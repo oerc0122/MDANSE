@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
@@ -39,7 +39,7 @@ from MDANSE_GUI.MolecularViewer.AtomProperties import (
 )
 
 
-def array_to_3d_imagedata(data, spacing):
+def array_to_3d_imagedata(data: np.ndarray, spacing: Tuple[float]):
     nx = data.shape[0]
     ny = data.shape[1]
     nz = data.shape[2]
@@ -188,10 +188,8 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self.update_renderer()
 
-    def _draw_isosurface(self, index):
+    def _draw_isosurface(self, index: int):
         """Draw the isosurface of an atom with the given index"""
-
-        return None  # we are not ready for this
 
         if self._surface is not None:
             self.on_clear_atomic_trace()
@@ -200,9 +198,19 @@ class MolecularViewer(QtWidgets.QWidget):
 
         initial_coords = self._reader.read_frame(0)
         coords, lower_bounds, upper_bounds = self._reader.read_atom_trajectory(index)
-        spacing, self._atomic_trace_histogram = histogram_3d(
-            coords, lower_bounds, upper_bounds, 100, 100, 100
-        )
+
+        gdim = (100, 100, 100)
+        grid = np.zeros(gdim, dtype=np.int32)
+        spacing = np.max(upper_bounds, axis=0) - np.min(lower_bounds, axis=0)
+        spacing /= 100
+        resolution = spacing
+
+        indices = np.floor(
+            (coords - np.min(lower_bounds, axis=0).reshape((1, 3))) / resolution
+        ).astype(int)
+        unique_indices, counts = np.unique(indices, return_counts=True, axis=0)
+        grid[tuple(unique_indices.T)] += counts
+        self._atomic_trace_histogram = grid
 
         self._image = array_to_3d_imagedata(self._atomic_trace_histogram, spacing)
         isovalue = self._atomic_trace_histogram.mean()
