@@ -61,11 +61,16 @@ def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
     AttributeError
         Error if unable to match to an element.
     """
-    if mass is not None and mass == 0.0:
+    if (mass is not None and mass == 0.0) or atm_label.upper() in [
+        "DUMMY",
+        "DU",
+        "D",
+        "M",
+    ]:
         return "Du"
 
     guesses = []
-    guess_0 = re.findall("([A-Za-z][a-z]?)", atm_label)
+    guess_0 = re.findall("([A-Za-z][A-Za-z]?)", atm_label)
     if len(guess_0) != 0:
         guess = guess_0[0].capitalize()
         guesses.append(guess)
@@ -80,6 +85,12 @@ def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
                 return guess
             num = ATOMS_DATABASE.get_atom_property(guess, "proton")
             atms = ATOMS_DATABASE.match_numeric_property("proton", num)
+
+            # if there is only one isotope for this element then we want
+            # to return the general element label e.g. Na not Na23
+            if len(atms) <= 2:
+                atms = [atms[0][:2]]
+
             for atm in atms:
                 atm_mass = ATOMS_DATABASE.get_atom_property(atm, "atomic_weight")
                 diff = abs(mass - atm_mass)
