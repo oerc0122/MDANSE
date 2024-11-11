@@ -22,7 +22,7 @@ short_traj = os.path.join(
 def test_editor_null():
     temp_name = tempfile.mktemp()
     parameters = {}
-    parameters["output_files"] = (temp_name, 64, "gzip", "INFO")
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
     parameters["frames"] = (0, 501, 1)
     temp = IJob.create("TrajectoryEditor")
@@ -48,7 +48,7 @@ def test_editor_null():
 def test_editor_frames():
     temp_name = tempfile.mktemp()
     parameters = {}
-    parameters["output_files"] = (temp_name, 64, "gzip", "INFO")
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
     parameters["frames"] = (0, 501, 10)
     temp = IJob.create("TrajectoryEditor")
@@ -75,7 +75,7 @@ def test_editor_frames():
 def test_editor_atoms():
     temp_name = tempfile.mktemp()
     parameters = {}
-    parameters["output_files"] = (temp_name, 64, "gzip", "INFO")
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
     parameters["frames"] = (0, 501, 1)
     parameters["atom_selection"] = '{"all": false, "element": ["H"]}'
@@ -103,7 +103,7 @@ def test_editor_atoms():
 def test_editor_unit_cell():
     temp_name = tempfile.mktemp()
     parameters = {}
-    parameters["output_files"] = (temp_name, 64, "gzip", "INFO")
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
     parameters["frames"] = (0, 501, 1)
     parameters["unit_cell"] = ([[1, 2, 3], [4, 5, 6], [7, 8, 9]], True)
@@ -133,7 +133,7 @@ def test_editor_unit_cell():
 def test_editor_transmute():
     temp_name = tempfile.mktemp()
     parameters = {}
-    parameters["output_files"] = (temp_name, 64, "gzip", "INFO")
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
     parameters["frames"] = (0, 501, 1)
     parameters["atom_transmutation"] = (

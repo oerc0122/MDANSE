@@ -108,6 +108,7 @@ class GlobalMotionFilteredTrajectory(IJob):
             self.numberOfSteps,
             self._selected_atoms.atom_list,
             positions_dtype=self.configuration["output_files"]["dtype"],
+            chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
         )
 

@@ -37,7 +37,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
     """
 
     log_options = ("no logs", "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL")
-    _default = ("OUTPUT_TRAJECTORY", 64, "none", "no logs")
+    _default = ("OUTPUT_TRAJECTORY", 64, 128, "none", "no logs")
 
     def __init__(self, name, format=None, **kwargs):
         """
@@ -54,11 +54,12 @@ class OutputTrajectoryConfigurator(IConfigurator):
         self._format = "MDTFormat"
         self._dtype = np.float64
         self._compression = "none"
+        self._chunk_limit = 128
 
     def configure(self, value: tuple):
         self._original_input = value
 
-        root, dtype, compression, logs = value
+        root, dtype, chunk_size, compression, logs = value
 
         if logs not in self.log_options:
             self.error_status = "log level option not recognised"
@@ -83,6 +84,8 @@ class OutputTrajectoryConfigurator(IConfigurator):
         else:
             self._dtype = np.float64
 
+        self._chunk_limit = chunk_size
+
         if compression in TrajectoryWriter.allowed_compression:
             self._compression = compression
         else:
@@ -97,6 +100,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
         self["file"] = temp_name
         self["dtype"] = self._dtype
         self["compression"] = self._compression
+        self["chunk_size"] = self._chunk_limit
         self["log_level"] = logs
         if logs == "no logs":
             self["write_logs"] = False
