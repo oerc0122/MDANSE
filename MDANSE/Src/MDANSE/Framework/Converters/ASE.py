@@ -224,7 +224,12 @@ class ASE(Converter):
         try:
             charges = frame.arrays["charges"]
         except KeyError:
-            pass
+            try:
+                charges = frame.get_initial_charges()
+            except:
+                pass
+            else:
+                self._trajectory.write_charges(charges, index)
         else:
             self._trajectory.write_charges(charges, index)
 

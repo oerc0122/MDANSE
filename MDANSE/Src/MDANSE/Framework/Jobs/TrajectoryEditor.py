@@ -161,7 +161,9 @@ class TrajectoryEditor(IJob):
             )
         else:
             com_conf = RealConfiguration(
-                self._output_trajectory.chemical_system, coords, **variables
+                self._output_trajectory.chemical_system,
+                coords[self._indices],
+                **variables,
             )
 
         self._output_trajectory.chemical_system.configuration = com_conf
