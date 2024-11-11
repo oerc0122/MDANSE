@@ -391,15 +391,16 @@ class TrajectoryWriter:
 
         self._dtype = positions_dtype
 
-        self._chunking_limit = chunking_limit
         if self._n_atoms <= 1.5 * chunking_limit:
             self._chunk_tuple = (1, self._n_atoms, 3)
             self._padded_size = self._n_atoms
+            self._chunking_limit = self._n_atoms
         else:
             self._chunk_tuple = (1, chunking_limit, 3)
             self._padded_size = (
                 math.ceil(self._n_atoms / chunking_limit) * chunking_limit
             )
+            self._chunking_limit = chunking_limit
 
         self._compression = compression
 
