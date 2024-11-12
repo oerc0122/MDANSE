@@ -37,8 +37,7 @@ class TopologyFileConfigurator(FileWithAtomDataConfigurator):
             for arg in ["element", "name", "type", "resname", "mass"]:
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
-            # the first in the out of the list above will be the
-            # main label
+            # the first out of the list above will be the main label
             (k, main_label) = next(iter(kwargs.items()))
             kwargs.pop(k)
             label = AtomLabel(main_label, **kwargs)

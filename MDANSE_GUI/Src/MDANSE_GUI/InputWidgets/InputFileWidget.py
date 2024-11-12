@@ -24,7 +24,8 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class InputFileWidget(WidgetBase):
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, *args, file_dialog=QFileDialog.getOpenFileName, **kwargs):
         super().__init__(*args, **kwargs)
         configurator = kwargs.get("configurator", None)
         if configurator is not None:
@@ -77,7 +78,7 @@ class InputFileWidget(WidgetBase):
         self._default_value = default_value
         self._layout.addWidget(button)
         self._configurator = configurator
-        self._file_dialog = QFileDialog.getOpenFileName
+        self._file_dialog = file_dialog
         self.updateValue()
 
     def configure_using_default(self):
@@ -101,19 +102,18 @@ class InputFileWidget(WidgetBase):
             self.default_path,  # the initial search path
             self._qt_file_association,  # text string specifying the file name filter.
         )
-        if new_value is not None:
-            if new_value[0]:
-                self._field.setText(new_value[0])
-                self.updateValue()
-                try:
-                    LOG.info(
-                        f"Settings path of {self._job_name} to {os.path.split(new_value[0])[0]}"
-                    )
-                    paths_group.set(self._job_name, os.path.split(new_value[0])[0])
-                except:
-                    LOG.error(
-                        f"session.set_path failed for {self._job_name}, {os.path.split(new_value[0])[0]}"
-                    )
+        if new_value is not None and new_value[0]:
+            self._field.setText(new_value[0])
+            self.updateValue()
+            try:
+                LOG.info(
+                    f"Settings path of {self._job_name} to {os.path.split(new_value[0])[0]}"
+                )
+                paths_group.set(self._job_name, os.path.split(new_value[0])[0])
+            except:
+                LOG.error(
+                    f"session.set_path failed for {self._job_name}, {os.path.split(new_value[0])[0]}"
+                )
 
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""

@@ -30,6 +30,14 @@ from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
 class MDAnalysis(Converter):
+    """Using MDAnalysis, read the MD trajectory and write the data out to
+    the MDT file. MDAnalysis reads MD trajectories by specifying
+    topology and coordinate files. Multiple files can be used for the
+    coordinate files so that trajectories will be stitched together.
+    For supported file formats, the continuous option ensures that
+    duplicated time-frames will not be added, see <a href="https://userguide.mdanalysis.org/stable/reading_and_writing.html">reading and writing</a>.
+    For topology and coordinate files supported by MDAnalysis see <a href="https://userguide.mdanalysis.org/stable/formats/index.html#formats">formats</a>.
+    """
 
     label = "MDAnalysis"
     settings = collections.OrderedDict()
@@ -42,7 +50,7 @@ class MDAnalysis(Converter):
         },
     )
     settings["coordinate_file"] = (
-        "InputFileConfigurator",
+        "MultiInputFileConfigurator",
         {
             "wildcard": "All files (*)",
             "default": "",
@@ -60,7 +68,7 @@ class MDAnalysis(Converter):
     settings["time_step"] = (
         "FloatConfigurator",
         {
-            "label": "Time step (ps) - use 0.0 for MDAnalysis default",
+            "label": "Time step (ps) - use 0.0 to use MDAnalysis values",
             "default": 0.0,
             "mini": 0.0,
         },
@@ -68,6 +76,10 @@ class MDAnalysis(Converter):
     settings["fold"] = (
         "BooleanConfigurator",
         {"default": False, "label": "Fold coordinates into box"},
+    )
+    settings["continuous"] = (
+        "BooleanConfigurator",
+        {"default": False, "label": "MDAnalysis frame continuous option"},
     )
     settings["output_files"] = (
         "OutputTrajectoryConfigurator",
@@ -79,15 +91,14 @@ class MDAnalysis(Converter):
     )
 
     def initialize(self):
-        if self.configuration["coordinate_file"]._original_input == "":
-            self.u = mda.Universe(
-                self.configuration["topology_file"]["filename"],
-            )
-        else:
-            self.u = mda.Universe(
-                self.configuration["topology_file"]["filename"],
-                self.configuration["coordinate_file"]["filename"],
-            )
+        """Load the trajectory using MDAnalysis and create the
+        trajectory writer.
+        """
+        self.u = mda.Universe(
+            self.configuration["topology_file"]["filename"],
+            *self.configuration["coordinate_file"]["filenames"],
+            continuous=self.configuration["continuous"]["value"]
+        )
 
         self.numberOfSteps = len(self.u.trajectory)
 
@@ -98,8 +109,7 @@ class MDAnalysis(Converter):
             for arg in ["element", "name", "type", "resname", "mass"]:
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
-            # the first in the out of the list above will be the
-            # main label
+            # the first out of the list above will be the main label
             (k, main_label) = next(iter(kwargs.items()))
             kwargs.pop(k)
             element = get_element_from_mapping(
@@ -117,7 +127,20 @@ class MDAnalysis(Converter):
         )
         super().initialize()
 
-    def run_step(self, index):
+    def run_step(self, index: int):
+        """For the given frame, read the MDAnalysis trajectory data,
+        convert and write it out to the MDT file.
+
+        Parameters
+        ----------
+        index : int
+            The frame index.
+
+        Returns
+        -------
+        tuple[int, None]
+            A tuple of the job index and None.
+        """
         self.u.trajectory[index]
 
         # convert from MDAnalysis units to MDANSE units
