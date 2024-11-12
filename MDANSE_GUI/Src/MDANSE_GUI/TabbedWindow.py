@@ -22,7 +22,6 @@ from qtpy.QtWidgets import (
     QMainWindow,
     QFileDialog,
     QToolBar,
-    QTabWidget,
     QMenuBar,
     QMessageBox,
     QApplication,
@@ -48,6 +47,7 @@ from MDANSE_GUI.Tabs.PlotSelectionTab import PlotSelectionTab
 from MDANSE_GUI.Tabs.PlotTab import PlotTab
 from MDANSE_GUI.Tabs.InstrumentTab import InstrumentTab
 from MDANSE_GUI.Widgets.StyleDialog import StyleDialog, StyleDatabase
+from MDANSE_GUI.Widgets.NotificationTabWidget import NotificationTabWidget
 
 
 class TabbedWindow(QMainWindow):
@@ -71,7 +71,7 @@ class TabbedWindow(QMainWindow):
         **kwargs,
     ):
         super().__init__(parent, *args, **kwargs)
-        self.tabs = QTabWidget(self)
+        self.tabs = NotificationTabWidget(self)
         self.setCentralWidget(self.tabs)
         self._views = defaultdict(list)
         self._actions = []
