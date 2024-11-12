@@ -22,7 +22,7 @@ from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
+from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration, RealConfiguration
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
@@ -54,6 +54,14 @@ class MDAnalysis(Converter):
             "dependencies": {"input_file": "topology_file"},
         },
     )
+    settings["time_step"] = (
+        "FloatConfigurator",
+        {
+            "label": "Time step (ps) - use 0.0 for MDAnalysis default",
+            "default": 0.0,
+            "mini": 0.0,
+        },
+    )
     settings["fold"] = (
         "BooleanConfigurator",
         {"default": False, "label": "Fold coordinates into box"},
@@ -78,12 +86,14 @@ class MDAnalysis(Converter):
         self._chemical_system = ChemicalSystem()
 
         for at in self.u.atoms:
+            kwargs = {}
+            for arg in ["name", "resname", "mass"]:
+                if hasattr(at, arg):
+                    kwargs[arg] = getattr(at, arg)
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"],
                 at.type,
-                name=at.name,
-                resname=at.resname,
-                mass=at.mass,
+                **kwargs
             )
             at = Atom(symbol=element, name=at.type)
             self._chemical_system.add_chemical_entity(at)
@@ -103,21 +113,30 @@ class MDAnalysis(Converter):
         # convert from MDAnalysis units to MDANSE units
         # see https://userguide.mdanalysis.org/stable/units.html for
         # default units in MDAnalysis
-        conf = PeriodicRealConfiguration(
-            self._trajectory._chemical_system,
-            self.u.trajectory.ts.positions * measure(1.0, "ang").toval("nm"),
-            UnitCell(
-                self.u.trajectory.ts.triclinic_dimensions
-                * measure(1.0, "ang").toval("nm")
-            ),
-        )
-
-        if self.configuration["fold"]["value"]:
-            conf.fold_coordinates()
+        if self.u.trajectory.ts.triclinic_dimensions is None:
+            conf = RealConfiguration(
+                self._trajectory._chemical_system,
+                self.u.trajectory.ts.positions * measure(1.0, "ang").toval("nm"),
+            )
+        else:
+            conf = PeriodicRealConfiguration(
+                self._trajectory._chemical_system,
+                self.u.trajectory.ts.positions * measure(1.0, "ang").toval(
+                    "nm"),
+                UnitCell(
+                    self.u.trajectory.ts.triclinic_dimensions
+                    * measure(1.0, "ang").toval("nm")
+                ),
+            )
+            if self.configuration["fold"]["value"]:
+                conf.fold_coordinates()
 
         self._trajectory._chemical_system.configuration = conf
 
-        time = index * self.u.trajectory.ts.dt
+        if float(self.configuration["time_step"]["value"]) == 0.0:
+            time = index * self.u.trajectory.ts.dt
+        else:
+            time = index * float(self.configuration["time_step"]["value"])
 
         self._trajectory.dump_configuration(
             time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
