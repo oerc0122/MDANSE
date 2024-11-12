@@ -269,6 +269,7 @@ class TabbedWindow(QMainWindow):
         self.tabs.addTab(trajectory_tab._core, name)
         self._tabs[name] = trajectory_tab
         self._job_holder.trajectory_for_loading.connect(trajectory_tab.load_trajectory)
+        self._job_holder.trajectory_for_loading.connect(trajectory_tab.tab_notification)
 
     def createInstrumentSelector(self):
         name = "Instruments"
@@ -335,6 +336,7 @@ class TabbedWindow(QMainWindow):
         self.tabs.addTab(plot_tab._core, name)
         self._tabs[name] = plot_tab
         self._job_holder.results_for_loading.connect(plot_tab.load_results)
+        self._job_holder.results_for_loading.connect(plot_tab.tab_notification)
 
     def createPlotHolder(self):
         name = "Plot Holder"
