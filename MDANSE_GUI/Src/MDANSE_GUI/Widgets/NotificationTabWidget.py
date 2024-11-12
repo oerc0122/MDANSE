@@ -16,7 +16,7 @@
 
 from qtpy.QtCore import Slot, Signal, QObject, QTimer
 from qtpy.QtWidgets import QTabWidget
-from qtpy.QtGui import QColor
+from qtpy.QtGui import QColor, QIcon
 
 
 class NotificationTabWidget(QTabWidget):
@@ -25,7 +25,6 @@ class NotificationTabWidget(QTabWidget):
         super().__init__(*args, **kwargs)
         self._normal_colours = {}
         self._special_color = QColor(250, 10, 50)
-        self.tabBarClicked.connect(self.reset_current_color)
 
     def addTab(self, widget: "QObject", name: str) -> int:
         object_id = super().addTab(widget, name)
@@ -37,12 +36,17 @@ class NotificationTabWidget(QTabWidget):
     @Slot(int)
     def set_special_color(self, tab_index: int):
         self.tabBar().setTabTextColor(tab_index, self._special_color)
+        self.tabBar().setTabIcon(
+            tab_index, QIcon.fromTheme(QIcon.ThemeIcon.DialogInformation)
+        )
 
     @Slot(int)
     def reset_current_color(self):
         tab_index = self.tabBar().currentIndex()
         self.tabBar().setTabTextColor(tab_index, self._normal_colours[tab_index])
+        self.tabBar().setTabIcon(tab_index, QIcon())
 
     @Slot(int)
     def reset_color(self, tab_index: int):
         self.tabBar().setTabTextColor(tab_index, self._normal_colours[tab_index])
+        self.tabBar().setTabIcon(tab_index, QIcon())

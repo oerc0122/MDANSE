@@ -115,6 +115,7 @@ class TabbedWindow(QMainWindow):
         self._tabs["Instruments"]._visualiser.instrument_details_changed.connect(
             self._tabs["Actions"].update_action_after_instrument_change
         )
+        self.tabs.currentChanged.connect(self.tabs.reset_current_color)
 
     def createCommonModels(self):
         self._trajectory_model = GeneralModel()
