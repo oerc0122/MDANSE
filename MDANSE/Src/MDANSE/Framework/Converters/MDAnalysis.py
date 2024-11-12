@@ -38,15 +38,15 @@ class MDAnalysis(Converter):
         {
             "wildcard": "All files (*)",
             "default": "INPUT_FILENAME",
-            "label": "The topology file",
+            "label": "Topology file",
         },
     )
     settings["coordinate_file"] = (
         "InputFileConfigurator",
         {
             "wildcard": "All files (*)",
-            "default": "INPUT_FILENAME",
-            "label": "The coordinate files",
+            "default": "",
+            "label": "Coordinate files (optional)",
         },
     )
     settings["atom_aliases"] = (
@@ -79,10 +79,15 @@ class MDAnalysis(Converter):
     )
 
     def initialize(self):
-        self.u = mda.Universe(
-            self.configuration["topology_file"]["filename"],
-            self.configuration["coordinate_file"]["filename"],
-        )
+        if self.configuration["coordinate_file"]._original_input == "":
+            self.u = mda.Universe(
+                self.configuration["topology_file"]["filename"],
+            )
+        else:
+            self.u = mda.Universe(
+                self.configuration["topology_file"]["filename"],
+                self.configuration["coordinate_file"]["filename"],
+            )
 
         self.numberOfSteps = len(self.u.trajectory)
 
