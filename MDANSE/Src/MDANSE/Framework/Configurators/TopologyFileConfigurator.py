@@ -34,10 +34,14 @@ class TopologyFileConfigurator(FileWithAtomDataConfigurator):
         labels = []
         for at in self.atoms:
             kwargs = {}
-            for arg in ["name", "resname", "mass"]:
+            for arg in ["element", "type", "name", "resname", "mass"]:
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
-            label = AtomLabel(at.type, **kwargs)
+            # the first in the out of the list above will be the
+            # main label
+            (k, main_label) = next(iter(kwargs.items()))
+            kwargs.pop(k)
+            label = AtomLabel(main_label, **kwargs)
             if label not in labels:
                 labels.append(label)
         return labels

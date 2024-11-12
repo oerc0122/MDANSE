@@ -95,11 +95,15 @@ class MDAnalysis(Converter):
 
         for at in self.u.atoms:
             kwargs = {}
-            for arg in ["name", "resname", "mass"]:
+            for arg in ["element", "type", "name", "resname", "mass"]:
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
+            # the first in the out of the list above will be the
+            # main label
+            (k, main_label) = next(iter(kwargs.items()))
+            kwargs.pop(k)
             element = get_element_from_mapping(
-                self.configuration["atom_aliases"]["value"], at.type, **kwargs
+                self.configuration["atom_aliases"]["value"], main_label, **kwargs
             )
             at = Atom(symbol=element, name=at.type)
             self._chemical_system.add_chemical_entity(at)
