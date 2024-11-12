@@ -62,6 +62,11 @@ def test_guess_element_sodium_with_mass_to_sodium():
     assert na == "Na"
 
 
+def test_guess_element_sod_with_mass_to_sodium():
+    na = guess_element("SOD", mass=22.98977)
+    assert na == "Na"
+
+
 def test_guess_element_chlorine_to_chlorine():
     na = guess_element("CL")
     assert na == "Cl"

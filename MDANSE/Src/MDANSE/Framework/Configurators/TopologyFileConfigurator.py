@@ -34,7 +34,7 @@ class TopologyFileConfigurator(FileWithAtomDataConfigurator):
         labels = []
         for at in self.atoms:
             kwargs = {}
-            for arg in ["element", "type", "name", "resname", "mass"]:
+            for arg in ["element", "name", "type", "resname", "mass"]:
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
             # the first in the out of the list above will be the
