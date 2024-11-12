@@ -22,7 +22,10 @@ from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration, RealConfiguration
+from MDANSE.MolecularDynamics.Configuration import (
+    PeriodicRealConfiguration,
+    RealConfiguration,
+)
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
@@ -91,9 +94,7 @@ class MDAnalysis(Converter):
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
             element = get_element_from_mapping(
-                self.configuration["atom_aliases"]["value"],
-                at.type,
-                **kwargs
+                self.configuration["atom_aliases"]["value"], at.type, **kwargs
             )
             at = Atom(symbol=element, name=at.type)
             self._chemical_system.add_chemical_entity(at)
@@ -121,8 +122,7 @@ class MDAnalysis(Converter):
         else:
             conf = PeriodicRealConfiguration(
                 self._trajectory._chemical_system,
-                self.u.trajectory.ts.positions * measure(1.0, "ang").toval(
-                    "nm"),
+                self.u.trajectory.ts.positions * measure(1.0, "ang").toval("nm"),
                 UnitCell(
                     self.u.trajectory.ts.triclinic_dimensions
                     * measure(1.0, "ang").toval("nm")
