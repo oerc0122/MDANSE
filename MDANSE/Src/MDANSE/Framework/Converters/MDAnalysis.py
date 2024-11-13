@@ -167,8 +167,15 @@ class MDAnalysis(Converter):
                     * measure(1.0, "ang").toval("nm")
                 ),
             )
+
             if self.configuration["fold"]["value"]:
                 conf.fold_coordinates()
+
+            if hasattr(self.u.trajectory.ts, "velocities"):
+                conf["velocities"] = self.u.trajectory.ts.velocities
+
+            if hasattr(self.u.trajectory.ts, "forces"):
+                conf["gradients"] = self.u.trajectory.ts.forces
 
         self._trajectory._chemical_system.configuration = conf
 
@@ -178,7 +185,14 @@ class MDAnalysis(Converter):
             time = index * float(self.configuration["time_step"]["value"])
 
         self._trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            time,
+            units={
+                "time": "ps",
+                "unit_cell": "nm",
+                "coordinates": "nm",
+                "velocities": "nm/ps",
+                "gradients": "uma nm/ps2",
+            },
         )
 
         return index, None
