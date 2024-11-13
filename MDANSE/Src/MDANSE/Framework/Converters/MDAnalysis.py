@@ -115,15 +115,22 @@ class MDAnalysis(Converter):
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"], main_label, **kwargs
             )
-            at = Atom(symbol=element, name=at.type)
-            self._chemical_system.add_chemical_entity(at)
+            self._chemical_system.add_chemical_entity(
+                Atom(symbol=element, name=at.type)
+            )
+
+        kwargs = {
+            "positions_dtype": self.configuration["output_files"]["dtype"],
+            "compression": self.configuration["output_files"]["compression"],
+        }
+        if hasattr(self.u.atoms, "charges"):
+            kwargs["initial_charges"] = self.u.atoms.charges
 
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
             self.numberOfSteps,
-            positions_dtype=self.configuration["output_files"]["dtype"],
-            compression=self.configuration["output_files"]["compression"],
+            **kwargs
         )
         super().initialize()
 
