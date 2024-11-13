@@ -79,6 +79,7 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "InstrumentResolutionConfigurator": InstrumentResolutionWidget,
     "PartialChargeConfigurator": PartialChargeWidget,
     "UnitCellConfigurator": UnitCellWidget,
+    "MDAnalysisTimeStepConfigurator": MDAnalysisTimeStepWidget,
 }
 
 

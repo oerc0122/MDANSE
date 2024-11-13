@@ -49,7 +49,7 @@ class MDAnalysis(Converter):
             "label": "Topology file",
         },
     )
-    settings["coordinate_file"] = (
+    settings["coordinate_files"] = (
         "MultiInputFileConfigurator",
         {
             "wildcard": "All files (*)",
@@ -66,11 +66,15 @@ class MDAnalysis(Converter):
         },
     )
     settings["time_step"] = (
-        "FloatConfigurator",
+        "MDAnalysisTimeStepConfigurator",
         {
-            "label": "Time step (ps) - use 0.0 to use MDAnalysis values",
+            "label": "Time step (ps)",
             "default": 0.0,
             "mini": 0.0,
+            "dependencies": {
+                "topology_file": "topology_file",
+                "coordinate_files": "coordinate_files",
+            },
         },
     )
     settings["fold"] = (
@@ -79,7 +83,7 @@ class MDAnalysis(Converter):
     )
     settings["continuous"] = (
         "BooleanConfigurator",
-        {"default": False, "label": "MDAnalysis frame continuous option"},
+        {"default": False, "label": "Continuous frame stitching"},
     )
     settings["output_files"] = (
         "OutputTrajectoryConfigurator",
@@ -96,7 +100,7 @@ class MDAnalysis(Converter):
         """
         self.u = mda.Universe(
             self.configuration["topology_file"]["filename"],
-            *self.configuration["coordinate_file"]["filenames"],
+            *self.configuration["coordinate_files"]["filenames"],
             continuous=self.configuration["continuous"]["value"]
         )
 
