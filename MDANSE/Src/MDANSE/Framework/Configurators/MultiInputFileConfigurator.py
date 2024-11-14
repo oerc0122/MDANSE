@@ -47,7 +47,9 @@ class MultiInputFileConfigurator(IConfigurator):
                     self.error_status = f"Unable to evaluate string: {e}"
                     return
                 if type(values) is not list:
-                    self.error_status = f"Input values should be able to be evaluated as a list"
+                    self.error_status = (
+                        f"Input values should be able to be evaluated as a list"
+                    )
                     return
             else:
                 values = []
