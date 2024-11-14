@@ -51,7 +51,7 @@ class UserSettingsModel(QStandardItemModel):
         # self.scan_model()
 
     def refresh(self):
-        self._settings.load_from_file()
+        # self._settings.load_from_file()
         self.populate_model()
         return
 

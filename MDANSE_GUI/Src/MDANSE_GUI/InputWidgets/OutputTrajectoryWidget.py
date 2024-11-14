@@ -44,8 +44,8 @@ class OutputTrajectoryWidget(WidgetBase):
         super().__init__(*args, layout_type="QGridLayout", **kwargs)
         default_value = self._configurator.default
         try:
-            parent = kwargs.get("parent", None)
-            self.default_path = parent.default_path
+            self._parent = kwargs.get("parent", None)
+            self.default_path = self._parent._default_path
         except KeyError:
             self.default_path = "."
             LOG.error("KeyError in OutputTrajectoryWidget - can't get default path.")
@@ -55,8 +55,8 @@ class OutputTrajectoryWidget(WidgetBase):
                 "AttributeError in OutputTrajectoryWidget - can't get default path."
             )
         try:
-            parent = kwargs.get("parent", None)
-            jobname = str(parent._job_instance.label).replace(" ", "")
+            self._parent = kwargs.get("parent", None)
+            jobname = str(self._parent._job_instance.label).replace(" ", "")
             guess_name = os.path.join(self.default_path, jobname + "_trajectory1")
         except:
             guess_name = default_value[0]
@@ -158,6 +158,9 @@ class OutputTrajectoryWidget(WidgetBase):
         filename = self._field.text()
         if len(filename) < 1:
             filename = self._default_value[0]
+        else:
+            path, name = os.path.split(filename)
+            self._parent.set_trajectory(path, name)
         dtype = dtype_lookup[self.dtype_box.currentText()]
         compression = self.compression_box.currentText()
         logs = self.logs_combo.currentText()

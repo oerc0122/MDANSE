@@ -85,14 +85,13 @@ class Action(QWidget):
     run_and_load = Signal(list)
     new_path = Signal(str)
 
-    last_paths = {}
-
     def __init__(self, *args, use_preview=False, **kwargs):
         self._default_path = None
         self._input_trajectory = None
         self._parent_tab = None
         self._trajectory_configurator = None
         self._settings = None
+        self._job_name = None
         self._use_preview = use_preview
         self._current_instrument = None
         default_path = kwargs.pop("path", None)
@@ -128,6 +127,8 @@ class Action(QWidget):
                 self._default_path = "."
             else:
                 self._default_path = path
+        if self._job_name is not None:
+            self._parent_tab.set_path(self._job_name, self._default_path)
 
     def set_instrument(self, instrument: SimpleInstrument) -> None:
         self._current_instrument = instrument
@@ -158,7 +159,7 @@ class Action(QWidget):
         self.clear_panel()
 
         self._job_name = job_name
-        self.last_paths[job_name] = self._parent_tab.get_path(job_name)
+        self._default_path = self._parent_tab.get_path(job_name)
         try:
             job_instance = IJob.create(job_name)
         except ValueError as e:
@@ -307,12 +308,6 @@ class Action(QWidget):
                     text += f"<p>[{array[0]}, {array[1]}, {array[2]}, ..., {array[-1]}] ({new_unit})</p>"
             self._preview_box.setHtml(text)
 
-    @Slot(dict)
-    def parse_updated_params(self, new_params: dict):
-        if "path" in new_params.keys():
-            self.default_path = new_params["path"]
-            self.new_path.emit(self.default_path)
-
     @Slot()
     def allow_execution(self):
         allow = True
@@ -351,7 +346,6 @@ class Action(QWidget):
         except:
             pass
         else:
-            self.last_paths[cname] = path
             self._parent_tab.set_path(self._job_name + "_script", path)
         pardict = self.set_parameters(labels=True)
         self._job_instance.save(result, pardict)
@@ -371,6 +365,7 @@ class Action(QWidget):
         pardict = self.set_parameters()
         LOG.info(pardict)
         self._parent_tab.set_path(self._job_name, self._default_path)
+        self._parent_tab._session.save()
         # when we are ready, we can consider running it
         # self.converter_instance.run(pardict)
         # this would send the actual instance, which _may_ be wrong

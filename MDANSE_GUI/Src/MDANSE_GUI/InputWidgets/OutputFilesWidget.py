@@ -36,7 +36,7 @@ class OutputFilesWidget(WidgetBase):
         default_value = self._configurator.default
         try:
             parent = kwargs.get("parent", None)
-            self.default_path = parent.default_path
+            self.default_path = parent._default_path
         except KeyError:
             self.default_path = "."
             LOG.error("KeyError in OutputFilesWidget - can't get default path.")

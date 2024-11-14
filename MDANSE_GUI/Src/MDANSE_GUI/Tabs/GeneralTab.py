@@ -168,6 +168,7 @@ class GeneralTab(QObject):
             paths_group.add(
                 path_key, path_value, f"Filesystem path recently used by {path_key}"
             )
+        self._session.save()
 
     @Slot()
     def save_state(self):
