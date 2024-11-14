@@ -36,23 +36,40 @@ class MultiInputFileConfigurator(IConfigurator):
             A list of file names or a string of the list which can be
             converted to a list using literal_eval.
         """
+        self["values"] = self._default
         self._original_input = values
 
         if type(values) is str:
             if values:
-                values = ast.literal_eval(values)
+                try:
+                    values = ast.literal_eval(values)
+                except (SyntaxError, ValueError) as e:
+                    self.error_status = f"Unable to evaluate string: {e}"
+                    return
+                if type(values) is not list:
+                    self.error_status = f"Input values should be able to be evaluated as a list"
+                    return
             else:
                 values = []
+
+        if type(values) is list:
+            if not all([type(value) is str for value in values]):
+                self.error_status = f"Input values should be a list of str"
+                return
+        else:
+            self.error_status = f"Input values should be able to be evaluated as a list"
+            return
 
         values = [PLATFORM.get_path(value) for value in values]
 
         none_exist = []
         for value in values:
-            if not os.path.exists(value):
+            if not os.path.isfile(value):
                 none_exist.append(value)
 
         if none_exist:
-            self.error_status = f"The files {', '.join(none_exist)} do not exist"
+            self.error_status = f"The files {', '.join(none_exist)} do not exist."
+            return
 
         self["values"] = values
         self["filenames"] = values
