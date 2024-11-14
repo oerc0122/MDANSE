@@ -34,7 +34,7 @@ class VASP(Converter):
     Converts a VASP trajectory to a HDF trajectory.
     """
 
-    label = "VASP (>=5)"
+    label = "VASP v5"
 
     settings = collections.OrderedDict()
     settings["xdatcar_file"] = (

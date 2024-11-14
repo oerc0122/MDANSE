@@ -44,10 +44,17 @@ class OutputStructureWidget(WidgetBase):
             LOG.error(
                 "AttributeError in OutputTrajectoryWidget - can't get default path."
             )
+        try:
+            parent = kwargs.get("parent", None)
+            jobname = str(parent._job_instance.label).replace(" ", "")
+            guess_name = os.path.join(self.default_path, "POSCAR")
+        except:
+            guess_name = default_value[0]
+            LOG.error("It was not possible to get the job name from the parent")
         self.file_association = "Output file name (*)"
         self._value = default_value
-        self._field = QLineEdit(default_value[0], self._base)
-        self._field.setPlaceholderText(default_value[0])
+        self._field = QLineEdit(guess_name, self._base)
+        self._field.setPlaceholderText(guess_name)
         self.format_box = QComboBox(self._base)
         self.format_box.addItems(self._configurator._formats)
         self.format_box.setCurrentText(default_value[1])
