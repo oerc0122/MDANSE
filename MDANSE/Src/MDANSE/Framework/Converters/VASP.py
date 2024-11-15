@@ -31,10 +31,25 @@ class VASPConverterError(Error):
 
 class VASP(Converter):
     """
-    Converts a VASP trajectory to a HDF trajectory.
+     This converter works for XDATCAR files which contain a *header*
+     specifying the unit cell size and atom types.
+
+     If your XDATCAR file does not have a header, you can add it manually
+     to the beginning of the file. The header can be copied from
+     the CONTCAR file.
+
+     A valid header should look like this:
+
+     unknown system
+            1
+      9.050041    0.000000    0.000000
+      0.000000    8.236754    0.000000
+      0.000000    0.000000   11.000452
+    Cu   Rb   Cl    S
+    9   4   7   12
     """
 
-    label = "VASP (>=5)"
+    label = "VASP"
 
     settings = collections.OrderedDict()
     settings["xdatcar_file"] = (
@@ -85,7 +100,9 @@ class VASP(Converter):
 
         self._chemicalSystem = ChemicalSystem()
 
-        for symbol, number in self._xdatcarFile["atoms"]:
+        for symbol, number in zip(
+            self._xdatcarFile["atoms"], self._xdatcarFile["atom_numbers"]
+        ):
             for i in range(number):
                 element = get_element_from_mapping(self._atomicAliases, symbol)
                 self._chemicalSystem.add_chemical_entity(
@@ -131,7 +148,7 @@ class VASP(Converter):
 
         # Compute the actual time
         time = (
-            index
+            self._xdatcarFile["step_number"]
             * self.configuration["time_step"]["value"]
             * measure(1.0, "fs").toval("ps")
         )
