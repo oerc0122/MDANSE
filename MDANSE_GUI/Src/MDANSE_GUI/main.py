@@ -53,6 +53,10 @@ def startGUI(some_args):
     path = os.path.dirname(os.path.abspath(__file__))
     app.setWindowIcon(QIcon(os.path.join(path, "Icons/MDANSE.ico")))
     fixed_locale = QLocale(QLocale.Language.English, QLocale.Country.UnitedKingdom)
+    fixed_locale.setNumberOptions(
+        QLocale.NumberOption.RejectGroupSeparator
+        | QLocale.NumberOption.OmitGroupSeparator
+    )
     QLocale.setDefault(fixed_locale)
 
     settings = QSettings(
