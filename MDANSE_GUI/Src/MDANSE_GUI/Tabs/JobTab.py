@@ -47,6 +47,7 @@ class JobTab(GeneralTab):
         super().__init__(*args, **kwargs)
         self._current_trajectory = ""
         self._job_starter = None
+        self._own_index = -1
         self._instrument_index = -1
         self._trajectory_combo = QComboBox()
         self._trajectory_combo.setEditable(False)
@@ -64,6 +65,9 @@ class JobTab(GeneralTab):
         self._core.add_widget(self._instrument_combo, upper=False)
         self.action._parent_tab = self
         self._visualiser._parent_tab = self
+
+    def set_own_index(self, index: int):
+        self._own_index = index
 
     def set_job_starter(self, job_starter):
         self._job_starter = job_starter
@@ -128,8 +132,10 @@ class JobTab(GeneralTab):
             return
         self._needs_updating = True
 
-    @Slot()
-    def update_action_on_tab_activation(self):
+    @Slot(int)
+    def update_action_on_tab_activation(self, current_index: int):
+        if current_index != self._own_index:
+            return
         self.action.test_file_outputs()
         if self._needs_updating:
             current_item = self._core.current_item()

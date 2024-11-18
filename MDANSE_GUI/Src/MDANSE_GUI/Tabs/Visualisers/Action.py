@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+import os
 from typing import Optional
 import traceback
 
@@ -94,6 +95,9 @@ class Action(QWidget):
         self._job_name = None
         self._use_preview = use_preview
         self._current_instrument = None
+        self._has_been_initialised = False
+        self.execute_button = None
+        self.post_execute_checkbox = None
         default_path = kwargs.pop("path", None)
         input_trajectory = kwargs.pop("trajectory", None)
         self.set_trajectory(default_path, input_trajectory)
@@ -121,7 +125,7 @@ class Action(QWidget):
         self._input_trajectory = trajectory
         path = None
         if self._input_trajectory is not None:
-            path, filename = os.path.split(self._input_trajectory)
+            path, _ = os.path.split(self._input_trajectory)
         if self._default_path is None:
             if path is None:
                 self._default_path = "."
@@ -157,6 +161,7 @@ class Action(QWidget):
             The job name.
         """
         self.clear_panel()
+        self._has_been_initialised = False
 
         self._job_name = job_name
         self._default_path = self._parent_tab.get_path(job_name)
@@ -226,6 +231,7 @@ class Action(QWidget):
                     input_widget.value_updated.connect(self.show_output_prediction)
                 LOG.info(f"Set up the right widget for {key}")
             # self.handlers[key] = data_handler
+            self._has_been_initialised = True
             self.check_inputs()
 
         if self._use_preview:
@@ -275,6 +281,8 @@ class Action(QWidget):
 
     @Slot()
     def test_file_outputs(self):
+        if not self._has_been_initialised:
+            return
         self.check_inputs()
         for widget in self._widgets:
             widget.updateValue()
@@ -324,14 +332,16 @@ class Action(QWidget):
         for widget in self._widgets:
             if not widget._configurator.valid:
                 allow = False
-        if allow:
-            self.execute_button.setEnabled(True)
-        else:
-            self.execute_button.setEnabled(False)
-        if self._job_name == "AverageStructure":
-            self.post_execute_checkbox.setEnabled(False)
-        else:
-            self.post_execute_checkbox.setEnabled(True)
+        if self.execute_button is not None:
+            if allow:
+                self.execute_button.setEnabled(True)
+            else:
+                self.execute_button.setEnabled(False)
+        if self.post_execute_checkbox is not None:
+            if self._job_name == "AverageStructure":
+                self.post_execute_checkbox.setEnabled(False)
+            else:
+                self.post_execute_checkbox.setEnabled(True)
 
     @Slot()
     def cancel_dialog(self):

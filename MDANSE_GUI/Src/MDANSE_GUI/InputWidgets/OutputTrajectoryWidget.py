@@ -125,6 +125,7 @@ class OutputTrajectoryWidget(WidgetBase):
         This will start a FileDialog, take the resulting path,
         and emit a signal to update the value show by the GUI.
         """
+        self.default_path = self._parent._default_path
         new_value = QFileDialog.getSaveFileName(
             self._base,  # the parent of the dialog
             "Save file",  # the label of the window
@@ -134,27 +135,6 @@ class OutputTrajectoryWidget(WidgetBase):
         if len(new_value[0]) > 0:
             self._field.setText(new_value[0])
             self.updateValue()
-
-    @staticmethod
-    def _get_unique_filename(directory, basename):
-        filesInDirectory = [
-            os.path.join(directory, e)
-            for e in itertools.chain(
-                glob.iglob(os.path.join(directory, "*")),
-                glob.iglob(os.path.join(directory, ".*")),
-            )
-            if os.path.isfile(os.path.join(directory, e))
-        ]
-        basenames = [os.path.splitext(f)[0] for f in filesInDirectory]
-
-        initialPath = path = os.path.join(directory, basename)
-        comp = 1
-        while True:
-            if path in basenames:
-                path = "%s(%d)" % (initialPath, comp)
-                comp += 1
-                continue
-            return path
 
     def get_widget_value(self):
         self._configurator._forbidden_files = self._session.reserved_filenames()

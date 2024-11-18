@@ -320,7 +320,8 @@ class TabbedWindow(QMainWindow):
             instrument_model=self._instrument_model,
         )
         job_tab.set_job_starter(self._job_holder)
-        self.tabs.addTab(job_tab._core, name)
+        jobtab_index = self.tabs.addTab(job_tab._core, name)
+        job_tab.set_own_index(jobtab_index)
         self._tabs[name] = job_tab
         self.tabs.tabBar().tabBarClicked.connect(
             job_tab.update_action_on_tab_activation

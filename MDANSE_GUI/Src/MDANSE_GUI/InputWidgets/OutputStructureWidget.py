@@ -115,27 +115,6 @@ class OutputStructureWidget(WidgetBase):
             self._field.setText(new_value[0])
             self.updateValue()
 
-    @staticmethod
-    def _get_unique_filename(directory, basename):
-        filesInDirectory = [
-            os.path.join(directory, e)
-            for e in itertools.chain(
-                glob.iglob(os.path.join(directory, "*")),
-                glob.iglob(os.path.join(directory, ".*")),
-            )
-            if os.path.isfile(os.path.join(directory, e))
-        ]
-        basenames = [os.path.splitext(f)[0] for f in filesInDirectory]
-
-        initialPath = path = os.path.join(directory, basename)
-        comp = 1
-        while True:
-            if path in basenames:
-                path = "%s(%d)" % (initialPath, comp)
-                comp += 1
-                continue
-            return path
-
     def get_widget_value(self):
         filename = self._field.text()
         if len(filename) < 1:
