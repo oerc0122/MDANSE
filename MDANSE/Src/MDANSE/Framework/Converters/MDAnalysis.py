@@ -101,7 +101,8 @@ class MDAnalysis(Converter):
         self.u = mda.Universe(
             self.configuration["topology_file"]["filename"],
             *self.configuration["coordinate_files"]["filenames"],
-            continuous=self.configuration["continuous"]["value"]
+            continuous=self.configuration["continuous"]["value"],
+            topology_format=self.configuration["topology_file"]["format"]
         )
 
         self.numberOfSteps = len(self.u.trajectory)

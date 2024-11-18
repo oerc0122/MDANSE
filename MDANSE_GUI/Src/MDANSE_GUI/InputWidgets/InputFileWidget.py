@@ -58,28 +58,32 @@ class InputFileWidget(WidgetBase):
                 LOG.error("AttributeError in InputFileWidget - can't get default path.")
         default_value = kwargs.get("default", "")
         if self._tooltip:
-            tooltip_text = self._tooltip
+            self._tooltip_text = self._tooltip
         else:
-            tooltip_text = "Specify a path to an existing file."
+            self._tooltip_text = "Specify a path to an existing file."
         try:
             file_association = configurator.wildcard
         except AttributeError:
             file_association = kwargs.get("wildcard", "")
         self._qt_file_association = file_association
-        field = QLineEdit(self._base)
-        self._field = field
-        field.textChanged.connect(self.updateValue)
-        field.setText(str(default_value))
-        field.setPlaceholderText(str(default_value))
-        field.setToolTip(tooltip_text)
-        self._layout.addWidget(field)
-        button = QPushButton("Browse", self._base)
-        button.clicked.connect(self.valueFromDialog)
         self._default_value = default_value
-        self._layout.addWidget(button)
+        self.add_widgets_to_layout()
         self._configurator = configurator
         self._file_dialog = file_dialog
         self.updateValue()
+
+    def add_widgets_to_layout(self):
+        field = QLineEdit(self._base)
+        self._field = field
+        field.textChanged.connect(self.updateValue)
+        field.setText(str(self._default_value))
+        field.setPlaceholderText(str(self._default_value))
+        field.setToolTip(self._tooltip_text)
+        self._layout.addWidget(field)
+
+        button = QPushButton("Browse", self._base)
+        button.clicked.connect(self.valueFromDialog)
+        self._layout.addWidget(button)
 
     def configure_using_default(self):
         """This is too specific to have a default value"""

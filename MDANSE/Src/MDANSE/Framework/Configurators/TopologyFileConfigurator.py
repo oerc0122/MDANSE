@@ -21,13 +21,29 @@ from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 class TopologyFileConfigurator(FileWithAtomDataConfigurator):
 
+    def configure(self, setting: str) -> None:
+        """
+        Parameters
+        ----------
+        setting : tuple
+            A tuple containing the topology filepath and format.
+        """
+        filepath, format = setting
+        self["format"] = format
+        super().configure(filepath)
+
     def parse(self) -> None:
         # TODO currently MDAnalysis guesses the atom types and masses.
         #  There is a PR https://github.com/MDAnalysis/mdanalysis/pull/3753
         #  which will give us more control over what is guessed. We may
         #  want to change the MDAnalysis guessing options in the future
         #  so that it works better with the MDANSE atom mapping.
-        self.atoms = mda.Universe(self["filename"]).atoms
+        if self["format"] == "AUTO":
+            self.atoms = mda.Universe(self["filename"]).atoms
+        else:
+            self.atoms = mda.Universe(
+                self["filename"], topology_format=self["format"]
+            ).atoms
 
     def get_atom_labels(self) -> list[AtomLabel]:
         """

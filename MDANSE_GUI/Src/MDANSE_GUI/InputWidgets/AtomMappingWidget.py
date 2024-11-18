@@ -64,7 +64,7 @@ class AtomMappingHelperDialog(QDialog):
         self._field = field
 
         self._file_widget = field_widget
-        self._file_widget._field.textChanged.connect(self.update_helper)
+        self._file_widget.value_changed.connect(self.update_helper)
 
         self.layout = QVBoxLayout()
         buffer_0 = QWidget(self)
@@ -191,7 +191,7 @@ class AtomMappingWidget(WidgetBase):
         self._default_value = default_value
         self._layout.addWidget(self._field)
         self._layout.addWidget(self.helper_button)
-        self._file_widget._field.textChanged.connect(self.update_helper_button)
+        self._file_widget.value_changed.connect(self.update_helper_button)
         self.update_labels()
         self.updateValue()
 

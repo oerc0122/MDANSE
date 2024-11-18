@@ -55,7 +55,7 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "ConfigFileConfigurator": InputFileWidget,
     "MultiInputFileConfigurator": MultiInputFileWidget,
     "InputFileConfigurator": InputFileWidget,
-    "TopologyFileConfigurator": InputFileWidget,
+    "TopologyFileConfigurator": TopologyInputFileWidget,
     "MDFileConfigurator": InputFileWidget,
     "FieldFileConfigurator": InputFileWidget,
     "XDATCARFileConfigurator": InputFileWidget,

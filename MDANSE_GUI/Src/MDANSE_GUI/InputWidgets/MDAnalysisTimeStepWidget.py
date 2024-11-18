@@ -13,7 +13,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
 import MDAnalysis as mda
 
 from MDANSE.MLogging import LOG
@@ -35,9 +34,7 @@ class MDAnalysisTimeStepWidget(FloatWidget):
                 ]
             ):
                 self._topology_file_widget = widget
-                self._topology_file_widget._field.textChanged.connect(
-                    self.update_from_files
-                )
+                self._topology_file_widget.value_changed.connect(self.update_from_files)
             if (
                 widget._configurator
                 is self._configurator._configurable[
@@ -45,7 +42,7 @@ class MDAnalysisTimeStepWidget(FloatWidget):
                 ]
             ):
                 self._coordinates_file_widget = widget
-                self._coordinates_file_widget._field.textChanged.connect(
+                self._coordinates_file_widget.value_changed.connect(
                     self.update_from_files
                 )
 
@@ -61,6 +58,7 @@ class MDAnalysisTimeStepWidget(FloatWidget):
                 value = mda.Universe(
                     self._topology_file_widget._configurator["filename"],
                     *self._coordinates_file_widget._configurator["filenames"],
+                    topology_format=self._topology_file_widget._configurator["format"],
                 ).trajectory.ts.dt
                 self._field.setText(str(value))
                 return
