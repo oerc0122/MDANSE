@@ -116,7 +116,7 @@ class MDAnalysis(Converter):
                 self.configuration["topology_file"]["filename"],
                 coord_files,
                 continuous=self.configuration["continuous"]["value"],
-                topology_format=self.configuration["topology_file"]["format"]
+                topology_format=self.configuration["topology_file"]["format"],
             )
 
         self.numberOfSteps = len(self.u.trajectory)

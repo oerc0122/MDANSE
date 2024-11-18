@@ -63,14 +63,18 @@ class MDAnalysisTimeStepWidget(FloatWidget):
                         self._topology_file_widget._configurator["filename"],
                         *coord_files,
                         format=coord_format,
-                        topology_format=self._topology_file_widget._configurator["format"],
+                        topology_format=self._topology_file_widget._configurator[
+                            "format"
+                        ],
                     ).trajectory.ts.dt
                 else:
                     coord_files = [(i, coord_format) for i in coord_files]
                     value = mda.Universe(
                         self._topology_file_widget._configurator["filename"],
                         coord_files,
-                        topology_format=self._topology_file_widget._configurator["format"],
+                        topology_format=self._topology_file_widget._configurator[
+                            "format"
+                        ],
                     ).trajectory.ts.dt
 
                 self._field.setText(str(value))
