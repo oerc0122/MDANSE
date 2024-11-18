@@ -29,7 +29,10 @@ class TopologyFileConfigurator(FileWithAtomDataConfigurator):
             A tuple containing the topology filepath and format.
         """
         filepath, format = setting
-        self["format"] = format
+        if format == "AUTO":
+            self["format"] = None
+        else:
+            self["format"] = format
         super().configure(filepath)
 
     def parse(self) -> None:
@@ -38,12 +41,9 @@ class TopologyFileConfigurator(FileWithAtomDataConfigurator):
         #  which will give us more control over what is guessed. We may
         #  want to change the MDAnalysis guessing options in the future
         #  so that it works better with the MDANSE atom mapping.
-        if self["format"] == "AUTO":
-            self.atoms = mda.Universe(self["filename"]).atoms
-        else:
-            self.atoms = mda.Universe(
-                self["filename"], topology_format=self["format"]
-            ).atoms
+        self.atoms = mda.Universe(
+            self["filename"], topology_format=self["format"]
+        ).atoms
 
     def get_atom_labels(self) -> list[AtomLabel]:
         """
