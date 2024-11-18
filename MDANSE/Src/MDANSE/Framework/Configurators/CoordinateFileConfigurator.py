@@ -91,6 +91,31 @@ class CoordinateFileConfigurator(IConfigurator):
                 self.error_status = f"MDAnalysis coordinate file format not recognised."
                 return
 
+        topology_configurator = self._configurable[self._dependencies["input_file"]]
+        if topology_configurator._valid:
+            try:
+                if len(self["filenames"]) <= 1 or self["format"] is None:
+                    traj = mda.Universe(
+                        topology_configurator["filename"],
+                        *self["filenames"],
+                        format=self["format"],
+                        topology_format=topology_configurator["format"],
+                    ).trajectory
+                else:
+                    coord_files = [(i, self["format"]) for i in self["filenames"]]
+                    traj = mda.Universe(
+                        topology_configurator["filename"],
+                        coord_files,
+                        topology_format=topology_configurator["format"],
+                    ).trajectory
+            except Exception as e:
+                self.error_status = f"Unable to create MDAnalysis universe: {e}"
+                return
+        else:
+            if self["values"]:
+                self.error_status = "Requires valid topology file."
+                return
+
         self.error_status = "OK"
 
     @property

@@ -38,10 +38,23 @@ class MDAnalysisTimeStepConfigurator(FloatConfigurator):
             ]
             if file_configurator._valid and files_configurator._valid:
                 try:
-                    value = mda.Universe(
-                        file_configurator["filename"], *files_configurator["filenames"]
-                    ).trajectory.ts.dt
-                except (AttributeError, ValueError) as e:
+                    coord_format = files_configurator["format"]
+                    coord_files = files_configurator["filenames"]
+                    if len(coord_files) <= 1 or coord_format is None:
+                        value = mda.Universe(
+                            file_configurator["filename"],
+                            *coord_files,
+                            format=coord_format,
+                            topology_format=file_configurator["format"],
+                        )
+                    else:
+                        coord_files = [(i, coord_format) for i in coord_files]
+                        value = mda.Universe(
+                            file_configurator["filename"],
+                            coord_files,
+                            topology_format=file_configurator["format"],
+                        ).trajectory.ts.dt
+                except Exception as e:
                     self.error_status = (
                         f"Unable to determine a time step from MDAnalysis: {e}"
                     )

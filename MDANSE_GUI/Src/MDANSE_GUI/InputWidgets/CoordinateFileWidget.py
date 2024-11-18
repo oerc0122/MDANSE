@@ -29,6 +29,14 @@ class CoordinateFileWidget(TopologyFileWidget):
         super().__init__(
             *args, file_dialog=file_dialog, format_options=mda._READERS.keys(), **kwargs
         )
+        for widget in self.parent()._widgets:
+            if (
+                widget._configurator
+                is self._configurator._configurable[
+                    self._configurator._dependencies["input_file"]
+                ]
+            ):
+                widget.value_changed.connect(self.updateValue)
 
     @Slot()
     def valueFromDialog(self):

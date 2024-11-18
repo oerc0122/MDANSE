@@ -55,6 +55,7 @@ class MDAnalysis(Converter):
             "wildcard": "All files (*)",
             "default": "",
             "label": "Coordinate files (optional)",
+            "dependencies": {"input_file": "topology_file"},
         },
     )
     settings["atom_aliases"] = (
@@ -98,13 +99,25 @@ class MDAnalysis(Converter):
         """Load the trajectory using MDAnalysis and create the
         trajectory writer.
         """
-        self.u = mda.Universe(
-            self.configuration["topology_file"]["filename"],
-            *self.configuration["coordinate_files"]["filenames"],
-            continuous=self.configuration["continuous"]["value"],
-            format=self.configuration["coordinate_files"]["format"],
-            topology_format=self.configuration["topology_file"]["format"]
-        )
+        coord_format = self.configuration["coordinate_files"]["format"]
+        coord_files = self.configuration["coordinate_files"]["filenames"]
+
+        if len(coord_files) <= 1 or coord_format is None:
+            self.u = mda.Universe(
+                self.configuration["topology_file"]["filename"],
+                *coord_files,
+                continuous=self.configuration["continuous"]["value"],
+                format=coord_format,
+                topology_format=self.configuration["topology_file"]["format"]
+            )
+        else:
+            coord_files = [(i, coord_format) for i in coord_files]
+            self.u = mda.Universe(
+                self.configuration["topology_file"]["filename"],
+                coord_files,
+                continuous=self.configuration["continuous"]["value"],
+                topology_format=self.configuration["topology_file"]["format"]
+            )
 
         self.numberOfSteps = len(self.u.trajectory)
 

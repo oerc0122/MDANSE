@@ -55,15 +55,27 @@ class MDAnalysisTimeStepWidget(FloatWidget):
             and self._coordinates_file_widget._configurator.valid
         ):
             try:
-                value = mda.Universe(
-                    self._topology_file_widget._configurator["filename"],
-                    *self._coordinates_file_widget._configurator["filenames"],
-                    format=self._coordinates_file_widget._configurator["format"],
-                    topology_format=self._topology_file_widget._configurator["format"],
-                ).trajectory.ts.dt
+                coord_format = self._coordinates_file_widget._configurator["format"]
+                coord_files = self._coordinates_file_widget._configurator["filenames"]
+
+                if len(coord_files) <= 1 or coord_format is None:
+                    value = mda.Universe(
+                        self._topology_file_widget._configurator["filename"],
+                        *coord_files,
+                        format=coord_format,
+                        topology_format=self._topology_file_widget._configurator["format"],
+                    ).trajectory.ts.dt
+                else:
+                    coord_files = [(i, coord_format) for i in coord_files]
+                    value = mda.Universe(
+                        self._topology_file_widget._configurator["filename"],
+                        coord_files,
+                        topology_format=self._topology_file_widget._configurator["format"],
+                    ).trajectory.ts.dt
+
                 self._field.setText(str(value))
                 return
-            except (AttributeError, ValueError, TypeError) as e:
+            except Exception as e:
                 LOG.warning(f"Failed to determine time step from MDAnalysis: {e}")
 
         self._field.setText(str(self._default_value))
