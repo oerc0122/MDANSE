@@ -26,6 +26,7 @@ from MDANSE_GUI.Tabs.Visualisers.Action import Action
 from MDANSE_GUI.Tabs.Visualisers.TextInfo import TextInfo
 from MDANSE_GUI.Tabs.Models.JobTree import JobTree
 from MDANSE_GUI.Tabs.Views.ActionsTree import ActionsTree
+from MDANSE_GUI.InputWidgets.MoleculeWidget import MoleculeWidget
 
 
 job_tab_label = """This is the list of jobs
@@ -98,6 +99,9 @@ class JobTab(GeneralTab):
             # we only update the widget if a job is selected from the
             # actions tree
             self.action.update_panel(current_item.text())
+            
+        
+
 
     @classmethod
     def standard_instance(cls):

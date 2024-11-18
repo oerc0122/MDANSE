@@ -81,5 +81,5 @@ def test_identify_molecules(trajectory: Trajectory):
     for ms in molstrings[1:]:
         result = result and ms == molstrings[0]
     assert result
-    print(chemical_system.unique_molecules())
-    assert len(chemical_system.unique_molecules()) == 1
+    print(chemical_system.unique_molecule_names)
+    assert len(chemical_system.unique_molecule_names) == 1
