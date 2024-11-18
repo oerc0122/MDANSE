@@ -181,6 +181,21 @@ class JobEntry(Handler, QObject):
             self._current_state.fail()
         self.update_fields()
 
+    def expected_output(self) -> str:
+        try:
+            len(self._parameters["output_files"][1])
+        except TypeError:  # job is a converter
+            file_name = self._parameters["output_files"][0]
+            if ".mdt" not in file_name[-5:]:
+                file_name += ".mdt"
+            return file_name
+        else:  # job is an analysis
+            if "MDAFormat" in self._parameters["output_files"][1]:
+                file_name = self._parameters["output_files"][0]
+                if ".mda" not in file_name[-5:]:
+                    file_name += ".mda"
+                return file_name
+
     @Slot(int)
     def on_started(self, target_steps: int):
         LOG.info(f"Item received on_started: {target_steps} total steps")
@@ -238,6 +253,8 @@ class JobHolder(QStandardItemModel):
 
     trajectory_for_loading = Signal(str)
     results_for_loading = Signal(str)
+    protect_filename = Signal(str)
+    unprotect_filename = Signal(str)
 
     def __init__(self, parent: QObject = None):
         super().__init__(parent=parent)
@@ -301,6 +318,7 @@ class JobHolder(QStandardItemModel):
         communicator.moveToThread(watcher_thread)
         entry_number = self.next_number
         item_th.parameters = job_vars[1]
+        item_th.for_loading.connect(self.unprotect_filename)
         if load_afterwards:
             if job_vars[0] in Converter.subclasses():
                 item_th.for_loading.connect(self.trajectory_for_loading)
@@ -323,6 +341,7 @@ class JobHolder(QStandardItemModel):
             task_name = str("This should have been a job name")
         name_item = QStandardItem(task_name)
         name_item.setData(entry_number, role=Qt.ItemDataRole.UserRole)
+        self.protect_filename(item_th.expected_output())
         self.appendRow(
             [
                 name_item,
