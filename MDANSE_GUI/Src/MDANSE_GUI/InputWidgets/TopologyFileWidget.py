@@ -22,7 +22,7 @@ from .InputFileWidget import InputFileWidget
 
 class TopologyFileWidget(InputFileWidget):
 
-    def __init__(self, *args, format_options=mda._PARSERS.keys(), **kwargs):
+    def __init__(self, *args, format_options=sorted(mda._PARSERS.keys()), **kwargs):
         self.format_options = ["AUTO"] + list(format_options)
         super().__init__(*args, **kwargs)
 
