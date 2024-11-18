@@ -261,6 +261,7 @@ class Action(QWidget):
 
         self.save_button.clicked.connect(self.save_dialog)
         self.execute_button.clicked.connect(self.execute_converter)
+        self.execute_button.needs_updating.connect(self.allow_execution)
 
         buttonlayout.addWidget(self.save_button)
         buttonlayout.addWidget(self.execute_button)

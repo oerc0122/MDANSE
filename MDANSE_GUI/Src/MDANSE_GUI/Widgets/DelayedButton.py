@@ -20,6 +20,8 @@ from qtpy.QtWidgets import QPushButton
 
 class DelayedButton(QPushButton):
 
+    needs_updating = Signal()
+
     def __init__(self, *args, **kwargs):
         delay_time = kwargs.pop("delay", 1000)
         inactive_message = kwargs.pop("inactive_text", "Starting...")
@@ -27,16 +29,23 @@ class DelayedButton(QPushButton):
 
         self._delay_time = delay_time
         self._inactive_message = inactive_message
+        self._freeze_updates = False
         self._active_message = self.text()
         self.clicked.connect(self.start_delay)
+
+    def setEnabled(self, a0: bool) -> None:
+        if not self._freeze_updates:
+            return super().setEnabled(a0)
 
     @Slot()
     def start_delay(self):
         self.setText(self._inactive_message)
         self.setEnabled(False)
+        self._freeze_updates = True
         QTimer.singleShot(self._delay_time, self.end_delay)
 
     @Slot()
     def end_delay(self):
         self.setText(self._active_message)
-        self.setEnabled(True)
+        self._freeze_updates = False
+        self.needs_updating.emit()
