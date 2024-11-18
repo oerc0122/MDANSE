@@ -67,7 +67,7 @@ class MoleculeSelectionConfigurator(IConfigurator):
 
         self._choices = trajectory_configurator[
             "instance"
-        ].chemical_system.unique_molecules()
+        ].chemical_system.unique_molecule_names
 
         if value in self._choices:
             self.error_status = "OK"

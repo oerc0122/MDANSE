@@ -13,10 +13,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from qtpy.QtWidgets import QComboBox
-
+from qtpy.QtCore import Slot
+from qtpy.QtWidgets import QComboBox, QPushButton, QDialog
+from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QSizePolicy, QFrame, \
+                                            QSizePolicy, QPushButton, QFileDialog
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
-
+from MDANSE_GUI.InputWidgets.MoleculePreviewWidget import MoleculePreviewWidget
 
 class MoleculeWidget(WidgetBase):
     def __init__(self, *args, **kwargs):
@@ -27,7 +29,7 @@ class MoleculeWidget(WidgetBase):
         if trajectory_configurator is not None:
             option_list = trajectory_configurator[
                 "instance"
-            ].chemical_system.unique_molecules()
+            ].chemical_system.unique_molecule_names
             if len(option_list) > 0:
                 default_option = option_list[0]
         else:
@@ -36,24 +38,77 @@ class MoleculeWidget(WidgetBase):
             else:
                 option_list = configurator.choices
                 default_option = configurator.default
-        field = QComboBox(self._base)
-        field.addItems(option_list)
-        field.setCurrentText(default_option)
-        field.currentTextChanged.connect(self.updateValue)
+        traj_config = self._configurator._configurable[
+            self._configurator._dependencies["trajectory"]
+        ]
+        hdf_traj = traj_config["hdf_trajectory"]
+        unique_molecules = hdf_traj.chemical_system.unique_molecules
+        # molecule = hdf_traj.molecule._atoms
+        # print("molecule atoms:", hdf_traj.molecule._atoms)
+
+        self.mol_dict = {}
+        for i, mol in enumerate(unique_molecules):
+            self.atom_information = []
+            no_of_molecules = hdf_traj.chemical_system.number_of_molecules(mol.name)
+            self.atom_number = {}
+            for atom in mol._atoms:
+                element = atom.element
+                try:
+                    self.atom_number[element] += 1
+                except KeyError:
+                    self.atom_number[element] = 1
+                index = atom.index
+                symbol = atom.symbol
+                coords = hdf_traj.trajectory.coordinates(0)[index]
+                atom_dict = {"symbol": symbol, "element": element, "coords": coords}
+                self.atom_information.append(atom_dict)
+
+            self.mol_dict[mol.name] = {"no_of_molecules": no_of_molecules, "atom_information": self.atom_information, "atom_number": self.atom_number}
+        self.field = QComboBox(self._base)
+        self.field.addItems(option_list)
+        self.field.setCurrentText(default_option)
+        selected_name = self.field.currentText()
+        self.selected_mol = self.mol_dict[selected_name]
+        self.field.currentTextChanged.connect(self.updateValue)
+        self.field.currentTextChanged.connect(self.molecule_changed)
+        button = QPushButton(self._base)
+        button.setText("Molecule Preview")
+        button.clicked.connect(self.button_clicked)
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
             tooltip_text = (
                 "A single option can be picked out of all the options listed."
             )
-        field.setToolTip(tooltip_text)
-        self._field = field
-        self._layout.addWidget(field)
+        self.field.setToolTip(tooltip_text)
+        self._field = self.field
+        self._layout.addWidget(self.field)
+        self._layout.addWidget(button)
         self._configurator = configurator
         self.default_labels()
         self.update_labels()
         self.updateValue()
+    @Slot()
+    def molecule_changed(self):
+        """
+        Change molecule preview and molecule information
+        """
+        selected_name = self.field.currentText()
+        self.selected_mol = self.mol_dict[selected_name]
+        self.window = MoleculePreviewWidget(self._base, self.selected_mol)
 
+    @Slot()
+    def button_clicked(self):
+        """ 
+        Opens a window that shows a preview of selected molecule
+        """
+        self.window = MoleculePreviewWidget(self._base, self.selected_mol)
+        if self.window.isVisible():
+            self.window.close()
+        else:
+            self.window.show()
+    
+        
     def configure_using_default(self):
         """This is too complex to have a default value"""
 
@@ -69,3 +124,4 @@ class MoleculeWidget(WidgetBase):
 
     def get_widget_value(self):
         return self._field.currentText()
+
