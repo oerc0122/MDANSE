@@ -15,27 +15,33 @@
 #
 import ast
 import os
+from typing import Union
+
+import MDAnalysis as mda
 
 from MDANSE import PLATFORM
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 
 
-class MultiInputFileConfigurator(IConfigurator):
+class CoordinateFileConfigurator(IConfigurator):
 
-    _default = []
+    _default = ("", "AUTO")
 
     def __init__(self, name, wildcard="All files (*)", **kwargs):
         IConfigurator.__init__(self, name, **kwargs)
         self._wildcard = wildcard
 
-    def configure(self, values):
+    def configure(self, setting: tuple[Union[str, list], str]):
         """
         Parameters
         ----------
-        values : str or list
-            A list of file names or a string of the list which can be
-            converted to a list using literal_eval.
+        setting : tuple[Union[str, list], str]
+            A tuple of a list of file names or a string of the list
+            which can be converted to a list using literal_eval and a
+            string of the coordinate file format.
         """
+        values, format = setting
+
         self["values"] = self._default
         self._original_input = values
 
@@ -75,6 +81,16 @@ class MultiInputFileConfigurator(IConfigurator):
 
         self["values"] = values
         self["filenames"] = values
+
+        if format == "AUTO" or not self["filenames"]:
+            self["format"] = None
+        else:
+            if format in mda._READERS.keys():
+                self["format"] = format
+            else:
+                self.error_status = f"MDAnalysis coordinate file format not recognised."
+                return
+
         self.error_status = "OK"
 
     @property

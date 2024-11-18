@@ -58,11 +58,12 @@ class MDAnalysisTimeStepWidget(FloatWidget):
                 value = mda.Universe(
                     self._topology_file_widget._configurator["filename"],
                     *self._coordinates_file_widget._configurator["filenames"],
+                    format=self._coordinates_file_widget._configurator["format"],
                     topology_format=self._topology_file_widget._configurator["format"],
                 ).trajectory.ts.dt
                 self._field.setText(str(value))
                 return
-            except (AttributeError, ValueError) as e:
+            except (AttributeError, ValueError, TypeError) as e:
                 LOG.warning(f"Failed to determine time step from MDAnalysis: {e}")
 
         self._field.setText(str(self._default_value))

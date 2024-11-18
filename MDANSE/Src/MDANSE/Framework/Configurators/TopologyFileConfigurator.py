@@ -21,6 +21,8 @@ from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 class TopologyFileConfigurator(FileWithAtomDataConfigurator):
 
+    _default = ("", "AUTO")
+
     def configure(self, setting: str) -> None:
         """
         Parameters
@@ -32,7 +34,11 @@ class TopologyFileConfigurator(FileWithAtomDataConfigurator):
         if format == "AUTO":
             self["format"] = None
         else:
-            self["format"] = format
+            if format in mda._PARSERS.keys():
+                self["format"] = format
+            else:
+                self.error_status = f"MDAnalysis topology file format not recognised."
+                return
         super().configure(filepath)
 
     def parse(self) -> None:

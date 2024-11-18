@@ -15,18 +15,20 @@
 #
 import os
 
+import MDAnalysis as mda
 from qtpy.QtWidgets import QFileDialog
 from qtpy.QtCore import Slot
 
 from MDANSE.MLogging import LOG
+from .TopologyFileWidget import TopologyFileWidget
 
-from .InputFileWidget import InputFileWidget
 
-
-class MultiInputFileWidget(InputFileWidget):
+class CoordinateFileWidget(TopologyFileWidget):
 
     def __init__(self, *args, file_dialog=QFileDialog.getOpenFileNames, **kwargs):
-        super().__init__(*args, file_dialog=file_dialog, **kwargs)
+        super().__init__(
+            *args, file_dialog=file_dialog, format_options=mda._READERS.keys(), **kwargs
+        )
 
     @Slot()
     def valueFromDialog(self):

@@ -20,7 +20,11 @@ from qtpy.QtWidgets import QLineEdit, QPushButton, QComboBox
 from .InputFileWidget import InputFileWidget
 
 
-class TopologyInputFileWidget(InputFileWidget):
+class TopologyFileWidget(InputFileWidget):
+
+    def __init__(self, *args, format_options=mda._PARSERS.keys(), **kwargs):
+        self.format_options = ["AUTO"] + list(format_options)
+        super().__init__(*args, **kwargs)
 
     def add_widgets_to_layout(self):
         field = QLineEdit(self._base)
@@ -31,7 +35,7 @@ class TopologyInputFileWidget(InputFileWidget):
         self._layout.addWidget(field)
 
         self.format_combo = QComboBox(self._base)
-        self.format_combo.addItems(["AUTO"] + list(mda._PARSERS.keys()))
+        self.format_combo.addItems(self.format_options)
         self._layout.addWidget(self.format_combo)
 
         button = QPushButton("Browse", self._base)

@@ -50,7 +50,7 @@ class MDAnalysis(Converter):
         },
     )
     settings["coordinate_files"] = (
-        "MultiInputFileConfigurator",
+        "CoordinateFileConfigurator",
         {
             "wildcard": "All files (*)",
             "default": "",
@@ -102,6 +102,7 @@ class MDAnalysis(Converter):
             self.configuration["topology_file"]["filename"],
             *self.configuration["coordinate_files"]["filenames"],
             continuous=self.configuration["continuous"]["value"],
+            format=self.configuration["coordinate_files"]["format"],
             topology_format=self.configuration["topology_file"]["format"]
         )
 
