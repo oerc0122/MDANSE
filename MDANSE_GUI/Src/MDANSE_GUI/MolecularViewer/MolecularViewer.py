@@ -76,6 +76,11 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._iren = QVTKRenderWindowInteractor(self)
 
+        def dummy_method(self, ev=None):
+            pass
+
+        setattr(self._iren, "keyPressEvent", dummy_method)
+
         self._renderer = vtk.vtkRenderer()
 
         self._iren.GetRenderWindow().AddRenderer(self._renderer)
@@ -596,12 +601,11 @@ class MolecularViewer(QtWidgets.QWidget):
         # Update the view.
         self.update_renderer()
 
-    def set_reader(self, reader, frame=0):
+    def set_reader(self, reader):
         """Set the trajectory at a given frame
 
         Args:
             reader (IReader): the trajectory object
-            frame (int): the selected frame
         """
 
         if (self._reader is not None) and (reader.filename == self._reader.filename):
@@ -614,8 +618,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._n_atoms = self._reader.n_atoms
         self._n_frames = self._reader.n_frames
-
-        self.new_max_frames.emit(self._n_frames - 1)
+        self._current_frame = min(self._current_frame, self._n_frames - 1)
 
         self._atoms = self._reader.atom_types
 
@@ -643,8 +646,8 @@ class MolecularViewer(QtWidgets.QWidget):
         self.reset_all_polydata()
         self._polydata.GetPointData().SetScalars(scalars)
 
-        self._current_frame = frame
         self._colour_manager.onNewValues()
+        self.new_max_frames.emit(self._n_frames - 1)
 
     @Slot(object)
     def take_atom_properties(self, data):
@@ -652,8 +655,8 @@ class MolecularViewer(QtWidgets.QWidget):
         scalars = ndarray_to_vtkarray(colours, radii, numbers)
         self._polydata = vtk.vtkPolyData()
         self._polydata.GetPointData().SetScalars(scalars)
-        self.set_coordinates(self._current_frame)
-
+        self.update_all_polydata()
+        self.update_renderer()
         # self._datamodel.setReader(reader)
 
     def update_renderer(self):

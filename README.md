@@ -6,7 +6,9 @@ MDANSE is a Python application designed for computing neutron observables from m
 be directly compared with neutron scattering experiments, particularly inelastic and quasi-elastic neutron scattering 
 spectroscopies.
 
-To do this, it interfaces with a variety of MD simulation software such as CASTEP, VASP, DMOL, Gromacs, DL_POLY, CHARMM, LAMMPS, PBD, DFTB etc., and provides both a graphical user interface (GUI) and a command line interface. 
+To do this, MDANSE reads trajectories created with MD simulation software
+such as CASTEP, VASP, DMOL, Gromacs, DL_POLY, CHARMM, LAMMPS, PBD, DFTB etc.,
+and provides both a graphical user interface (GUI) and a command line interface. 
 
 This project is built on the development published previously: \
 G. Goret, B. Aoun, E. Pellegrini, "MDANSE: An Interactive Analysis Environment for Molecular Dynamics Simulations", 
@@ -14,9 +16,9 @@ J Chem Inf Model. 57(1):1-5 (2017).
 
 ## Version information
 
-This is the development version of MDANSE. The main difference compared to the previous version is the transition from Python 2 to Python 3, and from wxWidgets to Qt. The previous version, formerly in the 'develop' branch, can now be found in the **legacy** branch.
+This is the 2.x branch of MDANSE, which consists of two Python packages, MDANSE (the analysis code) and MDANSE_GUI (the user interface). The final version in the 1.5.x series can still be found in the **legacy** branch, but is not being actively developed.
 
-The current version of MDANSE is currently still at the _alpha_ stage. You can help it advance to the _beta_ stage by reporting problems you experience while using MDANSE.
+The current version of MDANSE is currently still at the _beta_ stage. You can help it advance to the official release stage by reporting problems you experience while using MDANSE.
 
 ## Quick start: installation
 
@@ -64,13 +66,15 @@ The typical workflow of MDANSE:
 4. Check the results with the plotter.
 
 
-The most complete user documentation of MDANSE can be found on [our Read the Docs page](https://mdanse.readthedocs.io/en/protos). At the same time, it is still possible to access the original **[MDANSE User Guide](https://epubs.stfc.ac.uk/work/51935555)**.
+The most complete user documentation of MDANSE can be found on [our Read the Docs page](https://mdanse.readthedocs.io/en/protos).
+At the same time, it is still possible to access the original **[MDANSE User Guide](https://epubs.stfc.ac.uk/work/51935555)**.
 
 Other information including example scripts can be found on the [MDANSE website](https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx) 
+while the most recent tutorials are stored in the [MDANSE examples repository](https://github.com/ISISNeutronMuon/MDANSE-Examples).
 
 ## What can MDANSE do?
 
-Firstly, MDANSE can interface with MD simulation software. It does this by providing converters for different file formats
+Firstly, MDANSE can read the output of MD simulation software. It does this by providing converters for different file formats
 into an .MDT file (HDF format), which is then used for all calculations. The following MD packages are supported:
 
 - CASTEP
@@ -88,17 +92,22 @@ into an .MDT file (HDF format), which is then used for all calculations. The fol
 - XPLOR
 - ASE
 
-The converted trajectory can then be loaded into MDANSE, where it can be visualised via the Molecular Viewer and animated.
-Various trajectory variables (positions, velocities, and forces) can also be plotted for each particle. Then, various properties can be calculated, which can be compared with neutron (or, for some analysis types, with X-ray)
-experimental data, or used as a prediction of results of a potential experiment. The following properties can be computed:
+The converted trajectory can then be loaded into MDANSE, where it can be visualised and animated.
+Then, various properties can be calculated from the positions and velocities of atoms.
+The results can be compared with neutron (or, for some analysis types, with X-ray or IR)
+experimental data, or used as a prediction of results of a potential experiment.
+
+The following properties can be computed:
 
 <details><summary>Dynamics</summary><ul>
 <li>Angular correlation</li>
 <li>Density of states</li>
 <li>Mean Square Displacement</li>
-<li>Order parameter</li>
 <li>Position Autocorrelation Function</li>
 <li>Velocity Autocorrelation Function</li>
+<li>Current Correlation Function</li>
+<li>van Hove function (self)</li>
+<li>van Hove function (distinct)</li>
 </ul></details>
 
 <details><summary>Infrared</summary><ul>
@@ -107,7 +116,6 @@ experimental data, or used as a prediction of results of a potential experiment.
 </ul></details>
 
 <details><summary>Scattering</summary><ul>
-<li>Current correlation function</li>
 <li>Dynamic Coherent Structure Factor</li>
 <li>Dynamic Incoherent Structure Factor</li>
 <li>Elastic Incoherent Structure Factor</li>
@@ -126,7 +134,6 @@ experimental data, or used as a prediction of results of a potential experiment.
 <li>Root Mean Square Fluctuation</li>
 <li>Radius of Gyration</li>
 <li>Solvent Accessible Surface</li>
-<li>Spatial Density</li>
 <li>Static Structure Factor</li>
 <li>Voronoi (volume per atom)</li>
 <li>X-Ray Static Structure Factor</li>
@@ -137,10 +144,16 @@ experimental data, or used as a prediction of results of a potential experiment.
 <li>Temperature</li>
 </ul></details>
 
-Each of these analyses can be controlled using a number of parameters. For example, the user can select a subset of trajectory frames or a subset of atoms on which to perform the calculation, or specified atoms can be substituted with
-different elements/isotopes. Finally, their results can be saved in an MDA file (HDF5 format), or a set of DAT files (text format), and those can then be plotted directly in MDANSE.
+Each of these analyses can be controlled using a number of parameters. For example,
+the user can select a subset of trajectory frames or a subset of atoms
+on which to perform the calculation, or specified atoms can be substituted with
+different elements/isotopes. Finally, their results can be saved in an MDA file (HDF5 format)
+and plotted directly in MDANSE, 
+or saved a set of DAT files (text format) to be processed by the user using
+their own software of choice.
 
-More detailed information on how MDANSE works, what it can do, and the science can all be found on [our Read the Docs page](https://mdanse.readthedocs.io/en/protos).
+More detailed information on how MDANSE works, what it can do, and the science can
+be found on [our Read the Docs page](https://mdanse.readthedocs.io/en/protos).
 
 ## Citing MDANSE
 
@@ -191,9 +204,8 @@ Didcot, UK
 
 ## Software Inquiries
 
-For questions or contributions related to the software, please contact:
-
->Dr. Maciej Bartkowiak (maciej.bartkowiak@stfc.ac.uk)\
-ISIS Neutron and Muon Source \
-Rutherford Appleton Laboratory \
-Didcot, UK
+You are welcome to use the issue tracker to submit ideas for
+extending the MDANSE code or to report problems you encountered.
+However, if you prefer to contact the MDANSE developers directly,
+you can send us a message:
+>MDANSE Help (MDANSE-help@stfc.ac.uk)

@@ -35,14 +35,20 @@ class VectorModel(QStandardItemModel):
         self._chemical_system = chemical_system
 
     @Slot(str)
-    def switch_qvector_type(self, vector_type: str):
+    def switch_qvector_type(self, vector_type: str, optional_settings: dict = None):
         self.clear()
         self._defaults = []
         self._generator = IQVectors.create(vector_type, self._chemical_system)
         settings = self._generator.settings
         for kv in settings.items():
             name = kv[0]  # dictionary key
-            value = kv[1][1]["default"]  # tuple value 1: dictionary
+            if optional_settings is None:
+                value = kv[1][1]["default"]  # tuple value 1: dictionary
+            else:
+                try:
+                    value = optional_settings[name]
+                except KeyError:
+                    value = kv[1][1]["default"]  # tuple value 1: dictionary
             self._defaults.append(value)
             vtype = kv[1][0]  # tuple value 0: type
             items = [QStandardItem(str(x)) for x in [name, value, vtype]]
@@ -63,7 +69,8 @@ class VectorModel(QStandardItemModel):
             try:
                 params[name] = self.parse_vtype(vtype, value, name)
             except ValueError:
-                params[name] = self._defaults[rownum]
+                params[name] = "failed"
+            if params[name] == "failed":
                 self.item(rownum, 1).setData(
                     QBrush(Qt.GlobalColor.red), role=Qt.ItemDataRole.BackgroundRole
                 )
@@ -77,11 +84,19 @@ class VectorModel(QStandardItemModel):
         if vtype == "RangeConfigurator":
             inner_type = self._generator.settings[vname][1]["valueType"]
             tempstring = value.strip("()[] ")
-            return [inner_type(x) for x in tempstring.split(",")]
+            result = [inner_type(x) for x in tempstring.split(",")]
+            if len(result) == 3:
+                return result
+            else:
+                return "failed"
         elif vtype == "VectorConfigurator":
             inner_type = self._generator.settings[vname][1]["valueType"]
             tempstring = value.strip("()[] ")
-            return [inner_type(x) for x in tempstring.split(",")]
+            result = [inner_type(x) for x in tempstring.split(",")]
+            if len(result) == 3:
+                return result
+            else:
+                return "failed"
         elif vtype == "FloatConfigurator":
             return float(value)
         elif vtype == "IntegerConfigurator":

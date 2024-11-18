@@ -46,7 +46,10 @@ class GeneralTab(QObject):
         self._session = kwargs.pop("session", LocalSession())
         _ = kwargs.pop("settings", None)
         self._settings = self._session.obtain_settings(self)
-        self._global_settings = self._session.main_settings()
+        try:
+            self._global_settings = self._session.main_settings()
+        except AttributeError:
+            self._global_settings = None
         self._model = kwargs.pop("model", None)
         self._visualiser = kwargs.pop("visualiser", TextInfo())
         self._view = kwargs.pop("view", QListView())
@@ -102,7 +105,7 @@ class GeneralTab(QObject):
     def connect_units(self):
         if self._visualiser is not None:
             if self._visualiser._unit_lookup is None:
-                print(f"Visualiser {self._visualiser} has no unit lookup")
+                LOG.debug(f"Visualiser {self._visualiser} has no unit lookup")
                 self._visualiser._unit_lookup = self
 
     def conversion_factor(self, input_unit: str) -> Tuple[float, str]:
