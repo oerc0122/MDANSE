@@ -226,16 +226,7 @@ class Action(QWidget):
                     input_widget.value_updated.connect(self.show_output_prediction)
                 LOG.info(f"Set up the right widget for {key}")
             # self.handlers[key] = data_handler
-            configured = False
-            iterations = 0
-            while not configured:
-                configured = True
-                for widget in self._widgets:
-                    widget.value_from_configurator()
-                    configured = configured and widget._configurator.is_configured()
-                iterations += 1
-                if iterations > 5:
-                    break
+            self.check_inputs()
 
         if self._use_preview:
             self._preview_box = QTextEdit(self)
@@ -269,6 +260,25 @@ class Action(QWidget):
         self.layout.addWidget(buttonbase)
         self._widgets_in_layout.append(buttonbase)
         self.apply_instrument()
+
+    def check_inputs(self):
+        configured = False
+        iterations = 0
+        while not configured:
+            configured = True
+            for widget in self._widgets:
+                widget.value_from_configurator()
+                configured = configured and widget._configurator.is_configured()
+            iterations += 1
+            if iterations > 5:
+                break
+
+    @Slot()
+    def test_file_outputs(self):
+        self.check_inputs()
+        for widget in self._widgets:
+            widget.updateValue()
+        self.allow_execution()
 
     def apply_instrument(self):
         if self._current_instrument is not None:
@@ -377,3 +387,7 @@ class Action(QWidget):
             self.run_and_load.emit([self._job_name, pardict])
         else:
             self.new_thread_objects.emit([self._job_name, pardict])
+        self.check_inputs()
+        for widget in self._widgets:
+            widget.updateValue()
+        self.allow_execution()

@@ -80,6 +80,7 @@ class PlotSelectionTab(GeneralTab):
         if len(fname) > 0:
             _, short_name = os.path.split(fname)
             self._model.add_file(fname)
+            self._session.protect_filename(fname)
 
     @classmethod
     def standard_instance(cls):
@@ -118,6 +119,7 @@ class PlotSelectionTab(GeneralTab):
             label_text=label_text,
         )
         the_tab._visualiser._unit_lookup = the_tab
+        the_tab._view.free_name.connect(session.free_filename)
         return the_tab
 
 

@@ -43,6 +43,8 @@ class OutputFilesWidget(WidgetBase):
         except AttributeError:
             self.default_path = "."
             LOG.error("AttributeError in OutputFilesWidget - can't get default path.")
+        else:
+            self._session = parent._parent_tab._session
         try:
             parent = kwargs.get("parent", None)
             jobname = str(parent._job_instance.label).replace(" ", "")
@@ -112,28 +114,8 @@ class OutputFilesWidget(WidgetBase):
             self._field.setText(new_value[0])
             self.updateValue()
 
-    @staticmethod
-    def _get_unique_filename(directory, basename):
-        filesInDirectory = [
-            os.path.join(directory, e)
-            for e in itertools.chain(
-                glob.iglob(os.path.join(directory, "*")),
-                glob.iglob(os.path.join(directory, ".*")),
-            )
-            if os.path.isfile(os.path.join(directory, e))
-        ]
-        basenames = [os.path.splitext(f)[0] for f in filesInDirectory]
-
-        initialPath = path = os.path.join(directory, basename)
-        comp = 1
-        while True:
-            if path in basenames:
-                path = "%s(%d)" % (initialPath, comp)
-                comp += 1
-                continue
-            return path
-
     def get_widget_value(self):
+        self._configurator._forbidden_files = self._session.reserved_filenames()
         filename = self._field.text()
         if len(filename) < 1:
             filename = self._default_value[0]
@@ -142,14 +124,3 @@ class OutputFilesWidget(WidgetBase):
         log_level = self.logs_combo.currentText()
 
         return (filename, formats, log_level)
-
-    def set_data(self, datakey):
-        basename = "%s_%s" % (
-            os.path.splitext(os.path.basename(datakey))[0],
-            self._parent.type,
-        )
-        trajectoryDir = os.path.dirname(datakey)
-
-        path = OutputFilesWidget._get_unique_filename(trajectoryDir, basename)
-
-        self._filename.SetValue(path)

@@ -318,7 +318,7 @@ class JobHolder(QStandardItemModel):
         communicator.moveToThread(watcher_thread)
         entry_number = self.next_number
         item_th.parameters = job_vars[1]
-        item_th.for_loading.connect(self.unprotect_filename)
+        # item_th.for_loading.connect(self.unprotect_filename)
         if load_afterwards:
             if job_vars[0] in Converter.subclasses():
                 item_th.for_loading.connect(self.trajectory_for_loading)
@@ -341,7 +341,7 @@ class JobHolder(QStandardItemModel):
             task_name = str("This should have been a job name")
         name_item = QStandardItem(task_name)
         name_item.setData(entry_number, role=Qt.ItemDataRole.UserRole)
-        self.protect_filename(item_th.expected_output())
+        self.protect_filename.emit(item_th.expected_output())
         self.appendRow(
             [
                 name_item,

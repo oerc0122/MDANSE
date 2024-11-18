@@ -73,6 +73,7 @@ class TrajectoryTab(GeneralTab):
                 self._core.error.emit(repr(e))
             else:
                 self._core._model.append_object(((fname, data), short_name))
+                self._session.protect_filename(fname)
 
     @classmethod
     def standard_instance(cls):
@@ -110,6 +111,7 @@ class TrajectoryTab(GeneralTab):
             layout=partial(MultiPanel, left_panels=[TrajectoryInfo()]),
             label_text=label_text,
         )
+        the_tab._view.free_name.connect(session.free_filename)
         return the_tab
 
 

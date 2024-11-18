@@ -304,6 +304,9 @@ class TabbedWindow(QMainWindow):
         job_tab.set_job_starter(self._job_holder)
         self.tabs.addTab(job_tab._core, name)
         self._tabs[name] = job_tab
+        self.tabs.tabBar().tabBarClicked.connect(
+            job_tab.update_action_on_tab_activation
+        )
 
     def createActionsViewer(self):
         name = "Actions"

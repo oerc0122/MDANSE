@@ -52,6 +52,7 @@ class OutputFilesConfigurator(IConfigurator):
         self._formats = (
             formats if formats is not None else OutputFilesConfigurator._default[-1]
         )
+        self._forbidden_files = []
 
     def configure(self, value):
         """
@@ -99,6 +100,9 @@ class OutputFilesConfigurator(IConfigurator):
         self["root"] = root
         self["formats"] = formats
         self["files"] = ["%s%s" % (root, IFormat.create(f).extension) for f in formats]
+        for file in self["files"]:
+            if file in self._forbidden_files:
+                self.error_status = f"File {file} is either open or being written into. Please pick another name."
 
         self["value"] = self["files"]
         self["log_level"] = logs

@@ -130,6 +130,7 @@ class JobTab(GeneralTab):
 
     @Slot()
     def update_action_on_tab_activation(self):
+        self.action.test_file_outputs()
         if self._needs_updating:
             current_item = self._core.current_item()
             if current_item is not None:
