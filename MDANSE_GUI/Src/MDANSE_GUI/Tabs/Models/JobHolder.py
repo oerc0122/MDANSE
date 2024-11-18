@@ -238,6 +238,7 @@ class JobHolder(QStandardItemModel):
 
     trajectory_for_loading = Signal(str)
     results_for_loading = Signal(str)
+    new_job_started = Signal()
 
     def __init__(self, parent: QObject = None):
         super().__init__(parent=parent)
@@ -330,6 +331,7 @@ class JobHolder(QStandardItemModel):
                 item_th._stat_item,
             ]
         )
+        self.new_job_started.emit()
         # nrows = self.rowCount()
         # index = self.indexFromItem(item_th._item)
         # print(f"Index: {index}")
