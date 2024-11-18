@@ -95,6 +95,7 @@ class PlotTab(GeneralTab):
             label_text=label_text,
         )
         the_tab._visualiser._unit_lookup = the_tab
+        the_tab._visualiser.new_entry.connect(the_tab.tab_notification)
         return the_tab
 
     @property
@@ -113,6 +114,8 @@ class PlotTab(GeneralTab):
                 self._visualiser.plotter.plot_data()
             except Exception as e2:
                 LOG.error(f"Visualiser failed to plot data: {e2}")
+            else:
+                self.tab_notification()
 
     @Slot(int)
     def switch_model(self, tab_id):

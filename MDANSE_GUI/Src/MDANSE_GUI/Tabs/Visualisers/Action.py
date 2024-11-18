@@ -32,6 +32,7 @@ from qtpy.QtCore import Signal, Slot
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Jobs.IJob import IJob
 
+from MDANSE_GUI.Widgets.DelayedButton import DelayedButton
 from MDANSE_GUI.InputWidgets import *
 from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
 
@@ -243,7 +244,7 @@ class Action(QWidget):
         buttonlayout = QHBoxLayout(buttonbase)
         buttonbase.setLayout(buttonlayout)
         self.save_button = QPushButton("Save as script", buttonbase)
-        self.execute_button = QPushButton("RUN!", buttonbase)
+        self.execute_button = DelayedButton("RUN!", buttonbase, delay=3000)
         self.execute_button.setStyleSheet("font-weight: bold")
         self.post_execute_checkbox = QCheckBox("Auto-load results", buttonbase)
         try:
@@ -258,6 +259,7 @@ class Action(QWidget):
 
         self.save_button.clicked.connect(self.save_dialog)
         self.execute_button.clicked.connect(self.execute_converter)
+        self.execute_button.needs_updating.connect(self.allow_execution)
 
         buttonlayout.addWidget(self.save_button)
         buttonlayout.addWidget(self.execute_button)
