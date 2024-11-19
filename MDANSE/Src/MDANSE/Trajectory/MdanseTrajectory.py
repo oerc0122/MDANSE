@@ -438,6 +438,9 @@ class MdanseTrajectory:
         else:
             return False
 
+    def atom_property(self, atom_symbol: str, property: str):
+        return self._h5_file[f"/atom_database/{atom_symbol}"].attrs[property]
+
     @property
     def chemical_system(self):
         """Return the chemical system stored in the trajectory.

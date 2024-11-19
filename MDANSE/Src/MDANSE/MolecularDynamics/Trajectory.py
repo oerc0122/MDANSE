@@ -15,7 +15,10 @@
 #
 
 from ast import operator
-from typing import Collection
+from typing import Collection, List, Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from MDANSE.Chemistry.Databases import AtomsDatabase
 import math
 
 import numpy as np
@@ -278,6 +281,9 @@ class Trajectory:
         """
         return self._trajectory.has_variable(variable)
 
+    def atom_property(self, atom_symbol: str, property: str):
+        return self._trajectory.atom_property(atom_symbol, property)
+
     @property
     def chemical_system(self):
         """Return the chemical system stored in the trajectory.
@@ -399,6 +405,13 @@ class TrajectoryWriter:
             self._initial_charges = np.zeros(self._n_atoms)
         else:
             self._initial_charges = initial_charges
+
+    def write_atom_database(self, symbols: List[str], database: "AtomsDatabase"):
+        group = self._h5_file.create_group("/atom_database")
+        for symbol in symbols:
+            atom = group.create_dataset(symbol, shape="()")
+            for property in database.properties:
+                atom.attrs[property] = database.get_value(symbol, property)
 
     def _dump_chemical_system(self):
         """Dump the chemical system to the trajectory file."""

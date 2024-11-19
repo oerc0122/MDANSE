@@ -553,6 +553,9 @@ class H5MDTrajectory:
         else:
             return False
 
+    def atom_property(self, atom_symbol: str, property: str):
+        raise KeyError("H5MD trajectory does not store atom information")
+
     @property
     def chemical_system(self):
         """Return the chemical system stored in the trajectory.
