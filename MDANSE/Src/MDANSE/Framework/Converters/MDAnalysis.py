@@ -134,8 +134,14 @@ class MDAnalysis(Converter):
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"], main_label, **kwargs
             )
+
+            name = None
+            for arg in ["name", "type", "element"]:
+                if hasattr(at, arg):
+                    name = getattr(at, arg)
+                    break
             self._chemical_system.add_chemical_entity(
-                Atom(symbol=element, name=at.type)
+                Atom(symbol=element, name=name)
             )
 
         kwargs = {
