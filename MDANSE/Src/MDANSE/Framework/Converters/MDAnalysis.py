@@ -140,9 +140,7 @@ class MDAnalysis(Converter):
                 if hasattr(at, arg):
                     name = getattr(at, arg)
                     break
-            self._chemical_system.add_chemical_entity(
-                Atom(symbol=element, name=name)
-            )
+            self._chemical_system.add_chemical_entity(Atom(symbol=element, name=name))
 
         kwargs = {
             "positions_dtype": self.configuration["output_files"]["dtype"],
