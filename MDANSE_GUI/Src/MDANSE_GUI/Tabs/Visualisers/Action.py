@@ -54,7 +54,9 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "ASEFileConfigurator": InputFileWidget,
     "AseInputFileConfigurator": AseInputFileWidget,
     "ConfigFileConfigurator": InputFileWidget,
+    "CoordinateFileConfigurator": CoordinateFileWidget,
     "InputFileConfigurator": InputFileWidget,
+    "TopologyFileConfigurator": TopologyFileWidget,
     "MDFileConfigurator": InputFileWidget,
     "FieldFileConfigurator": InputFileWidget,
     "XDATCARFileConfigurator": InputFileWidget,
@@ -78,6 +80,7 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "InstrumentResolutionConfigurator": InstrumentResolutionWidget,
     "PartialChargeConfigurator": PartialChargeWidget,
     "UnitCellConfigurator": UnitCellWidget,
+    "MDAnalysisTimeStepConfigurator": MDAnalysisTimeStepWidget,
 }
 
 

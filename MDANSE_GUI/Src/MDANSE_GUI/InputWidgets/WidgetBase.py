@@ -32,6 +32,7 @@ class WidgetBase(QObject):
 
     valid_changed = Signal()
     value_updated = Signal()
+    value_changed = Signal()
 
     def __init__(self, *args, **kwargs):
         parent = kwargs.get("parent", None)
@@ -129,6 +130,7 @@ class WidgetBase(QObject):
             self.mark_error(
                 "COULD NOT SET THIS VALUE - you may need to change the values in other widgets"
             )
+        self.value_changed.emit()
         if self._configurator.valid:
             self.clear_error()
             self.value_updated.emit()
