@@ -46,7 +46,7 @@ class MDAnalysisTimeStepConfigurator(FloatConfigurator):
                             *coord_files,
                             format=coord_format,
                             topology_format=file_configurator["format"],
-                        )
+                        ).trajectory.ts.dt
                     else:
                         coord_files = [(i, coord_format) for i in coord_files]
                         value = mda.Universe(
