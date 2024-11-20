@@ -99,10 +99,16 @@ class OutputFilesConfigurator(IConfigurator):
 
         self["root"] = root
         self["formats"] = formats
-        self["files"] = ["%s%s" % (root, IFormat.create(f).extension) for f in formats]
+        self["files"] = []
+        for extension in [IFormat.create(f).extension for f in formats]:
+            if extension in root[-len(extension) :]:
+                self["files"].append(root)
+            else:
+                self["files"].append(root + extension)
         for file in self["files"]:
             if os.path.abspath(file) in self._forbidden_files:
                 self.error_status = f"File {file} is either open or being written into. Please pick another name."
+                return
 
         self["value"] = self["files"]
         self["log_level"] = logs
