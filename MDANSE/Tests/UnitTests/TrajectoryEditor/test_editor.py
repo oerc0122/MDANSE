@@ -189,3 +189,27 @@ def test_editor_set_charges():
     changed.close()
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")
+
+
+def test_editor_find_molecules():
+    temp_name = tempfile.mktemp()
+    parameters = {}
+    parameters["output_files"] = (temp_name, 64, "gzip", "INFO")
+    parameters["trajectory"] = short_traj
+    parameters["molecule_tolerance"] = [True, 0.25]
+    parameters["frames"] = (0, 501, 1)
+    temp = IJob.create("TrajectoryEditor")
+    temp.run(parameters, status=True)
+    assert path.exists(temp_name + ".mdt")
+    assert path.isfile(temp_name + ".mdt")
+    assert path.exists(temp_name + ".log")
+    assert path.isfile(temp_name + ".log")
+    # test if nothing has changed
+    original = HDFTrajectoryInputData(short_traj)
+    changed = HDFTrajectoryInputData(temp_name + ".mdt")
+    assert len(original.trajectory.chemical_system.unique_molecules()) == 0
+    assert len(changed.trajectory.chemical_system.unique_molecules()) > 0
+    original.close()
+    changed.close()
+    os.remove(temp_name + ".mdt")
+    os.remove(temp_name + ".log")
