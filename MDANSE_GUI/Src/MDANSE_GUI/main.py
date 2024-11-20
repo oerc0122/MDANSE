@@ -19,7 +19,7 @@ import os
 import time
 
 from qtpy.QtWidgets import QApplication, QSplashScreen, QStyleFactory
-from qtpy.QtCore import QSettings, Qt, QTimer
+from qtpy.QtCore import QSettings, Qt, QTimer, QLocale
 from qtpy.QtGui import QPixmap, QIcon
 
 from MDANSE.MLogging import LOG, FMT
@@ -52,6 +52,12 @@ def startGUI(some_args):
 
     path = os.path.dirname(os.path.abspath(__file__))
     app.setWindowIcon(QIcon(os.path.join(path, "Icons/MDANSE.ico")))
+    fixed_locale = QLocale(QLocale.Language.English, QLocale.Country.UnitedKingdom)
+    fixed_locale.setNumberOptions(
+        QLocale.NumberOption.RejectGroupSeparator
+        | QLocale.NumberOption.OmitGroupSeparator
+    )
+    QLocale.setDefault(fixed_locale)
 
     settings = QSettings(
         "ISIS Neutron and Muon Source", "MDANSE for Python 3", parent=app
