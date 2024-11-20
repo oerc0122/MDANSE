@@ -68,16 +68,19 @@ class TrajectoryEditor(IJob):
             }
         },
     )
-    # settings["atom_charges"] = (
-    #     "PartialChargeConfigurator",
-    #     {
-    #         "dependencies": {"trajectory": "trajectory"},
-    #         "default": {},
-    #     },
-    # )
+    settings["atom_charges"] = (
+        "PartialChargeConfigurator",
+        {
+            "dependencies": {"trajectory": "trajectory"},
+            "default": {},
+        },
+    )
     # settings["molecule_tolerance"] = (
-    #     "FloatConfigurator",
-    #     {"default": 0.25},
+    #     "OptionalFloatConfigurator",
+    #     {
+    #         "default": [False, 0.25],
+    #         "label_text": "Search for molecules (using the following bond length tolerance)",
+    #     },
     # )
     settings["output_files"] = (
         "OutputTrajectoryConfigurator",
@@ -141,16 +144,22 @@ class TrajectoryEditor(IJob):
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
         conf = conf.contiguous_configuration()
-
+        charges = self.configuration["trajectory"]["instance"].charges(frameIndex)
         coords = conf.coordinates
 
         variables = {}
         if self.configuration["trajectory"]["instance"].has_variable("velocities"):
-            variables = {
-                "velocities": self.configuration["trajectory"]["instance"]
+            variables["velocities"] = (
+                self.configuration["trajectory"]["instance"]
                 .variable("velocities")[frameIndex, self._indices, :]
                 .astype(np.float64)
-            }
+            )
+        if self.configuration["trajectory"]["instance"].has_variable("gradients"):
+            variables["gradients"] = (
+                self.configuration["trajectory"]["instance"]
+                .variable("gradients")[frameIndex, self._indices, :]
+                .astype(np.float64)
+            )
 
         if conf.is_periodic:
             com_conf = PeriodicRealConfiguration(
@@ -166,10 +175,19 @@ class TrajectoryEditor(IJob):
 
         self._output_trajectory.chemical_system.configuration = com_conf
 
+        new_charges = np.zeros(len(self._indices))
+        for number, at_index in enumerate(self._indices):
+            try:
+                q = self.configuration["atom_charges"]["charges"][at_index]
+            except KeyError:
+                q = charges[at_index]
+            new_charges[number] = q
+
         # The times corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
         self._output_trajectory.dump_configuration(time)
+        self._output_trajectory.write_charges(new_charges, index)
 
         return index, None
 
