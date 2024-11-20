@@ -24,7 +24,8 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class InputFileWidget(WidgetBase):
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, *args, file_dialog=QFileDialog.getOpenFileName, **kwargs):
         super().__init__(*args, **kwargs)
         configurator = kwargs.get("configurator", None)
         if configurator is not None:
@@ -47,28 +48,32 @@ class InputFileWidget(WidgetBase):
             LOG.error("AttributeError in OutputFilesWidget - can't get default path.")
         default_value = kwargs.get("default", "")
         if self._tooltip:
-            tooltip_text = self._tooltip
+            self._tooltip_text = self._tooltip
         else:
-            tooltip_text = "Specify a path to an existing file."
+            self._tooltip_text = "Specify a path to an existing file."
         try:
             file_association = configurator.wildcard
         except AttributeError:
             file_association = kwargs.get("wildcard", "")
         self._qt_file_association = file_association
+        self._default_value = default_value
+        self.add_widgets_to_layout()
+        self._configurator = configurator
+        self._file_dialog = file_dialog
+        self.updateValue()
+
+    def add_widgets_to_layout(self):
         field = QLineEdit(self._base)
         self._field = field
         field.textChanged.connect(self.updateValue)
-        field.setText(str(default_value))
-        field.setPlaceholderText(str(default_value))
-        field.setToolTip(tooltip_text)
+        field.setText(str(self._default_value))
+        field.setPlaceholderText(str(self._default_value))
+        field.setToolTip(self._tooltip_text)
         self._layout.addWidget(field)
+
         button = QPushButton("Browse", self._base)
         button.clicked.connect(self.valueFromDialog)
-        self._default_value = default_value
         self._layout.addWidget(button)
-        self._configurator = configurator
-        self._file_dialog = QFileDialog.getOpenFileName
-        self.updateValue()
 
     def configure_using_default(self):
         """This is too specific to have a default value"""
@@ -86,20 +91,19 @@ class InputFileWidget(WidgetBase):
             self._parent._default_path,  # the initial search path
             self._qt_file_association,  # text string specifying the file name filter.
         )
-        if new_value is not None:
-            if new_value[0]:
-                self._field.setText(new_value[0])
-                self.updateValue()
-                try:
-                    LOG.info(
-                        f"Settings path of {self._job_name} to {os.path.split(new_value[0])[0]}"
-                    )
-                    if self._parent is not None:
-                        self._parent._default_path = os.path.split(new_value[0])[0]
-                except:
-                    LOG.error(
-                        f"session.set_path failed for {self._job_name}, {os.path.split(new_value[0])[0]}"
-                    )
+        if new_value is not None and new_value[0]:
+            self._field.setText(new_value[0])
+            self.updateValue()
+            try:
+                LOG.info(
+                    f"Settings path of {self._job_name} to {os.path.split(new_value[0])[0]}"
+                )
+                if self._parent is not None:
+                    self._parent._default_path = os.path.split(new_value[0])[0]
+            except:
+                LOG.error(
+                    f"session.set_path failed for {self._job_name}, {os.path.split(new_value[0])[0]}"
+                )
 
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""
