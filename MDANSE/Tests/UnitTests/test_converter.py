@@ -526,7 +526,7 @@ def test_mdanalysis_conversion_file_exists_and_loads_up_successfully(compression
     parameters = {
         "topology_file": (md_pdb, "AUTO"),
         "coordinate_files": ([md_xtc], "XTC"),
-        "output_files": (temp_name, 64, compression, "INFO"),
+        "output_files": (temp_name, 64, 128, compression, "INFO"),
     }
 
     mdanalysis = Converter.create("MDAnalysis")
