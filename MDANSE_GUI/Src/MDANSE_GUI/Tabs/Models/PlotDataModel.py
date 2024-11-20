@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from abc import abstractmethod
+import os
 
 import h5py
 from qtpy.QtCore import QObject, Slot, Signal, QMutex, QModelIndex, Qt
@@ -70,7 +71,7 @@ class DataSetItem(BasicPlotDataItem):
     def data_path(self) -> str:
         parent_path = self.parent().data_path()
         own_path = self.data(role=Qt.ItemDataRole.UserRole)
-        return "/".join([parent_path, own_path])
+        return os.path.join(parent_path, own_path)
 
     def file_number(self) -> int:
         return self.parent().file_number()

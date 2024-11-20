@@ -56,7 +56,7 @@ class DataWidget(QWidget):
         self._sliderpack = None
         self._plotting_context = None
         self._slider_max = 100
-        self._current_path = "."
+        self._current_path = os.path.abspath(".")
         layout = QVBoxLayout(self)
         self.setLayout(layout)
         self.make_toolbar()

@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+import os
+
 from qtpy.QtWidgets import QLineEdit, QPushButton, QFileDialog, QComboBox
 from qtpy.QtCore import Slot
 from ase.io.formats import filetype
@@ -37,10 +39,10 @@ class AseInputFileWidget(WidgetBase):
             parent = kwargs.get("parent", None)
             self.default_path = parent.default_path
         except KeyError:
-            self.default_path = "."
+            self.default_path = os.path.abspath(".")
             LOG.error("KeyError in InputFileWidget - can't get default path.")
         except AttributeError:
-            self.default_path = "."
+            self.default_path = os.path.abspath(".")
             LOG.error("AttributeError in InputFileWidget - can't get default path.")
         default_value = kwargs.get("default", "")
         if self._tooltip:

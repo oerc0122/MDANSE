@@ -132,7 +132,7 @@ class Action(QWidget):
             path, _ = os.path.split(self._input_trajectory)
         if self._default_path is None:
             if path is None:
-                self._default_path = "."
+                self._default_path = os.path.abspath(".")
             else:
                 self._default_path = path
         if self._job_name is not None:
@@ -357,7 +357,7 @@ class Action(QWidget):
         try:
             cname = self._job_name
         except:
-            currentpath = "."
+            currentpath = os.path.abspath(".")
         else:
             currentpath = self._parent_tab.get_path(self._job_name + "_script")
         result, ftype = QFileDialog.getSaveFileName(

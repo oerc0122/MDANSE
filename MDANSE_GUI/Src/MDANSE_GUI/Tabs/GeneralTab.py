@@ -13,8 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
-
+import os
 from typing import Dict, Tuple
 
 from qtpy.QtCore import QObject, Slot, Signal, QMessageLogger
@@ -95,7 +94,7 @@ class GeneralTab(QObject):
         """
         group1 = [
             "Generic settings",  # name of the group of settings
-            {"path": "."},  # a dictionary of settings
+            {"path": os.path.abspath(".")},  # a dictionary of settings
             {
                 "path": "The path last used by this GUI element."
             },  # a dictionary of comments
@@ -167,9 +166,11 @@ class GeneralTab(QObject):
             path = paths_group.get(path_key)
         except KeyError:
             paths_group.add(
-                path_key, ".", f"Filesystem path recently used by {path_key}"
+                path_key,
+                os.path.abspath("."),
+                f"Filesystem path recently used by {path_key}",
             )
-            path = "."
+            path = os.path.abspath(".")
         return path
 
     def set_path(self, path_key: str, path_value: str):

@@ -96,7 +96,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
         if not self["extension"] in temp_name[-5:]:  # capture most extension lengths
             temp_name += self["extension"]
         self["file"] = temp_name
-        if self["file"] in self._forbidden_files:
+        if os.path.abspath(self["file"]) in self._forbidden_files:
             self.error_status = f"File {self['file']} is either open or being written into. Please pick another name."
             return
         self["dtype"] = self._dtype

@@ -13,8 +13,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import glob
-import itertools
 import os
 import os.path
 
@@ -37,10 +35,10 @@ class OutputStructureWidget(WidgetBase):
             parent = kwargs.get("parent", None)
             self.default_path = parent.default_path
         except KeyError:
-            self.default_path = "."
+            self.default_path = os.path.abspath(".")
             LOG.error("KeyError in OutputTrajectoryWidget - can't get default path.")
         except AttributeError:
-            self.default_path = "."
+            self.default_path = os.path.abspath(".")
             LOG.error(
                 "AttributeError in OutputTrajectoryWidget - can't get default path."
             )

@@ -41,10 +41,10 @@ class InputFileWidget(WidgetBase):
             parent = kwargs.get("parent", None)
             self.default_path = parent._default_path
         except KeyError:
-            self.default_path = "."
+            self.default_path = os.path.abspath(".")
             LOG.error("KeyError in OutputFilesWidget - can't get default path.")
         except AttributeError:
-            self.default_path = "."
+            self.default_path = os.path.abspath(".")
             LOG.error("AttributeError in OutputFilesWidget - can't get default path.")
         default_value = kwargs.get("default", "")
         if self._tooltip:

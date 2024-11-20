@@ -77,7 +77,7 @@ class LocalSession(QObject):
         return value
 
     def get_path(self, key: str) -> str:
-        value = self._paths.get(key, ".")
+        value = self._paths.get(key, os.path.abspath("."))
         return value
 
     def set_path(self, key: str, value: str):
