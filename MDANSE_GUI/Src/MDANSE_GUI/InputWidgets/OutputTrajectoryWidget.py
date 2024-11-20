@@ -140,8 +140,7 @@ class OutputTrajectoryWidget(WidgetBase):
         if len(filename) < 1:
             filename = self._default_value[0]
         else:
-            path, name = os.path.split(filename)
-            self._parent.set_trajectory(path, name)
+            self._parent.set_trajectory(os.path.abspath(filename))
         dtype = dtype_lookup[self.dtype_box.currentText()]
         compression = self.compression_box.currentText()
         logs = self.logs_combo.currentText()

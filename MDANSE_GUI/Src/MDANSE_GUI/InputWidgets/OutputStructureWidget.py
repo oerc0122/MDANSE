@@ -119,4 +119,4 @@ class OutputStructureWidget(WidgetBase):
             filename = self._default_value[0]
         format = self.format_box.currentText()
         log_level = self.logs_combo.currentText()
-        return (filename, format, log_level)
+        return (os.path.abspath(filename), format, log_level)

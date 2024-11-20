@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+import os
 from functools import partial
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QWidget, QComboBox, QLabel
@@ -95,7 +96,7 @@ class JobTab(GeneralTab):
         if traj_model.rowCount() < 1:
             # the combobox changed and there are no trajectories, they
             # were probably deleted lets clear the action widgets
-            self.action.set_trajectory(path=None, trajectory=None)
+            self.action.set_trajectory(trajectory=None)
             self.action.clear_panel()
             return
 
@@ -106,7 +107,7 @@ class JobTab(GeneralTab):
         # The combobox was changed we need to update the action
         # widgets with the new trajectory
         self.action.set_trajectory(
-            path=None, trajectory=traj_model._nodes[node_number][0]
+            trajectory=os.path.abspath(traj_model._nodes[node_number][0])
         )
         current_item = self._core.current_item()
         if current_item is not None:

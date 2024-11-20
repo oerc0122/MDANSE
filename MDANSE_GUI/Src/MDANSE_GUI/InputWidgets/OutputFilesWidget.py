@@ -33,8 +33,8 @@ class OutputFilesWidget(WidgetBase):
         super().__init__(*args, layout_type="QGridLayout", **kwargs)
         default_value = self._configurator.default
         try:
-            parent = kwargs.get("parent", None)
-            self.default_path = parent._default_path
+            self._parent = kwargs.get("parent", None)
+            self.default_path = self._parent._default_path
         except KeyError:
             self.default_path = os.path.abspath(".")
             LOG.error("KeyError in OutputFilesWidget - can't get default path.")
@@ -42,10 +42,10 @@ class OutputFilesWidget(WidgetBase):
             self.default_path = os.path.abspath(".")
             LOG.error("AttributeError in OutputFilesWidget - can't get default path.")
         else:
-            self._session = parent._parent_tab._session
+            self._session = self._parent._parent_tab._session
         try:
-            parent = kwargs.get("parent", None)
-            jobname = str(parent._job_instance.label).replace(" ", "")
+            self._parent = kwargs.get("parent", None)
+            jobname = str(self._parent._job_instance.label).replace(" ", "")
             guess_name = os.path.join(self.default_path, jobname + "_result1")
         except:
             guess_name = default_value[0]
@@ -102,6 +102,10 @@ class OutputFilesWidget(WidgetBase):
         This will start a FileDialog, take the resulting path,
         and emit a signal to update the value show by the GUI.
         """
+        try:
+            self.default_path = self._parent._default_path
+        except AttributeError:
+            self.default_path = os.path.abspath(".")
         new_value = QFileDialog.getSaveFileName(
             self._base,  # the parent of the dialog
             "Save files",  # the label of the window
@@ -121,4 +125,4 @@ class OutputFilesWidget(WidgetBase):
         formats = self.type_box.checked_values()
         log_level = self.logs_combo.currentText()
 
-        return (filename, formats, log_level)
+        return (os.path.abspath(filename), formats, log_level)

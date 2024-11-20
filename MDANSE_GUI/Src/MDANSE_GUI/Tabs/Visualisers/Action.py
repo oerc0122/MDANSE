@@ -102,9 +102,8 @@ class Action(QWidget):
         self._has_been_initialised = False
         self.execute_button = None
         self.post_execute_checkbox = None
-        default_path = kwargs.pop("path", None)
         input_trajectory = kwargs.pop("trajectory", None)
-        self.set_trajectory(default_path, input_trajectory)
+        self.set_trajectory(input_trajectory)
         super().__init__(*args, **kwargs)
 
         self.layout = QVBoxLayout(self)
@@ -115,7 +114,7 @@ class Action(QWidget):
     def set_settings(self, settings):
         self._settings = settings
 
-    def set_trajectory(self, path: Optional[str], trajectory: Optional[str]) -> None:
+    def set_trajectory(self, trajectory: str) -> None:
         """Set the trajectory path and filename.
 
         Parameters
@@ -125,16 +124,11 @@ class Action(QWidget):
         trajectory : str or None
             The path and filename of the trajectory
         """
-        self._default_path = path
         self._input_trajectory = trajectory
-        path = None
         if self._input_trajectory is not None:
-            path, _ = os.path.split(self._input_trajectory)
-        if self._default_path is None:
-            if path is None:
-                self._default_path = os.path.abspath(".")
-            else:
-                self._default_path = path
+            self._default_path, _ = os.path.split(self._input_trajectory)
+        else:
+            self._default_path = os.path.abspath(".")
         if self._job_name is not None:
             self._parent_tab.set_path(self._job_name, self._default_path)
 
@@ -168,7 +162,8 @@ class Action(QWidget):
         self._has_been_initialised = False
 
         self._job_name = job_name
-        self._default_path = self._parent_tab.get_path(job_name)
+        if self._default_path is None or self._default_path == os.path.abspath("."):
+            self._default_path = self._parent_tab.get_path(job_name)
         try:
             job_instance = IJob.create(job_name)
         except ValueError as e:

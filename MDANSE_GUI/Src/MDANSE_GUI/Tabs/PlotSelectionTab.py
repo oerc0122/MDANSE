@@ -78,7 +78,7 @@ class PlotSelectionTab(GeneralTab):
     @Slot(str)
     def load_results(self, fname: str):
         if len(fname) > 0:
-            _, short_name = os.path.split(fname)
+            fname = os.path.abspath(fname)
             self._model.add_file(fname)
             self._session.protect_filename(fname)
 
