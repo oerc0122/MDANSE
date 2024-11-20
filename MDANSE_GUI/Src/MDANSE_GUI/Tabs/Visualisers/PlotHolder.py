@@ -29,6 +29,7 @@ class PlotHolder(QTabWidget):
     """
 
     error = Signal(str)
+    new_entry = Signal()
 
     def __init__(self, *args, unit_lookup=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,6 +68,7 @@ class PlotHolder(QTabWidget):
         self._context.append(plotting_context)
         self._plotter.append(plotter)
         self.setCurrentIndex(tab_id)
+        self.new_entry.emit()
         return tab_id
 
     @Slot(str)
@@ -82,6 +84,7 @@ class PlotHolder(QTabWidget):
         self._context.append(plotting_context)
         self._plotter.append(plotter)
         self.setCurrentIndex(tab_id)
+        self.new_entry.emit()
         return tab_id
 
     @Slot(int)
