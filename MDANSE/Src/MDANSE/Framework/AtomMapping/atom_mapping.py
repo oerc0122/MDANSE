@@ -61,11 +61,18 @@ def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
     AttributeError
         Error if unable to match to an element.
     """
-    if mass is not None and mass == 0.0:
+    if (mass is not None and mass == 0.0) or atm_label.upper() in [
+        "DUMMY",
+        "DU",
+        "D",
+        "M",
+    ]:
         return "Du"
 
+    regex = "([A-Za-z][A-Za-z]?)"
+
     guesses = []
-    guess_0 = re.findall("([A-Za-z][a-z]?)", atm_label)
+    guess_0 = re.findall(regex, atm_label)
     if len(guess_0) != 0:
         guess = guess_0[0].capitalize()
         guesses.append(guess)
@@ -80,16 +87,24 @@ def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
                 return guess
             num = ATOMS_DATABASE.get_atom_property(guess, "proton")
             atms = ATOMS_DATABASE.match_numeric_property("proton", num)
+
+            # if there is only one isotope for this element then we want
+            # to return the general element label e.g. Na not Na23
+            if len(atms) <= 2:
+                atms = [re.findall(regex, atms[0])[0]]
+
             for atm in atms:
                 atm_mass = ATOMS_DATABASE.get_atom_property(atm, "atomic_weight")
                 diff = abs(mass - atm_mass)
-                if diff < best_diff:
+                if diff < 1 and diff < best_diff:
                     best_match = atm
                     best_diff = diff
+
     if best_match is not None:
         return best_match
 
-    # try to match based on mass if available and guesses failed
+    # try to match based on mass only, if available and previous
+    # guesses failed
     best_diff = np.inf
     if mass is not None:
         for atm, properties in ATOMS_DATABASE._data.items():
@@ -97,10 +112,16 @@ def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
             if atm_mass is None:
                 continue
             diff = abs(mass - atm_mass)
-            if diff < best_diff:
+            if diff < 1 and diff < best_diff:
                 best_match = atm
                 best_diff = diff
-        return best_match
+
+        num = ATOMS_DATABASE.get_atom_property(best_match, "proton")
+        atms = ATOMS_DATABASE.match_numeric_property("proton", num)
+        if len(atms) <= 2:
+            return re.findall(regex, atms[0])[0]
+        else:
+            return best_match
 
     raise AttributeError(f"Unable to guess: {atm_label}")
 

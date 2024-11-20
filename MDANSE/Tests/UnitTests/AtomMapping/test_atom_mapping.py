@@ -52,6 +52,26 @@ def test_guess_element_carbon_symbol_to_deuterium():
     assert h2 == "H2"
 
 
+def test_guess_element_sodium_to_sodium():
+    na = guess_element("NA")
+    assert na == "Na"
+
+
+def test_guess_element_sodium_with_mass_to_sodium():
+    na = guess_element("NA", mass=22.98977)
+    assert na == "Na"
+
+
+def test_guess_element_sod_with_mass_to_sodium():
+    na = guess_element("SOD", mass=22.98977)
+    assert na == "Na"
+
+
+def test_guess_element_chlorine_to_chlorine():
+    na = guess_element("CL")
+    assert na == "Cl"
+
+
 def test_get_element_from_mapping_with_entry_but_no_kwargs():
     mapping = {"": {"label1": "C"}}
     element = get_element_from_mapping(mapping, "label1")
