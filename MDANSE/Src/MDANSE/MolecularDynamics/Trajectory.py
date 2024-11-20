@@ -15,7 +15,7 @@
 #
 
 from ast import operator
-from typing import Collection, List, Dict, TYPE_CHECKING
+from typing import Collection, List, Dict, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from MDANSE.Chemistry.Databases import AtomsDatabase
@@ -405,6 +405,46 @@ class TrajectoryWriter:
             self._initial_charges = np.zeros(self._n_atoms)
         else:
             self._initial_charges = initial_charges
+
+    def write_atom_properties(self, symbol: str, properties: Dict[str, Any]):
+        if "atom_database" not in self._h5_file.keys():
+            group = self._h5_file.create_group("/atom_database")
+        else:
+            group = self._h5_file["/atom_database"]
+        if "property_labels" not in group:
+            string_dt = h5py.special_dtype(vlen=str)
+            label_dataset = group.create_dataset(
+                "property_labels", data=200 * [""], dtype=string_dt
+            )
+        else:
+            label_dataset = self._h5_file["/atom_database/property_labels"]
+        next_index = 0
+        for label in label_dataset[:]:
+            if len(label) > 0:
+                next_index += 1
+            else:
+                break
+        new_labels = [str(x) for x in properties.keys()]
+        for label in new_labels:
+            if label not in label_dataset:
+                label_dataset[next_index] = label
+                next_index += 1
+        mapping = {
+            property_label: index
+            for index, property_label in enumerate(label_dataset[:])
+        }
+        atom_dataset = group.create_dataset(symbol, data=200 * [-1])
+        for key, value in properties.items():
+            try:
+                float(value)
+            except ValueError:
+                continue
+            else:
+                atom_dataset[mapping[key]] = value
+        colour = [int(x) for x in properties["color"].split(";")]
+        atom_dataset[mapping["color"]] = (
+            0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
+        )
 
     def write_atom_database(self, symbols: List[str], database: "AtomsDatabase"):
         group = self._h5_file.create_group("/atom_database")
