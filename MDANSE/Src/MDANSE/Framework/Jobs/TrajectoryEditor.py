@@ -72,7 +72,7 @@ class TrajectoryEditor(IJob):
         "PartialChargeConfigurator",
         {
             "dependencies": {"trajectory": "trajectory"},
-            "default": {},
+            "default": "{}",
         },
     )
     # settings["molecule_tolerance"] = (
