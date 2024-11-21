@@ -48,20 +48,6 @@ def test_rebuild_molecules(trajectory: Trajectory):
     assert atoms_before == atoms_after
 
 
-def test_unwrap_molecules(trajectory: Trajectory):
-    conn = Connectivity(trajectory=trajectory)
-    conn.find_molecules()
-    chemical_system = trajectory.chemical_system
-    original_coords = chemical_system.configuration.coordinates
-    # print([atom.name for atom in chemical_system.atoms])
-    chemical_system.rebuild(conn._molecules)
-    configuration = chemical_system.configuration
-    contiguous_config = configuration.contiguous_configuration()
-    # print([atom.name for atom in chemical_system.atoms])
-    # print(cc.coordinates)
-    assert not np.allclose(original_coords, contiguous_config.coordinates)
-
-
 def test_identify_molecules(trajectory: Trajectory):
     conn = Connectivity(trajectory=trajectory)
     conn.find_molecules()

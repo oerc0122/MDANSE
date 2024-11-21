@@ -352,7 +352,7 @@ class TrajectoryWriter:
         n_steps,
         selected_atoms=None,
         positions_dtype=np.float64,
-        chunking_axis=1,
+        chunking_limit=128,
         compression="none",
         initial_charges=None,
     ):
@@ -405,7 +405,16 @@ class TrajectoryWriter:
 
         self._dtype = positions_dtype
 
-        self._chunking_axis = chunking_axis
+        if self._n_atoms <= 1.5 * chunking_limit:
+            self._chunk_tuple = (1, self._n_atoms, 3)
+            self._padded_size = self._n_atoms
+            self._chunking_limit = self._n_atoms
+        else:
+            self._chunk_tuple = (1, chunking_limit, 3)
+            self._padded_size = (
+                math.ceil(self._n_atoms / chunking_limit) * chunking_limit
+            )
+            self._chunking_limit = chunking_limit
 
         self._compression = compression
 
@@ -522,19 +531,19 @@ class TrajectoryWriter:
             if self._compression in TrajectoryWriter.allowed_compression:
                 variable_charge_dset = self._h5_file.create_dataset(
                     "/configuration/charges",
-                    shape=(self._n_steps, self._n_atoms),
-                    chunks=(1, self._n_atoms),
+                    shape=(self._n_steps, self._padded_size),
+                    chunks=(1, self._chunking_limit),
                     dtype=self._dtype,
                     compression=self._compression,
                 )
             else:
                 variable_charge_dset = self._h5_file.create_dataset(
                     "/configuration/charges",
-                    shape=(self._n_steps, self._n_atoms),
-                    chunks=(1, self._n_atoms),
+                    shape=(self._n_steps, self._padded_size),
+                    chunks=(1, self._chunking_limit),
                     dtype=self._dtype,
                 )
-        variable_charge_dset[index] = charges
+        variable_charge_dset[index, : self._n_atoms] = charges
 
     def validate_charges(self):
         charge_is_constant = False
@@ -551,7 +560,7 @@ class TrajectoryWriter:
                 shape=(self._n_atoms,),
                 dtype=self._dtype,
             )
-            constant_charge_dset[:] = new_charge
+            constant_charge_dset[:] = new_charge[: self._n_atoms]
             if variable_charge_dset is not None:
                 del self._h5_file[variable_charge_dset.name]
 
@@ -577,17 +586,6 @@ class TrajectoryWriter:
         if units is None:
             units = {}
 
-        if self._chunking_axis == 0:
-            chunk_tuple = (self._n_steps, 1, 3)
-        if self._chunking_axis == 1:
-            chunk_tuple = (1, self._n_atoms, 3)
-        else:
-            chunk_tuple = (
-                self._chunking_axis,
-                math.gcd(self._n_atoms, self._n_atoms // self._chunking_axis),
-                3,
-            )
-
         # Write the configuration variables
         configuration_grp = self._h5_file["/configuration"]
         for k, v in configuration.variables.items():
@@ -599,20 +597,20 @@ class TrajectoryWriter:
                 if self._compression in TrajectoryWriter.allowed_compression:
                     dset = configuration_grp.create_dataset(
                         k,
-                        shape=(self._n_steps, self._n_atoms, 3),
-                        chunks=chunk_tuple,
+                        shape=(self._n_steps, self._padded_size, 3),
+                        chunks=self._chunk_tuple,
                         dtype=self._dtype,
                         compression=self._compression,
                     )
                 else:
                     dset = configuration_grp.create_dataset(
                         k,
-                        shape=(self._n_steps, self._n_atoms, 3),
-                        chunks=chunk_tuple,
+                        shape=(self._n_steps, self._padded_size, 3),
+                        chunks=self._chunk_tuple,
                         dtype=self._dtype,
                     )
                 dset.attrs["units"] = units.get(k, "")
-            dset[self._current_index] = data
+            dset[self._current_index, : self._n_atoms] = data
 
         # Write the unit cell
         if configuration.is_periodic:

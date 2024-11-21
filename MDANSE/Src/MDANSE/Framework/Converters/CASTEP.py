@@ -101,6 +101,7 @@ class CASTEP(Converter):
             self._chemical_system,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
+            chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
         )
 

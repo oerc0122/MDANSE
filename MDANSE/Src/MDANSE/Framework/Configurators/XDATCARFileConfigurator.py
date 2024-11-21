@@ -25,134 +25,110 @@ class XDATCARFileError(Error):
     pass
 
 
+def read_modern_header(source):
+    cell = []
+    system_name = source.readline().strip()
+    scale_factor = float(source.readline())
+    for _ in range(3):
+        cell.append([float(x) for x in source.readline().split()])
+    atoms = source.readline().split()
+    atom_numbers = [int(x) for x in source.readline().split()]
+    unit_cell = np.array(cell) * scale_factor
+    return unit_cell, atoms, atom_numbers, system_name
+
+
+def check_trajectory(filename: str):
+    with open(filename, "r") as source:
+        _, _, atom_numbers, system_name = read_modern_header(source)
+    total_atom_number = np.sum(atom_numbers)
+    fixed_cell = True
+    frame_numbers = True
+    with open(filename, "r") as source:
+        lines_read = 0
+        names_found = 0
+        empty_found = 0
+        direct_configuration_found = 0
+        for line in source:
+            lines_read += 1
+            if lines_read > 2 * total_atom_number + 10:
+                break
+            if system_name in line:
+                names_found += 1
+            if "irect configuration=" in line:
+                direct_configuration_found += 1
+            if len(line.split()) == 0:
+                empty_found += 1
+    if names_found > 1:
+        fixed_cell = False
+    if empty_found > 0:
+        frame_numbers = False
+    if direct_configuration_found > 0:
+        if not frame_numbers:
+            raise ValueError(
+                "File contains both 'direct configuration' and empty lines"
+            )
+        frame_numbers = True
+    return fixed_cell, frame_numbers
+
+
 class XDATCARFileConfigurator(FileWithAtomDataConfigurator):
 
     def parse(self):
         filename = self["filename"]
-        self["instance"] = open(filename, "rb")
+        with open(filename, "r") as source:
+            lines_read = 0
+            for _ in source:
+                lines_read += 1
 
-        # Read header
-        self["instance"].readline()
-        header = []
-        while True:
-            self._headerSize = self["instance"].tell()
-            line = self["instance"].readline().strip()
-            if not line or line.lower().startswith(b"direct"):
-                self._frameHeaderSize = self["instance"].tell() - self._headerSize
-                break
-            header.append(line.decode())
+        self._has_fixed_cell, self._has_frame_numbers = check_trajectory(filename)
 
-        self["scale_factor"] = float(header[0])
+        self["instance"] = open(filename, "r")
 
-        cell = " ".join(header[1:4]).split()
+        self._conversion_factor = measure(1.0, "ang").toval("nm")
 
-        cell = np.array(cell, dtype=np.float64)
+        unit_cell, atoms, atom_numbers, _ = read_modern_header(self["instance"])
+        self._init_cell = unit_cell
 
-        self["cell_shape"] = (
-            np.reshape(cell, (3, 3))
-            * self["scale_factor"]
-            * measure(1.0, "ang").toval("nm")
-        )
+        self["cell_shape"] = unit_cell * self._conversion_factor
 
-        self["atoms"] = list(
-            zip(header[4].split(), [int(v) for v in header[5].split()])
-        )
+        self["atoms"] = atoms
+        self["atom_numbers"] = atom_numbers
 
-        self["n_atoms"] = sum([v[1] for v in self["atoms"]])
+        self["n_atoms"] = sum(atom_numbers)
 
-        # The point here is to determine if the trajectory is NVT or NPT. If traj is NPT, the box will change at each iteration and the "header" will appear betwwen every frame
-        # We try to read the two first frames to figure it out
-        nAtoms = 0
-        while True:
-            self._frameSize = self["instance"].tell()
-            line = self["instance"].readline().strip()
-            if not line or line.lower().startswith(b"direct"):
-                break
-            nAtoms += 1
-
-        if nAtoms == self["n_atoms"]:
-            # Traj is NVT
-            # Structure is
-            # Header
-            # FrameHeader
-            # Frame 1
-            # FrameHeader
-            # Frame 2
-            # ...
-            # With frameHeader being "dummy"
-            self._npt = False
-            self._frameSize -= self._headerSize
-            self._actualFrameSize = self._frameSize - self._frameHeaderSize
+        if self._has_fixed_cell:
+            n_frames = round((lines_read - 7) / (self["n_atoms"] + 1))
         else:
-            # Traj is NPT
-            # Structure is
-            # FrameHeader
-            # Frame 1
-            # FrameHeader
-            # Frame 2
-            # ...
-            # With FrameHeader containing box size
-            self._npt = True
-            self._actualFrameSize = self._frameSize
-            self._frameSize -= self._headerSize
-            self._frameHeaderSize += self._headerSize
-            self._headerSize = 0
-            self._actualFrameSize = self._frameSize - self._frameHeaderSize
-            # Retry to read the first frame
-            self["instance"].seek(self._frameHeaderSize)
-            nAtoms = 0
-            while True:
-                self._frameSize = self["instance"].tell()
-                line = self["instance"].readline().strip()
-                if len(line.split("  ")) != 3:
-                    break
-                nAtoms += 1
+            n_frames = round(lines_read / (self["n_atoms"] + 1 + 7))
+        self["n_frames"] = int(n_frames)
 
-            if nAtoms != self["n_atoms"]:
-                # Something went wrong
-                raise XDATCARFileError(
-                    "The number of atoms (%d) does not match the size of a frame (%d)."
-                    % (nAtoms, self["n_atoms"])
-                )
-
-        # Read frame number
-        self["instance"].seek(0, 2)
-        self["n_frames"] = (
-            self["instance"].tell() - self._headerSize
-        ) / self._frameSize
-
-        # Go back to top
-        self["instance"].seek(0)
+        self._coordinates = np.empty((self["n_atoms"], 3))
 
     def read_step(self, step):
-        self["instance"].seek(self._headerSize + step * self._frameSize)
 
-        if self._npt:
-            # Read box size
-            self["instance"].readline()
-            header = []
-            while True:
-                line = self["instance"].readline().strip()
-                if not line or line.lower().startswith("direct"):
-                    break
-                header.append(line)
-            cell = " ".join(header[1:4]).split()
-            cell = np.array(cell, dtype=np.float64)
-            self["cell_shape"] = (
-                np.reshape(cell, (3, 3))
-                * self["scale_factor"]
-                * measure(1.0, "ang").toval("nm")
+        if step > 0 and not self._has_fixed_cell:
+            unit_cell, atoms, atom_numbers, system_name = read_modern_header(
+                self["instance"]
             )
         else:
-            self["instance"].read(self._frameHeaderSize)
+            unit_cell = self._init_cell
 
-        data = np.array(
-            self["instance"].read(self._actualFrameSize).split(), dtype=np.float64
-        )
+        self["cell_shape"] = unit_cell * self._conversion_factor
 
-        config = np.reshape(data, (self["n_atoms"], 3))
+        if self._has_frame_numbers:
+            step_string = self["instance"].readline().split("configuration=")[-1]
+            step_number = int(step_string)
+        else:
+            self["instance"].readline()
+            step_number = step
+        self["step_number"] = step_number
 
-        return config
+        for atom_number in range(self["n_atoms"]):
+            self._coordinates[atom_number] = [
+                float(x) for x in self["instance"].readline().split()
+            ]
+
+        return self._coordinates
 
     def close(self):
         self["instance"].close()
@@ -165,7 +141,7 @@ class XDATCARFileConfigurator(FileWithAtomDataConfigurator):
             An ordered list of atom labels.
         """
         labels = []
-        for symbol, _ in self["atoms"]:
+        for symbol in self["atoms"]:
             label = AtomLabel(symbol)
             if label not in labels:
                 labels.append(label)

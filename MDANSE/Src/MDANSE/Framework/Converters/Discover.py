@@ -338,6 +338,7 @@ class Discover(Converter):
             self._chemicalSystem,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
+            chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
             initial_charges=self.configuration["xtd_file"].get_atom_charges(),
         )
