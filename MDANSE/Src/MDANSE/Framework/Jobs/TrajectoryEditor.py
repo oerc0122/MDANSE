@@ -27,6 +27,9 @@ from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
 )
+from MDANSE.MolecularDynamics.TrajectoryUtils import brute_formula
+from MDANSE.MolecularDynamics.Connectivity import Connectivity
+from MDANSE.Chemistry.Structrures import MoleculeTester
 
 
 class TrajectoryEditor(IJob):
@@ -68,17 +71,20 @@ class TrajectoryEditor(IJob):
             }
         },
     )
-    # settings["atom_charges"] = (
-    #     "PartialChargeConfigurator",
-    #     {
-    #         "dependencies": {"trajectory": "trajectory"},
-    #         "default": {},
-    #     },
-    # )
-    # settings["molecule_tolerance"] = (
-    #     "FloatConfigurator",
-    #     {"default": 0.25},
-    # )
+    settings["atom_charges"] = (
+        "PartialChargeConfigurator",
+        {
+            "dependencies": {"trajectory": "trajectory"},
+            "default": "{}",
+        },
+    )
+    settings["molecule_tolerance"] = (
+        "OptionalFloatConfigurator",
+        {
+            "default": [False, 0.25],
+            "label_text": "Search for molecules (using the following bond length tolerance)",
+        },
+    )
     settings["output_files"] = (
         "OutputTrajectoryConfigurator",
         {"format": "MDTFormat"},
@@ -115,6 +121,41 @@ class TrajectoryEditor(IJob):
 
         new_chemical_system = ChemicalSystem("Edited system")
         new_chemical_system.from_element_list([entry[0] for entry in elements])
+        if self.configuration["molecule_tolerance"]["use_it"]:
+            tolerance = self.configuration["molecule_tolerance"]["value"]
+            conn = Connectivity(trajectory=self._input_trajectory, selection=indexes)
+            conn.find_molecules(tolerance=tolerance)
+            conn.add_bond_information()
+            new_chemical_system.rebuild(conn._molecules)
+            conf = self.configuration["trajectory"]["instance"].configuration(
+                self.configuration["frames"]["value"][0]
+            )
+            conf = conf.contiguous_configuration()
+            coords = conf.coordinates[indexes]
+            if conf.is_periodic:
+                com_conf = PeriodicRealConfiguration(
+                    new_chemical_system,
+                    coords[self._indices],
+                    conf.unit_cell,
+                )
+            else:
+                com_conf = RealConfiguration(
+                    new_chemical_system,
+                    coords,
+                )
+            new_chemical_system.configuration = com_conf
+            coords = com_conf.contiguous_configuration().coordinates
+            for entity in new_chemical_system.chemical_entities:
+                if entity.number_of_atoms > 1:
+                    moltester = MoleculeTester(entity, coords)
+                    try:
+                        inchistring = moltester.identify_molecule()
+                    except:
+                        inchistring = ""
+                    if len(inchistring) > 0:
+                        entity.name = inchistring
+                    else:
+                        entity.name = brute_formula(entity)
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
@@ -142,16 +183,22 @@ class TrajectoryEditor(IJob):
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
         conf = conf.contiguous_configuration()
-
+        charges = self.configuration["trajectory"]["instance"].charges(frameIndex)
         coords = conf.coordinates
 
         variables = {}
         if self.configuration["trajectory"]["instance"].has_variable("velocities"):
-            variables = {
-                "velocities": self.configuration["trajectory"]["instance"]
+            variables["velocities"] = (
+                self.configuration["trajectory"]["instance"]
                 .variable("velocities")[frameIndex, self._indices, :]
                 .astype(np.float64)
-            }
+            )
+        if self.configuration["trajectory"]["instance"].has_variable("gradients"):
+            variables["gradients"] = (
+                self.configuration["trajectory"]["instance"]
+                .variable("gradients")[frameIndex, self._indices, :]
+                .astype(np.float64)
+            )
 
         if conf.is_periodic:
             com_conf = PeriodicRealConfiguration(
@@ -169,10 +216,19 @@ class TrajectoryEditor(IJob):
 
         self._output_trajectory.chemical_system.configuration = com_conf
 
+        new_charges = np.zeros(len(self._indices))
+        for number, at_index in enumerate(self._indices):
+            try:
+                q = self.configuration["atom_charges"]["charges"][at_index]
+            except KeyError:
+                q = charges[at_index]
+            new_charges[number] = q
+
         # The times corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
         self._output_trajectory.dump_configuration(time)
+        self._output_trajectory.write_charges(new_charges, index)
 
         return index, None
 
