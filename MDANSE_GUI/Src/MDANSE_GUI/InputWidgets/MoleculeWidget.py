@@ -67,8 +67,8 @@ class MoleculeWidget(WidgetBase):
         self.field = QComboBox(self._base)
         self.field.addItems(option_list)
         self.field.setCurrentText(default_option)
-        selected_name = self.field.currentText()
-        self.selected_mol = self.mol_dict[selected_name]
+        self.selected_name = self.field.currentText()
+        self.selected_mol = self.mol_dict[self.selected_name]
         self.field.currentTextChanged.connect(self.updateValue)
         self.field.currentTextChanged.connect(self.molecule_changed)
         button = QPushButton(self._base)
@@ -93,16 +93,16 @@ class MoleculeWidget(WidgetBase):
         """
         Change molecule preview and molecule information
         """
-        selected_name = self.field.currentText()
-        self.selected_mol = self.mol_dict[selected_name]
-        self.window = MoleculePreviewWidget(self._base, self.selected_mol)
+        self.selected_name = self.field.currentText()
+        self.selected_mol = self.mol_dict[self.selected_name]
+        self.window = MoleculePreviewWidget(self._base, self.selected_mol, self.selected_name)
 
     @Slot()
     def button_clicked(self):
         """ 
         Opens a window that shows a preview of selected molecule
         """
-        self.window = MoleculePreviewWidget(self._base, self.selected_mol)
+        self.window = MoleculePreviewWidget(self._base, self.selected_mol, self.selected_name)
         if self.window.isVisible():
             self.window.close()
         else:
