@@ -16,7 +16,7 @@
 
 import copy
 import os
-from typing import Union, ItemsView
+from typing import Union, ItemsView, Dict, Any
 
 import json
 
@@ -607,6 +607,27 @@ class AtomsDatabase(_Database):
             The atom property.
         """
         return self._data[symbol][property]
+
+    def get_property_dict(self, symbol: str) -> Dict[str, Any]:
+        """Faster access to the atom property as it avoids the deepcopy
+        in __getitem__.
+
+        Parameters
+        ----------
+        symbol : str
+            Symbol of the atom.
+        property : str
+            Property of the atoms to get.
+
+        Returns
+        -------
+        Union[int, float, str]
+            The atom property.
+        """
+        return {
+            property_name: self.get_value(symbol, property_name)
+            for property_name in self.properties
+        }
 
 
 class MoleculesDatabaseError(Error):

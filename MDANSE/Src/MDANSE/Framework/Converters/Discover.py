@@ -397,6 +397,7 @@ class Discover(Converter):
         self._hisfile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(Discover, self).finalize()

@@ -267,6 +267,7 @@ class DL_POLY(Converter):
         self._historyFile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(DL_POLY, self).finalize()

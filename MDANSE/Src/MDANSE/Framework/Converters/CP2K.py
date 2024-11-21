@@ -285,6 +285,7 @@ class CP2K(Converter):
         self._cellFile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(CP2K, self).finalize()

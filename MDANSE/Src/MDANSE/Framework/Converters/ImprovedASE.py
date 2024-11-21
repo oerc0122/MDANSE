@@ -212,6 +212,7 @@ class ImprovedASE(Converter):
         except:
             pass
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(ImprovedASE, self).finalize()

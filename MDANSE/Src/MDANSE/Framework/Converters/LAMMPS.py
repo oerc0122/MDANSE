@@ -896,6 +896,7 @@ class LAMMPS(Converter):
         self._reader.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(LAMMPS, self).finalize()

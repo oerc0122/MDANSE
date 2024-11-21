@@ -168,6 +168,7 @@ class CASTEP(Converter):
         self._castepFile.close()  # Close the .md file.
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(CASTEP, self).finalize()

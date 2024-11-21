@@ -200,6 +200,7 @@ class Gromacs(Converter):
         self._xdr_file.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(Gromacs, self).finalize()

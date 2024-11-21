@@ -447,11 +447,16 @@ class TrajectoryWriter:
         )
 
     def write_atom_database(self, symbols: List[str], database: "AtomsDatabase"):
-        group = self._h5_file.create_group("/atom_database")
-        for symbol in symbols:
-            atom = group.create_dataset(symbol, shape="()")
-            for property in database.properties:
-                atom.attrs[property] = database.get_value(symbol, property)
+        for atom_symbol in symbols:
+            property_dict = database.get_property_dict(atom_symbol)
+            self.write_atom_properties(atom_symbol, property_dict)
+
+    def write_standard_atom_database(self):
+        symbols = list(np.unique(self._chemical_system.atom_list))
+        database = ATOMS_DATABASE
+        for atom_symbol in symbols:
+            property_dict = database.get_property_dict(atom_symbol)
+            self.write_atom_properties(atom_symbol, property_dict)
 
     def _dump_chemical_system(self):
         """Dump the chemical system to the trajectory file."""

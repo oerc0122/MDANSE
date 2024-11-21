@@ -162,6 +162,7 @@ class VASP(Converter):
         self._xdatcarFile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(VASP, self).finalize()
