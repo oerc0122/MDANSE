@@ -2702,7 +2702,7 @@ class ChemicalSystem(_ChemicalEntity):
                 "ChemicalSystem.rebuild() changed the order of atoms. This needs to be handled!"
             )
 
-    def unique_molecules(self) -> List[str]: 
+    def unique_molecules(self) -> List[str]:
         """Returns the list of unique names in the chemical system"""
         result = np.unique(
             [ce.name for ce in self.chemical_entities if ce.number_of_atoms > 1]

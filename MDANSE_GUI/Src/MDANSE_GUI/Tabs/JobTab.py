@@ -110,9 +110,6 @@ class JobTab(GeneralTab):
             # we only update the widget if a job is selected from the
             # actions tree
             self.action.update_panel(current_item.text())
-            
-        
-
 
     @Slot(int)
     def set_current_instrument(self, index: int):

@@ -3,12 +3,20 @@ from qtpy.Qt3DExtras import Qt3DWindow
 from qtpy.QtGui import QColor
 from qtpy.Qt3DRender import QDirectionalLight, QGeometryRenderer
 from qtpy.QtGui import QColor, QVector3D, QQuaternion, QFont
-from qtpy.Qt3DExtras import QPhongMaterial, QCylinderMesh, \
-    QCuboidMesh, QPlaneMesh, QSphereMesh, Qt3DWindow, QOrbitCameraController
+from qtpy.Qt3DExtras import (
+    QPhongMaterial,
+    QCylinderMesh,
+    QCuboidMesh,
+    QPlaneMesh,
+    QSphereMesh,
+    Qt3DWindow,
+    QOrbitCameraController,
+)
 from qtpy.QtCore import Qt as _Qt
 from qtpy.Qt3DCore import QEntity, QTransform
 from MDANSE.Chemistry import ATOMS_DATABASE
 import numpy as np
+
 
 class MoleculePreviewWidget(QDialog):
     def __init__(self, parent, molecule_information, molecule_name):
@@ -16,14 +24,20 @@ class MoleculePreviewWidget(QDialog):
         self.setWindowTitle("Molecule Preview")
         self.resize(800, 600)
         self.view = Qt3DWindow()
-        self.view.defaultFrameGraph().setClearColor(QColor(0x4d4d4f)) #molecular viewer mdansechemistry atoms.json
-        container = QWidget.createWindowContainer(self.view) #from mdanse chemistry atoms database
+        self.view.defaultFrameGraph().setClearColor(
+            QColor(0x4D4D4F)
+        )  # molecular viewer mdansechemistry atoms.json
+        container = QWidget.createWindowContainer(
+            self.view
+        )  # from mdanse chemistry atoms database
         screenSize = self.view.screen().size()
         container.setMinimumSize(200, 100)
         container.setMaximumSize(screenSize)
-        container.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
+        container.setSizePolicy(
+            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding
+        )
         layout = QVBoxLayout()
-        layout.addWidget(container)        
+        layout.addWidget(container)
         self.rootEntity = QEntity()
         self.cuboidTransform = QTransform()
         self.axes = []
@@ -31,13 +45,15 @@ class MoleculePreviewWidget(QDialog):
         coords = []
         info_text = f"Molecule name: {molecule_name}\n"
         for key in molecule_information["atom_number"]:
-            info_text += f"Number of {key} atoms: {molecule_information['atom_number'][key]}\n"
+            info_text += (
+                f"Number of {key} atoms: {molecule_information['atom_number'][key]}\n"
+            )
 
         info_text += f"Number of such molecules in trajectory: {molecule_information['no_of_molecules']}\n"
 
         for i, atom in enumerate(molecule_information["atom_information"]):
             x, y, z = atom["coords"]
-            symbol = atom["symbol"]            
+            symbol = atom["symbol"]
             colour = ATOMS_DATABASE.get_atom_property(symbol, "color")
             radius = ATOMS_DATABASE.get_atom_property(symbol, "covalent_radius")
             mass.append(ATOMS_DATABASE.get_atom_property(symbol, "atomic_weight"))
@@ -48,10 +64,12 @@ class MoleculePreviewWidget(QDialog):
             sphereMesh = QSphereMesh()
             sphereMesh.setRings(20)
             sphereMesh.setSlices(20)
-            sphereMesh.setRadius(radius*10)
+            sphereMesh.setRadius(radius * 10)
             sphereTransform = QTransform()
             sphereTransform.setScale(1.0)
-            sphereTransform.setTranslation(QVector3D(20*x-10, 20*y-10, 20*z-10))
+            sphereTransform.setTranslation(
+                QVector3D(20 * x - 10, 20 * y - 10, 20 * z - 10)
+            )
             sphereMaterial = QPhongMaterial()
             sphereMaterial.setDiffuse(colour)
             sphereMaterial.setAmbient(colour)  # Set ambient to the same as diffuse.
@@ -69,8 +87,8 @@ class MoleculePreviewWidget(QDialog):
         self.setLayout(layout)
         mass = np.array(mass)
         coords = np.array(coords)
-        com = np.einsum("i,ik->k", mass, coords)/np.sum(mass)
-        x_com, y_com, z_com = 20*com-10
+        com = np.einsum("i,ik->k", mass, coords) / np.sum(mass)
+        x_com, y_com, z_com = 20 * com - 10
         # for n, x in enumerate(['x', 'y', 'z']):
         #     tempcyl = QCylinderMesh()
         #     tempcyl.setRadius(0.05)
@@ -99,10 +117,10 @@ class MoleculePreviewWidget(QDialog):
         #     self.axes.append(m_cylinderEntity)
         # Camera
         self.camera = self.view.camera()
-        self.camera.lens().setPerspectiveProjection(45.0, 16.0/9.0, 0.1, 1000.0)
-        self.camera.setPosition(QVector3D(x_com+5, y_com+5, z_com+10))
+        self.camera.lens().setPerspectiveProjection(45.0, 16.0 / 9.0, 0.1, 1000.0)
+        self.camera.setPosition(QVector3D(x_com + 5, y_com + 5, z_com + 10))
         self.camera.setViewCenter(QVector3D(x_com, y_com, z_com))
-        self.camera.setUpVector(QVector3D(0.0, 0.0, 1.0))   
+        self.camera.setUpVector(QVector3D(0.0, 0.0, 1.0))
         # add light
         lightEntity = QEntity(self.rootEntity)
         light = QDirectionalLight(lightEntity)
@@ -119,6 +137,3 @@ class MoleculePreviewWidget(QDialog):
         camController.setCamera(self.camera)
         self.view.setRootEntity(self.rootEntity)
         # # info_box.setStandardButtons(QMessageBox.Close)
-
-
-
