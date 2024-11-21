@@ -170,7 +170,7 @@ class Connectivity:
             for pair in pairs
         }
         total_max_length = np.max([x for x in maxbonds.values()])
-        for nstep, frame_number in enumerate(samples):
+        for _, frame_number in enumerate(samples):
             distances = self.internal_distances(
                 frame_number=frame_number, max_distance=total_max_length
             )
@@ -202,14 +202,15 @@ class Connectivity:
         if self._bond_mapping is None:
             self.find_bonds(tolerance=tolerance)
         molecules = []
+        atom_pool = list(range(len(self._elements)))
 
         total_graph = nx.Graph()
+        total_graph.add_nodes_from(atom_pool)
         total_graph.add_edges_from(self._unique_bonds)
-        atom_pool = list(range(len(self._elements)))
         while len(atom_pool) > 0:
             last_atom = atom_pool.pop()
             temp_dict = nx.dfs_successors(total_graph, last_atom)
-            others = reduce(list.__add__, temp_dict.values())
+            others = reduce(list.__add__, temp_dict.values(), [])
             for atom in others:
                 atom_pool.pop(atom_pool.index(atom))
             molecule = [last_atom] + others

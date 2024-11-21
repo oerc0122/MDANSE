@@ -18,7 +18,7 @@ from typing import Union
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE.Framework.AtomSelector import Selector
 
 
@@ -27,16 +27,16 @@ class AtomTransmuter:
     transmutation setting with applications of the apply_transmutation
     method with a selection setting and symbol."""
 
-    def __init__(self, system: ChemicalSystem) -> None:
+    def __init__(self, trajectory: Trajectory) -> None:
         """
         Parameters
         ----------
         system : ChemicalSystem
             The chemical system object.
         """
-        self.selector = Selector(system)
+        self.selector = Selector(trajectory)
         self._original_map = {}
-        for at in system.atom_list:
+        for at in trajectory.chemical_system.atom_list:
             self._original_map[at.index] = at.symbol
         self._new_map = {}
 
@@ -214,5 +214,5 @@ class AtomTransmutationConfigurator(IConfigurator):
             chemical system.
         """
         traj_config = self._configurable[self._dependencies["trajectory"]]
-        transmuter = AtomTransmuter(traj_config["instance"].chemical_system)
+        transmuter = AtomTransmuter(traj_config["instance"])
         return transmuter

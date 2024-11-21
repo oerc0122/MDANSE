@@ -144,5 +144,5 @@ class AtomSelectionConfigurator(IConfigurator):
             chemical system.
         """
         traj_config = self._configurable[self._dependencies["trajectory"]]
-        selector = Selector(traj_config["instance"].chemical_system)
+        selector = Selector(traj_config["instance"])
         return selector
