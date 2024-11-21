@@ -77,6 +77,7 @@ class StaticStructureFactor(DistanceHistogram):
         {
             "default": "b_coherent",
             "dependencies": {
+                "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
                 "atom_transmutation": "atom_transmutation",
             },

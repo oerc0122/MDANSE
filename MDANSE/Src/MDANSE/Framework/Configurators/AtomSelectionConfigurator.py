@@ -48,7 +48,7 @@ class AtomSelectionConfigurator(IConfigurator):
             self.error_status = "Invalid input value."
             return
 
-        selector = Selector(trajConfig["instance"].chemical_system)
+        selector = Selector(trajConfig["instance"])
         if not selector.check_valid_json_settings(value):
             self.error_status = "Invalid JSON string."
             return

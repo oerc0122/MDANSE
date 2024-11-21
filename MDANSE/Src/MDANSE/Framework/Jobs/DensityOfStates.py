@@ -76,7 +76,10 @@ class DensityOfStates(IJob):
         "WeightsConfigurator",
         {
             "default": "atomic_weight",
-            "dependencies": {"atom_selection": "atom_selection"},
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            },
         },
     )
     settings["output_files"] = (

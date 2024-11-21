@@ -70,7 +70,12 @@ class DensityProfile(IJob):
     settings["dr"] = ("FloatConfigurator", {"default": 0.01, "mini": 1.0e-9})
     settings["weights"] = (
         "WeightsConfigurator",
-        {"dependencies": {"atom_selection": "atom_selection"}},
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
     )
     settings["output_files"] = (
         "OutputFilesConfigurator",

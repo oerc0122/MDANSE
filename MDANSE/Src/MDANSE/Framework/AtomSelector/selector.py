@@ -120,7 +120,9 @@ class Selector:
                 for k1 in v0.keys():
                     self.match_exists[k0][k1] = True
             else:
-                self.match_exists[k0] = self._funcs[k0](self.system, check_exists=True)
+                self.match_exists[k0] = self._funcs[k0](
+                    self.trajectory, check_exists=True
+                )
 
     def reset_settings(self) -> None:
         """Resets the settings back to the defaults."""

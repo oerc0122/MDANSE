@@ -66,7 +66,12 @@ class VanHoveFunctionSelf(IJob):
     )
     settings["weights"] = (
         "WeightsConfigurator",
-        {"dependencies": {"atom_selection": "atom_selection"}},
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
     )
     settings["output_files"] = (
         "OutputFilesConfigurator",
