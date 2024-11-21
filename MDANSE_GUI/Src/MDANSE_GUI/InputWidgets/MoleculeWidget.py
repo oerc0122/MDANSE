@@ -15,10 +15,19 @@
 #
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QComboBox, QPushButton, QDialog
-from qtpy.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QSizePolicy, QFrame, \
-                                            QSizePolicy, QPushButton, QFileDialog
+from qtpy.QtWidgets import (
+    QHBoxLayout,
+    QVBoxLayout,
+    QWidget,
+    QSizePolicy,
+    QFrame,
+    QSizePolicy,
+    QPushButton,
+    QFileDialog,
+)
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.InputWidgets.MoleculePreviewWidget import MoleculePreviewWidget
+
 
 class MoleculeWidget(WidgetBase):
     def __init__(self, *args, **kwargs):
@@ -63,7 +72,11 @@ class MoleculeWidget(WidgetBase):
                 atom_dict = {"symbol": symbol, "element": element, "coords": coords}
                 self.atom_information.append(atom_dict)
 
-            self.mol_dict[mol.name] = {"no_of_molecules": no_of_molecules, "atom_information": self.atom_information, "atom_number": self.atom_number}
+            self.mol_dict[mol.name] = {
+                "no_of_molecules": no_of_molecules,
+                "atom_information": self.atom_information,
+                "atom_number": self.atom_number,
+            }
         self.field = QComboBox(self._base)
         self.field.addItems(option_list)
         self.field.setCurrentText(default_option)
@@ -88,6 +101,7 @@ class MoleculeWidget(WidgetBase):
         self.default_labels()
         self.update_labels()
         self.updateValue()
+
     @Slot()
     def molecule_changed(self):
         """
@@ -95,20 +109,23 @@ class MoleculeWidget(WidgetBase):
         """
         self.selected_name = self.field.currentText()
         self.selected_mol = self.mol_dict[self.selected_name]
-        self.window = MoleculePreviewWidget(self._base, self.selected_mol, self.selected_name)
+        self.window = MoleculePreviewWidget(
+            self._base, self.selected_mol, self.selected_name
+        )
 
     @Slot()
     def button_clicked(self):
-        """ 
+        """
         Opens a window that shows a preview of selected molecule
         """
-        self.window = MoleculePreviewWidget(self._base, self.selected_mol, self.selected_name)
+        self.window = MoleculePreviewWidget(
+            self._base, self.selected_mol, self.selected_name
+        )
         if self.window.isVisible():
             self.window.close()
         else:
             self.window.show()
-    
-        
+
     def configure_using_default(self):
         """This is too complex to have a default value"""
 
@@ -124,4 +141,3 @@ class MoleculeWidget(WidgetBase):
 
     def get_widget_value(self):
         return self._field.currentText()
-
