@@ -89,32 +89,6 @@ class MoleculePreviewWidget(QDialog):
         coords = np.array(coords)
         com = np.einsum("i,ik->k", mass, coords) / np.sum(mass)
         x_com, y_com, z_com = 20 * com - 10
-        # for n, x in enumerate(['x', 'y', 'z']):
-        #     tempcyl = QCylinderMesh()
-        #     tempcyl.setRadius(0.05)
-        #     tempcyl.setLength(100)
-        #     tempcyl.setRings(50)
-        #     tempcyl.setSlices(20)
-        #     tempTransform = QTransform()
-        #     tempTransform.setScale(1.0)
-        #     tempMaterial = QPhongMaterial()
-        #     if n == 0:
-        #         tempTransform.setRotation(QQuaternion.fromAxisAndAngle(QVector3D(1.0, 0.0, 0.0), 90.0))
-        #         tempTransform.setTranslation(QVector3D(x_com, y_com, z_com))
-        #         tempMaterial.setDiffuse(QColor(0xBB0000))
-        #     elif n == 1:
-        #         tempTransform.setRotation(QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0), 90.0))
-        #         tempTransform.setTranslation(QVector3D(x_com, y_com, z_com))
-        #         tempMaterial.setDiffuse(QColor(0x00BB00))
-        #     else:
-        #         tempTransform.setRotation(QQuaternion.fromAxisAndAngle(QVector3D(0.0, 0.0, 1.0), 90.0))
-        #         tempTransform.setTranslation(QVector3D(x_com, y_com, z_com))
-        #         tempMaterial.setDiffuse(QColor(0x0000BB))
-        #     m_cylinderEntity = QEntity(self.rootEntity)
-        #     m_cylinderEntity.addComponent(tempcyl)
-        #     m_cylinderEntity.addComponent(tempMaterial)
-        #     m_cylinderEntity.addComponent(tempTransform)
-        #     self.axes.append(m_cylinderEntity)
         # Camera
         self.camera = self.view.camera()
         self.camera.lens().setPerspectiveProjection(45.0, 16.0 / 9.0, 0.1, 1000.0)
