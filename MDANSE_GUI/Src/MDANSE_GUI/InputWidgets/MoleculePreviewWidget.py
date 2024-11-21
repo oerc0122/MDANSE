@@ -11,7 +11,7 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 import numpy as np
 
 class MoleculePreviewWidget(QDialog):
-    def __init__(self, parent, molecule_information):
+    def __init__(self, parent, molecule_information, molecule_name):
         super().__init__(parent)
         self.setWindowTitle("Molecule Preview")
         self.resize(800, 600)
@@ -29,7 +29,7 @@ class MoleculePreviewWidget(QDialog):
         self.axes = []
         mass = []
         coords = []
-        info_text = ""
+        info_text = f"Molecule name: {molecule_name}\n"
         for key in molecule_information["atom_number"]:
             info_text += f"Number of {key} atoms: {molecule_information['atom_number'][key]}\n"
 
