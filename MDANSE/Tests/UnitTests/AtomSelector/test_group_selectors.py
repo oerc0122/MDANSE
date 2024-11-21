@@ -1,6 +1,6 @@
 import os
 import pytest
-from MDANSE.IO.PDBReader import PDBReader
+from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.AtomSelector.group_selectors import (
     select_primary_amine,
     select_hydroxy,
@@ -11,32 +11,30 @@ from MDANSE.Framework.AtomSelector.group_selectors import (
 )
 
 
-pbd_2vb1 = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "Data", "2vb1.pdb"
+traj_2vb1 = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "..", "Data", "2vb1.mdt"
 )
-pbd_1gip = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "Data", "1gip.pdb"
+traj_1gip = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "..", "Data", "1gip.mdt"
 )
 
 
 @pytest.fixture(scope="module")
-def protein_chemical_system():
-    reader = PDBReader(pbd_2vb1)
-    protein_chemical_system = reader.build_chemical_system()
-    return protein_chemical_system
+def protein_trajectory():
+    protein_trajectory = HDFTrajectoryInputData(traj_2vb1)
+    return protein_trajectory.trajectory
 
 
 @pytest.fixture(scope="module")
 def nucleic_acid_chemical_system():
-    reader = PDBReader(pbd_1gip)
-    nucleic_acid_chemical_system = reader.build_chemical_system()
-    return nucleic_acid_chemical_system
+    protein_trajectory = HDFTrajectoryInputData(traj_1gip)
+    return protein_trajectory.trajectory
 
 
 def test_select_primary_amine_returns_true_as_match_exists(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    exists = select_primary_amine(protein_chemical_system, check_exists=True)
+    exists = select_primary_amine(protein_trajectory, check_exists=True)
     assert exists
 
 
@@ -48,21 +46,21 @@ def test_select_sulphate_returns_false_as_match_does_not_exist(
 
 
 def test_select_primary_amine_returns_correct_number_of_atom_matches(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    selection = select_primary_amine(protein_chemical_system)
+    selection = select_primary_amine(protein_trajectory)
     assert len(selection) == 117
 
 
 def test_select_hydroxy_returns_correct_number_of_atom_matches(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    selection = select_hydroxy(protein_chemical_system)
+    selection = select_hydroxy(protein_trajectory)
     assert len(selection) == 28786
 
 
-def test_select_methyl_returns_correct_number_of_atom_matches(protein_chemical_system):
-    selection = select_methly(protein_chemical_system)
+def test_select_methyl_returns_correct_number_of_atom_matches(protein_trajectory):
+    selection = select_methly(protein_trajectory)
     assert len(selection) == 244
 
 
@@ -80,6 +78,6 @@ def test_select_sulphate_returns_correct_number_of_atom_matches(
     assert len(selection) == 0
 
 
-def test_select_thiol_returns_correct_number_of_atoms_matches(protein_chemical_system):
-    selection = select_thiol(protein_chemical_system)
+def test_select_thiol_returns_correct_number_of_atoms_matches(protein_trajectory):
+    selection = select_thiol(protein_trajectory)
     assert len(selection) == 0

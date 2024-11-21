@@ -447,11 +447,17 @@ class MdanseTrajectory:
     def get_atom_property(self, symbol: str, property: str):
         if "atom_database" not in self._h5_file:
             return ATOMS_DATABASE.get_atom_property(symbol, property)
+        elif symbol not in self._h5_file["/atom_database"]:
+            return ATOMS_DATABASE.get_atom_property(symbol, property)
         index = np.where(
             self._h5_file["/atom_database/property_labels"][:]
             == property.encode("utf-8")
-        ).flatten()[0]
-        return self._h5_file[f"/atom_database/{symbol}"][index]
+        )[0].flatten()[0]
+        data_type = self._h5_file["/atom_database/property_types"][index]
+        value = self._h5_file[f"/atom_database/{symbol}"][index]
+        if data_type == b"int":
+            return int(value)
+        return value
 
     def atoms_in_database(self) -> List[str]:
         if "atom_database" not in self._h5_file:

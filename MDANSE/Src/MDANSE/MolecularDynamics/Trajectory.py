@@ -414,18 +414,26 @@ class TrajectoryWriter:
         else:
             self._initial_charges = initial_charges
 
-    def write_atom_properties(self, symbol: str, properties: Dict[str, Any]):
+    def write_atom_properties(
+        self, symbol: str, properties: Dict[str, Any], ptypes: Dict[str, str]
+    ):
         if "atom_database" not in self._h5_file.keys():
             group = self._h5_file.create_group("/atom_database")
         else:
             group = self._h5_file["/atom_database"]
+        string_dt = h5py.special_dtype(vlen=str)
         if "property_labels" not in group:
-            string_dt = h5py.special_dtype(vlen=str)
             label_dataset = group.create_dataset(
                 "property_labels", data=200 * [""], dtype=string_dt
             )
         else:
             label_dataset = self._h5_file["/atom_database/property_labels"]
+        if "property_types" not in group:
+            type_dataset = group.create_dataset(
+                "property_types", data=200 * [""], dtype=string_dt
+            )
+        else:
+            type_dataset = self._h5_file["/atom_database/property_types"]
         next_index = 0
         for label in label_dataset[:]:
             if len(label) > 0:
@@ -436,6 +444,7 @@ class TrajectoryWriter:
         for label in new_labels:
             if label.encode("utf-8") not in label_dataset:
                 label_dataset[next_index] = label
+                type_dataset[next_index] = ptypes[label]
                 next_index += 1
         mapping = {
             property_label.decode("utf-8"): index
@@ -450,14 +459,7 @@ class TrajectoryWriter:
             except TypeError:
                 continue
             else:
-                try:
-                    atom_dataset[mapping[key]] = value
-                except KeyError:
-                    print(f"MAPPING: {mapping}")
-                    print(f"label dataset: {label_dataset[:]}")
-                    import sys
-
-                    sys.exit()
+                atom_dataset[mapping[key]] = value
         colour = [int(x) for x in properties["color"].split(";")]
         atom_dataset[mapping["color"]] = (
             0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
@@ -466,14 +468,14 @@ class TrajectoryWriter:
     def write_atom_database(self, symbols: List[str], database: "AtomsDatabase"):
         for atom_symbol in symbols:
             property_dict = database.get_property_dict(atom_symbol)
-            self.write_atom_properties(atom_symbol, property_dict)
+            self.write_atom_properties(atom_symbol, property_dict, database._properties)
 
     def write_standard_atom_database(self):
         symbols = list(np.unique([at.symbol for at in self._chemical_system.atom_list]))
         database = ATOMS_DATABASE
         for atom_symbol in symbols:
             property_dict = database.get_property_dict(atom_symbol)
-            self.write_atom_properties(atom_symbol, property_dict)
+            self.write_atom_properties(atom_symbol, property_dict, database._properties)
 
     def _dump_chemical_system(self):
         """Dump the chemical system to the trajectory file."""

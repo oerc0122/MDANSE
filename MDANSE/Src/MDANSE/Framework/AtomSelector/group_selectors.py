@@ -14,7 +14,6 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from typing import Union
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
