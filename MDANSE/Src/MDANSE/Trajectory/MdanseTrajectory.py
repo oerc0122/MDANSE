@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import os
+from typing import List
 
 import numpy as np
 import h5py
@@ -264,12 +265,17 @@ class MdanseTrajectory:
             last = len(self)
 
         indexes = [at.index for at in atoms]
-        masses = np.array(
-            [
-                ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight")
-                for at in atoms
-            ]
-        )
+        try:
+            masses = np.array(
+                [self.get_atom_property(at.symbol, "atomic_weight") for at in atoms]
+            )
+        except KeyError:
+            masses = np.array(
+                [
+                    ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight")
+                    for at in atoms
+                ]
+            )
         grp = self._h5_file["/configuration"]
 
         coords = grp["coordinates"][first:last:step, :, :].astype(np.float64)
@@ -438,8 +444,29 @@ class MdanseTrajectory:
         else:
             return False
 
-    def atom_property(self, atom_symbol: str, property: str):
-        return self._h5_file[f"/atom_database/{atom_symbol}"].attrs[property]
+    def get_atom_property(self, symbol: str, property: str):
+        if "atom_database" not in self._h5_file:
+            return ATOMS_DATABASE.get_atom_property(symbol, property)
+        index = np.where(
+            self._h5_file["/atom_database/property_labels"][:]
+            == property.encode("utf-8")
+        ).flatten()[0]
+        return self._h5_file[f"/atom_database/{symbol}"][index]
+
+    def atoms_in_database(self) -> List[str]:
+        if "atom_database" not in self._h5_file:
+            return ATOMS_DATABASE.atoms
+        else:
+            return list(self._h5_file["/atom_database"].keys())
+
+    def properties_in_database(self) -> List[str]:
+        if "atom_database" not in self._h5_file:
+            return ATOMS_DATABASE.properties
+        else:
+            return list(
+                label.encode("utf-8")
+                for label in self._h5_file["/atom_database/property_labels"]
+            )
 
     @property
     def chemical_system(self):

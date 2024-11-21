@@ -18,7 +18,6 @@ import collections
 
 import numpy as np
 
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import generate_sphere_points
 from MDANSE.Extensions import sas_fast_calc
@@ -108,7 +107,9 @@ class SolventAccessibleSurface(IJob):
             [
                 (
                     at.index,
-                    ATOMS_DATABASE.get_atom_property(at.symbol, "covalent_radius"),
+                    self.configuration["trajectory"]["instance"].get_atom_property(
+                        at.symbol, "covalent_radius"
+                    ),
                 )
                 for at in self.configuration["trajectory"][
                     "instance"

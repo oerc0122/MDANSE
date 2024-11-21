@@ -153,7 +153,7 @@ class AtomTransmutationConfigurator(IConfigurator):
                 self.error_status = "Inputted setting not valid - atom index not found in the current system."
                 return
 
-            if element not in ATOMS_DATABASE:
+            if element not in traj_config["instance"].atoms_in_database:
                 self.error_status = (
                     f"the element {element} is not registered in the database"
                 )
@@ -164,7 +164,7 @@ class AtomTransmutationConfigurator(IConfigurator):
         atomSelConfigurator = self._configurable[self._dependencies["atom_selection"]]
         atomSelConfigurator["unique_names"] = sorted(set(atomSelConfigurator["names"]))
         atomSelConfigurator["masses"] = [
-            [ATOMS_DATABASE.get_atom_property(n, "atomic_weight")]
+            [traj_config["instance"].get_atom_property(n, "atomic_weight")]
             for n in atomSelConfigurator["names"]
         ]
         self.error_status = "OK"

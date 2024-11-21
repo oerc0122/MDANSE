@@ -14,7 +14,6 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import operator
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.AtomSelector import Selector
 
@@ -76,7 +75,7 @@ class AtomSelectionConfigurator(IConfigurator):
         self["names"] = [at.symbol for at in selectedAtoms]
         self["unique_names"] = sorted(set(self["names"]))
         self["masses"] = [
-            [ATOMS_DATABASE.get_atom_property(n, "atomic_weight")]
+            [trajConfig["instance"].get_atom_property(n, "atomic_weight")]
             for n in self["names"]
         ]
         if self["selection_length"] == 0:

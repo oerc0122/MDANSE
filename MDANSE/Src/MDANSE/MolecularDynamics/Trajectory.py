@@ -281,8 +281,16 @@ class Trajectory:
         """
         return self._trajectory.has_variable(variable)
 
-    def atom_property(self, atom_symbol: str, property: str):
-        return self._trajectory.atom_property(atom_symbol, property)
+    def get_atom_property(self, atom_symbol: str, property: str):
+        return self._trajectory.get_atom_property(atom_symbol, property)
+
+    @property
+    def atoms_in_database(self) -> List[str]:
+        return self._trajectory.atoms_in_database()
+
+    @property
+    def properties_in_database(self) -> List[str]:
+        return self._trajectory.properties_in_database()
 
     @property
     def chemical_system(self):
@@ -426,21 +434,30 @@ class TrajectoryWriter:
                 break
         new_labels = [str(x) for x in properties.keys()]
         for label in new_labels:
-            if label not in label_dataset:
+            if label.encode("utf-8") not in label_dataset:
                 label_dataset[next_index] = label
                 next_index += 1
         mapping = {
-            property_label: index
+            property_label.decode("utf-8"): index
             for index, property_label in enumerate(label_dataset[:])
         }
-        atom_dataset = group.create_dataset(symbol, data=200 * [-1])
+        atom_dataset = group.create_dataset(symbol, data=200 * [-1.0])
         for key, value in properties.items():
             try:
                 float(value)
             except ValueError:
                 continue
+            except TypeError:
+                continue
             else:
-                atom_dataset[mapping[key]] = value
+                try:
+                    atom_dataset[mapping[key]] = value
+                except KeyError:
+                    print(f"MAPPING: {mapping}")
+                    print(f"label dataset: {label_dataset[:]}")
+                    import sys
+
+                    sys.exit()
         colour = [int(x) for x in properties["color"].split(";")]
         atom_dataset[mapping["color"]] = (
             0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
@@ -452,7 +469,7 @@ class TrajectoryWriter:
             self.write_atom_properties(atom_symbol, property_dict)
 
     def write_standard_atom_database(self):
-        symbols = list(np.unique(self._chemical_system.atom_list))
+        symbols = list(np.unique([at.symbol for at in self._chemical_system.atom_list]))
         database = ATOMS_DATABASE
         for atom_symbol in symbols:
             property_dict = database.get_property_dict(atom_symbol)

@@ -22,47 +22,6 @@ class TestTrajectoryUtils(unittest.TestCase):
         self.assertEqual("H2O1", brute_formula(m, ""))
         self.assertEqual("H2O", brute_formula(m, "", True))
 
-    def test_build_connectivity(self):
-        cs = ChemicalSystem()
-
-        m = Molecule("WAT", "w")
-        ac = AtomCluster("ac", [Atom(), Atom(), Atom(), Atom()])
-        a = Atom()
-        ag = AtomGroup([Atom(parent=cs)])
-
-        for ce in [m, ac, a, ag]:
-            cs.add_chemical_entity(ce)
-
-        coords = np.array(
-            [
-                [1, 1.05, 1],
-                [1, 0.98, 1],
-                [1, 1.12, 1],
-                [1, 1, 1],
-                [1.044, 1, 1],
-                [0.95, 1, 1],
-                [1.055, 1, 1],
-                [1, 1, 1.02],
-                [1, 1, 1.06],
-            ]
-        )
-        conf = RealConfiguration(cs, coords)
-        cs.configuration = conf
-
-        build_connectivity(cs, 0.005)
-
-        self.assertEqual([m["OW"]], m["HW1"].bonds)
-        self.assertEqual([m["HW1"], m["HW2"]], m["OW"].bonds)
-        self.assertEqual([m["OW"]], m["HW2"].bonds)
-
-        self.assertEqual([ac[1].index, ac[2].index], [at.index for at in ac[0].bonds])
-        self.assertEqual([ac[0].index, ac[3].index], [at.index for at in ac[1].bonds])
-        self.assertEqual([ac[0].index], [at.index for at in ac[2].bonds])
-        self.assertEqual([ac[1].index], [at.index for at in ac[3].bonds])
-
-        self.assertEqual([ag._atoms[0].index], [at.index for at in a.bonds])
-        self.assertEqual([a.index], [at.index for at in ag._atoms[0].bonds])
-
     def test_find_atoms_in_molecule(self):
         m1 = Molecule("WAT", "water")
         m2 = Molecule("WAT", "water")

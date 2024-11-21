@@ -23,7 +23,6 @@ import io
 import numpy as np
 
 
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
@@ -137,23 +136,43 @@ class McStasVirtualInstrument(IJob):
         self._mcStasPhysicalParameters = {"density": 0.0}
         self._mcStasPhysicalParameters["V_rho"] = 0.0
         self._mcStasPhysicalParameters["weight"] = sum(
-            [ATOMS_DATABASE.get_atom_property(s, "atomic_weight") for s in symbols]
+            [
+                self.configuration["trajectory"]["instance"].get_atom_property(
+                    s, "atomic_weight"
+                )
+                for s in symbols
+            ]
         )
         self._mcStasPhysicalParameters["sigma_abs"] = (
             np.mean(
-                [ATOMS_DATABASE.get_atom_property(s, "xs_absorption") for s in symbols]
+                [
+                    self.configuration["trajectory"]["instance"].get_atom_property(
+                        s, "xs_absorption"
+                    )
+                    for s in symbols
+                ]
             )
             * MCSTAS_UNITS_LUT["nm2"]
         )
         self._mcStasPhysicalParameters["sigma_coh"] = (
             np.mean(
-                [ATOMS_DATABASE.get_atom_property(s, "xs_coherent") for s in symbols]
+                [
+                    self.configuration["trajectory"]["instance"].get_atom_property(
+                        s, "xs_coherent"
+                    )
+                    for s in symbols
+                ]
             )
             * MCSTAS_UNITS_LUT["nm2"]
         )
         self._mcStasPhysicalParameters["sigma_inc"] = (
             np.mean(
-                [ATOMS_DATABASE.get_atom_property(s, "xs_incoherent") for s in symbols]
+                [
+                    self.configuration["trajectory"]["instance"].get_atom_property(
+                        s, "xs_incoherent"
+                    )
+                    for s in symbols
+                ]
             )
             * MCSTAS_UNITS_LUT["nm2"]
         )

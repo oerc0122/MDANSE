@@ -17,6 +17,8 @@ import json
 import copy
 from typing import Union
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE.Framework.AtomSelector.all_selector import select_all
 from MDANSE.Framework.AtomSelector.atom_selectors import *
 from MDANSE.Framework.AtomSelector.group_selectors import *
@@ -82,14 +84,16 @@ class Selector:
         "index": "index",
     }
 
-    def __init__(self, system: ChemicalSystem) -> None:
+    def __init__(self, trajectory: Trajectory) -> None:
         """
         Parameters
         ----------
-        system: ChemicalSystem
+        trajectory: Trajectory
             The chemical system to apply the selection to.
         """
+        system = trajectory.chemical_system
         self.system = system
+        self.trajectory = trajectory
         self.all_idxs = set([at.index for at in system.atom_list])
         self.settings = copy.deepcopy(self._default)
 
@@ -101,7 +105,7 @@ class Selector:
                 [
                     symbol
                     for symbol in symbols
-                    if select_hs_on_element(system, symbol, check_exists=True)
+                    if select_hs_on_element(trajectory, symbol, check_exists=True)
                 ]
             ),
             "name": set([at.name for at in system.atom_list]),
@@ -177,7 +181,7 @@ class Selector:
                 if not switch:
                     continue
 
-                idxs.update(self._funcs[k](self.system, **arg))
+                idxs.update(self._funcs[k](self.trajectory, **arg))
 
         return idxs
 
@@ -208,7 +212,7 @@ class Selector:
                 if not switch:
                     continue
 
-                selection = self._funcs[k](self.system, **arg)
+                selection = self._funcs[k](self.trajectory, **arg)
                 if idxs.issuperset(selection):
                     added.update(selection)
                     continue

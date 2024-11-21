@@ -18,7 +18,6 @@ import collections
 
 import numpy as np
 
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Trajectory import sorted_atoms
@@ -143,7 +142,9 @@ class Density(IJob):
         mass_density = (
             sum(
                 [
-                    ATOMS_DATABASE.get_atom_property(s, "atomic_weight")
+                    self.configuration["trajectory"]["instance"].get_atom_property(
+                        s, "atomic_weight"
+                    )
                     for s in self._symbols
                 ]
             )

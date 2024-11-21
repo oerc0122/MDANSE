@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+from typing import List
 import os
 
 import numpy as np
@@ -553,8 +554,14 @@ class H5MDTrajectory:
         else:
             return False
 
-    def atom_property(self, atom_symbol: str, property: str):
-        raise KeyError("H5MD trajectory does not store atom information")
+    def get_atom_property(self, atom_symbol: str, property: str):
+        return ATOMS_DATABASE.get_atom_property(atom_symbol, property)
+
+    def atoms_in_database(self) -> List[str]:
+        return ATOMS_DATABASE.atoms
+
+    def properties_in_database(self) -> List[str]:
+        return ATOMS_DATABASE.properties
 
     @property
     def chemical_system(self):

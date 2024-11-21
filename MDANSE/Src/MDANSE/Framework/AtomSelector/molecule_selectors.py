@@ -15,6 +15,7 @@
 #
 from typing import Union
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 __all__ = [
@@ -23,7 +24,7 @@ __all__ = [
 
 
 def select_water(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects the O and H atoms of all water molecules.
 
@@ -39,6 +40,7 @@ def select_water(
     Union[set[int], bool]
         The atom indices of the matched atoms or a bool if checking match.
     """
+    system = trajectory.chemical_system
     pattern = "[#8X2;H2](~[H])~[H]"
     if check_exists:
         return system.has_substructure_match(pattern)

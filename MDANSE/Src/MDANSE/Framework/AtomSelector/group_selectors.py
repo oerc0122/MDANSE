@@ -15,6 +15,7 @@
 #
 from typing import Union
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 __all__ = [
@@ -28,7 +29,7 @@ __all__ = [
 
 
 def select_primary_amine(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects the N and H atoms of all primary amines.
 
@@ -44,6 +45,7 @@ def select_primary_amine(
     Union[set[int], bool]
         The atom indices of the matched atoms or a bool if checking match.
     """
+    system = trajectory.chemical_system
     pattern = "[#7X3;H2;!$([#7][#6X3][!#6]);!$([#7][#6X2][!#6])](~[H])~[H]"
     if check_exists:
         return system.has_substructure_match(pattern)
@@ -52,7 +54,7 @@ def select_primary_amine(
 
 
 def select_hydroxy(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects the O and H atoms of all hydroxy groups including water.
 
@@ -68,6 +70,7 @@ def select_hydroxy(
     Union[set[int], bool]
         The atom indices of the matched atoms or a bool if checking match.
     """
+    system = trajectory.chemical_system
     pattern = "[#8;H1,H2]~[H]"
     if check_exists:
         return system.has_substructure_match(pattern)
@@ -76,7 +79,7 @@ def select_hydroxy(
 
 
 def select_methly(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects the C and H atoms of all methyl groups.
 
@@ -92,6 +95,7 @@ def select_methly(
     Union[set[int], bool]
         The atom indices of the matched atoms or a bool if checking match.
     """
+    system = trajectory.chemical_system
     pattern = "[#6;H3](~[H])(~[H])~[H]"
     if check_exists:
         return system.has_substructure_match(pattern)
@@ -100,7 +104,7 @@ def select_methly(
 
 
 def select_phosphate(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects the P and O atoms of all phosphate groups.
 
@@ -116,6 +120,7 @@ def select_phosphate(
     set[int]
         The atom indices of the matched atoms or a bool if checking match.
     """
+    system = trajectory.chemical_system
     pattern = "[#15X4](~[#8])(~[#8])(~[#8])~[#8]"
     if check_exists:
         return system.has_substructure_match(pattern)
@@ -124,7 +129,7 @@ def select_phosphate(
 
 
 def select_sulphate(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects the S and O atoms of all sulphate groups.
 
@@ -140,6 +145,7 @@ def select_sulphate(
     Union[set[int], bool]
         The atom indices of the matched atoms or a bool if checking match.
     """
+    system = trajectory.chemical_system
     pattern = "[#16X4](~[#8])(~[#8])(~[#8])~[#8]"
     if check_exists:
         return system.has_substructure_match(pattern)
@@ -148,7 +154,7 @@ def select_sulphate(
 
 
 def select_thiol(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects the S and H atoms of all thiol groups.
 
@@ -164,6 +170,7 @@ def select_thiol(
     Union[set[int], bool]
         The atom indices of the matched atoms or a bool if checking match.
     """
+    system = trajectory.chemical_system
     pattern = "[#16X2;H1]~[H]"
     if check_exists:
         return system.has_substructure_match(pattern)

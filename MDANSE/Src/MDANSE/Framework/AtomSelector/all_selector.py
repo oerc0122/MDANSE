@@ -15,10 +15,11 @@
 #
 from typing import Union
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_all(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects all atoms in the chemical system except for the dummy
     atoms.
@@ -36,6 +37,7 @@ def select_all(
         All atom indices except for dummy atoms or a bool if checking
         match.
     """
+    system = trajectory.chemical_system
     if check_exists:
         return True
     else:

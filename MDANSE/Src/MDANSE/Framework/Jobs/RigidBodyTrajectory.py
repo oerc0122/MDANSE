@@ -20,7 +20,6 @@ import numpy as np
 
 import h5py
 
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalEntity import AtomCluster
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.Mathematics.LinearAlgebra import Quaternion, Vector

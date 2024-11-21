@@ -18,7 +18,6 @@ import collections
 
 import numpy as np
 
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Units import measure
 from MDANSE.Mathematics.Signal import differentiate
@@ -133,7 +132,9 @@ class Temperature(IJob):
 
         symbol = atom.symbol
 
-        mass = ATOMS_DATABASE.get_atom_property(symbol, "atomic_weight")
+        mass = self.configuration["trajectory"]["instance"].get_atom_property(
+            symbol, "atomic_weight"
+        )
 
         trajectory = self.configuration["trajectory"]["instance"]
 
