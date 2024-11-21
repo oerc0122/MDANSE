@@ -15,11 +15,13 @@
 #
 
 from itertools import product
+from functools import reduce
 from typing import List, Dict
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial import KDTree
+import networkx as nx
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
@@ -199,41 +201,19 @@ class Connectivity:
         """
         if self._bond_mapping is None:
             self.find_bonds(tolerance=tolerance)
-
-        def recursive_walk(
-            number: int, bond_mapping: Dict[int, int], atom_pool: List[int]
-        ):
-            """Returns a list of atoms connected by bonds to the input atom.
-            Called recursively in order to find the entire molecule.
-
-            Arguments:
-                number -- number (index) of the starting atom on the atom list.
-                bond_mapping -- dictionary of the interatomic connections,
-                    determined using the find_bonds method.
-                atom_pool -- a list of all the atom numbers, each atom to be used
-                    once only. Once an atom number has been assigned to a molecule,
-                    it will also be removed from this list.
-
-            Returns:
-                List[int] -- a list of atom numbers (indices)
-            """
-            connected_atoms = [number]
-            for at_number in bond_mapping[number]:
-                if at_number in atom_pool:
-                    connected_atoms.append(at_number)
-                    atom_pool.pop(atom_pool.index(at_number))
-                    connected_atoms += recursive_walk(
-                        at_number, bond_mapping, atom_pool
-                    )
-            return connected_atoms
-
         molecules = []
+
+        total_graph = nx.Graph()
+        total_graph.add_edges_from(self._unique_bonds)
         atom_pool = list(range(len(self._elements)))
-        while len(atom_pool):
-            new_molecule = recursive_walk(
-                atom_pool.pop(), self._bond_mapping, atom_pool
-            )
-            molecules.append(list(np.unique(new_molecule)))
+        while len(atom_pool) > 0:
+            last_atom = atom_pool.pop()
+            temp_dict = nx.dfs_successors(total_graph, last_atom)
+            others = reduce(list.__add__, temp_dict.values())
+            for atom in others:
+                atom_pool.pop(atom_pool.index(atom))
+            molecule = [last_atom] + others
+            molecules.append(molecule)
         self._molecules = molecules
 
     def add_bond_information(self):
