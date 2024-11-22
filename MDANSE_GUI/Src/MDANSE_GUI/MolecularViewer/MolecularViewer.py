@@ -406,8 +406,8 @@ class MolecularViewer(QtWidgets.QWidget):
             n_idxs = len(idxs)
             if n_idxs == 0:
                 continue
-            js[start: start + n_idxs] = i
-            ks[start: start + n_idxs] = idxs
+            js[start : start + n_idxs] = i
+            ks[start : start + n_idxs] = idxs
             start += n_idxs
 
         diff = rs[js] - rs[ks]
@@ -420,13 +420,10 @@ class MolecularViewer(QtWidgets.QWidget):
 
         n_points = len(ls)
         idxs = np.zeros((len(ls), 3), dtype=np.int64)
-        idxs[:,0] = 2
-        idxs[:,1] = ls
-        idxs[:,2] = ms
-        bonds.SetCells(
-            n_points,
-            numpy_support.numpy_to_vtkIdTypeArray(idxs.flatten())
-        )
+        idxs[:, 0] = 2
+        idxs[:, 1] = ls
+        idxs[:, 2] = ms
+        bonds.SetCells(n_points, numpy_support.numpy_to_vtkIdTypeArray(idxs.flatten()))
 
         return bonds, len(ls) > 0
 
@@ -642,8 +639,7 @@ class MolecularViewer(QtWidgets.QWidget):
             [
                 i
                 for i, at in enumerate(self._reader.atom_types)
-                if
-                CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
+                if CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
             ]
         )
         self.covs = np.array(
