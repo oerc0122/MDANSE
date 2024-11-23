@@ -396,7 +396,7 @@ class MolecularViewer(QtWidgets.QWidget):
         bonds = vtk.vtkCellArray()
 
         tree = KDTree(rs)
-        contacts = tree.query_ball_tree(tree, 2 * np.max(covs) + tolerance)
+        contacts = tree.query_ball_point(rs, 2 * np.max(covs) + tolerance, workers=-1)
         n_dists = sum([len(i) for i in contacts])
 
         js = np.zeros(n_dists, dtype=int)
