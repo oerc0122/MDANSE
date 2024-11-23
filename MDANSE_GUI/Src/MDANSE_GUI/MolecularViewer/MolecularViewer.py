@@ -410,13 +410,16 @@ class MolecularViewer(QtWidgets.QWidget):
             ks[start : start + n_idxs] = idxs
             start += n_idxs
 
+        mask = js < ks
+        js = js[mask]
+        ks = ks[mask]
         diff = rs[js] - rs[ks]
         dist = np.sum(diff * diff, axis=1)
         sum_radii = (covs[js] + covs[ks] + tolerance) ** 2
         js = js[(0 < dist) & (dist < sum_radii)]
         ks = ks[(0 < dist) & (dist < sum_radii)]
-        ls = not_du[js[js < ks]]
-        ms = not_du[ks[js < ks]]
+        ls = not_du[js]
+        ms = not_du[ks]
 
         n_points = len(ls)
         idxs = np.zeros((len(ls), 3), dtype=np.int64)
