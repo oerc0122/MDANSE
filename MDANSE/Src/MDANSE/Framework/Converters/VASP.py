@@ -16,7 +16,7 @@
 import collections
 
 from MDANSE.Core.Error import Error
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import PeriodicBoxConfiguration

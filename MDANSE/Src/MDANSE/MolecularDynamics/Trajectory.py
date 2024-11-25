@@ -28,7 +28,7 @@ from MDANSE.MLogging import LOG
 from MDANSE.Trajectory.MdanseTrajectory import MdanseTrajectory
 from MDANSE.Trajectory.H5MDTrajectory import H5MDTrajectory
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
 )
@@ -184,7 +184,7 @@ class Trajectory:
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
-        :type atoms: list MDANSE.Chemistry.ChemicalEntity.Atom
+        :type atoms: list MDANSE.Chemistry.ChemicalSystem.Atom
         :param first: the index of the first frame
         :type first: int
         :param last: the index of the last frame
@@ -297,7 +297,7 @@ class Trajectory:
         """Return the chemical system stored in the trajectory.
 
         :return: the chemical system
-        :rtype: MDANSE.Chemistry.ChemicalEntity.ChemicalSystem
+        :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         """
         return self._trajectory.chemical_system
 
@@ -361,11 +361,11 @@ class TrajectoryWriter:
         :param h5_filename: the trajectory filename
         :type h5_filename: str
         :param chemical_system: the chemical system
-        :type h5_filename: MDANSE.Chemistry.ChemicalEntity.ChemicalSystem
+        :type h5_filename: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         :param h5_filename: the number of steps
         :type h5_filename: int
         :param selected_atoms: the selected atoms of the chemical system to write
-        :type selected_atoms: list of MDANSE.Chemistry.ChemicalEntity.Atom
+        :type selected_atoms: list of MDANSE.Chemistry.ChemicalSystem.Atom
         """
 
         self._h5_filename = h5_filename
@@ -662,7 +662,7 @@ class RigidBodyTrajectoryGenerator:
         :param trajectory: the input trajectory
         :type trajectory: MDANSE.Trajectory.Trajectory
         :param chemical_entity: the chemical enitty for which the Rigig-Body trajectory should be computed
-        :type chemical_entity: MDANSE.Chemistry.ChemicalEntity.ChemicalEntity
+        :type chemical_entity: MDANSE.Chemistry.ChemicalSystem.ChemicalEntity
         :param reference: the reference configuration. Must be continuous.
         :type reference: MDANSE.MolecularDynamics.Configuration.Configuration
         :param first: the index of the first frame
@@ -821,7 +821,7 @@ def read_atoms_trajectory(
 
     # from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 
-    # from MDANSE.Chemistry.ChemicalEntity import Atom
+    # from MDANSE.Chemistry.ChemicalSystem import Atom
     # cs = ChemicalSystem()
     # for i in range(768):
     #     cs.add_chemical_entity(Atom(symbol='H'))

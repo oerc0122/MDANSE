@@ -1,6 +1,6 @@
 import unittest
 
-from MDANSE.Chemistry.ChemicalEntity import Molecule, Protein, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import Molecule, Protein, ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.TrajectoryUtils import *
 

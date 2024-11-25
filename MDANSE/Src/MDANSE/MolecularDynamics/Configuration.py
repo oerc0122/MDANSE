@@ -22,7 +22,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 if TYPE_CHECKING:
-    from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+    from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
     from MDANSE.Mathematics.Transformation import RigidBodyTransformation
     from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from MDANSE.Extensions import atoms_in_shell, contiguous_coordinates
@@ -40,7 +40,7 @@ class _Configuration(metaclass=abc.ABCMeta):
         Constructor.
 
         :param chemical_system: The chemical system described by this configuration.
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
         :param coords: the coordinates of all the particles in the chemical system
         :type coords: numpy.ndarray
@@ -144,7 +144,7 @@ class _Configuration(metaclass=abc.ABCMeta):
         Returns the chemical system stored in this configuration.
 
         :return: the chemical system that this configuration describes
-        :rtype: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :rtype: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
         """
         return self._chemical_system
 
@@ -154,7 +154,7 @@ class _Configuration(metaclass=abc.ABCMeta):
         Clones this configuration.
 
         :param chemical_system: the chemical system that this configuration describes
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
         """
         pass
 
@@ -201,7 +201,7 @@ class _PeriodicConfiguration(_Configuration):
         Constructor.
 
         :param chemical_system: The chemical system described by this configuration.
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
         :param coords: the coordinates of all the particles in the chemical system
         :type coords: numpy.ndarray
@@ -226,7 +226,7 @@ class _PeriodicConfiguration(_Configuration):
 
         :param chemical_system: the chemical system that is to be used for copying. It must have the same number of
                                 atoms as the chemical system that this configuration describes
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem):
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem):
         """
         if chemical_system is None:
             chemical_system = self._chemical_system
@@ -608,7 +608,7 @@ class RealConfiguration(_Configuration):
 
         :param chemical_system: the chemical system that is to be used for copying. It must have the same number of
                                 atoms as the chemical system that this configuration describes
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
         :return: the cloned configuration
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.RealConfiguration`

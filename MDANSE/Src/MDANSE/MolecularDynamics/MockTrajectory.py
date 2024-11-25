@@ -22,7 +22,7 @@ import numpy as np
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Units import measure
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Extensions import com_trajectory
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -329,7 +329,7 @@ class MockTrajectory:
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
-        :type atoms: list MDANSE.Chemistry.ChemicalEntity.Atom
+        :type atoms: list MDANSE.Chemistry.ChemicalSystem.Atom
         :param first: the index of the first frame
         :type first: int
         :param last: the index of the last frame
@@ -518,7 +518,7 @@ class MockTrajectory:
         """Return the chemical system stored in the trajectory.
 
         :return: the chemical system
-        :rtype: MDANSE.Chemistry.ChemicalEntity.ChemicalSystem
+        :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         """
         return self._chemicalSystem
 

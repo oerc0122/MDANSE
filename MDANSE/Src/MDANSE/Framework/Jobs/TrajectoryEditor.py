@@ -19,7 +19,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.MolecularDynamics.Trajectory import sorted_atoms

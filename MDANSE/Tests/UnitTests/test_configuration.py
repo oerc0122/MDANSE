@@ -17,7 +17,7 @@ import unittest
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import Atom, AtomCluster, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import Atom, AtomCluster, ChemicalSystem
 from MDANSE.Mathematics.Transformation import Translation, Rotation
 from MDANSE.Mathematics.LinearAlgebra import Vector
 from MDANSE.MolecularDynamics.Configuration import (

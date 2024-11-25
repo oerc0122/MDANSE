@@ -19,7 +19,7 @@ import collections
 import numpy as np
 
 
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,

@@ -16,7 +16,7 @@
 import tempfile
 import unittest
 import numpy as np
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import Atom, ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
 from MDANSE.MolecularDynamics.UnitCell import UnitCell

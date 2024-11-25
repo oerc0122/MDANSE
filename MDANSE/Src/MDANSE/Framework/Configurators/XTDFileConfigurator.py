@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ElementTree
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,

@@ -20,7 +20,7 @@ from rdkit.Chem.rdmolfiles import MolFromPDBBlock
 from rdkit.Chem import rdDetermineBonds
 
 
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE.IO.PDB import PDBFile
 from MDANSE.MLogging import LOG

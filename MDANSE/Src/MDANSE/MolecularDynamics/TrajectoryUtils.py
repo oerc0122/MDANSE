@@ -21,7 +21,7 @@ import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Extensions import fast_calculation
 
 
@@ -54,14 +54,14 @@ def atom_index_to_molecule_index(chemical_system: ChemicalSystem) -> dict[int, i
     chemical_entities property of ChemicalSystem.
 
     :param chemical_system: the chemical system whose lookup table is to be generated
-    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
     :return: a lookup table mapping atom indices to the indices of their root chemical entity
     :rtype: dict
 
     :Example:
 
-    >>> from MDANSE.Chemistry.ChemicalEntity import Molecule, ChemicalSystem
+    >>> from MDANSE.Chemistry.ChemicalSystem import Molecule, ChemicalSystem
     >>>
     >>> # Set up a chemical system
     >>> molecules = [Molecule('WAT', 'w1'), Molecule('WAT', 'w2')]
@@ -88,7 +88,7 @@ def brute_formula(
     Determine the molecular formula of a given chemical entity.
 
     :param chemical_entity: the chemical entity whose formula is to be determined
-    :type chemical_entity: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalEntity`
+    :type chemical_entity: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalEntity`
 
     :param sep: the separator used between elements, i.e. with the default separator a water molecule will return H2_O1
     :type sep: str
@@ -101,7 +101,7 @@ def brute_formula(
 
     :Example:
 
-    >>> from MDANSE.Chemistry.ChemicalEntity import Molecule
+    >>> from MDANSE.Chemistry.ChemicalSystem import Molecule
     >>> m = Molecule('WAT', 'water')
     >>>
     >>> brute_formula(m)
@@ -135,12 +135,12 @@ def find_atoms_in_molecule(
     Finds all chemical entities of the provided name within the chemical system, and then retrieves all atoms from each
     of the found entities whose name matches one of the provided atom names. However, please note that only the chemical
     entities directly registered in the chemical system are searched, i.e. the chemical_entities property of
-    :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`. Therefore, for example, if a chemical system consists of a
+    :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`. Therefore, for example, if a chemical system consists of a
     Protein with name 'protein' which consists of 2 NucleotideChains 'chain1' and 'chain2', and this function is called
     with the entity_name parameter set to 'chain1', an empty list will be returned.
 
     :param chemical_system: the chemical system to be searched
-    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
     :param entity_name: the name of the chemical entity to match
     :type entity_name: str
@@ -156,7 +156,7 @@ def find_atoms_in_molecule(
 
     :Example:
 
-    >>> from MDANSE.Chemistry.ChemicalEntity import Molecule, ChemicalSystem
+    >>> from MDANSE.Chemistry.ChemicalSystem import Molecule, ChemicalSystem
     >>>
     >>> cs = ChemicalSystem()
     >>>
@@ -208,14 +208,14 @@ def get_chemical_objects_dict(
     mapped.
 
     :param chemical_system: the chemical system whose entities are to be retrieved
-    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
     :return: a dict mapping the names of the entities in a chemical system to a list of entities with that name
     :rtype: dict
 
     :Examples:
 
-    >>> from MDANSE.Chemistry.ChemicalEntity import Molecule, ChemicalSystem
+    >>> from MDANSE.Chemistry.ChemicalSystem import Molecule, ChemicalSystem
     >>>
     >>> compounds = [Molecule('WAT', 'water'), Molecule('WAT', 'water'), Molecule('WAT', 'dihydrogen monoxide'), Atom()]
     >>>
@@ -240,14 +240,14 @@ def group_atoms(
     chemical_system: ChemicalSystem, groups: list[list[int]]
 ) -> list[AtomGroup]:
     """
-    Groups select atoms into :class: `MDANSE.Chemistry.ChemicalEntity.AtomGroup` objects according to the instructions
+    Groups select atoms into :class: `MDANSE.Chemistry.ChemicalSystem.AtomGroup` objects according to the instructions
     in the 'groups' argument. Please note, however, that the groups are created strictly according to this parameter,
     meaning that not all atoms are necessarily placed into a group and that some atoms may be placed into multiple
     groups, depending on the instructions. The only exception to this is if one of the lists in the 'groups' parameters
     is empty, in which case no group is created for that list, the instruction silently ignored.
 
     :param chemical_system: the chemical system whose atoms are to be grouped
-    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
     :param groups: the nested list of indexes, each sublist defining a group
     :type groups: list
@@ -257,7 +257,7 @@ def group_atoms(
 
     :Example:
 
-    >>> from MDANSE.Chemistry.ChemicalEntity import Atom, Molecule, ChemicalSystem
+    >>> from MDANSE.Chemistry.ChemicalSystem import Atom, Molecule, ChemicalSystem
     >>>
     >>> compounds = [Atom(), Molecule('WAT', ''), Molecule('WAT', ''), Molecule('WAT', '')]
     >>>
@@ -291,13 +291,13 @@ def resolve_undefined_molecules_name(chemical_system: ChemicalSystem) -> None:
     :func: `MDANSE.MolecularDynamics.TrajectoryUtils.resolve_undefined_molecules_name`.
 
     :param chemical_system: the chemical system
-    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
     :return: None
 
     :Example:
 
-    >>> from MDANSE.Chemistry.ChemicalEntity import Atom, Molecule, ChemicalSystem
+    >>> from MDANSE.Chemistry.ChemicalSystem import Atom, Molecule, ChemicalSystem
     >>>
     >>> compounds = [Molecule('WAT', ''), Molecule('WAT', ' water '), Molecule('WAT', '    '), Atom()]
     >>>
@@ -338,7 +338,7 @@ def sorted_atoms(
 
     :Example:
 
-    >>> from MDANSE.Chemistry.ChemicalEntity import Atom
+    >>> from MDANSE.Chemistry.ChemicalSystem import Atom
     >>>
     >>> atoms = [Atom() for _ in range(4)]
     >>> for i, atom in enumerate(atoms):

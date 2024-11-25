@@ -22,7 +22,7 @@ from ase.io import read as ase_read
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Units import measure
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
     PeriodicRealConfiguration,
@@ -119,7 +119,7 @@ class MinimalPDBReader:
         """Build the chemical system.
 
         Returns:
-            MDANSE.Chemistry.ChemicalEntity.ChemicalSystem: the chemical system
+            MDANSE.Chemistry.ChemicalSystem.ChemicalSystem: the chemical system
         """
 
         coordinates = []

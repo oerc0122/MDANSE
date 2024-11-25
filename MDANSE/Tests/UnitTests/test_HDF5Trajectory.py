@@ -19,7 +19,7 @@ import os
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import Atom, ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
 

@@ -16,7 +16,7 @@
 import json
 import copy
 from typing import Union
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE.Framework.AtomSelector.all_selector import select_all
 from MDANSE.Framework.AtomSelector.atom_selectors import *

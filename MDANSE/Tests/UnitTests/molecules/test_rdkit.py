@@ -6,7 +6,7 @@ from rdkit.Chem.rdmolops import SanitizeMol
 from rdkit.Chem.rdmolops import GetMolFrags
 import pytest
 from MDANSE.IO.PDBReader import PDBReader
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 
 
 fname = os.path.join(
