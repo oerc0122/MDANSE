@@ -22,7 +22,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 if TYPE_CHECKING:
-    from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom, _ChemicalEntity
+    from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
     from MDANSE.Mathematics.Transformation import RigidBodyTransformation
     from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from MDANSE.Extensions import atoms_in_shell, contiguous_coordinates
@@ -733,8 +733,6 @@ class RealConfiguration(_Configuration):
 
 if __name__ == "__main__":
     np.random.seed(1)
-
-    from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
 
     n_atoms = 2
     cs = ChemicalSystem()

@@ -20,7 +20,7 @@ import MDAnalysis as mda
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom
+from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,

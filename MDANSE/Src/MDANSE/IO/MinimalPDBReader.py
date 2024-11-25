@@ -22,7 +22,7 @@ from ase.io import read as ase_read
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Units import measure
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom
+from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
     PeriodicRealConfiguration,

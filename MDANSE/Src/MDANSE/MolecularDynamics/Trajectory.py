@@ -28,7 +28,7 @@ from MDANSE.MLogging import LOG
 from MDANSE.Trajectory.MdanseTrajectory import MdanseTrajectory
 from MDANSE.Trajectory.H5MDTrajectory import H5MDTrajectory
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem, _ChemicalEntity
+from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
 )
@@ -845,8 +845,6 @@ def read_atoms_trajectory(
 
 if __name__ == "__main__":
     from MDANSE.MolecularDynamics.Configuration import RealConfiguration
-
-    from MDANSE.Chemistry.ChemicalEntity import Atom
 
     cs = ChemicalSystem()
     for i in range(2):

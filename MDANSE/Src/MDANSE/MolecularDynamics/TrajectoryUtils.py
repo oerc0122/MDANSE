@@ -21,13 +21,7 @@ import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import (
-    Atom,
-    AtomCluster,
-    AtomGroup,
-    ChemicalSystem,
-    _ChemicalEntity,
-)
+from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
 from MDANSE.Extensions import fast_calculation
 
 

@@ -21,14 +21,11 @@ import copy
 import h5py
 import numpy as np
 from rdkit import Chem
-from MDANSE.Chemistry import (
-    ATOMS_DATABASE,
-)
 from MDANSE.MLogging import LOG
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 if TYPE_CHECKING:
     from MDANSE.MolecularDynamics.Configuration import _Configuration
+    from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 class BasicCluster:
@@ -226,7 +223,7 @@ class ChemicalSystem:
         for key, value in self._clusters.items():
             clusters_group.create_dataset(key, data=value)
 
-    def load(self, trajectory_instance: Trajectory):
+    def load(self, trajectory_instance: "Trajectory"):
 
         source = trajectory_instance.file
         self._trajectory = trajectory_instance

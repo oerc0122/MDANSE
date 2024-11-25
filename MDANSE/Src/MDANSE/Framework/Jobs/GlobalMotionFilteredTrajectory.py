@@ -21,7 +21,6 @@ import numpy as np
 
 import h5py
 
-from MDANSE.Chemistry.ChemicalEntity import AtomGroup
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import sorted_atoms, TrajectoryWriter

@@ -17,10 +17,6 @@ import re
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import (
-    Atom,
-    AtomCluster,
-)
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping, AtomLabel
 

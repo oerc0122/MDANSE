@@ -18,7 +18,6 @@ import copy
 from typing import Union
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE.Framework.AtomSelector.all_selector import select_all
 from MDANSE.Framework.AtomSelector.atom_selectors import *
 from MDANSE.Framework.AtomSelector.group_selectors import *
