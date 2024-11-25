@@ -383,7 +383,8 @@ class MolecularViewer(QtWidgets.QWidget):
         if self._bonds_visible:
             # do not bond atoms to dummy atoms
             rs = coords[self.not_du]
-            bonds, bonds_exist = self.create_bond_cell_array(rs, self.covs, self.not_du)
+            bonds, bonds_exist = self.create_bond_cell_array(
+                rs, self.covs[self.not_du], self.not_du)
             if bonds_exist:
                 self._polydata.SetLines(bonds)
                 self._polydata_bonds_exist = True
@@ -638,6 +639,10 @@ class MolecularViewer(QtWidgets.QWidget):
                 for at in self._atoms
             ]
         ).astype(np.float32)
+        self.du_log = np.array([
+            CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
+            for at in self._reader.atom_types
+        ])
         self.not_du = np.array(
             [
                 i
@@ -650,7 +655,7 @@ class MolecularViewer(QtWidgets.QWidget):
                 CHEMICAL_ELEMENTS.get_atom_property(at, "covalent_radius")
                 for at in self._reader.atom_types
             ]
-        )[self.not_du]
+        )
 
         scalars = ndarray_to_vtkarray(
             self._atom_colours, self._atom_scales, self._n_atoms
@@ -765,50 +770,29 @@ class MolecularViewerWithPicking(MolecularViewer):
         self.update_renderer()
 
     def update_picked_polydata(self):
+        atoms = vtk.vtkPoints()
+
+        if len(self.picked_atoms) == 0:
+            self._picked_polydata.SetPoints(atoms)
+            return
+
         picked = np.array(sorted(list(self.picked_atoms)))
         coords = self._reader.read_frame(self._current_frame)
-
-        atoms = vtk.vtkPoints()
-        atoms.SetNumberOfPoints(len(self.picked_atoms))
-        for i, j in enumerate(picked):
-            x, y, z = coords[j, :]
-            atoms.SetPoint(i, x, y, z)
+        atoms.SetData(numpy_support.numpy_to_vtk(coords[picked]))
         self._picked_polydata.SetPoints(atoms)
 
-        picked_colours = []
-        picked_radii = []
-        for i in sorted(list(self.picked_atoms)):
-            picked_colours.append(self._colour_manager.colours[i])
-            picked_radii.append(self._colour_manager.radii[i])
         scalars = ndarray_to_vtkarray(
-            np.array(picked_colours),
-            np.array(picked_radii),
+            self._colour_manager.colours[picked],
+            self._colour_manager.radii[picked],
             np.arange(len(self.picked_atoms)),
         )
         self._picked_polydata.GetPointData().SetScalars(scalars)
 
-        not_du = np.array(
-            [
-                i
-                for i, j in enumerate(picked)
-                if CHEMICAL_ELEMENTS.get_atom_property(
-                    self._reader.atom_types[j], "element"
-                )
-                != "dummy"
-            ]
-        )
-
+        not_du = np.arange(len(self.picked_atoms))[self.du_log[picked]]
         if self._bonds_visible and len(not_du) >= 1:
             # do not bond atoms to dummy atoms
             rs = coords[picked][not_du]
-            covs = np.array(
-                [
-                    CHEMICAL_ELEMENTS.get_atom_property(
-                        self._reader.atom_types[i], "covalent_radius"
-                    )
-                    for i in picked
-                ]
-            )[not_du]
+            covs = self.covs[picked][not_du]
 
             bonds, bonds_exist = self.create_bond_cell_array(rs, covs, not_du)
             if bonds_exist:
