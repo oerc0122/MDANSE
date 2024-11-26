@@ -151,8 +151,8 @@ class ElasticIncoherentStructureFactor(IJob):
         """
 
         # get atom index
-        indexes = self.configuration["atom_selection"]["indexes"][index]
-        atoms = [self._atoms[idx] for idx in indexes]
+        indices = self.configuration["atom_selection"]["indices"][index]
+        atoms = [self._atoms[idx] for idx in indices]
 
         series = self.configuration["trajectory"]["instance"].read_com_trajectory(
             atoms,

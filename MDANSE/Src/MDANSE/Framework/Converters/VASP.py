@@ -106,7 +106,7 @@ class VASP(Converter):
         ):
             for i in range(number):
                 element = get_element_from_mapping(self._atomicAliases, symbol)
-                element_list.append(element_list)
+                element_list.append(element)
         self._chemical_system.initialise_atoms(element_list)
 
         # A trajectory is opened for writing.

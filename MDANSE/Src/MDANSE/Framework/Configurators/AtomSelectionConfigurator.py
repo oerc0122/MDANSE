@@ -56,9 +56,9 @@ class AtomSelectionConfigurator(IConfigurator):
         self["value"] = value
 
         selector.load_from_json(value)
-        indexes = selector.get_idxs()
+        indices = selector.get_idxs()
 
-        self["flatten_indexes"] = sorted(list(indexes))
+        self["flatten_indices"] = sorted(list(indices))
 
         trajConfig = self._configurable[self._dependencies["trajectory"]]
 
@@ -66,10 +66,10 @@ class AtomSelectionConfigurator(IConfigurator):
             trajConfig["instance"].chemical_system.atom_list,
             key=operator.attrgetter("index"),
         )
-        selectedAtoms = [atoms[idx] for idx in self["flatten_indexes"]]
+        selectedAtoms = [atoms[idx] for idx in self["flatten_indices"]]
 
-        self["selection_length"] = len(self["flatten_indexes"])
-        self["indexes"] = [[idx] for idx in self["flatten_indexes"]]
+        self["selection_length"] = len(self["flatten_indices"])
+        self["indices"] = [[idx] for idx in self["flatten_indices"]]
 
         self["elements"] = [[at.symbol] for at in selectedAtoms]
         self["names"] = [at.symbol for at in selectedAtoms]
@@ -109,15 +109,15 @@ class AtomSelectionConfigurator(IConfigurator):
         """
         return len(self["names"])
 
-    def get_indexes(self):
-        indexesPerElement = {}
+    def get_indices(self):
+        indicesPerElement = {}
         for i, v in enumerate(self["names"]):
-            if v in indexesPerElement:
-                indexesPerElement[v].extend(self["indexes"][i])
+            if v in indicesPerElement:
+                indicesPerElement[v].extend(self["indices"][i])
             else:
-                indexesPerElement[v] = self["indexes"][i][:]
+                indicesPerElement[v] = self["indices"][i][:]
 
-        return indexesPerElement
+        return indicesPerElement
 
     def get_information(self) -> str:
         """

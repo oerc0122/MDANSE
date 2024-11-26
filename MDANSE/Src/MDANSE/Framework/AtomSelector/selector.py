@@ -25,7 +25,7 @@ from MDANSE.Framework.AtomSelector.molecule_selectors import *
 
 
 class Selector:
-    """Used to get the indexes of a subset of atoms of a chemical system.
+    """Used to get the indices of a subset of atoms of a chemical system.
 
     Attributes
     ----------
@@ -160,12 +160,12 @@ class Selector:
                 self.settings[k0] = v0
 
     def get_idxs(self) -> set[int]:
-        """The atom indexes after applying the selection to the system.
+        """The atom indices after applying the selection to the system.
 
         Returns
         -------
         set[int]
-            The atoms indexes.
+            The atoms indices.
         """
         idxs = set([])
 
@@ -195,7 +195,7 @@ class Selector:
         Parameters
         ----------
         idxs : set[int]
-            With the indexes of the atom selection.
+            With the indices of the atom selection.
         """
         new_settings = copy.deepcopy(self.settings)
         added = set([])

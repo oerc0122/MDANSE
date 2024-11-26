@@ -15,7 +15,7 @@
 #
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Dict
 import copy
 
 import h5py
@@ -88,6 +88,13 @@ class ChemicalSystem:
         for pair in pair_list:
             self.rdkit_mol.AddBond(pair[0], pair[1], Chem.rdchem.BondType.UNSPECIFIED)
 
+    def add_labels(self, label_dict: Dict[str, List[int]]):
+        for key, item in label_dict.items():
+            if key in self._labels.keys():
+                self._labels[key] += item
+            else:
+                self._labels[key] = item
+
     def add_clusters(self, group_list: List[List[int]]):
         for group in group_list:
             atom_list = [self._atom_types[index] for index in group]
@@ -117,7 +124,7 @@ class ChemicalSystem:
     def get_substructure_matches(
         self, smarts: str, maxmatches: int = 1000000
     ) -> set[int]:
-        """Get the indexes which match the smarts string. Note that
+        """Get the indices which match the smarts string. Note that
         the default bond type in MDANSE is
         Chem.rdchem.BondType.UNSPECIFIED.
 

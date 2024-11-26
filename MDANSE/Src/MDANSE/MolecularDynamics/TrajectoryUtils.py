@@ -129,7 +129,7 @@ def find_atoms_in_molecule(
     chemical_system: ChemicalSystem,
     entity_name: str,
     atom_names: list[str],
-    indexes: bool = False,
+    indices: bool = False,
 ) -> list[list[Union[Atom, int]]]:
     """
     Finds all chemical entities of the provided name within the chemical system, and then retrieves all atoms from each
@@ -148,10 +148,10 @@ def find_atoms_in_molecule(
     :param atom_names: the list of atom names to search
     :type atom_names: list
 
-    :param indexes: if True the indexes of the atoms will be returned otherwise the Atom instances will be returned
-    :type indexes: bool
+    :param indices: if True the indices of the atoms will be returned otherwise the Atom instances will be returned
+    :type indices: bool
 
-    :return: the list of indexes or atom instances found
+    :return: the list of indices or atom instances found
     :rtype: list
 
     :Example:
@@ -173,7 +173,7 @@ def find_atoms_in_molecule(
     >>> # Searching for atoms that do not exist in the molecules of the specified name returns a list of empty lists
     >>> find_atoms_in_molecule(cs, 'water', ['INVALID'])
     [[], []]
-    >>> # Setting the indexes parameter to True causes indices to be returned instead of atom objects
+    >>> # Setting the indices parameter to True causes indices to be returned instead of atom objects
     >>> find_atoms_in_molecule(cs, 'water', ['HW2', 'HW1'], True)
     [[1, 2], [4, 5]]
     """
@@ -193,7 +193,7 @@ def find_atoms_in_molecule(
         except ValueError:
             match.append([])
 
-    if indexes is True:
+    if indices is True:
         match = [[at.index for at in at_list] for at_list in match]
 
     return match
@@ -249,7 +249,7 @@ def group_atoms(
     :param chemical_system: the chemical system whose atoms are to be grouped
     :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
-    :param groups: the nested list of indexes, each sublist defining a group
+    :param groups: the nested list of indices, each sublist defining a group
     :type groups: list
 
     :return: list of atom groups as specified

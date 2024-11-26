@@ -90,14 +90,14 @@ class GlobalMotionFilteredTrajectory(IJob):
             self.configuration["trajectory"]["instance"].chemical_system.atom_list
         )
         self._selected_atoms = []
-        for indexes in self.configuration["atom_selection"]["indexes"]:
-            for idx in indexes:
+        for indices in self.configuration["atom_selection"]["indices"]:
+            for idx in indices:
                 self._selected_atoms.append(atoms[idx])
         self._selected_atoms = AtomGroup(self._selected_atoms)
 
         self._reference_atoms = []
-        for indexes in self.configuration["reference_selection"]["indexes"]:
-            for idx in indexes:
+        for indices in self.configuration["reference_selection"]["indices"]:
+            for idx in indices:
                 self._reference_atoms.append(atoms[idx])
         self._reference_atoms = AtomGroup(self._reference_atoms)
 

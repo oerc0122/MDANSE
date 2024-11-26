@@ -110,20 +110,20 @@ class TrajectoryEditor(IJob):
         )
 
         # The collection of atoms corresponding to the atoms selected for output.
-        indexes = [
+        indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
-        self._indices = indexes
-        self._selectedAtoms = [atoms[ind] for ind in indexes]
+        self._indices = indices
+        self._selectedAtoms = [atoms[ind] for ind in indices]
         elements = self.configuration["atom_selection"]["elements"]
 
         new_chemical_system = ChemicalSystem("Edited system")
         new_chemical_system.from_element_list([entry[0] for entry in elements])
         if self.configuration["molecule_tolerance"]["use_it"]:
             tolerance = self.configuration["molecule_tolerance"]["value"]
-            conn = Connectivity(trajectory=self._input_trajectory, selection=indexes)
+            conn = Connectivity(trajectory=self._input_trajectory, selection=indices)
             conn.find_molecules(tolerance=tolerance)
             conn.add_bond_information()
             new_chemical_system.rebuild(conn._molecules)
@@ -131,7 +131,7 @@ class TrajectoryEditor(IJob):
                 self.configuration["frames"]["value"][0]
             )
             conf = conf.contiguous_configuration()
-            coords = conf.coordinates[indexes]
+            coords = conf.coordinates[indices]
             if conf.is_periodic:
                 com_conf = PeriodicRealConfiguration(
                     new_chemical_system,

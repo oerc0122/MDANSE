@@ -178,11 +178,11 @@ class DensityOfStates(IJob):
         trajectory = self.configuration["trajectory"]["instance"]
 
         # get atom index
-        indexes = self.configuration["atom_selection"]["indexes"][index]
+        indices = self.configuration["atom_selection"]["indices"][index]
 
         if self.configuration["interpolation_order"]["value"] == 0:
             series = trajectory.read_configuration_trajectory(
-                indexes[0],
+                indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
                 step=self.configuration["frames"]["step"],
@@ -190,7 +190,7 @@ class DensityOfStates(IJob):
             )
         else:
             series = trajectory.read_atomic_trajectory(
-                indexes[0],
+                indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
                 step=self.configuration["frames"]["step"],

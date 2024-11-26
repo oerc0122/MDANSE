@@ -81,7 +81,7 @@ class CenterOfMassesTrajectory(IJob):
         self.numberOfSteps = self.configuration["frames"]["number"]
 
         chemical_system = ChemicalSystem()
-        for i in range(len(self.configuration["atom_selection"]["indexes"])):
+        for i in range(len(self.configuration["atom_selection"]["indices"])):
             at = Atom(symbol="H", name="com_{:d}".format(i))
             chemical_system.add_chemical_entity(at)
 
@@ -97,7 +97,7 @@ class CenterOfMassesTrajectory(IJob):
 
         self._grouped_atoms = group_atoms(
             self.configuration["trajectory"]["instance"].chemical_system,
-            self.configuration["atom_selection"]["indexes"],
+            self.configuration["atom_selection"]["indices"],
         )
 
     def run_step(self, index):

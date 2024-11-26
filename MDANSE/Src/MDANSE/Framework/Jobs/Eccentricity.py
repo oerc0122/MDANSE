@@ -79,10 +79,10 @@ class Eccentricity(IJob):
         self._atoms = sorted_atoms(
             self.configuration["trajectory"]["instance"].chemical_system.atom_list
         )
-        self._indexes = np.array(
+        self._indices = np.array(
             [
                 idx
-                for idxs in self._configuration["atom_selection"]["indexes"]
+                for idxs in self._configuration["atom_selection"]["indices"]
                 for idx in idxs
             ]
         )
@@ -107,7 +107,7 @@ class Eccentricity(IJob):
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
         conf = conf.contiguous_configuration()
-        series = conf["coordinates"][self._indexes, :]
+        series = conf["coordinates"][self._indices, :]
 
         com = center_of_mass(series, masses=self._selectionMasses)
 

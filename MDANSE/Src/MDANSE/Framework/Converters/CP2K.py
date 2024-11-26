@@ -150,7 +150,7 @@ class CP2K(Converter):
         "OutputTrajectoryConfigurator",
         {
             "formats": ["MDTFormat"],
-            "root": "xdatcar_file",
+            "root": "pos_file",
             "label": "MDANSE trajectory (filename, format)",
         },
     )

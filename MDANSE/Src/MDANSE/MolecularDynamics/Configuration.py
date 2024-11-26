@@ -16,7 +16,7 @@
 from __future__ import annotations
 import abc
 import copy
-from typing import Union, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING, List
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -334,7 +334,7 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
 
     def atoms_in_shell(
         self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> list[Atom]:
+    ) -> List[int]:
         """
         Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
         atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
@@ -355,15 +355,11 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
         :rtype: list
         """
 
-        indexes = atoms_in_shell.atoms_in_shell_box(
+        indices = atoms_in_shell.atoms_in_shell_box(
             self._variables["coordinates"].astype(np.float64), ref, mini, maxi
         )
 
-        atom_list = self._chemical_system.atom_list
-
-        selected_atoms = [atom_list[idx] for idx in indexes]
-
-        return selected_atoms
+        return indices
 
     def contiguous_configuration(self) -> PeriodicBoxConfiguration:
         """
@@ -373,21 +369,17 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indexes = []
-        for ce in self._chemical_system.chemical_entities:
-            indexes.append([at.index for at in ce.atom_list])
+        indices = self._chemical_system._atom_indices
 
         contiguous_coords = contiguous_coordinates.contiguous_coordinates_box(
-            self._variables["coordinates"], self._unit_cell.transposed_direct, indexes
+            self._variables["coordinates"], self._unit_cell.transposed_direct, indices
         )
 
         conf = self.clone()
         conf._variables["coordinates"] = contiguous_coords
         return conf
 
-    def contiguous_offsets(
-        self, chemical_entities: list[_ChemicalEntity] = None
-    ) -> np.ndarray:
+    def contiguous_offsets(self, indices: list[int] = None) -> np.ndarray:
         """
         Returns the contiguity offsets for a list of chemical entities.
 
@@ -398,33 +390,15 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
         :return: the offsets
         :rtype: numpy.ndarray
         """
-
-        if chemical_entities is None:
-            chemical_entities = self._chemical_system.chemical_entities
-        else:
-            for i, ce in enumerate(chemical_entities):
-                root = ce.root_chemical_system
-                if root is not self._chemical_system:
-                    raise ConfigurationError(
-                        "All the entities provided in the chemical_entities parameter must belong "
-                        "to the chemical system registered with this configuration, which is "
-                        f"{self._chemical_system.name}. However, the entity at index {i}, "
-                        f"{str(ce)}, is in chemical system "
-                        f"{root.name if root is not None else None}.\nExpected chemical system: "
-                        f"{repr(self._chemical_system)}\nActual chemical system: {repr(root)}\n"
-                        f"Faulty chemical entity: {repr(ce)}"
-                    )
-
-        indexes = []
-        for ce in chemical_entities:
-            indexes.append([at.index for at in ce.atom_list])
+        if indices is None:
+            indices = self._chemical_system._atom_indices
 
         offsets = contiguous_coordinates.contiguous_offsets_box(
             self._variables["coordinates"][
-                [item for sublist in indexes for item in sublist]
+                [item for sublist in indices for item in sublist]
             ],
             self._unit_cell.transposed_direct,
-            indexes,
+            indices,
         )
 
         return offsets
@@ -474,7 +448,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
 
     def atoms_in_shell(
         self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> list[Atom]:
+    ) -> list[int]:
         """
         Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
         atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
@@ -491,11 +465,11 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :param maxi: the outer radius of the shell
         :type maxi: float
 
-        :return: list of atoms within the defined shell
+        :return: list of atom indices within the defined shell
         :rtype: list
         """
 
-        indexes = atoms_in_shell.atoms_in_shell_real(
+        indices = atoms_in_shell.atoms_in_shell_real(
             self._variables["coordinates"].astype(np.float64),
             self._unit_cell.transposed_direct,
             self._unit_cell.transposed_inverse,
@@ -504,11 +478,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
             maxi,
         )
 
-        atom_list = self._chemical_system.atom_list
-
-        selected_atoms = [atom_list[idx] for idx in indexes]
-
-        return selected_atoms
+        return indices
 
     def contiguous_configuration(self) -> PeriodicRealConfiguration:
         """
@@ -518,15 +488,13 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indexes = []
-        for ce in self._chemical_system.chemical_entities:
-            indexes.append([at.index for at in ce.atom_list])
+        indices = self._chemical_system._atom_indices
 
         contiguous_coords = contiguous_coordinates.contiguous_coordinates_real(
             self._variables["coordinates"],
             self._unit_cell.transposed_direct,
             self._unit_cell.transposed_inverse,
-            indexes,
+            indices,
         )
 
         conf = self.clone()
@@ -552,9 +520,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         conf._variables["coordinates"] = contiguous_coords
         return conf
 
-    def contiguous_offsets(
-        self, chemical_entities: Union[None, list[_ChemicalEntity]] = None
-    ) -> np.ndarray:
+    def contiguous_offsets(self, indices: List[int] = None) -> np.ndarray:
         """
         Returns the contiguity offsets for a list of chemical entities.
 
@@ -566,32 +532,16 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :rtype: numpy.ndarray
         """
 
-        if chemical_entities is None:
-            chemical_entities = self._chemical_system.chemical_entities
-        else:
-            for i, ce in enumerate(chemical_entities):
-                root = ce.root_chemical_system
-                if root is not self._chemical_system:
-                    raise ConfigurationError(
-                        "All the entities provided in the chemical_entities parameter must belong "
-                        "to the chemical system registered with this configuration, which is "
-                        f"{self._chemical_system.name}. However, the entity at index {i}, "
-                        f"{str(ce)}, is in chemical system "
-                        f"{root.name if root is not None else None}.\nExpected chemical system: "
-                        f"{repr(self._chemical_system)}\nActual chemical system: {repr(root)}\n"
-                        f"Faulty chemical entity: {repr(ce)}"
-                    )
-        indexes = []
-        for ce in chemical_entities:
-            indexes.append([at.index for at in ce.atom_list])
+        if indices is None:
+            indices = self._chemical_system._atom_indices
 
         offsets = contiguous_coordinates.contiguous_offsets_real(
             self._variables["coordinates"][
-                [item for sublist in indexes for item in sublist]
+                [item for sublist in indices for item in sublist]
             ],
             self._unit_cell.transposed_direct,
             self._unit_cell.transposed_inverse,
-            indexes,
+            indices,
         )
 
         return offsets
@@ -643,7 +593,7 @@ class RealConfiguration(_Configuration):
 
     def atoms_in_shell(
         self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> list[Atom]:
+    ) -> List[int]:
         """
         Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
         atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
@@ -664,15 +614,11 @@ class RealConfiguration(_Configuration):
         :rtype: list
         """
 
-        indexes = atoms_in_shell.atoms_in_shell_nopbc(
+        indices = atoms_in_shell.atoms_in_shell_nopbc(
             self._variables["coordinates"].astype(np.float64), ref, mini, maxi
         )
 
-        atom_list = self._chemical_system.atom_list
-
-        selected_atoms = [atom_list[idx] for idx in indexes]
-
-        return selected_atoms
+        return indices
 
     def contiguous_configuration(self) -> RealConfiguration:
         """
@@ -692,9 +638,7 @@ class RealConfiguration(_Configuration):
         """
         return self
 
-    def contiguous_offsets(
-        self, chemical_entities: Union[None, list[_ChemicalEntity]] = None
-    ) -> np.ndarray:
+    def contiguous_offsets(self, indices: List[int] = None) -> np.ndarray:
         """
         Returns the contiguity offsets for a list of chemical entities, which are always zero for every atom.
 
@@ -706,27 +650,10 @@ class RealConfiguration(_Configuration):
         :rtype: numpy.ndarray
         """
 
-        if chemical_entities is None:
-            chemical_entities = self._chemical_system.chemical_entities
-        else:
-            for j, ce in enumerate(chemical_entities):
-                root = ce.root_chemical_system
-                if root is not self._chemical_system:
-                    raise ConfigurationError(
-                        "All the entities provided in the chemical_entities parameter must belong "
-                        "to the chemical system registered with this configuration, which is "
-                        f"{self._chemical_system.name}. However, the entity at index {j}, "
-                        f"{str(ce)}, is in chemical system "
-                        f"{root.name if root is not None else None}.\nExpected chemical system: "
-                        f"{repr(self._chemical_system)}\nActual chemical system: {repr(root)}\n"
-                        f"Faulty chemical entity: {repr(ce)}"
-                    )
+        if indices is None:
+            indices = self._chemical_system._atom_indices
 
-        number_of_particles = sum(
-            [ce.total_number_of_atoms for ce in chemical_entities]
-        )
-
-        offsets = np.zeros((number_of_particles, 3))
+        offsets = np.zeros((len(indices), 3))
 
         return offsets
 
@@ -736,8 +663,7 @@ if __name__ == "__main__":
 
     n_atoms = 2
     cs = ChemicalSystem()
-    for i in range(n_atoms):
-        cs.add_chemical_entity(Atom(symbol="H"))
+    cs.initialise_atoms(["H", "H"])
 
     coordinates = np.empty((n_atoms, 3), dtype=float)
     coordinates[0, :] = [1, 1, 1]

@@ -113,9 +113,9 @@ class DensityProfile(IJob):
 
         self._outputData.add("r", "LineOutputVariable", (self._n_bins,), units="nm")
 
-        self._indexes_per_element = self.configuration["atom_selection"].get_indexes()
+        self._indices_per_element = self.configuration["atom_selection"].get_indices()
 
-        for element in self._indexes_per_element.keys():
+        for element in self._indices_per_element.keys():
             self._outputData.add(
                 "dp_%s" % element,
                 "LineOutputVariable",
@@ -150,7 +150,7 @@ class DensityProfile(IJob):
 
         dp_per_frame = {}
 
-        for k, v in self._indexes_per_element.items():
+        for k, v in self._indices_per_element.items():
             h = np.histogram(
                 box_coords[v, axis_index], bins=self._n_bins, range=[0.0, 1.0]
             )

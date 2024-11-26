@@ -123,14 +123,29 @@ class MDAnalysis(Converter):
 
         self._chemical_system = ChemicalSystem()
         element_list = []
+        label_dict = {}
 
-        for at in self.u.atoms:
+        for at_number, at in enumerate(self.u.atoms):
             kwargs = {}
             for arg in ["element", "name", "type", "resname", "mass"]:
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
             # the first out of the list above will be the main label
             (k, main_label) = next(iter(kwargs.items()))
+            # label_list will be populated too
+            if "resname" in kwargs:
+                tag = kwargs("resname")
+            elif "type" in kwargs:
+                tag = kwargs("type")
+            elif "name" in kwargs:
+                tag = kwargs("name")
+            else:
+                tag = None
+            if tag:
+                if tag in label_dict.keys():
+                    label_dict[tag] += [at_number]
+                else:
+                    label_dict[tag] = [at_number]
             kwargs.pop(k)
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"], main_label, **kwargs
@@ -143,6 +158,7 @@ class MDAnalysis(Converter):
                     break
             element_list.append(element)
         self._chemical_system.initialise_atoms(element_list)
+        self._chemical_system.add_labels(label_dict)
 
         kwargs = {
             "positions_dtype": self.configuration["output_files"]["dtype"],

@@ -125,9 +125,9 @@ class RigidBodyTrajectory(IJob):
         self._groups = []
 
         for i in range(self.configuration["atom_selection"]["selection_length"]):
-            indexes = self.configuration["atom_selection"]["indexes"][i]
+            indices = self.configuration["atom_selection"]["indices"][i]
             self._groups.append(
-                AtomCluster("", [atoms[idx] for idx in indexes], parentless=True)
+                AtomCluster("", [atoms[idx] for idx in indices], parentless=True)
             )
 
         self.numberOfSteps = len(self._groups)
@@ -140,8 +140,8 @@ class RigidBodyTrajectory(IJob):
         unitCell = trajectory.unit_cell(self.referenceFrame)
 
         selectedAtoms = []
-        for indexes in self.configuration["atom_selection"]["indexes"]:
-            for idx in indexes:
+        for indices in self.configuration["atom_selection"]["indices"]:
+            for idx in indices:
                 selectedAtoms.append(atoms[idx])
 
         # Create trajectory
@@ -260,7 +260,7 @@ class RigidBodyTrajectory(IJob):
 
         # Loop over the groups.
         for comp in range(self.configuration["atom_selection"]["selection_length"]):
-            aIndexes = self.configuration["atom_selection"]["indexes"][comp]
+            aIndexes = self.configuration["atom_selection"]["indices"][comp]
 
             outputFile.attrs["info"] += "Group %s: %s\n" % (
                 comp,

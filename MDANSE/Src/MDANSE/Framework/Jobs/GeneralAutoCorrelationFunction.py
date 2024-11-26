@@ -124,12 +124,12 @@ class GeneralAutoCorrelationFunction(IJob):
             #. atomicGACF (np.array): the calculated auto-correlation function for the index
         """
 
-        indexes = self.configuration["atom_selection"]["indexes"][index]
+        indices = self.configuration["atom_selection"]["indices"][index]
 
         series = self.configuration["trajectory"][
             "instance"
         ].read_configuration_trajectory(
-            indexes[0],
+            indices[0],
             first=self.configuration["frames"]["first"],
             last=self.configuration["frames"]["last"] + 1,
             step=self.configuration["frames"]["step"],

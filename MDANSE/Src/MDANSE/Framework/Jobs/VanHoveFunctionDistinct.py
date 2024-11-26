@@ -175,13 +175,13 @@ class VanHoveFunctionDistinct(IJob):
         lut = atom_index_to_molecule_index(
             self.configuration["trajectory"]["instance"].chemical_system
         )
-        self._indexes = [
+        self._indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
-        self._indexes = np.array(self._indexes, dtype=np.int32)
-        self.indexToMolecule = np.array([lut[i] for i in self._indexes], dtype=np.int32)
+        self._indices = np.array(self._indices, dtype=np.int32)
+        self.indexToMolecule = np.array([lut[i] for i in self._indices], dtype=np.int32)
         self.indexToSymbol = np.array(
             [
                 self.selectedElements.index(name)

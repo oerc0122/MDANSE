@@ -116,18 +116,18 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         groups = collections.OrderedDict()
         for i in range(atomSelectionConfig["selection_length"]):
-            idx = atomSelectionConfig["indexes"][i][0]
+            idx = atomSelectionConfig["indices"][i][0]
             el = atomSelectionConfig["elements"][i][0]
             mass = atomSelectionConfig["masses"][i][0]
             at = allAtoms[idx]
             lvl = LEVELS[value][at.top_level_chemical_entity.__class__.__name__.lower()]
             parent = self.find_parent(at, lvl)
             d = groups.setdefault(parent, {})
-            d.setdefault("indexes", []).append(idx)
+            d.setdefault("indices", []).append(idx)
             d.setdefault("elements", []).append(el)
             d.setdefault("masses", []).append(mass)
 
-        indexes = []
+        indices = []
         elements = []
         masses = []
         names = []
@@ -135,11 +135,11 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         for i, v in enumerate(groups.values()):
             names.append("group_%d" % i)
             elements.append(v["elements"])
-            indexes.append(v["indexes"])
+            indices.append(v["indices"])
             masses.append(v["masses"])
             group_indices.append(i)
 
-        atomSelectionConfig["indexes"] = indexes
+        atomSelectionConfig["indices"] = indices
         atomSelectionConfig["elements"] = elements
         atomSelectionConfig["masses"] = masses
         atomSelectionConfig["names"] = names

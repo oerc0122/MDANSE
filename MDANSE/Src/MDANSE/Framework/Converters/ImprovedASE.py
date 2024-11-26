@@ -101,7 +101,7 @@ class ImprovedASE(Converter):
         {
             "label": "MDANSE trajectory (filename, format)",
             "formats": ["MDTFormat"],
-            "root": "config_file",
+            "root": "trajectory_file",
         },
     )
 

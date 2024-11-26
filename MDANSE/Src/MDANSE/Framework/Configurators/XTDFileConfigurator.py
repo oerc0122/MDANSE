@@ -150,8 +150,16 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
 
         coordinates = np.empty((self._nAtoms, 3), dtype=np.float64)
         element_list = [self._atoms[index]["element"] for index in range(self._nAtoms)]
+        unique_labels = set(
+            [self._atoms[index]["atom_name"] for index in range(self._nAtoms)]
+        )
+        label_dict = {label: [] for label in unique_labels}
+        for atom in self._atoms:
+            label_dict[atom["atom_name"]].append(atom["index"])
+
         self._chemical_system.initialise_atoms(element_list)
         self._chemical_system.add_bonds(self._bonds)
+        self._chemical_system.add_labels(label_dict)
 
         if self._pbc:
             boxConf = PeriodicBoxConfiguration(

@@ -102,7 +102,7 @@ class SolventAccessibleSurface(IJob):
         # The solid angle increment used to convert the sas from a number of accessible point to a surface.
         self.solidAngleIncr = 4.0 * np.pi / len(self.spherePoints)
 
-        # A mapping between the atom indexes and covalent_radius radius for the whole universe.
+        # A mapping between the atom indices and covalent_radius radius for the whole universe.
         self.vdwRadii = dict(
             [
                 (
@@ -122,9 +122,9 @@ class SolventAccessibleSurface(IJob):
         for k, v in self.vdwRadii.items():
             self.vdwRadii_list[k] = np.array([k, v])[:]
 
-        self._indexes = [
+        self._indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
 
@@ -145,10 +145,10 @@ class SolventAccessibleSurface(IJob):
         # The configuration is made continuous.
         conf = conf.continuous_configuration()
 
-        # Loop over the indexes of the selected atoms for the sas calculation.
+        # Loop over the indices of the selected atoms for the sas calculation.
         sas = sas_fast_calc.sas(
             conf["coordinates"],
-            self._indexes,
+            self._indices,
             self.vdwRadii_list,
             self.spherePoints,
             self.configuration["probe_radius"]["value"],

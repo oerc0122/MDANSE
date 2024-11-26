@@ -49,7 +49,7 @@ class AtomTransmuter:
         Parameters
         ----------
         selection_dict: dict[str, Union[bool, dict]]
-            The selection setting to get the indexes to map the inputted
+            The selection setting to get the indices to map the inputted
             symbol.
         symbol: str
             The element to map the selected atoms to.
@@ -182,7 +182,7 @@ class AtomTransmutationConfigurator(IConfigurator):
         atomSelConfigurator = self._configurable[self._dependencies["atom_selection"]]
 
         try:
-            idxInSelection = atomSelConfigurator["flatten_indexes"].index(idx)
+            idxInSelection = atomSelConfigurator["flatten_indices"].index(idx)
         except ValueError:
             pass
         else:

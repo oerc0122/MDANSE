@@ -148,20 +148,20 @@ class MeanSquareDisplacement(IJob):
             tuple: the result of the step
         """
 
-        # get selected atom indexes sublist
-        indexes = self.configuration["atom_selection"]["indexes"][index]
-        if len(indexes) == 1:
+        # get selected atom indices sublist
+        indices = self.configuration["atom_selection"]["indices"][index]
+        if len(indices) == 1:
             series = self.configuration["trajectory"][
                 "instance"
             ].read_atomic_trajectory(
-                indexes[0],
+                indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
                 step=self.configuration["frames"]["step"],
             )
 
         else:
-            selected_atoms = [self._atoms[idx] for idx in indexes]
+            selected_atoms = [self._atoms[idx] for idx in indices]
             series = self.configuration["trajectory"]["instance"].read_com_trajectory(
                 selected_atoms,
                 first=self.configuration["frames"]["first"],

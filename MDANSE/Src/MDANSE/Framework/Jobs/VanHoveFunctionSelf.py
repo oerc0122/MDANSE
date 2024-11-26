@@ -189,7 +189,7 @@ class VanHoveFunctionSelf(IJob):
         last = self.configuration["frames"]["last"] + 1
         step = self.configuration["frames"]["step"]
 
-        idx = self.configuration["atom_selection"]["indexes"][atm_index][0]
+        idx = self.configuration["atom_selection"]["indices"][atm_index][0]
         series = self.configuration["trajectory"]["instance"].read_atomic_trajectory(
             idx,
             first=first,

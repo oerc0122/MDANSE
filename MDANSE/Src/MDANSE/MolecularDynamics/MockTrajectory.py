@@ -346,7 +346,7 @@ class MockTrajectory:
         if last is None:
             last = len(self)
 
-        indexes = [at.index for at in atoms]
+        indices = [at.index for at in atoms]
         masses = np.array(
             [
                 ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight")
@@ -355,7 +355,7 @@ class MockTrajectory:
         )
 
         frames = np.array([self.coordinates(fnum) for fnum in range(first, last, step)])
-        coords = frames[:, indexes, :].astype(np.float64)
+        coords = frames[:, indices, :].astype(np.float64)
 
         if coords.ndim == 2:
             coords = coords[np.newaxis, :, :]
@@ -377,7 +377,7 @@ class MockTrajectory:
             top_lvl_chemical_entities = set(
                 [at.top_level_chemical_entity for at in atoms]
             )
-            top_lvl_chemical_entities_indexes = [
+            top_lvl_chemical_entities_indices = [
                 [at.index for at in e.atom_list] for e in top_lvl_chemical_entities
             ]
             bonds = {}
@@ -390,15 +390,15 @@ class MockTrajectory:
                 direct_cells,
                 inverse_cells,
                 masses,
-                top_lvl_chemical_entities_indexes,
-                indexes,
+                top_lvl_chemical_entities_indices,
+                indices,
                 bonds,
                 box_coordinates=box_coordinates,
             )
 
         else:
             com_traj = np.sum(
-                coords[:, indexes, :] * masses[np.newaxis, :, np.newaxis], axis=1
+                coords[:, indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
             )
             com_traj /= np.sum(masses)
 

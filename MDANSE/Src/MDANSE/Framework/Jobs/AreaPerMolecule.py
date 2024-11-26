@@ -81,7 +81,7 @@ class AreaPerMolecule(IJob):
         # This will define the number of steps of the analysis. MUST be defined for all analysis.
         self.numberOfSteps = self.configuration["frames"]["number"]
 
-        # Extract the indexes corresponding to the axis selection (a=0,b=1,c=2).
+        # Extract the indices corresponding to the axis selection (a=0,b=1,c=2).
         axis_labels = self.configuration["axis"]["value"]
         if axis_labels == "ab":
             self._axisIndexes = [0, 1]

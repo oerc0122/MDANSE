@@ -347,7 +347,7 @@ class H5MDTrajectory:
         if last is None:
             last = len(self)
 
-        indexes = [at.index for at in atoms]
+        indices = [at.index for at in atoms]
         try:
             masses = self._h5_file["/particles/all/mass/value"][:].astype(np.float64)
         except KeyError:
@@ -392,7 +392,7 @@ class H5MDTrajectory:
             top_lvl_chemical_entities = set(
                 [at.top_level_chemical_entity for at in atoms]
             )
-            top_lvl_chemical_entities_indexes = [
+            top_lvl_chemical_entities_indices = [
                 [at.index for at in e.atom_list] for e in top_lvl_chemical_entities
             ]
             bonds = {}
@@ -405,15 +405,15 @@ class H5MDTrajectory:
                 direct_cells,
                 inverse_cells,
                 masses,
-                top_lvl_chemical_entities_indexes,
-                indexes,
+                top_lvl_chemical_entities_indices,
+                indices,
                 bonds,
                 box_coordinates=box_coordinates,
             )
 
         else:
             com_traj = np.sum(
-                coords[:, indexes, :] * masses[np.newaxis, :, np.newaxis], axis=1
+                coords[:, indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
             )
             com_traj /= np.sum(masses)
 
