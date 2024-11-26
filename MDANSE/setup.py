@@ -244,11 +244,6 @@ if "linux" in sys.platform:
 
 EXTENSIONS = [
     Extension(
-        "MDANSE.Extensions.atoms_in_shell",
-        include_dirs=INCLUDE_DIR,
-        sources=[os.path.join("Extensions", "atoms_in_shell.pyx")],
-    ),
-    Extension(
         "MDANSE.Extensions.com_trajectory",
         include_dirs=INCLUDE_DIR,
         sources=[os.path.join("Extensions", "com_trajectory.pyx")],

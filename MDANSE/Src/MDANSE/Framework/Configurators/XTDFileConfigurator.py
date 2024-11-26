@@ -25,7 +25,6 @@ from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
 )
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
-from MDANSE.Mathematics.Graph import Graph
 from MDANSE.Framework.Configurators.FileWithAtomDataConfigurator import (
     FileWithAtomDataConfigurator,
 )

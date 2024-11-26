@@ -22,7 +22,6 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Units import measure
-from MDANSE.Mathematics.Graph import Graph
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
     PeriodicRealConfiguration,

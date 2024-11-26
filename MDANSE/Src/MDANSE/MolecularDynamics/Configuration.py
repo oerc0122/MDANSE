@@ -17,6 +17,7 @@ from __future__ import annotations
 import abc
 import copy
 from typing import Union, TYPE_CHECKING, List
+from functools import reduce
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
     from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
     from MDANSE.Mathematics.Transformation import RigidBodyTransformation
     from MDANSE.MolecularDynamics.UnitCell import UnitCell
-from MDANSE.Extensions import atoms_in_shell, contiguous_coordinates
+from MDANSE.Extensions import contiguous_coordinates
 
 
 class ConfigurationError(Exception):
@@ -332,35 +333,6 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
 
         return real_conf
 
-    def atoms_in_shell(
-        self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> List[int]:
-        """
-        Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
-        atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
-        radius mini are returned. Atoms that are exactly mini or maxi distance away from the reference atom ARE counted
-        For more details, see :func: `MDANSE.Extensions.atoms_in_shell.atoms_in_shell_box`, which is called under the
-        hood.
-
-        :param ref: the index of the reference atom
-        :type ref: int
-
-        :param mini: the inner radius of the shell
-        :type mini: float
-
-        :param maxi: the outer radius of the shell
-        :type maxi: float
-
-        :return: list of atoms within the defined shell
-        :rtype: list
-        """
-
-        indices = atoms_in_shell.atoms_in_shell_box(
-            self._variables["coordinates"].astype(np.float64), ref, mini, maxi
-        )
-
-        return indices
-
     def contiguous_configuration(self) -> PeriodicBoxConfiguration:
         """
         Return a configuration with chemical entities made contiguous.
@@ -369,10 +341,14 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indices = self._chemical_system._atom_indices
+        indices_grouped = reduce(
+            list.__add__, self._chemical_system._clusters.values(), []
+        )
 
         contiguous_coords = contiguous_coordinates.contiguous_coordinates_box(
-            self._variables["coordinates"], self._unit_cell.transposed_direct, indices
+            self._variables["coordinates"],
+            self._unit_cell.transposed_direct,
+            indices_grouped,
         )
 
         conf = self.clone()
@@ -391,14 +367,16 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
         :rtype: numpy.ndarray
         """
         if indices is None:
-            indices = self._chemical_system._atom_indices
+            indices_grouped = reduce(
+                list.__add__, self._chemical_system._clusters.values(), []
+            )
 
         offsets = contiguous_coordinates.contiguous_offsets_box(
             self._variables["coordinates"][
                 [item for sublist in indices for item in sublist]
             ],
             self._unit_cell.transposed_direct,
-            indices,
+            indices_grouped,
         )
 
         return offsets
@@ -446,40 +424,6 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         """
         return self._variables["coordinates"]
 
-    def atoms_in_shell(
-        self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> list[int]:
-        """
-        Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
-        atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
-        radius mini are returned. Atoms that are exactly mini or maxi distance away from the reference atom ARE counted
-        For more details, see :func: `MDANSE.Extensions.atoms_in_shell.atoms_in_shell_real`, which is called under the
-        hood.
-
-        :param ref: the index of the reference atom
-        :type ref: int
-
-        :param mini: the inner radius of the shell
-        :type mini: float
-
-        :param maxi: the outer radius of the shell
-        :type maxi: float
-
-        :return: list of atom indices within the defined shell
-        :rtype: list
-        """
-
-        indices = atoms_in_shell.atoms_in_shell_real(
-            self._variables["coordinates"].astype(np.float64),
-            self._unit_cell.transposed_direct,
-            self._unit_cell.transposed_inverse,
-            ref,
-            mini,
-            maxi,
-        )
-
-        return indices
-
     def contiguous_configuration(self) -> PeriodicRealConfiguration:
         """
         Return a configuration with chemical entities made contiguous.
@@ -488,13 +432,15 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indices = self._chemical_system._atom_indices
+        indices_grouped = reduce(
+            list.__add__, self._chemical_system._clusters.values(), []
+        )
 
         contiguous_coords = contiguous_coordinates.contiguous_coordinates_real(
             self._variables["coordinates"],
             self._unit_cell.transposed_direct,
             self._unit_cell.transposed_inverse,
-            indices,
+            indices_grouped,
         )
 
         conf = self.clone()
@@ -509,11 +455,15 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
+        indices_grouped = reduce(
+            list.__add__, self._chemical_system._clusters.values(), []
+        )
+
         contiguous_coords = contiguous_coordinates.continuous_coordinates(
             self._variables["coordinates"],
             self._unit_cell.transposed_direct,
             self._unit_cell.transposed_inverse,
-            self._chemical_system,
+            indices_grouped,
         )
 
         conf = self.clone()
@@ -533,7 +483,9 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         """
 
         if indices is None:
-            indices = self._chemical_system._atom_indices
+            indices_grouped = reduce(
+                list.__add__, self._chemical_system._clusters.values(), []
+            )
 
         offsets = contiguous_coordinates.contiguous_offsets_real(
             self._variables["coordinates"][
@@ -541,7 +493,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
             ],
             self._unit_cell.transposed_direct,
             self._unit_cell.transposed_inverse,
-            indices,
+            indices_grouped,
         )
 
         return offsets
@@ -590,35 +542,6 @@ class RealConfiguration(_Configuration):
         :rtype: numpy.ndarray
         """
         return self._variables["coordinates"]
-
-    def atoms_in_shell(
-        self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> List[int]:
-        """
-        Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
-        atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
-        radius mini are returned. Atoms that are exactly mini or maxi distance away from the reference atom ARE counted
-        For more details, see :func: `MDANSE.Extensions.atoms_in_shell.atoms_in_shell_nopbc`, which is called under the
-        hood.
-
-        :param ref: the index of the reference atom
-        :type ref: int
-
-        :param mini: the inner radius of the shell
-        :type mini: float
-
-        :param maxi: the outer radius of the shell
-        :type maxi: float
-
-        :return: list of atoms within the defined shell
-        :rtype: list
-        """
-
-        indices = atoms_in_shell.atoms_in_shell_nopbc(
-            self._variables["coordinates"].astype(np.float64), ref, mini, maxi
-        )
-
-        return indices
 
     def contiguous_configuration(self) -> RealConfiguration:
         """
@@ -672,5 +595,3 @@ if __name__ == "__main__":
     uc = np.array([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
 
     conf = RealConfiguration(cs, coordinates)
-
-    print(conf.atoms_in_shell(0, 0, 5))

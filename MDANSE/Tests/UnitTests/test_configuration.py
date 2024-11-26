@@ -320,16 +320,6 @@ class TestPeriodicBoxConfiguration(unittest.TestCase):
         )
         self.assertEqual(unit_cell, real._unit_cell)
 
-    def test_atoms_in_shell(self):
-        unit_cell = UnitCell(np.array([[10, 0, 0], [0, 10, 0], [0, 0, 10]]))
-        coords = np.array(
-            ([0.1, 0.1, 0.1], [0.2, 0.1, 0.1], [0.5, 0.1, 0.1], [0.9, 0.1, 0.1])
-        )
-        conf = PeriodicBoxConfiguration(self.chem_system, coords, unit_cell)
-        atoms = conf.atoms_in_shell(0, 0.0, 0.3)
-
-        self.assertEqual([1, 3], [at.index for at in atoms])
-
     def test_contiguous_configuration(self):
         unit_cell = UnitCell(np.array([[2, 1, 0], [-3, 2, 0], [2, 1, -4]]))
         coords = [[0.1, 0.1, 0.1], [0.3, 0.2, 0.4], [-1.3, -1.1, -1.3], [1.9, 1.5, 1.9]]
@@ -515,14 +505,6 @@ class TestPeriodicRealConfiguration(unittest.TestCase):
 
         real = conf.to_real_coordinates()
         self.assertTrue(np.allclose(coords, real), f"\nactual = {real}")
-
-    def test_atoms_in_shell(self):
-        coords = np.array([[1, 1, 1], [2, 1, 1], [5, 1, 1], [9, 1, 1]])
-        unit_cell = UnitCell(np.array([[10, 0, 0], [0, 10, 0], [0, 0, 10]]))
-        conf = PeriodicRealConfiguration(self.chem_system, coords, unit_cell)
-        atoms = conf.atoms_in_shell(0, 0, 3)
-
-        self.assertEqual([1, 3], [at.index for at in atoms])
 
     def test_contiguous_configuration(self):
         coords = np.array(
@@ -726,13 +708,6 @@ class TestRealConfiguration(unittest.TestCase):
         real = conf.to_real_coordinates()
 
         self.assertTrue(np.allclose(coordinates, real), f"\nactual = {real}")
-
-    def test_atoms_in_shell(self):
-        coords = np.array([[1, 1, 1], [2, 1, 1], [5, 1, 1], [9, 1, 1]])
-        conf = RealConfiguration(self.chem_system, coords)
-        atoms = conf.atoms_in_shell(0, 0, 5)
-
-        self.assertEqual([1, 2], [at.index for at in atoms])
 
     def test_contiguous_configuration(self):
         coords = np.random.uniform(0, 1, (self._nAtoms, 3))
