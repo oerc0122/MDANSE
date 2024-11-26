@@ -384,7 +384,8 @@ class MolecularViewer(QtWidgets.QWidget):
             # do not bond atoms to dummy atoms
             rs = coords[self.not_du]
             bonds, bonds_exist = self.create_bond_cell_array(
-                rs, self.covs[self.not_du], self.not_du)
+                rs, self.covs[self.not_du], self.not_du
+            )
             if bonds_exist:
                 self._polydata.SetLines(bonds)
                 self._polydata_bonds_exist = True
@@ -639,10 +640,12 @@ class MolecularViewer(QtWidgets.QWidget):
                 for at in self._atoms
             ]
         ).astype(np.float32)
-        self.du_log = np.array([
-            CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
-            for at in self._reader.atom_types
-        ])
+        self.du_log = np.array(
+            [
+                CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
+                for at in self._reader.atom_types
+            ]
+        )
         self.not_du = np.array(
             [
                 i
