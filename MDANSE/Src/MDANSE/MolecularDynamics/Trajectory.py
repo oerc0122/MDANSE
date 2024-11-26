@@ -371,7 +371,7 @@ class TrajectoryWriter:
         self._chemical_system = chemical_system
 
         if selected_atoms is None:
-            self._selected_atoms = self._chemical_system.atom_list
+            self._selected_atoms = self._chemical_system._atom_indices
         else:
             for at in selected_atoms:
                 if at.root_chemical_system != chemical_system:
@@ -382,8 +382,6 @@ class TrajectoryWriter:
                         "One or more atoms of the selection comes from a different chemical system"
                     )
             self._selected_atoms = selected_atoms
-
-        self._selected_atoms = [at.index for at in self._selected_atoms]
 
         all_atoms = self._chemical_system.atom_list
         for idx in self._selected_atoms:

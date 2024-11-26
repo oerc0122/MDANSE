@@ -19,7 +19,7 @@ import os
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalSystem import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
 
@@ -31,8 +31,7 @@ N_TIMESTEPS = 150
 def chemical_system():
     temp = ChemicalSystem("Dummy test system")
     nAtoms = N_ATOMS
-    for i in range(nAtoms):
-        temp.add_chemical_entity(Atom(symbol="H"))
+    temp.initialise_atoms(nAtoms * ["H"])
     return temp
 
 
@@ -92,8 +91,7 @@ def lzffed_trajectory(chemical_system, sample_configuration):
 def test_identity(chemical_system):
     temp = ChemicalSystem("Dummy test system")
     nAtoms = N_ATOMS
-    for i in range(nAtoms):
-        temp.add_chemical_entity(Atom(symbol="H"))
+    temp.initialise_atoms(nAtoms * ["H"])
     # assert(temp == chemical_system)
     assert chemical_system == chemical_system
 

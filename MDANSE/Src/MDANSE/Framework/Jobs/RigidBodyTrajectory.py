@@ -20,6 +20,7 @@ import numpy as np
 
 import h5py
 
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.Mathematics.LinearAlgebra import Quaternion, Vector
 from MDANSE.Mathematics.Transformation import Translation
@@ -189,7 +190,7 @@ class RigidBodyTrajectory(IJob):
         """ """
 
         group_coms = [
-            group.center_of_mass(self._reference_configuration)
+            center_of_mass(self._reference_configuration[group])
             for group in self._groups
         ]
 

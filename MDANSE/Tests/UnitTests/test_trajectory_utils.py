@@ -16,12 +16,6 @@ class TestTrajectoryUtils(unittest.TestCase):
         result = atom_index_to_molecule_index(cs)
         self.assertDictEqual({0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1}, result)
 
-    def test_brute_formula(self):
-        m = Molecule("WAT", "w1")
-        self.assertEqual("H2_O1", brute_formula(m))
-        self.assertEqual("H2O1", brute_formula(m, ""))
-        self.assertEqual("H2O", brute_formula(m, "", True))
-
     def test_find_atoms_in_molecule(self):
         m1 = Molecule("WAT", "water")
         m2 = Molecule("WAT", "water")
@@ -49,50 +43,6 @@ class TestTrajectoryUtils(unittest.TestCase):
         self.assertEqual([[], []], empty2)
         self.assertEqual([[1, 2], [4, 5]], water_hydrogen_indices)
 
-    def test_get_chemical_objects_dict(self):
-        m1 = Molecule("WAT", "water")
-        m2 = Molecule("WAT", "water")
-        m4 = Molecule("WAT", "dihydrogen oxide")
-
-        m3 = Molecule("WAT", "water")
-        p = Protein("protein")
-        p.set_peptide_chains([m3])
-
-        cs = ChemicalSystem()
-        for ce in [m1, m2, m4, p]:
-            cs.add_chemical_entity(ce)
-
-        self.assertDictEqual(
-            {"water": [m1, m2], "dihydrogen oxide": [m4], "protein": [p]},
-            get_chemical_objects_dict(cs),
-        )
-
-    def test_group_atoms(self):
-        atoms = [Atom() for _ in range(10)]
-        molecules = [Molecule("WAT", "") for _ in range(5)]
-        atoms.extend(molecules)
-
-        cs = ChemicalSystem()
-        for ce in atoms:
-            cs.add_chemical_entity(ce)
-
-        groups = group_atoms(cs, [[0, 1, 2], [], [1, 5], [10], [11, 12, 13, 11, 20]])
-
-        self.assertEqual(4, len(groups))
-        self.assertEqual([atoms[0], atoms[1], atoms[2]], groups[0]._atoms)
-        self.assertEqual([atoms[1], atoms[5]], groups[1]._atoms)
-        self.assertEqual([molecules[0]["OW"]], groups[2]._atoms)
-        self.assertEqual(
-            [
-                molecules[0]["HW2"],
-                molecules[0]["HW1"],
-                molecules[1]["OW"],
-                molecules[0]["HW2"],
-                molecules[3]["HW2"],
-            ],
-            groups[3]._atoms,
-        )
-
     def test_resolve_undefined_molecules_name(self):
         m1 = Molecule("WAT", "")
         m2 = Molecule("WAT", " water ")
@@ -113,46 +63,3 @@ class TestTrajectoryUtils(unittest.TestCase):
         self.assertEqual("H2O1", m4.name)
         self.assertEqual("", m3.name)
         self.assertEqual("protein", p.name)
-
-    def test_sorted_atoms_normal(self):
-        atoms = [Atom() for _ in range(10)]
-        for i, atom in enumerate(atoms):
-            atom.index = i
-
-        result = sorted_atoms(
-            [
-                atoms[1],
-                atoms[2],
-                atoms[5],
-                atoms[9],
-                atoms[0],
-                atoms[3],
-                atoms[8],
-                atoms[4],
-                atoms[7],
-                atoms[6],
-            ]
-        )
-        self.assertEqual(atoms, result)
-
-    def test_sorted_atoms_return_names(self):
-        atoms = [Atom() for _ in range(10)]
-        for i, atom in enumerate(atoms):
-            atom.index = i
-
-        result = sorted_atoms(
-            [
-                atoms[1],
-                atoms[2],
-                atoms[5],
-                atoms[9],
-                atoms[0],
-                atoms[3],
-                atoms[8],
-                atoms[4],
-                atoms[7],
-                atoms[6],
-            ],
-            "name",
-        )
-        self.assertEqual([at.name for at in atoms], result)

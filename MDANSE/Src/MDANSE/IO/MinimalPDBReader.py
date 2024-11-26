@@ -130,6 +130,8 @@ class MinimalPDBReader:
         posz_slice = atom_line_slice("pos_z")
         pos_scaling = measure(1.0, "ang").toval("nm")
 
+        element_list = []
+
         for atom_line in atom_lines:
             chemical_element = atom_line[element_slice].strip()
             atom_name = atom_line[name_slice]
@@ -149,19 +151,19 @@ class MinimalPDBReader:
             else:
                 backup_element3 = "fail"
             if backup_element in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=backup_element, name=atom_name)
+                element_list.append(backup_element)
             elif backup_element2 in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=backup_element2, name=atom_name)
+                element_list.append(backup_element2)
             elif backup_element3 in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=backup_element3, name=atom_name)
+                element_list.append(backup_element3)
             elif chemical_element in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=chemical_element, name=atom_name)
+                element_list.append(chemical_element)
             elif processed_atom_name in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=processed_atom_name, name=atom_name)
+                element_list.append(processed_atom_name)
             else:
                 LOG.warning(f"Dummy atom introduce from line {atom_line}")
-                atom = Atom(symbol="Du", name=atom_name)
-            self._chemical_system.add_chemical_entity(atom)
+                element_list.append("Du")
+            self._chemical_system.initialise_atoms(element_list)
             x, y, z = (
                 atom_line[posx_slice],
                 atom_line[posy_slice],

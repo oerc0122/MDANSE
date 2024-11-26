@@ -227,7 +227,7 @@ class LAMMPScustom(LAMMPSReader):
                         self._rankToName[i] = name
                     else:
                         self._rankToName[temp_index - 1] = name
-                    element = get_element_from_mapping(aliases, label, mass)
+                    element = get_element_from_mapping(aliases, label, mass=mass)
                     element_list.append(element)
 
                 chemical_system.initialise_atoms(element_list)
@@ -464,7 +464,7 @@ class LAMMPSxyz(LAMMPSReader):
             mass = str(config["elements"][ty][1])
             name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
             self._rankToName[idx] = name
-            element_list.append(get_element_from_mapping(aliases, label, mass))
+            element_list.append(get_element_from_mapping(aliases, label, mass=mass))
         chemical_system.initialise_atoms(element_list)
 
         if config["n_bonds"] is not None:
@@ -571,7 +571,7 @@ class LAMMPSh5md(LAMMPSReader):
             mass = str(config["elements"][ty][1])
             name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
             self._rankToName[idx] = name
-            element_list.append(get_element_from_mapping(aliases, label, mass))
+            element_list.append(get_element_from_mapping(aliases, label, mass=mass))
         chemical_system.initialise_atoms(element_list)
 
         if config["n_bonds"] is not None:

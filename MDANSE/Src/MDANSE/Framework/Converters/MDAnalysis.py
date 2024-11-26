@@ -134,11 +134,11 @@ class MDAnalysis(Converter):
             (k, main_label) = next(iter(kwargs.items()))
             # label_list will be populated too
             if "resname" in kwargs:
-                tag = kwargs("resname")
+                tag = kwargs["resname"]
             elif "type" in kwargs:
-                tag = kwargs("type")
+                tag = kwargs["type"]
             elif "name" in kwargs:
-                tag = kwargs("name")
+                tag = kwargs["name"]
             else:
                 tag = None
             if tag:

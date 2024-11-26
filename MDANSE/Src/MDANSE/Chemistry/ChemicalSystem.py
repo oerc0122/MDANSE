@@ -22,6 +22,7 @@ import h5py
 import numpy as np
 from rdkit import Chem
 from MDANSE.MLogging import LOG
+from MDANSE.Chemistry import ATOMS_DATABASE
 
 if TYPE_CHECKING:
     from MDANSE.MolecularDynamics.Trajectory import Trajectory
@@ -44,7 +45,9 @@ class ChemicalSystem:
         """
 
         self._name = name
-        self._trajectory = trajectory
+        self._database = ATOMS_DATABASE
+        if trajectory is not None:
+            self._database = trajectory
 
         self._atom_types = []
         self._atom_indices = []
@@ -71,7 +74,7 @@ class ChemicalSystem:
 
     def initialise_atoms(self, element_list: List[str]):
         self._atom_indices = [
-            self.add_atom(self._trajectory.get_atom_property(symbol, "atomic_number"))
+            self.add_atom(self._database.get_atom_property(symbol, "atomic_number"))
             for symbol in element_list
         ]
         self._atom_types = element_list
@@ -86,7 +89,9 @@ class ChemicalSystem:
     def add_bonds(self, pair_list: List[Tuple[int]]):
         self._bonds += pair_list
         for pair in pair_list:
-            self.rdkit_mol.AddBond(pair[0], pair[1], Chem.rdchem.BondType.UNSPECIFIED)
+            self.rdkit_mol.AddBond(
+                int(pair[0]), int(pair[1]), Chem.rdchem.BondType.UNSPECIFIED
+            )
 
     def add_labels(self, label_dict: Dict[str, List[int]]):
         for key, item in label_dict.items():
@@ -154,6 +159,21 @@ class ChemicalSystem:
         """List of all non-ghost atoms in the ChemicalSystem."""
         return self._atom_types
 
+    def grouping_level(self, index: int) -> int:
+        """Temporarily, there is no grouping test.
+
+        Parameters
+        ----------
+        index : int
+            atom index
+
+        Returns
+        -------
+        int
+            grouping level for the GroupingLevelConfigurator
+        """
+        return 0
+
     def copy(self) -> "ChemicalSystem":
         """
         Copies the instance of ChemicalSystem into a new, identical instance.
@@ -208,7 +228,13 @@ class ChemicalSystem:
         grp = h5_file.create_group("/composition")
         grp.attrs["name"] = self._name
 
-        grp.create_dataset("atom_types", data=self._atom_types, dtype=string_dt)
+        try:
+            grp.create_dataset("atom_types", data=self._atom_types, dtype=string_dt)
+        except TypeError:
+            print(f"Bad array: {self._atom_types}")
+            import sys
+
+            sys.exit(1)
         grp.create_dataset("atom_indices", data=self._atom_indices)
 
         grp.create_dataset("bonds", data=np.array(self._bonds))
