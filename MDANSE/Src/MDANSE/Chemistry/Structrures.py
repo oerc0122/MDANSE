@@ -40,8 +40,8 @@ class MoleculeTester:
     a library that can identify molecules.
     """
 
-    def __init__(self, chemical_entity, coordinates):
-        self.chemical_entity = chemical_entity
+    def __init__(self, atom_list, coordinates):
+        self.atom_list = atom_list
         self.coordinates = coordinates
         self.molecule_object = None
         self.molecule_string = None
@@ -50,7 +50,7 @@ class MoleculeTester:
         positions = self.coordinates
         buffer = DummyStringIO()
         temp_pdb = PDBFile(buffer, mode="w")
-        for natom, atom in enumerate(self.chemical_entity.atom_list):
+        for natom, atom in enumerate(self.atom_list):
             coords = positions[natom] * 10.0
             atom_data = {
                 "position": coords,

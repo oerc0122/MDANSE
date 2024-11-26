@@ -21,7 +21,6 @@ import numpy as np
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Units import measure
 from MDANSE.Mathematics.Signal import differentiate
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 KB = measure(1.380649e-23, "kg m2/s2 K").toval("uma nm2/ps2 K")
 
@@ -113,9 +112,9 @@ class Temperature(IJob):
             units="K",
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """

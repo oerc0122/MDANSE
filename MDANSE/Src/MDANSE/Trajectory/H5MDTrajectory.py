@@ -30,7 +30,6 @@ from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import (
-    resolve_undefined_molecules_name,
     atomic_trajectory,
 )
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
@@ -63,7 +62,7 @@ class H5MDTrajectory:
         self._chemical_system = ChemicalSystem(
             os.path.splitext(os.path.basename(self._h5_filename))[0]
         )
-        self._chemical_system.from_element_list(chemical_elements)
+        self._chemical_system.initialise_atoms(chemical_elements)
 
         # Load all the unit cells
         self._load_unit_cells()
@@ -79,15 +78,6 @@ class H5MDTrajectory:
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         coords *= conv_factor
-        if self._unit_cells:
-            unit_cell = self._unit_cells[0]
-            conf = PeriodicRealConfiguration(self._chemical_system, coords, unit_cell)
-        else:
-            conf = RealConfiguration(self._chemical_system, coords)
-        self._chemical_system.configuration = conf
-
-        # Define a default name for all chemical entities which have no name
-        resolve_undefined_molecules_name(self._chemical_system)
 
         self._variables_to_skip = []
 

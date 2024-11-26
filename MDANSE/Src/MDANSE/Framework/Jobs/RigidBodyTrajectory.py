@@ -23,11 +23,10 @@ import h5py
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.Mathematics.LinearAlgebra import Quaternion, Vector
 from MDANSE.Mathematics.Transformation import Translation
-from MDANSE.MolecularDynamics.Configuration import _Configuration, RealConfiguration
+from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import (
     RigidBodyTrajectoryGenerator,
     TrajectoryWriter,
-    sorted_atoms,
 )
 
 
@@ -118,9 +117,7 @@ class RigidBodyTrajectory(IJob):
             dtype=np.float64,
         )
 
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         self._groups = []
 

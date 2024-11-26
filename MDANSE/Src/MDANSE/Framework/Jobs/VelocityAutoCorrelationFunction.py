@@ -20,7 +20,6 @@ from scipy.signal import correlate
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
 from MDANSE.Mathematics.Signal import differentiate, normalize
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class VelocityAutoCorrelationFunction(IJob):
@@ -139,9 +138,9 @@ class VelocityAutoCorrelationFunction(IJob):
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """

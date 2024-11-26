@@ -19,7 +19,6 @@ import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import center_of_mass
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class Eccentricity(IJob):
@@ -76,9 +75,9 @@ class Eccentricity(IJob):
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
         self._indices = np.array(
             [
                 idx

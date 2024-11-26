@@ -18,7 +18,6 @@ import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class UnfoldedTrajectory(IJob):
@@ -62,9 +61,7 @@ class UnfoldedTrajectory(IJob):
 
         self.numberOfSteps = self.configuration["frames"]["number"]
 
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         # The collection of atoms corresponding to the atoms selected for output.
         indices = [

@@ -22,7 +22,6 @@ from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MolecularDynamics.Analysis import mean_square_displacement
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class GaussianDynamicIncoherentStructureFactor(IJob):
@@ -184,9 +183,9 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """

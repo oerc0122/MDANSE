@@ -27,7 +27,6 @@ from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
 from MDANSE.Framework.Units import measure
-from MDANSE.MolecularDynamics.Trajectory import sorted_atoms
 from MDANSE.MLogging import LOG
 
 MCSTAS_UNITS_LUT = {
@@ -127,10 +126,9 @@ class McStasVirtualInstrument(IJob):
         # The number of steps is set to 1 as the job is defined as single McStas run.
         self.numberOfSteps = 1
 
-        symbols = sorted_atoms(
-            self.configuration["trajectory"]["instance"]._chemical_system.atom_list,
-            "symbol",
-        )
+        symbols = self.configuration["trajectory"][
+            "instance"
+        ]._chemical_system.atom_list
 
         # Compute some parameters used for a proper McStas run
         self._mcStasPhysicalParameters = {"density": 0.0}

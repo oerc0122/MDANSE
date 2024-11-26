@@ -23,7 +23,7 @@ import h5py
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
-from MDANSE.MolecularDynamics.Trajectory import sorted_atoms, TrajectoryWriter
+from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 
 class GlobalMotionFilteredTrajectory(IJob):
@@ -86,20 +86,16 @@ class GlobalMotionFilteredTrajectory(IJob):
         self.numberOfSteps = self.configuration["frames"]["number"]
 
         # The collection of atoms corresponding to the atoms selected for output.
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
         self._selected_atoms = []
         for indices in self.configuration["atom_selection"]["indices"]:
             for idx in indices:
                 self._selected_atoms.append(atoms[idx])
-        self._selected_atoms = AtomGroup(self._selected_atoms)
 
         self._reference_atoms = []
         for indices in self.configuration["reference_selection"]["indices"]:
             for idx in indices:
                 self._reference_atoms.append(atoms[idx])
-        self._reference_atoms = AtomGroup(self._reference_atoms)
 
         self._output_trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],

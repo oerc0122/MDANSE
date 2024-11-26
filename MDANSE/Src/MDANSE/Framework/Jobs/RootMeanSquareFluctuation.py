@@ -18,7 +18,6 @@ import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Analysis import mean_square_fluctuation
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class RootMeanSquareFluctuation(IJob):
@@ -96,9 +95,9 @@ class RootMeanSquareFluctuation(IJob):
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """

@@ -21,7 +21,6 @@ from ase.io import write as ase_write
 from ase.atoms import Atoms, Atom
 
 from MDANSE.Framework.Units import measure
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
@@ -85,9 +84,9 @@ class AverageStructure(IJob):
 
         self.numberOfSteps = self.configuration["atom_selection"]["selection_length"]
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
         target_unit = self.configuration["output_units"]["value"]
         if target_unit == "Angstrom":

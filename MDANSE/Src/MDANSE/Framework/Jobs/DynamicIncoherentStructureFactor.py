@@ -22,7 +22,6 @@ from scipy.signal import correlate
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
 from MDANSE.Mathematics.Signal import get_spectrum
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class DynamicIncoherentStructureFactor(IJob):
@@ -112,9 +111,9 @@ class DynamicIncoherentStructureFactor(IJob):
 
         self._instrResolution = self.configuration["instrument_resolution"]
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
         self._nOmegas = self._instrResolution["n_omegas"]
 

@@ -28,7 +28,6 @@ from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import (
-    resolve_undefined_molecules_name,
     atomic_trajectory,
 )
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
@@ -59,18 +58,6 @@ class MdanseTrajectory:
 
         # Load all the unit cells
         self._load_unit_cells()
-
-        # Load the first configuration
-        coords = self._h5_file["/configuration/coordinates"][0, :, :]
-        if self._unit_cells:
-            unit_cell = self._unit_cells[0]
-            conf = PeriodicRealConfiguration(self._chemical_system, coords, unit_cell)
-        else:
-            conf = RealConfiguration(self._chemical_system, coords)
-        self._chemical_system.configuration = conf
-
-        # Define a default name for all chemical entities which have no name
-        resolve_undefined_molecules_name(self._chemical_system)
 
     @classmethod
     def file_is_right(self, filename):

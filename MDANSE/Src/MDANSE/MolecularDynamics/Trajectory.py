@@ -32,10 +32,6 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
 )
-from MDANSE.MolecularDynamics.TrajectoryUtils import (
-    sorted_atoms,
-    resolve_undefined_molecules_name,
-)
 
 
 available_formats = {
@@ -385,7 +381,7 @@ class TrajectoryWriter:
                     raise TrajectoryWriterError(
                         "One or more atoms of the selection comes from a different chemical system"
                     )
-            self._selected_atoms = sorted_atoms(selected_atoms)
+            self._selected_atoms = selected_atoms
 
         self._selected_atoms = [at.index for at in self._selected_atoms]
 
@@ -650,7 +646,7 @@ class RigidBodyTrajectoryGenerator:
     def __init__(
         self,
         trajectory,
-        chemical_entity: _ChemicalEntity,
+        chemical_entity: List[int],
         reference,
         first=0,
         last=None,

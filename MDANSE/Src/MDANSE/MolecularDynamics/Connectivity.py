@@ -217,16 +217,9 @@ class Connectivity:
             molecules.append(molecule)
         self._molecules = molecules
 
-    def add_bond_information(self):
-        for bond in self._unique_bonds:
-            ind1, ind2 = bond
-            at1, at2 = (
-                self._chemical_system.atoms[bond[0]],
-                self._chemical_system.atoms[bond[1]],
-            )
-            at1.bonds.append(at2)
-            at2.bonds.append(at1)
-            self._chemical_system._bonds.append((ind1, ind2))
+    def add_bond_information(self, new_chemical_system: ChemicalSystem):
+        new_chemical_system.add_bonds(self._bonds)
+        new_chemical_system.add_clusters(self._molecules)
 
     def add_point(self, index: int, point: np.ndarray, radius: float) -> bool:
         return True

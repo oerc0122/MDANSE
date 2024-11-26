@@ -16,7 +16,6 @@
 import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.MolecularDynamics.Trajectory import sorted_atoms
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 
@@ -59,9 +58,7 @@ class CroppedTrajectory(IJob):
 
         self.numberOfSteps = self.configuration["frames"]["number"]
 
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         # The collection of atoms corresponding to the atoms selected for output.
         indices = [
