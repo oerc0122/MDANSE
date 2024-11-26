@@ -172,14 +172,14 @@ class GlobalMotionFilteredTrajectory(IJob):
         new_configuration = RealConfiguration(
             self._output_trajectory.chemical_system, coords, None, **variables
         )
-        self._output_trajectory.chemical_system.configuration = new_configuration
-
         # The times corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
         # Write the step.
         self._output_trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            new_configuration,
+            time,
+            units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
         )
 
         return index, rms

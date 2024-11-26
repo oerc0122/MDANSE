@@ -33,16 +33,16 @@ class TestPDBReader(unittest.TestCase):
 
         reader = PDBReader(pbd_2vb1)
 
-        chemicalSystem = reader.build_chemical_system()
+        chemical_system = reader.build_chemical_system()
 
-        atomList = chemicalSystem.atom_list
+        atomList = chemical_system.atom_list
 
         self.assertEqual(atomList[4].symbol, "C")
         self.assertEqual(atomList[7].name, "HB2")
         self.assertEqual(atomList[10].full_name, "...LYS1.HG2")
         self.assertEqual(atomList[28].parent.name, "VAL2")
 
-        conf = chemicalSystem.configuration
+        conf = chemical_system.configuration
 
         self.assertAlmostEqual(conf.variables["coordinates"][0, 0], 4.6382)
         self.assertAlmostEqual(conf.variables["coordinates"][0, 1], 3.0423)

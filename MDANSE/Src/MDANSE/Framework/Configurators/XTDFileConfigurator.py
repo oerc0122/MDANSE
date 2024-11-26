@@ -38,11 +38,13 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         super().__init__(name, **kwargs)
         self._atoms = None
 
-        self._chemicalSystem = None
+        self._chemical_system = None
 
         self._pbc = False
 
         self._cell = None
+
+        self._configuration = None
 
     @property
     def clusters(self):
@@ -50,7 +52,7 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
 
     @property
     def chemicalSystem(self):
-        return self._chemicalSystem
+        return self._chemical_system
 
     @property
     def pbc(self):
@@ -126,6 +128,7 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         self._nAtoms = len(self._atoms)
 
         bondsMapping = {}
+        self._bonds = []
 
         comp = 0
         for node in ROOT.iter("Bond"):
@@ -138,53 +141,31 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
                     atomsMapping[int(v)] for v in node.attrib["Connects"].split(",")
                 ]
                 idx1, idx2 = bondsMapping[idx]
+                self._bonds.append((idx1, idx2))
                 self._atoms[idx1]["bonded_to"].add(idx2)
                 self._atoms[idx2]["bonded_to"].add(idx1)
 
     def build_chemical_system(self, aliases):
-        self._chemicalSystem = ChemicalSystem()
+        self._chemical_system = ChemicalSystem()
 
         coordinates = np.empty((self._nAtoms, 3), dtype=np.float64)
-
-        graph = Graph()
-
-        for idx, at in list(self._atoms.items()):
-            graph.add_node(name=idx, **at)
-
-        for idx, at in list(self._atoms.items()):
-            for bat in at["bonded_to"]:
-                graph.add_link(idx, bat)
-
-        clusters = graph.build_connected_components()
-
-        for cluster in clusters:
-            bruteFormula = collections.defaultdict(lambda: 0)
-
-            atoms = []
-            for node in cluster:
-                symbol = node.element
-                name = node.atom_name
-                element = get_element_from_mapping(aliases, symbol, type=name)
-                at = Atom(symbol=element, name=name, xtdIndex=node.xtd_index)
-                at.index = node.index
-                coordinates[at.index] = node.xyz
-                bruteFormula[element] += 1
-                atoms.append(at)
-            name = "".join(["%s%d" % (k, v) for k, v in sorted(bruteFormula.items())])
-            ac = AtomCluster(name, atoms)
-            self._chemicalSystem.add_chemical_entity(ac)
+        element_list = [self._atoms[index]["element"] for index in range(self._nAtoms)]
+        self._chemical_system.initialise_atoms(element_list)
+        self._chemical_system.add_bonds(self._bonds)
 
         if self._pbc:
             boxConf = PeriodicBoxConfiguration(
-                self._chemicalSystem, coordinates, self._cell
+                self._chemical_system, coordinates, self._cell
             )
-            realConf = boxConf.to_real_configuration()
+            real_conf = boxConf.to_real_configuration()
         else:
             coordinates *= measure(1.0, "ang").toval("nm")
-            realConf = RealConfiguration(self._chemicalSystem, coordinates, self._cell)
+            real_conf = RealConfiguration(
+                self._chemical_system, coordinates, self._cell
+            )
 
-        realConf.fold_coordinates()
-        self._chemicalSystem.configuration = realConf
+        real_conf.fold_coordinates()
+        self._configuration = real_conf
 
     def get_atom_labels(self) -> list[AtomLabel]:
         """

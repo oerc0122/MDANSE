@@ -122,6 +122,7 @@ class MDAnalysis(Converter):
         self.numberOfSteps = len(self.u.trajectory)
 
         self._chemical_system = ChemicalSystem()
+        element_list = []
 
         for at in self.u.atoms:
             kwargs = {}
@@ -140,7 +141,8 @@ class MDAnalysis(Converter):
                 if hasattr(at, arg):
                     name = getattr(at, arg)
                     break
-            self._chemical_system.add_chemical_entity(Atom(symbol=element, name=name))
+            element_list.append(element)
+        self._chemical_system.initialise_atoms(element_list)
 
         kwargs = {
             "positions_dtype": self.configuration["output_files"]["dtype"],
@@ -201,14 +203,13 @@ class MDAnalysis(Converter):
             if hasattr(self.u.trajectory.ts, "forces"):
                 conf["gradients"] = self.u.trajectory.ts.forces
 
-        self._trajectory._chemical_system.configuration = conf
-
         if float(self.configuration["time_step"]["value"]) == 0.0:
             time = index * self.u.trajectory.ts.dt
         else:
             time = index * float(self.configuration["time_step"]["value"])
 
         self._trajectory.dump_configuration(
+            conf,
             time,
             units={
                 "time": "ps",

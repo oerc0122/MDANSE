@@ -173,12 +173,10 @@ class Gromacs(Converter):
         if self.configuration["fold"]["value"]:
             conf.fold_coordinates()
 
-        self._trajectory.chemical_system.configuration = conf
-
         # The current time.
         time = times[0]
 
-        self._trajectory.dump_configuration(time)
+        self._trajectory.dump_configuration(conf, time)
 
         return index, None
 

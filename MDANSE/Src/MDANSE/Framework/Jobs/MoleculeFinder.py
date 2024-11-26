@@ -151,14 +151,12 @@ class MoleculeFinder(IJob):
                 self._output_trajectory.chemical_system, coords, **variables
             )
 
-        self._output_trajectory.chemical_system.configuration = com_conf
-
         # The times corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
         charge = self.configuration["trajectory"]["instance"].charges(index)
 
-        self._output_trajectory.dump_configuration(time)
+        self._output_trajectory.dump_configuration(com_conf, time)
 
         self._output_trajectory.write_charges(charge, index)
 

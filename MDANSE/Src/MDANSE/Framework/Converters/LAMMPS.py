@@ -141,6 +141,8 @@ class LAMMPScustom(LAMMPSReader):
 
         comp = -1
 
+        chemical_system = ChemicalSystem()
+
         while True:
             line = self._file.readline()
             comp += 1
@@ -199,8 +201,8 @@ class LAMMPScustom(LAMMPSReader):
                             )
 
                 self._rankToName = {}
+                element_list = []
 
-                g = Graph()
                 self._itemsPosition["ATOMS"] = [comp + 1, comp + self._nAtoms + 1]
                 for i in range(self._nAtoms):
                     temp = self._file.readline().split()
@@ -226,43 +228,17 @@ class LAMMPScustom(LAMMPSReader):
                         self._rankToName[i] = name
                     else:
                         self._rankToName[temp_index - 1] = name
-                    g.add_node(idx, label=label, mass=mass, atomName=name)
+                    element = get_element_from_mapping(aliases, label, mass)
+                    element_list.append(element)
+
+                chemical_system.initialise_atoms(element_list)
 
                 if config["n_bonds"] is not None:
+                    bonds = []
                     for idx1, idx2 in config["bonds"]:
-                        g.add_link(idx1, idx2)
+                        bonds.append((idx1, idx2))
+                    chemical_system.add_bonds(bonds)
 
-                chemicalSystem = ChemicalSystem()
-
-                for cluster in g.build_connected_components():
-                    if len(cluster) == 1:
-                        node = cluster.pop()
-                        try:
-                            element = get_element_from_mapping(
-                                aliases, node.label, mass=node.mass
-                            )
-                            obj = Atom(symbol=element, name=node.atomName)
-                        except TypeError:
-                            LOG.error("EXCEPTION in LAMMPS loader")
-                            LOG.error(f"node.element = {node.element}")
-                            LOG.error(f"node.atomName = {node.atomName}")
-                            LOG.error(f"rankToName = {self._rankToName}")
-                        obj.index = node.name
-                    else:
-                        atList = []
-                        for atom in cluster:
-                            element = get_element_from_mapping(
-                                aliases, atom.label, mass=atom.mass
-                            )
-                            at = Atom(symbol=element, name=atom.atomName)
-                            atList.append(at)
-                        c = collections.Counter([at.label for at in cluster])
-                        name = "".join(
-                            ["{:s}{:d}".format(k, v) for k, v in sorted(c.items())]
-                        )
-                        obj = AtomCluster(name, atList)
-
-                    chemicalSystem.add_chemical_entity(obj)
                 self._last = comp + self._nAtoms + 1
 
                 break
@@ -271,7 +247,7 @@ class LAMMPScustom(LAMMPSReader):
                 self._nAtoms = int(self._file.readline())
                 comp += 1
                 continue
-        return chemicalSystem
+        return chemical_system
 
     def run_step(self, index):
         """Runs a single step of the job.
@@ -377,22 +353,22 @@ class LAMMPScustom(LAMMPSReader):
             conf = PeriodicBoxConfiguration(
                 self._trajectory.chemical_system, coords, unitCell
             )
-            realConf = conf.to_real_configuration()
+            real_conf = conf.to_real_configuration()
         else:
             coords *= measure(1.0, self._length_unit).toval("nm")
-            realConf = PeriodicRealConfiguration(
+            real_conf = PeriodicRealConfiguration(
                 self._trajectory.chemical_system, coords, unitCell
             )
 
         if self._fold:
             # The whole configuration is folded in to the simulation box.
-            realConf.fold_coordinates()
-
-        self._trajectory.chemical_system.configuration = realConf
+            real_conf.fold_coordinates()
 
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            real_conf,
+            time,
+            units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
         )
         if self._charge is not None:
             self._trajectory.write_charges(
@@ -479,8 +455,9 @@ class LAMMPSxyz(LAMMPSReader):
         self._full_cell = full_cell
 
         self._rankToName = {}
+        element_list = []
+        chemical_system = ChemicalSystem()
 
-        g = Graph()
         for i in range(self._nAtoms):
             idx = i
             ty = atom_types[i] - 1
@@ -488,43 +465,16 @@ class LAMMPSxyz(LAMMPSReader):
             mass = str(config["elements"][ty][1])
             name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
             self._rankToName[idx] = name
-            g.add_node(idx, label=label, mass=mass, atomName=name)
+            element_list.append(get_element_from_mapping(aliases, label, mass))
+        chemical_system.initialise_atoms(element_list)
 
         if config["n_bonds"] is not None:
+            bonds = []
             for idx1, idx2 in config["bonds"]:
-                g.add_link(idx1, idx2)
+                bonds.append((idx1, idx2))
+            chemical_system.add_bonds(bonds)
 
-        chemicalSystem = ChemicalSystem()
-
-        for cluster in g.build_connected_components():
-            if len(cluster) == 1:
-                node = cluster.pop()
-                try:
-                    element = get_element_from_mapping(
-                        aliases, node.label, mass=node.mass
-                    )
-                    obj = Atom(symbol=element, name=node.atomName)
-                except TypeError:
-                    LOG.error("EXCEPTION in LAMMPS loader")
-                    LOG.error(f"node.element = {node.element}")
-                    LOG.error(f"node.atomName = {node.atomName}")
-                    LOG.error(f"rankToName = {self._rankToName}")
-                obj.index = node.name
-            else:
-                atList = []
-                for atom in cluster:
-                    element = get_element_from_mapping(
-                        aliases, atom.label, mass=atom.mass
-                    )
-                    at = Atom(symbol=element, name=atom.atomName)
-                    atList.append(at)
-                c = collections.Counter([at.label for at in cluster])
-                name = "".join(["{:s}{:d}".format(k, v) for k, v in sorted(c.items())])
-                obj = AtomCluster(name, atList)
-
-            chemicalSystem.add_chemical_entity(obj)
-
-        return chemicalSystem
+        return chemical_system
 
     def run_step(self, index):
         """Runs a single step of the job.
@@ -547,22 +497,22 @@ class LAMMPSxyz(LAMMPSReader):
             conf = PeriodicBoxConfiguration(
                 self._trajectory.chemical_system, positions, unitCell
             )
-            realConf = conf.to_real_configuration()
+            real_conf = conf.to_real_configuration()
         else:
             positions *= measure(1.0, self._length_unit).toval("nm")
-            realConf = PeriodicRealConfiguration(
+            real_conf = PeriodicRealConfiguration(
                 self._trajectory.chemical_system, positions, unitCell
             )
 
         if self._fold:
             # The whole configuration is folded in to the simulation box.
-            realConf.fold_coordinates()
-
-        self._trajectory.chemical_system.configuration = realConf
+            real_conf.fold_coordinates()
 
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            real_conf,
+            time,
+            units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
         )
 
         return index, 0
@@ -612,8 +562,9 @@ class LAMMPSh5md(LAMMPSReader):
         self._full_cell = full_cell
 
         self._rankToName = {}
+        chemical_system = ChemicalSystem()
+        element_list = []
 
-        g = Graph()
         for i in range(self._nAtoms):
             idx = i
             ty = atom_types[i] - 1
@@ -621,43 +572,16 @@ class LAMMPSh5md(LAMMPSReader):
             mass = str(config["elements"][ty][1])
             name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
             self._rankToName[idx] = name
-            g.add_node(idx, label=label, mass=mass, atomName=name)
+            element_list.append(get_element_from_mapping(aliases, label, mass))
+        chemical_system.initialise_atoms(element_list)
 
         if config["n_bonds"] is not None:
+            bonds = []
             for idx1, idx2 in config["bonds"]:
-                g.add_link(idx1, idx2)
+                bonds.append((idx1, idx2))
+            chemical_system.add_bonds(bonds)
 
-        chemicalSystem = ChemicalSystem()
-
-        for cluster in g.build_connected_components():
-            if len(cluster) == 1:
-                node = cluster.pop()
-                try:
-                    element = get_element_from_mapping(
-                        aliases, node.label, mass=node.mass
-                    )
-                    obj = Atom(symbol=element, name=node.atomName)
-                except TypeError:
-                    LOG.error("EXCEPTION in LAMMPS loader")
-                    LOG.error(f"node.element = {node.element}")
-                    LOG.error(f"node.atomName = {node.atomName}")
-                    LOG.error(f"rankToName = {self._rankToName}")
-                obj.index = node.name
-            else:
-                atList = []
-                for atom in cluster:
-                    element = get_element_from_mapping(
-                        aliases, atom.label, mass=atom.mass
-                    )
-                    at = Atom(symbol=element, name=atom.atomName)
-                    atList.append(at)
-                c = collections.Counter([at.label for at in cluster])
-                name = "".join(["{:s}{:d}".format(k, v) for k, v in sorted(c.items())])
-                obj = AtomCluster(name, atList)
-
-            chemicalSystem.add_chemical_entity(obj)
-
-        return chemicalSystem
+        return chemical_system
 
     def run_step(self, index):
         """Runs a single step of the job.
@@ -678,22 +602,22 @@ class LAMMPSh5md(LAMMPSReader):
             conf = PeriodicBoxConfiguration(
                 self._trajectory.chemical_system, positions, unitCell
             )
-            realConf = conf.to_real_configuration()
+            real_conf = conf.to_real_configuration()
         else:
             positions *= measure(1.0, self._length_unit).toval("nm")
-            realConf = PeriodicRealConfiguration(
+            real_conf = PeriodicRealConfiguration(
                 self._trajectory.chemical_system, positions, unitCell
             )
 
         if self._fold:
             # The whole configuration is folded in to the simulation box.
-            realConf.fold_coordinates()
-
-        self._trajectory.chemical_system.configuration = realConf
+            real_conf.fold_coordinates()
 
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            real_conf,
+            time,
+            units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
         )
         if self._charges_fixed is None:
             try:
@@ -804,7 +728,7 @@ class LAMMPS(Converter):
         self._reader = self.create_reader(self._lammps_format)
 
         self._reader.set_units(self._lammps_units)
-        self._chemicalSystem = self.parse_first_step(self._atomicAliases)
+        self._chemical_system = self.parse_first_step(self._atomicAliases)
 
         if self.numberOfSteps == 0:
             self.numberOfSteps = self._reader.get_time_steps(
@@ -815,9 +739,9 @@ class LAMMPS(Converter):
             np.array(self._lammpsConfig["charges"])
             * self._reader._charge_conversion_factor
         )
-        if len(charges_single_cell) < self._chemicalSystem.number_of_atoms:
+        if len(charges_single_cell) < self._chemical_system.number_of_atoms:
             charges = list(charges_single_cell) * int(
-                self._chemicalSystem.number_of_atoms // len(charges_single_cell)
+                self._chemical_system.number_of_atoms // len(charges_single_cell)
             )
         else:
             charges = list(charges_single_cell)
@@ -825,7 +749,7 @@ class LAMMPS(Converter):
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
-            self._chemicalSystem,
+            self._chemical_system,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
@@ -904,6 +828,6 @@ class LAMMPS(Converter):
 
     def parse_first_step(self, aliases):
         self._reader.open_file(self.configuration["trajectory_file"]["value"])
-        chemicalSystem = self._reader.parse_first_step(aliases, self._lammpsConfig)
+        chemical_system = self._reader.parse_first_step(aliases, self._lammpsConfig)
         self._reader.close()
-        return chemicalSystem
+        return chemical_system

@@ -233,9 +233,10 @@ class RigidBodyTrajectory(IJob):
                         Vector(*xyz)
                     )
 
-            self._output_trajectory._chemical_system.configuration = real_configuration
             self._output_trajectory.dump_configuration(
-                time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+                real_configuration,
+                time,
+                units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
             )
 
         outputFile = h5py.File(self.configuration["output_files"]["file"], "r+")

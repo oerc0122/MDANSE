@@ -59,8 +59,7 @@ def sample_trajectory(chemical_system, sample_configuration):
     os.close(fdesc)
     writer = TrajectoryWriter(fname, chemical_system, n_steps=N_TIMESTEPS)
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
-        writer.chemical_system.configuration = sample_configuration
-        writer.dump_configuration(ts)
+        writer.dump_configuration(sample_configuration, ts)
     return fname
 
 
@@ -73,8 +72,7 @@ def gzipped_trajectory(chemical_system, sample_configuration):
         fname, chemical_system, n_steps=N_TIMESTEPS, compression="gzip"
     )
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
-        writer.chemical_system.configuration = sample_configuration
-        writer.dump_configuration(ts)
+        writer.dump_configuration(sample_configuration, ts)
     return fname
 
 
@@ -87,8 +85,7 @@ def lzffed_trajectory(chemical_system, sample_configuration):
         fname, chemical_system, n_steps=N_TIMESTEPS, compression="lzf"
     )
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
-        writer.chemical_system.configuration = sample_configuration
-        writer.dump_configuration(ts)
+        writer.dump_configuration(sample_configuration, ts)
     return fname
 
 

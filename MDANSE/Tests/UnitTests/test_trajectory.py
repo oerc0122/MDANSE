@@ -26,15 +26,15 @@ class TestTrajectory(unittest.TestCase):
     """ """
 
     def setUp(self):
-        self._chemicalSystem = ChemicalSystem()
+        self._chemical_system = ChemicalSystem()
         self._nAtoms = 4
 
         for i in range(self._nAtoms):
-            self._chemicalSystem.add_chemical_entity(Atom(symbol="H"))
+            self._chemical_system.add_chemical_entity(Atom(symbol="H"))
 
     def test_write_trajectory(self):
         tf = tempfile.NamedTemporaryFile().name
-        tw = TrajectoryWriter(tf, self._chemicalSystem, 10)
+        tw = TrajectoryWriter(tf, self._chemical_system, 10)
 
         allCoordinates = []
         allUnitCells = []
@@ -44,10 +44,9 @@ class TestTrajectory(unittest.TestCase):
             allUnitCells.append(np.random.uniform(0, 10, (3, 3)))
             allCoordinates.append(np.random.uniform(0, 10, (self._nAtoms, 3)))
             conf = PeriodicRealConfiguration(
-                self._chemicalSystem, allCoordinates[-1], UnitCell(allUnitCells[-1])
+                self._chemical_system, allCoordinates[-1], UnitCell(allUnitCells[-1])
             )
-            tw.chemical_system.configuration = conf
-            tw.dump_configuration(i)
+            tw.dump_configuration(conf, i)
 
         tw.close()
 
@@ -66,7 +65,7 @@ class TestTrajectory(unittest.TestCase):
 
     def test_write_trajectory_with_velocities(self):
         tf = tempfile.NamedTemporaryFile().name
-        tw = TrajectoryWriter(tf, self._chemicalSystem, 10)
+        tw = TrajectoryWriter(tf, self._chemical_system, 10)
 
         allCoordinates = []
         allUnitCells = []
@@ -78,11 +77,10 @@ class TestTrajectory(unittest.TestCase):
             allCoordinates.append(np.random.uniform(0, 10, (self._nAtoms, 3)))
             allVelocities.append(np.random.uniform(0, 10, (self._nAtoms, 3)))
             conf = PeriodicRealConfiguration(
-                self._chemicalSystem, allCoordinates[-1], UnitCell(allUnitCells[-1])
+                self._chemical_system, allCoordinates[-1], UnitCell(allUnitCells[-1])
             )
             conf.variables["velocities"] = allVelocities[-1]
-            self._chemicalSystem.configuration = conf
-            tw.dump_configuration(i)
+            tw.dump_configuration(conf, i)
 
         tw.close()
 
@@ -104,7 +102,7 @@ class TestTrajectory(unittest.TestCase):
 
     def test_write_trajectory_with_gradients(self):
         tf = tempfile.NamedTemporaryFile().name
-        tw = TrajectoryWriter(tf, self._chemicalSystem, 10)
+        tw = TrajectoryWriter(tf, self._chemical_system, 10)
 
         allCoordinates = []
         allUnitCells = []
@@ -118,12 +116,11 @@ class TestTrajectory(unittest.TestCase):
             allVelocities.append(np.random.uniform(0, 10, (self._nAtoms, 3)))
             allGradients.append(np.random.uniform(0, 10, (self._nAtoms, 3)))
             conf = PeriodicRealConfiguration(
-                self._chemicalSystem, allCoordinates[-1], UnitCell(allUnitCells[-1])
+                self._chemical_system, allCoordinates[-1], UnitCell(allUnitCells[-1])
             )
             conf.variables["velocities"] = allVelocities[-1]
             conf.variables["gradients"] = allGradients[-1]
-            self._chemicalSystem.configuration = conf
-            tw.dump_configuration(i)
+            tw.dump_configuration(conf, i)
 
         tw.close()
 
@@ -148,7 +145,7 @@ class TestTrajectory(unittest.TestCase):
 
     def test_read_com_trajectory(self):
         tf = tempfile.NamedTemporaryFile().name
-        tw = TrajectoryWriter(tf, self._chemicalSystem, 1)
+        tw = TrajectoryWriter(tf, self._chemical_system, 1)
 
         allCoordinates = []
         allUnitCells = []
@@ -160,14 +157,13 @@ class TestTrajectory(unittest.TestCase):
                 [[0.0, 0.0, 0.0], [8.0, 8.0, 8.0], [4.0, 4.0, 4.0], [2.0, 2.0, 2.0]]
             )
             conf = PeriodicRealConfiguration(
-                self._chemicalSystem, allCoordinates[-1], UnitCell(allUnitCells[-1])
+                self._chemical_system, allCoordinates[-1], UnitCell(allUnitCells[-1])
             )
-            self._chemicalSystem.configuration = conf
-            tw.dump_configuration(i)
+            tw.dump_configuration(conf, i)
 
         tw.close()
 
         t = Trajectory(tf)
-        com_trajectory = t.read_com_trajectory(self._chemicalSystem.atoms, 0, 1, 1)
+        com_trajectory = t.read_com_trajectory(self._chemical_system.atoms, 0, 1, 1)
         self.assertTrue(np.allclose(com_trajectory, [[3.5, 3.5, 3.5]], rtol=1.0e-6))
         t.close()

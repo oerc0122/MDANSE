@@ -214,8 +214,6 @@ class TrajectoryEditor(IJob):
                 **variables,
             )
 
-        self._output_trajectory.chemical_system.configuration = com_conf
-
         new_charges = np.zeros(len(self._indices))
         for number, at_index in enumerate(self._indices):
             try:
@@ -227,7 +225,7 @@ class TrajectoryEditor(IJob):
         # The times corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
-        self._output_trajectory.dump_configuration(time)
+        self._output_trajectory.dump_configuration(com_conf, time)
         self._output_trajectory.write_charges(new_charges, index)
 
         return index, None

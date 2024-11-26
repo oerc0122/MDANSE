@@ -564,7 +564,7 @@ class TrajectoryWriter:
             if variable_charge_dset is not None:
                 del self._h5_file[variable_charge_dset.name]
 
-    def dump_configuration(self, time, units=None):
+    def dump_configuration(self, configuration, time, units=None):
         """Dump the chemical system configuration at a given time.
 
         :param time: the time
@@ -579,7 +579,6 @@ class TrajectoryWriter:
                 f"The current index {self._current_index} is greater than the actual number of steps of the trajectory {self._n_steps}"
             )
 
-        configuration = self._chemical_system.configuration
         if configuration is None:
             return
 

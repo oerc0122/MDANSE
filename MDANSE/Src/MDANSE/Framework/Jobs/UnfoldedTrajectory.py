@@ -110,8 +110,6 @@ class UnfoldedTrajectory(IJob):
 
         cloned_conf = conf.clone(self._outputTraj.chemical_system)
 
-        self._outputTraj.chemical_system.configuration = cloned_conf
-
         # The time corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
@@ -119,7 +117,7 @@ class UnfoldedTrajectory(IJob):
             self._selection_indices
         ]
         # Write the step.
-        self._outputTraj.dump_configuration(time)
+        self._outputTraj.dump_configuration(cloned_conf, time)
 
         self._outputTraj.write_charges(charge, index)
 

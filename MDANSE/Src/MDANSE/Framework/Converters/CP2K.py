@@ -194,12 +194,13 @@ class CP2K(Converter):
         self.numberOfSteps = self._xyzFile["n_frames"]
 
         self._chemical_system = ChemicalSystem()
+        element_list = []
 
-        for i, symbol in enumerate(self._xyzFile["atoms"]):
+        for _, symbol in enumerate(self._xyzFile["atoms"]):
             element = get_element_from_mapping(self._atomicAliases, symbol)
-            self._chemical_system.add_chemical_entity(
-                Atom(symbol=element, name="%s_%d" % (symbol, i + 1))
-            )
+            element_list.append(element)
+
+        self._chemical_system.initialise_atoms(element_list)
 
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
@@ -236,19 +237,18 @@ class CP2K(Converter):
                 1.0, iunit="ang/fs"
             ).toval("nm/ps")
 
-        realConf = PeriodicRealConfiguration(
+        real_conf = PeriodicRealConfiguration(
             self._trajectory.chemical_system, coords, unitcell, **variables
         )
 
         if self._configuration["fold"]["value"]:
-            realConf.fold_coordinates()
-
-        self._trajectory.chemical_system.configuration = realConf
+            real_conf.fold_coordinates()
 
         time = index * self._xyzFile["time_step"] * measure(1.0, iunit="fs").toval("ps")
 
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(
+            real_conf,
             time,
             units={
                 "time": "ps",

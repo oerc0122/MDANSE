@@ -30,4 +30,3 @@ def test_molecule_finder(trajectory: HDFTrajectoryInputData):
     configuration = chem_system.configuration
     coordinates = configuration._variables["coordinates"]
     print(coordinates.shape)
-

@@ -105,15 +105,13 @@ class CroppedTrajectory(IJob):
 
         cloned_conf = conf.clone(self._output_trajectory.chemical_system)
 
-        self._output_trajectory.chemical_system.configuration = cloned_conf
-
         time = self.configuration["frames"]["time"][index]
 
         charge = self.configuration["trajectory"]["instance"].charges(index)[
             self._selected_indices
         ]
 
-        self._output_trajectory.dump_configuration(time)
+        self._output_trajectory.dump_configuration(cloned_conf, time)
 
         self._output_trajectory.write_charges(charge, index)
 

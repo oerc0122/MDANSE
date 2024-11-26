@@ -24,7 +24,6 @@ from rdkit import Chem
 from MDANSE.MLogging import LOG
 
 if TYPE_CHECKING:
-    from MDANSE.MolecularDynamics.Configuration import _Configuration
     from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
@@ -147,15 +146,6 @@ class ChemicalSystem:
     def atom_list(self) -> list[str]:
         """List of all non-ghost atoms in the ChemicalSystem."""
         return self._atom_types
-
-    @property
-    def configuration(self) -> _Configuration:
-        """The Configuration that this ChemicalSystem is associated with."""
-        return self._configuration
-
-    @configuration.setter
-    def configuration(self, configuration: _Configuration):
-        self._configuration = configuration
 
     def copy(self) -> "ChemicalSystem":
         """

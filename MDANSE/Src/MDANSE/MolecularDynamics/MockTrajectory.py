@@ -76,9 +76,9 @@ class MockTrajectory:
         self._variables = {}
         self._coordinates = None
 
-        self._chemicalSystem = ChemicalSystem("MockSystem")
+        self._chemical_system = ChemicalSystem("MockSystem")
         for atom in self._atom_types:
-            self._chemicalSystem.add_chemical_entity(Atom(symbol=atom))
+            self._chemical_system.add_chemical_entity(Atom(symbol=atom))
 
     def set_coordinates(self, coords: np.ndarray):
         """Sets the initial (equlibrium) positions of atoms from
@@ -286,10 +286,10 @@ class MockTrajectory:
 
         if self._pbc:
             conf = PeriodicRealConfiguration(
-                self._chemicalSystem, coordinates, unit_cell, **variables
+                self._chemical_system, coordinates, unit_cell, **variables
             )
         else:
-            conf = RealConfiguration(self._chemicalSystem, coordinates, **variables)
+            conf = RealConfiguration(self._chemical_system, coordinates, **variables)
 
         return conf
 
@@ -520,7 +520,7 @@ class MockTrajectory:
         :return: the chemical system
         :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         """
-        return self._chemicalSystem
+        return self._chemical_system
 
     @property
     def file(self) -> str:

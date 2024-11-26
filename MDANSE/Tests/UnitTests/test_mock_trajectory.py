@@ -72,7 +72,7 @@ def test_com_trajectory(static_trajectory):
     """Centre of Mass (COM) trajectory should be identical
     to the static trajectory, since the atoms never moved"""
     com_trajectory = static_trajectory.read_com_trajectory(
-        static_trajectory._chemicalSystem.atoms, 0, 10, 1
+        static_trajectory._chemical_system.atoms, 0, 10, 1
     )
     conf_static = static_trajectory[3]
     conf_com = com_trajectory[3]
