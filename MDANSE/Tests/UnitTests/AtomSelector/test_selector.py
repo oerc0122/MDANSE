@@ -275,7 +275,7 @@ def test_selector_returns_true_with_correct_json_setting_0(protein_chemical_syst
 def test_selector_returns_true_with_correct_json_setting_1(protein_chemical_system):
     selector = Selector(protein_chemical_system)
     assert selector.check_valid_json_settings(
-        '{"all": false, "index": {"0": true, "1": true}}'
+        '{"all": false, "index": [0, 1]}'
     )
 
 
@@ -289,14 +289,14 @@ def test_selector_returns_false_with_incorrect_json_setting_0(protein_chemical_s
 def test_selector_returns_false_with_incorrect_json_setting_1(protein_chemical_system):
     selector = Selector(protein_chemical_system)
     assert not selector.check_valid_json_settings(
-        '{"all": false, "index": {0: true, "1": true}}'
+        '{"all": false, "index": [0, "1"]}'
     )
 
 
 def test_selector_returns_false_with_incorrect_json_setting_2(protein_chemical_system):
     selector = Selector(protein_chemical_system)
     assert not selector.check_valid_json_settings(
-        '{"all": False, "index": {"0": true, "1": true}}'
+        '{"all": False, "index": ["0", "1"]}'
     )
 
 
