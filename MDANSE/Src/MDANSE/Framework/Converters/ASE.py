@@ -133,10 +133,6 @@ class ASE(Converter):
             initial_charges=self._initial_charges,
         )
 
-        self._nameToIndex = dict(
-            [(at.name, at.index) for at in self._trajectory.chemical_system.atom_list]
-        )
-
         LOG.info(f"total steps: {self.numberOfSteps}")
 
     def run_step(self, index):
@@ -184,9 +180,9 @@ class ASE(Converter):
             if self._initial_masses is not None:
                 velocities = momenta / self._initial_masses.reshape((len(momenta), 1))
             else:
-                velocities = momenta / np.array(self._chemical_system.masses).reshape(
-                    (len(momenta), 1)
-                )
+                velocities = momenta / np.array(
+                    self._chemical_system.atom_property("atomic_weight")
+                ).reshape((len(momenta), 1))
             variables["velocities"] = velocities * measure(1.0, "ang/fs").toval("nm/ps")
 
         if self._isPeriodic:

@@ -16,7 +16,7 @@
 import tempfile
 import unittest
 import numpy as np
-from MDANSE.Chemistry.ChemicalSystem import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
@@ -28,9 +28,7 @@ class TestTrajectory(unittest.TestCase):
     def setUp(self):
         self._chemical_system = ChemicalSystem()
         self._nAtoms = 4
-
-        for i in range(self._nAtoms):
-            self._chemical_system.add_chemical_entity(Atom(symbol="H"))
+        self._chemical_system.initialise_atoms(self._nAtoms * ["H"])
 
     def test_write_trajectory(self):
         tf = tempfile.NamedTemporaryFile().name

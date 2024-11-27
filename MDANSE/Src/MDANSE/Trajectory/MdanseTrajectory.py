@@ -52,7 +52,7 @@ class MdanseTrajectory:
 
         # Load the chemical system
         self._chemical_system = ChemicalSystem(
-            os.path.splitext(os.path.basename(self._h5_filename))[0]
+            os.path.splitext(os.path.basename(self._h5_filename))[0], self
         )
         self._chemical_system.load(self._h5_filename)
 
@@ -63,7 +63,7 @@ class MdanseTrajectory:
     def file_is_right(self, filename):
         result = True
         try:
-            temp = h5py.File(filename)
+            _ = h5py.File(filename)
         except:
             result = False
         else:

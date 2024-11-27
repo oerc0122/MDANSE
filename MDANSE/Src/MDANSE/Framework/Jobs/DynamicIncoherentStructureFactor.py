@@ -209,9 +209,8 @@ class DynamicIncoherentStructureFactor(IJob):
             )
 
         else:
-            selected_atoms = [self._atoms[idx] for idx in indices]
             series = self.configuration["trajectory"]["instance"].read_com_trajectory(
-                selected_atoms,
+                indices,
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
                 step=self.configuration["frames"]["step"],

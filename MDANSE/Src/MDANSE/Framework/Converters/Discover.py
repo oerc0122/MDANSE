@@ -299,6 +299,8 @@ class Discover(Converter):
 
         self._xtdfile.build_chemical_system(self._atomicAliases)
 
+        self._atom_config = self._xtdfile._configuration
+
         self._chemical_system = self._xtdfile.chemicalSystem
 
         self._hisfile = HisFile(self.configuration["his_file"]["filename"])
@@ -310,11 +312,11 @@ class Discover(Converter):
         variables["velocities"] = self._hisfile["initial_velocities"]
 
         if np.all(self._hisfile["initial_cell"] < 0.11):
-            self._chemical_system.configuration.is_periodic = False
+            self._atom_config.is_periodic = False
             real_conf = RealConfiguration(
                 self._chemical_system, self._hisfile["initial_coordinates"], **variables
             )
-        elif self._chemical_system.configuration.is_periodic:
+        elif self._atom_config.is_periodic:
             unitCell = UnitCell(self._hisfile["initial_cell"])
             real_conf = PeriodicRealConfiguration(
                 self._chemical_system,
@@ -330,7 +332,7 @@ class Discover(Converter):
         if self.configuration["fold"]["value"]:
             real_conf.fold_coordinates()
 
-        self._chemical_system.configuration = real_conf
+        self._atom_config = real_conf
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
@@ -354,7 +356,7 @@ class Discover(Converter):
 
         time, cell, config, vel = self._hisfile.read_step(index)
 
-        conf = self._trajectory.chemical_system.configuration
+        conf = self._atom_config
         if conf.is_periodic:
             conf.unit_cell = UnitCell(cell)
 

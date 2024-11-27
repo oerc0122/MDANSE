@@ -54,6 +54,7 @@ class Trajectory:
         self._trajectory = self.open_trajectory(self._format)
         self._min_span = np.zeros(3)
         self._max_span = np.zeros(3)
+        self._atom_cache = {}
 
     def guess_correct_format(self):
         """This is a placeholder for now. As the number of
@@ -175,7 +176,7 @@ class Trajectory:
         return self._min_span
 
     def read_com_trajectory(
-        self, atoms, first=0, last=None, step=1, box_coordinates=False
+        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
     ):
         """Build the trajectory of the center of mass of a set of atoms.
 
@@ -194,7 +195,11 @@ class Trajectory:
         :rtype: ndarray
         """
         return self._trajectory.read_com_trajectory(
-            atoms, first=first, last=last, step=step, box_coordinates=box_coordinates
+            atom_indices,
+            first=first,
+            last=last,
+            step=step,
+            box_coordinates=box_coordinates,
         )
 
     def to_real_coordinates(self, box_coordinates, first, last, step):
@@ -278,7 +283,11 @@ class Trajectory:
         return self._trajectory.has_variable(variable)
 
     def get_atom_property(self, atom_symbol: str, property: str):
-        return self._trajectory.get_atom_property(atom_symbol, property)
+        if (atom_symbol, property) not in self._atom_cache.keys():
+            self._atom_cache[(atom_symbol, property)] = (
+                self._trajectory.get_atom_property(atom_symbol, property)
+            )
+        return self._atom_cache[(atom_symbol, property)]
 
     @property
     def atoms_in_database(self) -> List[str]:
@@ -369,21 +378,14 @@ class TrajectoryWriter:
         self._h5_file = h5py.File(self._h5_filename, "w")
 
         self._chemical_system = chemical_system
+        self._last_configuration = None
 
         if selected_atoms is None:
-            self._selected_atoms = self._chemical_system._atom_indices
+            self._selected_atoms = list(self._chemical_system._atom_indices)
         else:
-            for at in selected_atoms:
-                if at.root_chemical_system != chemical_system:
-                    LOG.error(
-                        f"atom.chemical_system={at.root_chemical_system} and traj.chemical_system={chemical_system}"
-                    )
-                    raise TrajectoryWriterError(
-                        "One or more atoms of the selection comes from a different chemical system"
-                    )
             self._selected_atoms = selected_atoms
 
-        all_atoms = self._chemical_system.atom_list
+        all_atoms = list(self._chemical_system.atom_list)
         for idx in self._selected_atoms:
             all_atoms[idx] = False
 
@@ -474,7 +476,7 @@ class TrajectoryWriter:
             self.write_atom_properties(atom_symbol, property_dict, database._properties)
 
     def write_standard_atom_database(self):
-        symbols = list(np.unique([at.symbol for at in self._chemical_system.atom_list]))
+        symbols = list(np.unique(self._chemical_system.atom_list))
         database = ATOMS_DATABASE
         for atom_symbol in symbols:
             property_dict = database.get_property_dict(atom_symbol)
@@ -493,11 +495,10 @@ class TrajectoryWriter:
         """Close the trajectory file"""
         self.validate_charges()
 
-        configuration = self._chemical_system.configuration
         n_atoms = self._chemical_system.total_number_of_atoms
-        if configuration is not None:
+        if self._last_configuration is not None:
             configuration_grp = self._h5_file["/configuration"]
-            for k, v in configuration.variables.items():
+            for k, v in self._last_configuration.variables.items():
                 dset = configuration_grp.get(k, None)
                 dset.resize((self._current_index, n_atoms, 3))
             try:
@@ -629,6 +630,7 @@ class TrajectoryWriter:
         time_dset[self._current_index] = time
 
         self._current_index += 1
+        self._last_configuration = configuration
 
 
 class RigidBodyTrajectoryGenerator:

@@ -140,7 +140,9 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
                     atomsMapping[int(v)] for v in node.attrib["Connects"].split(",")
                 ]
                 idx1, idx2 = bondsMapping[idx]
-                self._bonds.append((idx1, idx2))
+                self._bonds.append(
+                    (self._atoms[idx1]["index"], self._atoms[idx2]["index"])
+                )
                 self._atoms[idx1]["bonded_to"].add(idx2)
                 self._atoms[idx2]["bonded_to"].add(idx1)
 
@@ -148,13 +150,11 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         self._chemical_system = ChemicalSystem()
 
         coordinates = np.empty((self._nAtoms, 3), dtype=np.float64)
-        element_list = [self._atoms[index]["element"] for index in range(self._nAtoms)]
-        unique_labels = set(
-            [self._atoms[index]["atom_name"] for index in range(self._nAtoms)]
-        )
+        element_list = [atom["element"] for atom in self._atoms.values()]
+        unique_labels = set([atom["atom_name"] for atom in self._atoms.values()])
         label_dict = {label: [] for label in unique_labels}
-        for atom in self._atoms:
-            label_dict[atom["atom_name"]].append(atom["index"])
+        for temp_index, atom in enumerate(self._atoms.values()):
+            label_dict[atom["atom_name"]].append(temp_index)
 
         self._chemical_system.initialise_atoms(element_list)
         self._chemical_system.add_bonds(self._bonds)

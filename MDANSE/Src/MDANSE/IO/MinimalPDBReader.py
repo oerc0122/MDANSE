@@ -109,7 +109,7 @@ class MinimalPDBReader:
                     result.append(line)
                 elif "HETATM" in line[0:6]:
                     result.append(line)
-                if "ENDMDL" in line[0:6]:
+                if "END" in line[0:3]:
                     fail_count += 1
                 if fail_count > 0:
                     break
@@ -163,13 +163,13 @@ class MinimalPDBReader:
             else:
                 LOG.warning(f"Dummy atom introduce from line {atom_line}")
                 element_list.append("Du")
-            self._chemical_system.initialise_atoms(element_list)
             x, y, z = (
                 atom_line[posx_slice],
                 atom_line[posy_slice],
                 atom_line[posz_slice],
             )
             coordinates.append([float(aaa) for aaa in [x, y, z]])
+        self._chemical_system.initialise_atoms(element_list)
 
         coordinates = np.array(coordinates)
         coordinates *= pos_scaling

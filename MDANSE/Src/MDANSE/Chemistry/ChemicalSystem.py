@@ -15,7 +15,7 @@
 #
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Dict
+from typing import TYPE_CHECKING, List, Tuple, Dict, Any
 import copy
 
 import h5py
@@ -58,16 +58,7 @@ class ChemicalSystem:
         self._clusters = {}
 
         self.rdkit_mol = Chem.RWMol()
-
-    def __repr__(self):
-        contents = []
-        for key, value in self.__dict__.items():
-            if key == "rdkit_mol":
-                continue
-            contents.append(f'{key[1:] if key[0] == "_" else key}={repr(value)}')
-
-        contents = ", ".join(contents)
-        return f"MDANSE.MolecularDynamics.ChemicalEntity.ChemicalSystem({contents})"
+        self._unique_elements = set()
 
     def __str__(self):
         return f"ChemicalSystem {self._name} consisting of {len(self._atom_types)} atoms in {len(self._clusters)} molecules"
@@ -79,6 +70,7 @@ class ChemicalSystem:
         ]
         self._atom_types = element_list
         self._total_number_of_atoms = len(self._atom_indices)
+        self._unique_elements.update(set(element_list))
 
     def add_atom(self, atm_num: int) -> int:
         rdkit_atm = Chem.Atom(atm_num)
@@ -158,6 +150,13 @@ class ChemicalSystem:
     def atom_list(self) -> list[str]:
         """List of all non-ghost atoms in the ChemicalSystem."""
         return self._atom_types
+
+    def atom_property(self, property: str) -> list[Any]:
+        """List of a specific property, for all atoms in the system"""
+        lookup = {}
+        for atom in self._unique_elements:
+            lookup[atom] = self._database.get_atom_property(atom, property)
+        return [lookup[atom] for atom in self.atom_list]
 
     def grouping_level(self, index: int) -> int:
         """Temporarily, there is no grouping test.
@@ -246,10 +245,9 @@ class ChemicalSystem:
         for key, value in self._clusters.items():
             clusters_group.create_dataset(key, data=value)
 
-    def load(self, trajectory_instance: "Trajectory"):
+    def load(self, trajectory_filename: str):
 
-        source = trajectory_instance.file
-        self._trajectory = trajectory_instance
+        source = h5py.File(trajectory_filename)
         self.rdkit_mol = Chem.RWMol()
 
         grp = source["/composition"]

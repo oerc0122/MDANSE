@@ -138,10 +138,6 @@ class ImprovedASE(Converter):
             compression=self.configuration["output_files"]["compression"],
         )
 
-        self._nameToIndex = dict(
-            [(at.name, at.index) for at in self._trajectory.chemical_system.atom_list]
-        )
-
         LOG.info(f"total steps: {self.numberOfSteps}")
 
     def run_step(self, index):

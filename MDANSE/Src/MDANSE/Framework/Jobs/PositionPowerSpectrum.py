@@ -173,10 +173,9 @@ class PositionPowerSpectrum(IJob):
 
         # get atom index
         indices = self.configuration["atom_selection"]["indices"][index]
-        atoms = [self._atoms[idx] for idx in indices]
 
         series = trajectory.read_com_trajectory(
-            atoms,
+            indices,
             first=self.configuration["frames"]["first"],
             last=self.configuration["frames"]["last"] + 1,
             step=self.configuration["frames"]["step"],

@@ -315,7 +315,7 @@ class H5MDTrajectory:
         return grp.shape[0]
 
     def read_com_trajectory(
-        self, atoms, first=0, last=None, step=1, box_coordinates=False
+        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
     ):
         """Build the trajectory of the center of mass of a set of atoms.
 
@@ -337,7 +337,8 @@ class H5MDTrajectory:
         if last is None:
             last = len(self)
 
-        indices = [at.index for at in atoms]
+        atoms = [self.chemical_system.atom_list[index] for index in atom_indices]
+
         try:
             masses = self._h5_file["/particles/all/mass/value"][:].astype(np.float64)
         except KeyError:
@@ -346,7 +347,7 @@ class H5MDTrajectory:
             except KeyError:
                 masses = np.array(
                     [
-                        ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight")
+                        ATOMS_DATABASE.get_atom_property(at, "atomic_weight")
                         for at in atoms
                     ]
                 )
@@ -379,16 +380,10 @@ class H5MDTrajectory:
                 ]
             )
 
-            top_lvl_chemical_entities = set(
-                [at.top_level_chemical_entity for at in atoms]
-            )
             top_lvl_chemical_entities_indices = [
-                [at.index for at in e.atom_list] for e in top_lvl_chemical_entities
+                cluster_indices for cluster_indices in self.chemical_system._clusters
             ]
             bonds = {}
-            for e in top_lvl_chemical_entities:
-                for at in e.atom_list:
-                    bonds[at.index] = [other_at.index for other_at in at.bonds]
 
             com_traj = com_trajectory.com_trajectory(
                 coords,
@@ -396,14 +391,14 @@ class H5MDTrajectory:
                 inverse_cells,
                 masses,
                 top_lvl_chemical_entities_indices,
-                indices,
+                atom_indices,
                 bonds,
                 box_coordinates=box_coordinates,
             )
 
         else:
             com_traj = np.sum(
-                coords[:, indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
+                coords[:, atom_indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
             )
             com_traj /= np.sum(masses)
 

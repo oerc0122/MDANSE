@@ -341,7 +341,7 @@ class LAMMPScustom(LAMMPSReader):
             except ValueError:
                 idx = i
             else:
-                idx = self._nameToIndex[self._rankToName[temp_index - 1]]
+                idx = self._trajectory.chemical_system._atom_indices[i]
             coords[idx, :] = np.array(
                 [temp[self._x], temp[self._y], temp[self._z]], dtype=np.float64
             )
@@ -754,10 +754,6 @@ class LAMMPS(Converter):
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
             initial_charges=charges,
-        )
-
-        self._reader._nameToIndex = dict(
-            [(at.name, at.index) for at in self._trajectory.chemical_system.atom_list]
         )
 
         self._start = 0
