@@ -124,7 +124,7 @@ def test_selector_json_dump_3(protein_chemical_system):
         {"all": False, "element": {"S": True, "H": True}, "water": True}
     )
     json_dump = selector.settings_to_json()
-    assert json_dump == '{"all": false, "water": true, "element": ["S", "H"]}'
+    assert json_dump == '{"all": false, "water": true, "element": ["H", "S"]}'
 
 
 def test_selector_json_dump_4(protein_chemical_system):
@@ -140,7 +140,7 @@ def test_selector_json_dump_4(protein_chemical_system):
     json_dump = selector.settings_to_json()
     assert (
         json_dump
-        == '{"all": false, "water": true, "element": ["S", "H"], "index": [0, 1]}'
+        == '{"all": false, "water": true, "element": ["H", "S"], "index": [0, 1]}'
     )
 
 
@@ -149,7 +149,7 @@ def test_selector_json_dump_with_second_update(protein_chemical_system):
     selector.update_settings({"all": False})
     selector.update_settings({"element": {"S": True, "O": True}, "water": True})
     json_dump = selector.settings_to_json()
-    assert json_dump == '{"all": false, "water": true, "element": ["S", "O"]}'
+    assert json_dump == '{"all": false, "water": true, "element": ["O", "S"]}'
 
 
 def test_selector_json_dump_with_third_update(protein_chemical_system):

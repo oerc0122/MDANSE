@@ -91,7 +91,7 @@ class SelectionHelper(QDialog):
 
         self.selector = selector
         self._field = field
-        self.full_settings = self.selector.full_settings
+        self.settings = self.selector.settings
 
         self.selection_textbox = QTextEdit()
         self.selection_textbox.setReadOnly(True)
@@ -187,7 +187,7 @@ class SelectionHelper(QDialog):
         self.check_boxes = []
         self.combo_boxes = []
 
-        for k, v in self.full_settings.items():
+        for k, v in self.settings.items():
 
             if isinstance(v, bool):
                 check_layout = QHBoxLayout()
@@ -234,7 +234,7 @@ class SelectionHelper(QDialog):
         the current selection and the 3d view to match the selection.
         """
         for check_box in self.check_boxes:
-            self.full_settings[check_box.objectName()] = check_box.isChecked()
+            self.settings[check_box.objectName()] = check_box.isChecked()
         for combo_box in self.combo_boxes:
             for item in combo_box.getItems():
                 txt = item.text()
@@ -242,11 +242,11 @@ class SelectionHelper(QDialog):
                     key = int(txt)
                 else:
                     key = txt
-                self.full_settings[combo_box.objectName()][key] = (
+                self.settings[combo_box.objectName()][key] = (
                     item.checkState() == Qt.Checked
                 )
 
-        self.selector.update_settings(self.full_settings)
+        self.selector.update_settings(self.settings)
         idxs = self.selector.get_idxs()
         self.view_3d._viewer.change_picked(idxs)
         self.update_selection_textbox(idxs)
@@ -261,7 +261,7 @@ class SelectionHelper(QDialog):
             Selection indexes from the 3d view.
         """
         self.selector.update_with_idxs(selection)
-        self.full_settings = self.selector.full_settings
+        self.settings = self.selector.settings
         self.update_selection_widgets()
         self.update_selection_textbox(self.selector.get_idxs())
 
@@ -271,7 +271,7 @@ class SelectionHelper(QDialog):
         """
         for check_box in self.check_boxes:
             check_box.blockSignals(True)
-            if self.full_settings[check_box.objectName()]:
+            if self.settings[check_box.objectName()]:
                 check_box.setCheckState(Qt.Checked)
             else:
                 check_box.setCheckState(Qt.Unchecked)
@@ -284,7 +284,7 @@ class SelectionHelper(QDialog):
                     key = int(txt)
                 else:
                     key = txt
-                if self.full_settings[combo_box.objectName()][key]:
+                if self.settings[combo_box.objectName()][key]:
                     item.setCheckState(Qt.Checked)
                 else:
                     item.setCheckState(Qt.Unchecked)
@@ -311,14 +311,14 @@ class SelectionHelper(QDialog):
         """Set the field of the AtomSelectionWidget to the currently
         chosen setting in this widget.
         """
-        self.selector.update_settings(self.full_settings)
+        self.selector.update_settings(self.settings)
         self._field.setText(self.selector.settings_to_json())
 
     def reset(self) -> None:
         """Resets the helper to the default state."""
         self.selector.reset_settings()
         self.selector.settings["all"] = self.all_selection
-        self.full_settings = self.selector.full_settings
+        self.settings = self.selector.settings
         self.update_selection_widgets()
         idxs = self.selector.get_idxs()
         self.view_3d._viewer.change_picked(idxs)
