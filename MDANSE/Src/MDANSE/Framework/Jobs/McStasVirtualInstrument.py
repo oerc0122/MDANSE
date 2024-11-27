@@ -126,9 +126,7 @@ class McStasVirtualInstrument(IJob):
         # The number of steps is set to 1 as the job is defined as single McStas run.
         self.numberOfSteps = 1
 
-        symbols = self.configuration["trajectory"][
-            "instance"
-        ]._chemical_system.atom_list
+        symbols = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         # Compute some parameters used for a proper McStas run
         self._mcStasPhysicalParameters = {"density": 0.0}
@@ -183,7 +181,10 @@ class McStasVirtualInstrument(IJob):
                 self._mcStasPhysicalParameters["weight"] / cellVolume
             )
             self._mcStasPhysicalParameters["V_rho"] += (
-                configuration._chemical_system.number_of_atoms / cellVolume
+                self.configuration["trajectory"][
+                    "instance"
+                ].chemical_system.number_of_atoms
+                / cellVolume
             )
         self._mcStasPhysicalParameters["density"] /= self.configuration["frames"][
             "n_frames"

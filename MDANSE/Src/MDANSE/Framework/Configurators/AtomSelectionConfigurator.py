@@ -62,17 +62,14 @@ class AtomSelectionConfigurator(IConfigurator):
 
         trajConfig = self._configurable[self._dependencies["trajectory"]]
 
-        atoms = sorted(
-            trajConfig["instance"].chemical_system.atom_list,
-            key=operator.attrgetter("index"),
-        )
+        atoms = trajConfig["instance"].chemical_system.atom_list
         selectedAtoms = [atoms[idx] for idx in self["flatten_indices"]]
 
         self["selection_length"] = len(self["flatten_indices"])
         self["indices"] = [[idx] for idx in self["flatten_indices"]]
 
-        self["elements"] = [[at.symbol] for at in selectedAtoms]
-        self["names"] = [at.symbol for at in selectedAtoms]
+        self["elements"] = [[at] for at in selectedAtoms]
+        self["names"] = [at for at in selectedAtoms]
         self["unique_names"] = sorted(set(self["names"]))
         self["masses"] = [
             [trajConfig["instance"].get_atom_property(n, "atomic_weight")]

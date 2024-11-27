@@ -73,13 +73,20 @@ def select_dummy(
         All dummy atom indices or a bool if checking match.
     """
     system = trajectory.chemical_system
+    dummy_list = ["Du", "dummy"]
     if check_exists:
         for atm in system.atom_list:
-            if atm.element == "dummy":
+            if atm in dummy_list:
                 return True
         return False
     else:
-        return set([at.index for at in system.atom_list if at.element == "dummy"])
+        return set(
+            [
+                index
+                for index, element in enumerate(system.atom_list)
+                if element in dummy_list
+            ]
+        )
 
 
 def select_atom_name(
@@ -103,12 +110,13 @@ def select_atom_name(
     """
     system = trajectory.chemical_system
     if check_exists:
-        for atm in system.atom_list:
-            if atm.name == name:
-                return True
+        if name in system.atom_list:
+            return True
         return False
     else:
-        return set([at.index for at in system.atom_list if at.name == name])
+        return set(
+            [index for index, element in enumerate(system.atom_list) if element == name]
+        )
 
 
 def select_atom_fullname(
@@ -132,12 +140,17 @@ def select_atom_fullname(
     """
     system = trajectory.chemical_system
     if check_exists:
-        for atm in system.atom_list:
-            if atm.full_name == fullname:
-                return True
+        if fullname in system.atom_list:
+            return True
         return False
     else:
-        return set([at.index for at in system.atom_list if at.full_name == fullname])
+        return set(
+            [
+                index
+                for index, element in enumerate(system.atom_list)
+                if element == fullname
+            ]
+        )
 
 
 def select_hs_on_element(

@@ -106,14 +106,16 @@ class SolventAccessibleSurface(IJob):
         self.vdwRadii = dict(
             [
                 (
-                    at.index,
+                    number,
                     self.configuration["trajectory"]["instance"].get_atom_property(
-                        at.symbol, "covalent_radius"
+                        element, "covalent_radius"
                     ),
                 )
-                for at in self.configuration["trajectory"][
-                    "instance"
-                ].chemical_system.atom_list
+                for number, element in enumerate(
+                    self.configuration["trajectory"][
+                        "instance"
+                    ].chemical_system.atom_list
+                )
             ]
         )
         self.vdwRadii_list = np.zeros(

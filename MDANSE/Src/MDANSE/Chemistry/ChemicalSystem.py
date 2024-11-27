@@ -96,12 +96,14 @@ class ChemicalSystem:
 
     def add_clusters(self, group_list: List[List[int]]):
         for group in group_list:
+            sorted_group = tuple(sorted(set(group)))
+            if len(sorted_group) < 2:
+                continue
             atom_list = [self._atom_types[index] for index in group]
             unique_atoms, counts = np.unique(atom_list, return_counts=True)
             name = " ".join(
                 [str(unique_atoms[n]) + str(counts[n]) for n in range(len(counts))]
             )
-            sorted_group = tuple(sorted(group))
             if name not in self._clusters:
                 self._clusters[name] = [sorted_group]
             else:
@@ -201,11 +203,11 @@ class ChemicalSystem:
 
     def find_clusters_from_bonds(self):
         molecules = []
-        atom_pool = list(range(len(self._elements)))
+        atom_pool = list(self._atom_indices)
 
         total_graph = nx.Graph()
         total_graph.add_nodes_from(atom_pool)
-        total_graph.add_edges_from(self._unique_bonds)
+        total_graph.add_edges_from(self._bonds)
         while len(atom_pool) > 0:
             last_atom = atom_pool.pop()
             temp_dict = nx.dfs_successors(total_graph, last_atom)
@@ -273,6 +275,7 @@ class ChemicalSystem:
         if "composition" not in source.keys():
             source.close()
             self.legacy_load(trajectory_filename)
+            return
 
         self.rdkit_mol = Chem.RWMol()
 

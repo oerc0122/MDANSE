@@ -97,7 +97,7 @@ class TrajectoryEditor(IJob):
         self._input_trajectory = self.configuration["trajectory"]["instance"]
         self._input_chemical_system = self.configuration["trajectory"][
             "instance"
-        ]._chemical_system
+        ].chemical_system
 
         if self.configuration["unit_cell"]["apply"]:
             self._new_unit_cell = UnitCell(self.configuration["unit_cell"]["value"])
@@ -112,7 +112,9 @@ class TrajectoryEditor(IJob):
             for idx in idxs
         ]
         self._indices = indices
-        self._selectedAtoms = self._input_chemical_system[indices].atom_list[indices]
+        self._selectedAtoms = [
+            self._input_chemical_system.atom_list[ind] for ind in indices
+        ]
 
         new_chemical_system = ChemicalSystem("Edited system")
         new_chemical_system.initialise_atoms(self._selectedAtoms)

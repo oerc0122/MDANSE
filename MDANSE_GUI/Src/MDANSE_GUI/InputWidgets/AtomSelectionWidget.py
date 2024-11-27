@@ -304,7 +304,7 @@ class SelectionHelper(QDialog):
         text = [f"Number of atoms selected:\n{num_sel}\n\nSelected atoms:\n"]
         atoms = self.selector.system.atom_list
         for idx in idxs:
-            text.append(f"{idx}  ({atoms[idx].full_name})\n")
+            text.append(f"{idx}  ({atoms[idx]})\n")
         self.selection_textbox.setText("".join(text))
 
     def apply(self) -> None:

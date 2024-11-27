@@ -134,7 +134,7 @@ class ChargeHelper(SelectionHelper):
         text = [f"Partial charge mapping:\n"]
         atoms = self.selector.system.atom_list
         for idx, charge in map.items():
-            text.append(f"{idx}  ({atoms[idx].full_name}) -> {charge}\n")
+            text.append(f"{idx}  ({atoms[idx]}) -> {charge}\n")
 
         self.charge_textbox.setText("".join(text))
 

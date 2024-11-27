@@ -60,7 +60,9 @@ class Connectivity:
             chemical -- ChemicalSystem instance connected to the trajectory.
         """
         if self._selection is not None:
-            atom_elements = self._chemical_system.atom_list[self._selection]
+            atom_elements = [
+                self._chemical_system.atom_list[index] for index in self._selection
+            ]
         else:
             atom_elements = self._chemical_system.atom_list
         unique_elements = np.unique(atom_elements)
@@ -195,7 +197,7 @@ class Connectivity:
         self._unique_bonds = np.unique(np.sort(bonds, axis=1), axis=0)
 
     def add_bond_information(self, new_chemical_system: ChemicalSystem):
-        new_chemical_system.add_bonds(self._bonds)
+        new_chemical_system.add_bonds(self._unique_bonds)
         new_chemical_system.find_clusters_from_bonds()
 
     def add_point(self, index: int, point: np.ndarray, radius: float) -> bool:

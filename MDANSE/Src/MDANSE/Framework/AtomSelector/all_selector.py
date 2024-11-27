@@ -40,4 +40,4 @@ def select_all(
     if check_exists:
         return True
     else:
-        return set([at.index for at in system.atom_list if at.element != "dummy"])
+        return set(system._atom_indices)

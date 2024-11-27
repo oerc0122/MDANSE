@@ -36,8 +36,8 @@ class AtomTransmuter:
         """
         self.selector = Selector(trajectory)
         self._original_map = {}
-        for at in trajectory.chemical_system.atom_list:
-            self._original_map[at.index] = at.symbol
+        for number, element in enumerate(trajectory.chemical_system.atom_list):
+            self._original_map[number] = element
         self._new_map = {}
 
     def apply_transmutation(
@@ -138,7 +138,7 @@ class AtomTransmutationConfigurator(IConfigurator):
 
         traj_config = self._configurable[self._dependencies["trajectory"]]
         system = traj_config["instance"].chemical_system
-        idxs = [at.index for at in system.atom_list]
+        idxs = system._atom_indices
 
         self._nTransmutedAtoms = 0
         for idx, element in value.items():

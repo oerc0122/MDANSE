@@ -675,9 +675,7 @@ class RigidBodyTrajectoryGenerator:
 
         atoms = chemical_entity.atom_list
 
-        masses = [
-            ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight") for at in atoms
-        ]
+        masses = [ATOMS_DATABASE.get_atom_property(at, "atomic_weight") for at in atoms]
 
         mass = sum(masses)
 
@@ -695,7 +693,7 @@ class RigidBodyTrajectoryGenerator:
         # relative coords of the CONTIGUOUS reference
         r_ref = np.zeros((len(atoms), 3), np.float64)
         for i, at in enumerate(atoms):
-            r_ref[i] = reference["coordinates"][at.index, :] - ref_com
+            r_ref[i] = reference["coordinates"][i, :] - ref_com
 
         unit_cells, inverse_unit_cells = self._trajectory.get_unit_cells()
         if unit_cells is not None:
@@ -703,9 +701,7 @@ class RigidBodyTrajectoryGenerator:
             inverse_unit_cells = inverse_unit_cells[first:last:step, :, :]
 
         for i, at in enumerate(atoms):
-            r = self._trajectory.read_atomic_trajectory(
-                at.index, first, last, step, True
-            )
+            r = self._trajectory.read_atomic_trajectory(i, first, last, step, True)
             r = r - rcms
 
             r = r[:, np.newaxis, :]

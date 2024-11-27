@@ -29,7 +29,7 @@ from MDANSE_GUI.MolecularViewer.readers.i_reader import IReader
 class HDF5Wrapper(IReader):
     def __init__(self, fname, trajectory: "Trajectory", chemical: "ChemicalSystem"):
         super(HDF5Wrapper, self).__init__(fname)
-        self._n_atoms = chemical._number_of_atoms
+        self._n_atoms = chemical.number_of_atoms
         self._n_frames = len(trajectory)
         self._trajectory = trajectory
         self._chemical_system = chemical

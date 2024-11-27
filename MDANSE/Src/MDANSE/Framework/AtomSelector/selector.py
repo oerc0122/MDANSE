@@ -93,10 +93,10 @@ class Selector:
         system = trajectory.chemical_system
         self.system = system
         self.trajectory = trajectory
-        self.all_idxs = set([at.index for at in system.atom_list])
+        self.all_idxs = set(system._atom_indices)
         self.settings = copy.deepcopy(self._default)
 
-        symbols = set([at.symbol for at in system.atom_list])
+        symbols = set(system.atom_list)
         # all possible values for the system
         self._kwarg_vals = {
             "element": symbols,
@@ -107,8 +107,8 @@ class Selector:
                     if select_hs_on_element(trajectory, symbol, check_exists=True)
                 ]
             ),
-            "name": set([at.name for at in system.atom_list]),
-            "fullname": set([at.full_name for at in system.atom_list]),
+            "name": set(system.atom_list),
+            "fullname": set(system.atom_list),
             "index": self.all_idxs,
         }
 
