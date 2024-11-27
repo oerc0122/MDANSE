@@ -17,10 +17,12 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Tuple, Dict, Any
 import copy
+from functools import reduce
 
 import h5py
 import numpy as np
 from rdkit import Chem
+import networkx as nx
 from MDANSE.MLogging import LOG
 from MDANSE.Chemistry import ATOMS_DATABASE
 
@@ -99,9 +101,12 @@ class ChemicalSystem:
             name = " ".join(
                 [str(unique_atoms[n]) + str(counts[n]) for n in range(len(counts))]
             )
+            sorted_group = tuple(sorted(group))
             if name not in self._clusters:
-                self._clusters[name] = []
-            self._clusters[name].append(group)
+                self._clusters[name] = [sorted_group]
+            else:
+                if sorted_group not in self._clusters[name]:
+                    self._clusters[name].append(group)
 
     def has_substructure_match(self, smarts: str) -> bool:
         """Check if there is a substructure match.
@@ -194,6 +199,23 @@ class ChemicalSystem:
 
         return cs
 
+    def find_clusters_from_bonds(self):
+        molecules = []
+        atom_pool = list(range(len(self._elements)))
+
+        total_graph = nx.Graph()
+        total_graph.add_nodes_from(atom_pool)
+        total_graph.add_edges_from(self._unique_bonds)
+        while len(atom_pool) > 0:
+            last_atom = atom_pool.pop()
+            temp_dict = nx.dfs_successors(total_graph, last_atom)
+            others = reduce(list.__add__, temp_dict.values(), [])
+            for atom in others:
+                atom_pool.pop(atom_pool.index(atom))
+            molecule = [last_atom] + others
+            molecules.append(sorted(molecule))
+        self.add_clusters(molecules)
+
     def unique_molecules(self) -> List[str]:
         """Returns the list of unique names in the chemical system"""
         return list[self._clusters.keys()]
@@ -248,6 +270,10 @@ class ChemicalSystem:
     def load(self, trajectory_filename: str):
 
         source = h5py.File(trajectory_filename)
+        if "composition" not in source.keys():
+            source.close()
+            self.legacy_load(trajectory_filename)
+
         self.rdkit_mol = Chem.RWMol()
 
         grp = source["/composition"]
@@ -269,3 +295,23 @@ class ChemicalSystem:
             self._clusters[str(cluster)] = [
                 [int(x) for x in line] for line in grp[f"clusters/{cluster}"]
             ]
+        source.close()
+
+    def legacy_load(self, trajectory_filename: str):
+
+        source = h5py.File(trajectory_filename)
+        self.rdkit_mol = Chem.RWMol()
+
+        grp = source["/chemical_system"]
+        self._name = grp.attrs["name"]
+        atoms = grp["atoms"]
+        element_list = [line[0].decode("utf-8").strip("'") for line in atoms]
+        self.initialise_atoms(element_list)
+
+        bonds = grp["bonds"]
+        bond_list = bonds[:]
+        self.add_bonds([[int(pair[0]), int(pair[1])] for pair in bond_list])
+
+        source.close()
+
+        self.find_clusters_from_bonds()

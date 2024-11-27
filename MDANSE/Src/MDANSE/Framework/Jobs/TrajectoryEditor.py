@@ -119,7 +119,7 @@ class TrajectoryEditor(IJob):
         if self.configuration["molecule_tolerance"]["use_it"]:
             tolerance = self.configuration["molecule_tolerance"]["value"]
             conn = Connectivity(trajectory=self._input_trajectory, selection=indices)
-            conn.find_molecules(tolerance=tolerance)
+            conn.find_bonds(tolerance=tolerance)
             conn.add_bond_information(new_chemical_system)
             conf = self.configuration["trajectory"]["instance"].configuration(
                 self.configuration["frames"]["value"][0]

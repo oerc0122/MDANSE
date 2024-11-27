@@ -41,10 +41,11 @@ class Connectivity:
         **kwargs,
     ):
         self._chemical_system = trajectory.chemical_system
+        self._input_trajectory = trajectory
         self._selection = selection
         self._frames = trajectory
-        self._unit_cell = self._chemical_system.configuration
-        self._periodic = self._chemical_system.configuration.is_periodic
+        self._unit_cell = self._input_trajectory.configuration(0)
+        self._periodic = self._input_trajectory.configuration(0).is_periodic
         self.check_composition(self._chemical_system)
         self._bonds = None
         self._bond_mapping = None
@@ -59,11 +60,9 @@ class Connectivity:
             chemical -- ChemicalSystem instance connected to the trajectory.
         """
         if self._selection is not None:
-            atom_elements = [
-                atom.symbol for atom in chemical.atoms if atom.index in self._selection
-            ]
+            atom_elements = self._chemical_system.atom_list[self._selection]
         else:
-            atom_elements = [atom.symbol for atom in chemical.atoms]
+            atom_elements = self._chemical_system.atom_list
         unique_elements = np.unique(atom_elements)
         radii = {
             element: ATOMS_DATABASE.get_atom_property(element, "covalent_radius")
@@ -128,7 +127,7 @@ class Connectivity:
             NDArray -- an (N,N) array of squared distances between all the atom pairs,
                 one for each combination of the unit cell vectors.
         """
-        unit_cell = self._chemical_system.configuration.unit_cell
+        unit_cell = self._input_trajectory.configuration(frame_number).unit_cell
         vector_a, vector_b, vector_c = (
             unit_cell.a_vector,
             unit_cell.b_vector,
@@ -195,31 +194,9 @@ class Connectivity:
         self._bond_mapping = bond_mapping
         self._unique_bonds = np.unique(np.sort(bonds, axis=1), axis=0)
 
-    def find_molecules(self, tolerance: float = 0.2):
-        """Uses the internal list of bonds to find atoms that belong to the same
-        molecules. The grouping of atoms is saved internally.
-        """
-        if self._bond_mapping is None:
-            self.find_bonds(tolerance=tolerance)
-        molecules = []
-        atom_pool = list(range(len(self._elements)))
-
-        total_graph = nx.Graph()
-        total_graph.add_nodes_from(atom_pool)
-        total_graph.add_edges_from(self._unique_bonds)
-        while len(atom_pool) > 0:
-            last_atom = atom_pool.pop()
-            temp_dict = nx.dfs_successors(total_graph, last_atom)
-            others = reduce(list.__add__, temp_dict.values(), [])
-            for atom in others:
-                atom_pool.pop(atom_pool.index(atom))
-            molecule = [last_atom] + others
-            molecules.append(molecule)
-        self._molecules = molecules
-
     def add_bond_information(self, new_chemical_system: ChemicalSystem):
         new_chemical_system.add_bonds(self._bonds)
-        new_chemical_system.add_clusters(self._molecules)
+        new_chemical_system.find_clusters_from_bonds()
 
     def add_point(self, index: int, point: np.ndarray, radius: float) -> bool:
         return True

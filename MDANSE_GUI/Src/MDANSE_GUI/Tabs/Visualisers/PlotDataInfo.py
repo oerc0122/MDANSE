@@ -14,9 +14,14 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
+import numpy as np
 from qtpy.QtCore import Slot, Signal
 from qtpy.QtWidgets import QTextBrowser
+
+if TYPE_CHECKING:
+    from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 
 
 class PlotDataInfo(QTextBrowser):
@@ -37,13 +42,13 @@ class PlotDataInfo(QTextBrowser):
         filtered = self.filter(text)
         self.setHtml(filtered)
 
-    def summarise_chemical_system(self, cs):
+    def summarise_chemical_system(self, cs: "ChemicalSystem"):
         text = "\n ==== Chemical System summary ==== \n"
-        counter = defaultdict(int)
-        for atom in cs.atom_list:
-            counter[(atom.full_name, atom.symbol)] += 1
-        for key, value in counter.items():
-            text += f"Full Name: {key[0]}; Element: {key[1]}; Count: {value}\n"
+        atoms, counts = np.unique(cs.atom_list, return_counts=True)
+        for ind in range(len(atoms)):
+            text += f"Element: {atoms[ind]}; Count: {counts[ind]}\n"
+        for molname, mollist in cs._clusters.items():
+            text += f"Molecule: {molname}; Count: {len(mollist)}"
         text += " ===== \n"
         return text
 
