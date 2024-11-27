@@ -259,11 +259,6 @@ EXTENSIONS = [
         sources=[os.path.join("Extensions", "van_hove.pyx")],
     ),
     Extension(
-        "MDANSE.Extensions.fast_calculation",
-        include_dirs=INCLUDE_DIR,
-        sources=[os.path.join("Extensions", "fast_calculation.pyx")],
-    ),
-    Extension(
         "MDANSE.Extensions.sas_fast_calc",
         include_dirs=INCLUDE_DIR,
         sources=[os.path.join("Extensions", "sas_fast_calc.pyx")],

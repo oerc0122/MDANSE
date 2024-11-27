@@ -51,6 +51,7 @@ class ChemicalSystem:
         if trajectory is not None:
             self._database = trajectory
 
+        self._total_number_of_atoms = 0
         self._atom_types = []
         self._atom_indices = []
         self._labels = {}  # arbitrary tag attached to atoms (e.g. residue name)

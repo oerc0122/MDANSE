@@ -124,68 +124,6 @@ def contiguous_coordinates_box(ndarray[np.float64_t, ndim=2]  coords not None,
 
     return contiguous_coords
 
-def contiguous_offsets_real(ndarray[np.float64_t, ndim=2]  coords not None,
-                            ndarray[np.float64_t, ndim=2]  cell not None,
-                            ndarray[np.float64_t, ndim=2]  rcell not None,
-                            indexes):
-
-    cdef double x, y, z, sdx, sdy, sdz
-
-    cdef int i
-
-    cdef ndarray[np.float64_t, ndim=2] scaleconfig = np.empty((coords.shape[0],3),dtype=np.float64)
-
-    cdef ndarray[np.float64_t, ndim=2] offsets = np.zeros((coords.shape[0],3),dtype=np.float64)
-
-    for 0 <= i < coords.shape[0]:
-
-        x = coords[i,0]
-        y = coords[i,1]
-        z = coords[i,2]
-
-        scaleconfig[i,0] = x*rcell[0,0] + y*rcell[0,1] + z*rcell[0,2]
-        scaleconfig[i,1] = x*rcell[1,0] + y*rcell[1,1] + z*rcell[1,2]
-        scaleconfig[i,2] = x*rcell[2,0] + y*rcell[2,1] + z*rcell[2,2]
-
-    for idxs in indexes:
-        if len(idxs) == 1:
-            continue
-        
-        for idx in idxs[1:]:
-
-            sdx = scaleconfig[idx,0] - scaleconfig[idxs[0],0]
-            sdy = scaleconfig[idx,1] - scaleconfig[idxs[0],1]
-            sdz = scaleconfig[idx,2] - scaleconfig[idxs[0],2]
-
-            offsets[idx,0] = -round(sdx)
-            offsets[idx,1] = -round(sdy)
-            offsets[idx,2] = -round(sdz)
-
-    return offsets
-
-def contiguous_offsets_box(ndarray[np.float64_t, ndim=2]  coords not None,
-                           ndarray[np.float64_t, ndim=2]  cell not None,
-                           indexes):
-
-    cdef double sdx, sdy, sdz
-
-    cdef ndarray[np.float64_t, ndim=2] offsets = np.zeros((coords.shape[0], 3), dtype=np.float64)
-
-    for idxs in indexes:
-        if len(idxs) == 1:
-            continue
-        
-        for idx in idxs[1:]:
-
-            sdx = coords[idx, 0] - coords[idxs[0], 0]
-            sdy = coords[idx, 1] - coords[idxs[0], 1]
-            sdz = coords[idx, 2] - coords[idxs[0], 2]
-
-            offsets[idx, 0] = -round(sdx)
-            offsets[idx, 1] = -round(sdy)
-            offsets[idx, 2] = -round(sdz)
-
-    return offsets
 
 def _recursive_contiguity(
     ndarray[np.float64_t, ndim=2] contiguous_coords,

@@ -16,17 +16,122 @@
 from __future__ import annotations
 import abc
 import copy
-from typing import Union, TYPE_CHECKING, List
+from typing import Union, TYPE_CHECKING, List, Tuple
 from functools import reduce
 
 import numpy as np
+import networkx as nx
 from numpy.typing import ArrayLike
+from scipy.spatial import KDTree
 
 if TYPE_CHECKING:
     from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
     from MDANSE.Mathematics.Transformation import RigidBodyTransformation
     from MDANSE.MolecularDynamics.UnitCell import UnitCell
-from MDANSE.Extensions import contiguous_coordinates
+
+
+def contiguous_coordinates_real(
+    coords: np.ndarray, cell: np.ndarray, rcell: np.ndarray, indexes: List[Tuple[int]]
+):
+
+    contiguous_coords = coords.copy()
+
+    scaleconfig = np.matmul(coords, rcell)
+
+    for tupleidxs in indexes:
+
+        if len(tupleidxs) < 2:
+            continue
+
+        idxs = list(tupleidxs)
+        sdx = scaleconfig[idxs[1:]] - scaleconfig[idxs[0]]
+        scaleconfig -= np.round(sdx)
+        newconfig = np.matmul(scaleconfig, cell)
+        contiguous_coords[idxs[1:]] = newconfig
+
+    return contiguous_coords
+
+
+def contiguous_coordinates_box(
+    coords: np.ndarray, cell: np.ndarray, indexes: List[Tuple[int]]
+):
+
+    contiguous_coords = coords.copy()
+
+    for tupleidxs in indexes:
+
+        if len(tupleidxs) < 2:
+            continue
+
+        idxs = list(tupleidxs)
+        sdx = coords[idxs[1:]] - coords[idxs[0]]
+        sdx -= np.round(sdx)
+        newx = coords[idxs[0]] + sdx
+        contiguous_coords[idxs[1:]] = np.matmul(newx, cell)
+
+    return contiguous_coords
+
+
+def continuous_coordinates(
+    coords: np.ndarray,
+    cell: np.ndarray,
+    rcell: np.ndarray,
+    index_list: List[List[int]],
+    max_cutoff: float,
+):
+
+    new_coords = coords.copy()
+    for idx in index_list:
+        print(f"indices of a single group: {idx}")
+        new_coords[list(idx)] = shift_segments(
+            new_coords[list(idx)], cell, rcell, max_cutoff
+        )
+
+    return new_coords
+
+
+def shift_segments(
+    coords: np.ndarray, cell: np.ndarray, rcell: np.ndarray, max_cutoff: float = 0.5
+):
+    atom_pool = list(range(len(coords)))
+    tree = KDTree(coords)
+    distances = tree.sparse_distance_matrix(tree, max_distance=max_cutoff)
+    bonds = np.unique(
+        [
+            tuple(sorted([key[0], key[1]]))
+            for key, distance in distances.items()
+            if distance > 1e-5
+        ]
+    )
+    total_graph = nx.Graph()
+    total_graph.add_nodes_from(atom_pool)
+    total_graph.add_edges_from(bonds)
+    segments = []
+    while len(atom_pool) > 0:
+        last_atom = atom_pool.pop()
+        temp_dict = nx.dfs_successors(total_graph, last_atom)
+        others = reduce(list.__add__, temp_dict.values(), [])
+        for atom in others:
+            atom_pool.pop(atom_pool.index(atom))
+        segment = [last_atom] + others
+        segments.append(sorted(segment))
+    if len(segments) < 2:
+        return coords
+    new_coords = coords.copy()
+    frac_coords = np.matmul(coords, rcell)
+    sizes = [len(segment) for segment in segments]
+    max_size = max(sizes)
+    for index, segment in enumerate(segments):
+        if len(segment) == max_size:
+            main_segment = segments.pop(index)
+            break
+    main_pos = frac_coords[main_segment].mean(axis=0)
+    for other_segment in segments:
+        other_pos = frac_coords[other_segment].mean(axis=0)
+        shift_amplitude = np.round(main_pos - other_pos).astype(int)
+        shifted_frac = frac_coords[other_segment] + shift_amplitude.reshape((1, 3))
+        new_coords[other_segment] = np.matmul(shifted_frac, cell)
+    return new_coords
 
 
 class ConfigurationError(Exception):
@@ -345,41 +450,15 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
             list.__add__, self._chemical_system._clusters.values(), []
         )
 
-        contiguous_coords = contiguous_coordinates.contiguous_coordinates_box(
+        contiguous_coords = contiguous_coordinates_box(
             self._variables["coordinates"],
-            self._unit_cell.transposed_direct,
+            self.unit_cell.transposed_direct,
             indices_grouped,
         )
 
         conf = self.clone()
         conf._variables["coordinates"] = contiguous_coords
         return conf
-
-    def contiguous_offsets(self, indices: list[int] = None) -> np.ndarray:
-        """
-        Returns the contiguity offsets for a list of chemical entities.
-
-        :param chemical_entities: the list of chemical entities whose offsets are to be calculated or None for all
-                                  entities in the chemical system
-        :type chemical_entities: list
-
-        :return: the offsets
-        :rtype: numpy.ndarray
-        """
-        if indices is None:
-            indices_grouped = reduce(
-                list.__add__, self._chemical_system._clusters.values(), []
-            )
-
-        offsets = contiguous_coordinates.contiguous_offsets_box(
-            self._variables["coordinates"][
-                [item for sublist in indices for item in sublist]
-            ],
-            self._unit_cell.transposed_direct,
-            indices_grouped,
-        )
-
-        return offsets
 
 
 class PeriodicRealConfiguration(_PeriodicConfiguration):
@@ -436,7 +515,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
             list.__add__, self._chemical_system._clusters.values(), []
         )
 
-        contiguous_coords = contiguous_coordinates.contiguous_coordinates_real(
+        contiguous_coords = contiguous_coordinates_real(
             self._variables["coordinates"],
             self._unit_cell.transposed_direct,
             self._unit_cell.transposed_inverse,
@@ -459,44 +538,21 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
             list.__add__, self._chemical_system._clusters.values(), []
         )
 
-        contiguous_coords = contiguous_coordinates.continuous_coordinates(
+        max_cutoff = (
+            np.max(self._chemical_system.atom_property("covalent_radius")) * 2.5
+        )
+
+        continuous_coords = continuous_coordinates(
             self._variables["coordinates"],
             self._unit_cell.transposed_direct,
             self._unit_cell.transposed_inverse,
             indices_grouped,
+            max_cutoff,
         )
 
         conf = self.clone()
-        conf._variables["coordinates"] = contiguous_coords
+        conf._variables["coordinates"] = continuous_coords
         return conf
-
-    def contiguous_offsets(self, indices: List[int] = None) -> np.ndarray:
-        """
-        Returns the contiguity offsets for a list of chemical entities.
-
-        :param chemical_entities: the list of chemical entities whose offsets are to be calculated or None for all
-                                  entities in the chemical system
-        :type chemical_entities: list
-
-        :return: the offsets
-        :rtype: numpy.ndarray
-        """
-
-        if indices is None:
-            indices_grouped = reduce(
-                list.__add__, self._chemical_system._clusters.values(), []
-            )
-
-        offsets = contiguous_coordinates.contiguous_offsets_real(
-            self._variables["coordinates"][
-                [item for sublist in indices for item in sublist]
-            ],
-            self._unit_cell.transposed_direct,
-            self._unit_cell.transposed_inverse,
-            indices_grouped,
-        )
-
-        return offsets
 
 
 class RealConfiguration(_Configuration):
@@ -560,25 +616,6 @@ class RealConfiguration(_Configuration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.RealConfiguration`
         """
         return self
-
-    def contiguous_offsets(self, indices: List[int] = None) -> np.ndarray:
-        """
-        Returns the contiguity offsets for a list of chemical entities, which are always zero for every atom.
-
-        :param chemical_entities: the list of chemical entities whose offsets are to be calculated or None for all
-                                  entities in the chemical system
-        :type chemical_entities: list
-
-        :return: the offsets
-        :rtype: numpy.ndarray
-        """
-
-        if indices is None:
-            indices = self._chemical_system._atom_indices
-
-        offsets = np.zeros((len(indices), 3))
-
-        return offsets
 
 
 if __name__ == "__main__":

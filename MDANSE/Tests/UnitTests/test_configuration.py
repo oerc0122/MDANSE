@@ -513,34 +513,6 @@ class TestPeriodicRealConfiguration(unittest.TestCase):
         )
         self.assertEqual(unit_cell, result._unit_cell)
 
-    def test_contiguous_offsets_valid_no_input(self):
-        coords = np.array(
-            [
-                [14.0, 3.0, 6.0],
-                [32.0, 9.0, 15.0],
-                [50.0, 15.0, 24.0],
-                [68.0, 21.0, 33.0],
-            ]
-        )
-        unit_cell = UnitCell(
-            np.array([[1.0, 2.0, 1.0], [2.0, -1.0, 1.0], [3.0, 1.0, 1.0]])
-        )
-        conf = PeriodicRealConfiguration(self.chem_system, coords, unit_cell)
-
-        offsets = conf.contiguous_offsets()
-        self.assertTrue(
-            np.allclose(
-                [
-                    [0.0, 0.0, 0.0],
-                    [-3.0, -3.0, -3.0],
-                    [-6.0, -6.0, -6.0],
-                    [-9.0, -9.0, -9.0],
-                ],
-                offsets,
-            ),
-            f"\nactual = {offsets}",
-        )
-
 
 class TestRealConfiguration(unittest.TestCase):
     def setUp(self):
