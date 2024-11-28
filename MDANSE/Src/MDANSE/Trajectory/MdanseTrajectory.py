@@ -22,7 +22,7 @@ import h5py
 from MDANSE.MLogging import LOG
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.Extensions import com_trajectory
+from MDANSE.MolecularDynamics.CentreOfMassTrajectory import com_trajectory
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
@@ -229,7 +229,7 @@ class MdanseTrajectory:
         return grp["coordinates"].shape[0]
 
     def read_com_trajectory(
-        self, atoms, first=0, last=None, step=1, box_coordinates=False
+        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
     ):
         """Build the trajectory of the center of mass of a set of atoms.
 
@@ -251,10 +251,14 @@ class MdanseTrajectory:
         if last is None:
             last = len(self)
 
-        indices = [number for number, _ in enumerate(atoms)]
+        print(atom_indices)
         try:
-            masses = self.chemical_system.atom_property("atomic_weight")
+            masses = [
+                self.chemical_system.atom_property("atomic_weight")[index]
+                for index in atom_indices
+            ]
         except KeyError:
+            atoms = self.chemical_system.atom_list[atom_indices]
             masses = np.array(
                 [ATOMS_DATABASE.get_atom_property(at, "atomic_weight") for at in atoms]
             )
@@ -266,34 +270,27 @@ class MdanseTrajectory:
             coords = coords[np.newaxis, :, :]
 
         if self._unit_cells is not None:
-            direct_cells = np.array([uc.transposed_direct for uc in self._unit_cells])
-            inverse_cells = np.array([uc.transposed_inverse for uc in self._unit_cells])
+            direct_cells = np.array([uc.direct for uc in self._unit_cells])
+            inverse_cells = np.array([uc.inverse for uc in self._unit_cells])
 
-            top_lvl_chemical_entities = set(
-                [at.top_level_chemical_entity for at in atoms]
-            )
-            top_lvl_chemical_entities_indices = [
-                [at.index for at in e.atom_list] for e in top_lvl_chemical_entities
+            clusters = [
+                cluster_indices
+                for cluster_indices in self.chemical_system._clusters.values()
             ]
-            bonds = {}
-            for e in top_lvl_chemical_entities:
-                for at in e.atom_list:
-                    bonds[at.index] = [other_at.index for other_at in at.bonds]
 
-            com_traj = com_trajectory.com_trajectory(
+            com_traj = com_trajectory(
                 coords,
                 direct_cells,
                 inverse_cells,
-                masses,
-                top_lvl_chemical_entities_indices,
-                indices,
-                bonds,
+                np.array(masses),
+                clusters,
+                atom_indices,
                 box_coordinates=box_coordinates,
             )
 
         else:
             com_traj = np.sum(
-                coords[:, indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
+                coords[:, atom_indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
             )
             com_traj /= np.sum(masses)
 

@@ -24,7 +24,7 @@ from MDANSE.MLogging import LOG
 from MDANSE.Framework.Units import measure
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.Extensions import com_trajectory
+from MDANSE.MolecularDynamics.CentreOfMassTrajectory import com_trajectory
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
@@ -340,10 +340,14 @@ class H5MDTrajectory:
         atoms = [self.chemical_system.atom_list[index] for index in atom_indices]
 
         try:
-            masses = self._h5_file["/particles/all/mass/value"][:].astype(np.float64)
+            masses = self._h5_file["/particles/all/mass/value"][atom_indices].astype(
+                np.float64
+            )
         except KeyError:
             try:
-                masses = self._h5_file["/particles/all/mass"][:].astype(np.float64)
+                masses = self._h5_file["/particles/all/mass"][atom_indices].astype(
+                    np.float64
+                )
             except KeyError:
                 masses = np.array(
                     [
@@ -368,31 +372,24 @@ class H5MDTrajectory:
 
         if self._unit_cells is not None:
             direct_cells = np.array(
-                [
-                    self.unit_cell(nf).transposed_direct
-                    for nf in range(first, last, step)
-                ]
+                [self.unit_cell(nf).direct for nf in range(first, last, step)]
             )
             inverse_cells = np.array(
-                [
-                    self.unit_cell(nf).transposed_inverse
-                    for nf in range(first, last, step)
-                ]
+                [self.unit_cell(nf).inverse for nf in range(first, last, step)]
             )
 
-            top_lvl_chemical_entities_indices = [
-                cluster_indices for cluster_indices in self.chemical_system._clusters
+            clusters = [
+                cluster_indices
+                for cluster_indices in self.chemical_system._clusters.values()
             ]
-            bonds = {}
 
-            com_traj = com_trajectory.com_trajectory(
+            com_traj = com_trajectory(
                 coords,
                 direct_cells,
                 inverse_cells,
-                masses,
-                top_lvl_chemical_entities_indices,
+                np.array(masses),
+                clusters,
                 atom_indices,
-                bonds,
                 box_coordinates=box_coordinates,
             )
 

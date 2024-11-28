@@ -23,7 +23,7 @@ import numpy as np
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Units import measure
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.Extensions import com_trajectory
+from MDANSE.MolecularDynamics.CentreOfMassTrajectory import com_trajectory
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
@@ -362,37 +362,24 @@ class MockTrajectory:
 
         if self._pbc:
             direct_cells = np.array(
-                [
-                    self.unit_cell(fnum).transposed_direct
-                    for fnum in range(first, last, step)
-                ]
+                [self.unit_cell(fnum).direct for fnum in range(first, last, step)]
             )
             inverse_cells = np.array(
-                [
-                    self.unit_cell(fnum).transposed_inverse
-                    for fnum in range(first, last, step)
-                ]
+                [self.unit_cell(fnum).inverse for fnum in range(first, last, step)]
             )
 
-            top_lvl_chemical_entities = set(
-                [at.top_level_chemical_entity for at in atoms]
-            )
-            top_lvl_chemical_entities_indices = [
-                [at.index for at in e.atom_list] for e in top_lvl_chemical_entities
+            clusters = [
+                cluster_indices
+                for cluster_indices in self.chemical_system._clusters.values()
             ]
-            bonds = {}
-            for e in top_lvl_chemical_entities:
-                for at in e.atom_list:
-                    bonds[at.index] = [other_at.index for other_at in at.bonds]
 
-            com_traj = com_trajectory.com_trajectory(
+            com_traj = com_trajectory(
                 coords,
                 direct_cells,
                 inverse_cells,
                 masses,
-                top_lvl_chemical_entities_indices,
+                clusters,
                 indices,
-                bonds,
                 box_coordinates=box_coordinates,
             )
 

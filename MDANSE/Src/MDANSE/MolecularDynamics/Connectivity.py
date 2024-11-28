@@ -15,13 +15,11 @@
 #
 
 from itertools import product
-from functools import reduce
-from typing import List, Dict
+from typing import List
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial import KDTree
-import networkx as nx
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
