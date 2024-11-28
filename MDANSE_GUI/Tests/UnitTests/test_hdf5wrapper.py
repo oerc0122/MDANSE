@@ -19,7 +19,7 @@ import os
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
@@ -34,8 +34,7 @@ N_TIMESTEPS = 150
 def chemical_system():
     temp = ChemicalSystem("Dummy test system")
     nAtoms = N_ATOMS
-    for i in range(nAtoms):
-        temp.add_chemical_entity(Atom(symbol="H"))
+    temp.initialise_atoms(nAtoms*["H"])
     return temp
 
 

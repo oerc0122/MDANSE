@@ -1,6 +1,6 @@
 import os
 import pytest
-from MDANSE.IO.PDBReader import PDBReader
+from MDANSE.IO.MinimalPDBReader import MinimalPDBReader as PDBReader
 from MDANSE.Framework.Configurators.AtomTransmutationConfigurator import AtomTransmuter
 
 

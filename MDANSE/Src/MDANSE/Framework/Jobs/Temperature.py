@@ -127,9 +127,7 @@ class Temperature(IJob):
             #. kineticEnergy (np.array): The calculated kinetic energy
         """
 
-        atom = self._atoms[index]
-
-        symbol = atom.symbol
+        symbol = self._atoms[index]
 
         mass = self.configuration["trajectory"]["instance"].get_atom_property(
             symbol, "atomic_weight"

@@ -77,8 +77,7 @@ class MockTrajectory:
         self._coordinates = None
 
         self._chemical_system = ChemicalSystem("MockSystem")
-        for atom in self._atom_types:
-            self._chemical_system.add_chemical_entity(Atom(symbol=atom))
+        self._chemical_system.initialise_atoms(self._atom_types)
 
     def set_coordinates(self, coords: np.ndarray):
         """Sets the initial (equlibrium) positions of atoms from

@@ -92,12 +92,8 @@ class AreaPerMolecule(IJob):
 
         # The number of molecules that match the input name. Must be > 0.
         self._nMolecules = len(
-            [
-                ce
-                for ce in self.configuration["trajectory"][
-                    "instance"
-                ].chemical_system.chemical_entities
-                if ce.name == self.configuration["molecule_name"]["value"]
+            self.configuration["trajectory"]["instance"].chemical_system._clusters[
+                self.configuration["molecule_name"]["value"]
             ]
         )
         if self._nMolecules == 0:

@@ -1,10 +1,6 @@
 import os
 import pytest
-import numpy as np
-from rdkit.Chem.rdmolops import SanitizeMol
-from rdkit.Chem.rdmolops import GetMolFrags
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
-from MDANSE.Chemistry.Structrures import Topology
 
 
 short_traj = os.path.join(

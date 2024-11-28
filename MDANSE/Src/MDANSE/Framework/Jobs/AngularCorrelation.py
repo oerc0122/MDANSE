@@ -84,14 +84,9 @@ class AngularCorrelation(IJob):
         """
         super().initialize()
 
-        ce_list = self.configuration["trajectory"][
+        self.molecules = self.configuration["trajectory"][
             "instance"
-        ].chemical_system.chemical_entities
-        self.molecules = [
-            ce
-            for ce in ce_list
-            if ce.name == self.configuration["molecule_name"]["value"]
-        ]
+        ].chemical_system._clusters[self.configuration["molecule_name"]["value"]]
 
         self.numberOfSteps = len(self.molecules)
 

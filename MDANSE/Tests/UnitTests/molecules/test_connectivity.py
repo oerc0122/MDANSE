@@ -1,10 +1,8 @@
 import os
 import pytest
-import numpy as np
 from MDANSE.MolecularDynamics.Connectivity import Connectivity
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
-from MDANSE.Chemistry.Structrures import MoleculeTester
 
 
 short_traj = os.path.join(
@@ -50,19 +48,12 @@ def test_rebuild_molecules(trajectory: Trajectory):
 
 def test_identify_molecules(trajectory: Trajectory):
     conn = Connectivity(trajectory=trajectory)
-    conn.find_molecules()
+    conn.find_bonds()
     chemical_system = trajectory.chemical_system
-    chemical_system.rebuild(conn._molecules)
-    configuration = chemical_system.configuration
-    coords = configuration.contiguous_configuration().coordinates
+    conn.add_bond_information(chemical_system)
     molstrings = []
-    for entity in chemical_system.chemical_entities:
-        moltester = MoleculeTester(entity, coords)
-        inchistring = moltester.identify_molecule()
-        molstrings.append(inchistring)
-        if entity.number_of_atoms > 1:
-            entity.name = inchistring
-    assert len(molstrings) == 20
+    for molname, mollist in chemical_system._clusters.items():
+        assert len(mollist) == 20
     result = True
     for ms in molstrings[1:]:
         result = result and ms == molstrings[0]
