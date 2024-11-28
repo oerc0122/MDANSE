@@ -511,8 +511,8 @@ class TestPeriodicRealConfiguration(unittest.TestCase):
             ),
             f'\nactual = {result["coordinates"]}',
         )
-        self.assertEqual(unit_cell, result._unit_cell)    
-    
+        self.assertEqual(unit_cell, result._unit_cell)
+
     def test_continuous_configuration_with_bonds(self):
         coords = np.array(
             [
@@ -525,7 +525,7 @@ class TestPeriodicRealConfiguration(unittest.TestCase):
         unit_cell = UnitCell(
             np.array([[1.0, 2.0, 1.0], [2.0, -1.0, 1.0], [3.0, 1.0, 1.0]])
         )
-        self.chem_system.add_bonds([(0,1),(2,3)])
+        self.chem_system.add_bonds([(0, 1), (2, 3)])
         conf = PeriodicRealConfiguration(self.chem_system, coords, unit_cell)
 
         result = conf.continuous_configuration()

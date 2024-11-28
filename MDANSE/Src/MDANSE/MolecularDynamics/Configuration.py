@@ -113,7 +113,6 @@ def continuous_coordinates(
     coords: np.ndarray,
     cell: np.ndarray,
     rcell: np.ndarray,
-    index_list: List[List[int]],
     bond_list: List[Tuple[int]],
 ):
     """Translates atoms by lattice vectors to ensure that
@@ -128,8 +127,6 @@ def continuous_coordinates(
         3x3 unit cell array
     rcell : np.ndarray
         3x3 reciprocal cell array
-    index_list : List[List[int]]
-        List of clusters in the system
     bond_list : List[Tuple[int]]
         List of bonds in the system
 
@@ -138,27 +135,7 @@ def continuous_coordinates(
     np.ndarray
         new array of atom coordinates with translations applied
     """
-
-    new_coords = coords.copy()
-    for idx in index_list:
-        print(f"indices of a single group: {idx}")
-        relevant_bonds = [bond for bond in bond_list if bond[0] in idx]
-        if len(relevant_bonds) > 0:
-            new_coords = shift_segments(new_coords, cell, rcell, idx, relevant_bonds)
-
-    return new_coords
-
-
-def shift_segments(
-    coords: np.ndarray,
-    cell: np.ndarray,
-    rcell: np.ndarray,
-    index_list: List[int],
-    bond_list: List[Tuple[int]],
-):
-    atom_pool = list(index_list)
-    coord_indices = list(index_list)
-    print(coords[coord_indices])
+    atom_pool = list(range(len(coords)))
     total_graph = nx.Graph()
     total_graph.add_nodes_from(atom_pool)
     total_graph.add_edges_from(bond_list)
@@ -575,19 +552,10 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indices_grouped = reduce(
-            list.__add__, self._chemical_system._clusters.values(), []
-        )
-
-        max_cutoff = (
-            np.max(self._chemical_system.atom_property("covalent_radius")) * 2.5
-        )
-
         continuous_coords = continuous_coordinates(
             self._variables["coordinates"],
             self._unit_cell.direct,
             self._unit_cell.inverse,
-            indices_grouped,
             self.chemical_system._bonds,
         )
 
