@@ -22,7 +22,6 @@ from functools import reduce
 import numpy as np
 import networkx as nx
 from numpy.typing import ArrayLike
-from scipy.spatial import KDTree
 
 if TYPE_CHECKING:
     from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
@@ -31,34 +30,72 @@ if TYPE_CHECKING:
 
 
 def contiguous_coordinates_real(
-    coords: np.ndarray, cell: np.ndarray, rcell: np.ndarray, indexes: List[Tuple[int]]
+    coords: np.ndarray, cell: np.ndarray, rcell: np.ndarray, indices: List[Tuple[int]]
 ):
+    """Translates atoms by a lattice vector. Returns a coordinate array
+    in which atoms in each segment are separated from the first atom
+    by less than half the simulation box length.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of atom coordinates
+    cell : np.ndarray
+        3x3 unit cell array
+    rcell : np.ndarray
+        3x3 reciprocal cell array
+    indices : List[Tuple[int]]
+        a list of index group, as in [[1,2,3], [7,8]]
+        (this would ensure 2 and 3 are close to 1, and 8 is close to 7)
+
+    Returns
+    -------
+    np.ndarray
+        new coordinate array with the translations applied
+    """
 
     contiguous_coords = coords.copy()
 
     scaleconfig = np.matmul(coords, rcell)
 
-    for tupleidxs in indexes:
+    for tupleidxs in indices:
 
         if len(tupleidxs) < 2:
             continue
 
         idxs = list(tupleidxs)
         sdx = scaleconfig[idxs[1:]] - scaleconfig[idxs[0]]
-        scaleconfig -= np.round(sdx)
-        newconfig = np.matmul(scaleconfig, cell)
+        scaleconfig[idxs[1:]] -= np.round(sdx)
+        newconfig = np.matmul(scaleconfig[idxs[1:]], cell)
         contiguous_coords[idxs[1:]] = newconfig
 
     return contiguous_coords
 
 
 def contiguous_coordinates_box(
-    coords: np.ndarray, cell: np.ndarray, indexes: List[Tuple[int]]
+    coords: np.ndarray, cell: np.ndarray, indices: List[Tuple[int]]
 ):
+    """_summary_
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of fractional coordinates
+    cell : np.ndarray
+        3x3 unit cell array
+    indices : List[Tuple[int]]
+        a list of index group, as in [[1,2,3], [7,8]]
+        (this would ensure 2 and 3 are close to 1, and 8 is close to 7)
+
+    Returns
+    -------
+    np.ndarray
+        array of atom coordinates with the translations applied
+    """
 
     contiguous_coords = coords.copy()
 
-    for tupleidxs in indexes:
+    for tupleidxs in indices:
 
         if len(tupleidxs) < 2:
             continue
@@ -77,35 +114,54 @@ def continuous_coordinates(
     cell: np.ndarray,
     rcell: np.ndarray,
     index_list: List[List[int]],
-    max_cutoff: float,
+    bond_list: List[Tuple[int]],
 ):
+    """Translates atoms by lattice vectors to ensure that
+    no bonds are broken. Does nothing if no bonds are defined
+    in the system.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of atom coordinates
+    cell : np.ndarray
+        3x3 unit cell array
+    rcell : np.ndarray
+        3x3 reciprocal cell array
+    index_list : List[List[int]]
+        List of clusters in the system
+    bond_list : List[Tuple[int]]
+        List of bonds in the system
+
+    Returns
+    -------
+    np.ndarray
+        new array of atom coordinates with translations applied
+    """
 
     new_coords = coords.copy()
     for idx in index_list:
         print(f"indices of a single group: {idx}")
-        new_coords[list(idx)] = shift_segments(
-            new_coords[list(idx)], cell, rcell, max_cutoff
-        )
+        relevant_bonds = [bond for bond in bond_list if bond[0] in idx]
+        if len(relevant_bonds) > 0:
+            new_coords = shift_segments(new_coords, cell, rcell, idx, relevant_bonds)
 
     return new_coords
 
 
 def shift_segments(
-    coords: np.ndarray, cell: np.ndarray, rcell: np.ndarray, max_cutoff: float = 0.5
+    coords: np.ndarray,
+    cell: np.ndarray,
+    rcell: np.ndarray,
+    index_list: List[int],
+    bond_list: List[Tuple[int]],
 ):
-    atom_pool = list(range(len(coords)))
-    tree = KDTree(coords)
-    distances = tree.sparse_distance_matrix(tree, max_distance=max_cutoff)
-    bonds = np.unique(
-        [
-            tuple(sorted([key[0], key[1]]))
-            for key, distance in distances.items()
-            if distance > 1e-5
-        ]
-    )
+    atom_pool = list(index_list)
+    coord_indices = list(index_list)
+    print(coords[coord_indices])
     total_graph = nx.Graph()
     total_graph.add_nodes_from(atom_pool)
-    total_graph.add_edges_from(bonds)
+    total_graph.add_edges_from(bond_list)
     segments = []
     while len(atom_pool) > 0:
         last_atom = atom_pool.pop()
@@ -115,23 +171,8 @@ def shift_segments(
             atom_pool.pop(atom_pool.index(atom))
         segment = [last_atom] + others
         segments.append(sorted(segment))
-    if len(segments) < 2:
-        return coords
-    new_coords = coords.copy()
-    frac_coords = np.matmul(coords, rcell)
-    sizes = [len(segment) for segment in segments]
-    max_size = max(sizes)
-    for index, segment in enumerate(segments):
-        if len(segment) == max_size:
-            main_segment = segments.pop(index)
-            break
-    main_pos = frac_coords[main_segment].mean(axis=0)
-    for other_segment in segments:
-        other_pos = frac_coords[other_segment].mean(axis=0)
-        shift_amplitude = np.round(main_pos - other_pos).astype(int)
-        shifted_frac = frac_coords[other_segment] + shift_amplitude.reshape((1, 3))
-        new_coords[other_segment] = np.matmul(shifted_frac, cell)
-    return new_coords
+    print(segments)
+    return contiguous_coordinates_real(coords, cell, rcell, segments)
 
 
 class ConfigurationError(Exception):
@@ -452,7 +493,7 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
 
         contiguous_coords = contiguous_coordinates_box(
             self._variables["coordinates"],
-            self.unit_cell.transposed_direct,
+            self.unit_cell.direct,
             indices_grouped,
         )
 
@@ -517,8 +558,8 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
 
         contiguous_coords = contiguous_coordinates_real(
             self._variables["coordinates"],
-            self._unit_cell.transposed_direct,
-            self._unit_cell.transposed_inverse,
+            self._unit_cell.direct,
+            self._unit_cell.inverse,
             indices_grouped,
         )
 
@@ -544,10 +585,10 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
 
         continuous_coords = continuous_coordinates(
             self._variables["coordinates"],
-            self._unit_cell.transposed_direct,
-            self._unit_cell.transposed_inverse,
+            self._unit_cell.direct,
+            self._unit_cell.inverse,
             indices_grouped,
-            max_cutoff,
+            self.chemical_system._bonds,
         )
 
         conf = self.clone()

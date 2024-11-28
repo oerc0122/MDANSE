@@ -481,7 +481,7 @@ class TestPeriodicRealConfiguration(unittest.TestCase):
         )
         self.assertEqual(unit_cell, result._unit_cell)
 
-    def test_continuous_configuration(self):
+    def test_continuous_configuration_without_bonds(self):
         coords = np.array(
             [
                 [14.0, 3.0, 6.0],
@@ -506,6 +506,39 @@ class TestPeriodicRealConfiguration(unittest.TestCase):
                     [32.0, 9.0, 15.0],
                     [50.0, 15.0, 24.0],
                     [68.0, 21.0, 33.0],
+                ],
+                result["coordinates"],
+            ),
+            f'\nactual = {result["coordinates"]}',
+        )
+        self.assertEqual(unit_cell, result._unit_cell)    
+    
+    def test_continuous_configuration_with_bonds(self):
+        coords = np.array(
+            [
+                [14.0, 3.0, 6.0],
+                [32.0, 9.0, 15.0],
+                [50.0, 15.0, 24.0],
+                [68.0, 21.0, 33.0],
+            ]
+        )
+        unit_cell = UnitCell(
+            np.array([[1.0, 2.0, 1.0], [2.0, -1.0, 1.0], [3.0, 1.0, 1.0]])
+        )
+        self.chem_system.add_bonds([(0,1),(2,3)])
+        conf = PeriodicRealConfiguration(self.chem_system, coords, unit_cell)
+
+        result = conf.continuous_configuration()
+        self.assertTrue(isinstance(result, PeriodicRealConfiguration))
+        self.assertEqual(repr(self.chem_system), repr(result._chemical_system))
+        self.assertEqual(["coordinates"], list(result._variables.keys()))
+        self.assertTrue(
+            np.allclose(
+                [
+                    [14.0, 3.0, 6.0],
+                    [14.0, 3.0, 6.0],
+                    [50.0, 15.0, 24.0],
+                    [50.0, 15.0, 24.0],
                 ],
                 result["coordinates"],
             ),
