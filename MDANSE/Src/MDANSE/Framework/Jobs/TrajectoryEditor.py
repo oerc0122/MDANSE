@@ -112,9 +112,12 @@ class TrajectoryEditor(IJob):
             for idx in idxs
         ]
         self._indices = indices
-        self._selectedAtoms = [
-            self._input_chemical_system.atom_list[ind] for ind in indices
-        ]
+        temp_copy = list(self._input_chemical_system.atom_list)
+        indices_per_element = self.configuration["atom_selection"].get_indices()
+        for element, numbers in indices_per_element.items():
+            for num in numbers:
+                temp_copy[num] = element
+        self._selectedAtoms = [temp_copy[ind] for ind in indices]
 
         new_chemical_system = ChemicalSystem("Edited system")
         new_chemical_system.initialise_atoms(self._selectedAtoms)

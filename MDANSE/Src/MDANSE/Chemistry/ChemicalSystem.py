@@ -83,7 +83,7 @@ class ChemicalSystem:
         return self.rdkit_mol.AddAtom(rdkit_atm)
 
     def add_bonds(self, pair_list: List[Tuple[int]]):
-        self._bonds += pair_list
+        self._bonds += list(pair_list)
         for pair in pair_list:
             self.rdkit_mol.AddBond(
                 int(pair[0]), int(pair[1]), Chem.rdchem.BondType.UNSPECIFIED
@@ -224,7 +224,7 @@ class ChemicalSystem:
 
     def unique_molecules(self) -> List[str]:
         """Returns the list of unique names in the chemical system"""
-        return list[self._clusters.keys()]
+        return list([str(x) for x in self._clusters.keys()])
 
     def number_of_molecules(self, molecule_name: str) -> int:
         """Returns the number of molecules with the given name in the system"""
