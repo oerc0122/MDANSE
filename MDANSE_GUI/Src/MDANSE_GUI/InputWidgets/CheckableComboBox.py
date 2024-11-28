@@ -29,6 +29,7 @@ class CheckableComboBox(QComboBox):
         self.lineEdit().setReadOnly(True)
         self.view().viewport().installEventFilter(self)
         self.view().setAutoScroll(False)
+        self.item_text_castable_to_int = True
         # it's faster to access the items through this python list than
         # through self.model().item(idx)
         self._items = []
@@ -99,6 +100,11 @@ class CheckableComboBox(QComboBox):
         text : str
             The text of the item to add.
         """
+        if text != "select all" and self.item_text_castable_to_int:
+            try:
+                int(text)
+            except ValueError:
+                self.item_text_castable_to_int = False
         item = QStandardItem()
         item.setText(text)
         item.setEnabled(True)
@@ -128,26 +134,13 @@ class CheckableComboBox(QComboBox):
                 continue
             yield self._items[i]
 
-    def check_items_castable_to_int(self) -> bool:
-        """
-        Returns
-        -------
-        bool
-            Returns true if the text of all items can be cast to int.
-        """
-        try:
-            [int(i.text()) for i in self.getItems()]
-            return True
-        except ValueError:
-            return False
-
     def update_line_edit(self) -> None:
         """Updates the lineEdit text of the combobox."""
         vals = []
         for item in self.getItems():
             if item.checkState() == Qt.Checked:
                 vals.append(item.text())
-        if self.check_items_castable_to_int():
+        if self.item_text_castable_to_int:
             vals = [int(i) for i in vals]
             # changes for example 1,2,3,5,6,7,9,10 -> 1-3,5-7,9-10
             gr = (list(x) for _, x in groupby(vals, lambda x, c=count(): next(c) - x))
