@@ -128,18 +128,24 @@ class MinimalPDBReader:
         posx_slice = atom_line_slice("pos_x")
         posy_slice = atom_line_slice("pos_y")
         posz_slice = atom_line_slice("pos_z")
+        residue_slice = atom_line_slice("residue_name")
         pos_scaling = measure(1.0, "ang").toval("nm")
 
         element_list = []
+        name_list = []
+        label_dict = {}
 
-        for atom_line in atom_lines:
+        for atom_number, atom_line in enumerate(atom_lines):
             chemical_element = atom_line[element_slice].strip()
             atom_name = atom_line[name_slice]
             processed_atom_name = atom_name[:2].strip()
             if len(processed_atom_name) == 2:
-                processed_atom_name = (
-                    processed_atom_name[0].upper() + processed_atom_name[1].lower()
-                )
+                if processed_atom_name[0].isnumeric():
+                    processed_atom_name = processed_atom_name[1].upper()
+                else:
+                    processed_atom_name = (
+                        processed_atom_name[0].upper() + processed_atom_name[1].lower()
+                    )
             if len(chemical_element) == 2:
                 chemical_element = (
                     chemical_element[0].upper() + chemical_element[1].lower()
@@ -161,7 +167,7 @@ class MinimalPDBReader:
             elif processed_atom_name in ATOMS_DATABASE.atoms:
                 element_list.append(processed_atom_name)
             else:
-                LOG.warning(f"Dummy atom introduce from line {atom_line}")
+                LOG.warning(f"Dummy atom introduced from line {atom_line}")
                 element_list.append("Du")
             x, y, z = (
                 atom_line[posx_slice],
@@ -169,7 +175,13 @@ class MinimalPDBReader:
                 atom_line[posz_slice],
             )
             coordinates.append([float(aaa) for aaa in [x, y, z]])
-        self._chemical_system.initialise_atoms(element_list)
+            residue_name = atom_line[residue_slice]
+            if residue_name not in label_dict.keys():
+                label_dict[residue_name] = []
+            label_dict[residue_name].append(atom_number)
+            name_list.append(atom_name.strip())
+        self._chemical_system.initialise_atoms(element_list, name_list)
+        self._chemical_system.add_labels(label_dict)
 
         coordinates = np.array(coordinates)
         coordinates *= pos_scaling

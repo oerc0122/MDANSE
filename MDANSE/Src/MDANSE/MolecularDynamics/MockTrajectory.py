@@ -323,7 +323,7 @@ class MockTrajectory:
         return self._number_of_frames
 
     def read_com_trajectory(
-        self, atoms, first=0, last=None, step=1, box_coordinates=False
+        self, indices, first=0, last=None, step=1, box_coordinates=False
     ):
         """Build the trajectory of the center of mass of a set of atoms.
 
@@ -345,11 +345,10 @@ class MockTrajectory:
         if last is None:
             last = len(self)
 
-        indices = [at.index for at in atoms]
         masses = np.array(
             [
-                ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight")
-                for at in atoms
+                self.chemical_system.atom_property("atomic_weight")[index]
+                for index in indices
             ]
         )
 

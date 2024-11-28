@@ -27,7 +27,6 @@ ALL_JOBS = [
     "McStasVirtualInstrument",
     "MeanSquareDisplacement",
     "MolecularTrace",
-    "MoleculeFinder",
     "NeutronDynamicTotalStructureFactor",
     "OrderParameter",
     "PositionAutoCorrelationFunction",

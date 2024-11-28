@@ -66,7 +66,7 @@ class ChemicalSystem:
     def __str__(self):
         return f"ChemicalSystem {self._name} consisting of {len(self._atom_types)} atoms in {len(self._clusters)} molecules"
 
-    def initialise_atoms(self, element_list: List[str]):
+    def initialise_atoms(self, element_list: List[str], name_list: List[str] = None):
         self._atom_indices = [
             self.add_atom(self._database.get_atom_property(symbol, "atomic_number"))
             for symbol in element_list
@@ -74,6 +74,7 @@ class ChemicalSystem:
         self._atom_types = element_list
         self._total_number_of_atoms = len(self._atom_indices)
         self._unique_elements.update(set(element_list))
+        self._atom_names = name_list
 
     def add_atom(self, atm_num: int) -> int:
         rdkit_atm = Chem.Atom(atm_num)
@@ -159,6 +160,13 @@ class ChemicalSystem:
         """List of all non-ghost atoms in the ChemicalSystem."""
         return self._atom_types
 
+    @property
+    def name_list(self) -> list[str]:
+        """List of all non-ghost atoms in the ChemicalSystem."""
+        if self._atom_names is not None:
+            return self._atom_names
+        return self._atom_types
+
     def atom_property(self, property: str) -> list[Any]:
         """List of a specific property, for all atoms in the system"""
         lookup = {}
@@ -194,11 +202,6 @@ class ChemicalSystem:
             if attribute_name in ["rdkit_mol", "_configuration"]:
                 continue
             setattr(cs, attribute_name, copy.deepcopy(attribute_value))
-
-        if self._configuration is not None:
-            conf = self._configuration.clone(cs)
-
-            cs._configuration = conf
 
         return cs
 

@@ -103,7 +103,7 @@ def test_copy(chemical_system):
     print(original.number_of_atoms)
     print(copied.atom_list)
     print(copied.number_of_atoms)
-    assert repr(original) == repr(copied)
+    assert original.atom_list == copied.atom_list
 
 
 def test_compression(sample_trajectory, gzipped_trajectory, lzffed_trajectory):
