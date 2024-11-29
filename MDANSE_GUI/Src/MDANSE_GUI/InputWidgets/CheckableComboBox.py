@@ -101,11 +101,15 @@ class CheckableComboBox(QComboBox):
         set_checked : bool
             Checks the item if true.
         """
-        self.checked[idx] = set_checked
+        if self.checked[idx] == set_checked:
+            return
+
         if set_checked:
             check_uncheck = Qt.Checked
         else:
             check_uncheck = Qt.Unchecked
+
+        self.checked[idx] = set_checked
         self.items[idx].setCheckState(check_uncheck)
 
     def update_all_selected(self):
