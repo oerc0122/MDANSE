@@ -236,15 +236,13 @@ class SelectionHelper(QDialog):
         for check_box in self.check_boxes:
             self.settings[check_box.objectName()] = check_box.isChecked()
         for combo_box in self.combo_boxes:
-            for item in combo_box.getItems():
-                txt = item.text()
+            for i in range(combo_box.n_items):
+                txt = combo_box.text[i]
                 if combo_box.objectName() == "index":
                     key = int(txt)
                 else:
                     key = txt
-                self.settings[combo_box.objectName()][key] = (
-                    item.checkState() == Qt.Checked
-                )
+                self.settings[combo_box.objectName()][key] = combo_box.checked[i]
 
         self.selector.update_settings(self.settings)
         idxs = self.selector.get_idxs()
@@ -278,16 +276,15 @@ class SelectionHelper(QDialog):
             check_box.blockSignals(False)
         for combo_box in self.combo_boxes:
             combo_box.model().blockSignals(True)
-            for item in combo_box.getItems():
-                txt = item.text()
+            for i in range(combo_box.n_items):
+                txt = combo_box.text[i]
                 if combo_box.objectName() == "index":
                     key = int(txt)
                 else:
                     key = txt
-                if self.settings[combo_box.objectName()][key]:
-                    item.setCheckState(Qt.Checked)
-                else:
-                    item.setCheckState(Qt.Unchecked)
+                combo_box.set_item_checked_state(
+                    i, self.settings[combo_box.objectName()][key]
+                )
             combo_box.update_all_selected()
             combo_box.update_line_edit()
             combo_box.model().blockSignals(False)
