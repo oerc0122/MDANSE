@@ -22,7 +22,6 @@ from scipy.spatial import Voronoi as scipyVoronoi
 from scipy.spatial import Delaunay as scipyDelaunay
 
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
-from MDANSE.Extensions import mic_fast_calc
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
