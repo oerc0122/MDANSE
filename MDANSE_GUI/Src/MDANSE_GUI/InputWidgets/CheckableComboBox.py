@@ -97,7 +97,7 @@ class CheckableComboBox(QComboBox):
         Parameters
         ----------
         idx : int
-            Index of the items in the self.items list.
+            Index of the item in the self.items list.
         set_checked : bool
             Checks the item if true.
         """
