@@ -45,12 +45,14 @@ def solvent_accessible_surface(
         )
         distance_dict = sphere_tree.sparse_distance_matrix(tree, max_distance=max_dist)
         pair_array = np.array([pair for pair in distance_dict.keys()])
-        value_array = np.array([value for value in distance_dict.value()])
-        combined_array = np.hstack(pair_array, value_array)
+        value_array = np.array([value for value in distance_dict.values()])
+        combined_array = np.hstack(
+            [pair_array, value_array.reshape((len(value_array), 1))]
+        )
         blocked_for_sure = set(pair_array[:, 0][np.where(value_array <= min_dist)])
         free_for_sure = sphere_indices - set(pair_array[:, 0])
         uncertain = sphere_indices - free_for_sure - blocked_for_sure
-        confirmed = {}
+        confirmed = set()
         if len(uncertain) > 0:
             uncertain_lines = np.array(
                 [line for line in combined_array if line[0] in uncertain]
