@@ -15,7 +15,7 @@
 #
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any
 import copy
 from functools import reduce
 
@@ -25,16 +25,6 @@ from rdkit import Chem
 import networkx as nx
 from MDANSE.MLogging import LOG
 from MDANSE.Chemistry import ATOMS_DATABASE
-
-if TYPE_CHECKING:
-    from MDANSE.MolecularDynamics.Trajectory import Trajectory
-
-
-class BasicCluster:
-
-    def __init__(self, index_list: List[int], **kwargs):
-        self._name = kwargs.get("name", "unknown")
-        self._atoms = index_list
 
 
 class ChemicalSystem:
