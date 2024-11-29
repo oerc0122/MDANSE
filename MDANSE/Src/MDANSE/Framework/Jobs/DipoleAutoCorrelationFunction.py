@@ -128,11 +128,10 @@ class DipoleAutoCorrelationFunction(IJob):
             ]
             charges = self.configuration["trajectory"]["instance"].charges(frame_index)
             contiguous_configuration = configuration.contiguous_configuration()
-            coords = contiguous_configuration[molecule]
+            coords = contiguous_configuration.coordinates[molecule]
             com = center_of_mass(coords, masses)
 
-            for atm in molecule.atom_list:
-                idx = atm.index
+            for idx in molecule:
                 try:
                     q = self.configuration["atom_charges"]["charges"][idx]
                 except KeyError:

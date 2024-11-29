@@ -99,12 +99,12 @@ class ChemicalSystem:
 
     def add_clusters(self, group_list: List[List[int]]):
         for group in group_list:
-            sorted_group = tuple(sorted(set(group)))
+            sorted_group = list(sorted(set(group)))
             if len(sorted_group) < 2:
                 continue
             atom_list = [self._atom_types[index] for index in group]
             unique_atoms, counts = np.unique(atom_list, return_counts=True)
-            name = " ".join(
+            name = "_".join(
                 [str(unique_atoms[n]) + str(counts[n]) for n in range(len(counts))]
             )
             if name not in self._clusters:
@@ -330,6 +330,16 @@ class ChemicalSystem:
         bonds = grp["bonds"]
         bond_list = bonds[:]
         self.add_bonds([[int(pair[0]), int(pair[1])] for pair in bond_list])
+
+        if "atom_clusters" in grp.keys():
+            cluster_list = []
+            for line in grp["atom_clusters"]:
+                indices_string = line[0].decode("utf-8")
+                indices_list = [int(x) for x in indices_string.strip("[]").split(",")]
+                if indices_list:
+                    cluster_list.append(indices_list)
+            if cluster_list:
+                self.add_clusters(cluster_list)
 
         source.close()
 

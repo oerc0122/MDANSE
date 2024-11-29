@@ -19,6 +19,7 @@ import collections
 import numpy as np
 from scipy.signal import correlate
 
+from MDANSE.MolecularDynamics.CentreOfMassTrajectory import centre_of_mass
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
@@ -90,6 +91,12 @@ class AngularCorrelation(IJob):
 
         self.numberOfSteps = len(self.molecules)
 
+        self.masses = np.array(
+            self.configuration["trajectory"]["instance"].chemical_system.atom_property(
+                "atomic_weight"
+            )
+        )
+
         self._outputData.add(
             "time",
             "LineOutputVariable",
@@ -149,8 +156,7 @@ class AngularCorrelation(IJob):
         """
 
         molecule = self.molecules[index]
-        reference_atom = molecule.atom_list[0]
-        chemical_system = self.configuration["trajectory"]["instance"].chemical_system
+        masses = self.masses[molecule]
 
         at1_traj = np.empty((self.configuration["frames"]["number"], 3))
         at2_traj = np.empty((self.configuration["frames"]["number"], 3))
@@ -165,9 +171,10 @@ class AngularCorrelation(IJob):
             configuration = self.configuration["trajectory"]["instance"].configuration(
                 frame_index
             )
-            contiguous_configuration = configuration.contiguous_configuration()
-            at1_traj[i] = molecule.centre_of_mass(contiguous_configuration)
-            at2_traj[i] = reference_atom.centre_of_mass(contiguous_configuration)
+            coordinates = configuration.contiguous_configuration().coordinates
+            centre_coordinates = centre_of_mass(coordinates[molecule], masses)
+            at1_traj[i] = centre_coordinates
+            at2_traj[i] = coordinates[molecule[0]]
 
         diff = at2_traj - at1_traj
 

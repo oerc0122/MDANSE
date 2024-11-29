@@ -16,7 +16,7 @@
 
 import math
 import json
-from typing import TypeVar
+from typing import TypeVar, List
 
 import numpy as np
 
@@ -294,6 +294,17 @@ class MockTrajectory:
 
     def _load_unit_cells(self):
         """Only added for compatibility with Trajectory."""
+
+    def get_atom_property(self, atom_symbol: str, property: str):
+        return ATOMS_DATABASE.get_atom_property(atom_symbol, property)
+
+    @property
+    def atoms_in_database(self) -> List[str]:
+        return ATOMS_DATABASE.atoms
+
+    @property
+    def properties_in_database(self) -> List[str]:
+        return ATOMS_DATABASE.properties
 
     def unit_cell(self, frame: int) -> UnitCell:
         """Returns the UnitCell the size of the system.

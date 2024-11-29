@@ -251,16 +251,14 @@ class MdanseTrajectory:
         if last is None:
             last = len(self)
 
-        print(atom_indices)
         try:
-            masses = [
-                self.chemical_system.atom_property("atomic_weight")[index]
-                for index in atom_indices
-            ]
+            masses = self.chemical_system.atom_property("atomic_weight")
         except KeyError:
-            atoms = self.chemical_system.atom_list[atom_indices]
             masses = np.array(
-                [ATOMS_DATABASE.get_atom_property(at, "atomic_weight") for at in atoms]
+                [
+                    ATOMS_DATABASE.get_atom_property(at, "atomic_weight")
+                    for at in self.chemical_system.atom_list
+                ]
             )
         grp = self._h5_file["/configuration"]
 

@@ -58,12 +58,11 @@ def contiguous_coordinates_real(
 
     scaleconfig = np.matmul(coords, rcell)
 
-    for tupleidxs in indices:
+    for idxs in indices:
 
-        if len(tupleidxs) < 2:
+        if len(idxs) < 2:
             continue
 
-        idxs = list(tupleidxs)
         sdx = scaleconfig[idxs[1:]] - scaleconfig[idxs[0]]
         scaleconfig[idxs[1:]] -= np.round(sdx)
         newconfig = np.matmul(scaleconfig[idxs[1:]], cell)

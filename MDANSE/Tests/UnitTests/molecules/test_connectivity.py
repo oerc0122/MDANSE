@@ -22,28 +22,15 @@ def test_create_connectivity(trajectory: Trajectory):
     assert len(conn._unique_elements) == 2
 
 
-def test_find_bonds(trajectory: Trajectory):
+def test_find_molecules(trajectory: Trajectory):
     conn = Connectivity(trajectory=trajectory)
     conn.find_bonds()
     assert len(conn._unique_bonds) == 40
-
-
-def test_find_molecules(trajectory: Trajectory):
-    conn = Connectivity(trajectory=trajectory)
-    conn.find_molecules()
-    assert len(conn._molecules) == 20
-
-
-def test_rebuild_molecules(trajectory: Trajectory):
-    print(trajectory.chemical_system.atom_list)
-    conn = Connectivity(trajectory=trajectory)
-    conn.find_molecules()
-    atoms_before = int(trajectory.chemical_system.number_of_atoms)
-    chemical_system = trajectory.chemical_system
-    print(conn._molecules)
-    chemical_system.rebuild(conn._molecules)
-    atoms_after = int(trajectory.chemical_system.number_of_atoms)
-    assert atoms_before == atoms_after
+    conn.add_bond_information(trajectory.chemical_system)
+    molecules_found = 0
+    for name in trajectory.chemical_system.unique_molecules():
+        molecules_found += trajectory.chemical_system.number_of_molecules(name)
+    assert molecules_found == 20
 
 
 def test_identify_molecules(trajectory: Trajectory):

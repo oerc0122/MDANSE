@@ -17,8 +17,7 @@ fname = os.path.join(
 @pytest.fixture()
 def chem_from_pdb():
     reader = PDBReader(fname)
-    chem = reader.build_chemical_system()
-    yield chem
+    yield reader._chemical_system
 
 
 @pytest.fixture()

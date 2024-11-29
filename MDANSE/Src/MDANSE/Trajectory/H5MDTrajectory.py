@@ -337,17 +337,13 @@ class H5MDTrajectory:
         if last is None:
             last = len(self)
 
-        atoms = [self.chemical_system.atom_list[index] for index in atom_indices]
+        atoms = self.chemical_system.atom_list
 
         try:
-            masses = self._h5_file["/particles/all/mass/value"][atom_indices].astype(
-                np.float64
-            )
+            masses = self._h5_file["/particles/all/mass/value"][:].astype(np.float64)
         except KeyError:
             try:
-                masses = self._h5_file["/particles/all/mass"][atom_indices].astype(
-                    np.float64
-                )
+                masses = self._h5_file["/particles/all/mass"][:].astype(np.float64)
             except KeyError:
                 masses = np.array(
                     [

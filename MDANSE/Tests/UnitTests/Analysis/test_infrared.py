@@ -24,7 +24,7 @@ def test_dacf_analysis():
     parameters["running_mode"] = ("single-core", 1)
     parameters["trajectory"] = short_traj
     parameters["atom_charges"] = "{}"
-    parameters["molecule_name"] = "InChI=1S/CO2/c2-1-3"
+    parameters["molecule_name"] = "C1_O2"
     job = IJob.create("DipoleAutoCorrelationFunction")
     job.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
@@ -45,7 +45,7 @@ def test_ir_analysis():
     parameters["running_mode"] = ("single-core", 1)
     parameters["trajectory"] = short_traj
     parameters["atom_charges"] = "{}"
-    parameters["molecule_name"] = "InChI=1S/CO2/c2-1-3"
+    parameters["molecule_name"] = "C1_O2"
     job = IJob.create("Infrared")
     job.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
