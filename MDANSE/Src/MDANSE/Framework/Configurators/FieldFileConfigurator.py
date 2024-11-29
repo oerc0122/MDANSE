@@ -140,7 +140,7 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
 
     def build_chemical_system(self, chemical_system, aliases):
         element_list = []
-        bonds = []
+        name_list = []
 
         for db_name, nMolecules, atomic_contents, masses, _ in self["molecules"]:
             # Loops over the number of molecules of the current type.
@@ -153,4 +153,5 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
                         aliases, name, molecule=db_name, mass=mass
                     )
                     element_list.append(element)
-        chemical_system.initialise_atoms(element_list)
+                    name_list.append(name)
+        chemical_system.initialise_atoms(element_list, name_list)

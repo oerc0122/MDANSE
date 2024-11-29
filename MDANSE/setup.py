@@ -244,16 +244,6 @@ if "linux" in sys.platform:
 
 EXTENSIONS = [
     Extension(
-        "MDANSE.Extensions.com_trajectory",
-        include_dirs=INCLUDE_DIR,
-        sources=[os.path.join("Extensions", "com_trajectory.pyx")],
-    ),
-    Extension(
-        "MDANSE.Extensions.contiguous_coordinates",
-        include_dirs=INCLUDE_DIR,
-        sources=[os.path.join("Extensions", "contiguous_coordinates.pyx")],
-    ),
-    Extension(
         "MDANSE.Extensions.van_hove",
         include_dirs=INCLUDE_DIR,
         sources=[os.path.join("Extensions", "van_hove.pyx")],
@@ -262,12 +252,6 @@ EXTENSIONS = [
         "MDANSE.Extensions.sas_fast_calc",
         include_dirs=INCLUDE_DIR,
         sources=[os.path.join("Extensions", "sas_fast_calc.pyx")],
-    ),
-    Extension(
-        "MDANSE.Extensions.mic_fast_calc",
-        include_dirs=INCLUDE_DIR,
-        sources=[os.path.join("Extensions", "mic_fast_calc.pyx")],
-        language="c++",
     ),
     Extension(
         "MDANSE.Extensions.xtc",

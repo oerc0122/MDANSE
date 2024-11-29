@@ -34,7 +34,7 @@ N_TIMESTEPS = 150
 def chemical_system():
     temp = ChemicalSystem("Dummy test system")
     nAtoms = N_ATOMS
-    temp.initialise_atoms(nAtoms*["H"])
+    temp.initialise_atoms(nAtoms * ["H"])
     return temp
 
 
@@ -61,8 +61,7 @@ def sample_trajectory(chemical_system, sample_configuration):
     os.close(fdesc)
     writer = TrajectoryWriter(fname, chemical_system, n_steps=N_TIMESTEPS)
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
-        writer.chemical_system.configuration = sample_configuration
-        writer.dump_configuration(ts)
+        writer.dump_configuration(sample_configuration, ts)
     return fname
 
 

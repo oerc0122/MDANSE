@@ -151,12 +151,13 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
 
         coordinates = np.empty((self._nAtoms, 3), dtype=np.float64)
         element_list = [atom["element"] for atom in self._atoms.values()]
-        unique_labels = set([atom["atom_name"] for atom in self._atoms.values()])
+        name_list = [atom["atom_name"] for atom in self._atoms.values()]
+        unique_labels = set(name_list)
         label_dict = {label: [] for label in unique_labels}
         for temp_index, atom in enumerate(self._atoms.values()):
             label_dict[atom["atom_name"]].append(temp_index)
 
-        self._chemical_system.initialise_atoms(element_list)
+        self._chemical_system.initialise_atoms(element_list, name_list)
         self._chemical_system.add_bonds(self._bonds)
         self._chemical_system.add_labels(label_dict)
 

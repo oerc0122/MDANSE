@@ -15,6 +15,7 @@
 #
 
 import collections
+from typing import Dict
 
 import numpy as np
 
@@ -25,7 +26,27 @@ from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
 )
-from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
+from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
+
+
+def create_average_atom(atom_dictionary: Dict[str, int], database: Trajectory):
+    all_properties = database.properties_in_database()
+    values = {}
+    for property in all_properties:
+        temp = []
+        total = 0
+        for element_name in atom_dictionary.keys():
+            temp.append(database.get_atom_property(element_name, property))
+        for n, counts in atom_dictionary.values():
+            try:
+                float(temp[n])
+            except TypeError:
+                total = temp[n]
+            except ValueError:
+                total = temp[n]
+            else:
+                total += counts * temp[n]
+        values[property] = total
 
 
 class CenterOfMassesTrajectory(IJob):
@@ -91,6 +112,7 @@ class CenterOfMassesTrajectory(IJob):
             if index not in used_up_atoms:
                 new_element_list.append(chemical_system.atom_list[index])
         self._used_up_atoms = used_up_atoms
+        new_chemical_system.initialise_atoms(new_element_list)
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
@@ -129,17 +151,17 @@ class CenterOfMassesTrajectory(IJob):
             for cluster in chemical_system._clusters[cluster_name]:
                 masses = [
                     atom_database.get_atom_property(
-                        chemical_system.atom_list[index], "atomic_weight"
+                        chemical_system.atom_list[cluster_index], "atomic_weight"
                     )
-                    for index in cluster
+                    for cluster_index in cluster
                 ]
                 com_coords[mol_index] = center_of_mass(
                     conf.coordinates[cluster], masses
                 )
                 mol_index += 1
-        for index in chemical_system._atom_indices:
-            if index not in self._used_up_atoms:
-                com_coords[mol_index] = conf.coordinates[index]
+        for atom_index in chemical_system._atom_indices:
+            if atom_index not in self._used_up_atoms:
+                com_coords[mol_index] = conf.coordinates[atom_index]
                 mol_index += 1
 
         if conf.is_periodic:

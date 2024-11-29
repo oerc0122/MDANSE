@@ -166,7 +166,6 @@ class AngularCorrelation(IJob):
                 frame_index
             )
             contiguous_configuration = configuration.contiguous_configuration()
-            chemical_system.configuration = contiguous_configuration
             at1_traj[i] = molecule.centre_of_mass(contiguous_configuration)
             at2_traj[i] = reference_atom.centre_of_mass(contiguous_configuration)
 

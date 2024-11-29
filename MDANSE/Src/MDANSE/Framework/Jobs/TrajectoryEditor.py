@@ -118,9 +118,10 @@ class TrajectoryEditor(IJob):
             for num in numbers:
                 temp_copy[num] = element
         self._selectedAtoms = [temp_copy[ind] for ind in indices]
+        name_list = [self._input_chemical_system.name_list[ind] for ind in indices]
 
         new_chemical_system = ChemicalSystem("Edited system")
-        new_chemical_system.initialise_atoms(self._selectedAtoms)
+        new_chemical_system.initialise_atoms(self._selectedAtoms, name_list)
         if self.configuration["molecule_tolerance"]["use_it"]:
             tolerance = self.configuration["molecule_tolerance"]["value"]
             conn = Connectivity(trajectory=self._input_trajectory, selection=indices)

@@ -42,13 +42,3 @@ class TestPDBReader(unittest.TestCase):
         self.assertEqual(chemical_system.name_list[7], "HB2")
         # self.assertEqual(atomList[10].full_name, "...LYS1.HG2")
         # self.assertEqual(atomList[28].parent.name, "VAL2")
-
-        conf = chemical_system.configuration
-
-        self.assertAlmostEqual(conf.variables["coordinates"][0, 0], 4.6382)
-        self.assertAlmostEqual(conf.variables["coordinates"][0, 1], 3.0423)
-        self.assertAlmostEqual(conf.variables["coordinates"][0, 2], 2.6918)
-
-        self.assertAlmostEqual(conf.variables["coordinates"][-1, 0], 2.4937)
-        self.assertAlmostEqual(conf.variables["coordinates"][-1, 1], 3.9669)
-        self.assertAlmostEqual(conf.variables["coordinates"][-1, 2], -0.5209)

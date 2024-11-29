@@ -129,7 +129,6 @@ class MinimalPDBReader:
         posy_slice = atom_line_slice("pos_y")
         posz_slice = atom_line_slice("pos_z")
         residue_slice = atom_line_slice("residue_name")
-        pos_scaling = measure(1.0, "ang").toval("nm")
 
         element_list = []
         name_list = []
@@ -182,15 +181,3 @@ class MinimalPDBReader:
             name_list.append(atom_name.strip())
         self._chemical_system.initialise_atoms(element_list, name_list)
         self._chemical_system.add_labels(label_dict)
-
-        coordinates = np.array(coordinates)
-        coordinates *= pos_scaling
-
-        if self._unit_cell is None:
-            self._chemical_system.configuration = RealConfiguration(
-                self._chemical_system, coordinates
-            )
-        else:
-            self._chemical_system.configuration = PeriodicRealConfiguration(
-                self._chemical_system, coordinates, UnitCell(self._unit_cell)
-            )

@@ -53,6 +53,7 @@ class ChemicalSystem:
 
         self._total_number_of_atoms = 0
         self._atom_types = []
+        self._atom_names = None
         self._atom_indices = []
         self._labels = {}  # arbitrary tag attached to atoms (e.g. residue name)
 
@@ -170,7 +171,7 @@ class ChemicalSystem:
     def atom_property(self, property: str) -> list[Any]:
         """List of a specific property, for all atoms in the system"""
         lookup = {}
-        for atom in self._unique_elements:
+        for atom in self.atom_list:
             lookup[atom] = self._database.get_atom_property(atom, property)
         return [lookup[atom] for atom in self.atom_list]
 
@@ -262,6 +263,14 @@ class ChemicalSystem:
             import sys
 
             sys.exit(1)
+        if self._atom_names is not None:
+            try:
+                grp.create_dataset("atom_names", data=self._atom_names, dtype=string_dt)
+            except TypeError:
+                print(f"Bad array: {self._atom_names}")
+                import sys
+
+                sys.exit(1)
         grp.create_dataset("atom_indices", data=self._atom_indices)
 
         grp.create_dataset("bonds", data=np.array(self._bonds))
@@ -287,7 +296,10 @@ class ChemicalSystem:
         self._name = grp.attrs["name"]
 
         atom_types = [binary.decode("utf-8") for binary in grp["atom_types"][:]]
-        self.initialise_atoms(atom_types)
+        atom_names = None
+        if "atom_names" in grp.keys():
+            atom_names = [binary.decode("utf-8") for binary in grp["atom_names"][:]]
+        self.initialise_atoms(atom_types, atom_names)
         old_indices = [int(tag) for tag in grp["atom_indices"][:]]
         if not np.allclose(old_indices, self._atom_indices):
             LOG.error("Atoms got re-indexed on loading the trajectory")

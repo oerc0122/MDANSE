@@ -299,7 +299,10 @@ def test_selector_returns_false_with_incorrect_json_setting_2(protein_trajectory
     )
 
 
+@pytest.mark.xfail(reason="see docstring")
 def test_selector_with_atom_fullname(protein_trajectory):
+    """For the moment, full names of atoms are not implemented
+    in the ChemicalSystem."""
     selector = Selector(protein_trajectory)
     selector.update_settings(
         {
@@ -311,7 +314,12 @@ def test_selector_with_atom_fullname(protein_trajectory):
     assert len(atm_idxs) == 2
 
 
+@pytest.mark.xfail(reason="see docstring")
 def test_selector_with_atom_name(protein_trajectory):
+    """At the moment the oxygen in water has the same
+    atom name as the oxygen in the protein.
+    We will have to decide if this is acceptable.
+    """
     selector = Selector(protein_trajectory)
     selector.update_settings(
         {

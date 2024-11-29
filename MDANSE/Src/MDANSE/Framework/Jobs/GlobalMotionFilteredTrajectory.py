@@ -136,8 +136,6 @@ class GlobalMotionFilteredTrajectory(IJob):
             trajectory.chemical_system, coords, **variables
         )
 
-        trajectory.chemical_system.configuration = current_configuration
-
         # Case of the first frame.
         if frameIndex == self.configuration["frames"]["first"]:
             # A a linear transformation that shifts the center of mass of the reference atoms to the coordinate origin

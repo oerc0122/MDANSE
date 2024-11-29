@@ -123,6 +123,7 @@ class MDAnalysis(Converter):
 
         self._chemical_system = ChemicalSystem()
         element_list = []
+        name_list = []
         label_dict = {}
 
         for at_number, at in enumerate(self.u.atoms):
@@ -157,7 +158,10 @@ class MDAnalysis(Converter):
                     name = getattr(at, arg)
                     break
             element_list.append(element)
-        self._chemical_system.initialise_atoms(element_list)
+            name_list.append(name)
+        if None in name_list:
+            name_list = None
+        self._chemical_system.initialise_atoms(element_list, name_list)
         self._chemical_system.add_labels(label_dict)
 
         kwargs = {

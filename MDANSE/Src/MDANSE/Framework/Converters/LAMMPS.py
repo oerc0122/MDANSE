@@ -201,6 +201,7 @@ class LAMMPScustom(LAMMPSReader):
 
                 self._rankToName = {}
                 element_list = []
+                name_list = []
 
                 self._itemsPosition["ATOMS"] = [comp + 1, comp + self._nAtoms + 1]
                 for i in range(self._nAtoms):
@@ -229,8 +230,9 @@ class LAMMPScustom(LAMMPSReader):
                         self._rankToName[temp_index - 1] = name
                     element = get_element_from_mapping(aliases, label, mass=mass)
                     element_list.append(element)
+                    name_list.append(str(ty + 1))
 
-                chemical_system.initialise_atoms(element_list)
+                chemical_system.initialise_atoms(element_list, name_list)
 
                 if config["n_bonds"] is not None:
                     bonds = []
@@ -455,6 +457,7 @@ class LAMMPSxyz(LAMMPSReader):
 
         self._rankToName = {}
         element_list = []
+        name_list = []
         chemical_system = ChemicalSystem()
 
         for i in range(self._nAtoms):
@@ -465,7 +468,8 @@ class LAMMPSxyz(LAMMPSReader):
             name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
             self._rankToName[idx] = name
             element_list.append(get_element_from_mapping(aliases, label, mass=mass))
-        chemical_system.initialise_atoms(element_list)
+            name_list.append(str(ty + 1))
+        chemical_system.initialise_atoms(element_list, name_list)
 
         if config["n_bonds"] is not None:
             bonds = []
@@ -563,6 +567,7 @@ class LAMMPSh5md(LAMMPSReader):
         self._rankToName = {}
         chemical_system = ChemicalSystem()
         element_list = []
+        name_list = []
 
         for i in range(self._nAtoms):
             idx = i
@@ -572,7 +577,8 @@ class LAMMPSh5md(LAMMPSReader):
             name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
             self._rankToName[idx] = name
             element_list.append(get_element_from_mapping(aliases, label, mass=mass))
-        chemical_system.initialise_atoms(element_list)
+            name_list.append(str(ty + 1))
+        chemical_system.initialise_atoms(element_list, name_list)
 
         if config["n_bonds"] is not None:
             bonds = []

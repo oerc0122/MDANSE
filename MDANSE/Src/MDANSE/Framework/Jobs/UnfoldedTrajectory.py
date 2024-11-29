@@ -77,7 +77,7 @@ class UnfoldedTrajectory(IJob):
             self.configuration["output_files"]["file"],
             self.configuration["trajectory"]["instance"].chemical_system,
             self.numberOfSteps,
-            self._selectedAtoms,
+            self._selection_indices,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],

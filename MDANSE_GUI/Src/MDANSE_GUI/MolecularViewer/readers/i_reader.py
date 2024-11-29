@@ -20,7 +20,6 @@ import numpy as np
 
 from MDANSE.MLogging import LOG
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry import RESIDUES_DATABASE
 
 
 class InvalidFileError(Exception):
@@ -143,7 +142,6 @@ class IReader(abc.ABC):
         self._atom_types = []
         for i in range(self._n_atoms):
             atom_name = self._atom_names[i]
-            residue_name = self._residue_names[i]
 
             # Remove the trailing and initial digits from the upperized atom names
             upper_atom_name = atom_name.upper()
@@ -152,29 +150,16 @@ class IReader(abc.ABC):
             # Case of the an atom that belongs to a standard residue
             # Guess the atom type by the starting from the first alpha letter from the left,
             # increasing the word by one letter if there was no success in guessing the atom type
-            if residue_name in RESIDUES_DATABASE:
-                start = 1
-                while True:
-                    upper_atom_name = upper_atom_name[:start]
-                    if upper_atom_name in symbols:
-                        self._atom_types.append(upper_atom_name.capitalize())
-                        break
-                    if start > len(atom_name):
-                        raise ValueError("Unknown atom type: {}".format(atom_name))
-                    start += 1
-            # Case of the an atom that does not belong to a standard residue
-            # Guess the atom type by the starting from whole atom name,
-            # decreasing the word by one letter from the right if there was no success in guessing the atom type
-            else:
-                start = len(upper_atom_name)
-                while True:
-                    upper_atom_name = upper_atom_name[:start]
-                    if upper_atom_name in symbols:
-                        self._atom_types.append(upper_atom_name.capitalize())
-                        break
-                    if start == 0:
-                        raise ValueError("Unknown atom type: {}".format(atom_name))
-                    start -= 1
+
+            start = len(upper_atom_name)
+            while True:
+                upper_atom_name = upper_atom_name[:start]
+                if upper_atom_name in symbols:
+                    self._atom_types.append(upper_atom_name.capitalize())
+                    break
+                if start == 0:
+                    raise ValueError("Unknown atom type: {}".format(atom_name))
+                start -= 1
 
     def read_atom_trajectory(self, index):
         """Read the trajectory of a single atom with a given index

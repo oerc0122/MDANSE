@@ -15,14 +15,12 @@ def trajectory():
 
 
 def test_unit_cell(trajectory: HDFTrajectoryInputData):
-    chem_system = trajectory.chemical_system
-    configuration = chem_system.configuration
+    configuration = trajectory.configuration()
     unit_cell = configuration.unit_cell
     print(unit_cell.abc_and_angles)
 
 
 def test_molecule_finder(trajectory: HDFTrajectoryInputData):
-    chem_system = trajectory.chemical_system
-    configuration = chem_system.configuration
+    configuration = trajectory.configuration()
     coordinates = configuration._variables["coordinates"]
     print(coordinates.shape)

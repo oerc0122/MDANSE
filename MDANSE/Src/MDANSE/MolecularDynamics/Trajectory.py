@@ -121,7 +121,7 @@ class Trajectory:
 
         return self._trajectory.coordinates(frame)
 
-    def configuration(self, frame):
+    def configuration(self, frame: int = 0):
         """Build and return a configuration at a given frame.
 
         :param frame: the frame

@@ -96,9 +96,7 @@ class DensityProfile(IJob):
 
         axis_index = self.configuration["axis"]["index"]
 
-        first_conf = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.configuration
+        first_conf = self.configuration["trajectory"]["instance"].configuration()
 
         try:
             axis = first_conf.unit_cell.direct[axis_index, :]

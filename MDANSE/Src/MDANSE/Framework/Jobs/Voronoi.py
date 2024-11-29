@@ -21,6 +21,7 @@ import numpy as np
 from scipy.spatial import Voronoi as scipyVoronoi
 from scipy.spatial import Delaunay as scipyDelaunay
 
+from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from MDANSE.Extensions import mic_fast_calc
 from MDANSE.Framework.Jobs.IJob import IJob
 
@@ -34,6 +35,61 @@ def no_exc_min(l):
 
 class VoronoiError(Exception):
     pass
+
+
+def pad_coordinates(
+    coords: np.ndarray, unit_cell: "UnitCell", thickness: float
+) -> np.ndarray:
+    """Repeats coordinates in copies of the unit cell, and removes
+    the atoms that are now within the specified distance from the cell wall.
+    The returned coordinate array contains all the original atoms,
+    and additionally the atoms from the copies within the thickness
+    from the original cell walls.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of all the atoms in the unit cell
+    unit_cell : UnitCell
+        an instance of the UnitCell class, defining the simulation box
+    thickness : float
+        thickness of the outer layer to be included
+
+    Returns
+    -------
+    np.ndarray
+        Array of atom coordinates, together with their copies
+
+    Raises
+    ------
+    VoronoiError
+        Any error that may indicate that a Voronoi job failed
+    """
+    if abs(thickness) < 1e-6:
+        return coords
+    vectors = (
+        unit_cell.a_vector,
+        unit_cell.b_vector,
+        unit_cell.c_vector,
+    )
+    fractional_lengths = [np.linalg.norm(vector) / thickness for vector in vectors]
+    for axis in range(3):
+        extra_arrays = []
+        cutoff_max = 1 + fractional_lengths[axis]
+        cutoff_min = -fractional_lengths[axis]
+        for shift in [-1, 1]:
+            offset = vectors[axis] * shift
+            new_points = coords + offset.reshape((3, 1))
+            frac_points = np.matmul(new_points, unit_cell.inverse)
+            if shift > 0:
+                new_points = new_points[np.where(frac_points[:, axis] < cutoff_max)]
+            else:
+                new_points = new_points[np.where(frac_points[:, axis] > cutoff_min)]
+            if len(new_points) > 0:
+                extra_arrays.append(new_points)
+        if len(extra_arrays) > 0:
+            coords = np.vstack([coords] + extra_arrays)
+    return coords
 
 
 class Voronoi(IJob):
@@ -97,9 +153,7 @@ class Voronoi(IJob):
         # Will store neighbourhood histogram for voronoi regions.
         self.neighbourhood_hist = {}
 
-        first_conf = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.configuration
+        first_conf = self.configuration["trajectory"]["instance"].configuration()
 
         try:
             cell = first_conf.unit_cell.direct
@@ -126,16 +180,19 @@ class Voronoi(IJob):
         frameIndex = self.configuration["frames"]["value"][index]
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
+        unit_cell = conf._unit_cell
 
         if self.configuration["pbc"]["value"]:
-            conf, _ = mic_fast_calc.mic_generator_3D(
+            coords = pad_coordinates(
                 conf["coordinates"],
+                unit_cell,
                 self.configuration["pbc_border_size"]["value"],
-                self.cell_param,
             )
+        else:
+            coords = conf["coordinates"]
 
         # Computing Voronoi Diagram ...
-        Voronoi = scipyVoronoi(conf)
+        Voronoi = scipyVoronoi(coords)
         vertices_coords = Voronoi.vertices  # Option qhull v p
 
         # Extracting valid Voronoi regions ...
