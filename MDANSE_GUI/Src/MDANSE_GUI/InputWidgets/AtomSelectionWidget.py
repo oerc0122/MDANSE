@@ -23,7 +23,7 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QGroupBox,
     QLabel,
-    QTextEdit,
+    QPlainTextEdit,
     QWidget,
 )
 from MDANSE.Framework.AtomSelector import Selector
@@ -92,8 +92,9 @@ class SelectionHelper(QDialog):
         self.selector = selector
         self._field = field
         self.settings = self.selector.settings
+        self.atm_full_names = [atm.full_name for atm in self.selector.system.atom_list]
 
-        self.selection_textbox = QTextEdit()
+        self.selection_textbox = QPlainTextEdit()
         self.selection_textbox.setReadOnly(True)
 
         mol_view = MolecularViewerWithPicking()
@@ -299,10 +300,9 @@ class SelectionHelper(QDialog):
         """
         num_sel = len(idxs)
         text = [f"Number of atoms selected:\n{num_sel}\n\nSelected atoms:\n"]
-        atoms = self.selector.system.atom_list
         for idx in idxs:
-            text.append(f"{idx}  ({atoms[idx].full_name})\n")
-        self.selection_textbox.setText("".join(text))
+            text.append(f"{idx}  ({self.atm_full_names[idx]})\n")
+        self.selection_textbox.setPlainText("".join(text))
 
     def apply(self) -> None:
         """Set the field of the AtomSelectionWidget to the currently
