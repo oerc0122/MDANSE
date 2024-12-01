@@ -78,7 +78,7 @@ def pad_coordinates(
         cutoff_min = -fractional_lengths[axis]
         for shift in [-1, 1]:
             offset = vectors[axis] * shift
-            new_points = coords + offset.reshape((3, 1))
+            new_points = coords + offset.reshape((1, 3))
             frac_points = np.matmul(new_points, unit_cell.inverse)
             if shift > 0:
                 new_points = new_points[np.where(frac_points[:, axis] < cutoff_max)]
