@@ -21,6 +21,7 @@ import numpy as np
 from scipy.spatial import KDTree
 
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.MolecularDynamics.Configuration import padded_coordinates
 from MDANSE.Mathematics.Geometry import generate_sphere_points
 
 
@@ -186,12 +187,27 @@ class SolventAccessibleSurface(IJob):
 
         # The configuration is made continuous.
         conf = conf.continuous_configuration()
+        unit_cell = conf._unit_cell
+
+        if conf.is_periodic:
+            padding_thickness = 1.05 * max(
+                self.configuration["probe_radius"]["value"], np.max(self.vdwRadii)
+            )
+            coords, atom_indices = padded_coordinates(
+                conf["coordinates"],
+                unit_cell,
+                padding_thickness,
+            )
+            temp_vdw_radii = [self.vdwRadii[atom_index] for atom_index in atom_indices]
+        else:
+            coords = conf["coordinates"]
+            temp_vdw_radii = self.vdwRadii
 
         # Loop over the indices of the selected atoms for the sas calculation.
         sas = solvent_accessible_surface(
-            conf["coordinates"],
+            coords,
             self._indices,
-            self.vdwRadii,
+            temp_vdw_radii,
             self.spherePoints,
             self.configuration["probe_radius"]["value"],
         )

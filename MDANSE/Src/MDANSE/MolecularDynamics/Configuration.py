@@ -150,6 +150,69 @@ def continuous_coordinates(
     return contiguous_coordinates_real(coords, cell, rcell, segments)
 
 
+def padded_coordinates(
+    coords: np.ndarray, unit_cell: "UnitCell", thickness: float
+) -> np.ndarray:
+    """Repeats coordinates in copies of the unit cell, and removes
+    the atoms that are now within the specified distance from the cell wall.
+    The returned coordinate array contains all the original atoms,
+    and additionally the atoms from the copies within the thickness
+    from the original cell walls.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of all the atoms in the unit cell
+    unit_cell : UnitCell
+        an instance of the UnitCell class, defining the simulation box
+    thickness : float
+        thickness of the outer layer to be included
+
+    Returns
+    -------
+    np.ndarray
+        Array of atom coordinates, together with their copies
+
+    Raises
+    ------
+    VoronoiError
+        Any error that may indicate that a Voronoi job failed
+    """
+    if abs(thickness) < 1e-6:
+        return coords
+    vectors = (
+        unit_cell.a_vector,
+        unit_cell.b_vector,
+        unit_cell.c_vector,
+    )
+    fractional_lengths = [np.linalg.norm(vector) / thickness for vector in vectors]
+    all_indices = np.arange(len(coords), dtype=int)
+    for axis in range(3):
+        extra_arrays = []
+        extra_indices = []
+        cutoff_max = 1 + fractional_lengths[axis]
+        cutoff_min = -fractional_lengths[axis]
+        for shift in [-1, 1]:
+            offset = vectors[axis] * shift
+            new_points = coords + offset.reshape((1, 3))
+            frac_points = np.matmul(new_points, unit_cell.inverse)
+            if shift > 0:
+                criterion = np.where(frac_points[:, axis] < cutoff_max)
+                new_points = new_points[criterion]
+                new_indices = all_indices[criterion]
+            else:
+                criterion = np.where(frac_points[:, axis] > cutoff_min)
+                new_points = new_points[criterion]
+                new_indices = all_indices[criterion]
+            if len(new_points) > 0:
+                extra_arrays.append(new_points)
+                extra_indices.append(new_indices)
+        if len(extra_arrays) > 0:
+            coords = np.vstack([coords] + extra_arrays)
+            all_indices = np.concatenate([all_indices] + extra_indices)
+    return coords, all_indices
+
+
 class ConfigurationError(Exception):
     pass
 

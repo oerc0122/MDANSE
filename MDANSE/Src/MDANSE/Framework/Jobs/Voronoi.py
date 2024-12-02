@@ -16,79 +16,27 @@
 
 import collections
 import math
+from typing import List
 
 import numpy as np
 from scipy.spatial import Voronoi as scipyVoronoi
 from scipy.spatial import Delaunay as scipyDelaunay
 
-from MDANSE.MolecularDynamics.UnitCell import UnitCell
+from MDANSE.MolecularDynamics.Configuration import padded_coordinates
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
-def no_exc_min(l):
+def no_exc_min(numbers: List[float]):
     try:
-        return min(l)
-    except:
-        return -np.pi
+        return min(numbers)
+    except ValueError:
+        return -1
+    except TypeError:
+        return -2
 
 
 class VoronoiError(Exception):
     pass
-
-
-def pad_coordinates(
-    coords: np.ndarray, unit_cell: "UnitCell", thickness: float
-) -> np.ndarray:
-    """Repeats coordinates in copies of the unit cell, and removes
-    the atoms that are now within the specified distance from the cell wall.
-    The returned coordinate array contains all the original atoms,
-    and additionally the atoms from the copies within the thickness
-    from the original cell walls.
-
-    Parameters
-    ----------
-    coords : np.ndarray
-        Array of all the atoms in the unit cell
-    unit_cell : UnitCell
-        an instance of the UnitCell class, defining the simulation box
-    thickness : float
-        thickness of the outer layer to be included
-
-    Returns
-    -------
-    np.ndarray
-        Array of atom coordinates, together with their copies
-
-    Raises
-    ------
-    VoronoiError
-        Any error that may indicate that a Voronoi job failed
-    """
-    if abs(thickness) < 1e-6:
-        return coords
-    vectors = (
-        unit_cell.a_vector,
-        unit_cell.b_vector,
-        unit_cell.c_vector,
-    )
-    fractional_lengths = [np.linalg.norm(vector) / thickness for vector in vectors]
-    for axis in range(3):
-        extra_arrays = []
-        cutoff_max = 1 + fractional_lengths[axis]
-        cutoff_min = -fractional_lengths[axis]
-        for shift in [-1, 1]:
-            offset = vectors[axis] * shift
-            new_points = coords + offset.reshape((1, 3))
-            frac_points = np.matmul(new_points, unit_cell.inverse)
-            if shift > 0:
-                new_points = new_points[np.where(frac_points[:, axis] < cutoff_max)]
-            else:
-                new_points = new_points[np.where(frac_points[:, axis] > cutoff_min)]
-            if len(new_points) > 0:
-                extra_arrays.append(new_points)
-        if len(extra_arrays) > 0:
-            coords = np.vstack([coords] + extra_arrays)
-    return coords
 
 
 class Voronoi(IJob):
@@ -182,7 +130,7 @@ class Voronoi(IJob):
         unit_cell = conf._unit_cell
 
         if self.configuration["pbc"]["value"]:
-            coords = pad_coordinates(
+            coords, _ = padded_coordinates(
                 conf["coordinates"],
                 unit_cell,
                 self.configuration["pbc_border_size"]["value"],
@@ -190,20 +138,20 @@ class Voronoi(IJob):
         else:
             coords = conf["coordinates"]
 
-        # Computing Voronoi Diagram ...
+        # Computing Voronoi Diagram
         Voronoi = scipyVoronoi(coords)
         vertices_coords = Voronoi.vertices  # Option qhull v p
 
-        # Extracting valid Voronoi regions ...
+        # Extracting valid Voronoi regions
         points_ids = Voronoi.regions  # Option qhull v FN
         valid_regions_points_ids = []
         valid_region_id = []
         region_id = -1
         for p in Voronoi.point_region:
             region_id += 1
-            l = points_ids[p]
-            if no_exc_min(l) >= 0:
-                valid_regions_points_ids.append(l)
+            id_list = points_ids[p]
+            if no_exc_min(id_list) >= 0:
+                valid_regions_points_ids.append(id_list)
                 valid_region_id.append(region_id)
 
         valid_regions = {}
@@ -211,11 +159,11 @@ class Voronoi(IJob):
             vrid = valid_region_id[i]
             valid_regions[vrid] = valid_regions_points_ids[i]
 
-        # Extracting ridges of the valid Voronoi regions ...
+        # Extracting ridges of the valid Voronoi regions
         input_sites = Voronoi.ridge_points  # Option qhull v Fv (part of)
         self.max_region_id = input_sites.max()
 
-        # Calculating neighbourhood ...
+        # Calculating neighbourhood
         neighbourhood = np.zeros((self.max_region_id + 1), dtype=np.int32)
         for s in input_sites.ravel():
             neighbourhood[s] += 1
@@ -229,7 +177,7 @@ class Voronoi(IJob):
                 else:
                     self.neighbourhood_hist[v] += 1
 
-        # Delaunay Tesselation of each valid voronoi region ...
+        # Delaunay Tesselation of each valid voronoi region
         delaunay_regions_for_each_valid_voronoi_region = {}
         for vrid, ids in list(valid_regions.items()):
             if vrid >= self.nb_init_pts:
@@ -243,7 +191,7 @@ class Voronoi(IJob):
                 lut[dv] for dv in Delaunay.simplices
             ]
 
-        # Volume Computation ... "
+        # Volume Computation
         global_volumes = {}
         for vrid, regions in list(
             delaunay_regions_for_each_valid_voronoi_region.items()
