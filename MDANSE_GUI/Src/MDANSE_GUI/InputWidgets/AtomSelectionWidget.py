@@ -118,6 +118,7 @@ class SelectionHelper(QDialog):
         self.update_others()
 
         self.all_selection = True
+        self.selected = set([])
 
     def closeEvent(self, a0):
         """Hide the window instead of closing. Some issues occur in the
@@ -226,6 +227,14 @@ class SelectionHelper(QDialog):
                 combo_layout.addWidget(combo)
                 select_layout.addLayout(combo_layout)
 
+        invert_layout = QHBoxLayout()
+        label = QLabel("Invert selection:")
+        apply = QPushButton("Apply")
+        apply.clicked.connect(self.invert_selection)
+        invert_layout.addWidget(label)
+        invert_layout.addWidget(apply)
+        select_layout.addLayout(invert_layout)
+
         select.setLayout(select_layout)
         return [select]
 
@@ -246,9 +255,9 @@ class SelectionHelper(QDialog):
                 self.settings[combo_box.objectName()][key] = combo_box.checked[i]
 
         self.selector.update_settings(self.settings)
-        idxs = self.selector.get_idxs()
-        self.view_3d._viewer.change_picked(idxs)
-        self.update_selection_textbox(idxs)
+        self.selected = self.selector.get_idxs()
+        self.view_3d._viewer.change_picked(self.selected)
+        self.update_selection_textbox()
 
     def update_from_3d_view(self, selection: set[int]) -> None:
         """A selection/deselection was made in the 3d view, update the
@@ -262,7 +271,17 @@ class SelectionHelper(QDialog):
         self.selector.update_with_idxs(selection)
         self.settings = self.selector.settings
         self.update_selection_widgets()
-        self.update_selection_textbox(self.selector.get_idxs())
+        self.selected = self.selector.get_idxs()
+        self.update_selection_textbox()
+
+    def invert_selection(self):
+        """Inverts the selection."""
+        self.selected = self.selector.all_idxs - self.selected
+        self.selector.update_with_idxs(self.selected)
+        self.settings = self.selector.settings
+        self.update_selection_widgets()
+        self.view_3d._viewer.change_picked(self.selected)
+        self.update_selection_textbox()
 
     def update_selection_widgets(self) -> None:
         """Updates the selection widgets so that it matches the full
@@ -290,17 +309,11 @@ class SelectionHelper(QDialog):
             combo_box.update_line_edit()
             combo_box.model().blockSignals(False)
 
-    def update_selection_textbox(self, idxs: set[int]) -> None:
-        """Update the selection textbox.
-
-        Parameters
-        ----------
-        idxs : set[int]
-            The selected indexes.
-        """
-        num_sel = len(idxs)
+    def update_selection_textbox(self) -> None:
+        """Update the selection textbox."""
+        num_sel = len(self.selected)
         text = [f"Number of atoms selected:\n{num_sel}\n\nSelected atoms:\n"]
-        for idx in idxs:
+        for idx in self.selected:
             text.append(f"{idx}  ({self.atm_full_names[idx]})\n")
         self.selection_textbox.setPlainText("".join(text))
 
@@ -317,9 +330,9 @@ class SelectionHelper(QDialog):
         self.selector.settings["all"] = self.all_selection
         self.settings = self.selector.settings
         self.update_selection_widgets()
-        idxs = self.selector.get_idxs()
-        self.view_3d._viewer.change_picked(idxs)
-        self.update_selection_textbox(idxs)
+        self.selected = self.selector.get_idxs()
+        self.view_3d._viewer.change_picked(self.selected)
+        self.update_selection_textbox()
 
 
 class AtomSelectionWidget(WidgetBase):
