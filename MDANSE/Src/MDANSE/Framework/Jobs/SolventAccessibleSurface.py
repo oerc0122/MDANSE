@@ -48,9 +48,11 @@ def solvent_accessible_surface(
         value_array = np.array([value for value in distance_dict.values()])
         combined_array = np.hstack(
             [pair_array, value_array.reshape((len(value_array), 1))]
+        )[np.where(pair_array[:, 1] != idx)]
+        blocked_for_sure = set(
+            combined_array[:, 0][np.where(combined_array[:, 2] <= min_dist)]
         )
-        blocked_for_sure = set(pair_array[:, 0][np.where(value_array <= min_dist)])
-        free_for_sure = sphere_indices - set(pair_array[:, 0])
+        free_for_sure = sphere_indices - set(combined_array[:, 0])
         uncertain = sphere_indices - free_for_sure - blocked_for_sure
         confirmed = set()
         if len(uncertain) > 0:
@@ -68,7 +70,13 @@ def solvent_accessible_surface(
                 ]
             )
         free_for_sure.update(uncertain - confirmed)
-        sas += len(free_for_sure) * (vdwRadii[idx] + probe_radius_value) ** 2
+        sas += (
+            len(free_for_sure)
+            / len(sphere_points)
+            * 4
+            * np.pi
+            * (vdwRadii[idx] + probe_radius_value) ** 2
+        )
     return sas
 
 
@@ -148,14 +156,12 @@ class SolventAccessibleSurface(IJob):
             generate_sphere_points(self.configuration["n_sphere_points"]["value"]),
             dtype=np.float64,
         )
-        # The solid angle increment used to convert the sas from a number of accessible point to a surface.
-        self.solidAngleIncr = 4.0 * np.pi / len(self.spherePoints)
 
         # A mapping between the atom indices and covalent_radius radius for the whole universe.
         self.vdwRadii = self.configuration["trajectory"][
             "instance"
         ].chemical_system.atom_property(
-            "covalent_radius"
+            "vdw_radius"
         )  # should it be covalent?
 
         self._indices = [
@@ -208,9 +214,6 @@ class SolventAccessibleSurface(IJob):
         """
         Finalize the job.
         """
-
-        # The SAS is converted from a number of accessible points to a surface.
-        self._outputData["sas"] *= self.solidAngleIncr
 
         # Write the output variables.
         self._outputData.write(

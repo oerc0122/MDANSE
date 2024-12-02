@@ -147,7 +147,6 @@ def continuous_coordinates(
             atom_pool.pop(atom_pool.index(atom))
         segment = [last_atom] + others
         segments.append(sorted(segment))
-    print(segments)
     return contiguous_coordinates_real(coords, cell, rcell, segments)
 
 
