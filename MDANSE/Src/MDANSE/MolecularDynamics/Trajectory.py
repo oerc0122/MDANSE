@@ -289,6 +289,27 @@ class Trajectory:
             )
         return self._atom_cache[(atom_symbol, property)]
 
+    def has_atom(self, symbol: str):
+        return symbol in self.atoms_in_database
+
+    def get_property_dict(self, symbol: str) -> Dict[str, Any]:
+        """Returns a dictionary of all the properties of an atom type.
+
+        Parameters
+        ----------
+        symbol : str
+            Symbol of the atom.
+
+        Returns
+        -------
+        Union[int, float, str]
+            The atom property.
+        """
+        return {
+            property_name: self.get_atom_property(symbol, property_name)
+            for property_name in self.properties_in_database
+        }
+
     @property
     def atoms_in_database(self) -> List[str]:
         return self._trajectory.atoms_in_database()
@@ -341,6 +362,29 @@ class Trajectory:
         """
 
         return self._trajectory.variables()
+
+
+def create_average_atom(atom_dictionary: Dict[str, int], database: Trajectory):
+    all_properties = database.properties_in_database
+    values = {}
+    for property in all_properties:
+        temp = []
+        total = 0
+        for element_name, element_count in atom_dictionary.items():
+            temp.append(
+                [database.get_atom_property(element_name, property), element_count]
+            )
+        for entry in temp:
+            try:
+                converted = float(entry[0])
+            except TypeError:
+                total = entry
+            except ValueError:
+                total = entry
+            else:
+                total += converted * entry[1]
+        values[property] = total
+    return values
 
 
 class TrajectoryWriterError(Exception):
@@ -420,7 +464,7 @@ class TrajectoryWriter:
             self._initial_charges = initial_charges
 
     def write_atom_properties(
-        self, symbol: str, properties: Dict[str, Any], ptypes: Dict[str, str]
+        self, symbol: str, properties: Dict[str, Any], ptypes: Dict[str, str] = None
     ):
         if "atom_database" not in self._h5_file.keys():
             group = self._h5_file.create_group("/atom_database")
@@ -446,6 +490,8 @@ class TrajectoryWriter:
             else:
                 break
         new_labels = [str(x) for x in properties.keys()]
+        if ptypes is None:
+            ptypes = ATOMS_DATABASE._properties
         for label in new_labels:
             if label.encode("utf-8") not in label_dataset:
                 label_dataset[next_index] = label
@@ -465,21 +511,62 @@ class TrajectoryWriter:
                 continue
             else:
                 atom_dataset[mapping[key]] = value
-        colour = [int(x) for x in properties["color"].split(";")]
+        colour = [int(x) for x in properties["color"][0].split(";")]
         atom_dataset[mapping["color"]] = (
             0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
         )
 
     def write_atom_database(self, symbols: List[str], database: "AtomsDatabase"):
         for atom_symbol in symbols:
-            property_dict = database.get_property_dict(atom_symbol)
-            self.write_atom_properties(atom_symbol, property_dict, database._properties)
+            if database.has_atom(atom_symbol):
+                property_dict = database.get_property_dict(atom_symbol)
+            else:
+                atom_dict = {}
+                for token in atom_symbol.split("_"):
+                    symbol = ""
+                    number = ""
+                    noletters = True
+                    for char in token:
+                        if char.isnumeric():
+                            if noletters:
+                                symbol += char
+                            else:
+                                number += char
+                        else:
+                            symbol += char
+                            noletters = False
+                    atom_dict[symbol] = int(number)
+                property_dict = create_average_atom(atom_dict, database)
+            if hasattr(database, "_properties"):
+                self.write_atom_properties(
+                    atom_symbol, property_dict, database._properties
+                )
+            else:
+                self.write_atom_properties(atom_symbol, property_dict)
 
     def write_standard_atom_database(self):
         symbols = list(np.unique(self._chemical_system.atom_list))
         database = ATOMS_DATABASE
         for atom_symbol in symbols:
-            property_dict = database.get_property_dict(atom_symbol)
+            if database.has_atom(atom_symbol):
+                property_dict = database.get_property_dict(atom_symbol)
+            else:
+                atom_dict = {}
+                for token in atom_symbol.split("_"):
+                    symbol = ""
+                    number = ""
+                    noletters = True
+                    for char in token:
+                        if char.isnumeric():
+                            if noletters:
+                                symbol += char
+                            else:
+                                number += char
+                        else:
+                            symbol += char
+                            noletters = False
+                    atom_dict[symbol] = int(number)
+                property_dict = create_average_atom(atom_dict, database)
             self.write_atom_properties(atom_symbol, property_dict, database._properties)
 
     def _dump_chemical_system(self):

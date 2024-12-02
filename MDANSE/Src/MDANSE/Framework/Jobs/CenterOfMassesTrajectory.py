@@ -29,26 +29,6 @@ from MDANSE.MolecularDynamics.Configuration import (
 from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
 
 
-def create_average_atom(atom_dictionary: Dict[str, int], database: Trajectory):
-    all_properties = database.properties_in_database()
-    values = {}
-    for property in all_properties:
-        temp = []
-        total = 0
-        for element_name in atom_dictionary.keys():
-            temp.append(database.get_atom_property(element_name, property))
-        for n, counts in atom_dictionary.values():
-            try:
-                float(temp[n])
-            except TypeError:
-                total = temp[n]
-            except ValueError:
-                total = temp[n]
-            else:
-                total += counts * temp[n]
-        values[property] = total
-
-
 class CenterOfMassesTrajectory(IJob):
     """
     Creates a trajectory from the centre of masses for selected groups of atoms in a given input trajectory.
@@ -122,6 +102,10 @@ class CenterOfMassesTrajectory(IJob):
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
+        )
+        unique_atoms = np.unique(new_element_list)
+        self._output_trajectory.write_atom_database(
+            unique_atoms, self.configuration["trajectory"]["instance"]
         )
 
     def run_step(self, index):

@@ -606,7 +606,10 @@ class AtomsDatabase(_Database):
         Union[int, float, str]
             The atom property.
         """
-        return self._data[symbol][property]
+        try:
+            return self._data[symbol][property]
+        except KeyError:
+            return None
 
     def get_property_dict(self, symbol: str) -> Dict[str, Any]:
         """Faster access to the atom property as it avoids the deepcopy

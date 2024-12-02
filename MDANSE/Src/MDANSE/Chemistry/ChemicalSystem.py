@@ -68,7 +68,10 @@ class ChemicalSystem:
         self._atom_names = name_list
 
     def add_atom(self, atm_num: int) -> int:
-        rdkit_atm = Chem.Atom(atm_num)
+        if atm_num is not None:
+            rdkit_atm = Chem.Atom(atm_num)
+        else:
+            rdkit_atm = Chem.Atom(0)
         rdkit_atm.SetNumExplicitHs(0)
         rdkit_atm.SetNoImplicit(True)
         return self.rdkit_mol.AddAtom(rdkit_atm)

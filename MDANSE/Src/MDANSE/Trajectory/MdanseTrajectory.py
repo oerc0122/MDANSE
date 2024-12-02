@@ -434,6 +434,11 @@ class MdanseTrajectory:
         value = self._h5_file[f"/atom_database/{symbol}"][index]
         if data_type == b"int":
             return int(value)
+        if property == "color":
+            num1 = round(value / 0x10000)
+            num2 = round((value - num1 * 0x10000) / 0x100)
+            num3 = round((value - num1 * 0x10000 - num2 * 0x100))
+            return ";".join([str(int(x)) for x in [num1, num2, num3]])
         return value
 
     def atoms_in_database(self) -> List[str]:
@@ -447,7 +452,7 @@ class MdanseTrajectory:
             return ATOMS_DATABASE.properties
         else:
             return list(
-                label.encode("utf-8")
+                label.decode("utf-8")
                 for label in self._h5_file["/atom_database/property_labels"]
             )
 

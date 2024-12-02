@@ -27,7 +27,6 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
-from MDANSE.Chemistry import ATOMS_DATABASE as CHEMICAL_ELEMENTS
 from MDANSE.MLogging import LOG
 
 from MDANSE_GUI.MolecularViewer.readers import hdf5wrapper
@@ -73,6 +72,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self._scale_factor = 0.8
 
         self._datamodel = None
+        self._element_database = None
 
         self._iren = QVTKRenderWindowInteractor(self)
 
@@ -389,13 +389,14 @@ class MolecularViewer(QtWidgets.QWidget):
                 [
                     i
                     for i, at in enumerate(self._reader.atom_types)
-                    if CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
+                    if self._element_database.get_atom_property(at, "element")
+                    != "dummy"
                 ]
             )
             rs = coords[not_du]
             covs = np.array(
                 [
-                    CHEMICAL_ELEMENTS.get_atom_property(at, "covalent_radius")
+                    self._element_database.get_atom_property(at, "covalent_radius")
                     for at in self._reader.atom_types
                 ]
             )[not_du]
@@ -616,6 +617,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._reader = reader
 
+        self._element_database = self._reader._trajectory
         self._n_atoms = self._reader.n_atoms
         self._n_frames = self._reader.n_frames
         self._current_frame = min(self._current_frame, self._n_frames - 1)
@@ -628,13 +630,13 @@ class MolecularViewer(QtWidgets.QWidget):
         self._resolution = 4 if self._resolution < 4 else self._resolution
 
         self._atom_colours = self._colour_manager.reinitialise_from_database(
-            self._atoms, CHEMICAL_ELEMENTS, self.dummy_size
+            self._atoms, self._element_database, self.dummy_size
         )
         # this returs a list of indices, mapping colours to atoms
 
         self._atom_scales = np.array(
             [
-                CHEMICAL_ELEMENTS.get_atom_property(at, "vdw_radius")
+                self._element_database.get_atom_property(at, "vdw_radius")
                 for at in self._atoms
             ]
         ).astype(np.float32)
@@ -778,7 +780,7 @@ class MolecularViewerWithPicking(MolecularViewer):
             [
                 i
                 for i, j in enumerate(picked)
-                if CHEMICAL_ELEMENTS.get_atom_property(
+                if self._element_database.get_atom_property(
                     self._reader.atom_types[j], "element"
                 )
                 != "dummy"
@@ -790,7 +792,7 @@ class MolecularViewerWithPicking(MolecularViewer):
             rs = coords[picked][not_du]
             covs = np.array(
                 [
-                    CHEMICAL_ELEMENTS.get_atom_property(
+                    self._element_database.get_atom_property(
                         self._reader.atom_types[i], "covalent_radius"
                     )
                     for i in picked

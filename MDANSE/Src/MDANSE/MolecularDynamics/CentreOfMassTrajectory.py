@@ -14,14 +14,11 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import List, Dict
+from typing import List
 
 import numpy as np
 
-from MDANSE.MolecularDynamics.Configuration import (
-    contiguous_coordinates_real,
-    contiguous_coordinates_box,
-)
+from MDANSE.MolecularDynamics.Configuration import contiguous_coordinates_box
 
 
 def centre_of_mass(coords: np.ndarray, masses: np.ndarray) -> np.ndarray:
