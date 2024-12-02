@@ -61,16 +61,23 @@ total_list = []
 for tp in (short_traj, mdmc_traj):
     for jt in [
         "RadiusOfGyration",
-        "SolventAccessibleSurface",
-        "RootMeanSquareDeviation",
-        "RootMeanSquareFluctuation",
         "DensityProfile",
         "MolecularTrace",
-        "Voronoi",
         "Eccentricity",
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
+                total_list.append((tp, jt, rm, of))
+
+for tp in (short_traj, mdmc_traj):
+    for jt in [
+        "RootMeanSquareDeviation",
+        "RootMeanSquareFluctuation",
+        "SolventAccessibleSurface",
+        "Voronoi",
+    ]:
+        for rm in [("single-core", 1)]:
+            for of in ["MDAFormat"]:
                 total_list.append((tp, jt, rm, of))
 
 

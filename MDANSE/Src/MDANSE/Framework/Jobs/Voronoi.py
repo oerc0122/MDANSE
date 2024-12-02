@@ -71,7 +71,7 @@ class Voronoi(IJob):
         "BooleanConfigurator",
         {"label": "apply periodic_boundary_condition", "default": True},
     )
-    settings["pbc_border_size"] = ("FloatConfigurator", {"mini": 0.0, "default": 0.0})
+    settings["pbc_border_size"] = ("FloatConfigurator", {"mini": 0.0, "default": 0.2})
     settings["output_files"] = (
         "OutputFilesConfigurator",
         {"formats": ["MDAFormat", "TextFormat"]},
@@ -172,7 +172,7 @@ class Voronoi(IJob):
         for i in range(len(neighbourhood)):
             v = neighbourhood[i]
             if i in valid_region_id:
-                if v not in self.neighbourhood_hist:
+                if v not in self.neighbourhood_hist.keys():
                     self.neighbourhood_hist[v] = 1
                 else:
                     self.neighbourhood_hist[v] += 1

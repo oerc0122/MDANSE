@@ -179,7 +179,7 @@ def padded_coordinates(
         Any error that may indicate that a Voronoi job failed
     """
     if abs(thickness) < 1e-6:
-        return coords
+        return coords, np.arange(len(coords), dtype=int)
     vectors = (
         unit_cell.a_vector,
         unit_cell.b_vector,
