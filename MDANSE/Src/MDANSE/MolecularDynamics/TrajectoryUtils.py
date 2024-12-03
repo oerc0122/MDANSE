@@ -46,45 +46,28 @@ def elements_from_masses(masses: Iterable[float], tolerance: float = 0.01):
     return result
 
 
-def atom_index_to_molecule_index(chemical_system: ChemicalSystem) -> dict[int, int]:
-    """
-    Maps the indices of all atoms in a chemical system to the indices of their root parent chemical entities and returns
-    the lookup table. This can then be used to retrieve the root parent chemical entity of an atom through the
-    chemical_entities property of ChemicalSystem.
+def atom_index_to_molecule_index(chemical_system: ChemicalSystem) -> List[int]:
+    """Returns a list of molecule numbers, per atom. Single
+    atoms are assigned the value -1.
 
-    :param chemical_system: the chemical system whose lookup table is to be generated
-    :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
+    Parameters
+    ----------
+    chemical_system : ChemicalSystem
+        Object describing all the atoms and molecules in the system
 
-    :return: a lookup table mapping atom indices to the indices of their root chemical entity
-    :rtype: dict
-
-    :Example:
-
-    >>> from MDANSE.Chemistry.ChemicalSystem import Molecule, ChemicalSystem
-    >>>
-    >>> # Set up a chemical system
-    >>> molecules = [Molecule('WAT', 'w1'), Molecule('WAT', 'w2')]
-    >>> cs = ChemicalSystem()
-    >>> for molecule in molecules:
-    >>>     cs.add_chemical_entity(molecule)
-    >>>
-    >>> atom_index_to_molecule_index(cs)
-    {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1}
+    Returns
+    -------
+    List[int]
+        list of molecule numbers, per atom.
     """
 
-    lut = {}
-    all_keys = list(chemical_system._atom_indices)
-    last_cluster = 0
+    lut = [-1] * len(chemical_system.atom_list)
+    last_cluster = 1
     for cluster_name in chemical_system._clusters:
         for cluster in chemical_system._clusters[cluster_name]:
             for atom_index in cluster:
                 lut[atom_index] = last_cluster
-                all_keys.pop(all_keys.index(atom_index))
             last_cluster += 1
-    for single_atom_index in all_keys:
-        lut[single_atom_index] = last_cluster
-        last_cluster += 1
-
     return lut
 
 

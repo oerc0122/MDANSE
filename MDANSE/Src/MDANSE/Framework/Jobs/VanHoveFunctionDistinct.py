@@ -19,9 +19,18 @@ from typing import List
 
 import numpy as np
 
+from MDANSE.MLogging import LOG
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 from MDANSE.Mathematics.Arithmetic import weight
+
+
+def distance_array(ref_atom, other_atoms, cell_array):
+    diff_frac = other_atoms - ref_atom.reshape((1, 3))
+    diff_frac -= np.round(diff_frac)
+    diff_real = np.matmul(diff_frac, cell_array)
+    r = np.sqrt((diff_real**2).sum(axis=1))
+    return r
 
 
 def van_hove_distinct(
@@ -76,21 +85,36 @@ def van_hove_distinct(
     nbins = intra.shape[2]
 
     for i in range(scaleconfig_t0.shape[0] - 1):
-
-        xyz_frac = scaleconfig_t0[i]
-        diff_frac = scaleconfig_t1[i + 1 : scaleconfig_t0.shape[0]] - xyz_frac.reshape(
-            (1, 3)
-        )
-        diff_frac -= np.round(diff_frac)
-        diff_real = np.matmul(diff_frac, cell.T)
-        r = np.sqrt((diff_real**2).sum(axis=1))
-        bins = ((r - rmin) / dr).astype(int)
-        valid_bins = np.logical_and(bins >= 0, bins < nbins)
-        for j in range(len(bins)):
-            if valid_bins[j]:
-                if molindex[i] == molindex[j]:
+        if molindex[i] < 0:
+            xyz_frac = scaleconfig_t0[i]
+            other_frac = scaleconfig_t1[i + 1 : scaleconfig_t0.shape[0]]
+            r = distance_array(xyz_frac, other_frac, cell.T)
+            bins = ((r - rmin) / dr).astype(int)
+            valid_bins = np.logical_and(bins >= 0, bins < nbins)
+            for j in range(len(bins)):
+                if valid_bins[j]:
+                    inter[symbolindex[i], symbolindex[j], bins[j]] += 1.0
+        else:
+            xyz_frac = scaleconfig_t0[i]
+            other_frac1 = scaleconfig_t1[i + 1 : scaleconfig_t0.shape[0]][
+                np.where(molindex[i + 1 : scaleconfig_t0.shape[0]] == molindex[i])
+            ]
+            other_frac2 = scaleconfig_t1[i + 1 : scaleconfig_t0.shape[0]][
+                np.where(molindex[i + 1 : scaleconfig_t0.shape[0]] != molindex[i])
+            ]
+            r = distance_array(xyz_frac, other_frac1, cell.T)
+            bins = ((r - rmin) / dr).astype(int)
+            valid_bins = np.logical_and(
+                np.logical_and(bins >= 0, bins < nbins), r > 0.01
+            )
+            for j in range(len(bins)):
+                if valid_bins[j]:
                     intra[symbolindex[i], symbolindex[j], bins[j]] += 1.0
-                else:
+            r = distance_array(xyz_frac, other_frac2, cell.T)
+            bins = ((r - rmin) / dr).astype(int)
+            valid_bins = np.logical_and(bins >= 0, bins < nbins)
+            for j in range(len(bins)):
+                if valid_bins[j]:
                     inter[symbolindex[i], symbolindex[j], bins[j]] += 1.0
     return intra, inter
 
@@ -251,7 +275,6 @@ class VanHoveFunctionDistinct(IJob):
             for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
-        self._indices = np.array(self._indices, dtype=np.int32)
         self.indexToMolecule = np.array([lut[i] for i in self._indices], dtype=np.int32)
         self.indexToSymbol = np.array(
             [
@@ -310,13 +333,13 @@ class VanHoveFunctionDistinct(IJob):
             conf_t0 = self.configuration["trajectory"]["instance"].configuration(
                 frame_index_t0
             )
-            coords_t0 = conf_t0["coordinates"]
+            coords_t0 = conf_t0["coordinates"][self._indices]
 
             frame_index_t1 = self.configuration["frames"]["value"][i + time]
             conf_t1 = self.configuration["trajectory"]["instance"].configuration(
                 frame_index_t1
             )
-            coords_t1 = conf_t1["coordinates"]
+            coords_t1 = conf_t1["coordinates"][self._indices]
             direct_cell = conf_t1.unit_cell.transposed_direct
             inverse_cell = conf_t1.unit_cell.transposed_inverse
 

@@ -180,7 +180,7 @@ class DistanceHistogram(IJob):
             if cell_volume < 1e-9:
                 self.detailed_unit_cell_error()
 
-        coords = conf["coordinates"]
+        coords = conf["coordinates"][self._indices]
         scaleconfig = coords @ inverse_cell
 
         hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)

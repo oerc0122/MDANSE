@@ -435,8 +435,8 @@ class MdanseTrajectory:
         if data_type == b"int":
             return int(value)
         if property == "color":
-            num1 = round(value / 0x10000)
-            num2 = round((value - num1 * 0x10000) / 0x100)
+            num1 = round(value // 0x10000)
+            num2 = round((value - num1 * 0x10000) // 0x100)
             num3 = round((value - num1 * 0x10000 - num2 * 0x100))
             return ";".join([str(int(x)) for x in [num1, num2, num3]])
         return value
