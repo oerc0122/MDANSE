@@ -123,7 +123,7 @@ def test_selector_json_dump_3(protein_trajectory):
         {"all": False, "element": {"S": True, "H": True}, "water": True}
     )
     json_dump = selector.settings_to_json()
-    assert json_dump == '{"all": false, "water": true, "element": ["S", "H"]}'
+    assert json_dump == '{"all": false, "water": true, "element": ["H", "S"]}'
 
 
 def test_selector_json_dump_4(protein_trajectory):
@@ -139,7 +139,7 @@ def test_selector_json_dump_4(protein_trajectory):
     json_dump = selector.settings_to_json()
     assert (
         json_dump
-        == '{"all": false, "water": true, "element": ["S", "H"], "index": [0, 1]}'
+        == '{"all": false, "water": true, "element": ["H", "S"], "index": [0, 1]}'
     )
 
 
@@ -148,7 +148,7 @@ def test_selector_json_dump_with_second_update(protein_trajectory):
     selector.update_settings({"all": False})
     selector.update_settings({"element": {"S": True, "O": True}, "water": True})
     json_dump = selector.settings_to_json()
-    assert json_dump == '{"all": false, "water": true, "element": ["S", "O"]}'
+    assert json_dump == '{"all": false, "water": true, "element": ["O", "S"]}'
 
 
 def test_selector_json_dump_with_third_update(protein_trajectory):
@@ -274,7 +274,7 @@ def test_selector_returns_true_with_correct_json_setting_0(protein_trajectory):
 def test_selector_returns_true_with_correct_json_setting_1(protein_trajectory):
     selector = Selector(protein_trajectory)
     assert selector.check_valid_json_settings(
-        '{"all": false, "index": {"0": true, "1": true}}'
+        '{"all": false, "index": [0, 1]}'
     )
 
 
@@ -288,14 +288,14 @@ def test_selector_returns_false_with_incorrect_json_setting_0(protein_trajectory
 def test_selector_returns_false_with_incorrect_json_setting_1(protein_trajectory):
     selector = Selector(protein_trajectory)
     assert not selector.check_valid_json_settings(
-        '{"all": false, "index": {0: true, "1": true}}'
+        '{"all": false, "index": [0, "1"]}'
     )
 
 
 def test_selector_returns_false_with_incorrect_json_setting_2(protein_trajectory):
     selector = Selector(protein_trajectory)
     assert not selector.check_valid_json_settings(
-        '{"all": False, "index": {"0": true, "1": true}}'
+        '{"all": False, "index": ["0", "1"]}'
     )
 
 
