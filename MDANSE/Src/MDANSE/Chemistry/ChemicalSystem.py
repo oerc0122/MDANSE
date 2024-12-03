@@ -275,12 +275,17 @@ class ChemicalSystem:
         for key, value in self._clusters.items():
             clusters_group.create_dataset(key, data=value)
 
-    def load(self, trajectory_filename: str):
-
-        source = h5py.File(trajectory_filename)
+    def load(self, trajectory: str):
+        close_on_end = False
+        if hasattr(trajectory, "keys"):
+            source = trajectory
+        else:
+            close_on_end = True
+            source = h5py.File(trajectory)
         if "composition" not in source.keys():
-            source.close()
-            self.legacy_load(trajectory_filename)
+            if close_on_end:
+                source.close()
+            self.legacy_load(trajectory)
             return
 
         self.rdkit_mol = Chem.RWMol()
@@ -307,11 +312,16 @@ class ChemicalSystem:
             self._clusters[str(cluster)] = [
                 [int(x) for x in line] for line in grp[f"clusters/{cluster}"]
             ]
-        source.close()
+        if close_on_end:
+            source.close()
 
-    def legacy_load(self, trajectory_filename: str):
-
-        source = h5py.File(trajectory_filename)
+    def legacy_load(self, trajectory: str):
+        close_on_end = False
+        if hasattr(trajectory, "keys"):
+            source = trajectory
+        else:
+            close_on_end = True
+            source = h5py.File(trajectory)
         self.rdkit_mol = Chem.RWMol()
 
         grp = source["/chemical_system"]
@@ -333,7 +343,7 @@ class ChemicalSystem:
                     cluster_list.append(indices_list)
             if cluster_list:
                 self.add_clusters(cluster_list)
-
-        source.close()
+        if close_on_end:
+            source.close()
 
         self.find_clusters_from_bonds()

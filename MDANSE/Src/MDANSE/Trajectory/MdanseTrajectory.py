@@ -54,7 +54,7 @@ class MdanseTrajectory:
         self._chemical_system = ChemicalSystem(
             os.path.splitext(os.path.basename(self._h5_filename))[0], self
         )
-        self._chemical_system.load(self._h5_filename)
+        self._chemical_system.load(self._h5_file)
 
         # Load all the unit cells
         self._load_unit_cells()
