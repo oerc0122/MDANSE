@@ -23,6 +23,7 @@ from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QSizePolicy
 
 import vtk
+from vtk.util import numpy_support
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 
@@ -376,31 +377,15 @@ class MolecularViewer(QtWidgets.QWidget):
 
         if self._atoms_visible or self._bonds_visible:
             atoms = vtk.vtkPoints()
-            atoms.SetNumberOfPoints(self._n_atoms)
-            for i in range(self._n_atoms):
-                x, y, z = coords[i, :]
-                atoms.SetPoint(i, x, y, z)
-
+            atoms.SetData(numpy_support.numpy_to_vtk(coords))
             self._polydata.SetPoints(atoms)
 
         if self._bonds_visible:
             # do not bond atoms to dummy atoms
-            not_du = np.array(
-                [
-                    i
-                    for i, at in enumerate(self._reader.atom_types)
-                    if CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
-                ]
+            rs = coords[self.not_du]
+            bonds, bonds_exist = self.create_bond_cell_array(
+                rs, self.covs[self.not_du], self.not_du
             )
-            rs = coords[not_du]
-            covs = np.array(
-                [
-                    CHEMICAL_ELEMENTS.get_atom_property(at, "covalent_radius")
-                    for at in self._reader.atom_types
-                ]
-            )[not_du]
-
-            bonds, bonds_exist = self.create_bond_cell_array(rs, covs, not_du)
             if bonds_exist:
                 self._polydata.SetLines(bonds)
                 self._polydata_bonds_exist = True
@@ -410,25 +395,42 @@ class MolecularViewer(QtWidgets.QWidget):
 
     def create_bond_cell_array(self, rs, covs, not_du, tolerance=0.04):
         # determine and set bonds without PBC applied
-        tree = KDTree(rs)
         bonds = vtk.vtkCellArray()
-        contacts = tree.query_ball_tree(tree, 2 * np.max(covs) + tolerance)
-        n_bonds = 0
+
+        tree = KDTree(rs)
+        contacts = tree.query_ball_point(rs, 2 * np.max(covs) + tolerance, workers=-1)
+        n_dists = sum([len(i) for i in contacts])
+
+        js = np.zeros(n_dists, dtype=int)
+        ks = np.zeros(n_dists, dtype=int)
+        start = 0
         for i, idxs in enumerate(contacts):
-            if len(idxs) == 0:
+            n_idxs = len(idxs)
+            if n_idxs == 0:
                 continue
-            diff = rs[i] - rs[idxs]
-            dist = np.sum(diff * diff, axis=1)
-            sum_radii = (covs[i] + covs[idxs] + tolerance) ** 2
-            js = np.array(idxs)[(0 < dist) & (dist < sum_radii)]
-            js = not_du[js[i < js]]
-            n_bonds += len(js)
-            for j in js:
-                line = vtk.vtkLine()
-                line.GetPointIds().SetId(0, not_du[i])
-                line.GetPointIds().SetId(1, j)
-                bonds.InsertNextCell(line)
-        return bonds, n_bonds > 0
+            js[start : start + n_idxs] = i
+            ks[start : start + n_idxs] = idxs
+            start += n_idxs
+
+        mask = js < ks
+        js = js[mask]
+        ks = ks[mask]
+        diff = rs[js] - rs[ks]
+        dist = np.sum(diff * diff, axis=1)
+        sum_radii = (covs[js] + covs[ks] + tolerance) ** 2
+        js = js[(0 < dist) & (dist < sum_radii)]
+        ks = ks[(0 < dist) & (dist < sum_radii)]
+        ls = not_du[js]
+        ms = not_du[ks]
+
+        n_points = len(ls)
+        idxs = np.zeros((len(ls), 3), dtype=np.int64)
+        idxs[:, 0] = 2
+        idxs[:, 1] = ls
+        idxs[:, 2] = ms
+        bonds.SetCells(n_points, numpy_support.numpy_to_vtkIdTypeArray(idxs.flatten()))
+
+        return bonds, len(ls) > 0
 
     def update_uc_polydata(self):
         uc = self._reader.read_pbc(self._current_frame)
@@ -630,7 +632,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self._atom_colours = self._colour_manager.reinitialise_from_database(
             self._atoms, CHEMICAL_ELEMENTS, self.dummy_size
         )
-        # this returs a list of indices, mapping colours to atoms
+        # this returns a list of indices, mapping colours to atoms
 
         self._atom_scales = np.array(
             [
@@ -638,6 +640,25 @@ class MolecularViewer(QtWidgets.QWidget):
                 for at in self._atoms
             ]
         ).astype(np.float32)
+        self.du_log = np.array(
+            [
+                CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
+                for at in self._reader.atom_types
+            ]
+        )
+        self.not_du = np.array(
+            [
+                i
+                for i, at in enumerate(self._reader.atom_types)
+                if CHEMICAL_ELEMENTS.get_atom_property(at, "element") != "dummy"
+            ]
+        )
+        self.covs = np.array(
+            [
+                CHEMICAL_ELEMENTS.get_atom_property(at, "covalent_radius")
+                for at in self._reader.atom_types
+            ]
+        )
 
         scalars = ndarray_to_vtkarray(
             self._atom_colours, self._atom_scales, self._n_atoms
@@ -752,50 +773,29 @@ class MolecularViewerWithPicking(MolecularViewer):
         self.update_renderer()
 
     def update_picked_polydata(self):
+        atoms = vtk.vtkPoints()
+
+        if len(self.picked_atoms) == 0:
+            self._picked_polydata.SetPoints(atoms)
+            return
+
         picked = np.array(sorted(list(self.picked_atoms)))
         coords = self._reader.read_frame(self._current_frame)
-
-        atoms = vtk.vtkPoints()
-        atoms.SetNumberOfPoints(len(self.picked_atoms))
-        for i, j in enumerate(picked):
-            x, y, z = coords[j, :]
-            atoms.SetPoint(i, x, y, z)
+        atoms.SetData(numpy_support.numpy_to_vtk(coords[picked]))
         self._picked_polydata.SetPoints(atoms)
 
-        picked_colours = []
-        picked_radii = []
-        for i in sorted(list(self.picked_atoms)):
-            picked_colours.append(self._colour_manager.colours[i])
-            picked_radii.append(self._colour_manager.radii[i])
         scalars = ndarray_to_vtkarray(
-            np.array(picked_colours),
-            np.array(picked_radii),
+            self._colour_manager.colours[picked],
+            self._colour_manager.radii[picked],
             np.arange(len(self.picked_atoms)),
         )
         self._picked_polydata.GetPointData().SetScalars(scalars)
 
-        not_du = np.array(
-            [
-                i
-                for i, j in enumerate(picked)
-                if CHEMICAL_ELEMENTS.get_atom_property(
-                    self._reader.atom_types[j], "element"
-                )
-                != "dummy"
-            ]
-        )
-
+        not_du = np.arange(len(self.picked_atoms))[self.du_log[picked]]
         if self._bonds_visible and len(not_du) >= 1:
             # do not bond atoms to dummy atoms
             rs = coords[picked][not_du]
-            covs = np.array(
-                [
-                    CHEMICAL_ELEMENTS.get_atom_property(
-                        self._reader.atom_types[i], "covalent_radius"
-                    )
-                    for i in picked
-                ]
-            )[not_du]
+            covs = self.covs[picked][not_du]
 
             bonds, bonds_exist = self.create_bond_cell_array(rs, covs, not_du)
             if bonds_exist:

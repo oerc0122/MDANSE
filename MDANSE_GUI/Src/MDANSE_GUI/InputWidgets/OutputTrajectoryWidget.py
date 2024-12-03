@@ -22,6 +22,7 @@ from qtpy.QtWidgets import (
     QPushButton,
     QFileDialog,
     QLabel,
+    QSpinBox,
 )
 from qtpy.QtCore import Slot, Qt
 
@@ -71,6 +72,15 @@ class OutputTrajectoryWidget(WidgetBase):
         self.dtype_box = QComboBox(self._base)
         self.dtype_box.addItems(["float16", "float32", "float64"])
         self.dtype_box.setCurrentText("float64")
+        self.chunk_box = QSpinBox(self._base)
+        self.chunk_box.setMinimum(1)
+        self.chunk_box.setMaximum(0xFFFF)
+        self.chunk_box.setValue(128)
+        self.chunk_box.setSingleStep(32)
+        self.chunk_box.setToolTip(
+            "Specifies the size of a single chunk in the HDF5 file."
+            "Affects the performance of reading and writing the trajectory."
+        )
         self.compression_box = QComboBox(self._base)
         self.compression_box.addItems(["none", "gzip"])
         self.compression_box.setCurrentText("gzip")
@@ -79,6 +89,12 @@ class OutputTrajectoryWidget(WidgetBase):
         browse_button.clicked.connect(self.file_dialog)
         label = QLabel("Log file output:")
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label2 = QLabel("Atoms per chunk")
+        label2.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label2.setToolTip(
+            "Specifies the size of a single chunk in the HDF5 file."
+            "Affects the performance of reading and writing the trajectory."
+        )
         self.logs_combo = QComboBox(self._base)
         self.logs_combo.addItems(OutputTrajectoryConfigurator.log_options)
         self._layout.addWidget(self._field, 0, 0)
@@ -87,6 +103,8 @@ class OutputTrajectoryWidget(WidgetBase):
         self._layout.addWidget(browse_button, 0, 3)
         self._layout.addWidget(label, 1, 0)
         self._layout.addWidget(self.logs_combo, 1, 1)
+        self._layout.addWidget(label2, 1, 2)
+        self._layout.addWidget(self.chunk_box, 1, 3)
         self._default_value = default_value
         self._field.textChanged.connect(self.updateValue)
         self.default_labels()
@@ -142,6 +160,7 @@ class OutputTrajectoryWidget(WidgetBase):
         else:
             self._parent.set_trajectory(os.path.abspath(filename))
         dtype = dtype_lookup[self.dtype_box.currentText()]
+        chunk_size = self.chunk_box.value()
         compression = self.compression_box.currentText()
         logs = self.logs_combo.currentText()
-        return (filename, dtype, compression, logs)
+        return (filename, dtype, chunk_size, compression, logs)
