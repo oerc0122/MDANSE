@@ -273,9 +273,7 @@ def test_selector_returns_true_with_correct_json_setting_0(protein_trajectory):
 
 def test_selector_returns_true_with_correct_json_setting_1(protein_trajectory):
     selector = Selector(protein_trajectory)
-    assert selector.check_valid_json_settings(
-        '{"all": false, "index": [0, 1]}'
-    )
+    assert selector.check_valid_json_settings('{"all": false, "index": [0, 1]}')
 
 
 def test_selector_returns_false_with_incorrect_json_setting_0(protein_trajectory):
@@ -287,16 +285,12 @@ def test_selector_returns_false_with_incorrect_json_setting_0(protein_trajectory
 
 def test_selector_returns_false_with_incorrect_json_setting_1(protein_trajectory):
     selector = Selector(protein_trajectory)
-    assert not selector.check_valid_json_settings(
-        '{"all": false, "index": [0, "1"]}'
-    )
+    assert not selector.check_valid_json_settings('{"all": false, "index": [0, "1"]}')
 
 
 def test_selector_returns_false_with_incorrect_json_setting_2(protein_trajectory):
     selector = Selector(protein_trajectory)
-    assert not selector.check_valid_json_settings(
-        '{"all": False, "index": ["0", "1"]}'
-    )
+    assert not selector.check_valid_json_settings('{"all": False, "index": ["0", "1"]}')
 
 
 @pytest.mark.xfail(reason="see docstring")
