@@ -22,6 +22,13 @@ mdmc_traj = os.path.join(
     "Ar_mdmc_h5md.h5",
 )
 
+com_traj = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Data",
+    "com_trajectory.mdt",
+)
+
 
 ################################################################
 # Job parameters                                               #
@@ -58,7 +65,7 @@ def parameters():
 
 total_list = []
 
-for tp in (short_traj, mdmc_traj):
+for tp in (short_traj, mdmc_traj, com_traj):
     for jt in [
         "RadiusOfGyration",
         "DensityProfile",
