@@ -38,6 +38,7 @@ from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
 
 widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "FloatConfigurator": FloatWidget,
+    "OptionalFloatConfigurator": OptionalFloatWidget,
     "BooleanConfigurator": BooleanWidget,
     "StringConfigurator": StringWidget,
     "IntegerConfigurator": IntegerWidget,
