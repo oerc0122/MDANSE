@@ -167,7 +167,7 @@ def test_editor_transmute():
 def test_editor_set_charges():
     temp_name = tempfile.mktemp()
     parameters = {}
-    parameters["output_files"] = (temp_name, 64, "gzip", "INFO")
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
     parameters["atom_charges"] = (
         '{"0": 1.2, "1": 1.2, "2": 1.2, "3": 1.2, "4": 1.2, "5": 1.2, "6": -0.5, "7": -0.5, "8": -0.5, "9": -0.5, "10": -0.5, "11": -0.5, "12": -0.5, "13": -0.5, "14": -0.5, "15": -0.5, "16": -0.5, "17": -0.5, "18": -0.5, "19": -0.5}'
@@ -194,7 +194,7 @@ def test_editor_set_charges():
 def test_editor_find_molecules():
     temp_name = tempfile.mktemp()
     parameters = {}
-    parameters["output_files"] = (temp_name, 64, "gzip", "INFO")
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
     parameters["molecule_tolerance"] = [True, 0.25]
     parameters["frames"] = (0, 501, 1)
