@@ -23,7 +23,7 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QGroupBox,
     QLabel,
-    QTextEdit,
+    QPlainTextEdit,
     QWidget,
 )
 from MDANSE.Framework.AtomSelector import Selector
@@ -91,9 +91,10 @@ class SelectionHelper(QDialog):
 
         self.selector = selector
         self._field = field
-        self.full_settings = self.selector.full_settings
+        self.settings = self.selector.settings
+        self.atm_full_names = [atm.full_name for atm in self.selector.system.atom_list]
 
-        self.selection_textbox = QTextEdit()
+        self.selection_textbox = QPlainTextEdit()
         self.selection_textbox.setReadOnly(True)
 
         mol_view = MolecularViewerWithPicking()
@@ -117,6 +118,7 @@ class SelectionHelper(QDialog):
         self.update_others()
 
         self.all_selection = True
+        self.selected = set([])
 
     def closeEvent(self, a0):
         """Hide the window instead of closing. Some issues occur in the
@@ -187,7 +189,7 @@ class SelectionHelper(QDialog):
         self.check_boxes = []
         self.combo_boxes = []
 
-        for k, v in self.full_settings.items():
+        for k, v in self.settings.items():
 
             if isinstance(v, bool):
                 check_layout = QHBoxLayout()
@@ -225,6 +227,14 @@ class SelectionHelper(QDialog):
                 combo_layout.addWidget(combo)
                 select_layout.addLayout(combo_layout)
 
+        invert_layout = QHBoxLayout()
+        label = QLabel("Invert selection:")
+        apply = QPushButton("Apply")
+        apply.clicked.connect(self.invert_selection)
+        invert_layout.addWidget(label)
+        invert_layout.addWidget(apply)
+        select_layout.addLayout(invert_layout)
+
         select.setLayout(select_layout)
         return [select]
 
@@ -234,22 +244,20 @@ class SelectionHelper(QDialog):
         the current selection and the 3d view to match the selection.
         """
         for check_box in self.check_boxes:
-            self.full_settings[check_box.objectName()] = check_box.isChecked()
+            self.settings[check_box.objectName()] = check_box.isChecked()
         for combo_box in self.combo_boxes:
-            for item in combo_box.getItems():
-                txt = item.text()
+            for i in range(combo_box.n_items):
+                txt = combo_box.text[i]
                 if combo_box.objectName() == "index":
                     key = int(txt)
                 else:
                     key = txt
-                self.full_settings[combo_box.objectName()][key] = (
-                    item.checkState() == Qt.Checked
-                )
+                self.settings[combo_box.objectName()][key] = combo_box.checked[i]
 
-        self.selector.update_settings(self.full_settings)
-        idxs = self.selector.get_idxs()
-        self.view_3d._viewer.change_picked(idxs)
-        self.update_selection_textbox(idxs)
+        self.selector.update_settings(self.settings)
+        self.selected = self.selector.get_idxs()
+        self.view_3d._viewer.change_picked(self.selected)
+        self.update_selection_textbox()
 
     def update_from_3d_view(self, selection: set[int]) -> None:
         """A selection/deselection was made in the 3d view, update the
@@ -261,9 +269,19 @@ class SelectionHelper(QDialog):
             Selection indexes from the 3d view.
         """
         self.selector.update_with_idxs(selection)
-        self.full_settings = self.selector.full_settings
+        self.settings = self.selector.settings
         self.update_selection_widgets()
-        self.update_selection_textbox(self.selector.get_idxs())
+        self.selected = self.selector.get_idxs()
+        self.update_selection_textbox()
+
+    def invert_selection(self):
+        """Inverts the selection."""
+        self.selected = self.selector.all_idxs - self.selected
+        self.selector.update_with_idxs(self.selected)
+        self.settings = self.selector.settings
+        self.update_selection_widgets()
+        self.view_3d._viewer.change_picked(self.selected)
+        self.update_selection_textbox()
 
     def update_selection_widgets(self) -> None:
         """Updates the selection widgets so that it matches the full
@@ -271,58 +289,50 @@ class SelectionHelper(QDialog):
         """
         for check_box in self.check_boxes:
             check_box.blockSignals(True)
-            if self.full_settings[check_box.objectName()]:
+            if self.settings[check_box.objectName()]:
                 check_box.setCheckState(Qt.Checked)
             else:
                 check_box.setCheckState(Qt.Unchecked)
             check_box.blockSignals(False)
         for combo_box in self.combo_boxes:
             combo_box.model().blockSignals(True)
-            for item in combo_box.getItems():
-                txt = item.text()
+            for i in range(combo_box.n_items):
+                txt = combo_box.text[i]
                 if combo_box.objectName() == "index":
                     key = int(txt)
                 else:
                     key = txt
-                if self.full_settings[combo_box.objectName()][key]:
-                    item.setCheckState(Qt.Checked)
-                else:
-                    item.setCheckState(Qt.Unchecked)
+                combo_box.set_item_checked_state(
+                    i, self.settings[combo_box.objectName()][key]
+                )
             combo_box.update_all_selected()
             combo_box.update_line_edit()
             combo_box.model().blockSignals(False)
 
-    def update_selection_textbox(self, idxs: set[int]) -> None:
-        """Update the selection textbox.
-
-        Parameters
-        ----------
-        idxs : set[int]
-            The selected indexes.
-        """
-        num_sel = len(idxs)
+    def update_selection_textbox(self) -> None:
+        """Update the selection textbox."""
+        num_sel = len(self.selected)
         text = [f"Number of atoms selected:\n{num_sel}\n\nSelected atoms:\n"]
-        atoms = self.selector.system.atom_list
-        for idx in idxs:
-            text.append(f"{idx}  ({atoms[idx].full_name})\n")
-        self.selection_textbox.setText("".join(text))
+        for idx in self.selected:
+            text.append(f"{idx}  ({self.atm_full_names[idx]})\n")
+        self.selection_textbox.setPlainText("".join(text))
 
     def apply(self) -> None:
         """Set the field of the AtomSelectionWidget to the currently
         chosen setting in this widget.
         """
-        self.selector.update_settings(self.full_settings)
+        self.selector.update_settings(self.settings)
         self._field.setText(self.selector.settings_to_json())
 
     def reset(self) -> None:
         """Resets the helper to the default state."""
         self.selector.reset_settings()
         self.selector.settings["all"] = self.all_selection
-        self.full_settings = self.selector.full_settings
+        self.settings = self.selector.settings
         self.update_selection_widgets()
-        idxs = self.selector.get_idxs()
-        self.view_3d._viewer.change_picked(idxs)
-        self.update_selection_textbox(idxs)
+        self.selected = self.selector.get_idxs()
+        self.view_3d._viewer.change_picked(self.selected)
+        self.update_selection_textbox()
 
 
 class AtomSelectionWidget(WidgetBase):
