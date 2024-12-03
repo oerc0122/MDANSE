@@ -5,7 +5,7 @@ import sys
 
 import numpy
 
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, find_packages
 from Cython.Distutils import build_ext as cython_build_ext
 
 from distutils.sysconfig import get_config_vars
@@ -32,8 +32,6 @@ EXCLUDE_DIRECTORIES = (
     "EGG-INFO",
     "*.egg-info",
 )
-
-EXTENSIONS_PATH = "Extensions"
 
 INCLUDE_DIR = [numpy.get_include()]
 
@@ -242,36 +240,7 @@ if "linux" in sys.platform:
         flag for flag in opt.split() if flag != "-Wstrict-prototypes"
     )
 
-EXTENSIONS = [
-    Extension(
-        "MDANSE.Extensions.van_hove",
-        include_dirs=INCLUDE_DIR,
-        sources=[os.path.join("Extensions", "van_hove.pyx")],
-    ),
-    Extension(
-        "MDANSE.Extensions.xtc",
-        include_dirs=[
-            numpy.get_include(),
-            os.path.join("Extensions", "xtc", "include"),
-        ],
-        sources=glob.glob(os.path.join("Extensions", "xtc", "src", "*.c"))
-        + [os.path.join("Extensions", "xtc", "xtc.pyx")],
-    ),
-    Extension(
-        "MDANSE.Extensions.trr",
-        include_dirs=[
-            numpy.get_include(),
-            os.path.join("Extensions", "xtc", "include"),
-        ],
-        sources=glob.glob(os.path.join("Extensions", "xtc", "src", "*.c"))
-        + [os.path.join("Extensions", "xtc", "trr.pyx")],
-    ),
-]
-
-for ext in EXTENSIONS:
-    ext.cython_directives = {"language_level": "3"}
-
-CMDCLASS = {"build_ext": cython_build_ext}
+CMDCLASS = {}
 
 if sphinx:
     CMDCLASS["build_api"] = mdanse_build_api
@@ -287,6 +256,5 @@ setup(
     package_dir={"": "Src"},
     data_files=DATA_FILES,
     platforms=["Unix", "Windows"],
-    ext_modules=EXTENSIONS,
     cmdclass=CMDCLASS,
 )

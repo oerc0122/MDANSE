@@ -511,7 +511,10 @@ class TrajectoryWriter:
                 continue
             else:
                 atom_dataset[mapping[key]] = value
-        colour = [int(x) for x in properties["color"][0].split(";")]
+        try:
+            colour = [int(x) for x in properties["color"].split(";")]
+        except AttributeError:
+            colour = [int(x) for x in properties["color"][0].split(";")]
         atom_dataset[mapping["color"]] = (
             0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
         )

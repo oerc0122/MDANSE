@@ -19,7 +19,7 @@ import itertools
 
 import numpy as np
 
-from MDANSE.Extensions import van_hove
+from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import van_hove_distinct
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 
@@ -186,7 +186,7 @@ class DistanceHistogram(IJob):
         hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
         hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
 
-        van_hove.van_hove_distinct(
+        van_hove_distinct(
             direct_cell,
             self.indexToMolecule,
             self.indexToSymbol,

@@ -15,13 +15,84 @@
 #
 import collections
 import itertools as it
+from typing import List
 
 import numpy as np
 
-from MDANSE.Extensions import van_hove
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 from MDANSE.Mathematics.Arithmetic import weight
+
+
+def van_hove_distinct(
+    cell: np.ndarray,
+    molindex: List[int],
+    symbolindex: List[int],
+    intra: np.ndarray,
+    inter: np.ndarray,
+    scaleconfig_t0: np.ndarray,
+    scaleconfig_t1: np.ndarray,
+    rmin: float,
+    dr: float,
+):
+    """Calculates the distance histogram between the configurations at
+    times t0 and t1. Distances are calculated using the minimum image
+    convention which are all worked out using the fractional coordinates
+    with the unit cell of the configuration at time t1. The function can
+    be used to calculate the distinct part of the van Hove function.
+
+    This function was an generalization of a Pyrex adaptation of a
+    FORTRAN implementation made by Miguel Angel Gonzalez (Institut Laue
+    Langevin) for the calculation of intra and intermolecular distance
+    histograms.
+
+    Parameters
+    ----------
+    cell : np.ndarray
+        The transpose of the direct matrix of the configuration at
+        time t1.
+    molindex : np.ndarray
+        An array which maps atom indexes to molecule indexes.
+    symbolindex : np.ndarray
+        An array which maps atom indexes to symbol indexes.
+    intra : np.ndarray
+        An output array to save the distance histogram results of
+        intramolecular atom differences.
+    inter : np.ndarray
+        An output array to save the distance histogram results of
+        intermolecular atom differences.
+    scaleconfig_t0 : np.ndarray
+        The coordinates of the configuration at t0 in fractional
+        coordinate in the unit cell of the configuration at time t1.
+    scaleconfig_t1 : np.ndarray
+        The coordinates of the configuration at t1 in fractional
+        coordinate in the unit cell of the configuration at time t1.
+    rmin : float
+        The minimum distance of the histogram.
+    dr : float
+        The distances between histogram bins.
+    """
+
+    nbins = intra.shape[2]
+
+    for i in range(scaleconfig_t0.shape[0] - 1):
+
+        xyz_frac = scaleconfig_t0[i]
+        diff_frac = scaleconfig_t1[i + 1 : scaleconfig_t0.shape[0]] - xyz_frac.reshape(
+            (1, 3)
+        )
+        diff_frac -= np.round(diff_frac)
+        diff_real = np.matmul(diff_frac, cell.T)
+        r = np.sqrt((diff_real**2).sum(axis=1))
+        bins = ((r - rmin) / dr).astype(int)
+        valid_bins = np.logical_and(bins >= 0, bins < nbins)
+        for j in range(len(bins)):
+            if valid_bins[j]:
+                if molindex[i] == molindex[j]:
+                    intra[symbolindex[i], symbolindex[j], bins[j]] += 1.0
+                else:
+                    inter[symbolindex[i], symbolindex[j], bins[j]] += 1.0
+    return intra, inter
 
 
 class VanHoveFunctionDistinct(IJob):
@@ -255,7 +326,7 @@ class VanHoveFunctionDistinct(IJob):
             inter = np.zeros_like(bins_inter)
             intra = np.zeros_like(bins_inter)
 
-            van_hove.van_hove_distinct(
+            intra, inter = van_hove_distinct(
                 direct_cell,
                 self.indexToMolecule,
                 self.indexToSymbol,

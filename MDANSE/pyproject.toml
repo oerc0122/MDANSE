@@ -36,6 +36,7 @@ dependencies = [
     "ase",
     "rdkit",
     "MDAnalysis",
+    "mdtraj",
     "networkx"
 ]
 
