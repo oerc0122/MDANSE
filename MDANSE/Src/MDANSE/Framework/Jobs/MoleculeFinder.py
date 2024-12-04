@@ -90,7 +90,10 @@ class MoleculeFinder(IJob):
         for entity in chemical_system.chemical_entities:
             if entity.number_of_atoms > 1:
                 moltester = MoleculeTester(entity, coords)
-                inchistring = moltester.identify_molecule()
+                try:
+                    inchistring = moltester.identify_molecule()
+                except:
+                    inchistring = ""
                 if len(inchistring) > 0:
                     entity.name = inchistring
                 else:
@@ -102,6 +105,7 @@ class MoleculeFinder(IJob):
             chemical_system,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
+            chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
             initial_charges=self.configuration["trajectory"]["instance"].charges(0),
         )

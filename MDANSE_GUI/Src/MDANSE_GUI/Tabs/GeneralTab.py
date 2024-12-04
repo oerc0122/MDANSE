@@ -17,7 +17,7 @@
 
 from typing import Dict, Tuple
 
-from qtpy.QtCore import QObject, Slot, QMessageLogger
+from qtpy.QtCore import QObject, Slot, Signal, QMessageLogger
 from qtpy.QtWidgets import QListView
 
 from MDANSE.MLogging import LOG
@@ -41,7 +41,10 @@ class GeneralTab(QObject):
     for accessing them from the outside.
     """
 
+    notify_user = Signal(int)
+
     def __init__(self, *args, **kwargs):
+        self._my_tab_id = -1
         self._name = kwargs.pop("name", "Unnamed GUI part")
         self._session = kwargs.pop("session", LocalSession())
         _ = kwargs.pop("settings", None)
@@ -68,6 +71,13 @@ class GeneralTab(QObject):
             self._core.set_model(self._model)
         self._core.set_label_text(label_text)
         self.propagate_session()
+
+    def set_my_id(self, tab_id: int):
+        self._my_tab_id = tab_id
+
+    @Slot()
+    def tab_notification(self):
+        self.notify_user.emit(self._my_tab_id)
 
     def grouped_settings(self):
         """This method tells the Session object what settings

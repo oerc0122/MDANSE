@@ -18,6 +18,7 @@ from collections import defaultdict
 
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import (
+    QWidget,
     QComboBox,
     QLineEdit,
     QPushButton,
@@ -26,8 +27,8 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QGridLayout,
+    QScrollArea,
 )
-
 from MDANSE.Framework.AtomMapping import guess_element
 from MDANSE.Chemistry import ATOMS_DATABASE
 
@@ -55,22 +56,31 @@ class AtomMappingHelperDialog(QDialog):
         """
         super().__init__(parent, *args, **kwargs)
         self.setWindowTitle("Atom mapping helper")
-        self.min_width = kwargs.get("min_width", 400)
-        self.resize(self.min_width, self.height())
+        self.min_width = kwargs.get("min_width", 500)
+        self.min_height = kwargs.get("min_width", 600)
+        self.resize(self.min_width, self.min_height)
         self.setMinimumWidth(self.min_width)
+        self.setMinimumHeight(self.min_height)
         self._field = field
 
         self._file_widget = field_widget
-        self._file_widget._field.textChanged.connect(self.update_helper)
+        self._file_widget.value_changed.connect(self.update_helper)
 
         self.layout = QVBoxLayout()
+        buffer_0 = QWidget(self)
         header_layout = QHBoxLayout()
         header_layout.addWidget(QLabel("Group"))
         header_layout.addWidget(QLabel("Atom Label"))
         header_layout.addWidget(QLabel("Element"))
+        buffer_0.setLayout(header_layout)
 
         self.mapping_widgets = []
+        buffer_1 = QWidget(self)
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(buffer_1)
+        scroll_area.setWidgetResizable(True)
         self.mapping_layout = QGridLayout()
+        buffer_1.setLayout(self.mapping_layout)
 
         button_layout = QHBoxLayout()
         apply = QPushButton("Apply")
@@ -83,8 +93,8 @@ class AtomMappingHelperDialog(QDialog):
         button_layout.addWidget(auto)
         button_layout.addWidget(close)
 
-        self.layout.addLayout(header_layout)
-        self.layout.addLayout(self.mapping_layout)
+        self.layout.addWidget(buffer_0)
+        self.layout.addWidget(scroll_area)
         self.layout.addLayout(button_layout)
         self.setLayout(self.layout)
 
@@ -181,7 +191,7 @@ class AtomMappingWidget(WidgetBase):
         self._default_value = default_value
         self._layout.addWidget(self._field)
         self._layout.addWidget(self.helper_button)
-        self._file_widget._field.textChanged.connect(self.update_helper_button)
+        self._file_widget.value_changed.connect(self.update_helper_button)
         self.update_labels()
         self.updateValue()
 

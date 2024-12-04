@@ -126,7 +126,7 @@ class TransmutationHelper(SelectionHelper):
         transmutation setting.
         """
         self.transmuter.apply_transmutation(
-            self.full_settings, self.transmutation_combo.currentText()
+            self.settings, self.transmutation_combo.currentText()
         )
         self.update_transmutation_textbox()
 

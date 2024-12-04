@@ -59,6 +59,7 @@ ALL_JOBS = [
     "Gromacs",
     "ImprovedASE",
     "LAMMPS",
+    "MDAnalysis",
     "VASP",
     "CHARMM",
     "NAMD",

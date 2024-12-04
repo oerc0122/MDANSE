@@ -19,6 +19,7 @@ from typing import List, Dict
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.spatial import KDTree
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
@@ -87,7 +88,9 @@ class Connectivity:
         else:
             return self._frames.coordinates(frame_number)
 
-    def internal_distances(self, frame_number: int = 0) -> NDArray[np.float64]:
+    def internal_distances(
+        self, frame_number: int = 0, max_distance: float = 0.2
+    ) -> NDArray[np.float64]:
         """Calculates an (N,N) array of interatomic distances SQUARED within
         the simulation box. If there are no periodic boundary conditions,
         the returned array contains ALL the distances in the system.
@@ -102,13 +105,12 @@ class Connectivity:
         coordinates = self.get_coordinates(frame_number=frame_number)
         if coordinates is None:
             return None
-        lhs = coordinates.reshape((len(coordinates), 1, 3))
-        rhs = coordinates.reshape((1, len(coordinates), 3))
-        difference = lhs - rhs
-        distance = np.sum(difference**2, axis=2)
-        return distance
+        tree = KDTree(coordinates)
+        return tree.sparse_distance_matrix(tree, max_distance=max_distance)
 
-    def periodic_distances(self, frame_number: int = 0) -> NDArray[np.float64]:
+    def periodic_distances(
+        self, frame_number: int = 0, max_distance: float = 0.2
+    ) -> NDArray[np.float64]:
         """Calculates the distances between the atoms in the simulation box
         and a copy of the simulation box translated by a unit cell vector.
         Only needed if the simulation was run with periodic boundary conditions.
@@ -133,16 +135,14 @@ class Connectivity:
         coordinates = self.get_coordinates(frame_number=frame_number)
         if coordinates is None:
             return None
-        lhs = coordinates.reshape((len(coordinates), 1, 3))
-        rhs = coordinates.reshape((1, len(coordinates), 3))
+        tree1 = KDTree(coordinates)
         for num, shift in enumerate(product([-1, 0, 1], repeat=3)):
             if np.allclose(shift, [0, 0, 0]):
                 continue
             self._translation_vectors[num] = shift
             offset = shift[0] * vector_a + shift[1] * vector_b + shift[2] * vector_c
-            difference = lhs - rhs + offset
-            distance = np.sum(difference**2, axis=2)
-            yield num, distance
+            tree2 = KDTree(coordinates + offset.reshape((1, 3)))
+            yield num, tree1.sparse_distance_matrix(tree2, max_distance=max_distance)
 
     def find_bonds(self, frames: List[int] = None, tolerance: float = 0.2):
         """Checks several frames of the trajectory for the presence of atom pairs
@@ -164,45 +164,31 @@ class Connectivity:
         bonds = []
         pairs = product(self._unique_elements, repeat=2)
         maxbonds = {
-            pair: ((self._radii[pair[0]] + self._radii[pair[1]]) * (1.0 + tolerance))
-            ** 2
+            pair: (self._radii[pair[0]] + self._radii[pair[1]]) * (1.0 + tolerance)
             for pair in pairs
         }
-        max_distance_array = np.zeros((len(self._elements), len(self._elements)))
-        connection_array = np.zeros(
-            (len(self._elements), len(self._elements)), dtype=bool
-        )
-        pair_array = np.array(
-            [[(x, y) for x in self._elements] for y in self._elements]
-        )
-        for pair, maxlength in maxbonds.items():
-            max_distance_array[
-                np.where(
-                    np.logical_and(
-                        pair_array[:, :, 0] == pair[0], pair_array[:, :, 1] == pair[1]
-                    )
-                )
-            ] = maxlength
+        total_max_length = np.max([x for x in maxbonds.values()])
         for nstep, frame_number in enumerate(samples):
-            distances = [(None, self.internal_distances(frame_number=frame_number))]
+            distances = self.internal_distances(
+                frame_number=frame_number, max_distance=total_max_length
+            )
             if self._periodic:
-                for num, dist in self.periodic_distances(frame_number=frame_number):
-                    distances.append((num, dist))
-            for ndist, disttuple in enumerate(distances):
-                vecnum, dist = disttuple
-                result = dist < max_distance_array
-                if ndist == 0:
-                    # internal distances: bond with self possible, and wrong
-                    result = np.logical_and(
-                        result,
-                        dist > 1e-3,
-                    )
-                connection_array = np.logical_or(connection_array, result)
-        first, second = np.where(connection_array)
-        bonds = np.column_stack([first, second])
+                for _, dist in self.periodic_distances(
+                    frame_number=frame_number, max_distance=total_max_length
+                ):
+                    for key, value in dist.items():
+                        if key not in distances.keys():
+                            distances[key] = value
+        bonds = []
         bond_mapping = {atom_number: [] for atom_number in range(len(self._elements))}
-        for pair in bonds:
-            bond_mapping[pair[0]].append(pair[1])
+        for key, value in distances.items():
+            if key[0] == key[1]:
+                continue
+            element_pair = (self._elements[key[0]], self._elements[key[1]])
+            if value > maxbonds[element_pair]:
+                continue
+            bonds.append(key)
+            bond_mapping[key[0]].append(key[1])
         self._bonds = bonds
         self._bond_mapping = bond_mapping
         self._unique_bonds = np.unique(np.sort(bonds, axis=1), axis=0)

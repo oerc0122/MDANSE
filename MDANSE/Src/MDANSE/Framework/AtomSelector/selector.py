@@ -110,7 +110,7 @@ class Selector:
         }
 
         # figure out if a match exists for the selector function
-        self.match_exists = self.full_settings
+        self.match_exists = self.create_default_settings()
         for k0, v0 in self.match_exists.items():
             if isinstance(v0, dict):
                 for k1 in v0.keys():
@@ -118,9 +118,25 @@ class Selector:
             else:
                 self.match_exists[k0] = self._funcs[k0](self.system, check_exists=True)
 
+        self.settings = self.create_default_settings()
+
+    def create_default_settings(self) -> dict[str, Union[bool, dict]]:
+        """Create a new settings dictionary with default settings.
+
+        Returns
+        -------
+        dict[str, Union[bool, dict]]
+            A settings dictionary.
+        """
+        settings = copy.deepcopy(self._default)
+        for k, vs in self._kwarg_vals.items():
+            for v in sorted(vs):
+                settings[k][v] = False
+        return settings
+
     def reset_settings(self) -> None:
         """Resets the settings back to the defaults."""
-        self.settings = copy.deepcopy(self._default)
+        self.settings = self.create_default_settings()
 
     def update_settings(
         self, settings: dict[str, Union[bool, dict]], reset_first: bool = False
@@ -192,10 +208,14 @@ class Selector:
         idxs : set[int]
             With the indexes of the atom selection.
         """
-        new_settings = copy.deepcopy(self.settings)
+        new_settings = self.create_default_settings()
+        new_settings["all"] = False
+
         added = set([])
-        prev_selected = set([])
         for k, v in self.settings.items():
+
+            if k == "index":
+                continue
 
             if isinstance(v, dict):
                 args = [{self._kwarg_keys[k]: i} for i in v.keys()]
@@ -209,20 +229,17 @@ class Selector:
                     continue
 
                 selection = self._funcs[k](self.system, **arg)
-                if idxs.issuperset(selection):
-                    added.update(selection)
+                if not idxs.issuperset(selection):
                     continue
 
-                prev_selected.update(selection)
+                added.update(selection)
                 if isinstance(v, dict):
-                    new_settings[k][arg[self._kwarg_keys[k]]] = False
+                    new_settings[k][arg[self._kwarg_keys[k]]] = True
                 else:
-                    new_settings[k] = False
+                    new_settings[k] = True
 
         for idx in idxs - added:
             new_settings["index"][idx] = True
-        for idx in prev_selected - idxs:
-            new_settings["index"][idx] = False
 
         self.settings = new_settings
 
@@ -245,7 +262,7 @@ class Selector:
                     if v1:
                         sub_list.append(k1)
                 if sub_list:
-                    minimal_dict[k0] = sub_list
+                    minimal_dict[k0] = sorted(sub_list)
         return json.dumps(minimal_dict)
 
     def json_to_settings(self, json_string: str) -> dict[str, Union[bool, dict]]:
@@ -337,18 +354,3 @@ class Selector:
         except ValueError:
             return False
         return self.check_valid_setting(settings)
-
-    @property
-    def full_settings(self) -> dict[str, Union[bool, dict]]:
-        """
-        Returns
-        -------
-        dict[str, Union[bool, dict]]
-            The full settings for the initialised chemical system.
-        """
-        settings = copy.deepcopy(self.settings)
-        for k, vs in self._kwarg_vals.items():
-            for v in sorted(vs):
-                if v not in settings[k]:
-                    settings[k][v] = False
-        return settings

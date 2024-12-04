@@ -22,7 +22,6 @@ from qtpy.QtWidgets import (
     QMainWindow,
     QFileDialog,
     QToolBar,
-    QTabWidget,
     QMenuBar,
     QMessageBox,
     QApplication,
@@ -48,6 +47,7 @@ from MDANSE_GUI.Tabs.PlotSelectionTab import PlotSelectionTab
 from MDANSE_GUI.Tabs.PlotTab import PlotTab
 from MDANSE_GUI.Tabs.InstrumentTab import InstrumentTab
 from MDANSE_GUI.Widgets.StyleDialog import StyleDialog, StyleDatabase
+from MDANSE_GUI.Widgets.NotificationTabWidget import NotificationTabWidget
 
 
 class TabbedWindow(QMainWindow):
@@ -71,7 +71,7 @@ class TabbedWindow(QMainWindow):
         **kwargs,
     ):
         super().__init__(parent, *args, **kwargs)
-        self.tabs = QTabWidget(self)
+        self.tabs = NotificationTabWidget(self)
         self.setCentralWidget(self.tabs)
         self._views = defaultdict(list)
         self._actions = []
@@ -115,6 +115,7 @@ class TabbedWindow(QMainWindow):
         self._tabs["Instruments"]._visualiser.instrument_details_changed.connect(
             self._tabs["Actions"].update_action_after_instrument_change
         )
+        self.tabs.currentChanged.connect(self.tabs.reset_current_color)
 
     def createCommonModels(self):
         self._trajectory_model = GeneralModel()
@@ -269,6 +270,7 @@ class TabbedWindow(QMainWindow):
         self.tabs.addTab(trajectory_tab._core, name)
         self._tabs[name] = trajectory_tab
         self._job_holder.trajectory_for_loading.connect(trajectory_tab.load_trajectory)
+        self._job_holder.trajectory_for_loading.connect(trajectory_tab.tab_notification)
 
     def createInstrumentSelector(self):
         name = "Instruments"
@@ -335,6 +337,7 @@ class TabbedWindow(QMainWindow):
         self.tabs.addTab(plot_tab._core, name)
         self._tabs[name] = plot_tab
         self._job_holder.results_for_loading.connect(plot_tab.load_results)
+        self._job_holder.results_for_loading.connect(plot_tab.tab_notification)
 
     def createPlotHolder(self):
         name = "Plot Holder"

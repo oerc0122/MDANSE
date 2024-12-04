@@ -124,7 +124,7 @@ class QVectorsWidget(WidgetBase):
         self._selector.currentTextChanged.connect(self._model.switch_qvector_type)
         self._selector.setCurrentIndex(1)
         self._model.itemChanged.connect(self.updateValue)
-        self._model.type_changed.connect(self.updateValue)
+        self._model.type_changed.connect(self.type_change_update)
         self.updateValue()
         if self._tooltip:
             tooltip_text = self._tooltip
@@ -139,6 +139,14 @@ class QVectorsWidget(WidgetBase):
         policy.setVerticalPolicy(QSizePolicy.Policy.Minimum)
         self._view.setSizePolicy(policy)
         self._view.horizontalHeader().hide()
+
+    def type_change_update(self):
+        # need to disconnect itemChanged otherwise updateValue will
+        # be called multiple times as the item data has been changed
+        # during the type update
+        self._model.itemChanged.disconnect()
+        self.updateValue()
+        self._model.itemChanged.connect(self.updateValue)
 
     @Slot(bool)
     def validate_model_parameters(self, all_are_correct: bool):

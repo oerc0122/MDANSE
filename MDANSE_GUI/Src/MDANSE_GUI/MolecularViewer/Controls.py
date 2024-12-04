@@ -215,7 +215,7 @@ class ViewerControls(QWidget):
         layout2 = QHBoxLayout(wrapper2)
         frame_time_selector = QSpinBox(base)
         frame_time_selector.setToolTip("Larger number means slower animation")
-        frame_time_selector.setValue(5)
+        frame_time_selector.setValue(80)
         frame_time_selector.setMinimum(1)
         frame_time_selector.setMaximum(5000)
         frame_time_selector.valueChanged.connect(self.setTimeStep)

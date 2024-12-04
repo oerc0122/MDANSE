@@ -122,7 +122,7 @@ class ChargeHelper(SelectionHelper):
         except ValueError:
             # probably an empty QLineEdit box
             return
-        self.mapper.update_charges(self.full_settings, charge)
+        self.mapper.update_charges(self.settings, charge)
         self.update_charge_textbox()
 
     def update_charge_textbox(self) -> None:
