@@ -30,6 +30,7 @@ com_traj = os.path.join(
     "com_trajectory.mdt",
 )
 
+
 @pytest.mark.parametrize(
     "interp_order, normalise",
     [
