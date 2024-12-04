@@ -16,6 +16,7 @@
 
 import os
 from typing import Dict, List
+from pathlib import PurePath
 
 from qtpy.QtCore import QObject, Signal, Slot, Qt, QModelIndex
 from qtpy.QtGui import QStandardItem, QStandardItemModel
@@ -380,13 +381,13 @@ class StructuredSession(QObject):
 
     @Slot(str)
     def protect_filename(self, some_filename: str):
-        new_filename = os.path.abspath(some_filename)
+        new_filename = PurePath(os.path.abspath(some_filename))
         if new_filename not in self._reserved_filenames:
-            self._reserved_filenames.append(os.path.abspath(new_filename))
+            self._reserved_filenames.append(new_filename)
 
     @Slot(str)
     def free_filename(self, some_filename: str):
-        filename = os.path.abspath(some_filename)
+        filename = PurePath(os.path.abspath(some_filename))
         if filename in self._reserved_filenames:
             index = self._reserved_filenames.index(filename)
             self._reserved_filenames.pop(index)

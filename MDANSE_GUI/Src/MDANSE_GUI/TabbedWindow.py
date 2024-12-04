@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import os
+from pathlib import PurePath
 from collections import defaultdict
 from importlib import metadata
 
@@ -241,12 +242,12 @@ class TabbedWindow(QMainWindow):
         fname = QFileDialog.getOpenFileName(
             self,
             "Load an MD trajectory",
-            self.workdir,
+            str(self.workdir),
             "MDT files (*.mdt);;HDF5 files (*.h5 *.hdf);;All files (*)",
         )
         LOG.info(fname)
         if len(fname[0]) > 0:
-            self.file_name_for_loading.emit(fname[0])
+            self.file_name_for_loading.emit(str(PurePath(fname[0])))
 
     @Slot(bool)
     def invertToolbar(self, dark=False):

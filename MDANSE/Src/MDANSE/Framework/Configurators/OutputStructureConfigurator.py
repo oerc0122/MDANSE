@@ -15,6 +15,7 @@
 #
 
 import os
+from pathlib import PurePath
 
 from ase.io.formats import ioformats
 
@@ -88,7 +89,7 @@ class OutputStructureConfigurator(IConfigurator):
         self["root"] = root
         self["format"] = format
         self["file"] = root
-        if os.path.abspath(self["file"]) in self._forbidden_files:
+        if PurePath(os.path.abspath(self["file"])) in self._forbidden_files:
             self.error_status = f"File {self['file']} is either open or being written into. Please pick another name."
             return
         self["log_level"] = logs

@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import os
+from pathlib import PurePath
 from functools import partial
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QWidget, QComboBox, QLabel
@@ -107,7 +108,7 @@ class JobTab(GeneralTab):
         # The combobox was changed we need to update the action
         # widgets with the new trajectory
         self.action.set_trajectory(
-            trajectory=os.path.abspath(traj_model._nodes[node_number][0])
+            trajectory=str(PurePath(os.path.abspath(traj_model._nodes[node_number][0])))
         )
         current_item = self._core.current_item()
         if current_item is not None:

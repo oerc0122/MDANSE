@@ -82,7 +82,7 @@ class PlotDataView(QTreeView):
             filename = mda_data_structure._file.filename
         except AttributeError:
             filename = mda_data_structure.file
-        self.free_name.emit(filename)
+        self.free_name.emit(str(filename))
         model.removeRow(index.row())
         self.item_details.emit("")
 

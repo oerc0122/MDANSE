@@ -15,6 +15,7 @@
 #
 import os
 import json
+from pathlib import PurePath
 from typing import Dict, List
 
 from qtpy.QtCore import QObject, Signal, Slot

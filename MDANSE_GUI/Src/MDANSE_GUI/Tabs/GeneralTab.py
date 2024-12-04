@@ -15,6 +15,7 @@
 #
 import os
 from typing import Dict, Tuple
+from pathlib import PurePath
 
 from qtpy.QtCore import QObject, Slot, Signal, QMessageLogger
 from qtpy.QtWidgets import QListView
@@ -171,7 +172,7 @@ class GeneralTab(QObject):
                 f"Filesystem path recently used by {path_key}",
             )
             path = os.path.abspath(".")
-        return path
+        return str(PurePath(path))
 
     def set_path(self, path_key: str, path_value: str):
         paths_group = self._settings.group("paths")

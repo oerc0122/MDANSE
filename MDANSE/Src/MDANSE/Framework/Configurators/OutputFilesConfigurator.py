@@ -15,6 +15,7 @@
 #
 
 import os
+from pathlib import PurePath
 
 from MDANSE import PLATFORM
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
@@ -106,7 +107,7 @@ class OutputFilesConfigurator(IConfigurator):
             else:
                 self["files"].append(root + extension)
         for file in self["files"]:
-            if os.path.abspath(file) in self._forbidden_files:
+            if PurePath(os.path.abspath(file)) in self._forbidden_files:
                 self.error_status = f"File {file} is either open or being written into. Please pick another name."
                 return
 

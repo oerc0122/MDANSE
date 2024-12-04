@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import os
-from typing import Optional
+from pathlib import PurePath
 import traceback
 
 import numpy as np
@@ -127,11 +127,11 @@ class Action(QWidget):
         """
         self._input_trajectory = trajectory
         if self._input_trajectory is not None:
-            self._default_path, _ = os.path.split(self._input_trajectory)
+            self._default_path = PurePath(os.path.split(self._input_trajectory)[0])
         else:
-            self._default_path = os.path.abspath(".")
+            self._default_path = PurePath(os.path.abspath("."))
         if self._job_name is not None:
-            self._parent_tab.set_path(self._job_name, self._default_path)
+            self._parent_tab.set_path(self._job_name, str(self._default_path))
 
     def set_instrument(self, instrument: SimpleInstrument) -> None:
         self._current_instrument = instrument
@@ -163,8 +163,10 @@ class Action(QWidget):
         self._has_been_initialised = False
 
         self._job_name = job_name
-        if self._default_path is None or self._default_path == os.path.abspath("."):
-            self._default_path = self._parent_tab.get_path(job_name)
+        if self._default_path is None or PurePath(self._default_path) == PurePath(
+            os.path.abspath(".")
+        ):
+            self._default_path = str(PurePath(self._parent_tab.get_path(job_name)))
         try:
             job_instance = IJob.create(job_name)
         except ValueError as e:
@@ -369,21 +371,23 @@ class Action(QWidget):
         try:
             cname = self._job_name
         except:
-            currentpath = os.path.abspath(".")
+            currentpath = PurePath(os.path.abspath("."))
         else:
-            currentpath = self._parent_tab.get_path(self._job_name + "_script")
+            currentpath = PurePath(
+                self._parent_tab.get_path(self._job_name + "_script")
+            )
         result, ftype = QFileDialog.getSaveFileName(
             self, "Save job as a Python script", currentpath, "Python script (*.py)"
         )
         if result == "":
             return None
-        path, _ = os.path.split(result)
+        path = PurePath(os.path.split(result))
         try:
             cname = self._job_name
         except:
             pass
         else:
-            self._parent_tab.set_path(self._job_name + "_script", path)
+            self._parent_tab.set_path(self._job_name + "_script", str(path))
         pardict = self.set_parameters(labels=True)
         self._job_instance.save(result, pardict)
 
@@ -401,7 +405,7 @@ class Action(QWidget):
     def execute_converter(self):
         pardict = self.set_parameters()
         LOG.info(pardict)
-        self._parent_tab.set_path(self._job_name, self._default_path)
+        self._parent_tab.set_path(self._job_name, str(self._default_path))
         self._parent_tab._session.save()
         # when we are ready, we can consider running it
         # self.converter_instance.run(pardict)
