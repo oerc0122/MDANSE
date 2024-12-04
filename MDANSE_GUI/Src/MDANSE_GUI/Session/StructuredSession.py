@@ -382,8 +382,7 @@ class StructuredSession(QObject):
     @Slot(str)
     def protect_filename(self, some_filename: str):
         new_filename = PurePath(os.path.abspath(some_filename))
-        if new_filename not in self._reserved_filenames:
-            self._reserved_filenames.append(new_filename)
+        self._reserved_filenames.append(new_filename)
 
     @Slot(str)
     def free_filename(self, some_filename: str):
