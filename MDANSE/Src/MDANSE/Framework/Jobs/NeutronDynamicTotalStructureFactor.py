@@ -33,7 +33,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
     Computes the dynamic total structure factor for a set of atoms as the sum of the incoherent and coherent structure factors
     """
 
-    enabled = False
+    enabled = True
 
     label = "Neutron Dynamic Total Structure Factor"
 
@@ -437,9 +437,9 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Compute incoherent functions and structure factor
         for element, _ in nAtomsPerElement.items():
-            if self._input_dcsf_weight == "equal":
+            if self._input_disf_weight == "equal":
                 bi = ATOMS_DATABASE.get_atom_property(element, "b_incoherent2")
-            elif self._input_dcsf_weight == "b_incoherent2":
+            elif self._input_disf_weight == "b_incoherent2":
                 bi = 1.0
             else:
                 LOG.error("Input DCSF weights should be b_incoherent2 or equal")
