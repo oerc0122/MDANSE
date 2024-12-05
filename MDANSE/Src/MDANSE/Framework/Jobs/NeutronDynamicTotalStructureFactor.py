@@ -18,6 +18,7 @@ import itertools
 
 import numpy as np
 
+from MDANSE.MLogging import LOG
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
@@ -47,11 +48,11 @@ class NeutronDynamicTotalStructureFactor(IJob):
     settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
     settings["dcsf_input_file"] = (
         "HDFInputFileConfigurator",
-        {"label": "MDANSE Coherent Structure Factor", "default": "dcsf.h5"},
+        {"label": "MDANSE Coherent Structure Factor", "default": "dcsf.mda"},
     )
     settings["disf_input_file"] = (
         "HDFInputFileConfigurator",
-        {"label": "MDANSE Incoherent Structure Factor", "default": "disf.h5"},
+        {"label": "MDANSE Incoherent Structure Factor", "default": "disf.mda"},
     )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
@@ -354,6 +355,20 @@ class NeutronDynamicTotalStructureFactor(IJob):
             units="nm2/ps",
             main_result=True,
         )
+        self._input_disf_weight = (
+            self.configuration["disf_input_file"]["instance"][
+                "metadata/inputs/weights"
+            ][0]
+            .decode()
+            .strip('"')
+        )
+        self._input_dcsf_weight = (
+            self.configuration["dcsf_input_file"]["instance"][
+                "metadata/inputs/weights"
+            ][0]
+            .decode()
+            .strip('"')
+        )
 
     def run_step(self, index):
         """
@@ -390,24 +405,20 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Compute coherent functions and structure factor
         for pair in self._elementsPairs:
-            bi = ATOMS_DATABASE.get_atom_property(pair[0], "b_coherent")
-            bj = ATOMS_DATABASE.get_atom_property(pair[1], "b_coherent")
-            ni = nAtomsPerElement[pair[0]]
-            nj = nAtomsPerElement[pair[1]]
-            ci = ni / nTotalAtoms
-            cj = nj / nTotalAtoms
+            if self._input_dcsf_weight == "equal":
+                bi = ATOMS_DATABASE.get_atom_property(pair[0], "b_coherent")
+                bj = ATOMS_DATABASE.get_atom_property(pair[1], "b_coherent")
+            elif self._input_dcsf_weight == "b_coherent":
+                bi = bj = 1.0
+            else:
+                LOG.error("Input DCSF weights should be b_coherent or equal")
+                return
 
             self._outputData["f(q,t)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["f(q,t)_coh_%s%s" % pair][:]
-                * np.sqrt(ci * cj)
-                * bi
-                * bj
+                self._outputData["f(q,t)_coh_%s%s" % pair][:] * bi * bj
             )
             self._outputData["s(q,f)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["s(q,f)_coh_%s%s" % pair][:]
-                * np.sqrt(ci * cj)
-                * bi
-                * bj
+                self._outputData["s(q,f)_coh_%s%s" % pair][:] * bi * bj
             )
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
                 self._outputData["f(q,t)_coh_total"][:] += self._outputData[
@@ -425,16 +436,20 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 )
 
         # Compute incoherent functions and structure factor
-        for element, ni in nAtomsPerElement.items():
-            bi = ATOMS_DATABASE.get_atom_property(element, "b_incoherent2")
-            ni = nAtomsPerElement[element]
-            ci = ni / nTotalAtoms
+        for element, _ in nAtomsPerElement.items():
+            if self._input_dcsf_weight == "equal":
+                bi = ATOMS_DATABASE.get_atom_property(element, "b_incoherent2")
+            elif self._input_dcsf_weight == "b_incoherent2":
+                bi = 1.0
+            else:
+                LOG.error("Input DCSF weights should be b_incoherent2 or equal")
+                return
 
             self._outputData["f(q,t)_inc_weighted_%s" % element][:] = (
-                self._outputData["f(q,t)_inc_%s" % element][:] * ci * bi
+                self._outputData["f(q,t)_inc_%s" % element][:] * bi
             )
             self._outputData["s(q,f)_inc_weighted_%s" % element][:] = (
-                self._outputData["s(q,f)_inc_%s" % element][:] * ci * bi
+                self._outputData["s(q,f)_inc_%s" % element][:] * bi
             )
 
             self._outputData["f(q,t)_inc_total"][:] += self._outputData[
