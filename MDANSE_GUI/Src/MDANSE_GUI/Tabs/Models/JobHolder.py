@@ -94,6 +94,7 @@ class JobEntry(Handler, QObject):
     of current jobs. It is used for reporting the task progress to the GUI."""
 
     for_loading = Signal(str)
+    free_filename = Signal(str)
 
     def __init__(
         self,
@@ -161,24 +162,24 @@ class JobEntry(Handler, QObject):
 
     @Slot(bool)
     def on_finished(self, success: bool):
+        try:
+            len(self._parameters["output_files"][1])
+        except TypeError:  # job is a converter
+            file_name = self._parameters["output_files"][0]
+            if ".mdt" not in file_name[-5:]:
+                file_name += ".mdt"
+        else:  # job is an analysis
+            if "MDAFormat" in self._parameters["output_files"][1]:
+                file_name = self._parameters["output_files"][0]
+                if ".mda" not in file_name[-5:]:
+                    file_name += ".mda"
         if success:
-            self._current_state.finish()
             if self._load_afterwards:
-                try:
-                    len(self._parameters["output_files"][1])
-                except TypeError:  # job is a converter
-                    file_name = self._parameters["output_files"][0]
-                    if ".mdt" not in file_name[-5:]:
-                        file_name += ".mdt"
-                    self.for_loading.emit(file_name)
-                else:  # job is an analysis
-                    if "MDAFormat" in self._parameters["output_files"][1]:
-                        file_name = self._parameters["output_files"][0]
-                        if ".mda" not in file_name[-5:]:
-                            file_name += ".mda"
-                        self.for_loading.emit(file_name)
+                self.for_loading.emit(file_name)
+            self._current_state.finish()
         else:
             self._current_state.fail()
+        self.free_filename.emit(file_name)
         self.update_fields()
 
     def expected_output(self) -> str:
@@ -319,7 +320,7 @@ class JobHolder(QStandardItemModel):
         communicator.moveToThread(watcher_thread)
         entry_number = self.next_number
         item_th.parameters = job_vars[1]
-        item_th.for_loading.connect(self.unprotect_filename)
+        item_th.free_filename.connect(self.unprotect_filename)
         if load_afterwards:
             if job_vars[0] in Converter.subclasses():
                 item_th.for_loading.connect(self.trajectory_for_loading)
