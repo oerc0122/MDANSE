@@ -319,7 +319,7 @@ class JobHolder(QStandardItemModel):
         communicator.moveToThread(watcher_thread)
         entry_number = self.next_number
         item_th.parameters = job_vars[1]
-        # item_th.for_loading.connect(self.unprotect_filename)
+        item_th.for_loading.connect(self.unprotect_filename)
         if load_afterwards:
             if job_vars[0] in Converter.subclasses():
                 item_th.for_loading.connect(self.trajectory_for_loading)
