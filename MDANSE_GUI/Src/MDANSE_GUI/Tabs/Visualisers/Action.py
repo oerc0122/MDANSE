@@ -38,6 +38,7 @@ from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
 
 widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "FloatConfigurator": FloatWidget,
+    "OptionalFloatConfigurator": OptionalFloatWidget,
     "BooleanConfigurator": BooleanWidget,
     "StringConfigurator": StringWidget,
     "IntegerConfigurator": IntegerWidget,
@@ -225,7 +226,10 @@ class Action(QWidget):
                 self._widgets_in_layout.append(widget)
                 self._widgets.append(input_widget)
                 input_widget.valid_changed.connect(self.allow_execution)
-                if self._use_preview:
+                has_preview = callable(
+                    getattr(input_widget._configurator, "preview_output_axis", False)
+                )
+                if self._use_preview and has_preview:
                     input_widget.value_updated.connect(self.show_output_prediction)
                 LOG.info(f"Set up the right widget for {key}")
             # self.handlers[key] = data_handler
@@ -279,6 +283,18 @@ class Action(QWidget):
             q_vector_tuple = self._current_instrument.create_q_vector_params()
             resolution_tuple = self._current_instrument.create_resolution_params()
             for widget in self._widgets:
+                has_preview = callable(
+                    getattr(widget._configurator, "preview_output_axis", False)
+                )
+                if not has_preview:
+                    continue
+                # These widgets will emit a signal and call
+                # show_output_prediction this means that this function
+                # can be called multiple times. We need to block the
+                # signals from these widgets to stop this from happening
+                # show_output_prediction will be called at the end of
+                # this function.
+                widget.blockSignals(True)
                 if isinstance(widget, InstrumentResolutionWidget):
                     if resolution_tuple is None:
                         continue
@@ -290,6 +306,7 @@ class Action(QWidget):
                     widget._model.switch_qvector_type(
                         q_vector_tuple[0], q_vector_tuple[1]
                     )
+                widget.blockSignals(False)
         self.allow_execution()
         self.show_output_prediction()
 

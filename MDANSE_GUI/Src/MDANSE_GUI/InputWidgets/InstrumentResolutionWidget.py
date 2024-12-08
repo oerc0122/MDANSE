@@ -125,6 +125,10 @@ class InstrumentResolutionWidget(WidgetBase):
 
     @Slot(str)
     def change_function(self, function: str, optional_parameters: dict = None):
+        # need to disconnect textChanged otherwise updateValue will
+        # be called multiple times as the field data will be changed
+        # during the function change
+        [field.textChanged.disconnect() for field in self._fields]
         if optional_parameters is None:
             if function in init_parameters.keys():
                 new_params = init_parameters[function]
@@ -141,6 +145,8 @@ class InstrumentResolutionWidget(WidgetBase):
             self._type_combo.setCurrentText(function)
         self._type_combo.blockSignals(False)
         self.set_field_values(new_params)
+        self.updateValue()
+        [field.textChanged.connect(self.updateValue) for field in self._fields]
 
     def get_widget_value(self):
         function = widget_text_map[self._type_combo.currentText()]

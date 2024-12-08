@@ -90,7 +90,10 @@ class MoleculeFinder(IJob):
         for entity in chemical_system.chemical_entities:
             if entity.number_of_atoms > 1:
                 moltester = MoleculeTester(entity, coords)
-                inchistring = moltester.identify_molecule()
+                try:
+                    inchistring = moltester.identify_molecule()
+                except:
+                    inchistring = ""
                 if len(inchistring) > 0:
                     entity.name = inchistring
                 else:

@@ -162,3 +162,54 @@ def test_editor_transmute():
     changed.close()
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")
+
+
+def test_editor_set_charges():
+    temp_name = tempfile.mktemp()
+    parameters = {}
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
+    parameters["trajectory"] = short_traj
+    parameters["atom_charges"] = (
+        '{"0": 1.2, "1": 1.2, "2": 1.2, "3": 1.2, "4": 1.2, "5": 1.2, "6": -0.5, "7": -0.5, "8": -0.5, "9": -0.5, "10": -0.5, "11": -0.5, "12": -0.5, "13": -0.5, "14": -0.5, "15": -0.5, "16": -0.5, "17": -0.5, "18": -0.5, "19": -0.5}'
+    )
+    parameters["frames"] = (0, 501, 1)
+    temp = IJob.create("TrajectoryEditor")
+    temp.run(parameters, status=True)
+    assert path.exists(temp_name + ".mdt")
+    assert path.isfile(temp_name + ".mdt")
+    assert path.exists(temp_name + ".log")
+    assert path.isfile(temp_name + ".log")
+    # test if nothing has changed
+    original = HDFTrajectoryInputData(short_traj)
+    changed = HDFTrajectoryInputData(temp_name + ".mdt")
+    assert len(original.trajectory) == len(changed.trajectory)
+    assert np.allclose(original.trajectory.charges(0), 0.0)
+    assert abs(np.sum(changed.trajectory.charges(0)) - 0.2) < 1e-5
+    original.close()
+    changed.close()
+    os.remove(temp_name + ".mdt")
+    os.remove(temp_name + ".log")
+
+
+def test_editor_find_molecules():
+    temp_name = tempfile.mktemp()
+    parameters = {}
+    parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
+    parameters["trajectory"] = short_traj
+    parameters["molecule_tolerance"] = [True, 0.25]
+    parameters["frames"] = (0, 501, 1)
+    temp = IJob.create("TrajectoryEditor")
+    temp.run(parameters, status=True)
+    assert path.exists(temp_name + ".mdt")
+    assert path.isfile(temp_name + ".mdt")
+    assert path.exists(temp_name + ".log")
+    assert path.isfile(temp_name + ".log")
+    # test if nothing has changed
+    original = HDFTrajectoryInputData(short_traj)
+    changed = HDFTrajectoryInputData(temp_name + ".mdt")
+    assert len(original.trajectory.chemical_system.unique_molecules()) == 0
+    assert len(changed.trajectory.chemical_system.unique_molecules()) > 0
+    original.close()
+    changed.close()
+    os.remove(temp_name + ".mdt")
+    os.remove(temp_name + ".log")
