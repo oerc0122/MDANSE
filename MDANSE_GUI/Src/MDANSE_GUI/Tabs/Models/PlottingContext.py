@@ -56,12 +56,14 @@ def get_mpl_colours():
 
 
 class SingleDataset:
-    def __init__(self, name: str, source: "h5py.File"):
+
+    def __init__(self, name: str, source: "h5py.File", linestyle: str = "-"):
         self._name = name
         self._filename = source.filename
         self._use_scaling = True
         self._curves = {}
         self._curve_labels = {}
+        self._linestyle = linestyle
         self._planes = {}
         self._plane_labels = {}
         self._data_limits = None
@@ -441,7 +443,7 @@ class PlottingContext(QStandardItemModel):
                 new_dataset.longest_axis()[-1],
                 "",
                 self.next_colour(),
-                "-",
+                new_dataset._linestyle,
                 "",
                 "",
             ]

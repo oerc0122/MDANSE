@@ -52,12 +52,12 @@ class MoleculeWidget(WidgetBase):
         ]
         hdf_traj = traj_config["hdf_trajectory"]
         unique_molecules = hdf_traj.chemical_system.unique_molecules
-        # molecule = hdf_traj.molecule._atoms
-        # print("molecule atoms:", hdf_traj.molecule._atoms)
-
+        traj_bond_list = hdf_traj.chemical_system._bonds
         self.mol_dict = {}
+        coords_0 = hdf_traj.trajectory.coordinates(0)
         for i, mol in enumerate(unique_molecules):
-            self.atom_information = []
+            indices = []
+            self.atom_information = {}
             no_of_molecules = hdf_traj.chemical_system.number_of_molecules(mol.name)
             self.atom_number = {}
             for atom in mol._atoms:
@@ -67,16 +67,22 @@ class MoleculeWidget(WidgetBase):
                 except KeyError:
                     self.atom_number[element] = 1
                 index = atom.index
+                indices.append(index)
                 symbol = atom.symbol
-                coords = hdf_traj.trajectory.coordinates(0)[index]
+                coords = coords_0[index]
                 atom_dict = {"symbol": symbol, "element": element, "coords": coords}
-                self.atom_information.append(atom_dict)
+                self.atom_information[index] = atom_dict
 
+            bond_list = [
+                bond for bond in traj_bond_list if all(atom in indices for atom in bond)
+            ]
             self.mol_dict[mol.name] = {
                 "no_of_molecules": no_of_molecules,
                 "atom_information": self.atom_information,
                 "atom_number": self.atom_number,
+                "bond_info": bond_list,
             }
+
         self.field = QComboBox(self._base)
         self.field.addItems(option_list)
         self.field.setCurrentText(default_option)
