@@ -107,6 +107,7 @@ class JobEntry(Handler, QObject):
         super().__init__()
         QObject.__init__(self)
         self._command = command
+        self._finished = False
         self._parameters = {}
         self._pause_event = pause_event
         self._load_afterwards = load_afterwards
@@ -162,6 +163,9 @@ class JobEntry(Handler, QObject):
 
     @Slot(bool)
     def on_finished(self, success: bool):
+        if self._finished:
+            return
+        self._finished = True
         file_name = self.expected_output()
         if success:
             if self._load_afterwards:
