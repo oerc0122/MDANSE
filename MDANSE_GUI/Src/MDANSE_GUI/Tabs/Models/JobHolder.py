@@ -162,17 +162,7 @@ class JobEntry(Handler, QObject):
 
     @Slot(bool)
     def on_finished(self, success: bool):
-        try:
-            len(self._parameters["output_files"][1])
-        except TypeError:  # job is a converter
-            file_name = self._parameters["output_files"][0]
-            if ".mdt" not in file_name[-5:]:
-                file_name += ".mdt"
-        else:  # job is an analysis
-            if "MDAFormat" in self._parameters["output_files"][1]:
-                file_name = self._parameters["output_files"][0]
-                if ".mda" not in file_name[-5:]:
-                    file_name += ".mda"
+        file_name = self.expected_output()
         if success:
             if self._load_afterwards:
                 self.for_loading.emit(file_name)
@@ -196,6 +186,8 @@ class JobEntry(Handler, QObject):
                 if ".mda" not in file_name[-5:]:
                     file_name += ".mda"
                 return file_name
+            else:
+                return self._parameters["output_files"][0]
 
     @Slot(int)
     def on_started(self, target_steps: int):

@@ -377,11 +377,14 @@ class Action(QWidget):
                 self._parent_tab.get_path(self._job_name + "_script")
             )
         result, ftype = QFileDialog.getSaveFileName(
-            self, "Save job as a Python script", currentpath, "Python script (*.py)"
+            self,
+            "Save job as a Python script",
+            str(currentpath),
+            "Python script (*.py)",
         )
         if result == "":
             return None
-        path = PurePath(os.path.split(result))
+        path = PurePath(os.path.split(result)[0])
         try:
             cname = self._job_name
         except:

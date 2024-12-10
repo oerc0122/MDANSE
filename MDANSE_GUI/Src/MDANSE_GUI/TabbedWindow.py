@@ -59,9 +59,6 @@ class TabbedWindow(QMainWindow):
         QMainWindow - the base class.
     """
 
-    file_name_for_loading = Signal(str)
-    converter_name_for_dialog = Signal(str)
-
     def __init__(
         self,
         *args,
@@ -187,8 +184,6 @@ class TabbedWindow(QMainWindow):
         # self._toolBar.setMovable(True)
         self._toolBar.setObjectName("main toolbar")
         valid_keys = [
-            # ('load', self.loadTrajectory),
-            # ('plus', self.loadTrajectory),
             ("periodic_table", self.launchPeriodicTable),
             ("element", self.launchElementsEditor),
             ("units", self.launchUnitsEditor),
@@ -236,18 +231,6 @@ class TabbedWindow(QMainWindow):
             dialog.activateWindow()
         else:
             dialog.show()
-
-    @Slot()
-    def loadTrajectory(self):
-        fname = QFileDialog.getOpenFileName(
-            self,
-            "Load an MD trajectory",
-            str(self.workdir),
-            "MDT files (*.mdt);;HDF5 files (*.h5 *.hdf);;All files (*)",
-        )
-        LOG.info(fname)
-        if len(fname[0]) > 0:
-            self.file_name_for_loading.emit(str(PurePath(fname[0])))
 
     @Slot(bool)
     def invertToolbar(self, dark=False):

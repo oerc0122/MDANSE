@@ -383,6 +383,7 @@ class StructuredSession(QObject):
     def protect_filename(self, some_filename: str):
         new_filename = PurePath(os.path.abspath(some_filename))
         self._reserved_filenames.append(new_filename)
+        print(self._reserved_filenames)
 
     @Slot(str)
     def free_filename(self, some_filename: str):
@@ -390,6 +391,7 @@ class StructuredSession(QObject):
         if filename in self._reserved_filenames:
             index = self._reserved_filenames.index(filename)
             self._reserved_filenames.pop(index)
+        print(self._reserved_filenames)
 
     def main_settings(self):
         return self._configs[self._main_config_name]

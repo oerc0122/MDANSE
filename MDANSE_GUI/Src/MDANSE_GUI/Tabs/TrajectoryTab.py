@@ -59,7 +59,7 @@ class TrajectoryTab(GeneralTab):
         )
         for fname in fnames[0]:
             self.load_trajectory(PurePath(fname))
-            last_path = PurePath(os.path.split(fname)[0])
+            last_path = str(PurePath(os.path.split(fname)[0]))
         if fnames[0]:
             self.set_path("trajectory", str(PurePath(last_path)))
             self._session.save()

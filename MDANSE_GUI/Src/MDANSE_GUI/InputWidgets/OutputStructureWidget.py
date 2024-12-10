@@ -49,6 +49,8 @@ class OutputStructureWidget(WidgetBase):
         except:
             guess_name = str(PurePath(default_value[0]))
             LOG.error("It was not possible to get the job name from the parent")
+        else:
+            self._session = parent._parent_tab._session
         self.file_association = "Output file name (*)"
         self._value = default_value
         self._field = QLineEdit(str(guess_name), self._base)
@@ -114,6 +116,7 @@ class OutputStructureWidget(WidgetBase):
             self.updateValue()
 
     def get_widget_value(self):
+        self._configurator._forbidden_files = self._session.reserved_filenames()
         filename = self._field.text()
         if len(filename) < 1:
             filename = self._default_value[0]
