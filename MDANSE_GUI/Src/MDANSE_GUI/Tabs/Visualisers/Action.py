@@ -83,6 +83,8 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "PartialChargeConfigurator": PartialChargeWidget,
     "UnitCellConfigurator": UnitCellWidget,
     "MDAnalysisTimeStepConfigurator": MDAnalysisTimeStepWidget,
+    "MDTrajTrajectoryFileConfigurator": InputFileWidget,
+    "MDTrajTopologyFileConfigurator": InputFileWidget,
 }
 
 
