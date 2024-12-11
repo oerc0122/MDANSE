@@ -489,9 +489,16 @@ class TrajectoryWriter:
                 next_index += 1
             else:
                 break
+        properties["dummy"] = 0
+        if symbol == "Du":
+            properties["dummy"] = 1
+        if "element" in properties.keys():
+            if properties["element"] == "dummy":
+                properties["dummy"] = 1
         new_labels = [str(x) for x in properties.keys()]
         if ptypes is None:
             ptypes = ATOMS_DATABASE._properties
+        ptypes["dummy"] = "int"
         for label in new_labels:
             if label.encode("utf-8") not in label_dataset:
                 label_dataset[next_index] = label

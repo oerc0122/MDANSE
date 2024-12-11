@@ -78,8 +78,13 @@ def select_dummy(
         for atm in system.atom_list:
             if atm in dummy_list:
                 return True
+            elif trajectory.get_atom_property(atm, "dummy"):
+                return True
         return False
     else:
+        for atm in system._unique_elements:
+            if trajectory.get_atom_property(atm, "dummy"):
+                dummy_list.append(atm)
         return set(
             [
                 index

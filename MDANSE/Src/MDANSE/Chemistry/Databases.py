@@ -609,6 +609,12 @@ class AtomsDatabase(_Database):
         try:
             return self._data[symbol][property]
         except KeyError:
+            if property == "dummy":
+                if symbol == "Du":
+                    return 1
+                if self._data[symbol]["element"] == "dummy":
+                    return 1
+                return 0
             return None
 
     def get_property_dict(self, symbol: str) -> Dict[str, Any]:

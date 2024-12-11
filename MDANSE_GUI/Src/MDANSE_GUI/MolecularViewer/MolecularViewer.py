@@ -643,7 +643,7 @@ class MolecularViewer(QtWidgets.QWidget):
         ).astype(np.float32)
         self.du_log = np.array(
             [
-                self._element_database.get_atom_property(at, "element") != "dummy"
+                self._element_database.get_atom_property(at, "dummy") == 0
                 for at in self._reader.atom_types
             ]
         )
@@ -651,7 +651,7 @@ class MolecularViewer(QtWidgets.QWidget):
             [
                 i
                 for i, at in enumerate(self._reader.atom_types)
-                if self._element_database.get_atom_property(at, "element") != "dummy"
+                if self._element_database.get_atom_property(at, "dummy") == 0
             ]
         )
         self.covs = np.array(

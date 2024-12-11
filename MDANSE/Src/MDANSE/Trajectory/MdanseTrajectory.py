@@ -426,10 +426,18 @@ class MdanseTrajectory:
             return ATOMS_DATABASE.get_atom_property(symbol, property)
         elif symbol not in self._h5_file["/atom_database"]:
             return ATOMS_DATABASE.get_atom_property(symbol, property)
-        index = np.where(
+        temp = np.where(
             self._h5_file["/atom_database/property_labels"][:]
             == property.encode("utf-8")
-        )[0].flatten()[0]
+        )[0]
+        if len(temp) == 0:
+            if property == "dummy":
+                return ATOMS_DATABASE.get_atom_property(symbol, property)
+            else:
+                raise KeyError(
+                    f"Property {property} is not in the trajectory's internal database."
+                )
+        index = temp.flatten()[0]
         data_type = self._h5_file["/atom_database/property_types"][index]
         value = self._h5_file[f"/atom_database/{symbol}"][index]
         if data_type == b"int":
