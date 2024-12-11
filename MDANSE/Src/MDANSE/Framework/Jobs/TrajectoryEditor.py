@@ -130,12 +130,11 @@ class TrajectoryEditor(IJob):
             conf = self.configuration["trajectory"]["instance"].configuration(
                 self.configuration["frames"]["value"][0]
             )
-            conf = conf.contiguous_configuration()
             coords = conf.coordinates[indices]
             if conf.is_periodic:
                 com_conf = PeriodicRealConfiguration(
                     new_chemical_system,
-                    coords[self._indices],
+                    coords,
                     conf.unit_cell,
                 )
             else:

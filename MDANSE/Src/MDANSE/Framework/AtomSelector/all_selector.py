@@ -40,4 +40,15 @@ def select_all(
     if check_exists:
         return True
     else:
-        return set(system._atom_indices)
+        dummy_list = []
+        atom_list = system.atom_list
+        for atm in system._unique_elements:
+            if trajectory.get_atom_property(atm, "dummy"):
+                dummy_list.append(atm)
+        return set(
+            [
+                index
+                for index in system._atom_indices
+                if atom_list[index] not in dummy_list
+            ]
+        )

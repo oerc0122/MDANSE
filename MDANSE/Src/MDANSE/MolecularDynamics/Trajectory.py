@@ -384,6 +384,10 @@ def create_average_atom(atom_dictionary: Dict[str, int], database: Trajectory):
             else:
                 total += converted * entry[1]
         values[property] = total
+    is_dummy = 1
+    for element_name, _ in atom_dictionary.items():
+        is_dummy = is_dummy and database.get_atom_property(element_name, "dummy")
+    values["dummy"] = is_dummy
     return values
 
 

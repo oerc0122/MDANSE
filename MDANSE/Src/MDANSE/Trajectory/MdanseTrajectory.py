@@ -432,7 +432,13 @@ class MdanseTrajectory:
         )[0]
         if len(temp) == 0:
             if property == "dummy":
-                return ATOMS_DATABASE.get_atom_property(symbol, property)
+                try:
+                    return ATOMS_DATABASE.get_atom_property(symbol, property)
+                except KeyError:
+                    if (
+                        "_" in symbol
+                    ):  # this is most likely an artificial atom from a molecule
+                        return 0  # the molecule atoms are not dummy
             else:
                 raise KeyError(
                     f"Property {property} is not in the trajectory's internal database."
