@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import operator
+
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.AtomSelector import Selector
 
