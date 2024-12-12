@@ -27,7 +27,7 @@ class Infrared(IJob):
 
     enabled = True
 
-    label = "Dipole AutoCorrelation Function"
+    label = "Infrared Spectrum"
 
     category = (
         "Analysis",
