@@ -23,7 +23,7 @@ from MDANSE import PLATFORM
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 
 
-class CoordinateFileConfigurator(IConfigurator):
+class MDAnalysisCoordinateFileConfigurator(IConfigurator):
 
     _default = ("", "AUTO")
 
@@ -48,7 +48,11 @@ class CoordinateFileConfigurator(IConfigurator):
         if type(values) is str:
             if values:
                 try:
-                    values = ast.literal_eval(values)
+                    # some issues when \ is used in the path as this
+                    # can be interpreted as an escape character by
+                    # literal_eval, on windows we can use \ or / so lets
+                    # just swap them here
+                    values = ast.literal_eval(values.replace("\\", "/"))
                 except (SyntaxError, ValueError) as e:
                     self.error_status = f"Unable to evaluate string: {e}"
                     return

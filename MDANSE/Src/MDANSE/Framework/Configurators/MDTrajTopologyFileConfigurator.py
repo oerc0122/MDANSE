@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Optional
+import traceback
 from pathlib import Path
 
 import mdtraj as md
@@ -24,18 +26,52 @@ from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
 
+    def configure(self, value: Optional[str]):
+        """
+        Parameters
+        ----------
+        value : str or None
+            The path of the MDTraj topology file can be None if
+            topology information is contained in the trajectory files.
+        """
+        if not self._configurable[self._dependencies["trajectory_files"]].valid:
+            self.error_status = "Trajectory file not valid"
+            return
+
+        if not value:
+            self["filename"] = value
+
+            extension = "".join(
+                Path(
+                    self._configurable[self._dependencies["trajectory_files"]][
+                        "filename"
+                    ]
+                ).suffixes
+            )[1:]
+            supported = list(i[1:] for i in _TOPOLOGY_EXTS)
+            if extension not in supported:
+                self.error_status = (
+                    f"Trajectory file does not contain topology information. "
+                    f"File '{extension}' not support should be one of the following: {supported}"
+                )
+                return
+
+            self.error_status = "OK"
+            try:
+                self.parse()
+            except Exception as e:
+                self.error_status = f"File parsing error {e}: {traceback.format_exc()}"
+            return
+
+        else:
+            extension = "".join(Path(value).suffixes)[1:]
+            supported = list(i[1:] for i in _TOPOLOGY_EXTS)
+            if extension not in supported:
+                self.error_status = f"File '{extension}' not support should be one of the following: {supported}"
+                return
+            super().configure(value)
+
     def parse(self) -> None:
-        extension = "".join(Path(self["value"]).suffixes)[1:]
-
-        supported = list(i[1:] for i in _TOPOLOGY_EXTS)
-        if extension not in supported:
-            raise ValueError(
-                f"File '{extension}' not support should be one of the following: {supported}"
-            )
-
-        if not self._configurable[self._dependencies["trajectory_files"]]._valid:
-            raise RuntimeError(f"Trajectory file not valid")
-
         trajectory_file = self._configurable[self._dependencies["trajectory_files"]][
             "filename"
         ]
@@ -54,7 +90,11 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
         labels = []
         for at in self.atoms:
             label = AtomLabel(
-                at.name, symbol=at.element.symbol, residue=at.residue.name
+                at.name,
+                symbol=at.element.symbol,
+                residue=at.residue.name,
+                number=at.element.number,
+                mass=at.element.mass,
             )
             if label not in labels:
                 labels.append(label)

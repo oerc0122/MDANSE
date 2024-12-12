@@ -21,10 +21,10 @@ from qtpy.QtWidgets import QFileDialog
 from qtpy.QtCore import Slot
 
 from MDANSE.MLogging import LOG
-from .TopologyFileWidget import TopologyFileWidget
+from .MDAnalysisTopologyFileWidget import MDAnalysisTopologyFileWidget
 
 
-class CoordinateFileWidget(TopologyFileWidget):
+class MDAnalysisCoordinateFileWidget(MDAnalysisTopologyFileWidget):
 
     def __init__(self, *args, file_dialog=QFileDialog.getOpenFileNames, **kwargs):
         super().__init__(

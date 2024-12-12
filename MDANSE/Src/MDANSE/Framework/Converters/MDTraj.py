@@ -51,8 +51,8 @@ class MDTraj(Converter):
         "MDTrajTopologyFileConfigurator",
         {
             "wildcard": "All files (*)",
-            "default": "INPUT_FILENAME",
-            "label": "Topology file",
+            "default": "",
+            "label": "Topology file (optional)",
             "dependencies": {"trajectory_files": "trajectory_files"},
         },
     )
@@ -101,6 +101,8 @@ class MDTraj(Converter):
                 at.name,
                 residue=at.residue.name,
                 symbol=at.element.symbol,
+                number=at.element.number,
+                mass=at.element.mass,
             )
             self._chemical_system.add_chemical_entity(
                 Atom(symbol=element, name=at.name)
@@ -155,11 +157,16 @@ class MDTraj(Converter):
         #  there is a discussion about this on GitHub
         #  (https://github.com/mdtraj/mdtraj/issues/1824).
         #  It doesn't look like they have any plans to add this but if
-        #  they change there minds then we should update our code to
+        #  they change their minds then we should update our code to
         #  support this.
 
+        if self.numberOfSteps == 1:
+            time = 0
+        else:
+            time = index * self.traj.timestep
+
         self._trajectory.dump_configuration(
-            index * self.traj.timestep,
+            time,
             units={
                 "time": "ps",
                 "unit_cell": "nm",

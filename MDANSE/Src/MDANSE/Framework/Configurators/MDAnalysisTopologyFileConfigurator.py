@@ -19,7 +19,7 @@ from MDANSE.Framework.AtomMapping import AtomLabel
 from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 
-class TopologyFileConfigurator(FileWithAtomDataConfigurator):
+class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
 
     _default = ("", "AUTO")
 
