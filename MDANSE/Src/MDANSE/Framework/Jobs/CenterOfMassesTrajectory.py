@@ -15,7 +15,6 @@
 #
 
 import collections
-from typing import Dict
 
 import numpy as np
 
@@ -26,7 +25,7 @@ from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
 )
-from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
+from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 
 class CenterOfMassesTrajectory(IJob):
@@ -64,7 +63,8 @@ class CenterOfMassesTrajectory(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-            }
+            },
+            "default": "molecule",
         },
     )
     settings["output_files"] = (

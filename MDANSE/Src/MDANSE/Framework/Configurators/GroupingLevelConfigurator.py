@@ -21,40 +21,6 @@ from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
 )
 
-LEVELS = collections.OrderedDict()
-LEVELS["atom"] = {
-    "atom": 0,
-    "atomcluster": 0,
-    "molecule": 0,
-    "nucleotidechain": 0,
-    "peptidechain": 0,
-    "protein": 0,
-}
-LEVELS["residue"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 1,
-    "peptidechain": 1,
-    "protein": 1,
-}
-LEVELS["chain"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 2,
-    "peptidechain": 2,
-    "protein": 2,
-}
-LEVELS["molecule"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 2,
-    "peptidechain": 2,
-    "protein": 2,
-}
-
 
 class GroupingLevelConfigurator(SingleChoiceConfigurator):
     """
@@ -83,11 +49,12 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         :param choices: the level of granularities allowed for the input value. If None all levels are allowed.
         :type choices: one of ['atom','group','residue','chain','molecule'] or None
         """
+        usual_choices = ["atom", "molecule", "group"]
 
         if choices is None:
-            choices = list(LEVELS.keys())
+            choices = usual_choices
         else:
-            choices = list(set(LEVELS.keys()).intersection(choices))
+            choices += [x for x in usual_choices if x not in choices]
 
         SingleChoiceConfigurator.__init__(self, name, choices=choices, **kwargs)
 
