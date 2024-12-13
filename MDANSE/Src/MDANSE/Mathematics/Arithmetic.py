@@ -13,29 +13,49 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import List, Dict, Tuple
 import itertools
 
 import numpy as np
 
 
-def get_weights(props, contents, dim):
+def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
+    """Calculates the scaling factor to be applied to output datasets
+    of an analysis.
+
+    Parameters
+    ----------
+    props : Dict[str, float]
+        Dictionary of values of an atom property for a selected object, averaged over atoms in that object
+    contents : Dict[str, int]
+        Dictionary of numbers of atoms in an object
+    dim : int
+        number of atom types in the label of the output datasets (e.g. 1 for "O", 2 for "CuCu")
+
+    Returns
+    -------
+    Tuple(Dict[Tuple[str], float], float)
+        Dictionary of scaling factors per dataset key, and a sum of all the factors
+    """
     normFactor = None
 
     weights = {}
 
     cartesianProduct = set(itertools.product(list(props.keys()), repeat=dim))
     for elements in cartesianProduct:
-        n = np.prod([contents[el] for el in elements])
-        p = np.prod(np.array([props[el] for el in elements]), axis=0)
+        atom_number_product = np.prod([contents[el] for el in elements])
+        property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
 
-        fact = n * p
+        factor = atom_number_product * property_product
+        # E.g. for property b_coh, 5 Cu atoms and dim=2
+        # factor = 5*5 * b_coh(Cu)*b_coh(Cu)
 
-        weights[elements] = np.float64(np.copy(fact))
+        weights[elements] = np.float64(np.copy(factor))
 
         if normFactor is None:
-            normFactor = fact
+            normFactor = factor
         else:
-            normFactor += fact
+            normFactor += factor
 
     if abs(normFactor) > 0.0:  # if normFactor is 0, all weights are 0 too.
         for k in list(weights.keys()):
@@ -44,8 +64,40 @@ def get_weights(props, contents, dim):
     return weights, normFactor
 
 
-def weight(props, values, contents, dim, key, symmetric=True, update_partials=False):
-    weights = get_weights(props, contents, dim)[0]
+def weight(
+    props: Dict[str, float],
+    values: Dict[str, np.ndarray],
+    contents: Dict[str, int],
+    dim: int,
+    key: str,
+    symmetric: bool = True,
+    update_partials: bool = False,
+):
+    """_summary_
+
+    Parameters
+    ----------
+    props : Dict[str, float]
+        Dictionary of values of an atom property for a selected object, averaged over atoms in that object
+    values : Dict[str, np.ndarray]
+        Dictionary of data arrays containing analysis results.
+    contents : Dict[str, int]
+        Dictionary of numbers of atoms in an object
+    dim : int
+        number of atom types in the label of the output datasets (e.g. 1 for "O", 2 for "CuCu")
+    key : str
+        A string data set name with formatting elements (placeholders for chemical element labels)
+    symmetric : bool, optional
+        do not generate results for the same elements in a different sequence, by default True
+    update_partials : bool, optional
+        Partial results will be rescaled if this is true, by default False
+
+    Returns
+    -------
+    np.ndarray
+        total sum of all the component arrays scaled by their weights
+    """
+    weights, _ = get_weights(props, contents, dim)
     weightedSum = None
     matches = dict([(key % k, k) for k in list(weights.keys())])
 

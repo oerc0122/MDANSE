@@ -106,20 +106,24 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         self.error_status = "OK"
 
     def get_weights(self):
-        ascfg = self._configurable[self._dependencies["atom_selection"]]
+        atom_selection_configurator = self._configurable[
+            self._dependencies["atom_selection"]
+        ]
 
         weights = {}
-        for i in range(ascfg["selection_length"]):
-            name = ascfg["names"][i]
-            for el in ascfg["elements"][i]:
-                p = ATOMS_DATABASE.get_atom_property(el, self["property"])
+        for i in range(atom_selection_configurator["selection_length"]):
+            name = atom_selection_configurator["names"][i]
+            for element in atom_selection_configurator["elements"][i]:
+                property = ATOMS_DATABASE.get_atom_property(element, self["property"])
                 if name in weights:
-                    weights[name] += p
+                    weights[name] += property
                 else:
-                    weights[name] = p
+                    weights[name] = property
 
-        for k, v in list(ascfg.get_natoms().items()):
-            weights[k] /= v
+        for element, num_atoms in list(
+            atom_selection_configurator.get_natoms().items()
+        ):
+            weights[element] /= num_atoms
 
         return weights
 
