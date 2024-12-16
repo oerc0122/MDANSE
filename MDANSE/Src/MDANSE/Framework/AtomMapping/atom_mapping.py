@@ -22,12 +22,12 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 
 class AtomLabel:
 
-    def __init__(self, atm_label, **kwargs):
-        self.atm_label = atm_label
+    def __init__(self, atm_label: str, **kwargs):
+        self.atm_label = re.sub("[;=]", "", atm_label)
         self.grp_label = f""
         if kwargs:
             for k, v in kwargs.items():
-                self.grp_label += f"{k}={v};"
+                self.grp_label += f"{k}={re.sub("[;=]", "", str(v))};"
             self.grp_label = self.grp_label[:-1]
         self.mass = kwargs.get("mass", None)
         if self.mass is not None:
@@ -220,7 +220,7 @@ def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLab
     bool
         True if the mapping is valid.
     """
-    pattern = re.compile("[A-Za-z]\w*=.+(;[A-Za-z]\w*=.+)*$")
+    pattern = re.compile("[A-Za-z]\w*=[^=;]+(;[A-Za-z]\w*=[^=;]+)*$")
     if not all([pattern.match(grp_label) for grp_label in mapping.keys()]):
         return False
 

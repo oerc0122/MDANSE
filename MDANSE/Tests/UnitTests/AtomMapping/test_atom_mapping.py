@@ -145,6 +145,24 @@ def test_check_mapping_valid_as_elements_are_correct_3():
     assert check_mapping_valid(mapping, labels)
 
 
+def test_check_mapping_valid_as_elements_are_correct_4():
+    labels = [AtomLabel("label1", type="1*"), AtomLabel("C1", type="2*")]
+    mapping = {"type=1*": {"label1": "C"}, "type=2*": {"C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_valid_as_elements_are_correct_5():
+    labels = [AtomLabel("label1", mass="12"), AtomLabel("C1", mass="13")]
+    mapping = {"mass=12": {"label1": "C"}, "mass=13": {"C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_valid_as_elements_are_correct_6():
+    labels = [AtomLabel("label=1", molecule="mol=1"), AtomLabel("C=1", molecule="mol=2")]
+    mapping = {"molecule=mol1": {"label1": "C"}, "molecule=mol2": {"C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
 def test_check_mapping_not_valid_as_elements_not_correct():
     labels = [
         AtomLabel("label1", molecule="mol1"),
