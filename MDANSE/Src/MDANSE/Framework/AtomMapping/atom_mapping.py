@@ -39,6 +39,9 @@ class AtomLabel:
         if self.grp_label == other.grp_label and self.atm_label == other.atm_label:
             return True
 
+    def __hash__(self):
+        return hash((self.atm_label, self.grp_label, self.mass))
+
 
 def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
     """From an input atom label find a match to an element in the atom
@@ -179,6 +182,29 @@ def fill_remaining_labels(
             mapping[grp_label][atm_label] = guess_element(atm_label, label.mass)
 
 
+def mapping_to_labels(mapping: dict[str, dict[str, str]]) -> list[AtomLabel]:
+    """Converts the mapping back into a list of labels.
+
+    Parameters
+    ----------
+    mapping : dict[str, dict[str, str]]
+        The atom mapping dictionary.
+
+    Returns
+    -------
+    list[AtomLabel]
+        List of atom labels from the mapping.
+    """
+    labels = []
+    for grp_label, atm_map in mapping.items():
+        kwargs = {}
+        for k, v in [i.split("=") for i in grp_label.split(";")]:
+            kwargs[k] = v
+        for atm_label in atm_map.keys():
+            labels.append(AtomLabel(atm_label, **kwargs))
+    return labels
+
+
 def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLabel]):
     """Given a list of labels check that the mapping is valid.
 
@@ -194,11 +220,17 @@ def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLab
     bool
         True if the mapping is valid.
     """
+    pattern = re.compile("[A-Za-z]\w*=\w+(;[A-Za-z]\w*=\w+)*$")
+    if not all([pattern.match(grp_label) for grp_label in mapping.keys()]):
+        return False
+
+    if set(mapping_to_labels(mapping)) != set(labels):
+        return False
+
     for label in labels:
         grp_label = label.grp_label
         atm_label = label.atm_label
-        if grp_label not in mapping or atm_label not in mapping[grp_label]:
-            return False
         if mapping[grp_label][atm_label] not in ATOMS_DATABASE:
             return False
+
     return True
