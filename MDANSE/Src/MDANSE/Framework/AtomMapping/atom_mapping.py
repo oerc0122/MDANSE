@@ -220,7 +220,7 @@ def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLab
     bool
         True if the mapping is valid.
     """
-    pattern = re.compile("[A-Za-z]\w*=\w+(;[A-Za-z]\w*=\w+)*$")
+    pattern = re.compile("[A-Za-z]\w*=.+(;[A-Za-z]\w*=.+)*$")
     if not all([pattern.match(grp_label) for grp_label in mapping.keys()]):
         return False
 
