@@ -214,6 +214,15 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing s(q,f) in dcsf input file"
                 )
+            if (
+                "scaling_factor"
+                not in self.configuration["dcsf_input_file"]["instance"][
+                    "s(q,f)_{}{}".format(*pair)
+                ].attrs.keys()
+            ):
+                raise NeutronDynamicTotalStructureFactorError(
+                    "This DCSF file was created before the new scaling scheme. Please calculate it again."
+                )
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             if (
@@ -229,6 +238,15 @@ class NeutronDynamicTotalStructureFactor(IJob):
             ):
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing s(q,f) in disf input file"
+                )
+            if (
+                "scaling_factor"
+                not in self.configuration["disf_input_file"]["instance"][
+                    "s(q,f)_{}".format(element)
+                ].attrs.keys()
+            ):
+                raise NeutronDynamicTotalStructureFactorError(
+                    "This DISF file was created before the new scaling scheme. Please calculate it again."
                 )
 
         for element in self.configuration["atom_selection"]["unique_names"]:
@@ -405,20 +423,24 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Compute coherent functions and structure factor
         for pair in self._elementsPairs:
-            if self._input_dcsf_weight == "equal":
-                bi = ATOMS_DATABASE.get_atom_property(pair[0], "b_coherent")
-                bj = ATOMS_DATABASE.get_atom_property(pair[1], "b_coherent")
-            elif self._input_dcsf_weight == "b_coherent":
-                bi = bj = 1.0
-            else:
-                LOG.error("Input DCSF weights should be b_coherent or equal")
-                return
+            bi = ATOMS_DATABASE.get_atom_property(pair[0], "b_coherent")
+            bj = ATOMS_DATABASE.get_atom_property(pair[1], "b_coherent")
+            ni = nAtomsPerElement[pair[0]]
+            nj = nAtomsPerElement[pair[1]]
+            ci = ni / nTotalAtoms
+            cj = nj / nTotalAtoms
 
             self._outputData["f(q,t)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["f(q,t)_coh_%s%s" % pair][:] * bi * bj
+                self._outputData["f(q,t)_coh_%s%s" % pair][:]
+                * np.sqrt(ci * cj)
+                * bi
+                * bj
             )
             self._outputData["s(q,f)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["s(q,f)_coh_%s%s" % pair][:] * bi * bj
+                self._outputData["s(q,f)_coh_%s%s" % pair][:]
+                * np.sqrt(ci * cj)
+                * bi
+                * bj
             )
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
                 self._outputData["f(q,t)_coh_total"][:] += self._outputData[
@@ -436,20 +458,16 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 )
 
         # Compute incoherent functions and structure factor
-        for element, _ in nAtomsPerElement.items():
-            if self._input_disf_weight == "equal":
-                bi = ATOMS_DATABASE.get_atom_property(element, "b_incoherent2")
-            elif self._input_disf_weight == "b_incoherent2":
-                bi = 1.0
-            else:
-                LOG.error("Input DCSF weights should be b_incoherent2 or equal")
-                return
+        for element, ni in nAtomsPerElement.items():
+            bi = ATOMS_DATABASE.get_atom_property(element, "b_incoherent2")
+            ni = nAtomsPerElement[element]
+            ci = ni / nTotalAtoms
 
             self._outputData["f(q,t)_inc_weighted_%s" % element][:] = (
-                self._outputData["f(q,t)_inc_%s" % element][:] * bi
+                self._outputData["f(q,t)_inc_%s" % element][:] * ci * bi
             )
             self._outputData["s(q,f)_inc_weighted_%s" % element][:] = (
-                self._outputData["s(q,f)_inc_%s" % element][:] * bi
+                self._outputData["s(q,f)_inc_%s" % element][:] * ci * bi
             )
 
             self._outputData["f(q,t)_inc_total"][:] += self._outputData[

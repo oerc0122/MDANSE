@@ -249,32 +249,36 @@ class DynamicCoherentStructureFactor(IJob):
         """
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
+
+        weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 2)
+        assign_weights(self._outputData, weight_dict, "f(q,t)_%s%s")
+        assign_weights(self._outputData, weight_dict, "s(q,f)_%s%s")
         for pair in self._elementsPairs:
             ni = nAtomsPerElement[pair[0]]
             nj = nAtomsPerElement[pair[1]]
-            self._outputData["f(q,t)_%s%s" % pair][:] /= np.sqrt(ni * nj)
+            extra_scaling = 1.0 / np.sqrt(ni * nj)
+            self._outputData["f(q,t)_%s%s" % pair].scaling_factor *= extra_scaling
             self._outputData["s(q,f)_%s%s" % pair][:] = get_spectrum(
                 self._outputData["f(q,t)_%s%s" % pair],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
-        weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 2)
-        assign_weights(self._outputData, weight_dict, "f(q,t)_%s%s")
-        assign_weights(self._outputData, weight_dict, "s(q,f)_%s%s")
+            self._outputData["s(q,f)_%s%s" % pair].scaling_factor *= extra_scaling
+
         self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "f(q,t)_%s%s",
-            update_partials=True,
+            update_partials=False,
         )
 
         self._outputData["s(q,f)_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "s(q,f)_%s%s",
-            update_partials=True,
+            update_partials=False,
         )
 
         self._outputData.write(
