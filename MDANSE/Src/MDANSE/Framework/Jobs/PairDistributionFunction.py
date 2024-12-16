@@ -17,7 +17,7 @@
 import numpy as np
 
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
-from MDANSE.Mathematics.Arithmetic import weight, get_weights
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 class PairDistributionFunction(DistanceHistogram):
@@ -151,7 +151,10 @@ class PairDistributionFunction(DistanceHistogram):
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
         for i in ["_intra", "_inter", ""]:
-            pdf = weight(
+            assign_weights(
+                self._outputData, weight_dict, "pdf{}_%s%s".format(i if i else "_total")
+            )
+            pdf = weighted_sum(
                 self._outputData,
                 weight_dict,
                 "pdf{}_%s%s".format(i if i else "_total"),

@@ -21,7 +21,7 @@ import numpy as np
 from MDANSE.Extensions import van_hove
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
-from MDANSE.Mathematics.Arithmetic import weight, get_weights
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 class VanHoveFunctionDistinct(IJob):
@@ -321,7 +321,12 @@ class VanHoveFunctionDistinct(IJob):
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
         for i in ["_intra", "_inter", ""]:
-            pdf = weight(
+            assign_weights(
+                self._outputData,
+                weight_dict,
+                "g(r,t){}_%s%s".format(i if i else "_total"),
+            )
+            pdf = weighted_sum(
                 self._outputData,
                 weight_dict,
                 "g(r,t){}_%s%s".format(i if i else "_total"),

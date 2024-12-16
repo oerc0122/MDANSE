@@ -45,11 +45,11 @@ class Platform(object, metaclass=abc.ABCMeta):
         """
         Create a new instance of Platform class.
 
-        :param cls: the class to instanciate.
+        :param cls: the class to instantiate.
         :type cls: class
         """
 
-        # Case of the first instanciation.
+        # Case of the first instantiation.
         if cls.__instance is None:
             cls.__instance = super(Platform, cls).__new__(cls, *args, **kwargs)
 

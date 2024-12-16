@@ -66,12 +66,11 @@ def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
     return weights
 
 
-def weight(
+def assign_weights(
     values: Dict[str, np.ndarray],
     weights: Dict[str, float],
     key: str,
     symmetric: bool = True,
-    update_partials: bool = False,
 ):
     """_summary_
 
@@ -97,22 +96,58 @@ def weight(
     matches = dict([(key % k, k) for k in list(weights.keys()) if k not in ["sum"]])
     dim = key.count("%s")
 
-    for k, val in values.items():
+    for k in values.keys():
         if k not in matches:
             continue
 
         if symmetric:
             permutations = set(itertools.permutations(matches[k], r=dim))
-            w = sum([weights.pop(p) for p in permutations])
+            w = sum([weights[p] for p in permutations])
         else:
-            w = weights.pop(matches[k])
+            w = weights[matches[k]]
+
+        values[k].scaling_factor *= w
+
+    return weightedSum
+
+
+def weighted_sum(
+    values: Dict[str, np.ndarray],
+    weights: Dict[str, float],
+    key: str,
+    update_partials: bool = False,
+):
+    """_summary_
+
+    Parameters
+    ----------
+    values : Dict[str, np.ndarray]
+        Dictionary of data arrays containing analysis results.
+    weights : Dict[str, float]
+        Dictionary of scaling factors per dataset
+    key : str
+        A string data set name with formatting elements (placeholders for chemical element labels)
+    update_partials : bool, optional
+        Partial results will be rescaled if this is true, by default False
+
+    Returns
+    -------
+    np.ndarray
+        total sum of all the component arrays scaled by their weights
+    """
+    weightedSum = None
+    matches = dict([(key % k, k) for k in list(weights.keys()) if k not in ["sum"]])
+
+    for k, val in values.items():
+        if k not in matches:
+            continue
 
         if weightedSum is None:
-            weightedSum = w * val
+            weightedSum = val * val.scaling_factor
         else:
-            weightedSum += w * val
+            weightedSum += val * val.scaling_factor
 
         if update_partials:
-            values[k][:] = w * val
+            values[k][:] = val * val.scaling_factor
 
     return weightedSum

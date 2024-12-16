@@ -60,6 +60,7 @@ class SingleDataset:
     def __init__(self, name: str, source: "h5py.File"):
         self._name = name
         self._filename = source.filename
+        self._use_scaling = True
         self._curves = {}
         self._curve_labels = {}
         self._planes = {}
@@ -85,6 +86,11 @@ class SingleDataset:
         self._data_unit = source[name].attrs["units"]
         self._n_dim = len(self._data.shape)
         self._axes_tag = source[name].attrs["axis"]
+        self._scaling_factor = 1.0
+        try:
+            self._scaling_factor = float(source[name].attrs["scaling_factor"])
+        except KeyError:
+            pass
         self._axes = {}
         self._axes_units = {}
         for ax_number, axis_name in enumerate(self._axes_tag.split("|")):
@@ -145,6 +151,12 @@ class SingleDataset:
                 best_axis = aname
         return best_unit, best_axis
 
+    @property
+    def data(self):
+        if self._use_scaling:
+            return self._data * self._scaling_factor
+        return self._data
+
     def curves_vs_axis(self, axis_unit: str) -> List[np.ndarray]:
         self._curves = {}
         self._curve_labels = {}
@@ -173,10 +185,21 @@ class SingleDataset:
         for n in range(len(indices)):
             if self._data_limits is not None:
                 if n in self._data_limits:
-                    self._curves[tuple(indices[n])] = self._data[slicers[n]].squeeze()
+                    if self._use_scaling:
+                        temp_data = (
+                            self._data[slicers[n]].squeeze() * self._scaling_factor
+                        )
+                    else:
+                        temp_data = self._data[slicers[n]].squeeze()
+                    self._curves[tuple(indices[n])] = temp_data
                     self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
             else:
-                self._curves[tuple(indices[n])] = self._data[slicers[n]].squeeze()
+                if self._use_scaling:
+                    self._curves[tuple(indices[n])] = (
+                        self._data[slicers[n]].squeeze() * self._scaling_factor
+                    )
+                else:
+                    self._curves[tuple(indices[n])] = self._data[slicers[n]].squeeze()
                 self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
         return self._curves
         # slicer = tuple(slicer)
@@ -194,7 +217,7 @@ class SingleDataset:
         if total_ndim == 1:
             return
         elif total_ndim == 2:
-            return self._data
+            return self.data
         data_shape = self._data.shape
         number_of_planes = data_shape[axis_number]
         perpendicular_axis = None
@@ -213,7 +236,10 @@ class SingleDataset:
                     fixed_argument = perpendicular_axis[plane_number]
                     slice_def[axis_number] = plane_number
                     data = self._data[tuple(slice_def)]
-                    self._planes[plane_number] = data
+                    if self._use_scaling:
+                        self._planes[plane_number] = data * self._scaling_factor
+                    else:
+                        self._planes[plane_number] = data
                     self._plane_labels[plane_number] = (
                         f"{perpendicular_axis_name}={fixed_argument}"
                     )
@@ -221,7 +247,10 @@ class SingleDataset:
                 fixed_argument = perpendicular_axis[plane_number]
                 slice_def[axis_number] = plane_number
                 data = self._data[tuple(slice_def)]
-                self._planes[plane_number] = data
+                if self._use_scaling:
+                    self._planes[plane_number] = data * self._scaling_factor
+                else:
+                    self._planes[plane_number] = data
                 self._plane_labels[plane_number] = (
                     f"{perpendicular_axis_name}={fixed_argument}"
                 )

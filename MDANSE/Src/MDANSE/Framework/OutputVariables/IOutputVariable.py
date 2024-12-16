@@ -60,7 +60,7 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
         partial_result=False,
     ):
         """
-        Instanciate a new MDANSE output variable.
+        Instantiate a new MDANSE output variable.
 
         @param cls: the class to instantiate.
         @type cls: an OutputVariable object
@@ -96,6 +96,8 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
         obj.units = units
 
         obj.axis = axis
+
+        obj.scaling_factor = 1.0
 
         data_tags = []
         if main_result:

@@ -198,12 +198,12 @@ class DatasetFormatter:
                     [
                         dataset._axes[best_axis][: self._preview_lines]
                         * conversion_factor,
-                        dataset._data[: self._preview_lines],
+                        dataset.data[: self._preview_lines],
                     ]
                 ).T
             else:
                 temp = np.vstack(
-                    [dataset._axes[best_axis] * conversion_factor, dataset._data]
+                    [dataset._axes[best_axis] * conversion_factor, dataset.data]
                 ).T
             return header_lines, temp
 
@@ -262,7 +262,7 @@ class DatasetFormatter:
             temp = np.hstack(
                 [
                     new_axes[axis_numbers[0]][:nlines].reshape((nlines, 1)),
-                    dataset._data[:nlines, :ncols],
+                    dataset.data[:nlines, :ncols],
                 ]
             )
             temp = np.vstack(
@@ -277,7 +277,7 @@ class DatasetFormatter:
             temp = np.hstack(
                 [
                     new_axes[axis_numbers[0]].reshape((dataset._data.shape[0], 1)),
-                    dataset._data,
+                    dataset.data,
                 ]
             )
             temp = np.vstack(
@@ -332,7 +332,7 @@ class DatasetFormatter:
                 new_axes[axis_numbers[axis_number]][index]
                 for axis_number, index in enumerate(array_index)
             ]
-            yval = dataset._data[array_index]
+            yval = dataset.data[array_index]
             temp.append(xvals + [yval])
             counter += 1
         return header_lines, np.vstack(temp)

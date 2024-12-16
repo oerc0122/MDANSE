@@ -22,7 +22,7 @@ from scipy.signal import correlate
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight, get_weights
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 
 
@@ -261,14 +261,16 @@ class DynamicCoherentStructureFactor(IJob):
             )
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
-        self._outputData["f(q,t)_total"][:] = weight(
+        assign_weights(self._outputData, weight_dict, "f(q,t)_%s%s")
+        assign_weights(self._outputData, weight_dict, "s(q,f)_%s%s")
+        self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "f(q,t)_%s%s",
             update_partials=True,
         )
 
-        self._outputData["s(q,f)_total"][:] = weight(
+        self._outputData["s(q,f)_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "s(q,f)_%s%s",

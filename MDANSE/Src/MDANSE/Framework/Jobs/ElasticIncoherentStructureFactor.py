@@ -19,7 +19,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight, get_weights
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
@@ -199,7 +199,8 @@ class ElasticIncoherentStructureFactor(IJob):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
-        self._outputData["eisf_total"][:] = weight(
+        assign_weights(self._outputData, weight_dict, "eisf_%s")
+        self._outputData["eisf_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "eisf_%s",

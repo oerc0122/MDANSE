@@ -21,7 +21,7 @@ import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight, get_weights
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import (
     differentiate,
     get_spectrum,
@@ -393,26 +393,30 @@ class CurrentCorrelationFunction(IJob):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
-        jqtLongTotal = weight(
+        assign_weights(self._outputData, weight_dict, "j(q,t)_long_%s%s")
+        assign_weights(self._outputData, weight_dict, "j(q,t)_trans_%s%s")
+        assign_weights(self._outputData, weight_dict, "J(q,f)_long_%s%s")
+        assign_weights(self._outputData, weight_dict, "J(q,f)_trans_%s%s")
+        jqtLongTotal = weighted_sum(
             self._outputData,
             weight_dict,
             "j(q,t)_long_%s%s",
         )
         self._outputData["j(q,t)_long_total"][:] = jqtLongTotal
-        jqtTransTotal = weight(
+        jqtTransTotal = weighted_sum(
             self._outputData,
             weight_dict,
             "j(q,t)_trans_%s%s",
         )
         self._outputData["j(q,t)_trans_total"][:] = jqtTransTotal
 
-        sqfLongTotal = weight(
+        sqfLongTotal = weighted_sum(
             self._outputData,
             weight_dict,
             "J(q,f)_long_%s%s",
         )
         self._outputData["J(q,f)_long_total"][:] = sqfLongTotal
-        sqfTransTotal = weight(
+        sqfTransTotal = weighted_sum(
             self._outputData,
             weight_dict,
             "J(q,f)_trans_%s%s",
