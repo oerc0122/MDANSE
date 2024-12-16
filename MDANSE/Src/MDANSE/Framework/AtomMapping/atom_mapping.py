@@ -23,11 +23,12 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 class AtomLabel:
 
     def __init__(self, atm_label: str, **kwargs):
-        self.atm_label = re.sub("[;=]", "", atm_label)
+        translation = str.maketrans("", "", ";=")
+        self.atm_label = atm_label.translate(translation)
         self.grp_label = f""
         if kwargs:
             for k, v in kwargs.items():
-                self.grp_label += f"{k}={re.sub("[;=]", "", str(v))};"
+                self.grp_label += f"{k}={str(v).translate(translation)};"
             self.grp_label = self.grp_label[:-1]
         self.mass = kwargs.get("mass", None)
         if self.mass is not None:
@@ -38,6 +39,9 @@ class AtomLabel:
             AssertionError(f"{other} should be an instance of AtomLabel.")
         if self.grp_label == other.grp_label and self.atm_label == other.atm_label:
             return True
+
+    def __hash__(self):
+        return hash((self.atm_label, self.grp_label, self.mass))
 
 
 def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
@@ -221,9 +225,7 @@ def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLab
     if not all([pattern.match(grp_label) for grp_label in mapping.keys()]):
         return False
 
-    if set(
-        [(i.atm_label, i.grp_label, i.mass) for i in mapping_to_labels(mapping)]
-    ) != set([(i.atm_label, i.grp_label, i.mass) for i in labels]):
+    if set(mapping_to_labels(mapping)) != set(labels):
         return False
 
     for label in labels:

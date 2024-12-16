@@ -90,7 +90,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
         list[AtomLabel]
             An ordered list of atom labels.
         """
-        labels = []
+        labels = set()
         for at in self.atoms:
             label = AtomLabel(
                 at.name,
@@ -100,5 +100,5 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
                 mass=at.element.mass,
             )
             if label not in labels:
-                labels.append(label)
-        return labels
+                labels.add(label)
+        return list(labels)
