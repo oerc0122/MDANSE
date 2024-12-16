@@ -20,7 +20,7 @@ import numpy as np
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import weight, get_weights
 
 
 def atomic_scattering_factor(element, qvalues):
@@ -195,15 +195,11 @@ class XRayStaticStructureFactor(DistanceHistogram):
             (k, atomic_scattering_factor(k, self._outputData["q"]))
             for k in list(nAtomsPerElement.keys())
         )
-
-        xssfIntra = weight(
-            asf, self._outputData, nAtomsPerElement, 2, "xssf_intra_%s%s"
-        )
+        weight_dict = get_weights(asf, nAtomsPerElement, 2)
+        xssfIntra = weight(self._outputData, weight_dict, "xssf_intra_%s%s")
         self._outputData["xssf_intra"][:] = xssfIntra
 
-        xssfInter = weight(
-            asf, self._outputData, nAtomsPerElement, 2, "xssf_inter_%s%s"
-        )
+        xssfInter = weight(self._outputData, weight_dict, "xssf_inter_%s%s")
         self._outputData["xssf_inter"][:] = xssfInter
 
         self._outputData["xssf_total"][:] = xssfIntra + xssfInter

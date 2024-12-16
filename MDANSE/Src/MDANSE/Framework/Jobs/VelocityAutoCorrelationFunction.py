@@ -18,7 +18,7 @@ import collections
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import weight, get_weights
 from MDANSE.Mathematics.Signal import differentiate, normalize
 from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
@@ -210,8 +210,8 @@ class VelocityAutoCorrelationFunction(IJob):
             self._outputData["vacf_%s" % element] /= number
 
         weights = self.configuration["weights"].get_weights()
-
-        vacfTotal = weight(weights, self._outputData, nAtomsPerElement, 1, "vacf_%s")
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        vacfTotal = weight(self._outputData, weight_dict, "vacf_%s")
         self._outputData["vacf_total"][:] = vacfTotal
 
         if self.configuration["normalize"]["value"]:

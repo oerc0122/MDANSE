@@ -61,14 +61,14 @@ def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
         for k in list(weights.keys()):
             weights[k] /= np.float64(normFactor)
 
-    return weights, normFactor
+    weights["sum"] = normFactor
+
+    return weights
 
 
 def weight(
-    props: Dict[str, float],
     values: Dict[str, np.ndarray],
-    contents: Dict[str, int],
-    dim: int,
+    weights: Dict[str, float],
     key: str,
     symmetric: bool = True,
     update_partials: bool = False,
@@ -77,14 +77,10 @@ def weight(
 
     Parameters
     ----------
-    props : Dict[str, float]
-        Dictionary of values of an atom property for a selected object, averaged over atoms in that object
     values : Dict[str, np.ndarray]
         Dictionary of data arrays containing analysis results.
-    contents : Dict[str, int]
-        Dictionary of numbers of atoms in an object
-    dim : int
-        number of atom types in the label of the output datasets (e.g. 1 for "O", 2 for "CuCu")
+    weights : Dict[str, float]
+        Dictionary of scaling factors per dataset
     key : str
         A string data set name with formatting elements (placeholders for chemical element labels)
     symmetric : bool, optional
@@ -97,9 +93,9 @@ def weight(
     np.ndarray
         total sum of all the component arrays scaled by their weights
     """
-    weights, _ = get_weights(props, contents, dim)
     weightedSum = None
-    matches = dict([(key % k, k) for k in list(weights.keys())])
+    matches = dict([(key % k, k) for k in list(weights.keys()) if k not in ["sum"]])
+    dim = key.count("%s")
 
     for k, val in values.items():
         if k not in matches:

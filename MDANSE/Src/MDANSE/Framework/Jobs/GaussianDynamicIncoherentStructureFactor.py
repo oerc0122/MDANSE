@@ -19,7 +19,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import weight, get_weights
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MolecularDynamics.Analysis import mean_square_displacement
 from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
@@ -250,21 +250,17 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 axis=1,
             )
         weights = self.configuration["weights"].get_weights()
-
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
         self._outputData["f(q,t)_total"][:] = weight(
-            weights,
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "f(q,t)_%s",
             update_partials=True,
         )
 
         self._outputData["s(q,f)_total"][:] = weight(
-            weights,
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "s(q,f)_%s",
             update_partials=True,
         )

@@ -17,7 +17,7 @@
 import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import weight, get_weights
 from MDANSE.Mathematics.Signal import correlation, normalize
 
 
@@ -168,7 +168,8 @@ class GeneralAutoCorrelationFunction(IJob):
                     )
 
         weights = self.configuration["weights"].get_weights()
-        gacfTotal = weight(weights, self._outputData, nAtomsPerElement, 1, "gacf_%s")
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        gacfTotal = weight(self._outputData, weight_dict, "gacf_%s")
 
         self._outputData["gacf_total"][:] = gacfTotal
 

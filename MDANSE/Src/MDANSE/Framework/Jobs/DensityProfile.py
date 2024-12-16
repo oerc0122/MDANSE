@@ -21,7 +21,7 @@ import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import weight, get_weights
 
 
 class DensityProfileError(Error):
@@ -176,11 +176,11 @@ class DensityProfile(IJob):
         for element in n_atoms_per_element.keys():
             self._outputData["dp_%s" % element] += self.numberOfSteps
 
+        weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, n_atoms_per_element, 1)
         dp_total = weight(
-            self.configuration["weights"].get_weights(),
             self._outputData,
-            n_atoms_per_element,
-            1,
+            weight_dict,
             "dp_%s",
         )
 

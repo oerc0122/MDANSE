@@ -19,7 +19,7 @@ import numpy as np
 
 from MDANSE.Extensions import van_hove
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import weight, get_weights
 
 
 class VanHoveFunctionSelf(IJob):
@@ -243,19 +243,16 @@ class VanHoveFunctionSelf(IJob):
             )
 
         weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
         self._outputData["g(r,t)_total"][:] = weight(
-            weights,
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "g(r,t)_%s",
             update_partials=True,
         )
         self._outputData["4_pi_r2_g(r,t)_total"][:] = weight(
-            weights,
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "4_pi_r2_g(r,t)_%s",
             update_partials=True,
         )

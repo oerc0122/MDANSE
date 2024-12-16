@@ -18,7 +18,7 @@ import collections
 
 from MDANSE.MolecularDynamics.Analysis import mean_square_displacement
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import weight, get_weights
 from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
@@ -196,7 +196,8 @@ class MeanSquareDisplacement(IJob):
             self._outputData["msd_%s" % element] /= number
 
         weights = self.configuration["weights"].get_weights()
-        msdTotal = weight(weights, self._outputData, nAtomsPerElement, 1, "msd_%s")
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        msdTotal = weight(self._outputData, weight_dict, "msd_%s")
 
         self._outputData.add(
             "msd_total",

@@ -18,7 +18,7 @@ import collections
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import weight, get_weights
 from MDANSE.Mathematics.Signal import differentiate, get_spectrum
 from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 from MDANSE.MLogging import LOG
@@ -238,19 +238,16 @@ class DensityOfStates(IJob):
             )
 
         weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
         self._outputData["vacf_total"][:] = weight(
-            weights,
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "vacf_%s",
             update_partials=True,
         )
         self._outputData["dos_total"][:] = weight(
-            weights,
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "dos_%s",
             update_partials=True,
         )
