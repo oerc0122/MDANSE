@@ -61,7 +61,6 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
                 self.parse()
             except Exception as e:
                 self.error_status = f"File parsing error {e}: {traceback.format_exc()}"
-            return
 
         else:
             extension = "".join(Path(value).suffixes)[1:]
@@ -76,9 +75,13 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
             "filename"
         ]
         if self["filename"]:
-            self.atoms = md.load(trajectory_file, top=self["filename"]).topology.atoms
+            self.atoms = [
+                at
+                for at in md.load(trajectory_file, top=self["filename"]).topology.atoms
+            ]
+
         else:
-            self.atoms = md.load(trajectory_file).topology.atoms
+            self.atoms = [at for at in md.load(trajectory_file).topology.atoms]
 
     def get_atom_labels(self) -> list[AtomLabel]:
         """

@@ -64,7 +64,6 @@ class AtomMappingHelperDialog(QDialog):
         self._field = field
 
         self._file_widget = field_widget
-        self._file_widget.value_changed.connect(self.update_helper)
 
         self.layout = QVBoxLayout()
         buffer_0 = QWidget(self)
@@ -202,9 +201,13 @@ class AtomMappingWidget(WidgetBase):
         """
         if self._file_widget._configurator.valid:
             self.helper_button.setEnabled(True)
+            self.helper.update_helper()
+            self.helper.apply()
         else:
             self.helper_button.setEnabled(False)
-        self.helper.apply()
+            self.helper.close()
+            self.helper.clear_panel()
+            self.helper.apply()
 
     @Slot()
     def helper_dialog(self) -> None:
@@ -213,6 +216,16 @@ class AtomMappingWidget(WidgetBase):
             self.helper.close()
         else:
             self.helper.show()
+
+    def mark_error(self, error_text: str):
+        self.helper.clear_panel()
+        super().mark_error(error_text)
+        self.helper.update_helper()
+
+    def clear_error(self):
+        self.helper.clear_panel()
+        super().clear_error()
+        self.helper.update_helper()
 
     def get_widget_value(self) -> str:
         """
