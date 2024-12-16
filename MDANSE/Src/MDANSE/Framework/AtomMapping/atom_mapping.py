@@ -39,9 +39,6 @@ class AtomLabel:
         if self.grp_label == other.grp_label and self.atm_label == other.atm_label:
             return True
 
-    def __hash__(self):
-        return hash((self.atm_label, self.grp_label, self.mass))
-
 
 def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
     """From an input atom label find a match to an element in the atom
@@ -224,7 +221,9 @@ def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLab
     if not all([pattern.match(grp_label) for grp_label in mapping.keys()]):
         return False
 
-    if set(mapping_to_labels(mapping)) != set(labels):
+    if set(
+        [(i.atm_label, i.grp_label, i.mass) for i in mapping_to_labels(mapping)]
+    ) != set([(i.atm_label, i.grp_label, i.mass) for i in labels]):
         return False
 
     for label in labels:
