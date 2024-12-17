@@ -56,7 +56,7 @@ class AtomMappingConfigurator(IConfigurator):
             self.error_status = "Input file not selected."
             return
 
-        labels = file_configurator.get_labels()
+        labels = file_configurator.labels
         try:
             fill_remaining_labels(value, labels)
         except AttributeError:

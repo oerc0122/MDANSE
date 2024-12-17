@@ -66,6 +66,10 @@ class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
             # the first out of the list above will be the main label
-            (k, main_label) = next(iter(kwargs.items()))
-            kwargs.pop(k)
-            yield AtomLabel(main_label, **kwargs)
+            try:
+                (k, main_label) = next(iter(kwargs.items()))
+                kwargs.pop(k)
+                yield AtomLabel(main_label, **kwargs)
+            except StopIteration:
+                yield from []
+                return
