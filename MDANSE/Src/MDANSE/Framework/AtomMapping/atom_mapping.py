@@ -23,6 +23,18 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 class AtomLabel:
 
     def __init__(self, atm_label: str, **kwargs):
+        """Creates an atom label object which is used for atom mapping
+        and atom type guessing.
+
+        Parameters
+        ----------
+        atm_label : str
+            The main atom label.
+        kwargs : dict
+            The other atom label.
+        """
+        # use translations since it's faster than the alternative
+        # methods as of writing e.g. re.replace
         translation = str.maketrans("", "", ";=")
         self.atm_label = atm_label.translate(translation)
         self.grp_label = f""
@@ -35,12 +47,39 @@ class AtomLabel:
             self.mass = float(self.mass)
 
     def __eq__(self, other: object) -> bool:
+        """Used to check if atom labels are equal.
+
+        Parameters
+        ----------
+        other : AtomLabel
+            The other atom label to compare against.
+
+        Returns
+        -------
+        bool
+            True if all attributes are equal.
+
+        Raises
+        ------
+        AssertionError
+            If the other object is not an AtomLabel.
+        """
         if not isinstance(other, AtomLabel):
             AssertionError(f"{other} should be an instance of AtomLabel.")
-        if self.grp_label == other.grp_label and self.atm_label == other.atm_label:
+        if (
+            self.grp_label == other.grp_label
+            and self.atm_label == other.atm_label
+            and self.mass == other.mass
+        ):
             return True
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        """
+        Returns
+        -------
+        int
+            A hash of the object in its current state.
+        """
         return hash((self.atm_label, self.grp_label, self.mass))
 
 
