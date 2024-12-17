@@ -113,6 +113,10 @@ class AtomMappingHelperDialog(QDialog):
             w0 = QLabel(label.grp_label.replace(";", "\n"))
             w1 = QLabel(label.atm_label)
             w2 = QComboBox()
+            # this combobox can be slow without this policy since we
+            # are adding alot of items
+            w2.setSizeAdjustPolicy(
+                w2.AdjustToMinimumContentsLengthWithIcon)
             w2.addItems(self.all_symbols)
             self.mapping_widgets.append((w0, w1, w2))
             self.mapping_layout.addWidget(w0, i, 0)
@@ -216,16 +220,6 @@ class AtomMappingWidget(WidgetBase):
             self.helper.close()
         else:
             self.helper.show()
-
-    def mark_error(self, error_text: str):
-        self.helper.clear_panel()
-        super().mark_error(error_text)
-        self.helper.update_helper()
-
-    def clear_error(self):
-        self.helper.clear_panel()
-        super().clear_error()
-        self.helper.update_helper()
 
     def get_widget_value(self) -> str:
         """
