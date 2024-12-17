@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import Optional
+from typing import Optional, Iterable
 import traceback
 from pathlib import Path
 
@@ -83,22 +83,18 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
         else:
             self.atoms = [at for at in md.load(trajectory_file).topology.atoms]
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = set()
         for at in self.atoms:
-            label = AtomLabel(
+            yield AtomLabel(
                 at.name,
                 symbol=at.element.symbol,
                 residue=at.residue.name,
                 number=at.element.number,
                 mass=at.element.mass,
             )
-            if label not in labels:
-                labels.add(label)
-        return list(labels)

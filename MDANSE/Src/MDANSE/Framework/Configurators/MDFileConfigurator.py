@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
+
 import itertools
 import re
 import numpy as np
@@ -191,16 +193,12 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
         """Closes the file."""
         self["instance"].close()
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for atm_label, _ in self["atoms"]:
-            label = AtomLabel(atm_label)
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(atm_label)

@@ -108,7 +108,7 @@ class AtomMappingHelperDialog(QDialog):
         if not self._file_widget._configurator.valid:
             return
 
-        self.labels = self._file_widget._configurator.get_atom_labels()
+        self.labels = self._file_widget._configurator.get_labels()
         for i, label in enumerate(self.labels):
             w0 = QLabel(label.grp_label.replace(";", "\n"))
             w1 = QLabel(label.atm_label)

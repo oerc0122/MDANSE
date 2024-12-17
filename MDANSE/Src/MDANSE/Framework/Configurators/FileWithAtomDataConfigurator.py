@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
 from abc import abstractmethod
 import traceback
 
@@ -44,6 +45,18 @@ class FileWithAtomDataConfigurator(InputFileConfigurator):
         pass
 
     @abstractmethod
-    def get_atom_labels(self) -> list[AtomLabel]:
-        """Return the atoms labels in the file."""
-        pass
+    def atom_labels(self) -> Iterable[AtomLabel]:
+        """Yields atom labels"""
+
+    def get_labels(self) -> list[AtomLabel]:
+        """
+        Returns
+        -------
+        list[AtomLabel]
+            An ordered list of atom labels.
+        """
+        labels = set()
+        for label in self.atom_labels():
+            if label not in labels:
+                labels.add(label)
+        return list(labels)

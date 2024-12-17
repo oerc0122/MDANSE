@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
+
 import MDAnalysis as mda
 
 from MDANSE.Framework.AtomMapping import AtomLabel
@@ -51,14 +53,13 @@ class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
             self["filename"], topology_format=self["format"]
         ).atoms
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for at in self.atoms:
             kwargs = {}
             for arg in ["element", "name", "type", "resname", "mass"]:
@@ -67,7 +68,4 @@ class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
             # the first out of the list above will be the main label
             (k, main_label) = next(iter(kwargs.items()))
             kwargs.pop(k)
-            label = AtomLabel(main_label, **kwargs)
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(main_label, **kwargs)
