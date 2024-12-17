@@ -71,17 +71,17 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
             super().configure(value)
 
     def parse(self) -> None:
-        trajectory_file = self._configurable[self._dependencies["trajectory_files"]][
-            "filename"
+        trajectory_files = self._configurable[self._dependencies["trajectory_files"]][
+            "filenames"
         ]
         if self["filename"]:
             self.atoms = [
                 at
-                for at in md.load(trajectory_file, top=self["filename"]).topology.atoms
+                for at in md.load(trajectory_files, top=self["filename"]).topology.atoms
             ]
 
         else:
-            self.atoms = [at for at in md.load(trajectory_file).topology.atoms]
+            self.atoms = [at for at in md.load(trajectory_files).topology.atoms]
 
     def atom_labels(self) -> Iterable[AtomLabel]:
         """

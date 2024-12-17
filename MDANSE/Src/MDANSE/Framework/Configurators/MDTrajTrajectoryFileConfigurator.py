@@ -17,16 +17,19 @@ from pathlib import Path
 
 from mdtraj.formats.registry import FormatRegistry
 
+from .MultiInputFileConfigurator import MultiInputFileConfigurator
 
-from .InputFileConfigurator import InputFileConfigurator
 
-
-class MDTrajTrajectoryFileConfigurator(InputFileConfigurator):
+class MDTrajTrajectoryFileConfigurator(MultiInputFileConfigurator):
 
     def configure(self, value):
         super().configure(value)
 
-        extension = "".join(Path(self["value"]).suffixes)[1:]
+        extensions = {"".join(Path(value).suffixes)[1:] for value in self["values"]}
+        if len(extensions) != 1:
+            self.error_status = f"Files should be of a single format."
+            return
+        extension = next(iter(extensions))
 
         supported = list(i[1:] for i in FormatRegistry.loaders.keys())
         if extension not in supported:

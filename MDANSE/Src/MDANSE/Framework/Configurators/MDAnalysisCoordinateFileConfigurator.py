@@ -13,17 +13,15 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import ast
-import os
 from typing import Union
 
 import MDAnalysis as mda
 
-from MDANSE import PLATFORM
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+from .MultiInputFileConfigurator import MultiInputFileConfigurator
 
 
-class MDAnalysisCoordinateFileConfigurator(IConfigurator):
+class MDAnalysisCoordinateFileConfigurator(MultiInputFileConfigurator):
 
     _default = ("", "AUTO")
 
@@ -41,50 +39,7 @@ class MDAnalysisCoordinateFileConfigurator(IConfigurator):
             string of the coordinate file format.
         """
         values, format = setting
-
-        self["values"] = self._default
-        self._original_input = values
-
-        if type(values) is str:
-            if values:
-                try:
-                    # some issues when \ is used in the path as this
-                    # can be interpreted as an escape character by
-                    # literal_eval, on windows we can use \ or / so lets
-                    # just swap them here
-                    values = ast.literal_eval(values.replace("\\", "/"))
-                except (SyntaxError, ValueError) as e:
-                    self.error_status = f"Unable to evaluate string: {e}"
-                    return
-                if type(values) is not list:
-                    self.error_status = (
-                        f"Input values should be able to be evaluated as a list"
-                    )
-                    return
-            else:
-                values = []
-
-        if type(values) is list:
-            if not all([type(value) is str for value in values]):
-                self.error_status = f"Input values should be a list of str"
-                return
-        else:
-            self.error_status = f"Input values should be able to be evaluated as a list"
-            return
-
-        values = [PLATFORM.get_path(value) for value in values]
-
-        none_exist = []
-        for value in values:
-            if not os.path.isfile(value):
-                none_exist.append(value)
-
-        if none_exist:
-            self.error_status = f"The files {', '.join(none_exist)} do not exist."
-            return
-
-        self["values"] = values
-        self["filenames"] = values
+        super().configure(values)
 
         if format == "AUTO" or not self["filenames"]:
             self["format"] = None
@@ -99,7 +54,7 @@ class MDAnalysisCoordinateFileConfigurator(IConfigurator):
         if topology_configurator._valid:
             try:
                 if len(self["filenames"]) <= 1 or self["format"] is None:
-                    traj = mda.Universe(
+                    _ = mda.Universe(
                         topology_configurator["filename"],
                         *self["filenames"],
                         format=self["format"],
@@ -107,7 +62,7 @@ class MDAnalysisCoordinateFileConfigurator(IConfigurator):
                     ).trajectory
                 else:
                     coord_files = [(i, self["format"]) for i in self["filenames"]]
-                    traj = mda.Universe(
+                    _ = mda.Universe(
                         topology_configurator["filename"],
                         coord_files,
                         topology_format=topology_configurator["format"],
@@ -119,8 +74,6 @@ class MDAnalysisCoordinateFileConfigurator(IConfigurator):
             if self["values"]:
                 self.error_status = "Requires valid topology file."
                 return
-
-        self.error_status = "OK"
 
     @property
     def wildcard(self):

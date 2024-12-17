@@ -43,7 +43,7 @@ class MDTraj(Converter):
         "MDTrajTrajectoryFileConfigurator",
         {
             "wildcard": "All files (*)",
-            "default": "INPUT_FILENAME",
+            "default": '["INPUT_FILENAME"]',
             "label": "Trajectory files",
         },
     )
@@ -68,9 +68,9 @@ class MDTraj(Converter):
         "BooleanConfigurator",
         {"default": False, "label": "Fold coordinates into box"},
     )
-    settings["continuous"] = (
+    settings["discard_overlapping_frames"] = (
         "BooleanConfigurator",
-        {"default": False, "label": "Continuous frame stitching"},
+        {"default": False, "label": "Discard overlapping frames"},
     )
     settings["output_files"] = (
         "OutputTrajectoryConfigurator",
@@ -85,12 +85,23 @@ class MDTraj(Converter):
         """Load the trajectory using MDTraj and create the
         trajectory writer.
         """
-        traj_files = self.configuration["trajectory_files"]["filename"]
+        traj_files = self.configuration["trajectory_files"]["filenames"]
         top_file = self.configuration["topology_file"]["filename"]
         if top_file:
-            self.traj = md.load(traj_files, top=top_file)
+            self.traj = md.load(
+                traj_files,
+                top=top_file,
+                discard_overlapping_frames=self.configuration[
+                    "discard_overlapping_frames"
+                ]["value"],
+            )
         else:
-            self.traj = md.load(traj_files)
+            self.traj = md.load(
+                traj_files,
+                discard_overlapping_frames=self.configuration[
+                    "discard_overlapping_frames"
+                ]["value"],
+            )
 
         self.numberOfSteps = self.traj.n_frames
 
