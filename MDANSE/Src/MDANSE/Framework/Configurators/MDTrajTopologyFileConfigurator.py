@@ -41,13 +41,10 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
         if not value:
             self["filename"] = value
 
-            extension = "".join(
-                Path(
-                    self._configurable[self._dependencies["trajectory_files"]][
-                        "filename"
-                    ]
-                ).suffixes
-            )[1:]
+            extension = self._configurable[
+                self._dependencies["trajectory_files"]
+            ].extension
+
             supported = list(i[1:] for i in _TOPOLOGY_EXTS)
             if extension not in supported:
                 self.error_status = (

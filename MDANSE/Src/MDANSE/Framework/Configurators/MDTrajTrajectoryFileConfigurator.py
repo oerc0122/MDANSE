@@ -29,9 +29,9 @@ class MDTrajTrajectoryFileConfigurator(MultiInputFileConfigurator):
         if len(extensions) != 1:
             self.error_status = f"Files should be of a single format."
             return
-        extension = next(iter(extensions))
+        self.extension = next(iter(extensions))
 
         supported = list(i[1:] for i in FormatRegistry.loaders.keys())
-        if extension not in supported:
-            self.error_status = f"File '{extension}' not support should be one of the following: {supported}"
+        if self.extension not in supported:
+            self.error_status = f"File '{self.extension}' not support should be one of the following: {supported}"
             return
