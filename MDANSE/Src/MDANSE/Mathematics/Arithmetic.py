@@ -20,8 +20,9 @@ import numpy as np
 
 
 def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
-    """Calculates the scaling factor to be applied to output datasets
-    of an analysis.
+    """Calculates the scaling factors to be applied to output datasets
+    of an analysis. Returns an dictionary of scaling factors, where the
+    chemical elements identifying each dataset are the keys.
 
     Parameters
     ----------
@@ -72,7 +73,8 @@ def assign_weights(
     key: str,
     symmetric: bool = True,
 ):
-    """_summary_
+    """Updates the scaling factors of partial datasets, without
+    modifying the data.
 
     Parameters
     ----------
@@ -92,7 +94,6 @@ def assign_weights(
     np.ndarray
         total sum of all the component arrays scaled by their weights
     """
-    weightedSum = None
     matches = dict([(key % k, k) for k in list(weights.keys()) if k not in ["sum"]])
     dim = key.count("%s")
 
@@ -108,8 +109,6 @@ def assign_weights(
 
         values[k].scaling_factor *= w
 
-    return weightedSum
-
 
 def weighted_sum(
     values: Dict[str, np.ndarray],
@@ -117,7 +116,9 @@ def weighted_sum(
     key: str,
     update_partials: bool = False,
 ):
-    """_summary_
+    """Sums up partial datasets multiplied by their scaling factors.
+    The scaling factors have to be set before, typically by calling
+    the assign_weights function.
 
     Parameters
     ----------
