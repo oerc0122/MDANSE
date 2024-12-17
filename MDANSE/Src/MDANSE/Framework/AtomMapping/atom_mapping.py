@@ -34,7 +34,7 @@ class AtomLabel:
             The other atom label.
         """
         # use translations since it's faster than the alternative
-        # methods as of writing e.g. re.replace
+        # methods as of writing e.g. re.sub
         translation = str.maketrans("", "", ";=")
         self.atm_label = atm_label.translate(translation)
         self.grp_label = f""
