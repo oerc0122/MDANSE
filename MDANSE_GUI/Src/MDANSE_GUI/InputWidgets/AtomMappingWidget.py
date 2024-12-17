@@ -115,8 +115,7 @@ class AtomMappingHelperDialog(QDialog):
             w2 = QComboBox()
             # this combobox can be slow without this policy since we
             # are adding alot of items
-            w2.setSizeAdjustPolicy(
-                w2.AdjustToMinimumContentsLengthWithIcon)
+            w2.setSizeAdjustPolicy(w2.AdjustToMinimumContentsLengthWithIcon)
             w2.addItems(self.all_symbols)
             self.mapping_widgets.append((w0, w1, w2))
             self.mapping_layout.addWidget(w0, i, 0)
