@@ -72,6 +72,8 @@ class AtomLabel:
             and self.mass == other.mass
         ):
             return True
+        else:
+            return False
 
     def __hash__(self) -> int:
         """
