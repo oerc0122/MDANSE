@@ -163,6 +163,12 @@ def test_check_mapping_valid_as_elements_are_correct_6():
     assert check_mapping_valid(mapping, labels)
 
 
+def test_check_mapping_valid_as_elements_are_correct_7():
+    labels = [AtomLabel("label=1"), AtomLabel("C=1")]
+    mapping = {"": {"label1": "C", "C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
 def test_check_mapping_not_valid_as_elements_not_correct():
     labels = [
         AtomLabel("label1", molecule="mol1"),

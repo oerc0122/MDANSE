@@ -30,7 +30,7 @@ class AtomLabel:
         ----------
         atm_label : str
             The main atom label.
-        kwargs : dict
+        kwargs
             The other atom label.
         """
         # use translations since it's faster than the alternative
@@ -240,8 +240,9 @@ def mapping_to_labels(mapping: dict[str, dict[str, str]]) -> list[AtomLabel]:
     labels = []
     for grp_label, atm_map in mapping.items():
         kwargs = {}
-        for k, v in [i.split("=") for i in grp_label.split(";")]:
-            kwargs[k] = v
+        if grp_label:
+            for k, v in [i.split("=") for i in grp_label.split(";")]:
+                kwargs[k] = v
         for atm_label in atm_map.keys():
             labels.append(AtomLabel(atm_label, **kwargs))
     return labels
@@ -262,7 +263,7 @@ def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLab
     bool
         True if the mapping is valid.
     """
-    pattern = re.compile("[A-Za-z]\w*=[^=;]+(;[A-Za-z]\w*=[^=;]+)*$")
+    pattern = re.compile("^([A-Za-z]\w*=[^=;]+(;[A-Za-z]\w*=[^=;]+)*)*$")
     if not all([pattern.match(grp_label) for grp_label in mapping.keys()]):
         return False
 
