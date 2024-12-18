@@ -60,8 +60,4 @@ class FileWithAtomDataConfigurator(InputFileConfigurator):
         list[AtomLabel]
             An ordered list of atom labels.
         """
-        labels = set()
-        for label in self.atom_labels():
-            if label not in labels:
-                labels.add(label)
-        return list(labels)
+        return list(set(self.atom_labels()))
