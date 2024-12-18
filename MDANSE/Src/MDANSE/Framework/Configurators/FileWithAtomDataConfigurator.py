@@ -40,7 +40,7 @@ class FileWithAtomDataConfigurator(InputFileConfigurator):
             self.error_status = f"File parsing error {e}: {traceback.format_exc()}"
             return
 
-        if len(self.generate_labels()) == 0:
+        if len(self.unique_labels()) == 0:
             self.error_status = f"Unable to generate atom labels"
             return
 
@@ -53,7 +53,7 @@ class FileWithAtomDataConfigurator(InputFileConfigurator):
     def atom_labels(self) -> Iterable[AtomLabel]:
         """Yields atom labels"""
 
-    def generate_labels(self) -> list[AtomLabel]:
+    def unique_labels(self) -> list[AtomLabel]:
         """
         Returns
         -------
