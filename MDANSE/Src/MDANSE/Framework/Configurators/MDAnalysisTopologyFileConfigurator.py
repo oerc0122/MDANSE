@@ -60,16 +60,19 @@ class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
         AtomLabel
             An atom label.
         """
+        args = []
+        for arg in ["element", "name", "type", "resname", "mass"]:
+            if hasattr(self.atoms[0], arg):
+                args.append(arg)
+        if len(args) == 0:
+            yield from []
+            return
+
         for at in self.atoms:
             kwargs = {}
-            for arg in ["element", "name", "type", "resname", "mass"]:
-                if hasattr(at, arg):
-                    kwargs[arg] = getattr(at, arg)
+            for arg in args:
+                kwargs[arg] = getattr(at, arg)
             # the first out of the list above will be the main label
-            try:
-                (k, main_label) = next(iter(kwargs.items()))
-                kwargs.pop(k)
-                yield AtomLabel(main_label, **kwargs)
-            except StopIteration:
-                yield from []
-                return
+            (k, main_label) = next(iter(kwargs.items()))
+            kwargs.pop(k)
+            yield AtomLabel(main_label, **kwargs)
