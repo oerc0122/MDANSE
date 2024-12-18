@@ -547,7 +547,7 @@ def test_mdanalysis_conversion_file_exists_and_loads_up_successfully(compression
 
 
 @pytest.mark.parametrize("compression", ["none", "gzip", "lzf"])
-def test_mdanalysis_conversion_file_exists_and_loads_up_successfully(compression):
+def test_mdtraj_conversion_file_exists_and_loads_up_successfully(compression):
     temp_name = tempfile.mktemp()
 
     parameters = {
