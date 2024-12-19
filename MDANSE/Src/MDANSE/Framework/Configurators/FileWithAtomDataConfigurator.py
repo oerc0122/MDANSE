@@ -40,7 +40,8 @@ class FileWithAtomDataConfigurator(InputFileConfigurator):
             self.error_status = f"File parsing error {e}: {traceback.format_exc()}"
             return
 
-        if len(self.unique_labels()) == 0:
+        self.labels = self.unique_labels()
+        if len(self.labels) == 0:
             self.error_status = f"Unable to generate atom labels"
             return
 

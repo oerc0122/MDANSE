@@ -39,6 +39,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
             return
 
         if not value:
+            self.error_status = "OK"
             self["filename"] = value
 
             extension = self._configurable[
@@ -53,11 +54,15 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
                 )
                 return
 
-            self.error_status = "OK"
             try:
                 self.parse()
             except Exception as e:
                 self.error_status = f"File parsing error {e}: {traceback.format_exc()}"
+                return
+
+            self.labels = self.unique_labels()
+            if len(self.labels) == 0:
+                self.error_status = f"Unable to generate atom labels"
 
         else:
             extension = "".join(Path(value).suffixes)[1:]
