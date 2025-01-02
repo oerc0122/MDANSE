@@ -78,8 +78,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
         ]
         if self["filename"]:
             self.atoms = [
-                at
-                for at in md.load(coord_files, top=self["filename"]).topology.atoms
+                at for at in md.load(coord_files, top=self["filename"]).topology.atoms
             ]
 
         else:
