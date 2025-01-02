@@ -33,6 +33,20 @@ def distance_array(ref_atom, other_atoms, cell_array):
     return r
 
 
+def distance_array_2D(ref_atoms, other_atoms, cell_array):
+    diff_frac = other_atoms.reshape((len(other_atoms), 1, 3)) - ref_atoms.reshape(
+        (1, len(ref_atoms), 3)
+    )
+    criterion = np.triu_indices(len(ref_atoms), k=1)
+    temp = diff_frac[criterion]
+    temp -= np.round(temp)
+    diff_real = np.matmul(temp, cell_array)
+    r = np.sqrt((diff_real**2).sum(axis=1))
+    result = -1.0 * np.ones((len(other_atoms), len(ref_atoms)))
+    result[criterion] = r
+    return result
+
+
 def van_hove_distinct(
     cell: np.ndarray,
     molindex: List[int],
@@ -84,38 +98,41 @@ def van_hove_distinct(
 
     nbins = intra.shape[2]
 
-    for i in range(scaleconfig_t0.shape[0] - 1):
-        if molindex[i] < 0:
-            xyz_frac = scaleconfig_t0[i]
-            other_frac = scaleconfig_t1[i + 1 : scaleconfig_t0.shape[0]]
-            r = distance_array(xyz_frac, other_frac, cell.T)
-            bins = ((r - rmin) / dr).astype(int)
-            valid_bins = np.logical_and(bins >= 0, bins < nbins)
-            for j in range(len(bins)):
-                if valid_bins[j]:
-                    inter[symbolindex[i], symbolindex[j], bins[j]] += 1.0
-        else:
-            xyz_frac = scaleconfig_t0[i]
-            other_frac1 = scaleconfig_t1[i + 1 : scaleconfig_t0.shape[0]][
-                np.where(molindex[i + 1 : scaleconfig_t0.shape[0]] == molindex[i])
-            ]
-            other_frac2 = scaleconfig_t1[i + 1 : scaleconfig_t0.shape[0]][
-                np.where(molindex[i + 1 : scaleconfig_t0.shape[0]] != molindex[i])
-            ]
-            r = distance_array(xyz_frac, other_frac1, cell.T)
-            bins = ((r - rmin) / dr).astype(int)
-            valid_bins = np.logical_and(
-                np.logical_and(bins >= 0, bins < nbins), r > 0.01
+    all_distances = distance_array_2D(scaleconfig_t0, scaleconfig_t1, cell.T)
+    bins = ((all_distances - rmin) / dr).astype(int)
+    valid_bins = np.logical_and(bins >= 0, bins < nbins)
+
+    same_mol = np.equal(
+        molindex.reshape((len(molindex), 1)), molindex.reshape((1, len(molindex)))
+    )
+    molindex_positive = molindex >= 0
+    same_mol = np.logical_and(
+        same_mol,
+        np.logical_and(
+            molindex_positive.reshape((len(molindex), 1)),
+            molindex_positive.reshape((1, len(molindex))),
+        ),
+    )
+    unique_types = np.unique(symbolindex)
+
+    for type1 in unique_types:
+        for type2 in unique_types:
+            type_mask = np.logical_and(
+                (symbolindex == type1).reshape((len(symbolindex), 1)),
+                (symbolindex == type2).reshape((1, len(symbolindex))),
             )
-            for j in range(len(bins)):
-                if valid_bins[j]:
-                    intra[symbolindex[i], symbolindex[j], bins[j]] += 1.0
-            r = distance_array(xyz_frac, other_frac2, cell.T)
-            bins = ((r - rmin) / dr).astype(int)
-            valid_bins = np.logical_and(bins >= 0, bins < nbins)
-            for j in range(len(bins)):
-                if valid_bins[j]:
-                    inter[symbolindex[i], symbolindex[j], bins[j]] += 1.0
+            temp_mask = np.logical_and(valid_bins, type_mask)
+            inter_bins, inter_counts = np.unique(
+                bins[np.where(np.logical_and(temp_mask, same_mol))], return_counts=True
+            )
+            intra_bins, intra_counts = np.unique(
+                bins[np.where(np.logical_and(temp_mask, np.logical_not(same_mol)))],
+                return_counts=True,
+            )
+            for bin, counts in zip(inter_bins, inter_counts):
+                inter[type1, type2, bin] += counts
+            for bin, counts in zip(intra_bins, intra_counts):
+                intra[type1, type2, bin] += counts
     return intra, inter
 
 
