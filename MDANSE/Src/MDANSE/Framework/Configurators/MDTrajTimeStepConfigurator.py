@@ -45,7 +45,7 @@ class MDTrajTimeStepConfigurator(FloatConfigurator):
                     if traj.n_frames == 1:
                         value = self._default
                     else:
-                        value = traj.timestep
+                        value = float(traj.timestep)
                 except Exception as e:
                     self.error_status = (
                         f"Unable to determine a time step from MDTraj: {e}"
