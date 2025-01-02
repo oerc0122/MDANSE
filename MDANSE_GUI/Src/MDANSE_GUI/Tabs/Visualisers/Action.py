@@ -294,7 +294,8 @@ class Action(QWidget):
             return
         self.check_inputs()
         for widget in self._widgets:
-            widget.updateValue()
+            if isinstance(widget, (OutputFilesWidget, OutputTrajectoryWidget)):
+                widget.updateValue()
         self.allow_execution()
 
     def apply_instrument(self):
