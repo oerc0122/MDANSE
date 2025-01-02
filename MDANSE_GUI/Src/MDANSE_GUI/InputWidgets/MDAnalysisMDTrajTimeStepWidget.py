@@ -13,13 +13,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import MDAnalysis as mda
-
-from MDANSE.MLogging import LOG
 from .FloatWidget import FloatWidget
 
 
-class MDAnalysisTimeStepWidget(FloatWidget):
+class MDAnalysisMDTrajTimeStepWidget(FloatWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -39,7 +39,7 @@ class MDTraj(Converter):
     label = "MDTraj"
     settings = collections.OrderedDict()
 
-    settings["trajectory_files"] = (
+    settings["coordinate_files"] = (
         "MDTrajTrajectoryFileConfigurator",
         {
             "wildcard": "All files (*)",
@@ -53,7 +53,7 @@ class MDTraj(Converter):
             "wildcard": "All files (*)",
             "default": "",
             "label": "Topology file (optional)",
-            "dependencies": {"trajectory_files": "trajectory_files"},
+            "dependencies": {"coordinate_files": "coordinate_files"},
         },
     )
     settings["atom_aliases"] = (
@@ -62,6 +62,18 @@ class MDTraj(Converter):
             "default": "{}",
             "label": "Atom mapping",
             "dependencies": {"input_file": "topology_file"},
+        },
+    )
+    settings["time_step"] = (
+        "MDTrajTimeStepConfigurator",
+        {
+            "label": "Time step (ps)",
+            "default": 0.0,
+            "mini": 0.0,
+            "dependencies": {
+                "coordinate_files": "coordinate_files",
+                "topology_file": "topology_file",
+            },
         },
     )
     settings["fold"] = (
@@ -85,11 +97,11 @@ class MDTraj(Converter):
         """Load the trajectory using MDTraj and create the
         trajectory writer.
         """
-        traj_files = self.configuration["trajectory_files"]["filenames"]
+        coord_files = self.configuration["coordinate_files"]["filenames"]
         top_file = self.configuration["topology_file"]["filename"]
         if top_file:
             self.traj = md.load(
-                traj_files,
+                coord_files,
                 top=top_file,
                 discard_overlapping_frames=self.configuration[
                     "discard_overlapping_frames"
@@ -97,7 +109,7 @@ class MDTraj(Converter):
             )
         else:
             self.traj = md.load(
-                traj_files,
+                coord_files,
                 discard_overlapping_frames=self.configuration[
                     "discard_overlapping_frames"
                 ]["value"],

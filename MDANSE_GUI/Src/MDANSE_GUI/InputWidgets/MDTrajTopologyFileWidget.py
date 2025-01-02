@@ -27,7 +27,7 @@ class MDTrajTopologyFileWidget(InputFileWidget):
             if (
                 widget._configurator
                 is self._configurator._configurable[
-                    self._configurator._dependencies["trajectory_files"]
+                    self._configurator._dependencies["coordinate_files"]
                 ]
             ):
                 widget.value_changed.connect(self.updateValue)

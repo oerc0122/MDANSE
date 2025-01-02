@@ -552,7 +552,7 @@ def test_mdtraj_conversion_file_exists_and_loads_up_successfully(compression):
 
     parameters = {
         "topology_file": hem_cam_pdb,
-        "trajectory_files": [hem_cam_dcd],
+        "coordinate_files": [hem_cam_dcd],
         "output_files": (temp_name, 64, 128, compression, "INFO"),
     }
 
