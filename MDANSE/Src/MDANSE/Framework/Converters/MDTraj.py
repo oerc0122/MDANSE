@@ -186,7 +186,10 @@ class MDTraj(Converter):
         if self.numberOfSteps == 1:
             time = 0
         else:
-            time = index * self.traj.timestep
+            if float(self.configuration["time_step"]["value"]) == 0.0:
+                time = index * self.traj.timestep
+            else:
+                time = index * float(self.configuration["time_step"]["value"])
 
         self._trajectory.dump_configuration(
             time,
