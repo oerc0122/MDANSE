@@ -15,7 +15,8 @@
 #
 import collections
 import itertools as it
-from typing import List
+from typing import List, Dict, Tuple
+import line_profiler
 
 import numpy as np
 
@@ -33,24 +34,23 @@ def distance_array(ref_atom, other_atoms, cell_array):
     return r
 
 
+@line_profiler.profile
 def distance_array_2D(ref_atoms, other_atoms, cell_array):
     diff_frac = other_atoms.reshape((len(other_atoms), 1, 3)) - ref_atoms.reshape(
         (1, len(ref_atoms), 3)
     )
-    criterion = np.triu_indices(len(ref_atoms), k=1)
-    temp = diff_frac[criterion]
+    temp = diff_frac
     temp -= np.round(temp)
     diff_real = np.matmul(temp, cell_array)
-    r = np.sqrt((diff_real**2).sum(axis=1))
-    result = -1.0 * np.ones((len(other_atoms), len(ref_atoms)))
-    result[criterion] = r
-    return result
+    r = np.sqrt((diff_real**2).sum(axis=2))
+    return r
 
 
+@line_profiler.profile
 def van_hove_distinct(
     cell: np.ndarray,
-    molindex: List[int],
-    symbolindex: List[int],
+    indices_intra: Dict[int, Tuple[List[int]]],
+    indices_inter: Dict[int, Tuple[List[int]]],
     intra: np.ndarray,
     inter: np.ndarray,
     scaleconfig_t0: np.ndarray,
@@ -74,10 +74,12 @@ def van_hove_distinct(
     cell : np.ndarray
         The transpose of the direct matrix of the configuration at
         time t1.
-    molindex : np.ndarray
-        An array which maps atom indexes to molecule indexes.
-    symbolindex : np.ndarray
-        An array which maps atom indexes to symbol indexes.
+    indices_intra : np.ndarray
+        Dictionary of array indices. Stores indices of all the distance array elements
+        which contribute to the intramolecular distances for each atom type pair.
+    indices_inter : np.ndarray
+        Dictionary of array indices. Stores indices of all the distance array elements
+        which contribute to the intermolecular distances for each atom type pair.
     intra : np.ndarray
         An output array to save the distance histogram results of
         intramolecular atom differences.
@@ -100,39 +102,66 @@ def van_hove_distinct(
 
     all_distances = distance_array_2D(scaleconfig_t0, scaleconfig_t1, cell.T)
     bins = ((all_distances - rmin) / dr).astype(int)
-    valid_bins = np.logical_and(bins >= 0, bins < nbins)
 
-    same_mol = np.equal(
-        molindex.reshape((len(molindex), 1)), molindex.reshape((1, len(molindex)))
-    )
-    molindex_positive = molindex >= 0
-    same_mol = np.logical_and(
-        same_mol,
-        np.logical_and(
-            molindex_positive.reshape((len(molindex), 1)),
-            molindex_positive.reshape((1, len(molindex))),
-        ),
-    )
+    for dkey, indices in indices_intra.items():
+        type1, type2 = dkey
+        sub_bins = bins[indices]
+        bin_numbers, bin_counts = np.unique(
+            sub_bins,
+            return_counts=True,
+        )
+        for bin, counts in zip(bin_numbers, bin_counts):
+            if bin < 0:
+                continue
+            if bin >= nbins:
+                continue
+            intra[type1, type2, bin] += counts
+
+    for dkey, indices in indices_inter.items():
+        type1, type2 = dkey
+        sub_bins = bins[indices]
+        bin_numbers, bin_counts = np.unique(
+            sub_bins,
+            return_counts=True,
+        )
+        for bin, counts in zip(bin_numbers, bin_counts):
+            if bin < 0:
+                continue
+            if bin >= nbins:
+                continue
+            inter[type1, type2, bin] += counts
+    return intra, inter
+
+
+def find_index_groups(
+    molindex: List[int],
+    symbolindex: List[int],
+):
     unique_types = np.unique(symbolindex)
-
-    for type1 in unique_types:
-        for type2 in unique_types:
-            type_mask = np.logical_and(
-                (symbolindex == type1).reshape((len(symbolindex), 1)),
-                (symbolindex == type2).reshape((1, len(symbolindex))),
-            )
-            temp_mask = np.logical_and(valid_bins, type_mask)
-            inter_bins, inter_counts = np.unique(
-                bins[np.where(np.logical_and(temp_mask, same_mol))], return_counts=True
-            )
-            intra_bins, intra_counts = np.unique(
-                bins[np.where(np.logical_and(temp_mask, np.logical_not(same_mol)))],
-                return_counts=True,
-            )
-            for bin, counts in zip(inter_bins, inter_counts):
-                inter[type1, type2, bin] += counts
-            for bin, counts in zip(intra_bins, intra_counts):
-                intra[type1, type2, bin] += counts
+    inter = {}
+    intra = {}
+    for s1 in unique_types:
+        for s2 in unique_types:
+            inter[(s1, s2)] = [], []
+            intra[(s1, s2)] = [], []
+    for i in range(len(molindex)):
+        for j in range(len(molindex)):
+            if i == j:
+                continue
+            mol1 = molindex[i]
+            mol2 = molindex[j]
+            type1 = symbolindex[i]
+            type2 = symbolindex[j]
+            dkey = (type1, type2)
+            if mol1 < 0 or mol2 < 0:
+                inter[dkey][0].append(i)
+                inter[dkey][1].append(j)
+            elif mol1 == mol2:
+                intra[dkey][0].append(i)
+                intra[dkey][1].append(j)
+            else:
+                inter[dkey][0].append(i)
+                inter[dkey][1].append(j)
     return intra, inter
 
 
@@ -324,6 +353,10 @@ class VanHoveFunctionDistinct(IJob):
             (self.nElements, self.nElements, self.n_mid_points, self.numberOfSteps)
         )
 
+        self.indices_intra, self.indices_inter = find_index_groups(
+            self.indexToMolecule, self.indexToSymbol
+        )
+
     def run_step(self, time: int) -> tuple[int, tuple[np.ndarray, np.ndarray]]:
         """Calculates the distance histogram between the configurations
         at the inputted time difference. The distance histograms are
@@ -368,8 +401,8 @@ class VanHoveFunctionDistinct(IJob):
 
             intra, inter = van_hove_distinct(
                 direct_cell,
-                self.indexToMolecule,
-                self.indexToSymbol,
+                self.indices_intra,
+                self.indices_inter,
                 intra,
                 inter,
                 scaleconfig_t0,

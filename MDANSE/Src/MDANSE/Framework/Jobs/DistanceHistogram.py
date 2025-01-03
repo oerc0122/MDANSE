@@ -19,7 +19,10 @@ import itertools
 
 import numpy as np
 
-from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import van_hove_distinct
+from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
+    van_hove_distinct,
+    find_index_groups,
+)
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 
@@ -142,6 +145,11 @@ class DistanceHistogram(IJob):
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(self.selectedElements, 2)
         )
+        self.indices_intra, self.indices_inter = find_index_groups(
+            self.indexToMolecule, self.indexToSymbol
+        )
+        print(f"indices_intra, {self.indices_intra}")
+        print(f"indices_inter, {self.indices_inter}")
 
     def detailed_unit_cell_error(self):
         raise ValueError(
@@ -188,8 +196,8 @@ class DistanceHistogram(IJob):
 
         van_hove_distinct(
             direct_cell,
-            self.indexToMolecule,
-            self.indexToSymbol,
+            self.indices_intra,
+            self.indices_inter,
             hIntraTemp,
             hInterTemp,
             scaleconfig,
