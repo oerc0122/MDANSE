@@ -122,8 +122,8 @@ class MDTraj(Converter):
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"],
                 at.name,
-                residue=at.residue.name,
                 symbol=at.element.symbol,
+                residue=at.residue.name,
                 number=at.element.number,
                 mass=at.element.mass,
             )
