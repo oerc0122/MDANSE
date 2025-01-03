@@ -22,22 +22,67 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 
 class AtomLabel:
 
-    def __init__(self, atm_label, **kwargs):
-        self.atm_label = atm_label
+    def __init__(self, atm_label: str, **kwargs):
+        """Creates an atom label object which is used for atom mapping
+        and atom type guessing.
+
+        Parameters
+        ----------
+        atm_label : str
+            The main atom label.
+        kwargs
+            The other atom label.
+        """
+        # use translations since it's faster than the alternative
+        # methods as of writing e.g. re.sub
+        translation = str.maketrans("", "", ";=")
+        self.atm_label = atm_label.translate(translation)
         self.grp_label = f""
         if kwargs:
             for k, v in kwargs.items():
-                self.grp_label += f"{k}={v};"
+                self.grp_label += f"{k}={str(v).translate(translation)};"
             self.grp_label = self.grp_label[:-1]
         self.mass = kwargs.get("mass", None)
         if self.mass is not None:
             self.mass = float(self.mass)
 
     def __eq__(self, other: object) -> bool:
+        """Used to check if atom labels are equal.
+
+        Parameters
+        ----------
+        other : AtomLabel
+            The other atom label to compare against.
+
+        Returns
+        -------
+        bool
+            True if all attributes are equal.
+
+        Raises
+        ------
+        AssertionError
+            If the other object is not an AtomLabel.
+        """
         if not isinstance(other, AtomLabel):
             AssertionError(f"{other} should be an instance of AtomLabel.")
-        if self.grp_label == other.grp_label and self.atm_label == other.atm_label:
+        if (
+            self.grp_label == other.grp_label
+            and self.atm_label == other.atm_label
+            and self.mass == other.mass
+        ):
             return True
+        else:
+            return False
+
+    def __hash__(self) -> int:
+        """
+        Returns
+        -------
+        int
+            A hash of the object in its current state.
+        """
+        return hash((self.atm_label, self.grp_label, self.mass))
 
 
 def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
@@ -179,6 +224,30 @@ def fill_remaining_labels(
             mapping[grp_label][atm_label] = guess_element(atm_label, label.mass)
 
 
+def mapping_to_labels(mapping: dict[str, dict[str, str]]) -> list[AtomLabel]:
+    """Converts the mapping back into a list of labels.
+
+    Parameters
+    ----------
+    mapping : dict[str, dict[str, str]]
+        The atom mapping dictionary.
+
+    Returns
+    -------
+    list[AtomLabel]
+        List of atom labels from the mapping.
+    """
+    labels = []
+    for grp_label, atm_map in mapping.items():
+        kwargs = {}
+        if grp_label:
+            for k, v in [i.split("=") for i in grp_label.split(";")]:
+                kwargs[k] = v
+        for atm_label in atm_map.keys():
+            labels.append(AtomLabel(atm_label, **kwargs))
+    return labels
+
+
 def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLabel]):
     """Given a list of labels check that the mapping is valid.
 
@@ -194,11 +263,17 @@ def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLab
     bool
         True if the mapping is valid.
     """
+    pattern = re.compile("^([A-Za-z]\w*=[^=;]+(;[A-Za-z]\w*=[^=;]+)*)*$")
+    if not all([pattern.match(grp_label) for grp_label in mapping.keys()]):
+        return False
+
+    if set(mapping_to_labels(mapping)) != set(labels):
+        return False
+
     for label in labels:
         grp_label = label.grp_label
         atm_label = label.atm_label
-        if grp_label not in mapping or atm_label not in mapping[grp_label]:
-            return False
         if mapping[grp_label][atm_label] not in ATOMS_DATABASE:
             return False
+
     return True

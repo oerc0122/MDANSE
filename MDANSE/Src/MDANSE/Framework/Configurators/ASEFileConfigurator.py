@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
+
 from ase.io import iread, read
 from ase.io.trajectory import Trajectory as ASETrajectory
 
@@ -37,16 +39,12 @@ class ASEFileConfigurator(FileWithAtomDataConfigurator):
 
         self["element_list"] = first_frame.get_chemical_symbols()
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for atm_label in self["element_list"]:
-            label = AtomLabel(atm_label)
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(atm_label)

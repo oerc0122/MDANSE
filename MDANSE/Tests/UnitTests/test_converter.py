@@ -544,3 +544,26 @@ def test_mdanalysis_conversion_file_exists_and_loads_up_successfully(compression
     assert os.path.exists(temp_name + ".log")
     assert os.path.isfile(temp_name + ".log")
     os.remove(temp_name + ".log")
+
+
+@pytest.mark.parametrize("compression", ["none", "gzip", "lzf"])
+def test_mdtraj_conversion_file_exists_and_loads_up_successfully(compression):
+    temp_name = tempfile.mktemp()
+
+    parameters = {
+        "topology_file": hem_cam_pdb,
+        "coordinate_files": [hem_cam_dcd],
+        "output_files": (temp_name, 64, 128, compression, "INFO"),
+    }
+
+    mdanalysis = Converter.create("MDTraj")
+    mdanalysis.run(parameters, status=True)
+
+    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+
+    assert os.path.exists(temp_name + ".mdt")
+    assert os.path.isfile(temp_name + ".mdt")
+    os.remove(temp_name + ".mdt")
+    assert os.path.exists(temp_name + ".log")
+    assert os.path.isfile(temp_name + ".log")
+    os.remove(temp_name + ".log")

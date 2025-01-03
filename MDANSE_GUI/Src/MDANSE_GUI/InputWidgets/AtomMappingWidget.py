@@ -64,7 +64,6 @@ class AtomMappingHelperDialog(QDialog):
         self._field = field
 
         self._file_widget = field_widget
-        self._file_widget.value_changed.connect(self.update_helper)
 
         self.layout = QVBoxLayout()
         buffer_0 = QWidget(self)
@@ -109,11 +108,14 @@ class AtomMappingHelperDialog(QDialog):
         if not self._file_widget._configurator.valid:
             return
 
-        self.labels = self._file_widget._configurator.get_atom_labels()
+        self.labels = self._file_widget._configurator.labels
         for i, label in enumerate(self.labels):
             w0 = QLabel(label.grp_label.replace(";", "\n"))
             w1 = QLabel(label.atm_label)
             w2 = QComboBox()
+            # this combobox can be slow without this policy since we
+            # are adding alot of items
+            w2.setSizeAdjustPolicy(w2.AdjustToMinimumContentsLengthWithIcon)
             w2.addItems(self.all_symbols)
             self.mapping_widgets.append((w0, w1, w2))
             self.mapping_layout.addWidget(w0, i, 0)
@@ -202,9 +204,13 @@ class AtomMappingWidget(WidgetBase):
         """
         if self._file_widget._configurator.valid:
             self.helper_button.setEnabled(True)
+            self.helper.update_helper()
+            self.helper.apply()
         else:
             self.helper_button.setEnabled(False)
-        self.helper.apply()
+            self.helper.close()
+            self.helper.clear_panel()
+            self.helper.apply()
 
     @Slot()
     def helper_dialog(self) -> None:
