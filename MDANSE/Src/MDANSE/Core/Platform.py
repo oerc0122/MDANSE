@@ -22,6 +22,8 @@ import inspect
 import os
 import re
 import subprocess
+import tempfile
+
 
 from MDANSE.Core.Error import Error
 
@@ -147,21 +149,48 @@ class Platform(object, metaclass=abc.ABCMeta):
 
         os.chdir(directory)
 
-    def is_directory_writable(self, path):
+    @classmethod
+    def is_directory_writable(cls, path):
+        """Check if the directories can be created and a file can be
+        written into it.
+
+        Parameters
+        ----------
+        path : str
+            The path to test if a file can be written to it.
+
+        Returns
+        -------
+        bool
+            True if a file can be written to the input path.
         """
-        Check whether a given directory is writable.
+        path = cls.get_path(path)
 
-        :param path: the directory to be tested for writable status
-        :type path: str
+        if os.path.exists(path):
+            while True:
+                file = os.path.join(path, next(tempfile._get_candidate_names()))
+                if not os.path.isfile(file):
+                    try:
+                        open(file, "w").close()
+                        os.remove(file)
+                    except OSError:
+                        return False
+                    return True
 
-        :return: true if the directory is writable, false otherwise
-        :rtype: bool
-        """
+        head, tail = os.path.split(path)
+        if not tail:
+            head, tail = os.path.split(head)
 
-        # Gets an absolute version of the path to check
-        path = self.get_path(path)
-
-        return os.access(path, os.W_OK | os.X_OK)
+        if os.path.exists(head):
+            try:
+                os.mkdir(path)
+            except OSError:
+                return False
+            writable = cls.is_directory_writable(path)
+            os.rmdir(path)
+            return writable
+        else:
+            return cls.is_directory_writable(head)
 
     def create_directory(self, path):
         """
@@ -187,7 +216,8 @@ class Platform(object, metaclass=abc.ABCMeta):
                 "{0}: /n {1}".format(str(path), e)
             )
 
-    def get_path(self, path):
+    @classmethod
+    def get_path(cls, path):
         """
         Return a normalized and absolute version of a given path
 

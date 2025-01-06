@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
+import os
 import collections
 
 import numpy as np
@@ -23,6 +23,7 @@ from ase.atoms import Atoms, Atom
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE import PLATFORM
 
 
 class AverageStructure(IJob):
@@ -184,6 +185,7 @@ class AverageStructure(IJob):
             correction = np.floor(temp)
             self._ase_atoms.set_scaled_positions(temp - correction)
 
+        PLATFORM.create_directory(os.path.dirname(self.configuration["output_files"]["file"]))
         ase_write(
             self.configuration["output_files"]["file"],
             self._ase_atoms,

@@ -40,6 +40,7 @@ from qtpy.QtWidgets import (
 from qtpy.QtCore import Slot, Signal, Qt
 
 from MDANSE.MLogging import LOG
+from MDANSE import PLATFORM
 
 from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
 
@@ -154,6 +155,7 @@ class DataWidget(QWidget):
             if nsets == 0:  # do not create a file if there are no data
                 return
         try:
+            PLATFORM.create_directory(os.path.dirname(self._output_widget.text()))
             target = open(target_path, "w", newline="")
         except:
             LOG.error(f"Could not open file for writing: {target_path}")

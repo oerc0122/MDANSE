@@ -73,9 +73,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
 
         dirname = os.path.dirname(root)
 
-        try:
-            PLATFORM.create_directory(dirname)
-        except:
+        if not PLATFORM.is_directory_writable(dirname):
             self.error_status = f"the directory {dirname} is not writable"
             return
 
