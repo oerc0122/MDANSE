@@ -185,7 +185,9 @@ class AverageStructure(IJob):
             correction = np.floor(temp)
             self._ase_atoms.set_scaled_positions(temp - correction)
 
-        PLATFORM.create_directory(os.path.dirname(self.configuration["output_files"]["file"]))
+        PLATFORM.create_directory(
+            os.path.dirname(self.configuration["output_files"]["file"])
+        )
         ase_write(
             self.configuration["output_files"]["file"],
             self._ase_atoms,
