@@ -145,11 +145,7 @@ class DistanceHistogram(IJob):
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(self.selectedElements, 2)
         )
-        self.indices_intra, self.indices_inter = find_index_groups(
-            self.indexToMolecule, self.indexToSymbol
-        )
-        print(f"indices_intra, {self.indices_intra}")
-        print(f"indices_inter, {self.indices_inter}")
+        self.indices_intra = find_index_groups(self.indexToMolecule, self.indexToSymbol)
 
     def detailed_unit_cell_error(self):
         raise ValueError(
@@ -192,14 +188,14 @@ class DistanceHistogram(IJob):
         scaleconfig = coords @ inverse_cell
 
         hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
-        hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
+        hTotalTemp = np.zeros(self.hInter.shape, dtype=np.float64)
 
         van_hove_distinct(
             direct_cell,
             self.indices_intra,
-            self.indices_inter,
+            self.indexToSymbol,
             hIntraTemp,
-            hInterTemp,
+            hTotalTemp,
             scaleconfig,
             scaleconfig,
             self.configuration["r_values"]["first"],
@@ -207,9 +203,9 @@ class DistanceHistogram(IJob):
         )
 
         np.multiply(hIntraTemp, cell_volume, hIntraTemp)
-        np.multiply(hInterTemp, cell_volume, hInterTemp)
+        np.multiply(hTotalTemp, cell_volume, hTotalTemp)
 
-        return index, (cell_volume, hIntraTemp, hInterTemp)
+        return index, (cell_volume, hIntraTemp, hTotalTemp)
 
     def combine(self, index, x):
         """
@@ -229,7 +225,7 @@ class DistanceHistogram(IJob):
         # volume can variate during the MD (e.g. NPT conditions). This volume is the one that intervene in the density
         # calculation.
         self.hIntra += x[1]
-        self.hInter += x[2]
+        self.hInter += x[2] - x[1]
 
         for k, v in list(self._nAtomsPerElement.items()):
             self._concentrations[k] += float(v) / nAtoms

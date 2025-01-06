@@ -16,7 +16,6 @@
 import collections
 import itertools as it
 from typing import List, Dict, Tuple
-import line_profiler
 
 import numpy as np
 
@@ -26,16 +25,27 @@ from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_inde
 from MDANSE.Mathematics.Arithmetic import weight
 
 
-def distance_array(ref_atom, other_atoms, cell_array):
-    diff_frac = other_atoms - ref_atom.reshape((1, 3))
-    diff_frac -= np.round(diff_frac)
-    diff_real = np.matmul(diff_frac, cell_array)
-    r = np.sqrt((diff_real**2).sum(axis=1))
-    return r
+def distance_array_2D(
+    ref_atoms: np.ndarray, other_atoms: np.ndarray, cell_array: np.ndarray
+):
+    """Given two input arrays of atomic positions sized
+    (N,3) and (M,3), returns an (M, N) array of distances
+    between the atoms.
 
+    Parameters
+    ----------
+    ref_atoms : np.ndarray
+        (N, 3)-shaped array of atom positions
+    other_atoms : np.ndarray
+        (M, 3)-shaped array of atom positions
+    cell_array : np.ndarray
+        direct matrix of the unit cell of the system
 
-@line_profiler.profile
-def distance_array_2D(ref_atoms, other_atoms, cell_array):
+    Returns
+    -------
+    np.ndarray
+        (N, M)-shaped array of distances between atoms from the two arrays
+    """
     diff_frac = other_atoms.reshape((len(other_atoms), 1, 3)) - ref_atoms.reshape(
         (1, len(ref_atoms), 3)
     )
@@ -46,13 +56,12 @@ def distance_array_2D(ref_atoms, other_atoms, cell_array):
     return r
 
 
-@line_profiler.profile
 def van_hove_distinct(
     cell: np.ndarray,
     indices_intra: Dict[int, Tuple[List[int]]],
-    indices_inter: Dict[int, Tuple[List[int]]],
+    symbolindex: List[int],
     intra: np.ndarray,
-    inter: np.ndarray,
+    total: np.ndarray,
     scaleconfig_t0: np.ndarray,
     scaleconfig_t1: np.ndarray,
     rmin: float,
@@ -64,44 +73,47 @@ def van_hove_distinct(
     with the unit cell of the configuration at time t1. The function can
     be used to calculate the distinct part of the van Hove function.
 
-    This function was an generalization of a Pyrex adaptation of a
-    FORTRAN implementation made by Miguel Angel Gonzalez (Institut Laue
-    Langevin) for the calculation of intra and intermolecular distance
-    histograms.
+    The original implementation by Miguel Angel Gonzalez (Institut Laue
+    Langevin) has now been replaced by numpy functions.
 
     Parameters
     ----------
     cell : np.ndarray
-        The transpose of the direct matrix of the configuration at
-        time t1.
-    indices_intra : np.ndarray
-        Dictionary of array indices. Stores indices of all the distance array elements
-        which contribute to the intramolecular distances for each atom type pair.
-    indices_inter : np.ndarray
-        Dictionary of array indices. Stores indices of all the distance array elements
-        which contribute to the intermolecular distances for each atom type pair.
+        direct matrix of the unit cell of the system
+    indices_intra : Dict[int, Tuple[List[int]]]
+        array indices of the distance matrix elements for each molecule in the system
+    symbolindex : List[int]
+        list of int values of atom types in the system
     intra : np.ndarray
-        An output array to save the distance histogram results of
-        intramolecular atom differences.
-    inter : np.ndarray
-        An output array to save the distance histogram results of
-        intermolecular atom differences.
+        the array accumulating the intramolecular distance counts for different atom type pairs
+    total : np.ndarray
+        the array accumulating all the distance counts for different atom type pairs
     scaleconfig_t0 : np.ndarray
-        The coordinates of the configuration at t0 in fractional
-        coordinate in the unit cell of the configuration at time t1.
+        array of atom positions at time t0
     scaleconfig_t1 : np.ndarray
-        The coordinates of the configuration at t1 in fractional
-        coordinate in the unit cell of the configuration at time t1.
+        array of atom positions at time t1
     rmin : float
-        The minimum distance of the histogram.
+        lowest distance allowed in the binning of the results
     dr : float
-        The distances between histogram bins.
+        size of the binning step
+
+    Returns
+    -------
+    Tuple[np.ndarray]
+        intra and total input arrays modified by adding new counts
     """
 
     nbins = intra.shape[2]
+    unique_types = np.unique(symbolindex)
+    type_indices = {}
+    for type1 in unique_types:
+        type_indices[type1] = np.where(symbolindex == type1)
 
     all_distances = distance_array_2D(scaleconfig_t0, scaleconfig_t1, cell.T)
+
     bins = ((all_distances - rmin) / dr).astype(int)
+
+    bins[range(len(symbolindex)), range(len(symbolindex))] = -1
 
     for dkey, indices in indices_intra.items():
         type1, type2 = dkey
@@ -117,35 +129,52 @@ def van_hove_distinct(
                 continue
             intra[type1, type2, bin] += counts
 
-    for dkey, indices in indices_inter.items():
-        type1, type2 = dkey
-        sub_bins = bins[indices]
-        bin_numbers, bin_counts = np.unique(
-            sub_bins,
-            return_counts=True,
-        )
-        for bin, counts in zip(bin_numbers, bin_counts):
-            if bin < 0:
-                continue
-            if bin >= nbins:
-                continue
-            inter[type1, type2, bin] += counts
-    return intra, inter
+    for type1 in unique_types:
+        for type2 in unique_types:
+            sub_bins = bins[np.ix_(type_indices[type1][0], type_indices[type2][0])]
+            bin_numbers, bin_counts = np.unique(
+                sub_bins,
+                return_counts=True,
+            )
+            for bin, counts in zip(bin_numbers, bin_counts):
+                if bin < 0:
+                    continue
+                if bin >= nbins:
+                    continue
+                total[type1, type2, bin] += counts
+
+    return intra, total
 
 
 def find_index_groups(
     molindex: List[int],
     symbolindex: List[int],
 ):
+    """Finds and returns the indices of the distance array which
+    will be used for calculating the intramolecular distances.
+    These indices are expected to remain fixed within a run and
+    are only calculated once.
+
+    Parameters
+    ----------
+    molindex : List[int]
+        list containing, for each atom, the number of its corresponding molecule
+    symbolindex : List[int]
+        atom type given as an int number for each atom in the simulation
+
+    Returns
+    -------
+    Dict[Tuple[int], Tuple[List[int]]]
+        A dictionary of (atom_type1, atom_type2) : row_index_list, column_index_list values
+    """
     unique_types = np.unique(symbolindex)
-    inter = {}
     intra = {}
     for s1 in unique_types:
         for s2 in unique_types:
-            inter[(s1, s2)] = [], []
             intra[(s1, s2)] = [], []
-    for i in range(len(molindex)):
-        for j in range(len(molindex)):
+    valid_indices = [x for x in range(len(molindex)) if molindex[x] >= 0]
+    for i in valid_indices:
+        for j in valid_indices:
             if i == j:
                 continue
             mol1 = molindex[i]
@@ -153,16 +182,10 @@ def find_index_groups(
             type1 = symbolindex[i]
             type2 = symbolindex[j]
             dkey = (type1, type2)
-            if mol1 < 0 or mol2 < 0:
-                inter[dkey][0].append(i)
-                inter[dkey][1].append(j)
-            elif mol1 == mol2:
+            if mol1 == mol2:
                 intra[dkey][0].append(i)
                 intra[dkey][1].append(j)
-            else:
-                inter[dkey][0].append(i)
-                inter[dkey][1].append(j)
-    return intra, inter
+    return intra
 
 
 class VanHoveFunctionDistinct(IJob):
@@ -353,9 +376,7 @@ class VanHoveFunctionDistinct(IJob):
             (self.nElements, self.nElements, self.n_mid_points, self.numberOfSteps)
         )
 
-        self.indices_intra, self.indices_inter = find_index_groups(
-            self.indexToMolecule, self.indexToSymbol
-        )
+        self.indices_intra = find_index_groups(self.indexToMolecule, self.indexToSymbol)
 
     def run_step(self, time: int) -> tuple[int, tuple[np.ndarray, np.ndarray]]:
         """Calculates the distance histogram between the configurations
@@ -374,7 +395,7 @@ class VanHoveFunctionDistinct(IJob):
             inter and intramolecular distance histograms.
         """
         bins_intra = np.zeros((self.nElements, self.nElements, self.n_mid_points))
-        bins_inter = np.zeros((self.nElements, self.nElements, self.n_mid_points))
+        bins_total = np.zeros((self.nElements, self.nElements, self.n_mid_points))
 
         # average the distance histograms at the inputted time
         # difference over a number of configuration
@@ -396,15 +417,15 @@ class VanHoveFunctionDistinct(IJob):
             scaleconfig_t0 = coords_t0 @ inverse_cell
             scaleconfig_t1 = coords_t1 @ inverse_cell
 
-            inter = np.zeros_like(bins_inter)
-            intra = np.zeros_like(bins_inter)
+            intra = np.zeros_like(bins_intra)
+            total = np.zeros_like(bins_total)
 
-            intra, inter = van_hove_distinct(
+            intra, total = van_hove_distinct(
                 direct_cell,
                 self.indices_intra,
-                self.indices_inter,
+                self.indexToSymbol,
                 intra,
-                inter,
+                total,
                 scaleconfig_t0,
                 scaleconfig_t1,
                 self.configuration["r_values"]["first"],
@@ -415,9 +436,9 @@ class VanHoveFunctionDistinct(IJob):
             # we multiply my the volume here and divide by the number
             # of atoms in finalize.
             bins_intra += conf_t1.unit_cell.volume * intra
-            bins_inter += conf_t1.unit_cell.volume * inter
+            bins_total += conf_t1.unit_cell.volume * total
 
-        return time, (bins_intra, bins_inter)
+        return time, (bins_intra, bins_total)
 
     def combine(self, time: int, x: tuple[np.ndarray, np.ndarray]):
         """Add the results into the histograms for the inputted time
@@ -432,7 +453,7 @@ class VanHoveFunctionDistinct(IJob):
             configurations at the inputted time difference.
         """
         self.h_intra[..., time] += x[0]
-        self.h_inter[..., time] += x[1]
+        self.h_inter[..., time] += x[1] - x[0]
 
     def finalize(self):
         """Using the distance histograms calculate, normalize and save the
@@ -454,7 +475,7 @@ class VanHoveFunctionDistinct(IJob):
                 self.h_intra[idi, idj] += self.h_intra[idj, idi]
                 self.h_inter[idi, idj] += self.h_inter[idj, idi]
 
-            fact = nij * self.n_configs * self.shell_volumes
+            fact = 2 * nij * self.n_configs * self.shell_volumes
             van_hove_intra = self.h_intra[idi, idj, ...] / fact[:, np.newaxis]
             van_hove_inter = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
             van_hove_total = van_hove_intra + van_hove_inter
