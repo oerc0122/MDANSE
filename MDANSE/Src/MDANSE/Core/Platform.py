@@ -172,13 +172,12 @@ class Platform(object, metaclass=abc.ABCMeta):
             made to the filesystem.
             """
             if os.path.exists(dirname):
-                if not os.path.isfile(filepath):
-                    try:
-                        open(filepath, "w").close()
-                        os.remove(filepath)
-                    except OSError:
-                        return False
-                    return True
+                try:
+                    open(filepath, "w").close()
+                    os.remove(filepath)
+                except OSError:
+                    return False
+                return True
 
             head, tail = os.path.split(head_0)
             if os.path.exists(head):
@@ -192,7 +191,10 @@ class Platform(object, metaclass=abc.ABCMeta):
             else:
                 return recursive_check(head)
 
-        return recursive_check(dirname)
+        if os.path.isfile(filepath):
+            return os.access(filepath, os.W_OK)
+        else:
+            return recursive_check(dirname)
 
     def create_directory(self, path):
         """
