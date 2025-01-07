@@ -150,47 +150,49 @@ class Platform(object, metaclass=abc.ABCMeta):
         os.chdir(directory)
 
     @classmethod
-    def is_directory_writable(cls, path):
+    def is_file_writable(cls, filepath: str) -> bool:
         """Check if the directories can be created and a file can be
         written into it.
 
         Parameters
         ----------
-        path : str
-            The path to test if a file can be written to it.
+        filepath : str
+            The filepath to test if the file can be written.
 
         Returns
         -------
         bool
-            True if a file can be written to the input path.
+            True if a file can be written.
         """
-        path = cls.get_path(path)
+        dirname = cls.get_path(os.path.dirname(filepath))
 
-        if os.path.exists(path):
-            while True:
-                file = os.path.join(path, next(tempfile._get_candidate_names()))
-                if not os.path.isfile(file):
+        def recursive_check(head_0: str) -> bool:
+            """Builds the directories up and tests if the file can be
+            written and then removes everything so that no changes are
+            made to the filesystem.
+            """
+            if os.path.exists(dirname):
+                if not os.path.isfile(filepath):
                     try:
-                        open(file, "w").close()
-                        os.remove(file)
+                        open(filepath, "w").close()
+                        os.remove(filepath)
                     except OSError:
                         return False
                     return True
 
-        head, tail = os.path.split(path)
-        if not tail:
-            head, tail = os.path.split(head)
+            head, tail = os.path.split(head_0)
+            if os.path.exists(head):
+                try:
+                    os.mkdir(head_0)
+                except OSError:
+                    return False
+                writable = recursive_check(dirname)
+                os.rmdir(head_0)
+                return writable
+            else:
+                return recursive_check(head)
 
-        if os.path.exists(head):
-            try:
-                os.mkdir(path)
-            except OSError:
-                return False
-            writable = cls.is_directory_writable(path)
-            os.rmdir(path)
-            return writable
-        else:
-            return cls.is_directory_writable(head)
+        return recursive_check(dirname)
 
     def create_directory(self, path):
         """

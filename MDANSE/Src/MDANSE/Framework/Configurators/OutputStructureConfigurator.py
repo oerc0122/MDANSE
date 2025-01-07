@@ -74,10 +74,8 @@ class OutputStructureConfigurator(IConfigurator):
             self.error_status = "empty root name for the output file."
             return
 
-        dirname = os.path.dirname(root)
-
-        if not PLATFORM.is_directory_writable(dirname):
-            self.error_status = f"the directory {dirname} is not writable"
+        if not PLATFORM.is_file_writable(root):
+            self.error_status = f"the file {root} is not writable"
             return
 
         if not format in self.formats:
