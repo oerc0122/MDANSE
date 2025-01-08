@@ -40,6 +40,7 @@ from qtpy.QtWidgets import (
 from qtpy.QtCore import Slot, Signal, Qt
 
 from MDANSE.MLogging import LOG
+from MDANSE import PLATFORM
 
 from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
 
@@ -109,6 +110,7 @@ class DataWidget(QWidget):
         self.layout().addLayout(layout)
         layout.addWidget(QLabel("Output file:"))
         self._output_widget = QLineEdit("", self)
+        self._output_widget.textChanged.connect(self.check_file_writable)
         layout.addWidget(self._output_widget)
         self._browse_button = QPushButton("Browse", self)
         self._browse_button.clicked.connect(self.output_file_dialog)
@@ -128,6 +130,15 @@ class DataWidget(QWidget):
         self._output_button = QPushButton("Save file", self)
         self._output_button.clicked.connect(self.save_to_file)
         layout.addWidget(self._output_button)
+
+    @Slot()
+    def check_file_writable(self):
+        if PLATFORM.is_file_writable(self._output_widget.text()):
+            self._output_button.setEnabled(True)
+            self._output_widget.setStyleSheet("")
+        else:
+            self._output_button.setEnabled(False)
+            self._output_widget.setStyleSheet("color: red;")
 
     @Slot()
     def output_file_dialog(self):
@@ -154,6 +165,7 @@ class DataWidget(QWidget):
             if nsets == 0:  # do not create a file if there are no data
                 return
         try:
+            PLATFORM.create_directory(os.path.dirname(self._output_widget.text()))
             target = open(target_path, "w", newline="")
         except:
             LOG.error(f"Could not open file for writing: {target_path}")

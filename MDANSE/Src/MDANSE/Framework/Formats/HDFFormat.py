@@ -21,6 +21,7 @@ import h5py
 
 from MDANSE.Framework.Formats.IFormat import IFormat
 from MDANSE.MLogging import LOG
+from MDANSE import PLATFORM
 
 if TYPE_CHECKING:
     from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
@@ -71,6 +72,7 @@ class HDFFormat(IFormat):
         filename = "%s%s" % (filename, extension)
 
         # The HDF output file is opened for writing.
+        PLATFORM.create_directory(os.path.dirname(filename))
         outputFile = h5py.File(filename, "w")
 
         if header:
