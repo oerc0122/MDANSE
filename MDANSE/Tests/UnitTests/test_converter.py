@@ -413,7 +413,12 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_with_
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    # check trajectory has velocity and gradient data
+    traj = HDFTrajectoryConfigurator("trajectory")
+    traj.configure(temp_name + ".mdt")
+    assert traj["instance"].has_variable("velocities")
+    assert traj["instance"].has_variable("gradients")
+    traj["instance"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
