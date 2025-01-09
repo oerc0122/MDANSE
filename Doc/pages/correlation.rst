@@ -66,5 +66,5 @@ Its widths in the time and frequency domain are :math:`\sigma_t = \alpha/T`
 and :math:`\sigma_\nu = 1/(2\pi\sigma_t)`, respectively.
 :math:`\sigma_\nu` corresponds to the width of the resolution
 function of the Fourier spectrum and
-:math:`T_{c} =(N_c-1)\cdot\Delta t` is the length of the correlation
+:math:`T_{c} =(N_c-1)\Delta t` is the length of the correlation
 function.

@@ -20,22 +20,21 @@ This section discusses plugins used
 to calculate neutron spectroscopy observables from the trajectory.
 These plugins will be explored in depth in further sections, however,
 before that, it is important to understand how MDANSE performs these
-analyses. A part of that are :ref:`param-q-vectors`, which
-are used to perform these analyses. An in-depth discussion of this
-aspect is present in `Appendix 2 <#_Appendix_2>`__.
+analyses. A part of that are the :ref:`param-q-vectors`, which
+are used to perform these analyses.
 
 .. _scattering_theory:
 
 Background
 ''''''''''
-**Dynamic Structure Factor S(q, ω):** This is a central
+**Dynamic Structure Factor S(q, ω)**: This is a central
 concept in neutron scattering experiments. This factor characterizes how
 scattering intensity changes with alterations in momentum (:math:`q`) and energy (:math:`\omega`)
 during scattering events. It is instrumental in unraveling the atomic and
 molecular structures of materials.
 
-**Double Differential Cross-Section:** :math:`S(q, \omega)` is closely related to the
-double differential cross-section [7], which is a vital measurement in neutron
+**Double Differential Cross-Section**: :math:`S(q, \omega)` is closely related to the
+double differential cross-section, which is a vital measurement in neutron
 scattering. The double differential cross-section, :math:`{\mathrm{d}^{2}{\sigma/\mathit{\mathrm{d}\Omega
 \mathrm{d}E}}}`, is defined as the number of
 neutrons scattered per unit time into the solid angle interval
@@ -75,7 +74,7 @@ These equations relate the neutron energies (:math:`E` and :math:`E_0`) to their
 numbers (:math:`k` and :math:`k_0`) using the mass of the neutron (:math:`m`). They are fundamental for
 connecting energy and momentum in neutron scattering.
 
-**Dimensionless Momentum and Energy Transfer:** These equations below define the
+**Dimensionless Momentum and Energy Transfer**: These equations below define the
 dimensionless momentum (:math:`q`, dynamic structure factor) and energy (:math:`\omega`) transfer in
 units of the reduced Planck constant (:math:`\hbar`) based on the incident and scattered
 wave numbers and energies:
@@ -91,7 +90,7 @@ wave numbers and energies:
    {{\omega = \frac{E_{0} - E}{\hbar}}.}
 
 The modulus of the momentum transfer can be expressed in terms of a scattering
-angle, energy transfer, and incident neutron energy. See equation below:
+angle, energy transfer, and incident neutron energy.
 
 .. math::
    :label: pfx60
@@ -99,7 +98,7 @@ angle, energy transfer, and incident neutron energy. See equation below:
    {{\vert q \vert = \vert k_{0} \vert \sqrt{{2 - \frac{\mathit{\hbar\omega}}{E_{0}} - 2}\cos{\theta\sqrt{1 - \frac{\mathit{\hbar\omega}}{E_{0}}}}}}.}
 
 
-**Intermediate Scattering Function F(q, t):**
+**Intermediate Scattering Function F(q, t)**:
 This equation defines the dynamic structure factor, :math:`S(q, \omega)`, as a Fourier
 transform of the intermediate scattering function, :math:`F(q, t)`, with respect to
 time, :math:`t`. It captures information about the structure and dynamics of the
@@ -138,7 +137,7 @@ The overline :math:`\overline{...}` appearing in :math:`{\Gamma_{\mathit{\alpha\
 denotes an average over isotopes and relative spin orientations of
 neutron and nucleus.
 
-**Coherent and Incoherent Scattering:**
+**Coherent and Incoherent Scattering**:
 Usually, one splits the intermediate scattering function and the dynamic
 structure factor into their *coherent* and *incoherent* parts which
 describe collective and single particle motions, respectively. Defining
@@ -196,7 +195,7 @@ and :math:`\omega_{J,(\mathrm{coh}/\mathrm{inc})}` are defined in Section :ref:`
 the Fourier transformation defined in Eq. :math:numref:`pfx61`.
 
 
-**Classical Framework and Corrections:**
+**Classical Framework and Corrections**:
 In the classical framework the intermediate scattering functions are
 interpreted as classical time correlation functions. The position
 operators are replaced by time-dependent vector functions and quantum
@@ -228,7 +227,7 @@ liquid, containing only one sort of atoms, it reads
 
 where :math:`M` is the mass of the atoms.
 
-**Recoil Moment:** Formula :math:numref:`pfx76` shows that the
+**Recoil Moment**: Formula :math:numref:`pfx76` shows that the
 first moment is given by the average kinetic energy (in units of
 :math:`\hbar`) of a particle which receives a momentum transfer
 :math:`\hbar q`. Therefore, :math:`\langle\omega\rangle`
@@ -252,7 +251,7 @@ so far. For more details we refer to Ref.
 [Ref18]_.
 
 
-**Static Structure Factor S(q):** An important quantity describing structural properties of liquids is the
+**Static Structure Factor S(q)**: An important quantity describing structural properties of liquids is the
 static structure factor. :math:`S(q)` as an integral involving the
 dynamic structure factor which is also the coherent intermediate scattering function
 at zero time delay :math:`t = 0`.
@@ -262,7 +261,7 @@ at zero time delay :math:`t = 0`.
 
    {\text{S}(q)\doteq{\int\limits_{- \infty}^{+ \infty}{\mathrm{d}\omega}}\,\text{S}_{\mathrm{coh}}\left( {q,\omega} \right) = \text{F}_{\mathrm{coh}}\left( {q,0} \right).}
 
-**Total Structure Factors:** MDANSE computes the partial :math:`S(Q)` as the Fourier transform of the
+**Total Structure Factors**: MDANSE computes the partial :math:`S(Q)` as the Fourier transform of the
 partial pair distribution function :math:`g(r)`, corresponding to the Faber-Ziman definition:
 
 .. math::
@@ -275,7 +274,7 @@ the total :math:`g(r)`. In the case of the analysis 'X-ray Static structure
 factor', the :math:`Q`-dependence of the atomic form factors is taken into
 account in this weighted sum.
 
-**X-ray Observable Normalization:** Again, Soper has provided experimental data (table 4 in *ISRN Physical
+**X-ray Observable Normalization**: Again, Soper has provided experimental data (table 4 in *ISRN Physical
 Chemistry*, 279463 (2013), given in file soper13_fx.dat). Here a source
 of confusion is that the data can be normalized in different ways (see
 Soper's paper). Using the normalization II in that reference we have

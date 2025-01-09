@@ -11,11 +11,11 @@ analysis calculation and (3) results plotting.
 1. Trajectory conversion
 ------------------------
 To load a trajectory into MDANSE and run an analysis calculation
-the trajectory must be in the MDANSE trajectory format, saved as a HDF file.
+the trajectory must be in the MDANSE trajectory format (MDT).
 
 Most likely your trajectory is in whatever format was output by your preferred Molecular Dynamics
 simulation software, and you need to convert it first. Once you have converted your
-trajectory to the MDANSE HDF format, you can use it as input for all kinds of
+trajectory to the MDANSE MDT format, you can use it as input for all kinds of
 analysis. See also :ref:`trajectory-converters`.
 
 2a. Analysis parameters
@@ -57,25 +57,23 @@ type of analysis performed.
 Output files
 ^^^^^^^^^^^^
 All the output arrays created in the analysis are written to the filesystem in the
-format chosen by the user. (If you intend to continue visualising the results within
-the MDANSE_GUI, you will need to use the HDF5 format. If, however, you were planning
+format chosen by the user. If you intend to continue visualising the results within
+the MDANSE_GUI, you will need to use the MDAFormat. If, however, you were planning
 to process the results further using other software, then you will need to pick
-the ASCII output. See also :ref:`param-output-files`)
+the TextFormat output. See also :ref:`param-output-files`
 
 2b. Analysis results
 ---------------------
 The analysis jobs are run in steps, iterating over each part of the trajectory.
-
 The iterations over steps will produce partial results. This is where the specific
 equations described in the documentation of an analysis type are applied.
-The partial results will be combined into the final result.
-
-The partial properties are calculated, typically per atom type,
-or per pair of atom types and are combined into the total result.
+The partial results will be combined into the final result. The partial
+properties are calculated, typically per atom type, or per pair of atom
+types and are combined into the total result.
 
 3. Plotting
 -----------
-If the HDF5 format was chosen for the analysis job output file, the
+If the MDAFormat was chosen for the analysis job output file, the
 file can then be opened in the MDANSE_GUI and plotted. As the MDANSE_GUI
 plotting is built on the matplotlib library many options found in the
 matplotlib are available in MDANSE_GUI. Additionally as the analysis

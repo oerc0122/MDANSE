@@ -62,8 +62,8 @@ Density Of States
 .. _theory-and-implementation-1:
 
 *MDANSE* calculates the power spectrum of the *VACF*, which in case of
-the mass-weighted *VACF* defines the phonon discrete *DOS*, (see the
-section on :ref:`analysis-vacf`) defined as:
+the mass-weighted *VACF* defines the phonon discrete *DOS* (see the
+section on :ref:`analysis-vacf`), defined as:
 
 .. math::
    :label: pfx5
@@ -89,8 +89,9 @@ can be smoothed by, for example, a Gaussian window applied in the time domain
 [Ref10]_ (see the section :ref:`appendix-fca`). Its width in the time domain
 is :math:`{\sigma_{t} = \alpha}\text{/}T`
 , where :math:`T` is the length of the correlation function. We remark that the diffusion
-constant obtained from *DOS* is biased due to the spectral smoothing
+constant obtained from this *DOS* is biased due to the spectral smoothing
 procedure since the *VACF* is weighted by this window Gaussian function.
+
 *MDANSE* computes the density of states starting from atomic
 velocities. In the case that velocities are not available, the velocities will be
 computed by numerical differentiation of the coordinate trajectories
@@ -192,7 +193,7 @@ coefficient one obtains the relation
 .. math::
    :label: pfx20
 
-   {{D_{\alpha} = {\int\limits_{0}^{t}{\mathrm{d}\tau \, C_{\mathit{\upsilon\upsilon};\mathit{\alpha\alpha}}(t)}}}.}
+   {{D_{\alpha} = {\int\limits_{0}^{\infty}{\mathrm{d}\tau \, C_{\mathit{\upsilon\upsilon};\mathit{\alpha\alpha}}(t)}}}.}
 
 and can also be written as
 
@@ -202,7 +203,7 @@ and can also be written as
    {{D_{\alpha} = \pi}{\overset{\sim}{C}}_{\mathit{\upsilon\upsilon};\mathit{\alpha\alpha}}(0).}
 
 Computationally, the *MSD* is calculated by calculating the position autocorrelation since
-from Eq. :math:numref:`pfx13` and :math:numref:`pfx14`
+from Eqs. :math:numref:`pfx13` and :math:numref:`pfx14`
 
 .. math::
    :label: pfx22
@@ -391,7 +392,7 @@ property describing the dynamics of a molecular system. Indeed, it
 reveals the underlying nature of the forces acting on the system.
 
 In a molecular system that would be made of non-interacting particles,
-the velocities would be constant at any time triggering the *VACF* to be
+the velocities would be constant and the *VACF* would have
 a constant value. Now, if we think about a system with small
 interactions such as in a gas-phase, the magnitude and direction of the
 velocity of a particle will change gradually over time due to its
