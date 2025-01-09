@@ -30,6 +30,8 @@ dlp_field_v2 = os.path.join(file_wd, "Data", "FIELD_Water")
 dlp_history_v2 = os.path.join(file_wd, "Data", "HISTORY_Water")
 dlp_field_v4 = os.path.join(file_wd, "Data", "FIELD4")
 dlp_history_v4 = os.path.join(file_wd, "Data", "HISTORY4")
+dlp_field_with_grad = os.path.join(file_wd, "Data", "FIELD_methanol_short")
+dlp_history_with_grad = os.path.join(file_wd, "Data", "HISTORY_methanol_short")
 apoferritin_dcd = os.path.join(file_wd, "Data", "apoferritin.dcd")
 apoferritin_pdb = os.path.join(file_wd, "Data", "apoferritin.pdb")
 pbanew_md = os.path.join(file_wd, "Data", "PBAnew.md")
@@ -386,6 +388,37 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_versi
     dl_poly.run(parameters, status=True)
 
     HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+
+    assert os.path.exists(temp_name + ".mdt")
+    assert os.path.isfile(temp_name + ".mdt")
+    os.remove(temp_name + ".mdt")
+    assert os.path.exists(temp_name + ".log")
+    assert os.path.isfile(temp_name + ".log")
+    os.remove(temp_name + ".log")
+
+
+@pytest.mark.parametrize("compression", ["none", "gzip", "lzf"])
+def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_with_grad(
+    compression,
+):
+    temp_name = tempfile.mktemp()
+
+    parameters = {
+        "atom_aliases": "{}",
+        "field_file": dlp_field_with_grad,
+        "fold": False,
+        "history_file": dlp_history_with_grad,
+        "output_files": (temp_name, 64, 128, compression, "INFO"),
+    }
+    dl_poly = Converter.create("DL_POLY")
+    dl_poly.run(parameters, status=True)
+
+    # check trajectory has velocity and gradient data
+    traj = HDFTrajectoryConfigurator("trajectory")
+    traj.configure(temp_name + ".mdt")
+    assert traj["instance"].has_variable("velocities")
+    assert traj["instance"].has_variable("gradients")
+    traj["instance"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
