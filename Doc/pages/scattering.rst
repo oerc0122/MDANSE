@@ -27,13 +27,13 @@ are used to perform these analyses.
 
 Background
 ''''''''''
-**Dynamic Structure Factor S(q, ω)**: This is a central
+**Dynamic structure factor S(q, ω)**: This is a central
 concept in neutron scattering experiments. This factor characterizes how
 scattering intensity changes with alterations in momentum (:math:`q`) and energy (:math:`\omega`)
 during scattering events. It is instrumental in unraveling the atomic and
 molecular structures of materials.
 
-**Double Differential Cross-Section**: :math:`S(q, \omega)` is closely related to the
+**Double differential cross-section**: The dynamic structure factor is closely related to the
 double differential cross-section, which is a vital measurement in neutron
 scattering. The double differential cross-section, :math:`{\mathrm{d}^{2}{\sigma/\mathit{\mathrm{d}\Omega
 \mathrm{d}E}}}`, is defined as the number of
@@ -74,8 +74,8 @@ These equations relate the neutron energies (:math:`E` and :math:`E_0`) to their
 numbers (:math:`k` and :math:`k_0`) using the mass of the neutron (:math:`m`). They are fundamental for
 connecting energy and momentum in neutron scattering.
 
-**Dimensionless Momentum and Energy Transfer**: These equations below define the
-dimensionless momentum (:math:`q`, dynamic structure factor) and energy (:math:`\omega`) transfer in
+**Momentum and energy transfer**: These equations below define the
+momentum (:math:`q`) and energy (:math:`\omega`) transfer in
 units of the reduced Planck constant (:math:`\hbar`) based on the incident and scattered
 wave numbers and energies:
 
@@ -98,10 +98,10 @@ angle, energy transfer, and incident neutron energy.
    {{\vert q \vert = \vert k_{0} \vert \sqrt{{2 - \frac{\mathit{\hbar\omega}}{E_{0}} - 2}\cos{\theta\sqrt{1 - \frac{\mathit{\hbar\omega}}{E_{0}}}}}}.}
 
 
-**Intermediate Scattering Function F(q, t)**:
-This equation defines the dynamic structure factor, :math:`S(q, \omega)`, as a Fourier
-transform of the intermediate scattering function, :math:`F(q, t)`, with respect to
-time, :math:`t`. It captures information about the structure and dynamics of the
+**Intermediate scattering function F(q, t)**:
+This equation defines the dynamic structure factor :math:`S(q, \omega)` as a Fourier
+transform of the intermediate scattering function :math:`F(q, t)` with respect to
+time :math:`t`. It captures information about the structure and dynamics of the
 scattering system [Ref16]_. It can be written as:
 
 .. math::
@@ -109,7 +109,7 @@ scattering system [Ref16]_. It can be written as:
 
    {S{\left( {q,\omega} \right) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d}t \, }\exp\left\lbrack {{- i}\omega t} \right\rbrack F\left( {q,t} \right).}
 
-:math:`F(q, t)` is called the *intermediate scattering function* and is defined as
+and
 
 .. math::
    :label: pfx62
@@ -137,10 +137,10 @@ The overline :math:`\overline{...}` appearing in :math:`{\Gamma_{\mathit{\alpha\
 denotes an average over isotopes and relative spin orientations of
 neutron and nucleus.
 
-**Coherent and Incoherent Scattering**:
+**Coherent and incoherent scattering**:
 Usually, one splits the intermediate scattering function and the dynamic
 structure factor into their *coherent* and *incoherent* parts which
-describe collective and single particle motions, respectively. Defining
+describe collective and single particle motions, respectively. By defining
 
 .. math::
    :label: pfx65
@@ -195,7 +195,7 @@ and :math:`\omega_{J,(\mathrm{coh}/\mathrm{inc})}` are defined in Section :ref:`
 the Fourier transformation defined in Eq. :math:numref:`pfx61`.
 
 
-**Classical Framework and Corrections**:
+**Classical framework and corrections**:
 In the classical framework the intermediate scattering functions are
 interpreted as classical time correlation functions. The position
 operators are replaced by time-dependent vector functions and quantum
@@ -227,7 +227,7 @@ liquid, containing only one sort of atoms, it reads
 
 where :math:`M` is the mass of the atoms.
 
-**Recoil Moment**: Formula :math:numref:`pfx76` shows that the
+**Recoil moment**: Formula :math:numref:`pfx76` shows that the
 first moment is given by the average kinetic energy (in units of
 :math:`\hbar`) of a particle which receives a momentum transfer
 :math:`\hbar q`. Therefore, :math:`\langle\omega\rangle`
@@ -247,13 +247,12 @@ is correct to first order in :math:`\hbar`. Therefore, it cannot be used
 for large :math:`q`-values which correspond to large momentum transfers
 :math:`\hbar q`. This is actually true for all correction
 methods which have suggested
-so far. For more details we refer to Ref.
-[Ref18]_.
+so far. For more details we refer to [Ref18]_.
 
 
-**Static Structure Factor S(q)**: An important quantity describing structural properties of liquids is the
-static structure factor. :math:`S(q)` as an integral involving the
-dynamic structure factor which is also the coherent intermediate scattering function
+**Static structure factor S(q)**: An important quantity describing structural properties of liquids is the
+static structure factor. :math:`S(q)` is an integral involving the
+dynamic structure factor or the coherent intermediate scattering function
 at zero time delay :math:`t = 0`.
 
 .. math::
@@ -261,7 +260,7 @@ at zero time delay :math:`t = 0`.
 
    {\text{S}(q)\doteq{\int\limits_{- \infty}^{+ \infty}{\mathrm{d}\omega}}\,\text{S}_{\mathrm{coh}}\left( {q,\omega} \right) = \text{F}_{\mathrm{coh}}\left( {q,0} \right).}
 
-**Total Structure Factors**: MDANSE computes the partial :math:`S(Q)` as the Fourier transform of the
+**Total structure factors**: MDANSE computes the partial :math:`S(Q)` as the Fourier transform of the
 partial pair distribution function :math:`g(r)`, corresponding to the Faber-Ziman definition:
 
 .. math::
@@ -274,7 +273,7 @@ the total :math:`g(r)`. In the case of the analysis 'X-ray Static structure
 factor', the :math:`Q`-dependence of the atomic form factors is taken into
 account in this weighted sum.
 
-**X-ray Observable Normalization**: Again, Soper has provided experimental data (table 4 in *ISRN Physical
+**X-ray observable normalization**: Soper has provided experimental data (table 4 in *ISRN Physical
 Chemistry*, 279463 (2013), given in file soper13_fx.dat). Here a source
 of confusion is that the data can be normalized in different ways (see
 Soper's paper). Using the normalization II in that reference we have
@@ -348,15 +347,6 @@ longitudinal current correlation and the dynamic structure factor.
 
 Dynamic Coherent Structure Factor
 '''''''''''''''''''''''''''''''''
-In materials science and condensed matter physics, dynamic coherent structure
-factors are crucial. They enable a  understanding of complex
-particle or atom movements and interactions over time. These factors provide
-invaluable insights into the dynamic behavior of materials, aiding researchers in
-deciphering particle evolution and characterizing properties such as diffusion
-rates, elasticity, and phase transitions. They play a pivotal role in enhancing
-our understanding of system dynamics and significantly benefit research in these
-fields.
-
 In this analysis, MDANSE proceeds in two steps. First, it computes the partial
 and total intermediate coherent scattering function using equation
 :math:numref:`pfx69`. Then, the partial and total dynamic coherent structure
@@ -364,10 +354,7 @@ factors are obtained by performing the Fourier Transformation, defined in Eq.
 :math:numref:`pfx61`, respectively on the total and partial intermediate
 coherent scattering functions.
 
-**Coherent Intermediate Scattering Function Calculation:**
-*MDANSE* computes the coherent intermediate scattering function on a
-rectangular grid of equidistantly spaced points along the time-and the
-:math:`q`-axis, respectively:
+**The coherent intermediate scattering function**:
 
 .. math::
    :label: pfx80
@@ -378,35 +365,20 @@ where :math:`{k = 0}, \ldots, {N_{t} - 1}` and :math:`{m = 0}, \ldots, {N_{q} - 
 :math:`N_t` is the number of time steps in the coordinate time series,
 :math:`N_q` is a user-defined number of :math:`q`-shells,
 :math:`N_{\mathrm{species}}` is the number of selected species, :math:`n_{I}`
-is the number of atoms of species :math:`I`, :math:`\omega_{I}` the weight
-for species :math:`I` (see Section :ref:`target_CN` for more details)
-and :math:`{\rho_{I}( {q,k\Delta t})}`. The overline
-:math:`{\overline{...}}^{q}` in Eq. :math:numref:`pfx80` denotes an average
-over :math:`q`-vectors having *approximately* the same modulus
-
-**Fourier-Transformed Particle Density:** Below defines
-the Fourier-transformed particle density for species :math:`I`:
+is the number of atoms , :math:`\omega_{I}` is the weight and :math:`{\rho_{I}( {q,k\Delta t})}` is the Fourier components of the particle density of species
+:math:`I`
 
 .. math::
    :label: pfx83
 
    {\rho_{I}{\left( {q,k\cdot\Delta t} \right) = \sum\limits_{\alpha}^{n_{I}}}\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}\left( {k\Delta t} \right)} \right\rbrack.}
 
-
-**q-Vectors on a Reciprocal Lattice:** Below describes the selection of :math:`q`-vectors on a lattice reciprocal to the MD box lattice.
-
-.. math::
-   :label: pfx85
-   
-   {{q_{m} = {q_{\mathit{\min}} + m}}\Delta q}
+The overline :math:`{\overline{...}}^{q}` in Eq. :math:numref:`pfx80`
+denotes an average over :math:`q`-vectors having *approximately* the same
+modulus.
 
 
-The particle density must not change if jumps in the particle
-trajectories due to periodic boundary conditions occur. In addition, the
-*average* particle density (:math:`N/V`) must not change.
-
-**Position Vector in the MD Cell** This can be achieved by choosing :math:`q`-vectors on a
-lattice which is reciprocal to the lattice defined by the *MD* box. Let
+**Reciprocal lattice q-vectors**: Let
 :math:`b_1`, :math:`b_2`, :math:`b_3` be the basis vectors
 which span the *MD* cell. Any position vector in the *MD* cell can be
 written as
@@ -416,11 +388,10 @@ written as
 
    {{R = x^{'}}{b_{1} + y^{'}}{b_{2} + z^{'}}b_{3},}
 
-Eq. :math:numref:`pfx86` defines the position vector in the MD cell.
-
-**Dual Basis Vectors:** with :math:`x'`, :math:`y'`, :math:`z'` having
+so that it defines the position vector in the MD cell.
+With :math:`x'`, :math:`y'`, :math:`z'` having
 values between :math:`0` and :math:`1` if :math:`R` is in the unit cell.
-The primes indicate that the coordinates are box coordinates. A jump due
+The primes indicate that the coordinates are fractional coordinates. A jump due
 to periodic boundary conditions can cause :math:`x'`, :math:`y'`,
 :math:`z'` to jump by :math:`\pm1`. The set of dual basis
 vectors :math:`b^1`, :math:`b^2`, :math:`b^3` is defined by
@@ -431,20 +402,17 @@ the relation
 
    {b_{i}{b^{j} = \delta_{i}^{j}}.}
 
-Eq. :math:numref:`pfx87` defines the dual basis vectors and
-their relation to the basis vectors.
-
-**Selection of q-Vectors with Phase Changes:** If the q-vectors are now chosen as
+and defines the dual basis vectors and their relation to the basis
+vectors. If the q-vectors are now chosen as
 
 .. math::
    :label: pfx88
 
    {{q = 2}\pi\left( {k{b^{1} + l}{b^{2} + m}b^{3}} \right),}
 
-Describes the selection of :math:`q`-vectors with phase changes for
-handling jumps in particle trajectories
-
-where :math:`k`, :math:`l`, :math:`m` are integer numbers, jumps in the particle trajectories
+so that this selection of :math:`q`-vectors produces phase changes for
+handling jumps in particle trajectories. Here :math:`k`, :math:`l`, :math:`m`
+are integer numbers, jumps in the particle trajectories
 produce phase changes of multiples of :math:`2\pi` in the Fourier transformed
 particle density, i.e. leave it unchanged. One can define a grid of
 :math:`q`-shells or a grid of :math:`q`-vectors along a given direction or on a
@@ -454,7 +422,7 @@ deviate within the prescribed tolerance from the equidistant :math:`q`-grid.
 From these :math:`q`-vectors only a maximum number per grid-point (called
 generically :math:`q`-shell also in the anisotropic case) is kept.
 
-**Negative Coherent Scattering Lengths:** The :math:`q`-vectors can be generated isotropically, anisotropically or along
+**Negative coherent scattering lengths**: The :math:`q`-vectors can be generated isotropically, anisotropically or along
 user-defined directions. The :math:`\sqrt{\omega_{I}}` may be negative
 if they represent normalized coherent scattering
 lengths, i.e.
@@ -466,11 +434,10 @@ lengths, i.e.
 
 Defines the use of negative coherent scattering lengths for hydrogenous materials.
 Negative coherent scattering lengths occur in hydrogenous materials
-since :math:`b_{\mathrm{H},\mathrm{coh}}` is negative [Ref20]_.
-
-When the default value of weights (:math:`b_{\mathrm{coherent}}`) is chosen for this
+since :math:`b_{\mathrm{H},\mathrm{coh}}` is negative [Ref20]_. When the
+default value of weights (:math:`b_{\mathrm{coherent}}`) is chosen for this
 analysis, the result will correspond to that of the equation :math:numref:`ntdsf-eq6`
-from the :ref:`analysis-ndtsf`.
+from the :ref:`neutron-dynamic-total-structure-factor`.
 
 .. _dynamic-incoherent-structure-factor:
 
@@ -485,9 +452,7 @@ performing the Fourier Transformation, defined in Eq. :math:numref:`pfx61`,
 respectively on the total and partial intermediate incoherent
 scattering function.
 
-**Computation of Incoherent Intermediate Scattering Function:** *MDANSE* computes the incoherent intermediate scattering function on a
-rectangular grid of equidistantly spaced points along the time-and the
-:math:`q`-axis, respectively:
+**The incoherent intermediate scattering function**:
 
 .. math::
    :label: pfx90
@@ -510,65 +475,18 @@ is defined as:
 
 The overline :math:`{\overline{...}}^{q}` in Eq. :math:numref:`pfx92`
 denotes an average
-over :math:`q`-vectors having *approximately* the same modulus
-:math:`{{q_{m} = {q_{\mathit{\min}} + m}}\Delta q}`. The
-particle density must not change if jumps in the particle
-trajectories due to periodic boundary conditions occur. 
-
-
-**Selection of q-Vectors on a Reciprocal Lattice:** In addition, the
-*average* particle density (:math:`N/V`) must not change. This can be achieved
-by choosing :math:`q`-vectors on a lattice which is reciprocal to the lattice
-defined by the *MD* box. Let :math:`b_1`, :math:`b_2`,
-:math:`b_3` be the basis vectors which span the *MD* cell. Any
-position vector in the *MD* cell can be written as
-
-.. math::
-   :label: pfx94
-
-   {{R = x^{'}}{b_{1} + y^{'}}{b_{2} + z^{'}}b_{3},}
-
-with :math:`x'`, :math:`y'`, :math:`z'` having values between :math:`0` and :math:`1`
-if :math:`R` is in the unit cell. The primes indicate that
-the coordinates are box coordinates. A jump due to periodic boundary
-conditions causes :math:`x'`, :math:`y'`, :math:`z'` to jump by :math:`\pm 1`.
-The set of dual basis vectors :math:`b^1`, :math:`b^2`, :math:`b^3` is defined by
-the relation
-
-.. math::
-   :label: pfx95
-
-   {b_{i}{b^{j} = \delta_{i}^{j}}.}
-
-If the :math:`q`-vectors are now chosen as
-
-.. math::
-   :label: pfx96
-
-   {{q = 2}\pi\left( {k{b^{1} + l}{b^{2} + m}b^{3}} \right),}
-
-where :math:`k`, :math:`l`, :math:`m`,  are integer numbers, jumps in the particle trajectories
-produce phase changes of multiples of :math:`2\pi` in the Fourier transformed
-particle density, i.e. leave it unchanged. One can define a grid of
-:math:`q`-shells or a grid of :math:`q`-vectors along a given direction or on a
-given plane, giving in addition a *tolerance* for :math:`q`. *MDANSE* looks
-then for :math:`q`-vectors of the form given in Eq. :math:numref:`pfx96` whose moduli
-deviate within the prescribed tolerance from the equidistant :math:`q`-grid.
-From these :math:`q`-vectors only a maximum number per grid-point (called
-generically :math:`q`-shell also in the anisotropic case) is kept.
-The :math:`q`-vectors can be generated isotropically, anisotropically or along
-user-defined directions.
-
-When the default value of weights (:math:`{b^{2}}_{\mathrm{incoherent}}`) is chosen for this
+over :math:`q`-vectors having *approximately* the same modulus. When the default
+value of weights (:math:`{b^{2}}_{\mathrm{incoherent}}`) is chosen for this
 analysis, the result will correspond to that of the equation :math:numref:`ntdsf-eq7`
-from the :ref:`analysis-ndtsf`.
+from the :ref:`neutron-dynamic-total-structure-factor`.
 
 .. _elastic-incoherent-structure-factor:
 
 Elastic Incoherent Structure Factor
 '''''''''''''''''''''''''''''''''''
 
-The *EISF* appears as the amplitude of the *elastic* line in the neutron
+The elastic incoherent structure
+factor (*EISF*) appears as the amplitude of the *elastic* line in the neutron
 scattering spectrum. Elastic scattering is only present for systems in which the
 atomic motion is confined in space, as for solids. To understand which information
 is contained in the *EISF* we consider for simplicity a system where only one
@@ -577,9 +495,8 @@ the case for all systems containing a large amount of hydrogen atoms, as biologi
 systems. Incoherent scattering from hydrogen dominates by far all other
 contributions.
 
-**Van Hove Self-correlation Function:** The Elastic Incoherent Structure
-Factor (*EISF*) is defined as the limit of the incoherent intermediate
-scattering function for infinite time,
+**The van Hove self-correlation function**: The *EISF* is defined as the
+limit of the incoherent intermediate scattering function for infinite time
 
 .. math::
    :label: pfx97
@@ -634,7 +551,7 @@ vanishes for all systems in which the particles can access an infinite
 volume since :math:`G_{\mathrm{s}}(r, t)` approaches :math:`1/V` for large times. This is
 the case for molecules in liquids and gases.
 
-**EISF Computation:** For computational purposes it is convenient to use the following
+**EISF computation**: For computational purposes it is convenient to use the following
 representation of the *EISF* [Ref21]_:
 
 .. math::
@@ -668,7 +585,7 @@ the length of the *MD* trajectory from which the *EISF* is computed
 should be long enough to allow for a representative sampling of the
 conformational space.
 
-**Grid Computation:** *MDANSE* allows one to compute the elastic incoherent structure factor
+**Grid computation**: *MDANSE* allows one to compute the elastic incoherent structure factor
 on a grid of equidistantly spaced points along the *q*-axis:
 
 .. math::
