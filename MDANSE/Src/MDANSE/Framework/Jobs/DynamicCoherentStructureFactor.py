@@ -24,6 +24,8 @@ from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
 from MDANSE.Mathematics.Signal import get_spectrum
+from MDANSE.Framework.QVectors.IQVectors import IQVectors
+from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
 class DynamicCoherentStructureFactorError(Error):
@@ -181,6 +183,19 @@ class DynamicCoherentStructureFactor(IJob):
             main_result=True,
         )
 
+        self._average_unit_cell = UnitCell(
+            np.mean(
+                [
+                    self.configuration["trajectory"]["instance"]
+                    .unit_cell(frame)
+                    ._unit_cell
+                    for frame in self.configuration["frames"]["value"]
+                ],
+                axis=0,
+            )
+        )
+        print(f"Average unit cell: {self._average_unit_cell._unit_cell}")
+
     def run_step(self, index):
         """
         Runs a single step of the job.\n
@@ -213,7 +228,16 @@ class DynamicCoherentStructureFactor(IJob):
 
             # loop over the trajectory time steps
             for i, frame in enumerate(self.configuration["frames"]["value"]):
-                qVectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"]
+                # unit_cell = traj.unit_cell(frame)
+                unit_cell = self._average_unit_cell
+                try:
+                    hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
+                except KeyError:
+                    qVectors = self.configuration["q_vectors"]["value"][shell][
+                        "q_vectors"
+                    ]
+                else:
+                    qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
 
                 coords = traj.configuration(frame)["coordinates"]
 

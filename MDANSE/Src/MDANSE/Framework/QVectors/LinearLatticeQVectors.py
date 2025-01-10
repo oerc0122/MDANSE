@@ -51,7 +51,9 @@ class LinearLatticeQVectors(LatticeQVectors):
             random.seed(self._configuration["seed"]["value"])
 
         # The Q vector corresponding to the input hkl.
-        qVect = np.dot(self._inverseUnitCell, self._configuration["axis"]["vector"])
+        qVect = self.hkl_to_qvectors(
+            self._configuration["axis"]["vector"], self._unit_cell
+        )
 
         qMax = (
             self._configuration["shells"]["last"]
@@ -95,11 +97,8 @@ class LinearLatticeQVectors(LatticeQVectors):
                 self._configuration["q_vectors"][q]["q_vectors"] = vects[:, hits]
                 self._configuration["q_vectors"][q]["n_q_vectors"] = n
                 self._configuration["q_vectors"][q]["q"] = q
-                self._configuration["q_vectors"][q]["hkls"] = np.rint(
-                    np.dot(
-                        self._directUnitCell,
-                        self._configuration["q_vectors"][q]["q_vectors"],
-                    )
+                self._configuration["q_vectors"][q]["hkls"] = self.qvectors_to_hkl(
+                    vects[:, hits], self._unit_cell
                 )
 
             if self._status is not None:

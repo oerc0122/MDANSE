@@ -49,21 +49,19 @@ class SphericalLatticeQVectors(LatticeQVectors):
             + 0.5 * self._configuration["width"]["value"]
         )
 
-        hklMax = (
-            np.ceil([qMax / np.sqrt(np.sum(v**2)) for v in self._inverseUnitCell.T]) + 1
-        )
+        hklMax = np.ceil(self.qvectors_to_hkl(qMax * np.eye(3), self._unit_cell)) + 1
 
-        vects = np.mgrid[
-            -hklMax[0] : hklMax[0] + 1,
-            -hklMax[1] : hklMax[1] + 1,
-            -hklMax[2] : hklMax[2] + 1,
+        hkl_vects = np.mgrid[
+            -hklMax[0, 0] : hklMax[0, 0] + 1,
+            -hklMax[1, 1] : hklMax[1, 1] + 1,
+            -hklMax[2, 2] : hklMax[2, 2] + 1,
         ]
 
-        vects = vects.reshape(
+        hkl_vects = hkl_vects.reshape(
             3, int(2 * hklMax[0] + 1) * int(2 * hklMax[1] + 1) * int(2 * hklMax[2] + 1)
         )
 
-        vects = np.dot(self._inverseUnitCell, vects)
+        vects = self.hkl_to_qvectors(hkl_vects, self._unit_cell)
 
         dists2 = np.sum(vects**2, axis=0)
 
@@ -96,11 +94,8 @@ class SphericalLatticeQVectors(LatticeQVectors):
                 self._configuration["q_vectors"][q]["q_vectors"] = vects[:, hits]
                 self._configuration["q_vectors"][q]["n_q_vectors"] = n
                 self._configuration["q_vectors"][q]["q"] = q
-                self._configuration["q_vectors"][q]["hkls"] = np.rint(
-                    np.dot(
-                        self._directUnitCell,
-                        self._configuration["q_vectors"][q]["q_vectors"],
-                    )
+                self._configuration["q_vectors"][q]["hkls"] = self.qvectors_to_hkl(
+                    vects[:, hits], self._unit_cell
                 )
 
             if self._status is not None:

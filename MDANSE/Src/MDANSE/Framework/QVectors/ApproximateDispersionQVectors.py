@@ -69,7 +69,7 @@ class ApproximateDispersionQVectors(LatticeQVectors):
             np.array(qStart)[:, np.newaxis] + np.outer(n, np.arange(0, nSteps)) * qStep
         )
 
-        hkls = np.rint(np.dot(self._directUnitCell, vects))
+        hkls = self.qvectors_to_hkl(vects, self._unit_cell)
 
         dists = np.sqrt(np.sum(vects**2, axis=0))
         dists = list(zip(range(len(dists)), dists))

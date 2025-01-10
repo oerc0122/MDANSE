@@ -48,7 +48,7 @@ class DispersionLatticeQVectors(LatticeQVectors):
         )
 
         # The k matrix (3,n_hkls)
-        vects = np.dot(self._inverseUnitCell, hkls)
+        vects = self.hkl_to_qvectors(hkls, self._unit_cell)
 
         dists = np.sqrt(np.sum(vects**2, axis=0))
 

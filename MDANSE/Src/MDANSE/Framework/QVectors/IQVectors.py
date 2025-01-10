@@ -14,11 +14,17 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import abc
+from typing import TYPE_CHECKING
+
+import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Configurable import Configurable
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.MLogging import LOG
+
+if TYPE_CHECKING:
+    from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
 class QVectorsError(Error):
@@ -54,3 +60,13 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
 
     def setStatus(self, status):
         self._status = status
+
+    @classmethod
+    def qvectors_to_hkl(
+        self, vector_array: np.array, unit_cell: "UnitCell"
+    ) -> np.ndarray:
+        return np.dot(unit_cell.direct, vector_array) / (2 * np.pi)
+
+    @classmethod
+    def hkl_to_qvectors(self, hkls: np.array, unit_cell: "UnitCell") -> np.ndarray:
+        return 2 * np.pi * np.dot(unit_cell.inverse, hkls)

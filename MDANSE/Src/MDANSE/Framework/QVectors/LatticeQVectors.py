@@ -33,10 +33,4 @@ class LatticeQVectors(IQVectors):
                 "The universe must be periodic for building lattice-based Q vectors"
             )
 
-        self._inverseUnitCell = (
-            2.0 * np.pi * self._chemical_system.configuration.unit_cell.inverse
-        )
-
-        self._directUnitCell = (
-            2.0 * np.pi * self._chemical_system.configuration.unit_cell.direct
-        )
+        self._unit_cell = self._chemical_system.configuration.unit_cell
