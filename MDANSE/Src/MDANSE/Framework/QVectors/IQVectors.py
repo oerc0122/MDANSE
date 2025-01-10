@@ -25,6 +25,7 @@ from MDANSE.MLogging import LOG
 
 if TYPE_CHECKING:
     from MDANSE.MolecularDynamics.UnitCell import UnitCell
+    from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
 
 
 class QVectorsError(Error):
@@ -65,8 +66,85 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
     def qvectors_to_hkl(
         self, vector_array: np.array, unit_cell: "UnitCell"
     ) -> np.ndarray:
+        """Using a unit cell definition, recalculates an array
+        of q vectors to an equivalent array of HKL Miller indices.
+
+        Parameters
+        ----------
+        vector_array : np.array
+            a (3,N) array of scattering vectors
+        unit_cell : UnitCell
+            an instance of UnitCell class describing the simulation box
+
+        Returns
+        -------
+        np.ndarray
+            A (3,N) array of HKL values (Miller indices)
+        """
         return np.dot(unit_cell.direct, vector_array) / (2 * np.pi)
 
     @classmethod
     def hkl_to_qvectors(self, hkls: np.array, unit_cell: "UnitCell") -> np.ndarray:
+        """Converts an array of HKL values to scattering vectors
+        based on the definition of a unit cell.
+
+        Parameters
+        ----------
+        hkls : np.array
+            A (3,N) array of HKL values (Miller indices)
+        unit_cell : UnitCell
+            An instance of UnitCell class describing the simulation box shape
+
+        Returns
+        -------
+        np.ndarray
+            a (3, N) array of Q vectors (scattering vectors)
+        """
         return 2 * np.pi * np.dot(unit_cell.inverse, hkls)
+
+    def write_vectors_to_file(self, output_data: "OutputData"):
+        """Writes a summary of the generated vectors to the output
+        file using an OutputData class instance.
+
+        Parameters
+        ----------
+        output_data : OutputData
+            An object managing the writeout to one or many output files
+        """
+        q_values = [float(x) for x in self._configuration["q_vectors"].keys()]
+        output_data.add(
+            "vector_generator/q",
+            "LineOutputVariable",
+            q_values,
+            units="1/nm",
+        )
+        qvector_lengths = [
+            self._configuration["q_vectors"][q]["q_vectors"].shape[1] for q in q_values
+        ]
+        qarray_maxlength = np.max(qvector_lengths)
+        output_data.add(
+            "vector_generator/qvector_array",
+            "VolumeOutputVariable",
+            (len(q_values), 3, qarray_maxlength),
+            units="1/nm",
+        )
+        output_data["vector_generator/qvector_array"][:] = 0.0
+        for nq, q in enumerate(q_values):
+            output_data["vector_generator/qvector_array"][
+                nq, :, : qvector_lengths[nq]
+            ] = self._configuration["q_vectors"][q]["q_vectors"]
+        try:
+            hkl_arrays = [self._configuration["q_vectors"][q]["hkls"] for q in q_values]
+        except KeyError:
+            return
+        output_data.add(
+            "vector_generator/hkl_array",
+            "VolumeOutputVariable",
+            (len(q_values), 3, qarray_maxlength),
+            units="au",
+        )
+        output_data["vector_generator/hkl_array"][:] = 0.0
+        for nq, q in enumerate(q_values):
+            output_data["vector_generator/hkl_array"][nq, :, : qvector_lengths[nq]] = (
+                hkl_arrays[nq]
+            )

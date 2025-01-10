@@ -58,12 +58,12 @@ class QVectorsConfigurator(IConfigurator):
         trajConfig = self._configurable[self._dependencies["trajectory"]]
         if isinstance(value, tuple):
             try:
-                generator, parameters = value
+                generator_name, parameters = value
             except ValueError:
                 self.error_status = f"Invalid q vectors settings {value}"
                 return
             generator = IQVectors.create(
-                generator, trajConfig["instance"].chemical_system
+                generator_name, trajConfig["instance"].chemical_system
             )
             try:
                 generator.setup(parameters)
@@ -99,6 +99,7 @@ class QVectorsConfigurator(IConfigurator):
         self["shells"] = list(self["q_vectors"].keys())
         self["n_shells"] = len(self["q_vectors"])
         self["value"] = self["q_vectors"]
+        self["generator"] = generator
         self.error_status = "OK"
 
     def preview_output_axis(self):

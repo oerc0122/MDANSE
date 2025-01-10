@@ -43,7 +43,6 @@ class SphericalLatticeQVectors(LatticeQVectors):
         if self._configuration["seed"]["value"] != 0:
             np.random.seed(self._configuration["seed"]["value"])
             random.seed(self._configuration["seed"]["value"])
-
         qMax = (
             self._configuration["shells"]["last"]
             + 0.5 * self._configuration["width"]["value"]
@@ -58,7 +57,10 @@ class SphericalLatticeQVectors(LatticeQVectors):
         ]
 
         hkl_vects = hkl_vects.reshape(
-            3, int(2 * hklMax[0] + 1) * int(2 * hklMax[1] + 1) * int(2 * hklMax[2] + 1)
+            3,
+            int(2 * hklMax[0, 0] + 1)
+            * int(2 * hklMax[1, 1] + 1)
+            * int(2 * hklMax[2, 2] + 1),
         )
 
         vects = self.hkl_to_qvectors(hkl_vects, self._unit_cell)

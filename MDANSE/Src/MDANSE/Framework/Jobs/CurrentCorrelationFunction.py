@@ -369,6 +369,10 @@ class CurrentCorrelationFunction(IJob):
         """Normalize, Fourier transform and write the results out to
         the MDA files.
         """
+        self.configuration["q_vectors"]["generator"].write_vectors_to_file(
+            self._outputData
+        )
+
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         for pair in self._elementsPairs:
             at1, at2 = pair
