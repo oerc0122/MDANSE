@@ -294,25 +294,55 @@ recalculate the x-ray observable using the atomic factors.
 Current Correlation Function
 ''''''''''''''''''''''''''''
 
-The correlation function is a fundamental concept in the study of dynamical
-processes in various physical systems, including disordered materials. It
-provides insights into how fluctuations or excitations propagate through a
-system over time. In the context of disordered systems, understanding the
-correlation function can help reveal the behavior of particles or components
-in a disordered environment, such as a disordered solid or a supercooled
-liquid.
+The current correlation functions :math:`C_{\alpha\beta}(q, t)` and :math:`C_{\alpha\beta}(q, \omega)`
+are closely related to the intermediate scattering function :math:`F(q, t)`
+and the dynamics structure factor :math:`S(q, \omega)`. The intermediate
+scattering function :math:`F(q, t)` is a correlation function of the Fourier components of
+particle density whereas the current correlation function :math:`C_{\alpha\beta}(q, t)`
+are a correlation function of the Fourier components of the particle current:
 
-In the context of MDANSE, researchers calculate two essential components
-of the correlation function:
+.. math::
 
-- **Longitudinal Component:** This component is associated with density
-  fluctuations, offering insights into how particle or atom densities change
-  at specific locations within the disordered system over time.
+    C_{\alpha\beta}(q, t) = \frac{1}{N} \langle j_{\alpha}(q, t) j_{\beta}(-q, 0) \rangle \qquad\qquad j_{\alpha}(q, t) = \sum_{l} v_{l\alpha}(t) \exp(iq\cdot r_l(t))
 
-- **Transverse Component:** The transverse component is linked to propagating
-  shear modes, helping researchers comprehend the relative displacements of
-  neighboring particles or atoms and the propagation of these shear modes
-  throughout the disordered material.
+where :math:`\alpha, \beta = x, y` or :math:`z`. The particle currents
+can be projected onto longitudinal and transverse components of the
+:math:`q`-vector. The longitudinal and transverse particle current are:
+
+.. math::
+
+    j_{\mathrm{L}}(q, t) = \sum_{l} (v_{l\alpha}(t) \cdot \hat{q})\hat{q} \, \exp(iq\cdot r_l(t))
+
+.. math::
+
+    j_{\mathrm{T}}(q, t) = \sum_{l} [v_{l\alpha}(t) - (v_{l\alpha}(t) \cdot \hat{q})\hat{q}] \, \exp(iq\cdot r_l(t))
+
+where :math:`\hat{q}` are unit vectors of :math:`q`. For isotropic systems,
+the longitudinal and transverse particle current are uncorrelated and the
+current correlation function tensor :math:`C_{\alpha\beta}(q, t)`
+will depend only on two independent components so that we can write:
+
+.. math::
+
+    C_{\alpha\beta}(q, t) = \hat{q}_{\alpha}\hat{q}_{\beta} C_{\mathrm{L}}(q, t) + (\delta_{\alpha\beta} - \hat{q}_{\alpha}\hat{q}_{\beta}) C_{\mathrm{T}}(q, t)
+
+where the longitudinal and transverse current correlation functions are.
+
+.. math::
+
+    C_{\mathrm{L}}(q, t) = \frac{1}{N} \langle j_{\mathrm{L}}(q, t) \cdot j_{\mathrm{L}}(-q, 0) \rangle
+
+.. math::
+
+    C_{\mathrm{T}}(q, t) = \frac{1}{N} \langle j_{\mathrm{T}}(q, t) \cdot j_{\mathrm{T}}(-q, 0) \rangle
+
+
+From the continuity equation we can obtain a relation between the
+longitudinal current correlation and the dynamic structure factor.
+
+.. math::
+
+    C_{\mathrm{L}}(q, \omega) = \frac{\omega^2}{Q^2} S(q, \omega)
 
 .. _dynamic-coherent-structure-factor:
 
