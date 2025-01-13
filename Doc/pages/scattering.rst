@@ -166,7 +166,7 @@ treatments for coherent and incoherent scattering lengths.
 
    {\text{F}_{\text{inc}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{\alpha}{b_{\alpha,\mathrm{inc}}^{2}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}(0)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\alpha}(t)} \right\rbrack} \right\rangle}}.}
 
-*MDANSE* introduces the partial terms, this considers the contributions from different species :math:`(I, J)` to the scattering process.
+MDANSE introduces the partial terms, this considers the contributions from different species :math:`(I, J)` to the scattering process.
 
 .. math::
    :label: pfx69
@@ -183,12 +183,12 @@ where:
 .. math::
    :label: pfx71
 
-   {\text{F}_{\mathit{IJ},\text{coh}}{\left( {q,t} \right) = \frac{1}{\sqrt{n_{I}n_{J}}}}{\sum\limits_{\alpha}^{n_{I}}{\sum\limits_{\beta}^{n_{J}}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}\left( t_{0} \right)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\beta}\left( {t_{0} + t} \right)} \right\rbrack} \right\rangle_{t_{0}}}},}
+   {\text{F}_{\mathit{IJ},\text{coh}}{\left( {q,t} \right) = \frac{1}{\sqrt{n_{I}n_{J}}}}{\sum\limits_{\alpha}^{n_{I}}{\sum\limits_{\beta}^{n_{J}}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}\left( 0 \right)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\beta}\left( t \right)} \right\rbrack} \right\rangle}},}
 
 .. math::
    :label: pfx72
 
-   {\text{F}_{I,\text{inc}}{\left( {q,t} \right) = \frac{1}{n_{I}}}{\sum\limits_{\alpha = 1}^{n_{I}}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}\left( t_{0} \right)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\alpha}\left( {t_{0} + t} \right)} \right\rbrack} \right\rangle_{t_{0}}}.}
+   {\text{F}_{I,\text{inc}}{\left( {q,t} \right) = \frac{1}{n_{I}}}{\sum\limits_{\alpha = 1}^{n_{I}}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}\left( 0 \right)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\alpha}\left( t \right)} \right\rbrack} \right\rangle}.}
 
 where :math:`n_I`, :math:`n_J`, :math:`n_{\mathrm{species}}`, :math:`\omega_{I,(\mathrm{coh}/\mathrm{inc})}`
 and :math:`\omega_{J,(\mathrm{coh}/\mathrm{inc})}` are defined in Section :ref:`target_CN`. The corresponding dynamic structure factors are obtained by performing
@@ -354,33 +354,36 @@ factors are obtained by performing the Fourier Transformation, defined in Eq.
 :math:numref:`pfx61`, respectively on the total and partial intermediate
 coherent scattering functions.
 
-**The coherent intermediate scattering function**:
+**Coherent intermediate scattering function**:
 
 .. math::
    :label: pfx80
    
-   {{F}_{\text{coh}}\left( {q_{m},k\Delta t} \right)\doteq{\sum\limits_{{I = 1},J\geq I}^{N_{\mathrm{species}}}\sqrt{n_{I}n_{J}\omega_{I,\text{com}}\omega_{I,\text{com}}}}{\overline{\left\langle {\rho_{I}\left( {{-q},0} \right)\rho_{J}\left( {q,k\Delta t} \right)} \right\rangle}}^{q},}
+   {{F}_{\text{coh}}\left( {q, t} \right)\doteq{\sum\limits_{{I = 1},J\geq I}^{N_{\mathrm{species}}}\sqrt{n_{I}n_{J}\omega_{I,\text{com}}\omega_{I,\text{com}}}}{\left\langle {\rho_{I}\left( {{-q},0} \right)\rho_{J}\left( {q, t} \right)} \right\rangle},}
 
-where :math:`{k = 0}, \ldots, {N_{t} - 1}` and :math:`{m = 0}, \ldots, {N_{q} - 1}`.
-:math:`N_t` is the number of time steps in the coordinate time series,
-:math:`N_q` is a user-defined number of :math:`q`-shells,
-:math:`N_{\mathrm{species}}` is the number of selected species, :math:`n_{I}`
-is the number of atoms , :math:`\omega_{I}` is the weight and :math:`{\rho_{I}( {q,k\Delta t})}` is the Fourier components of the particle density of species
+where :math:`N_{\mathrm{species}}` is the number of selected species, :math:`n_{I}`
+is the number of atoms , :math:`\omega_{I}` is the weight and
+:math:`{\rho_{I}( {q, t})}` is the Fourier components of the particle density of species
 :math:`I`
 
 .. math::
    :label: pfx83
 
-   {\rho_{I}{\left( {q,k\cdot\Delta t} \right) = \sum\limits_{\alpha}^{n_{I}}}\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}\left( {k\Delta t} \right)} \right\rbrack.}
+   {\rho_{I}{\left( {q, t} \right) = \sum\limits_{\alpha}^{n_{I}}}\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}\left( t \right)} \right\rbrack.}
 
-The overline :math:`{\overline{...}}^{q}` in Eq. :math:numref:`pfx80`
-denotes an average over :math:`q`-vectors having *approximately* the same
-modulus.
+In MDANSE, the DCSF is averaged over :math:`q`-vectors having *approximately* the same
+modulus so that
 
+.. math::
+   :label: pfx80
+
+   F_{\text{coh}}\left( {Q_{m}, t} \right) = \overline{F_{\text{coh}}\left( {q_m, t} \right)}^{q_m}
+
+where :math:`Q_{m} \approx \vert q_{m} \vert`.
 
 **Reciprocal lattice q-vectors**: Let
 :math:`b_1`, :math:`b_2`, :math:`b_3` be the basis vectors
-which span the *MD* cell. Any position vector in the *MD* cell can be
+which span the MD cell. Any position vector in the MD cell can be
 written as
 
 .. math::
@@ -403,7 +406,7 @@ the relation
    {b_{i}{b^{j} = \delta_{i}^{j}}.}
 
 and defines the dual basis vectors and their relation to the basis
-vectors. If the q-vectors are now chosen as
+vectors. If the :math:`q`-vectors are now chosen as
 
 .. math::
    :label: pfx88
@@ -414,9 +417,11 @@ so that this selection of :math:`q`-vectors produces phase changes for
 handling jumps in particle trajectories. Here :math:`k`, :math:`l`, :math:`m`
 are integer numbers, jumps in the particle trajectories
 produce phase changes of multiples of :math:`2\pi` in the Fourier transformed
-particle density, i.e. leave it unchanged. One can define a grid of
+particle density, i.e. leave it unchanged.
+
+In MDANSE, One can define a grid of
 :math:`q`-shells or a grid of :math:`q`-vectors along a given direction or on a
-given plane, giving in addition a *tolerance* for :math:`q`. *MDANSE* looks
+given plane, giving in addition a *tolerance* for :math:`q`. MDANSE looks
 then for :math:`q`-vectors of the form given in Eq. :math:numref:`pfx88` whose moduli
 deviate within the prescribed tolerance from the equidistant :math:`q`-grid.
 From these :math:`q`-vectors only a maximum number per grid-point (called
@@ -435,7 +440,7 @@ lengths, i.e.
 Defines the use of negative coherent scattering lengths for hydrogenous materials.
 Negative coherent scattering lengths occur in hydrogenous materials
 since :math:`b_{\mathrm{H},\mathrm{coh}}` is negative [Ref20]_. When the
-default value of weights (:math:`b_{\mathrm{coherent}}`) is chosen for this
+default value of weights (``b_coherent``) is chosen for this
 analysis, the result will correspond to that of the equation :math:numref:`ntdsf-eq6`
 from the :ref:`neutron-dynamic-total-structure-factor`.
 
@@ -444,7 +449,7 @@ from the :ref:`neutron-dynamic-total-structure-factor`.
 Dynamic Incoherent Structure Factor
 '''''''''''''''''''''''''''''''''''
                       
-In this analysis, *MDANSE* proceeds in two steps. First, it computes
+In this analysis, MDANSE proceeds in two steps. First, it computes
 the partial and total intermediate incoherent scattering function
 :math:`F_{\mathrm{inc}}(q, t)` using equation :math:numref:`pfx70`. Then, the
 partial and total dynamic incoherent structure factors are obtained by
@@ -452,33 +457,33 @@ performing the Fourier Transformation, defined in Eq. :math:numref:`pfx61`,
 respectively on the total and partial intermediate incoherent
 scattering function.
 
-**The incoherent intermediate scattering function**:
+**Incoherent intermediate scattering function**:
 
 .. math::
    :label: pfx90
 
-   {\text{F}_{\text{inc}}\left( {q_{m},k\Delta t} \right)\doteq{\sum\limits_{I = 1}^{N_{\mathrm{species}}}{n_{I}\omega_{I,\text{inc}}}}\text{F}_{I,\text{inc}}\left( {q_{m},k\Delta t} \right)}
+   {\text{F}_{\text{inc}}\left( {q, t} \right)\doteq{\sum\limits_{I = 1}^{N_{\mathrm{species}}}{n_{I}\omega_{I,\text{inc}}}}\text{F}_{I,\text{inc}}\left( {q, t} \right)}
 
-
-where :math:`{k = 0}, \ldots, {N_t - 1}` and :math:`{m = 0}, \ldots, {N_q - 1}`. :math:`N_t`
-is the number of time steps in the coordinate time series, :math:`N_q`
-is a user-defined number of :math:`q`-shells, :math:`N_{\mathrm{species}}`
+where :math:`N_{\mathrm{species}}`
 is the number of selected species, :math:`n_I` the
 number of atoms of species :math:`n_I`, :math:`\omega_{I}` the weight for species :math:`I`
-(see Section :ref:`target_CN` for more details) and :math:`{F_{I,\text{inc}}\left( {q_{m},k\Delta t} \right)}`
+(see Section :ref:`target_CN` for more details) and :math:`{F_{I,\text{inc}}\left( {q, t} \right)}`
 is defined as:
 
 .. math::
    :label: pfx92
 
-   {\text{F}_{I,\mathrm{inc}}{\left( {q_{m},k\Delta t} \right) = \sum\limits_{\alpha = 1}^{n_{I}}}{\overline{\left\langle {\exp\left\lbrack {{-i}q\cdot R_{\alpha}(0)} \right\rbrack\exp\left\lbrack {iq\cdot R_{\alpha}(t)} \right\rbrack} \right\rangle}}^{q}.}
+   {\text{F}_{I,\mathrm{inc}}{\left( {q_{m}, t} \right) = \sum\limits_{\alpha = 1}^{n_{I}}}{\left\langle {\exp\left\lbrack {{-i}q\cdot R_{\alpha}(0)} \right\rbrack\exp\left\lbrack {iq\cdot R_{\alpha}(t)} \right\rbrack} \right\rangle}.}
 
-The overline :math:`{\overline{...}}^{q}` in Eq. :math:numref:`pfx92`
-denotes an average
-over :math:`q`-vectors having *approximately* the same modulus. When the default
-value of weights (:math:`{b^{2}}_{\mathrm{incoherent}}`) is chosen for this
-analysis, the result will correspond to that of the equation :math:numref:`ntdsf-eq7`
-from the :ref:`neutron-dynamic-total-structure-factor`.
+In MDANSE, the DISF is averaged over :math:`q`-vectors having *approximately* the same
+modulus so that
+
+.. math::
+   :label: pfx80
+
+   F_{\text{inc}}\left( {Q_{m}, t} \right) = \overline{F_{\text{inc}}\left( {q_m, t} \right)}^{q_m}
+
+where :math:`Q_{m} \approx \vert q_{m} \vert`.
 
 .. _elastic-incoherent-structure-factor:
 
@@ -486,16 +491,16 @@ Elastic Incoherent Structure Factor
 '''''''''''''''''''''''''''''''''''
 
 The elastic incoherent structure
-factor (*EISF*) appears as the amplitude of the *elastic* line in the neutron
+factor (EISF) appears as the amplitude of the *elastic* line in the neutron
 scattering spectrum. Elastic scattering is only present for systems in which the
 atomic motion is confined in space, as for solids. To understand which information
-is contained in the *EISF* we consider for simplicity a system where only one
+is contained in the EISF we consider for simplicity a system where only one
 sort of atoms is visible to the neutrons. To a very good approximation this is
 the case for all systems containing a large amount of hydrogen atoms, as biological
 systems. Incoherent scattering from hydrogen dominates by far all other
 contributions.
 
-**The van Hove self-correlation function**: The *EISF* is defined as the
+**The van Hove self-correlation function**: The EISF is defined as the
 limit of the incoherent intermediate scattering function for infinite time
 
 .. math::
@@ -503,7 +508,7 @@ limit of the incoherent intermediate scattering function for infinite time
 
    {\mathrm{EISF}(q)\doteq\lim\limits_{t\rightarrow\infty}\text{F}_{\mathrm{inc}}\left( {q,t} \right).}
 
-Using the above definition of the *EISF* one can decompose the incoherent
+Using the above definition of the EISF one can decompose the incoherent
 intermediate scattering function as follows:
 
 .. math::
@@ -519,10 +524,10 @@ now the Fourier transform it follows immediately that
 
    {\text{S}_{\text{inc}}{\left( {q,\omega} \right) = \mathrm{EISF}}(q)\delta{(\omega) + \text{S}_{\text{inc}}^{'}}\left( {q,\omega} \right).}
 
-The *EISF* appears as the amplitude of the *elastic* line in the neutron
+The EISF appears as the amplitude of the *elastic* line in the neutron
 scattering spectrum. Elastic scattering is only present for systems in
 which the atomic motion is confined in space, as for solids. To
-understand which information is contained in the *EISF* we consider for
+understand which information is contained in the EISF we consider for
 simplicity a system where only one sort of atoms is visible to the
 neutrons. To a very good approximation this is the case for all systems
 containing a large amount of hydrogen atoms, as biological systems.
@@ -544,15 +549,15 @@ one can write:
 
    {\mathrm{EISF}(q) = b_{\text{inc}}^{2}{\int \mathrm{d}^{3}}r \, \exp\left\lbrack {\mathit{iq}\cdot r} \right\rbrack G_{\mathrm{s}}\left( {r,{t = \infty}} \right).}
 
-The *EISF* gives the sampling distribution of the points in space in the
+The EISF gives the sampling distribution of the points in space in the
 limit of infinite time. In a real experiment this means times longer
-than the time which is observable with a given instrument. The *EISF*
+than the time which is observable with a given instrument. The EISF
 vanishes for all systems in which the particles can access an infinite
 volume since :math:`G_{\mathrm{s}}(r, t)` approaches :math:`1/V` for large times. This is
 the case for molecules in liquids and gases.
 
 **EISF computation**: For computational purposes it is convenient to use the following
-representation of the *EISF* [Ref21]_:
+representation of the EISF [Ref21]_:
 
 .. math::
    :label: pfx102
@@ -570,83 +575,57 @@ following expression for the elastic incoherent scattering function is
    {\mathrm{EISF}_{I}{(q) = \frac{1}{n_{I}}}{\sum\limits_{\alpha}^{n_{I}}\left\langle {|{\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}} \right\rbrack\left. {} \right|^{2}}} \right\rangle}.}
 
 This expression is derived from definition :math:numref:`pfx97`
-of the *EISF* and expression :math:numref:`pfx70` for the
+of the EISF and expression :math:numref:`pfx70` for the
 intermediate scattering function, using that for infinite time the
 relation
 
 .. math::
    :label: pfx104
    
-   {\left\langle {\exp\left\lbrack {{- \mathit{iq}}\cdot R_{\alpha}(0)} \right\rbrack\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}(t)} \right\rbrack} \right\rangle = \left\langle {|{\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}} \right\rbrack\left. {} \right|^{2}}} \right\rangle}
+   \lim\limits_{t\rightarrow\infty}{\left\langle {\exp\left\lbrack {{- \mathit{iq}}\cdot R_{\alpha}(0)} \right\rbrack\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}(t)} \right\rbrack} \right\rangle = \left\langle {|{\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}} \right\rbrack\left. {} \right|^{2}}} \right\rangle}
 
-holds. In this way the computation of the *EISF* is reduced to the
+holds. In this way the computation of the EISF is reduced to the
 computation of a static thermal average. We remark at this point that
-the length of the *MD* trajectory from which the *EISF* is computed
+the length of the MD trajectory from which the EISF is computed
 should be long enough to allow for a representative sampling of the
 conformational space.
 
-**Grid computation**: *MDANSE* allows one to compute the elastic incoherent structure factor
-on a grid of equidistantly spaced points along the *q*-axis:
+In MDANSE, the EISF is averaged over :math:`q`-vectors having *approximately* the same
+modulus so that
 
 .. math::
-   :label: pfx105
+   :label: pfx80
 
-   {\mathrm{EISF}\left( q_{m} \right)\doteq{\sum\limits_{I = 1}^{N_{\mathit{species}}}{n_{I}\omega_{I}\mathrm{EISF}_{I}\left( q_{m} \right)}} \qquad {m = 0}, \ldots, {N_{q} - 1.}}
+   \mathrm{EISF}\left( {Q_{m}, t} \right) = \overline{\mathrm{EISF}\left( {q_m, t} \right)}^{q_m}
 
-where :math:`N_q` is a user-defined number of :math:`q`-shells, the values for
-:math:`q_m` are defined as
-
-.. math::
-   :label: pfx106
-   
-   {{q_{m} = {q_{\mathit{\min}} + m}}\Delta q}
-
-and for each species the following expression for the elastic
-incoherent scattering function is:
-
-.. math::
-   :label: pfx107
-
-   {\mathrm{EISF}_{I}{\left( q_{m} \right) = \frac{1}{n_{I}}}{\sum\limits_{\alpha}^{n_{I}}{\overline{\left\langle {|{\exp\left\lbrack {\mathit{iq}\cdot R_{\alpha}} \right\rbrack\left. {} \right|^{2}}} \right\rangle}}^{q}}.}
-
-Here the symbol :math:`{\overline{...}}^{q}`
-denotes an average over the *q*-vectors having the same modulus
-:math:`q_m`. The program corrects the atomic input trajectories for
-jumps due to periodic boundary conditions.
+where :math:`Q_{m} \approx \vert q_{m} \vert`.
 
 .. _gaussian-dynamic-incoherent-structure-factor:
 
 Gaussian Dynamic Incoherent Structure Factor
 ''''''''''''''''''''''''''''''''''''''''''''
-                      
-The Gaussian Dynamic Incoherent Structure Factor is a concept used to study how
-particles or atoms move independently within materials over time, with a focus
-on their distribution. It's valuable in materials science and condensed matter
-physics for understanding dynamic behavior at the atomic level.
 
-**MSD Calculation:** The *MSD* can be related to the incoherent intermediate scattering
+**Cumulant expansion**: The MSD can be related to the incoherent intermediate scattering
 function via the cumulant expansion [Ref11]_, [Ref22]_
 
 .. math::
    :label: pfx108
 
-   {\text{F}_{\text{inc}}^{\mathrm{g}}{\left( {q,t} \right) = {\sum\limits_{I = 1}^{N_{\mathrm{species}}}{n_{I}\omega_{I,\text{inc}}}}}\text{F}_{I,\text{inc}}^{\mathrm{g}}\left( {q,t} \right)}
-
-where :math:`N_{\mathrm{species}}` is the number of selected species, :math:`n_I`
-the number of atoms of species :math:`I`, :math:`\omega_{I,\mathrm{inc}}` the weight for
-species \mathrm{I} (see Section :ref:`target_CN` for more details) and
+   {\text{F}_{\text{inc}}{\left( {q,t} \right) = {\sum\limits_{I = 1}^{N_{\mathrm{species}}}{n_{I}\omega_{I,\text{inc}}}}}\text{F}_{I,\text{inc}}\left( {q,t} \right)}
 
 .. math::
    :label: pfx109
 
-   {\text{F}_{I,\text{inc}}^{\mathrm{g}}{\left( {q,t} \right) = \frac{1}{n_{I}}}\sum\limits_{\alpha}^{n_{I}}\exp\left\lbrack {{- q^{2}}\rho_{\alpha,1}{(t) + q^{4}}\rho_{\alpha,2}(t)\mp\ldots} \right\rbrack.}
+   {\text{F}_{I,\text{inc}}{\left( {q,t} \right) = \frac{1}{n_{I}}}\sum\limits_{\alpha}^{n_{I}}\exp\left\lbrack {{- q^{2}}\rho_{\alpha,1}{(t) + q^{4}}\rho_{\alpha,2}(t) + \ldots} \right\rbrack}
 
-
-The cumulants :math:`\rho_{\alpha,k}(t)` are identified as
+where :math:`N_{\mathrm{species}}` is the number of selected species, :math:`n_I`
+the number of atoms of species :math:`I`, :math:`\omega_{I,\mathrm{inc}}` the weight for
+species :math:`I` (see Section :ref:`target_CN` for more details). The cumulants
+:math:`\rho_{\alpha,k}(t)` are identified as
 
 .. math::
 
-   {\rho_{\alpha,1}{(t) = \left\langle {d_{\alpha}^{2}\left( {t;n_{q}} \right)} \right\rangle}}
+   {\rho_{\alpha,1}{(t) = \frac{1}{2!}\left\langle {d_{\alpha}^{2}\left( {t;n_{q}} \right)} \right\rangle}}
 
 .. math::
 
@@ -656,74 +635,56 @@ The cumulants :math:`\rho_{\alpha,k}(t)` are identified as
    :label: pfx112
    {\vdots}
 
-**Gaussian Approximation:** The vector :math:`n_q` is the unit vector
+**Gaussian approximation**: The vector :math:`n_q` is the unit vector
 in the direction of :math:`q`. In the Gaussian
 approximation the above expansion is truncated after the
-:math:`q^2`-term. For certain model systems like the ideal gas, the
-harmonic oscillator, and a particle undergoing Einstein diffusion, this
-is exact. For these systems the incoherent intermediate scattering
-function is completely determined by the *MSD*. *MDANSE* allows one to
-compute the total and partial incoherent intermediate scattering
-function in the *Gaussian approximation* by discretizing equation
-:math:numref:`pfx108`:
+:math:`q^2`-term.
 
 .. math::
-   :label: pfx113
 
-   {\text{F}_{\text{inc}}^{\mathrm{g}}\left( {q_{m},k\Delta t} \right)\doteq{\sum\limits_{I = 1}^{N_{\mathit{species}}}{n_{I}\omega_{I,\text{inc}}\text{F}_{I,\text{inc}}^{\mathrm{g}}\left( {q_{m},k\Delta t} \right)}}}
+   {\text{F}_{I,\text{inc}}\left( {q,t} \right) \approx \text{F}_{I,\text{inc}}^{\mathrm{g}}{\left( {q,t} \right) = \frac{1}{n_{I}}}\sum\limits_{\alpha}^{n_{I}}\exp\left\lbrack {{- q^{2}}\rho_{\alpha,1}(t)} \right\rbrack}
 
-where :math:`{k = 0}, \ldots, {N_t - 1}` and :math:`{m = 0}, \ldots ,{N_q - 1}`.
+For certain model systems like the ideal gas, the
+harmonic oscillator, and a particle undergoing Einstein diffusion, this
+is exact. For these systems the incoherent intermediate scattering
+function is completely determined by the MSD.
 
-**Intermediate Scattering Function:** for each species the
-following expression for the intermediate scattering function
+**Intermediate scattering function**: For an isotropic system, the
+following expression for the intermediate scattering function is obtained
 
 .. math::
    :label: pfx114
 
-   {\text{F}_{I,\alpha,\text{inc}}^{\mathrm{g}}{\left( {q_{m},k\Delta t} \right) = \frac{1}{n_{I}}}\sum\limits_{\alpha}^{n_{I}}\exp\left\lbrack {\frac{- \left( q_{m} \right)^{2}}{6}\Delta_{\alpha}^{2}\left( {k\Delta t} \right)} \right\rbrack \quad \mathrm{isotropic\ system}}
+   {\text{F}_{I,\alpha,\text{inc}}^{\mathrm{g}}{\left( {Q, t} \right) = \frac{1}{n_{I}}}\sum\limits_{\alpha}^{n_{I}}\exp\left\lbrack {\frac{- Q^{2}}{6}\Delta_{\alpha}^{2}\left( { t} \right)} \right\rbrack}
 
 .. math::
    :label: pfx115
 
-   {\text{F}_{I,\alpha,\text{inc}}^{\mathrm{g}}{\left( {q_{m},k\Delta t} \right) = \frac{1}{n_{I}}}\sum\limits_{\alpha}^{n_{I}}\exp\left\lbrack {\frac{- \left( q_{m} \right)^{2}}{2}\Delta_{\alpha}^{2}\left( {k\Delta t;n} \right)} \right\rbrack \quad \mathrm{isotropic\ system}}
+   {\text{F}_{I,\alpha,\text{inc}}^{\mathrm{g}}{\left( {Q, t} \right) = \frac{1}{n_{I}}}\sum\limits_{\alpha}^{n_{I}}\exp\left\lbrack {\frac{- Q^{2}}{2}\Delta_{\alpha}^{2}\left( { t;n} \right)} \right\rbrack}
 
-:math:`N_t` is the total number of time steps in the coordinate time
-series and :math:`N_q` is a user-defined number of :math:`q`-shells. The (:math:`q`,
-:math:`t`)-grid is the same as for the calculation of the intermediate
-incoherent scattering function (see `Dynamic Incoherent Structure
-Factor <#_Dynamic_Incoherent_Structure>`__). The quantities :math:`\Delta_{\alpha}^{2}(t)`
+where the quantities :math:`\Delta_{\alpha}^{2}(t)`
 and :math:`\Delta_{\alpha}^{2}\left( {t;n} \right)` are the mean-square
 displacements, defined in Equations :math:numref:`pfx14`
 and :math:numref:`pfx15`, respectively.
-They are computed by using the algorithm described in the `Mean Square
-Displacement <#_Theory_and_implementation_2>`__ section. *MDANSE*
-corrects the atomic input trajectories for jumps due to periodic
-boundary conditions. It should be noted that the computation of the
+They are computed by using the algorithm described in the :ref:`analysis-msd` section.
+It should be noted that the computation of the
 intermediate scattering function in the Gaussian approximation is much
 'cheaper' than the computation of the full intermediate scattering
 function, :math:`F_{\mathrm{inc}}(q, t)`, since no averaging over different
-:math:`q`-vectors needs to be performed. It is sufficient to compute a single
-mean-square displacement per atom.
+:math:`q`-vectors needs to be performed.
 
 .. _neutron-dynamic-total-structure-factor:
 
 Neutron Dynamic Total Structure Factor
 ''''''''''''''''''''''''''''''''''''''
 
-The Neutron Dynamic Total Structure Factor is a term used in scientific
-research, especially in neutron scattering experiments, to investigate how
-particles or atoms within a material contribute to its overall structure and
-dynamics. This factor provides valuable insights into how these components move
-and interact over time.
-
-**Calculation of Partial Coherent Intermediate Scattering Functions and Dynamic Structure Factors:**
-this is a combination of the dynamic coherent and the dynamic incoherent
+**Partial coherent intermediate scattering functions and dynamic structure factors**:
+This is a combination of the dynamic coherent and the dynamic incoherent
 structure factors. It is a fully neutron-specific analysis, where the
 coherent part of the intermediate scattering function is calculated
-using the atomic coherent neutron scattering lengths
-:math:`b_{\mathrm{coherent}}` and
+using the atomic coherent neutron scattering lengths ``b_coherent`` and
 the incoherent one is calculated using the square of the atomic
-incoherent neutron scattering lengths :math:`{b^{2}}_{\mathrm{incoherent}}`. Therefore, in
+incoherent neutron scattering lengths ``b_incoherent2``. Therefore, in
 this analysis the weights option is not available.
 
 The partial coherent intermediate scattering functions
@@ -735,21 +696,15 @@ same way as in the DCSF analysis, i.e.:
 .. math::
    :label: ntdsf-eq1
    
-   I_{\alpha\beta}^{\mathrm{coh}}(q,t) = \left| \frac{1}{\sqrt{N_{\alpha}N_{\beta}}}\sum_{i \in \alpha,j \in \beta}^{N_{\alpha},N_{\beta}}\left\langle \exp\left[- iq \cdot r_{i}(t_{0})\right] \exp \left[iq \cdot r_{j}(t_{0} + t)\right] \right\rangle_{t_0} \right|_{q}
+   I_{\alpha\beta}^{\mathrm{coh}}(q,t) = \frac{1}{\sqrt{N_{\alpha}N_{\beta}}}\sum_{i \in \alpha,j \in \beta}^{N_{\alpha},N_{\beta}}\left\langle \exp\left[- iq \cdot r_{i}(0)\right] \exp \left[iq \cdot r_{j}(t)\right] \right\rangle
 
 where :math:`\alpha` and :math:`\beta` refer to the chemical elements,
 :math:`N_{\alpha}` and :math:`N_{\beta}` are the respective number of
 atoms of each type, :math:`i` and :math:`j` are two specific atoms of
 type :math:`\alpha` and :math:`\beta`, respectively, and
 :math:`\mathbf{r}_{i}(0)` and :math:`\mathbf{r}_{j}(t)` are their
-positions at the time origin and at the time :math:`t`, respectively.
-The notation :math:`\left\langle \ldots \right\rangle_{t_0}` indicates an
-average over all possible time origins :math:`t_{0}` and
-:math:`|\ldots|_{q}` represents an average over all the
-:math:`q`-vectors contributing to the corresponding
-:math:`q`-bin.
-
-Similarly, the partial incoherent intermediate scattering functions
+positions at the times :math:`0` and :math:`t`, respectively. Similarly,
+the partial incoherent intermediate scattering functions
 :math:`I_{\alpha}^{\mathrm{inc}}(q,t)` and the partial incoherent dynamic
 structure factors :math:`S_{\alpha}^{\mathrm{inc}}(q,\omega)` are obtained as in
 the DISF analysis:
@@ -757,10 +712,9 @@ the DISF analysis:
 .. math::
    :label: ntdsf-eq2
    
-   I_{\alpha}^{\mathrm{inc}}(q,t) = \left| \frac{1}{N_{\alpha}}\sum_{i \in \alpha}^{N_{\alpha}}\left\langle \exp\left[- iq \cdot r_{i}(t_{0})\right] \exp \left[iq \cdot r_{i}(t_{0} + t)\right] \right\rangle_{t_0} \right|_{q}
+   I_{\alpha}^{\mathrm{inc}}(q,t) = \frac{1}{N_{\alpha}}\sum_{i \in \alpha}^{N_{\alpha}}\left\langle \exp\left[- iq \cdot r_{i}(0)\right] \exp \left[iq \cdot r_{i}(t)\right] \right\rangle
 
-
-**Combination of Partial Contributions:** The main difference between
+**Combination of partial contributions**: The main difference between
 this analysis and the DCSF and DISF
 analyses, apart from the fact that the coherent and incoherent
 contributions are calculated simultaneously, is the way the different
@@ -785,12 +739,11 @@ calculated as:
 
 where :math:`c_{\alpha} = N_{\alpha} / N` and
 :math:`c_{\beta} =  N_{\beta} / N` are the concentration numbers
-for elements :math:`\alpha` and :math:`\beta`, respectively.
+for elements :math:`\alpha` and :math:`\beta`, respectively. These
+expressions correspond to the formalism and equations given in
+[Ref47]_ - Chapter 1: “An introduction to neutron scattering” .
 
-These expressions correspond to the formalism and equations given in
-[Ref47]_, chapter 1: “An introduction to neutron scattering” .
-
-**Units Conversion:**
+**Units conversion**:
 As in the MDANSE database the coherent and incoherent neutron scattering
 lengths are given in Å, the total intermediate scattering functions
 above will be given in Å\ :sup:`2`/sterad/atom. Therefore, multiplying
@@ -803,7 +756,7 @@ On the other hand, the DISF and DCSF analyses use the standard weight
 normalization procedure implemented in MDANSE (see :ref:`param-normalize`).
 Therefore the total coherent intermediate scattering function
 returned by the DCSF analysis is (assuming that the chosen weights are
-b_coherent):
+``b_coherent``):
 
 .. math::
    :label: ntdsf-eq6
@@ -811,7 +764,7 @@ b_coherent):
    I^{\mathrm{coh}}(q,t) = \frac{\sum_{\alpha\beta}^{n}{c_{\alpha}c_{\beta}b_{\alpha,\mathrm{coh}}b_{\beta,\mathrm{coh}}I_{\alpha\beta}^{\mathrm{coh}}(q,t)}}{\sum_{\alpha\beta}^{n}{c_{\alpha}c_{\beta}b_{\alpha,\mathrm{coh}}b_{\beta,\mathrm{coh}}}}
 
 and the incoherent intermedicate scattering function given by the DISF
-analysis is (assuming that the chosen weights are b_incoherent2):
+analysis is (assuming that the chosen weights are ``b_incoherent2``):
 
 .. math::
    :label: ntdsf-eq7

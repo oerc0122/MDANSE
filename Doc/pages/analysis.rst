@@ -115,9 +115,9 @@ properties within the computational environment.
 
 Center Of Masses Trajectory
 '''''''''''''''''''''''''''
-The Center Of Mass Trajectory (*COMT*) analysis consists in deriving the
+The Center Of Mass Trajectory (COMT) analysis consists in deriving the
 trajectory of the respective centres of mass of a set of groups of
-atoms. In order to produce a visualizable trajectory, *MDANSE* assigns
+atoms. In order to produce a visualizable trajectory, MDANSE assigns
 the centres of mass to pseudo-hydrogen atoms whose mass is equal to the
 mass of their associated group. Thus, the produced trajectory can be
 reused for other analysis. In that sense, *COMT* analysis is a practical
@@ -143,11 +143,11 @@ It is often of interest to separate global motion from internal motion,
 both for quantitative analysis and for visualization by animated
 display. Obviously, this can be done under the hypothesis that global
 and internal motions are decoupled within the length and timescales of
-the analysis. *MDANSE* can create Global Motion Filtered Trajectory
-(*GMFT*) by filtering out global motions (made of the three
+the analysis. MDANSE can create Global Motion Filtered Trajectory
+(GMFT) by filtering out global motions (made of the three
 translational and rotational degrees of freedom), either on the whole
 system or on a user-defined subset, by fitting it to a reference
-structure (usually the first frame of the *MD*). Global motion filtering
+structure (usually the first frame of the MD). Global motion filtering
 uses a straightforward algorithm:
 
 -  for the first frame, find the linear transformation such that the
@@ -175,24 +175,24 @@ which may be the centre-of-mass, and the dynamics of the angular
 coordinates describing the orientation of the rigid body. The angular
 coordinates are the appropriate variables to compute angular correlation
 functions of molecular systems in space and time. In most cases,
-however, these variables are not directly available from *MD*
-simulations since *MD* algorithms typically work in cartesian
+however, these variables are not directly available from MD
+simulations since MD algorithms typically work in cartesian
 coordinates. Molecules are either treated as flexible, or, if they are
 treated as rigid, constraints are taken into account in the framework of
-cartesian coordinates [Ref23]_. In *MDANSE*,
-Rigid-Body Trajectory (*RBT*) can be defined from a *MD* trajectory by
+cartesian coordinates [Ref23]_. In MDANSE,
+Rigid-Body Trajectory (RBT) can be defined from a MD trajectory by
 fitting rigid reference structures, defining a (sub)molecule, to the
 corresponding structure in each time frame of the trajectory. Here 'fit'
 means the optimal superposition of the structures in a least-squares
 sense. We will describe now how rigid body motions, i.e. global
 translations and rotations of molecules or subunits of complex
-molecules, can be extracted from a *MD* trajectory. A more detailed
+molecules, can be extracted from a MD trajectory. A more detailed
 presentation is given in [Ref24]_. We define
 an optimal rigid-body trajectory in the following way: for each time
 frame of the trajectory the atomic positions of a rigid reference
 structure, defined by the three cartesian components of its centroid
 (e.g. the centre of mass) and three angles, are as close as possible to
-the atomic positions of the corresponding structure in the *MD*
+the atomic positions of the corresponding structure in the MD
 configuration. Here 'as close as possible' means as close as possible in
 a least-squares sense.
 
