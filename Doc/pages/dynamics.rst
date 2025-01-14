@@ -455,7 +455,7 @@ reads
 
    {{\overset{\sim}{C}}_{\mathit{vv};\mathit{\alpha\alpha}}{(\omega) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d} t \,}\exp\left\lbrack {{- i}\omega t} \right\rbrack C_{\mathit{vv};\mathit{\alpha\alpha}}(t).}
 
-For non-isotropic systems, relation :math:numref:`pfx48` holds if the *DOS*
+For non-isotropic systems, relation :math:numref:`pfx48` holds if the DOS
 is computed from the atomic velocity autocorrelation
 functions :math:`C_{\mathit{vv};\mathit{\alpha\alpha}}\left( {t;n_{q}} \right)`
 where :math:`n_q` is the unit vector in the direction of :math:`q`.

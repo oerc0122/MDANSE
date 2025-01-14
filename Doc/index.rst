@@ -74,6 +74,7 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5 <https://doi.org/10.1021/acs.jcim.6b0057
    :caption: ⚛️ How-To Guides
 
    pages/H_start
+   pages/H_conv
    pages/H_cli
    pages/H_gui
    pages/gui
