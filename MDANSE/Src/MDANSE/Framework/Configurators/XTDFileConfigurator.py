@@ -149,7 +149,9 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
     def build_chemical_system(self, aliases):
         self._chemical_system = ChemicalSystem()
 
-        coordinates = np.empty((self._nAtoms, 3), dtype=np.float64)
+        coordinates = np.array(
+            [atom["xyz"] for atom in self._atoms.values()], dtype=np.float64
+        )
         element_list = [atom["element"] for atom in self._atoms.values()]
         name_list = [atom["atom_name"] for atom in self._atoms.values()]
         unique_labels = set(name_list)
