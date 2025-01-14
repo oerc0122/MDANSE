@@ -256,7 +256,7 @@ that differ from those of nMOLDYN.
 Root Mean Square Deviation
 ''''''''''''''''''''''''''
                          
-The Root Mean-Square Deviation (RMSD) is perhaps the most popular estimator
+The Root mean-square deviation (RMSD) is perhaps the most popular estimator
 of structural similarity. It quantifies differences between two structures by
 measuring the root mean-square of atomic position differences, revealing
 insights into their structural dissimilarities. It is a numerical measure of
@@ -286,12 +286,12 @@ atoms in addition to the RMSD of all atoms of the system.
 Root Mean Square Fluctuation
 ''''''''''''''''''''''''''''
 
-Root Mean Square Fluctuation (*RMSF*) assesses how the positions of atoms or
-molecules within a system fluctuate over time. Specifically, *RMSF* measures the
+Root mean square fluctuation (RMSF) assesses how the positions of atoms or
+molecules within a system fluctuate over time. Specifically, RMSF measures the
 average magnitude of deviations or fluctuations in atomic positions from their
 mean positions during a simulation.
 
-*RMSF* analysis is valuable for understanding the flexibility and stability of
+RMSF analysis is valuable for understanding the flexibility and stability of
 molecules within a simulation, providing insights into regions where atoms or
 groups of atoms exhibit significant fluctuations. This information can be crucial
 for studying the dynamic behavior of biomolecules, protein-ligand interactions,
@@ -303,27 +303,26 @@ or any molecular system subject to temporal variations.
 Radius Of Gyration
 ''''''''''''''''''
 
-Radius Of Gyration (*ROG*) is calculated as a root (atomic mass weighted) mean
+Radius of gyration (ROG) is calculated as a root (atomic mass weighted) mean
 square distance of the components of a system relative to either its centre of
-mass or a given axis of rotation. The *ROG* serves as a quantitative
+mass or a given axis of rotation. The ROG serves as a quantitative
 measure which can be used to characterize the spatial distribution of
 a system such as a molecule or a cluster of atoms.
 
-In MDANSE *ROG* is calculated relative to the systems centre of mass.
+In MDANSE, ROG is calculated relative to the systems centre of mass.
 It can be defined as:
 
 .. math::
    :label: pfx134
 
-    {\mathrm{ROG}{({n\Delta t}) = \sqrt{\frac{\sum\limits_{i}^{N}m_{i}\vert {\mathbf{r}_{i}{(n\Delta t) - \mathbf{r}_{\mathrm{CM}}}(n\Delta t)} \vert^{2}}{\sum\limits_{i}^{N}m_{i}}}} \qquad {n = 0}, \ldots, {N_{t} - 1}}
+    {\mathrm{ROG}{({n\Delta t}) = \sqrt{\frac{\sum\limits_{i}^{N}m_{i}\vert {\mathbf{r}_{i}{(t) - \mathbf{r}_{\mathrm{CM}}}(t)} \vert^{2}}{\sum\limits_{i}^{N}m_{i}}}}}
 
-where :math:`N_{t}` is the number of frames, :math:`\mathrm{\Delta}t`
-is the time step, :math:`N` is the number of atoms of the system,
-:math:`\mathbf{r}_{i}(n\Delta t)` are the positions of the
-atoms :math:`i`, :math:`\mathbf{r}_{\mathrm{CM}}(n\Delta t)` is the centre of mass of
-the system and :math:`n\Delta t` is the time of the simulation.
+where :math:`N` is the number of atoms of the system,
+:math:`\mathbf{r}_{i}(t)` are the positions of the
+atoms :math:`i`, :math:`\mathbf{r}_{\mathrm{CM}}(t)` is the centre of mass of
+the system and :math:`t` is the time of the simulation.
 
-*ROG* can be used to describe the overall spread of the molecule and
+ROG can be used to describe the overall spread of the molecule and
 as such is a good measure for the molecule compactness. For example,
 it can be useful when monitoring folding process of a protein.
 
@@ -333,14 +332,14 @@ it can be useful when monitoring folding process of a protein.
 Solvent Accessible Surface
 ''''''''''''''''''''''''''
 
-The Solvent Accessible Surface calculation involves defining the surface
+The solvent accessible surface calculation involves defining the surface
 accessibility of molecules or atoms by creating a mesh of points. The
 number of points is determined by the field discussed, influencing the
 level of detail in the surface representation. Essentially, a higher
 density of points leads to a finer-grained representation, capturing
 smaller surface features and intricacies.
 
-**Probe Radius**: Measured in nanometers, the probe radius is a crucial
+**Probe radius**: Measured in nanometers, the probe radius is a crucial
 parameter influencing the precision of the calculation. Smaller probe
 radii provide a more detailed and  assessment of the
 molecular surface area, often resulting in a larger reported surface
@@ -352,7 +351,7 @@ area due to increased sensitivity to surface features.
 Static Structure Factor
 '''''''''''''''''''''''
 
-The **Static Structure Factor** analysis offers a convenient method to
+The static structure factor analysis offers a convenient method to
 calculate the static coherent structure factor, represented as :math:`S(q)`, where
 :math:`S(q) = F_{\mathrm{coh}}(q, t = 0)`. This factor is fundamental for gaining
 insights into the ordered arrangements of particles within a material.
@@ -391,7 +390,7 @@ and X-ray scattering experiments in material science. It systematically
 investigates material structural properties by analyzing particle
 distribution and ordering. Researchers gain precise insights into
 fundamental aspects like atomic spacing and ordered patterns. MDANSE
-provides fine-grained control over ":math:`r` values" and ":math:`q` values," enabling
+provides fine-grained control over ":math:`r`-values" and ":math:`q`-values," enabling
 customization for probing specific material structural characteristics.
 This tool is invaluable for advancing scientific and industrial research,
 especially in neutron scattering experiments.

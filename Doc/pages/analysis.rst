@@ -38,7 +38,7 @@ molecular dipole:
 .. math::
    :label: pfx115
 
-   I(\omega) \propto \frac{1}{2\pi} \int\limits_{-\infty}^{\infty} \mathrm{d}t \, e^{i\omega t}\frac{1}{3 N_{\alpha}}\sum_{\alpha} \langle \dot{\mu}_{\alpha}(t_0) \cdot \dot{\mu}_{\alpha}(t_0 + t) \rangle_{t_0}
+   I(\omega) \propto \frac{1}{2\pi} \int\limits_{-\infty}^{\infty} \mathrm{d}t \, e^{i\omega t}\frac{1}{3 N_{\alpha}}\sum_{\alpha} \langle \dot{\mu}_{\alpha}(0) \cdot \dot{\mu}_{\alpha}(t) \rangle
 
 where :math:`N_{\alpha}` is the number of molecules :math:`\alpha` and :math:`\dot{\mu}(t)` is
 the time-derivative of the molecular dipole moment.
@@ -47,7 +47,7 @@ the time-derivative of the molecular dipole moment.
 
 Dipole AutoCorrelation Function
 '''''''''''''''''''''''''''''''
-Dipole AutoCorrelation Function is valuable for studying
+Dipole autocorrelation function is valuable for studying
 molecular vibrations and infrared spectra using dipole auto-correlation.
 Researchers can gain insights into the vibrational modes and spectral
 characteristics of molecules, aiding in the identification and analysis
@@ -102,7 +102,7 @@ Trajectory
 
 Box Translated Trajectory
 '''''''''''''''''''''''''
-A "Box Translated Trajectory" in molecular dynamics simulations refers to a
+A box translated trajectory in molecular dynamics simulations refers to a
 technique where the entire simulation box, representing the space in which
 molecules interact, is shifted or translated during the simulation. This
 approach can be useful for correcting periodic boundary condition artifacts,
@@ -115,19 +115,19 @@ properties within the computational environment.
 
 Center Of Masses Trajectory
 '''''''''''''''''''''''''''
-The Center Of Mass Trajectory (COMT) analysis consists in deriving the
+The center of mass trajectory (COMT) analysis consists in deriving the
 trajectory of the respective centres of mass of a set of groups of
 atoms. In order to produce a visualizable trajectory, MDANSE assigns
 the centres of mass to pseudo-hydrogen atoms whose mass is equal to the
 mass of their associated group. Thus, the produced trajectory can be
-reused for other analysis. In that sense, *COMT* analysis is a practical
+reused for other analysis. In that sense, COMT analysis is a practical
 way to reduce noticeably the dimensionality of a system.
 
 .. _cropped-trajectory:
 
 Cropped Trajectory
 ''''''''''''''''''
-A "Cropped Trajectory" in molecular dynamics simulations refers to a
+A cropped trajectory in molecular dynamics simulations refers to a
 shortened version of the trajectory data file, focusing on a specific time
 segment of a simulation. This cropping process is useful for reducing data
 size, isolating relevant events, improving computational efficiency, and
@@ -143,7 +143,7 @@ It is often of interest to separate global motion from internal motion,
 both for quantitative analysis and for visualization by animated
 display. Obviously, this can be done under the hypothesis that global
 and internal motions are decoupled within the length and timescales of
-the analysis. MDANSE can create Global Motion Filtered Trajectory
+the analysis. MDANSE can create global motion filtered trajectory
 (GMFT) by filtering out global motions (made of the three
 translational and rotational degrees of freedom), either on the whole
 system or on a user-defined subset, by fitting it to a reference
@@ -154,9 +154,9 @@ uses a straightforward algorithm:
    coordinate origin becomes the centre of mass of the system and its
    principal axes of inertia are parallel to the three coordinates axes
    (also called principal axes transformation),
--  this provides a reference configuration C\ :sub:`ref`,
--  for any other frames *f*, finds and applies the linear transformation
-   that minimizes the RMS distance between frame *f* and C\ :sub:`ref`.
+-  this provides a reference configuration :math:`C_{\mathrm{ref}}`,
+-  for any other frames :math:`f`, finds and applies the linear transformation
+   that minimizes the RMS distance between frame :math:`f` and :math:`C_{\mathrm{ref}}`.
 
 The result is stored in a new trajectory file that contains only
 internal motions. This analysis can be useful in case where diffusive
@@ -180,7 +180,7 @@ simulations since MD algorithms typically work in cartesian
 coordinates. Molecules are either treated as flexible, or, if they are
 treated as rigid, constraints are taken into account in the framework of
 cartesian coordinates [Ref23]_. In MDANSE,
-Rigid-Body Trajectory (RBT) can be defined from a MD trajectory by
+rigid-body trajectory (RBT) can be defined from a MD trajectory by
 fitting rigid reference structures, defining a (sub)molecule, to the
 corresponding structure in each time frame of the trajectory. Here 'fit'
 means the optimal superposition of the structures in a least-squares
@@ -193,10 +193,10 @@ frame of the trajectory the atomic positions of a rigid reference
 structure, defined by the three cartesian components of its centroid
 (e.g. the centre of mass) and three angles, are as close as possible to
 the atomic positions of the corresponding structure in the MD
-configuration. Here 'as close as possible' means as close as possible in
+configuration. Here "as close as possible" means as close as possible in
 a least-squares sense.
 
-**Optimal superposition:** We consider a given time frame in which the
+**Optimal superposition**: We consider a given time frame in which the
 atomic positions of a (sub)molecule are given by :math:`x_{\alpha}` where :math:`{\alpha = 1}, \ldots, N`.
 The corresponding positions in the reference structure are denoted as
 :math:`x_{\alpha}^{(0)}` where :math:`{\alpha = 1}, \ldots, N`.
@@ -210,8 +210,8 @@ define the deviation
    {\Delta_{\alpha}\doteq D(q){\left\lbrack {x_{\alpha}^{(0)} - X^{(0)}} \right\rbrack - \left\lbrack {x_{\alpha} - X} \right\rbrack}.}
 
 Here :math:`D(q)` is a rotation matrix which depends on also yet
-undetermined angular coordinates which we chose to be *quaternion
-parameters*, abbreviated as vector :math:`q = (q_0, q_1, q_2, q_3)`.
+undetermined angular coordinates which we chose to be quaternion
+parameters, abbreviated as vector :math:`q = (q_0, q_1, q_2, q_3)`.
 The quaternion parameters fulfil the normalization condition :math:`q \cdot {q = 1}` [Ref25]_.
 The target function to be minimized is now defined as
 
@@ -220,7 +220,7 @@ The target function to be minimized is now defined as
 
    {m{\left( {q;X,X^{(0)}} \right) = {\sum\limits_{\alpha}{\omega_{\alpha}|\Delta|_{\alpha}^{2}}}}.}
 
-where :math:`\omega_{\alpha}` are atomic weights (see Section ??). The minimization
+where :math:`\omega_{\alpha}` are atomic weights. The minimization
 with respect to the centroids is decoupled from the minimization with
 respect to the quaternion parameters and yields
 
@@ -257,7 +257,7 @@ are fixed and the rotation matrix reads
    \end{pmatrix}
 
 
-**Quaternions and rotations:** The rotational minimization problem can
+**Quaternions and rotations**: The rotational minimization problem can
 be elegantly solved by using quaternion algebra. Quaternions are
 so-called hypercomplex numbers, having a real unit, 1, and three
 imaginary units, :math:`I`, :math:`J`, and :math:`K`. Since :math:`IJ = K` (cyclic),
@@ -306,7 +306,7 @@ where :math:`Q` is a normalised quaternion
 
    {\text{|}Q\text{|}^{2}\doteq{{q_{0}^{2} + q_{1}^{2} + q_{2}^{2} + q_{3}^{2}} = \frac{1}{4}\mathrm{Tr}\, Q^{T}Q = 1}}.
 
-We note that a normalized quaternion is represented by an *orthogonal* 4 x 4 matrix. :math:`R'` may then be
+We note that a normalized quaternion is represented by an orthogonal 4 x 4 matrix. :math:`R'` may then be
 written as
 
 .. math::
@@ -316,7 +316,7 @@ written as
 
 where the components :math:`x'`, :math:`y'`, :math:`z'`, abbreviated as :math:`r'`, are given by :math:`r^{'} = D(q)r`.
 
-**Solution of the minimization problem:** In quaternion algebra, the
+**Solution of the minimization problem**: In quaternion algebra, the
 rotational minimization problem may now be phrased as follows:
 
 .. math::
@@ -371,14 +371,14 @@ Now any normalized eigenvector :math:`q` fulfils the relation
 
 Therefore, the eigenvector belonging to the smallest eigenvalue,
 :math:`\lambda_{\mathrm{min}}`, is the desired solution. At the same time :math:`\lambda_{\mathrm{min}}`
-gives the average error per atom. The result of *RBT* analysis is stored
-in a new trajectory file that contains only *RBT* motions.
+gives the average error per atom. The result of RBT analysis is stored
+in a new trajectory file that contains only RBT motions.
 
 .. _unfolded-trajectory:
 
 Unfolded Trajectory
 '''''''''''''''''''
-An "Unfolded Trajectory" in the context of molecular dynamics
+An unfolded trajectory in the context of molecular dynamics
 simulations refers to a trajectory data file that has been processed or
 analyzed to reveal the unfolding or expansion of molecular structures over
 time. This term is particularly relevant in the study of biomolecules or
