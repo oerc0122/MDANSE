@@ -113,7 +113,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         """
         q_values = [float(x) for x in self._configuration["q_vectors"].keys()]
         output_data.add(
-            "vector_generator/q",
+            "vector_generator_q",
             "LineOutputVariable",
             q_values,
             units="1/nm",
@@ -123,14 +123,14 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         ]
         qarray_maxlength = np.max(qvector_lengths)
         output_data.add(
-            "vector_generator/qvector_array",
+            "vector_generator_qvector_array",
             "VolumeOutputVariable",
             (len(q_values), 3, qarray_maxlength),
             units="1/nm",
         )
-        output_data["vector_generator/qvector_array"][:] = 0.0
+        output_data["vector_generator_qvector_array"][:] = 0.0
         for nq, q in enumerate(q_values):
-            output_data["vector_generator/qvector_array"][
+            output_data["vector_generator_qvector_array"][
                 nq, :, : qvector_lengths[nq]
             ] = self._configuration["q_vectors"][q]["q_vectors"]
         try:
@@ -138,13 +138,13 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         except KeyError:
             return
         output_data.add(
-            "vector_generator/hkl_array",
+            "vector_generator_hkl_array",
             "VolumeOutputVariable",
             (len(q_values), 3, qarray_maxlength),
             units="au",
         )
-        output_data["vector_generator/hkl_array"][:] = 0.0
+        output_data["vector_generator_hkl_array"][:] = 0.0
         for nq, q in enumerate(q_values):
-            output_data["vector_generator/hkl_array"][nq, :, : qvector_lengths[nq]] = (
+            output_data["vector_generator_hkl_array"][nq, :, : qvector_lengths[nq]] = (
                 hkl_arrays[nq]
             )
