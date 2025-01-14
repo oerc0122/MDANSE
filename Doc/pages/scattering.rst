@@ -779,7 +779,7 @@ Naturally, similar expressions apply to the dynamic structure factors,
 
 Structure Factor From Scattering Function
 '''''''''''''''''''''''''''''''''''''''''
-The "Structure Factor From Scattering Function" is a concept used in
+The structure factor from scattering function is a concept used in
 scientific research, particularly in the field of neutron scattering
 experiments. It relates to how particles or atoms within a material
 contribute to its overall structural properties based on their scattering

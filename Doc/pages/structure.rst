@@ -385,7 +385,7 @@ molecular structures and dynamics.
 Xray Static Structure Factor
 ''''''''''''''''''''''''''''
 
-MDANSE's Xray Static Structure Factor analysis is tailored for neutron
+MDANSE's xray static structure factor analysis is tailored for neutron
 and X-ray scattering experiments in material science. It systematically
 investigates material structural properties by analyzing particle
 distribution and ordering. Researchers gain precise insights into
