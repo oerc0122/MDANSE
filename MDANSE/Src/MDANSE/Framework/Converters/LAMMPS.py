@@ -202,6 +202,7 @@ class LAMMPScustom(LAMMPSReader):
                 self._rankToName = {}
                 element_list = []
                 name_list = []
+                index_list = []
 
                 self._itemsPosition["ATOMS"] = [comp + 1, comp + self._nAtoms + 1]
                 for i in range(self._nAtoms):
@@ -231,8 +232,12 @@ class LAMMPScustom(LAMMPSReader):
                     element = get_element_from_mapping(aliases, label, mass=mass)
                     element_list.append(element)
                     name_list.append(str(ty + 1))
+                    index_list.append(idx)
 
-                chemical_system.initialise_atoms(element_list, name_list)
+                sorting = np.argsort(index_list)
+                chemical_system.initialise_atoms(
+                    element_list[sorting], name_list[sorting]
+                )
 
                 if config["n_bonds"] is not None:
                     bonds = []
@@ -339,11 +344,11 @@ class LAMMPScustom(LAMMPSReader):
         ):
             temp = self._file.readline().split()
             try:
-                temp_index = int(temp[0])
+                temp_index = int(temp[self._id]) - 1
             except ValueError:
                 idx = i
             else:
-                idx = self._trajectory.chemical_system._atom_indices[i]
+                idx = temp_index
             coords[idx, :] = np.array(
                 [temp[self._x], temp[self._y], temp[self._z]], dtype=np.float64
             )
