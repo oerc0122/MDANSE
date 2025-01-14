@@ -41,6 +41,11 @@ class DerivativeOrderConfigurator(IntegerConfigurator):
         value : int or None
             The interpolation order to use.
         """
+        frames_configurator = self._configurable[self._dependencies["frames"]]
+        if not frames_configurator._valid:
+            self.error_status = f"Frames configurator is not valid."
+            return
+
         self._original_input = value
         if value is None:
             value = self._default
@@ -51,6 +56,13 @@ class DerivativeOrderConfigurator(IntegerConfigurator):
             self.error_status = (
                 f"Use an interpolation order less than or equal to zero or "
                 f"greater than 5 is not implemented."
+            )
+            return
+
+        number = frames_configurator["number"]
+        if number < value + 1:
+            self.error_status = (
+                f"Not enough MD frames to apply derivatives of order {value}"
             )
             return
 
