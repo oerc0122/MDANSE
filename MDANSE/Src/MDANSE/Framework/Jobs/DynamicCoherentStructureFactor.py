@@ -194,7 +194,6 @@ class DynamicCoherentStructureFactor(IJob):
                 axis=0,
             )
         )
-        print(f"Average unit cell: {self._average_unit_cell._unit_cell}")
 
     def run_step(self, index):
         """
