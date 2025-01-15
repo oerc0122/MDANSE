@@ -19,7 +19,7 @@ import mdtraj as md
 
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -118,7 +118,8 @@ class MDTraj(Converter):
         self.numberOfSteps = self.traj.n_frames
 
         self._chemical_system = ChemicalSystem()
-        for at in self.traj.topology.atoms:
+        elements, atom_names, atom_labels = [], [], {}
+        for atnumber, at in enumerate(self.traj.topology.atoms):
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"],
                 at.name,
@@ -127,9 +128,17 @@ class MDTraj(Converter):
                 number=at.element.number,
                 mass=at.element.mass,
             )
-            self._chemical_system.add_chemical_entity(
-                Atom(symbol=element, name=at.name)
-            )
+            elements.append(element)
+            atom_names.append(at.name)
+            if at.residue.name:
+                try:
+                    atom_labels[at.residue.name]
+                except KeyError:
+                    atom_labels[at.residue.name] = [atnumber]
+                else:
+                    atom_labels[at.residue.name].append(atnumber)
+        self._chemical_system.initialise_atoms(elements, atom_names)
+        self._chemical_system.add_labels(atom_labels)
 
         kwargs = {
             "positions_dtype": self.configuration["output_files"]["dtype"],
@@ -174,8 +183,6 @@ class MDTraj(Converter):
             if self.configuration["fold"]["value"]:
                 conf.fold_coordinates()
 
-        self._trajectory._chemical_system.configuration = conf
-
         # TODO as of 11/12/2024 MDTraj does not read velocity data
         #  there is a discussion about this on GitHub
         #  (https://github.com/mdtraj/mdtraj/issues/1824).
@@ -192,6 +199,7 @@ class MDTraj(Converter):
                 time = index * float(self.configuration["time_step"]["value"])
 
         self._trajectory.dump_configuration(
+            conf,
             time,
             units={
                 "time": "ps",

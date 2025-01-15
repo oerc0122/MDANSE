@@ -54,17 +54,21 @@ class CellFile(dict):
             words = line.strip().split()
 
             if len(words) != 12:
-                raise CellFileError("Invalid format for cell line")
+                raise CellFileError(f"Invalid format for cell line: {line}")
 
             try:
                 time_steps.append(float(words[1]))
             except ValueError:
-                raise CellFileError("Can not cast time step to floating")
+                raise CellFileError(
+                    f"Cannot cast time step {words[1]} to a floating point number"
+                )
 
             try:
                 cell = np.array(words[2:11], dtype=np.float64).reshape((3, 3))
             except ValueError:
-                raise CellFileError("Can not cast cell coordinates to floating")
+                raise CellFileError(
+                    f"Cannot cast cell coordinates {words[2:11]} to floating point numbers"
+                )
 
             self["cells"].append(cell)
 
