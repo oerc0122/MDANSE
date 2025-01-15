@@ -646,7 +646,10 @@ def test_mdtraj_conversion_file_exists_and_loads_up_successfully(compression):
     mdanalysis = Converter.create("MDTraj")
     mdanalysis.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
