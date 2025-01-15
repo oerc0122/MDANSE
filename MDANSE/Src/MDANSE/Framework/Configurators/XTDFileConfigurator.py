@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
 import collections
 import xml.etree.ElementTree as ElementTree
 
@@ -178,19 +179,15 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         real_conf.fold_coordinates()
         self._configuration = real_conf
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for info in self._atoms.values():
-            label = AtomLabel(info["element"], type=info["atom_name"])
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(info["element"], type=info["atom_name"])
 
     def get_atom_charges(self) -> np.ndarray:
         """Returns an array of partial electric charges

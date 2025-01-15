@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
 from abc import abstractmethod
 import traceback
 
@@ -37,6 +38,12 @@ class FileWithAtomDataConfigurator(InputFileConfigurator):
             self.parse()
         except Exception as e:
             self.error_status = f"File parsing error {e}: {traceback.format_exc()}"
+            return
+
+        self.labels = self.unique_labels()
+        if len(self.labels) == 0:
+            self.error_status = f"Unable to generate atom labels"
+            return
 
     @abstractmethod
     def parse(self) -> None:
@@ -44,6 +51,14 @@ class FileWithAtomDataConfigurator(InputFileConfigurator):
         pass
 
     @abstractmethod
-    def get_atom_labels(self) -> list[AtomLabel]:
-        """Return the atoms labels in the file."""
-        pass
+    def atom_labels(self) -> Iterable[AtomLabel]:
+        """Yields atom labels"""
+
+    def unique_labels(self) -> list[AtomLabel]:
+        """
+        Returns
+        -------
+        list[AtomLabel]
+            An ordered list of atom labels.
+        """
+        return list(set(self.atom_labels()))

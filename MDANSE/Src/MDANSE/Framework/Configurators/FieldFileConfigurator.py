@@ -13,13 +13,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
 import re
 
 import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping, AtomLabel
-
 from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 
@@ -110,20 +110,16 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
 
             first = last + 1
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for mol_name, _, atomic_contents, masses, _ in self["molecules"]:
             for atm_label, mass in zip(atomic_contents, masses):
-                label = AtomLabel(atm_label, molecule=mol_name, mass=mass)
-                if label not in labels:
-                    labels.append(label)
-        return labels
+                yield AtomLabel(atm_label, molecule=mol_name, mass=mass)
 
     def get_atom_charges(self) -> np.ndarray:
         """Returns an array of partial electric charges

@@ -109,7 +109,7 @@ class HistoryFile(dict):
             config.append(velocities)
 
         # Case of the velocities + gradients
-        elif self["keytrj"] > 1:
+        if self["keytrj"] > 1:
             gradients *= self._grad_conversion
             config.append(gradients)
 

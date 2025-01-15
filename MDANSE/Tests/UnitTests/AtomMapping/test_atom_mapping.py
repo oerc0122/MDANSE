@@ -127,9 +127,45 @@ def test_fill_remaining_labels_fill_mapping_correctly_missing_mapping():
     assert mapping == {"molecule=mol1": {"label1": "C", "C1": "C"}}
 
 
-def test_check_mapping_valid_as_elements_are_correct():
+def test_check_mapping_valid_as_elements_are_correct_1():
     labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
     mapping = {"molecule=mol1": {"label1": "C", "C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_valid_as_elements_are_correct_2():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"molecule=mol1": {"C1": "C", "label1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_valid_as_elements_are_correct_3():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol2")]
+    mapping = {"molecule=mol1": {"label1": "C"}, "molecule=mol2": {"C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_valid_as_elements_are_correct_4():
+    labels = [AtomLabel("label1", type="1*"), AtomLabel("C1", type="2*")]
+    mapping = {"type=1*": {"label1": "C"}, "type=2*": {"C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_valid_as_elements_are_correct_5():
+    labels = [AtomLabel("label1", mass="12"), AtomLabel("C1", mass="13")]
+    mapping = {"mass=12": {"label1": "C"}, "mass=13": {"C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_valid_as_elements_are_correct_6():
+    labels = [AtomLabel("label=1", molecule="mol=1"), AtomLabel("C=1", molecule="mol=2")]
+    mapping = {"molecule=mol1": {"label1": "C"}, "molecule=mol2": {"C1": "C"}}
+    assert check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_valid_as_elements_are_correct_7():
+    labels = [AtomLabel("label=1"), AtomLabel("C=1")]
+    mapping = {"": {"label1": "C", "C1": "C"}}
     assert check_mapping_valid(mapping, labels)
 
 
@@ -142,10 +178,76 @@ def test_check_mapping_not_valid_as_elements_not_correct():
     assert not check_mapping_valid(mapping, labels)
 
 
-def test_check_mapping_not_valid_due_to_missing_mappings():
+def test_check_mapping_not_valid_due_to_missing_mappings_1():
     labels = [
         AtomLabel("label1", molecule="mol1"),
         AtomLabel("label2", molecule="mol1"),
     ]
     mapping = {"molecule=mol1": {"label1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_missing_mappings_2():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol2")]
+    mapping = {"molecule=mol1": {"label1": "C", "C1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_incorrect_keys_1():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"molecule=mol1": {"label1": "C", "label2": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_incorrect_keys_2():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"molecule=mol1": {"label1": "C", "C1": "C", "label2": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_bad_keys_1():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"molecule==mol1": {"label1": "C", "C1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_bad_keys_2():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"molecule===mol1": {"label1": "C", "C1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_bad_keys_3():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"molecule=mol1;": {"label1": "C", "C1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_bad_keys_4():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {";molecule=mol1": {"label1": "C", "C1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_bad_keys_5():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"molecule;=mol1": {"label1": "C", "C1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_bad_keys_6():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"mole;cule=mol1": {"label1": "C", "C1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_bad_keys_7():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol1")]
+    mapping = {"molecule=mo;l1": {"label1": "C", "C1": "C"}}
+    assert not check_mapping_valid(mapping, labels)
+
+
+def test_check_mapping_not_valid_due_to_bad_keys_8():
+    labels = [AtomLabel("label1", molecule="mol1"), AtomLabel("C1", molecule="mol2")]
+    mapping = {"molecule=mol1": {"label1": "C"}, "molec;ule=mol2": {"C1": "C"}}
     assert not check_mapping_valid(mapping, labels)

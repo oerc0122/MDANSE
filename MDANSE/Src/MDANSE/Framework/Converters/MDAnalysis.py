@@ -42,7 +42,7 @@ class MDAnalysis(Converter):
     label = "MDAnalysis"
     settings = collections.OrderedDict()
     settings["topology_file"] = (
-        "TopologyFileConfigurator",
+        "MDAnalysisTopologyFileConfigurator",
         {
             "wildcard": "All files (*)",
             "default": "INPUT_FILENAME",
@@ -50,7 +50,7 @@ class MDAnalysis(Converter):
         },
     )
     settings["coordinate_files"] = (
-        "CoordinateFileConfigurator",
+        "MDAnalysisCoordinateFileConfigurator",
         {
             "wildcard": "All files (*)",
             "default": "",

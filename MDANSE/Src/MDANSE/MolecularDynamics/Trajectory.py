@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
+import os
 from ast import operator
 from typing import Collection, List, Dict, TYPE_CHECKING, Any
 
@@ -32,6 +32,7 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
 )
+from MDANSE import PLATFORM
 
 
 available_formats = {
@@ -422,7 +423,7 @@ class TrajectoryWriter:
         """
 
         self._h5_filename = h5_filename
-
+        PLATFORM.create_directory(os.path.dirname(h5_filename))
         self._h5_file = h5py.File(self._h5_filename, "w")
 
         self._chemical_system = chemical_system
