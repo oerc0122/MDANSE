@@ -145,16 +145,12 @@ def select_atom_fullname(
     """
     system = trajectory.chemical_system
     if check_exists:
-        if fullname in system.atom_list:
+        if fullname in system.name_list:
             return True
         return False
     else:
         return set(
-            [
-                index
-                for index, element in enumerate(system.atom_list)
-                if element == fullname
-            ]
+            [index for index, name in enumerate(system.name_list) if name == fullname]
         )
 
 

@@ -20,7 +20,7 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 __all__ = [
     "select_primary_amine",
     "select_hydroxy",
-    "select_methly",
+    "select_methyl",
     "select_phosphate",
     "select_sulphate",
     "select_thiol",
@@ -77,7 +77,7 @@ def select_hydroxy(
         return system.get_substructure_matches(pattern)
 
 
-def select_methly(
+def select_methyl(
     trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects the C and H atoms of all methyl groups.

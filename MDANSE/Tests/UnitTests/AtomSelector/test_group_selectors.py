@@ -4,7 +4,7 @@ from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInput
 from MDANSE.Framework.AtomSelector.group_selectors import (
     select_primary_amine,
     select_hydroxy,
-    select_methly,
+    select_methyl,
     select_phosphate,
     select_sulphate,
     select_thiol,
@@ -60,7 +60,7 @@ def test_select_hydroxy_returns_correct_number_of_atom_matches(
 
 
 def test_select_methyl_returns_correct_number_of_atom_matches(protein_trajectory):
-    selection = select_methly(protein_trajectory)
+    selection = select_methyl(protein_trajectory)
     assert len(selection) == 244
 
 

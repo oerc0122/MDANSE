@@ -63,7 +63,7 @@ class Selector:
         "hs_on_heteroatom": select_hs_on_heteroatom,
         "primary_amine": select_primary_amine,
         "hydroxy": select_hydroxy,
-        "methyl": select_methly,
+        "methyl": select_methyl,
         "phosphate": select_phosphate,
         "sulphate": select_sulphate,
         "thiol": select_thiol,

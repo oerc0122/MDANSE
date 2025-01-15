@@ -116,6 +116,7 @@ class MDTraj(Converter):
             )
 
         self.numberOfSteps = self.traj.n_frames
+        mdtraj_to_mdanse = {}
 
         self._chemical_system = ChemicalSystem()
         elements, atom_names, atom_labels = [], [], {}
@@ -130,6 +131,7 @@ class MDTraj(Converter):
             )
             elements.append(element)
             atom_names.append(at.name)
+            mdtraj_to_mdanse[at.index] = atnumber
             if at.residue.name:
                 try:
                     atom_labels[at.residue.name]
@@ -139,6 +141,11 @@ class MDTraj(Converter):
                     atom_labels[at.residue.name].append(atnumber)
         self._chemical_system.initialise_atoms(elements, atom_names)
         self._chemical_system.add_labels(atom_labels)
+        bonds = []
+        for at1, at2 in self.traj.topology.bonds:
+            bonds.append([mdtraj_to_mdanse[at1.index], mdtraj_to_mdanse[at2.index]])
+        self._chemical_system.add_bonds(bonds)
+        self._chemical_system.find_clusters_from_bonds()
 
         kwargs = {
             "positions_dtype": self.configuration["output_files"]["dtype"],
