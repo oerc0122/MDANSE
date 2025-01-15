@@ -442,7 +442,7 @@ incoherent dynamic structure factor by the relation:
 
    {\lim\limits_{q\rightarrow 0}\frac{\omega^{2}}{q^{2}}S{\left( {q,\omega} \right) = G}(\omega),}
 
-where :math:`G(\omega)` is the Density Of States (*DOS*). For an isotropic system it
+where :math:`G(\omega)` is the density of states. For an isotropic system it
 reads
 
 .. math::
