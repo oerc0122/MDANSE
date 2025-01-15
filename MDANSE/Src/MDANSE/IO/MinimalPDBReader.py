@@ -129,10 +129,12 @@ class MinimalPDBReader:
         posy_slice = atom_line_slice("pos_y")
         posz_slice = atom_line_slice("pos_z")
         residue_slice = atom_line_slice("residue_name")
+        residue_number_slice = atom_line_slice("residue_number")
 
         element_list = []
         name_list = []
         label_dict = {}
+        clusters = {}
 
         for atom_number, atom_line in enumerate(atom_lines):
             chemical_element = atom_line[element_slice].strip()
@@ -179,5 +181,17 @@ class MinimalPDBReader:
                 label_dict[residue_name] = []
             label_dict[residue_name].append(atom_number)
             name_list.append(atom_name.strip())
+            residue_number_string = atom_line[residue_number_slice]
+            try:
+                residue_number = int(residue_number_string)
+            except ValueError:
+                try:
+                    residue_number = int(residue_number_string, base=16)
+                except ValueError:
+                    continue
+            if residue_number in clusters.keys():
+                clusters[residue_number].append(atom_number)
+            else:
+                clusters[residue_number] = [atom_number]
         self._chemical_system.initialise_atoms(element_list, name_list)
         self._chemical_system.add_labels(label_dict)

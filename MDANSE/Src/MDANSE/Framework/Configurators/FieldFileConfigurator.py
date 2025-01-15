@@ -144,14 +144,22 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
 
         for db_name, nMolecules, atomic_contents, masses, _ in self["molecules"]:
             # Loops over the number of molecules of the current type.
-            for i in range(nMolecules):
+            clusters = []
+            index = 0
+            for _ in range(nMolecules):
                 # This list will contains the instances of the atoms of the molecule.
                 # Loops over the atom of the molecule.
-                for j, (name, mass) in enumerate(zip(atomic_contents, masses)):
+                cluster = []
+                for _, (name, mass) in enumerate(zip(atomic_contents, masses)):
                     # The atom is created.
                     element = get_element_from_mapping(
                         aliases, name, molecule=db_name, mass=mass
                     )
                     element_list.append(element)
                     name_list.append(name)
+                    cluster.append(index)
+                    index += 1
+                if len(cluster) > 1:
+                    clusters.append(cluster)
         chemical_system.initialise_atoms(element_list, name_list)
+        chemical_system.add_clusters(clusters)

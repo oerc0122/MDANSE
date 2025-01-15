@@ -739,6 +739,7 @@ class LAMMPS(Converter):
 
         self._reader.set_units(self._lammps_units)
         self._chemical_system = self.parse_first_step(self._atomicAliases)
+        self._chemical_system.find_clusters_from_bonds()
 
         if self.numberOfSteps == 0:
             self.numberOfSteps = self._reader.get_time_steps(

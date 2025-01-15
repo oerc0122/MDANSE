@@ -162,6 +162,7 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         self._chemical_system.initialise_atoms(element_list, name_list)
         self._chemical_system.add_bonds(self._bonds)
         self._chemical_system.add_labels(label_dict)
+        self._chemical_system.find_clusters_from_bonds()
 
         if self._pbc:
             boxConf = PeriodicBoxConfiguration(
