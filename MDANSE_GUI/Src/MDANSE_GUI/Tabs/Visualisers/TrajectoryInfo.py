@@ -57,7 +57,7 @@ class TrajectoryInfo(QTextBrowser):
         for ind in range(len(atoms)):
             text += f"Element: {atoms[ind]}; Count: {counts[ind]}\n"
         for molname, mollist in cs._clusters.items():
-            text += f"Molecule: {molname}; Count: {len(mollist)}"
+            text += f"Molecule: {molname}; Count: {len(mollist)}\n"
         text += " ===== \n"
         return text
 

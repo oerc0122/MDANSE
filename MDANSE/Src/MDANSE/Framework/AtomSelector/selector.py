@@ -108,7 +108,7 @@ class Selector:
                 ]
             ),
             "name": set(system.atom_list),
-            "fullname": set(system.atom_list),
+            "fullname": set(system.name_list),
             "index": self.all_idxs,
         }
 

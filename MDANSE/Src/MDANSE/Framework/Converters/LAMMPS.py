@@ -236,7 +236,7 @@ class LAMMPScustom(LAMMPSReader):
 
                 sorting = np.argsort(index_list)
                 chemical_system.initialise_atoms(
-                    element_list[sorting], name_list[sorting]
+                    np.array(element_list)[sorting], np.array(name_list)[sorting]
                 )
 
                 if config["n_bonds"] is not None:

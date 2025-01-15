@@ -195,3 +195,4 @@ class MinimalPDBReader:
                 clusters[residue_number] = [atom_number]
         self._chemical_system.initialise_atoms(element_list, name_list)
         self._chemical_system.add_labels(label_dict)
+        self._chemical_system.add_clusters(clusters.values())

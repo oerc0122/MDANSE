@@ -62,10 +62,11 @@ class ChemicalSystem:
             self.add_atom(self._database.get_atom_property(symbol, "atomic_number"))
             for symbol in element_list
         ]
-        self._atom_types = element_list
+        self._atom_types = [str(x) for x in element_list]
         self._total_number_of_atoms = len(self._atom_indices)
         self._unique_elements.update(set(element_list))
-        self._atom_names = name_list
+        if name_list is not None:
+            self._atom_names = [str(x) for x in name_list]
 
     def add_atom(self, atm_num: int) -> int:
         if atm_num is not None:
