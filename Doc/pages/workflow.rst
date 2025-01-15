@@ -60,7 +60,7 @@ All the output arrays created in the analysis are written to the filesystem in t
 format chosen by the user. If you intend to continue visualising the results within
 the MDANSE_GUI, you will need to use the MDAFormat. If, however, you were planning
 to process the results further using other software, then you will need to pick
-the TextFormat output. See also :ref:`param-output-files`
+the TextFormat output. See also :ref:`param-output-files`.
 
 2b. Analysis results
 ---------------------

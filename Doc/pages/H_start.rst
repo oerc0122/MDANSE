@@ -1,7 +1,7 @@
+.. _installation-tutorial:
+
 Installing MDANSE
 =================
-
-.. _installation_tutorial:
 
 MDANSE can be easily installed by following these steps:
 

@@ -8,8 +8,8 @@ simulations in the context of neutron scattering experiments.
 MDANSE Installation 
 --------------------
 
-To get started with MDANSE, you can follow the MDANSE Installation Tutorial
-at :ref:`installation_tutorial`.
+To get started with MDANSE, you can follow the MDANSE installation guide
+at :ref:`installation-tutorial`.
 
 
 Explore the Documentation
