@@ -369,7 +369,7 @@ In MDANSE the distinct part of the van Hove function is spherically
 averaged and normalised so that for liquid or gaseous systems
 
 .. math::
-    \lim_{r \rightarrow \infty } G_{\mathrm{d}}(r, t) = \lim_{\Delta t \rightarrow \infty } G_{\mathrm{d}}(r, t) = 1
+    \lim_{r \rightarrow \infty } G_{\mathrm{d}}(r, t) = \lim_{t \rightarrow \infty } G_{\mathrm{d}}(r, t) = 1
 
 and the self part of the van Hove function in MDANSE is summed so
 that it only depends on the distance :math:`r`

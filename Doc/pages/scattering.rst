@@ -310,11 +310,8 @@ can be projected onto longitudinal and transverse components of the
 
 .. math::
 
-    j_{\mathrm{L}}(q, t) = \sum_{l} (v_{l\alpha}(t) \cdot \hat{q})\hat{q} \, \exp(iq\cdot r_l(t))
-
-.. math::
-
-    j_{\mathrm{T}}(q, t) = \sum_{l} [v_{l\alpha}(t) - (v_{l\alpha}(t) \cdot \hat{q})\hat{q}] \, \exp(iq\cdot r_l(t))
+    j_{\mathrm{L}}(q, t) &= \sum_{l} (v_{l\alpha}(t) \cdot \hat{q})\hat{q} \, \exp(iq\cdot r_l(t)) \\
+    j_{\mathrm{T}}(q, t) &= \sum_{l} [v_{l\alpha}(t) - (v_{l\alpha}(t) \cdot \hat{q})\hat{q}] \, \exp(iq\cdot r_l(t))
 
 where :math:`\hat{q}` are unit vectors of :math:`q`. For isotropic systems,
 the longitudinal and transverse particle current are uncorrelated and the
