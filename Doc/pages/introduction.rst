@@ -26,13 +26,11 @@ molecular dynamics simulations. Its primary objectives are to:
 Flexibility and Compatibility
 -----------------------------
 
-MDANSE offers:
-
 - A Python-based graphical user interface (GUI) via the MDANSE_GUI package,
   including a trajectory viewer and a data plotter.
 - Command-line utilities for creating and running MDANSE jobs as Python scripts.
 - Specialised trajectory converters for specific MD engines.
-- A general trajectory converter based on ASE.
+- General trajectory converters based on ASE, MDAnalysis and MDTraj.
 
 Your Guide to MDANSE
 ---------------------
@@ -47,9 +45,5 @@ Collaboration and Feedback
 The authors welcome suggestions, feedback, and bug reports regarding the MDANSE
 software and this user's guide, we encourage you to report them. Your feedback is
 essential in helping us enhance the software and improve the user experience.
-
-GitHub Repository
------------------
-
-You can report issues and make suggestions on our GitHub repository. Please visit
-the following link to access the `MDANSE GitHub repository <https://github.com/ISISNeutronMuon/MDANSE>`_
+You can report issues and make suggestions on our `GitHub repository <https://github.com/ISISNeutronMuon/MDANSE>`_.
+Alternatively, you can contact the developers directly by emailing us at MDANSE-help@stfc.ac.uk.

@@ -4,6 +4,8 @@
 Glossary of Parameters
 =======================
 
+.. _param-frames:
+
 Frames
 ~~~~~~
 
@@ -148,6 +150,7 @@ Axis selection is available for :ref:`analysis-angular-correlation`
 and :ref:`analysis-op` analyses.
 
 
+.. _param-atom-selection:
 
 Atom Selection
 ^^^^^^^^^^^^^^
