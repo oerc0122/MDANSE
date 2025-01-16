@@ -22,8 +22,13 @@ is built on top of HDF5. Using
 HDF5 ensures platform independence, efficient data storage, and 
 self-contained information within trajectory files.
 
-Furthermore, users can used MDANSE to convert trajectories from
-other formats to the MDT format required perform analysis calculations.
+Trajectories have to be converted to the MDT format before
+MDANSE can perform analysis calculations. Multiple converters
+are available in MDANSE to convert outputs of different MD engines
+to the MDT format.
+
+The results of MDANSE analysis runs are saved in MDA files.
+Contents of the MDA files can be viewed and plotted in the MDANSE GUI.
 
 .. _text_output:
 
