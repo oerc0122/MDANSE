@@ -24,8 +24,8 @@ from importlib import metadata
 
 import numpy as np
 
-
 from MDANSE.Framework.Formats.IFormat import IFormat
+from MDANSE import PLATFORM
 
 if TYPE_CHECKING:
     from MDANSE.Framework.Jobs.IJob import IJob
@@ -64,6 +64,7 @@ class TextFormat(IFormat):
         filename = os.path.splitext(filename)[0]
         filename = "%s_text.tar" % filename
 
+        PLATFORM.create_directory(os.path.dirname(filename))
         tf = tarfile.open(filename, "w")
 
         if header:

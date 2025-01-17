@@ -20,7 +20,6 @@ from scipy.signal import correlate
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
 from MDANSE.Mathematics.Signal import differentiate, get_spectrum
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 from MDANSE.MLogging import LOG
 
 
@@ -76,7 +75,10 @@ class DensityOfStates(IJob):
         "WeightsConfigurator",
         {
             "default": "atomic_weight",
-            "dependencies": {"atom_selection": "atom_selection"},
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            },
         },
     )
     settings["output_files"] = (
@@ -156,9 +158,9 @@ class DensityOfStates(IJob):
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -175,11 +177,11 @@ class DensityOfStates(IJob):
         trajectory = self.configuration["trajectory"]["instance"]
 
         # get atom index
-        indexes = self.configuration["atom_selection"]["indexes"][index]
+        indices = self.configuration["atom_selection"]["indices"][index]
 
         if self.configuration["interpolation_order"]["value"] == 0:
             series = trajectory.read_configuration_trajectory(
-                indexes[0],
+                indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
                 step=self.configuration["frames"]["step"],
@@ -187,7 +189,7 @@ class DensityOfStates(IJob):
             )
         else:
             series = trajectory.read_atomic_trajectory(
-                indexes[0],
+                indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
                 step=self.configuration["frames"]["step"],

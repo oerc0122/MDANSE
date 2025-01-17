@@ -13,8 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import operator
-from MDANSE.Chemistry import ATOMS_DATABASE
+
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.AtomSelector import Selector
 
@@ -49,7 +48,7 @@ class AtomSelectionConfigurator(IConfigurator):
             self.error_status = "Invalid input value."
             return
 
-        selector = Selector(trajConfig["instance"].chemical_system)
+        selector = Selector(trajConfig["instance"])
         if not selector.check_valid_json_settings(value):
             self.error_status = "Invalid JSON string."
             return
@@ -57,26 +56,23 @@ class AtomSelectionConfigurator(IConfigurator):
         self["value"] = value
 
         selector.load_from_json(value)
-        indexes = selector.get_idxs()
+        indices = selector.get_idxs()
 
-        self["flatten_indexes"] = sorted(list(indexes))
+        self["flatten_indices"] = sorted(list(indices))
 
         trajConfig = self._configurable[self._dependencies["trajectory"]]
 
-        atoms = sorted(
-            trajConfig["instance"].chemical_system.atom_list,
-            key=operator.attrgetter("index"),
-        )
-        selectedAtoms = [atoms[idx] for idx in self["flatten_indexes"]]
+        atoms = trajConfig["instance"].chemical_system.atom_list
+        selectedAtoms = [atoms[idx] for idx in self["flatten_indices"]]
 
-        self["selection_length"] = len(self["flatten_indexes"])
-        self["indexes"] = [[idx] for idx in self["flatten_indexes"]]
+        self["selection_length"] = len(self["flatten_indices"])
+        self["indices"] = [[idx] for idx in self["flatten_indices"]]
 
-        self["elements"] = [[at.symbol] for at in selectedAtoms]
-        self["names"] = [at.symbol for at in selectedAtoms]
+        self["elements"] = [[at] for at in selectedAtoms]
+        self["names"] = [at for at in selectedAtoms]
         self["unique_names"] = sorted(set(self["names"]))
         self["masses"] = [
-            [ATOMS_DATABASE.get_atom_property(n, "atomic_weight")]
+            [trajConfig["instance"].get_atom_property(n, "atomic_weight")]
             for n in self["names"]
         ]
         if self["selection_length"] == 0:
@@ -110,15 +106,15 @@ class AtomSelectionConfigurator(IConfigurator):
         """
         return len(self["names"])
 
-    def get_indexes(self):
-        indexesPerElement = {}
+    def get_indices(self):
+        indicesPerElement = {}
         for i, v in enumerate(self["names"]):
-            if v in indexesPerElement:
-                indexesPerElement[v].extend(self["indexes"][i])
+            if v in indicesPerElement:
+                indicesPerElement[v].extend(self["indices"][i])
             else:
-                indexesPerElement[v] = self["indexes"][i][:]
+                indicesPerElement[v] = self["indices"][i][:]
 
-        return indexesPerElement
+        return indicesPerElement
 
     def get_information(self) -> str:
         """
@@ -145,5 +141,5 @@ class AtomSelectionConfigurator(IConfigurator):
             chemical system.
         """
         traj_config = self._configurable[self._dependencies["trajectory"]]
-        selector = Selector(traj_config["instance"].chemical_system)
+        selector = Selector(traj_config["instance"])
         return selector

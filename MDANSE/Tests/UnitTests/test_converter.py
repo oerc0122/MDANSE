@@ -30,6 +30,8 @@ dlp_field_v2 = os.path.join(file_wd, "Data", "FIELD_Water")
 dlp_history_v2 = os.path.join(file_wd, "Data", "HISTORY_Water")
 dlp_field_v4 = os.path.join(file_wd, "Data", "FIELD4")
 dlp_history_v4 = os.path.join(file_wd, "Data", "HISTORY4")
+dlp_field_with_grad = os.path.join(file_wd, "Data", "FIELD_methanol_short")
+dlp_history_with_grad = os.path.join(file_wd, "Data", "HISTORY_methanol_short")
 apoferritin_dcd = os.path.join(file_wd, "Data", "apoferritin.dcd")
 apoferritin_pdb = os.path.join(file_wd, "Data", "apoferritin.pdb")
 pbanew_md = os.path.join(file_wd, "Data", "PBAnew.md")
@@ -55,7 +57,10 @@ def test_lammps_mdt_conversion_file_exists_and_loads_up_successfully(compression
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -84,7 +89,10 @@ def test_lammps_mdt_conversion_unit_system(unit_system):
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -115,7 +123,10 @@ def test_lammps_mdt_conversion_trajectory_format(trajectory_file, trajectory_for
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -155,7 +166,10 @@ def test_vasp_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     vasp = Converter.create("VASP")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -179,7 +193,10 @@ def test_discover_mdt_conversion_file_exists_and_loads_up_successfully(compressi
     vasp = Converter.create("discover")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -203,7 +220,10 @@ def test_cp2k_mdt_conversion_file_exists_and_loads_up_successfully(velocity):
     vasp = Converter.create("cp2k")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -228,7 +248,10 @@ def test_charmm_mdt_conversion_file_exists_and_loads_up_successfully(compression
     vasp = Converter.create("charmm")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -254,7 +277,10 @@ def test_ase_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     ase_conv = Converter.create("ase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -280,7 +306,10 @@ def test_improvedase_mdt_conversion_file_exists_and_loads_up_successfully(trajec
     ase_conv = Converter.create("improvedase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -307,7 +336,10 @@ def test_improvedase_lammps_two_files():
     ase_conv = Converter.create("improvedase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -333,7 +365,10 @@ def test_xyz_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     ase_conv = Converter.create("ase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -359,7 +394,10 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_versi
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -385,7 +423,41 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_versi
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    assert os.path.exists(temp_name + ".mdt")
+    assert os.path.isfile(temp_name + ".mdt")
+    os.remove(temp_name + ".mdt")
+    assert os.path.exists(temp_name + ".log")
+    assert os.path.isfile(temp_name + ".log")
+    os.remove(temp_name + ".log")
+
+
+@pytest.mark.parametrize("compression", ["none", "gzip", "lzf"])
+def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_with_grad(
+    compression,
+):
+    temp_name = tempfile.mktemp()
+
+    parameters = {
+        "atom_aliases": "{}",
+        "field_file": dlp_field_with_grad,
+        "fold": False,
+        "history_file": dlp_history_with_grad,
+        "output_files": (temp_name, 64, 128, compression, "INFO"),
+    }
+    dl_poly = Converter.create("DL_POLY")
+    dl_poly.run(parameters, status=True)
+
+    # check trajectory has velocity and gradient data
+    traj = HDFTrajectoryConfigurator("trajectory")
+    traj.configure(temp_name + ".mdt")
+    assert traj["instance"].has_variable("velocities")
+    assert traj["instance"].has_variable("gradients")
+    traj["instance"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -435,7 +507,10 @@ def test_castep_md_conversion_file_exists_and_loads_up_successfully(compression)
     castep = Converter.create("CASTEP")
     castep.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -460,7 +535,10 @@ def test_dftb_conversion_file_exists_and_loads_up_successfully(compression):
     dftb = Converter.create("DFTB")
     dftb.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -485,7 +563,10 @@ def test_forcite_conversion_file_exists_and_loads_up_successfully(compression):
     forcite = Converter.create("Forcite")
     forcite.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -509,7 +590,10 @@ def test_gromacs_conversion_file_exists_and_loads_up_successfully(compression):
     gromacs = Converter.create("Gromacs")
     gromacs.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -532,11 +616,40 @@ def test_mdanalysis_conversion_file_exists_and_loads_up_successfully(compression
     mdanalysis = Converter.create("MDAnalysis")
     mdanalysis.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     # remove offset files generated by mdanalysis
     os.remove(os.path.join(file_wd, "Data", ".md.xtc_offsets.lock"))
     os.remove(os.path.join(file_wd, "Data", ".md.xtc_offsets.npz"))
+
+    assert os.path.exists(temp_name + ".mdt")
+    assert os.path.isfile(temp_name + ".mdt")
+    os.remove(temp_name + ".mdt")
+    assert os.path.exists(temp_name + ".log")
+    assert os.path.isfile(temp_name + ".log")
+    os.remove(temp_name + ".log")
+
+
+@pytest.mark.parametrize("compression", ["none", "gzip", "lzf"])
+def test_mdtraj_conversion_file_exists_and_loads_up_successfully(compression):
+    temp_name = tempfile.mktemp()
+
+    parameters = {
+        "topology_file": hem_cam_pdb,
+        "coordinate_files": [hem_cam_dcd],
+        "output_files": (temp_name, 64, 128, compression, "INFO"),
+    }
+
+    mdanalysis = Converter.create("MDTraj")
+    mdanalysis.run(parameters, status=True)
+
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")

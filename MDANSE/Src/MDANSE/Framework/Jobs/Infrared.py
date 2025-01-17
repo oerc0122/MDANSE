@@ -18,6 +18,7 @@ import collections
 import numpy as np
 from scipy.signal import correlate
 
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Signal import differentiate, get_spectrum
 
@@ -26,7 +27,7 @@ class Infrared(IJob):
 
     enabled = True
 
-    label = "Dipole AutoCorrelation Function"
+    label = "Infrared Spectrum"
 
     category = (
         "Analysis",
@@ -73,13 +74,12 @@ class Infrared(IJob):
     def initialize(self):
         super().initialize()
 
-        ce_list = self.configuration["trajectory"][
+        self.chemical_system = self.configuration["trajectory"][
             "instance"
-        ].chemical_system.chemical_entities
-        self.molecules = [
-            ce
-            for ce in ce_list
-            if ce.name == self.configuration["molecule_name"]["value"]
+        ].chemical_system
+
+        self.molecules = self.chemical_system._clusters[
+            self.configuration["molecule_name"]["value"]
         ]
 
         self.numberOfSteps = len(self.molecules)
@@ -155,12 +155,18 @@ class Infrared(IJob):
             configuration = self.configuration["trajectory"]["instance"].configuration(
                 frame_index
             )
+            masses = [
+                self.configuration["trajectory"]["instance"].get_atom_property(
+                    self.chemical_system.atom_list[index], "atomic_weight"
+                )
+                for index in molecule
+            ]
             charges = self.configuration["trajectory"]["instance"].charges(frame_index)
             contiguous_configuration = configuration.contiguous_configuration()
-            com = molecule.center_of_mass(contiguous_configuration)
+            coords = contiguous_configuration.coordinates[molecule]
+            com = center_of_mass(coords, masses)
 
-            for atm in molecule.atom_list:
-                idx = atm.index
+            for idx in molecule:
                 try:
                     q = self.configuration["atom_charges"]["charges"][idx]
                 except KeyError:

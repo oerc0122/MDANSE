@@ -15,6 +15,7 @@
 #
 
 import os
+from pathlib import PurePath
 
 import numpy as np
 
@@ -54,6 +55,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
         self._format = "MDTFormat"
         self._dtype = np.float64
         self._compression = "none"
+        self._forbidden_files = []
         self._chunk_limit = 128
 
     def configure(self, value: tuple):
@@ -69,12 +71,8 @@ class OutputTrajectoryConfigurator(IConfigurator):
             self.error_status = "empty root name for the output file."
             return
 
-        dirname = os.path.dirname(root)
-
-        try:
-            PLATFORM.create_directory(dirname)
-        except:
-            self.error_status = f"the directory {dirname} is not writable"
+        if not PLATFORM.is_file_writable(root):
+            self.error_status = f"the file {root} is not writable"
             return
 
         if dtype < 17:
@@ -98,6 +96,9 @@ class OutputTrajectoryConfigurator(IConfigurator):
         if not self["extension"] in temp_name[-5:]:  # capture most extension lengths
             temp_name += self["extension"]
         self["file"] = temp_name
+        if PurePath(os.path.abspath(self["file"])) in self._forbidden_files:
+            self.error_status = f"File {self['file']} is either open or being written into. Please pick another name."
+            return
         self["dtype"] = self._dtype
         self["compression"] = self._compression
         self["chunk_size"] = self._chunk_limit

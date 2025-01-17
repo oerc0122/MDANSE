@@ -1,7 +1,5 @@
 include LICENSE
 
-recursive-include Extensions/qhull_lib *.h *c *.pxd
-recursive-include Extensions/xtc *.h *c *.pxd
 recursive-include Src/MDANSE/Chemistry *.json
 recursive-include Src/MDANSE/Framework *.json
 

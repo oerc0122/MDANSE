@@ -17,9 +17,53 @@ import collections
 
 import numpy as np
 
-from MDANSE.Extensions import van_hove
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
+
+
+def van_hove_self(
+    xyz: np.ndarray,
+    histograms: np.ndarray,
+    cell_vols: np.ndarray,
+    rmin: float,
+    dr: float,
+    n_configs: int,
+    n_frames: int,
+):
+    """Calculates the distance histogram between an atom at time t0
+    and the same atom at a time t0 + t. The results from this function
+    can be used to calculate the self part of the van Hove function.
+
+    Parameters
+    ----------
+    xyz : np.ndarray
+        The trajectory of an atom.
+    histograms : np.ndarray
+        The histograms to be updated.
+    cell_vols : np.ndarray
+        The cell volumes.
+    rmin : float
+        The minimum distance of the histogram.
+    dr : float
+        The distances between histogram bins.
+    n_configs : int
+        Number of configs to be averaged over.
+    n_frames : int
+        Number of correlation frames.
+    """
+
+    nbins = histograms.shape[0]
+
+    for i in range(n_configs):
+        x0 = xyz[i]
+        r_array = xyz[i : i + n_frames] - x0.reshape((1, 3))
+        distance_array = np.sqrt((r_array**2).sum(axis=1))
+        bins = ((distance_array - rmin) / dr).astype(int)
+        valid_bins = np.logical_and(bins >= 0, bins < nbins)
+        for j in range(n_frames):
+            if valid_bins[j]:
+                histograms[bins[j], j] += cell_vols[i + j]
+    return histograms
 
 
 class VanHoveFunctionSelf(IJob):
@@ -66,7 +110,12 @@ class VanHoveFunctionSelf(IJob):
     )
     settings["weights"] = (
         "WeightsConfigurator",
-        {"dependencies": {"atom_selection": "atom_selection"}},
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
     )
     settings["output_files"] = (
         "OutputFilesConfigurator",
@@ -184,7 +233,7 @@ class VanHoveFunctionSelf(IJob):
         last = self.configuration["frames"]["last"] + 1
         step = self.configuration["frames"]["step"]
 
-        idx = self.configuration["atom_selection"]["indexes"][atm_index][0]
+        idx = self.configuration["atom_selection"]["indices"][atm_index][0]
         series = self.configuration["trajectory"]["instance"].read_atomic_trajectory(
             idx,
             first=first,
@@ -200,7 +249,7 @@ class VanHoveFunctionSelf(IJob):
             ]
         )
 
-        van_hove.van_hove_self(
+        histograms = van_hove_self(
             series,
             histograms,
             cell_vols,

@@ -325,7 +325,7 @@ class Forcite(Converter):
 
         self._xtdfile.build_chemical_system(self._atomicAliases)
 
-        self._chemicalSystem = self._xtdfile.chemicalSystem
+        self._chemical_system = self._xtdfile.chemicalSystem
 
         self._trjfile = TrjFile(self.configuration["trj_file"]["filename"])
 
@@ -334,14 +334,14 @@ class Forcite(Converter):
 
         if self._trjfile["velocities_written"]:
             self._velocities = np.zeros(
-                (self._chemicalSystem.number_of_atoms, 3), dtype=np.float64
+                (self._chemical_system.number_of_atoms, 3), dtype=np.float64
             )
         else:
             self._velocities = None
 
         if self._trjfile["gradients_written"]:
             self._gradients = np.zeros(
-                (self._chemicalSystem.number_of_atoms, 3), dtype=np.float64
+                (self._chemical_system.number_of_atoms, 3), dtype=np.float64
             )
         else:
             self._gradients = None
@@ -349,7 +349,7 @@ class Forcite(Converter):
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
-            self._chemicalSystem,
+            self._chemical_system,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
@@ -370,7 +370,7 @@ class Forcite(Converter):
         time, cell, xyz, velocities, gradients = self._trjfile.read_step(index)
 
         # If the universe is periodic set its shape with the current dimensions of the unit cell.
-        conf = self._trajectory.chemical_system.configuration
+        conf = self._xtdfile._configuration
         movableAtoms = self._trjfile["mvofst"]
         conf["coordinates"][movableAtoms, :] = xyz
         if conf.is_periodic:
@@ -388,6 +388,7 @@ class Forcite(Converter):
             conf["gradients"] = self._gradients
 
         self._trajectory.dump_configuration(
+            conf,
             time,
             units={
                 "time": "ps",
@@ -419,6 +420,7 @@ class Forcite(Converter):
         self._trjfile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(Forcite, self).finalize()

@@ -299,7 +299,9 @@ class Discover(Converter):
 
         self._xtdfile.build_chemical_system(self._atomicAliases)
 
-        self._chemicalSystem = self._xtdfile.chemicalSystem
+        self._atom_config = self._xtdfile._configuration
+
+        self._chemical_system = self._xtdfile.chemicalSystem
 
         self._hisfile = HisFile(self.configuration["his_file"]["filename"])
 
@@ -310,32 +312,32 @@ class Discover(Converter):
         variables["velocities"] = self._hisfile["initial_velocities"]
 
         if np.all(self._hisfile["initial_cell"] < 0.11):
-            self._chemicalSystem.configuration.is_periodic = False
-            realConf = RealConfiguration(
-                self._chemicalSystem, self._hisfile["initial_coordinates"], **variables
+            self._atom_config.is_periodic = False
+            real_conf = RealConfiguration(
+                self._chemical_system, self._hisfile["initial_coordinates"], **variables
             )
-        elif self._chemicalSystem.configuration.is_periodic:
+        elif self._atom_config.is_periodic:
             unitCell = UnitCell(self._hisfile["initial_cell"])
-            realConf = PeriodicRealConfiguration(
-                self._chemicalSystem,
+            real_conf = PeriodicRealConfiguration(
+                self._chemical_system,
                 self._hisfile["initial_coordinates"],
                 unitCell,
                 **variables,
             )
         else:
-            realConf = RealConfiguration(
-                self._chemicalSystem, self._hisfile["initial_coordinates"], **variables
+            real_conf = RealConfiguration(
+                self._chemical_system, self._hisfile["initial_coordinates"], **variables
             )
 
         if self.configuration["fold"]["value"]:
-            realConf.fold_coordinates()
+            real_conf.fold_coordinates()
 
-        self._chemicalSystem.configuration = realConf
+        self._atom_config = real_conf
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
-            self._chemicalSystem,
+            self._chemical_system,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
@@ -354,7 +356,7 @@ class Discover(Converter):
 
         time, cell, config, vel = self._hisfile.read_step(index)
 
-        conf = self._trajectory.chemical_system.configuration
+        conf = self._atom_config
         if conf.is_periodic:
             conf.unit_cell = UnitCell(cell)
 
@@ -365,9 +367,8 @@ class Discover(Converter):
 
         conf.fold_coordinates()
 
-        self._trajectory.chemical_system.configuration = conf
-
         self._trajectory.dump_configuration(
+            conf,
             time,
             units={
                 "time": "ps",
@@ -398,6 +399,7 @@ class Discover(Converter):
         self._hisfile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(Discover, self).finalize()

@@ -15,6 +15,7 @@
 #
 
 import os
+from pathlib import PurePath
 
 from ase.io.formats import ioformats
 
@@ -51,6 +52,7 @@ class OutputStructureConfigurator(IConfigurator):
         IConfigurator.__init__(self, name, **kwargs)
 
         self._formats = [fmt for fmt in ioformats if ioformats[fmt].can_write]
+        self._forbidden_files = []
 
     def configure(self, value):
         """
@@ -72,12 +74,8 @@ class OutputStructureConfigurator(IConfigurator):
             self.error_status = "empty root name for the output file."
             return
 
-        dirname = os.path.dirname(root)
-
-        try:
-            PLATFORM.create_directory(dirname)
-        except:
-            self.error_status = f"the directory {dirname} is not writable"
+        if not PLATFORM.is_file_writable(root):
+            self.error_status = f"the file {root} is not writable"
             return
 
         if not format in self.formats:
@@ -87,6 +85,9 @@ class OutputStructureConfigurator(IConfigurator):
         self["root"] = root
         self["format"] = format
         self["file"] = root
+        if PurePath(os.path.abspath(self["file"])) in self._forbidden_files:
+            self.error_status = f"File {self['file']} is either open or being written into. Please pick another name."
+            return
         self["log_level"] = logs
         if logs == "no logs":
             self["write_logs"] = False

@@ -89,11 +89,30 @@ class JobThread(QThread):
                 self._job_comm.status_update(status_update)
 
 
-class JobEntry(Handler, QObject):
+class JobLogHandler(Handler):
+
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def msgs_and_levels(self):
+        msgs = []
+        levels = []
+        for record in self.records:
+            msgs.append(self.format(record))
+            levels.append(record.levelname)
+        return msgs, levels
+
+    def emit(self, record):
+        self.records.append(record)
+
+
+class JobEntry(QObject):
     """This coordinates all the objects that make up one line on the list
     of current jobs. It is used for reporting the task progress to the GUI."""
 
     for_loading = Signal(str)
+    free_filename = Signal(str)
 
     def __init__(
         self,
@@ -103,9 +122,9 @@ class JobEntry(Handler, QObject):
         pause_event=None,
         load_afterwards=False,
     ):
-        super().__init__()
-        QObject.__init__(self)
+        super().__init__(*args)
         self._command = command
+        self._finished = False
         self._parameters = {}
         self._pause_event = pause_event
         self._load_afterwards = load_afterwards
@@ -130,7 +149,7 @@ class JobEntry(Handler, QObject):
         self._prog_item.setData("progress", role=Qt.ItemDataRole.DisplayRole)
         self._prog_item.setData(0, role=ProgressDelegate.progress_role)
         self._prog_item.setData(100, role=ProgressDelegate.progress_role + 1)
-        self.records = []
+        self.handler = JobLogHandler()
 
     def text_summary(self) -> str:
         result = ""
@@ -161,25 +180,35 @@ class JobEntry(Handler, QObject):
 
     @Slot(bool)
     def on_finished(self, success: bool):
+        if self._finished:
+            return
+        self._finished = True
+        file_name = self.expected_output()
         if success:
-            self._current_state.finish()
             if self._load_afterwards:
-                try:
-                    len(self._parameters["output_files"][1])
-                except TypeError:  # job is a converter
-                    file_name = self._parameters["output_files"][0]
-                    if ".mdt" not in file_name[-5:]:
-                        file_name += ".mdt"
-                    self.for_loading.emit(file_name)
-                else:  # job is an analysis
-                    if "MDAFormat" in self._parameters["output_files"][1]:
-                        file_name = self._parameters["output_files"][0]
-                        if ".mda" not in file_name[-5:]:
-                            file_name += ".mda"
-                        self.for_loading.emit(file_name)
+                self.for_loading.emit(file_name)
+            self._current_state.finish()
         else:
             self._current_state.fail()
+        self.free_filename.emit(file_name)
         self.update_fields()
+
+    def expected_output(self) -> str:
+        try:
+            len(self._parameters["output_files"][1])
+        except TypeError:  # job is a converter
+            file_name = self._parameters["output_files"][0]
+            if ".mdt" not in file_name[-5:]:
+                file_name += ".mdt"
+            return file_name
+        else:  # job is an analysis
+            if "MDAFormat" in self._parameters["output_files"][1]:
+                file_name = self._parameters["output_files"][0]
+                if ".mda" not in file_name[-5:]:
+                    file_name += ".mda"
+                return file_name
+            else:
+                return self._parameters["output_files"][0]
 
     @Slot(int)
     def on_started(self, target_steps: int):
@@ -220,17 +249,6 @@ class JobEntry(Handler, QObject):
         self._current_state.kill()
         self.update_fields()
 
-    def msgs_and_levels(self):
-        msgs = []
-        levels = []
-        for record in self.records:
-            msgs.append(self.format(record))
-            levels.append(record.levelname)
-        return msgs, levels
-
-    def emit(self, record):
-        self.records.append(record)
-
 
 class JobHolder(QStandardItemModel):
     """All the job INSTANCES that are started by the GUI
@@ -238,6 +256,8 @@ class JobHolder(QStandardItemModel):
 
     trajectory_for_loading = Signal(str)
     results_for_loading = Signal(str)
+    protect_filename = Signal(str)
+    unprotect_filename = Signal(str)
     new_job_started = Signal()
 
     def __init__(self, parent: QObject = None):
@@ -274,8 +294,8 @@ class JobHolder(QStandardItemModel):
             pause_event=pause_event,
             load_afterwards=load_afterwards,
         )
-        item_th.setFormatter(FMT)
-        item_th.setLevel("INFO")
+        item_th.handler.setFormatter(FMT)
+        item_th.handler.setLevel("INFO")
 
         try:
             subprocess_ref = Subprocess(
@@ -293,7 +313,7 @@ class JobHolder(QStandardItemModel):
             )
             return
 
-        handlers = [item_th] + LOG.handlers
+        handlers = [item_th.handler] + LOG.handlers
         listener = QueueListener(log_queue, *handlers, respect_handler_level=True)
         listener.start()
 
@@ -302,6 +322,7 @@ class JobHolder(QStandardItemModel):
         communicator.moveToThread(watcher_thread)
         entry_number = self.next_number
         item_th.parameters = job_vars[1]
+        item_th.free_filename.connect(self.unprotect_filename)
         if load_afterwards:
             if job_vars[0] in Converter.subclasses():
                 item_th.for_loading.connect(self.trajectory_for_loading)
@@ -324,6 +345,7 @@ class JobHolder(QStandardItemModel):
             task_name = str("This should have been a job name")
         name_item = QStandardItem(task_name)
         name_item.setData(entry_number, role=Qt.ItemDataRole.UserRole)
+        self.protect_filename.emit(item_th.expected_output())
         self.appendRow(
             [
                 name_item,
