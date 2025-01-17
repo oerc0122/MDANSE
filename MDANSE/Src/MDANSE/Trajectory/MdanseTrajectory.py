@@ -15,6 +15,7 @@
 #
 import os
 from typing import List
+import traceback
 
 import numpy as np
 import h5py
@@ -63,17 +64,21 @@ class MdanseTrajectory:
     def file_is_right(self, filename):
         result = True
         try:
-            _ = h5py.File(filename)
-        except:
+            file_object = h5py.File(filename)
+        except FileNotFoundError:
             result = False
         else:
             try:
                 temp_cs = ChemicalSystem(
                     os.path.splitext(os.path.basename(filename))[0]
                 )
-                temp_cs.load(filename)
-            except:
+                temp_cs.load(file_object)
+            except Exception as ex:
+                LOG.error(
+                    f"Loading the ChemicalSystem from {filename} failed: {ex}, {traceback.format_exc()}"
+                )
                 result = False
+            file_object.close()
         return result
 
     def close(self):
