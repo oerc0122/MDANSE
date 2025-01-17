@@ -41,11 +41,14 @@ class VoronoiError(Exception):
 
 class Voronoi(IJob):
     """
-    Computes the volume of each Voronoi cell and corresponding 'neighbourhood' statistics for 3d systems.
-    Delaunay triangulation is used for the decomposition of polytops into simplexes,
-    Voronoi and Delaunay tessellation are calculated using a cython wrapping of the Qhull library (scipy wrapping used as Externals)
+    Computes the volume of each Voronoi cell and corresponding 'neighbourhood'
+    statistics for 3d systems. Vornoi diagram and Delaunay tesselation are
+    used as implemented in scipy.spatial module. Replicas of atoms from
+    the simulation box will be included in the calculation within
+    a finite distance from the box wall (given in nm).
 
-    Voronoi analysis is another commonly-used, complementary method for characterising the local structure of a system.
+    Voronoi analysis is another commonly-used, complementary method for
+    characterising the local structure of a system.
 
     **Acknowledgement:**\n
     Gael Goret, PELLEGRINI Eric

@@ -151,7 +151,10 @@ def continuous_coordinates(
 
 
 def padded_coordinates(
-    coords: np.ndarray, unit_cell: "UnitCell", thickness: float
+    coords: np.ndarray,
+    unit_cell: "UnitCell",
+    thickness: float,
+    fold_into_box: bool = True,
 ) -> np.ndarray:
     """Repeats coordinates in copies of the unit cell, and removes
     the atoms that are now within the specified distance from the cell wall.
@@ -167,6 +170,8 @@ def padded_coordinates(
         an instance of the UnitCell class, defining the simulation box
     thickness : float
         thickness of the outer layer to be included
+    fold_into_box : bool
+        if True, translates all the atoms so their fractional coordinates are in [0.0, 1.0)
 
     Returns
     -------
@@ -185,7 +190,7 @@ def padded_coordinates(
         unit_cell.b_vector,
         unit_cell.c_vector,
     )
-    fractional_lengths = [np.linalg.norm(vector) / thickness for vector in vectors]
+    fractional_lengths = [thickness / np.linalg.norm(vector) for vector in vectors]
     all_indices = np.arange(len(coords), dtype=int)
     for axis in range(3):
         extra_arrays = []
@@ -196,6 +201,8 @@ def padded_coordinates(
             offset = vectors[axis] * shift
             new_points = coords + offset.reshape((1, 3))
             frac_points = np.matmul(new_points, unit_cell.inverse)
+            if fold_into_box:
+                frac_points -= np.floor(frac_points)
             if shift > 0:
                 criterion = np.where(frac_points[:, axis] < cutoff_max)
                 new_points = new_points[criterion]
