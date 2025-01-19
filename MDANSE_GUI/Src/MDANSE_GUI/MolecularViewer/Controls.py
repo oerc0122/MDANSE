@@ -188,7 +188,7 @@ class ViewerControls(QWidget):
         layout0 = QHBoxLayout(wrapper0)
         bkg_button = QPushButton("Background", wrapper0)
         proj_button = QPushButton("Toggle projection", wrapper0)
-        trace_button = QPushButton("Calculate trace", wrapper0)
+        trace_button = QPushButton("Molecular trace", wrapper0)
         bkg_button.clicked.connect(self.set_background_colour)
         proj_button.clicked.connect(self.toggle_projection)
         trace_button.clicked.connect(self.calculate_trace)
@@ -288,7 +288,7 @@ class ViewerControls(QWidget):
 
     @Slot()
     def calculate_trace(self):
-        self._viewer._draw_isosurface(0)
+        self._viewer.show_trace_settings_dialog()
 
     @Slot()
     def toggle_projection(self):

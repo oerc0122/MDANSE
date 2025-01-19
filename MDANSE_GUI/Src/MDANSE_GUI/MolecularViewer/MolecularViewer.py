@@ -13,14 +13,23 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
 
 from qtpy import QtWidgets
 from qtpy.QtCore import Signal, Slot
-from qtpy.QtWidgets import QSizePolicy
+from qtpy.QtWidgets import (
+    QSizePolicy,
+    QDialog,
+    QFormLayout,
+    QPushButton,
+    QLineEdit,
+    QDoubleSpinBox,
+    QSpinBox,
+    QLabel,
+)
 
 import vtk
 from vtk.util import numpy_support
@@ -66,6 +75,7 @@ class MolecularViewer(QtWidgets.QWidget):
     """This class implements a molecular viewer."""
 
     new_max_frames = Signal(int)
+    changed_trace = Signal()
 
     def __init__(self):
         super(MolecularViewer, self).__init__()
@@ -132,7 +142,8 @@ class MolecularViewer(QtWidgets.QWidget):
         self._polydata_bonds_exist = False
         self._uc_polydata = None
 
-        self._surface = None
+        self._surfaces = []
+        self._isocontours = []
 
         self._reader = None
 
@@ -142,6 +153,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self.dummy_size = 0.0
 
         self.reset_camera = False
+        self.create_trace_dialog()
 
     def setDataModel(self, datamodel: TrajectoryAtomData):
         self._datamodel = datamodel
@@ -189,21 +201,46 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self.update_renderer()
 
-    def _draw_isosurface(self, index: int):
+    def trace_from_dialog(self, params: Dict[str, Any]):
+        self._draw_isosurface(params["atom_number"], params)
+
+    def delete_from_dialog(self, trace_number: int):
+        try:
+            surface = self._surfaces[trace_number]
+        except IndexError:
+            return
+        else:
+            surface.VisibilityOff()
+            surface.ReleaseGraphicsResources(self._iren.GetRenderWindow())
+            self._renderer.RemoveActor(surface)
+            self._surfaces.pop(trace_number)
+            self._iren.Render()
+            self.changed_trace.emit()
+
+    def _draw_isosurface(self, index: int, params=None):
         """Draw the isosurface of an atom with the given index"""
 
-        if self._surface is not None:
-            self.on_clear_atomic_trace()
+        if self._reader is None:
+            return
 
         LOG.info("Computing isosurface ...")
+        if params is not None:
+            grid_step = params.get("grid_step", 100)
+            r, g, b = params.get("surface_colour", (0, 0.5, 0.75))
+            opacity = params.get("surface_opacity", 0.5)
+            trace_cutoff = params.get("trace_cutoff", 90)
+        else:
+            grid_step = 100
+            r, g, b = 0, 0.5, 0.75
+            opacity = 0.5
+            trace_cutoff = 90
 
-        initial_coords = self._reader.read_frame(0)
         coords, lower_bounds, upper_bounds = self._reader.read_atom_trajectory(index)
 
-        gdim = (100, 100, 100)
+        gdim = (grid_step, grid_step, grid_step)
         grid = np.zeros(gdim, dtype=np.int32)
         spacing = np.max(upper_bounds, axis=0) - np.min(lower_bounds, axis=0)
-        spacing /= 100
+        spacing /= grid_step
         resolution = spacing
 
         indices = np.floor(
@@ -214,19 +251,19 @@ class MolecularViewer(QtWidgets.QWidget):
         self._atomic_trace_histogram = grid
 
         self._image = array_to_3d_imagedata(self._atomic_trace_histogram, spacing)
-        isovalue = self._atomic_trace_histogram.mean()
+        isovalue = np.percentile(self._atomic_trace_histogram, trace_cutoff)
 
-        self._isocontour = vtk.vtkMarchingContourFilter()
-        self._isocontour.UseScalarTreeOn()
-        self._isocontour.ComputeNormalsOn()
+        new_isocontour = vtk.vtkMarchingContourFilter()
+        new_isocontour.UseScalarTreeOn()
+        new_isocontour.ComputeNormalsOn()
         if vtk.vtkVersion.GetVTKMajorVersion() < 6:
-            self._isocontour.SetInput(self.image)
+            new_isocontour.SetInput(self.image)
         else:
-            self._isocontour.SetInputData(self._image)
-        self._isocontour.SetValue(0, isovalue)
+            new_isocontour.SetInputData(self._image)
+        new_isocontour.SetValue(0, isovalue)
 
         self._depthSort = vtk.vtkDepthSortPolyData()
-        self._depthSort.SetInputConnection(self._isocontour.GetOutputPort())
+        self._depthSort.SetInputConnection(new_isocontour.GetOutputPort())
         self._depthSort.SetDirectionToBackToFront()
         self._depthSort.SetVector(1, 1, 1)
         self._depthSort.SetCamera(self._camera)
@@ -238,27 +275,30 @@ class MolecularViewer(QtWidgets.QWidget):
         mapper.ScalarVisibilityOff()
         mapper.Update()
 
-        self._surface = vtk.vtkActor()
-        self._surface.SetMapper(mapper)
-        self._surface.GetProperty().SetColor((0, 0.5, 0.75))
-        self._surface.GetProperty().SetOpacity(0.5)
-        self._surface.PickableOff()
+        new_surface = vtk.vtkActor()
+        new_surface.SetMapper(mapper)
+        new_surface.GetProperty().SetColor((r, g, b))
+        new_surface.GetProperty().SetOpacity(opacity)
+        new_surface.PickableOff()
 
-        self._surface.GetProperty().SetRepresentationToSurface()
+        new_surface.GetProperty().SetRepresentationToSurface()
 
-        self._surface.GetProperty().SetInterpolationToGouraud()
-        self._surface.GetProperty().SetSpecular(0.4)
-        self._surface.GetProperty().SetSpecularPower(10)
+        new_surface.GetProperty().SetInterpolationToGouraud()
+        new_surface.GetProperty().SetSpecular(0.4)
+        new_surface.GetProperty().SetSpecularPower(10)
 
-        self._renderer.AddActor(self._surface)
+        self._renderer.AddActor(new_surface)
 
-        self._surface.SetPosition(
+        new_surface.SetPosition(
             lower_bounds[0, 0], lower_bounds[0, 1], lower_bounds[0, 2]
         )
+        self._surfaces.append(new_surface)
+        self._isocontours.append(new_isocontour)
 
         self._iren.Render()
 
         LOG.info("... done")
+        self.changed_trace.emit()
 
     def create_all_actors(self):
         actors = []
@@ -346,6 +386,7 @@ class MolecularViewer(QtWidgets.QWidget):
         if self._actors is None:
             return
 
+        self.on_clear_atomic_trace()
         self._actors.VisibilityOff()
         self._actors.ReleaseGraphicsResources(self.get_render_window())
         self._renderer.RemoveActor(self._actors)
@@ -496,38 +537,40 @@ class MolecularViewer(QtWidgets.QWidget):
     def iren(self):
         return self._iren
 
-    def on_change_atomic_trace_opacity(self, opacity):
+    def on_change_atomic_trace_opacity(self, surface_number, opacity):
         """Event handler called when the opacity level is changed."""
 
-        if self._surface is None:
+        if len(self._surfaces) <= surface_number:
             return
 
-        self._surface.GetProperty().SetOpacity(opacity)
+        self._surfaces[surface_number].GetProperty().SetOpacity(opacity)
         self._iren.Render()
 
-    def on_change_atomic_trace_isocontour_level(self, level):
+    def on_change_atomic_trace_isocontour_level(self, surface_number, level):
         """Event handler called when the user change the isocontour level."""
 
-        if self._surface is None:
+        if len(self._surfaces) <= surface_number:
             return
 
-        self._isocontour.SetValue(0, level)
-        self._isocontour.Update()
+        self._isocontours[surface_number].SetValue(0, level)
+        self._isocontours[surface_number].Update()
         self._iren.Render()
 
-    def on_change_atomic_trace_rendering_type(self, rendering_type):
+    def on_change_atomic_trace_rendering_type(self, surface_number, rendering_type):
         """Event handler called when the user change the rendering type for the atomic trace."""
 
-        if self._surface is None:
+        if len(self._surfaces) <= surface_number:
             return
 
+        surface = self._surfaces[surface_number]
+
         if rendering_type == "wireframe":
-            self._surface.GetProperty().SetRepresentationToWireframe()
+            surface.GetProperty().SetRepresentationToWireframe()
         elif rendering_type == "surface":
-            self._surface.GetProperty().SetRepresentationToSurface()
+            surface.GetProperty().SetRepresentationToSurface()
         elif rendering_type == "points":
-            self._surface.GetProperty().SetRepresentationToPoints()
-            self._surface.GetProperty().SetPointSize(3)
+            surface.GetProperty().SetRepresentationToPoints()
+            surface.GetProperty().SetPointSize(3)
         else:
             return
 
@@ -536,35 +579,34 @@ class MolecularViewer(QtWidgets.QWidget):
     def on_clear_atomic_trace(self):
         """Event handler called when the user select the 'Atomic trace -> Clear' main menu item"""
 
-        if self._surface is None:
+        if not self._surfaces:
             return
 
-        self._surface.VisibilityOff()
-        self._surface.ReleaseGraphicsResources(self._iren.GetRenderWindow())
-        self._renderer.RemoveActor(self._surface)
+        for surface in self._surfaces:
+            surface.VisibilityOff()
+            surface.ReleaseGraphicsResources(self._iren.GetRenderWindow())
+            self._renderer.RemoveActor(surface)
         self._iren.Render()
 
-        self._surface = None
+        self._surfaces = []
+        self.changed_trace.emit()
 
-    def on_open_atomic_trace_settings_dialog(self):
-        """Event handler which pops the atomic trace settings."""
+    def show_trace_settings_dialog(self):
+        dialog = self._trace_dialog
+        if dialog.isVisible():
+            if dialog.isMaximized():
+                dialog.showMaximized()
+            else:
+                dialog.showNormal()
+            dialog.activateWindow()
+        else:
+            dialog.show()
 
-        if self._surface is None:
-            return
-
-        hist_min = self._atomic_trace_histogram.min()
-        hist_max = self._atomic_trace_histogram.max()
-        hist_mean = self._atomic_trace_histogram.mean()
-
-        dlg = AtomicTraceSettingsDialog(hist_min, hist_max, hist_mean, self)
-
-        dlg.rendering_type_changed.connect(self.on_change_atomic_trace_rendering_type)
-        dlg.opacity_changed.connect(self.on_change_atomic_trace_opacity)
-        dlg.isocontour_level_changed.connect(
-            self.on_change_atomic_trace_isocontour_level
-        )
-
-        dlg.show()
+    def create_trace_dialog(self):
+        self._trace_dialog = AtomTraceDialog(self)
+        self._trace_dialog.new_atom_trace.connect(self.trace_from_dialog)
+        self._trace_dialog.remove_atom_trace.connect(self.delete_from_dialog)
+        self.changed_trace.connect(self._trace_dialog.update_limits)
 
     def on_show_atomic_trace(self):
         if self._previously_picked_atom is None:
@@ -678,6 +720,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._colour_manager.onNewValues()
         self.new_max_frames.emit(self._n_frames - 1)
+        self._trace_dialog.update_limits()
 
     @Slot(object)
     def take_atom_properties(self, data):
@@ -874,3 +917,102 @@ class MolecularViewerWithPicking(MolecularViewer):
         self._picked_polydata.GetPointData().SetScalars(scalars)
 
         self.set_coordinates(self._current_frame)
+
+
+class AtomTraceDialog(QDialog):
+
+    new_atom_trace = Signal(dict)
+    remove_atom_trace = Signal(int)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setWindowTitle("Add atom trace to the view")
+        layout = QFormLayout(self)
+        self.setLayout(layout)
+
+        self._molviewer = parent
+        self.initialise_values(parent)
+        self.populate_layout()
+
+    def initialise_values(self, viewer: MolecularViewer):
+        self._n_atoms = viewer._n_atoms
+        self._opacity = 0.5
+        self._color = (0, 0.5, 0.75)
+        self._iso_percentile = 90
+
+    def populate_layout(self):
+        layout = self.layout()
+        self.add_trace_button = QPushButton("Calculate and add atom trace", self)
+        self.remove_trace_button = QPushButton("Remove atom trace", self)
+        self.add_trace_button.clicked.connect(self.new_trace_details)
+        self.remove_trace_button.clicked.connect(self.remove_trace)
+        self._atom_spinbox = QSpinBox(self)
+        self._surface_spinbox = QSpinBox(self)
+        self._fraction_spinbox = QSpinBox(self)
+        self._grid_spinbox = QSpinBox(self)
+        self._opacity_spinbox = QDoubleSpinBox(self)
+        for sbox in [
+            self._atom_spinbox,
+            self._surface_spinbox,
+            self._fraction_spinbox,
+            self._opacity_spinbox,
+        ]:
+            sbox.setMinimum(0)
+            sbox.setValue(0)
+        self.update_limits()
+        self._fraction_spinbox.setMaximum(100)
+        self._fraction_spinbox.setValue(90)
+        self._grid_spinbox.setMaximum(100000)
+        self._grid_spinbox.setMinimum(4)
+        self._grid_spinbox.setValue(100)
+        self._opacity_spinbox.setMaximum(1.0)
+        self._opacity_spinbox.setValue(0.5)
+        self._opacity_spinbox.setSingleStep(0.01)
+        layout.addRow("Selected atom index: ", self._atom_spinbox)
+        layout.addRow("Number of grid steps for trace calculation", self._grid_spinbox)
+        layout.addRow("Trace percentile for isovalue", self._fraction_spinbox)
+        layout.addRow("Isosurface opacity", self._opacity_spinbox)
+        layout.addWidget(self.add_trace_button)
+        layout.addRow("Remove the surface with index: ", self._surface_spinbox)
+        layout.addWidget(self.remove_trace_button)
+
+    @Slot()
+    def update_limits(self):
+        self._atom_spinbox.setMaximum(self._molviewer._n_atoms - 1)
+        self._surface_spinbox.setMaximum(max(len(self._molviewer._surfaces) - 1, 0))
+        self.enable_buttons()
+
+    def enable_buttons(self):
+        if len(self._molviewer._surfaces) == 0:
+            self.remove_trace_button.setEnabled(False)
+        else:
+            self.remove_trace_button.setEnabled(True)
+        if self._molviewer._n_atoms < 1:
+            self.add_trace_button.setEnabled(False)
+        else:
+            self.add_trace_button.setEnabled(True)
+
+    def get_values(self):
+        params = {
+            "atom_number": 0,
+            "grid_step": 100,
+            "surface_colour": (0, 0.5, 0.75),
+            "surface_opacity": 0.5,
+            "trace_cutoff": 90,
+            "surface_number": -1,
+        }
+        params["atom_number"] = self._atom_spinbox.value()
+        params["surface_number"] = self._surface_spinbox.value()
+        params["trace_cutoff"] = self._fraction_spinbox.value()
+        params["grid_step"] = self._grid_spinbox.value()
+        params["surface_opacity"] = self._opacity_spinbox.value()
+        return params
+
+    def new_trace_details(self):
+        params = self.get_values()
+        self.new_atom_trace.emit(params)
+
+    def remove_trace(self):
+        params = self.get_values()
+        self.remove_atom_trace.emit(params["surface_number"])
