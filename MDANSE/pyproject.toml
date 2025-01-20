@@ -35,7 +35,8 @@ dependencies = [
     "h5py",
     "ase",
     "rdkit",
-    "MDAnalysis"
+    "MDAnalysis",
+    "mdtraj"
 ]
 
 # dynamic = ["version", "description"]

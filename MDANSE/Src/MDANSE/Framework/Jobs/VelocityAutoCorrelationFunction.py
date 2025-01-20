@@ -68,7 +68,10 @@ class VelocityAutoCorrelationFunction(IJob):
     )
     settings["interpolation_order"] = (
         "InterpolationOrderConfigurator",
-        {"label": "velocities", "dependencies": {"trajectory": "trajectory"}},
+        {
+            "label": "velocities",
+            "dependencies": {"trajectory": "trajectory", "frames": "frames"},
+        },
     )
     settings["projection"] = (
         "ProjectionConfigurator",

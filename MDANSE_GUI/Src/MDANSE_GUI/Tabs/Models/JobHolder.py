@@ -89,7 +89,25 @@ class JobThread(QThread):
                 self._job_comm.status_update(status_update)
 
 
-class JobEntry(Handler, QObject):
+class JobLogHandler(Handler):
+
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def msgs_and_levels(self):
+        msgs = []
+        levels = []
+        for record in self.records:
+            msgs.append(self.format(record))
+            levels.append(record.levelname)
+        return msgs, levels
+
+    def emit(self, record):
+        self.records.append(record)
+
+
+class JobEntry(QObject):
     """This coordinates all the objects that make up one line on the list
     of current jobs. It is used for reporting the task progress to the GUI."""
 
@@ -104,8 +122,7 @@ class JobEntry(Handler, QObject):
         pause_event=None,
         load_afterwards=False,
     ):
-        super().__init__()
-        QObject.__init__(self)
+        super().__init__(*args)
         self._command = command
         self._finished = False
         self._parameters = {}
@@ -132,7 +149,7 @@ class JobEntry(Handler, QObject):
         self._prog_item.setData("progress", role=Qt.ItemDataRole.DisplayRole)
         self._prog_item.setData(0, role=ProgressDelegate.progress_role)
         self._prog_item.setData(100, role=ProgressDelegate.progress_role + 1)
-        self.records = []
+        self.handler = JobLogHandler()
 
     def text_summary(self) -> str:
         result = ""
@@ -232,17 +249,6 @@ class JobEntry(Handler, QObject):
         self._current_state.kill()
         self.update_fields()
 
-    def msgs_and_levels(self):
-        msgs = []
-        levels = []
-        for record in self.records:
-            msgs.append(self.format(record))
-            levels.append(record.levelname)
-        return msgs, levels
-
-    def emit(self, record):
-        self.records.append(record)
-
 
 class JobHolder(QStandardItemModel):
     """All the job INSTANCES that are started by the GUI
@@ -288,8 +294,8 @@ class JobHolder(QStandardItemModel):
             pause_event=pause_event,
             load_afterwards=load_afterwards,
         )
-        item_th.setFormatter(FMT)
-        item_th.setLevel("INFO")
+        item_th.handler.setFormatter(FMT)
+        item_th.handler.setLevel("INFO")
 
         try:
             subprocess_ref = Subprocess(
@@ -307,7 +313,7 @@ class JobHolder(QStandardItemModel):
             )
             return
 
-        handlers = [item_th] + LOG.handlers
+        handlers = [item_th.handler] + LOG.handlers
         listener = QueueListener(log_queue, *handlers, respect_handler_level=True)
         listener.start()
 

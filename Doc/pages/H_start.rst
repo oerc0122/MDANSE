@@ -1,20 +1,16 @@
+.. _installation-tutorial:
+
 Installing MDANSE
 =================
-
-.. _installation_tutorial:
-
-MDANSE Installation Steps
---------------------------
 
 MDANSE can be easily installed by following these steps:
 
 Create Virtual Environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To create your Python virtual environment for MDANSE use `venv` or `virtualenv`.
+To create your Python virtual environment for MDANSE use ``venv`` or ``virtualenv``.
+Open a terminal or command prompt.
 
-Open a Terminal or Command Prompt.
-
-Navigate to Your Project Directory (Optional): If you have a specific
+**Navigate to your project directory (optional)**: If you have a specific
 project directory where you want to work with MDANSE, navigate to that
 directory using the ``cd`` command. For example:
 
@@ -22,7 +18,7 @@ directory using the ``cd`` command. For example:
 
    cd path/to/your/project/directory
 
-Create a Virtual Environment: To create a virtual environment named
+**Create a virtual environment**: To create a virtual environment named
 ``mdanse``, use the following command:
 
 .. code-block:: bash
@@ -51,7 +47,7 @@ activation command varies by operating system:
 Install MDANSE Package
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Use `pip` to install the MDANSE package from the specified GitHub repository:
+Use ``pip`` to install the MDANSE package from the specified GitHub repository:
 
 .. code-block:: bash
 
@@ -63,18 +59,18 @@ and analysis using MDANSE, but none of the visualisation tools.
 Install MDANSE_GUI Package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Similarly, install the MDANSE_GUI package using `pip`:
+Similarly, install the MDANSE_GUI package using ``pip``:
 
 .. code-block:: bash
 
    pip install MDANSE_GUI
 
-From now on, the `mdanse_gui` command will be available to start
+From now on, the ``mdanse_gui`` command will be available to start
 the graphical interface of MDANSE, which makes it easier to create
 valid inputs for different analysis types.
 
-Run MDANSE
-~~~~~~~~~~
+Run MDANSE_GUI
+~~~~~~~~~~~~~~
 
 You can now start using MDANSE by running the following command:
 
@@ -82,7 +78,7 @@ You can now start using MDANSE by running the following command:
 
    mdanse_gui
 
-This will launch the MDANSE Graphical User Interface (GUI),
+This will launch the MDANSE graphical user interface (GUI),
 and you can start using MDANSE for your analysis.
 
 MDANSE Scripts

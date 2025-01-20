@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
+
 import numpy as np
 
 from MDANSE.Core.Error import Error
@@ -133,16 +135,12 @@ class XDATCARFileConfigurator(FileWithAtomDataConfigurator):
     def close(self):
         self["instance"].close()
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for symbol in self["atoms"]:
-            label = AtomLabel(symbol)
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(symbol)

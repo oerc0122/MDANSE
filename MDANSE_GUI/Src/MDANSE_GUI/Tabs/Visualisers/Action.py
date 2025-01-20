@@ -56,9 +56,9 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "ASEFileConfigurator": InputFileWidget,
     "AseInputFileConfigurator": AseInputFileWidget,
     "ConfigFileConfigurator": InputFileWidget,
-    "CoordinateFileConfigurator": CoordinateFileWidget,
+    "MDAnalysisCoordinateFileConfigurator": MDAnalysisCoordinateFileWidget,
     "InputFileConfigurator": InputFileWidget,
-    "TopologyFileConfigurator": TopologyFileWidget,
+    "MDAnalysisTopologyFileConfigurator": MDAnalysisTopologyFileWidget,
     "MDFileConfigurator": InputFileWidget,
     "FieldFileConfigurator": InputFileWidget,
     "XDATCARFileConfigurator": InputFileWidget,
@@ -82,7 +82,10 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "InstrumentResolutionConfigurator": InstrumentResolutionWidget,
     "PartialChargeConfigurator": PartialChargeWidget,
     "UnitCellConfigurator": UnitCellWidget,
-    "MDAnalysisTimeStepConfigurator": MDAnalysisTimeStepWidget,
+    "MDAnalysisTimeStepConfigurator": MDAnalysisMDTrajTimeStepWidget,
+    "MDTrajTimeStepConfigurator": MDAnalysisMDTrajTimeStepWidget,
+    "MDTrajTrajectoryFileConfigurator": MultiInputFileWidget,
+    "MDTrajTopologyFileConfigurator": MDTrajTopologyFileWidget,
 }
 
 
@@ -291,7 +294,8 @@ class Action(QWidget):
             return
         self.check_inputs()
         for widget in self._widgets:
-            widget.updateValue()
+            if isinstance(widget, (OutputFilesWidget, OutputTrajectoryWidget)):
+                widget.updateValue()
         self.allow_execution()
 
     def apply_instrument(self):
@@ -332,7 +336,7 @@ class Action(QWidget):
             self.allow_execution()
             LOG.info("Show output prediction")
             pardict = self.set_parameters()
-            self._job_instance.setup(pardict)
+            self._job_instance.setup(pardict, rebuild=False)
             axes = self._job_instance.preview_output_axis()
             LOG.info(f"Axes = {axes.keys()}")
             text = "<p><b>The results will cover the following range:</b></p>"

@@ -56,8 +56,7 @@ class Temperature(IJob):
         "InterpolationOrderConfigurator",
         {
             "label": "velocities",
-            "dependencies": {"trajectory": "trajectory"},
-            "default": 1,
+            "dependencies": {"trajectory": "trajectory", "frames": "frames"},
         },
     )
     settings["output_files"] = (

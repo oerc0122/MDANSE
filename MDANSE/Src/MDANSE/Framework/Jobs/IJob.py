@@ -523,6 +523,7 @@ class %(classname)s(IJob):
             The log level.
         """
         self._log_filename = filename
+        PLATFORM.create_directory(os.path.dirname(filename))
         fh = FileHandler(filename, mode="w")
         # set the name so that we can track it and then close it later,
         # tracking the fh by storing it in this object causes issues

@@ -13,13 +13,15 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
+
 import MDAnalysis as mda
 
 from MDANSE.Framework.AtomMapping import AtomLabel
 from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 
-class TopologyFileConfigurator(FileWithAtomDataConfigurator):
+class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
 
     _default = ("", "AUTO")
 
@@ -51,23 +53,26 @@ class TopologyFileConfigurator(FileWithAtomDataConfigurator):
             self["filename"], topology_format=self["format"]
         ).atoms
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
+        args = []
+        for arg in ["element", "name", "type", "resname", "mass"]:
+            if hasattr(self.atoms[0], arg):
+                args.append(arg)
+        if len(args) == 0:
+            yield from []
+            return
+
         for at in self.atoms:
             kwargs = {}
-            for arg in ["element", "name", "type", "resname", "mass"]:
-                if hasattr(at, arg):
-                    kwargs[arg] = getattr(at, arg)
+            for arg in args:
+                kwargs[arg] = getattr(at, arg)
             # the first out of the list above will be the main label
             (k, main_label) = next(iter(kwargs.items()))
             kwargs.pop(k)
-            label = AtomLabel(main_label, **kwargs)
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(main_label, **kwargs)
