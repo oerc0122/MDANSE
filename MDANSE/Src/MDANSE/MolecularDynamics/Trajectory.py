@@ -365,7 +365,52 @@ class Trajectory:
         return self._trajectory.variables()
 
 
-def create_average_atom(atom_dictionary: Dict[str, int], database: Trajectory):
+additive_atom_properties = [
+    "nucleon",
+    "b_incoherent2",
+    "xray_asf_b4",
+    "proton",
+    "atomic_weight",
+    "ionization_energy",
+    "xs_absorption",
+    "xs_scattering",
+    "b_incoherent",
+    "b_coherent",
+    "charge",
+    "xray_asf_c",
+    "neutron",
+    "xray_asf_a4",
+    "xray_asf_a2",
+    "xray_asf_a3",
+    "xray_asf_a1",
+    "xray_asf_b3",
+    "xray_asf_b2",
+    "xray_asf_b1",
+    "xs_incoherent",
+    "xs_coherent",
+    "nuclear_spin",
+]
+averaged_atom_properties = [
+    "electronegativity",
+    "electroaffinity",
+    "atomic_number",
+    "group",
+    "serie",
+]
+constant_atom_properties = {
+    "equal": 1.0,
+    "abundance": 100.0,
+}
+atom_radii = [
+    "covalent_radius",
+    "vdw_radius",
+    "atomic_radius",
+]
+
+
+def create_average_atom(
+    atom_dictionary: Dict[str, int], database: Trajectory, radius_padding: float = 0.0
+):
     all_properties = database.properties_in_database
     values = {}
     for property in all_properties:
@@ -375,15 +420,30 @@ def create_average_atom(atom_dictionary: Dict[str, int], database: Trajectory):
             temp.append(
                 [database.get_atom_property(element_name, property), element_count]
             )
-        for entry in temp:
-            try:
-                converted = float(entry[0])
-            except TypeError:
-                total = entry
-            except ValueError:
-                total = entry
-            else:
-                total += converted * entry[1]
+        if property in additive_atom_properties:
+            total = np.sum([float(x[0]) * int(x[1]) for x in temp])
+        elif property in averaged_atom_properties:
+            total = np.sum([float(x[0]) * int(x[1]) for x in temp]) / np.sum(
+                [int(x[1]) for x in temp]
+            )
+        elif property in constant_atom_properties.keys():
+            total = constant_atom_properties[property]
+        elif property in atom_radii:
+            total = (
+                np.sum([float(x[0]) * int(x[1]) for x in temp])
+                / np.sum([int(x[1]) for x in temp])
+                + radius_padding
+            )
+        else:
+            for entry in temp:
+                try:
+                    converted = float(entry[0])
+                except TypeError:
+                    total = entry
+                except ValueError:
+                    total = entry
+                else:
+                    total += converted * entry[1]
         values[property] = total
     is_dummy = 1
     for element_name, _ in atom_dictionary.items():
@@ -531,12 +591,18 @@ class TrajectoryWriter:
             0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
         )
 
-    def write_atom_database(self, symbols: List[str], database: "AtomsDatabase"):
+    def write_atom_database(
+        self,
+        symbols: List[str],
+        database: "AtomsDatabase",
+        optional_molecule_radii: Dict[str, float] = None,
+    ):
         for atom_symbol in symbols:
             if database.has_atom(atom_symbol):
                 property_dict = database.get_property_dict(atom_symbol)
             else:
                 atom_dict = {}
+                molecule_radius = 0.0
                 for token in atom_symbol.split("_"):
                     symbol = ""
                     number = ""
@@ -551,7 +617,11 @@ class TrajectoryWriter:
                             symbol += char
                             noletters = False
                     atom_dict[symbol] = int(number)
-                property_dict = create_average_atom(atom_dict, database)
+                if optional_molecule_radii is not None:
+                    molecule_radius = optional_molecule_radii.get(atom_symbol, 0.0)
+                property_dict = create_average_atom(
+                    atom_dict, database, radius_padding=molecule_radius
+                )
             if hasattr(database, "_properties"):
                 self.write_atom_properties(
                     atom_symbol, property_dict, database._properties

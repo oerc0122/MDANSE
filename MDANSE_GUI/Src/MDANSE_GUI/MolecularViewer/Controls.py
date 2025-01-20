@@ -236,7 +236,7 @@ class ViewerControls(QWidget):
         layout4 = QHBoxLayout(wrapper4)
         size_factor = QDoubleSpinBox(base)
         size_factor.setToolTip("Scaling factor for atom size")
-        size_factor.setValue(0.8)
+        size_factor.setValue(0.4)
         size_factor.setMinimum(0.0)
         size_factor.setMaximum(50.0)
         size_factor.setSingleStep(0.05)
