@@ -421,12 +421,15 @@ class NeutronDynamicTotalStructureFactor(IJob):
         for val in list(nAtomsPerElement.values()):
             nTotalAtoms += val
 
+        all_b_coh = []
+        all_b_incoh = []
         # Compute coherent functions and structure factor
         for pair in self._elementsPairs:
             bi = ATOMS_DATABASE.get_atom_property(pair[0], "b_coherent")
             bj = ATOMS_DATABASE.get_atom_property(pair[1], "b_coherent")
             ci = 1.0 / nTotalAtoms
             cj = 1.0 / nTotalAtoms
+            all_b_coh += [bi, bj]
 
             self._outputData["f(q,t)_coh_weighted_%s%s" % pair][:] = (
                 self._outputData["f(q,t)_coh_%s%s" % pair][:]
@@ -459,6 +462,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
         for element, ni in nAtomsPerElement.items():
             bi = ATOMS_DATABASE.get_atom_property(element, "b_incoherent2")
             ci = 1.0 / nTotalAtoms
+            all_b_incoh.append(bi)
 
             self._outputData["f(q,t)_inc_weighted_%s" % element][:] = (
                 self._outputData["f(q,t)_inc_%s" % element][:] * ci * bi
@@ -474,14 +478,16 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "s(q,f)_inc_weighted_%s" % element
             ][:]
 
+        norm_coh = np.mean(all_b_coh) ** 2
+        norm_incoh = np.mean(all_b_incoh)
         # Compute total F(Q,t) = inc + coh
         self._outputData["f(q,t)_total"][:] = (
             self._outputData["f(q,t)_coh_total"][:]
             + self._outputData["f(q,t)_inc_total"][:]
         )
         self._outputData["s(q,f)_total"][:] = (
-            self._outputData["s(q,f)_coh_total"][:]
-            + self._outputData["s(q,f)_inc_total"][:]
+            self._outputData["s(q,f)_coh_total"][:] / norm_coh
+            + self._outputData["s(q,f)_inc_total"][:] / norm_incoh
         )
 
         self._outputData.write(
