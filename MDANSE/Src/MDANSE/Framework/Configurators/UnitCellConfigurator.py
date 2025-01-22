@@ -92,23 +92,25 @@ class UnitCellConfigurator(IConfigurator):
         :type value: (np.ndarray, bool) tuple
         """
         self._original_input = value
-
-        self.update_trajectory_information()
-
-        try:
-            input_array = np.array(value[0], dtype=float)
-        except:
-            self.error_status = (
-                "Could not convert the inputs into a floating point array"
-            )
-            return
-        else:
-            if input_array.shape != (3, 3):
-                self.error_status = "Input shape must be 3x3"
-                return
-
-        self["value"] = input_array
         self["apply"] = value[1]
+        if self["apply"]:
+            self.update_trajectory_information()
+
+            try:
+                input_array = np.array(value[0], dtype=float)
+            except:
+                self.error_status = (
+                    "Could not convert the inputs into a floating point array"
+                )
+                return
+            else:
+                if input_array.shape != (3, 3):
+                    self.error_status = "Input shape must be 3x3"
+                    return
+
+            self["value"] = input_array
+        else:
+            self["value"] = np.eye(3)
         self.error_status = "OK"
 
     def get_information(self):

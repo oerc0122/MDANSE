@@ -62,10 +62,10 @@ def contiguous_coordinates_real(
 
         if len(idxs) < 2:
             continue
-
-        sdx = scaleconfig[idxs[1:]] - scaleconfig[idxs[0]]
-        scaleconfig[idxs[1:]] -= np.round(sdx)
-        newconfig = np.matmul(scaleconfig[idxs[1:]], cell)
+        minimum_offsets = scaleconfig[idxs[1:]] - scaleconfig[idxs[0]]
+        minimum_offsets -= np.round(minimum_offsets)
+        newconfig = scaleconfig[idxs[0]] + minimum_offsets
+        newconfig = np.matmul(newconfig, cell)
         contiguous_coords[idxs[1:]] = newconfig
 
     return contiguous_coords
