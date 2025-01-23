@@ -225,32 +225,38 @@ class MolecularViewer(QtWidgets.QWidget):
 
         LOG.info("Computing isosurface ...")
         if params is not None:
-            grid_step = params.get("grid_step", 100)
+            fine_sampling = params.get("fine_sampling", 5)
             r, g, b = params.get("surface_colour", (0, 0.5, 0.75))
             opacity = params.get("surface_opacity", 0.5)
             trace_cutoff = params.get("trace_cutoff", 90)
         else:
-            grid_step = 100
+            fine_sampling = 5
             r, g, b = 0, 0.5, 0.75
             opacity = 0.5
             trace_cutoff = 90
 
-        coords, lower_bounds, upper_bounds = self._reader.read_atom_trajectory(index)
+        coords = self._reader.read_atom_trajectory(index)
+        element = self._reader._atom_types[index]
+        radius = self._reader._trajectory.get_atom_property(element, "covalent_radius")
+        upper_limit = np.max(coords, axis=0) + radius
+        lower_limit = np.min(coords, axis=0) - radius
+        grid_step = radius / fine_sampling
 
-        gdim = (grid_step, grid_step, grid_step)
+        span = upper_limit - lower_limit
+        grid_steps = [int(x) for x in span / grid_step]
+        gdim = (grid_steps[0], grid_steps[1], grid_steps[2])
         grid = np.zeros(gdim, dtype=np.int32)
-        spacing = np.max(upper_bounds, axis=0) - np.min(lower_bounds, axis=0)
-        spacing /= grid_step
-        resolution = spacing
 
-        indices = np.floor(
-            (coords - np.min(lower_bounds, axis=0).reshape((1, 3))) / resolution
-        ).astype(int)
+        indices = np.floor((coords - lower_limit.reshape((1, 3))) / grid_step).astype(
+            int
+        )
         unique_indices, counts = np.unique(indices, return_counts=True, axis=0)
         grid[tuple(unique_indices.T)] += counts
         self._atomic_trace_histogram = grid
 
-        self._image = array_to_3d_imagedata(self._atomic_trace_histogram, spacing)
+        self._image = array_to_3d_imagedata(
+            self._atomic_trace_histogram, (grid_step, grid_step, grid_step)
+        )
         isovalue = np.percentile(self._atomic_trace_histogram, trace_cutoff)
 
         new_isocontour = vtk.vtkMarchingContourFilter()
@@ -289,9 +295,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._renderer.AddActor(new_surface)
 
-        new_surface.SetPosition(
-            lower_bounds[0, 0], lower_bounds[0, 1], lower_bounds[0, 2]
-        )
+        new_surface.SetPosition(lower_limit[0], lower_limit[1], lower_limit[2])
         self._surfaces.append(new_surface)
         self._isocontours.append(new_isocontour)
 
@@ -952,6 +956,7 @@ class AtomTraceDialog(QDialog):
         self._fraction_spinbox = QSpinBox(self)
         self._grid_spinbox = QSpinBox(self)
         self._opacity_spinbox = QDoubleSpinBox(self)
+        self._colour_lineedit = QLineEdit("0,128,192", self)
         for sbox in [
             self._atom_spinbox,
             self._surface_spinbox,
@@ -962,24 +967,25 @@ class AtomTraceDialog(QDialog):
             sbox.setValue(0)
         self.update_limits()
         self._fraction_spinbox.setMaximum(100)
-        self._fraction_spinbox.setValue(90)
-        self._grid_spinbox.setMaximum(100000)
-        self._grid_spinbox.setMinimum(4)
-        self._grid_spinbox.setValue(100)
+        self._fraction_spinbox.setValue(5)
+        self._grid_spinbox.setMaximum(10)
+        self._grid_spinbox.setMinimum(1)
+        self._grid_spinbox.setValue(3)
         self._opacity_spinbox.setMaximum(1.0)
         self._opacity_spinbox.setValue(0.5)
         self._opacity_spinbox.setSingleStep(0.01)
         layout.addRow("Selected atom index: ", self._atom_spinbox)
-        layout.addRow("Number of grid steps for trace calculation", self._grid_spinbox)
+        layout.addRow("Sampling step (1=coarse, 10=fine)", self._grid_spinbox)
         layout.addRow("Trace percentile for isovalue", self._fraction_spinbox)
         layout.addRow("Isosurface opacity", self._opacity_spinbox)
+        layout.addRow("Isosurface colour (R,G,B)", self._colour_lineedit)
         layout.addWidget(self.add_trace_button)
         layout.addRow("Remove the surface with index: ", self._surface_spinbox)
         layout.addWidget(self.remove_trace_button)
 
     @Slot()
     def update_limits(self):
-        self._atom_spinbox.setMaximum(self._molviewer._n_atoms - 1)
+        self._atom_spinbox.setMaximum(max(self._molviewer._n_atoms - 1, 0))
         self._surface_spinbox.setMaximum(max(len(self._molviewer._surfaces) - 1, 0))
         self.enable_buttons()
 
@@ -996,16 +1002,24 @@ class AtomTraceDialog(QDialog):
     def get_values(self):
         params = {
             "atom_number": 0,
-            "grid_step": 100,
+            "fine_sampling": 3,
             "surface_colour": (0, 0.5, 0.75),
             "surface_opacity": 0.5,
-            "trace_cutoff": 90,
+            "trace_cutoff": 5,
             "surface_number": -1,
         }
         params["atom_number"] = self._atom_spinbox.value()
         params["surface_number"] = self._surface_spinbox.value()
+        try:
+            params["surface_colour"] = [
+                float(x) / 256 for x in self._colour_lineedit.text().split(",")
+            ]
+        except ValueError:
+            pass
+        except TypeError:
+            pass
         params["trace_cutoff"] = self._fraction_spinbox.value()
-        params["grid_step"] = self._grid_spinbox.value()
+        params["fine_sampling"] = self._grid_spinbox.value()
         params["surface_opacity"] = self._opacity_spinbox.value()
         return params
 
