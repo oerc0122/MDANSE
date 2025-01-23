@@ -413,7 +413,7 @@ class MolecularViewer(QtWidgets.QWidget):
         ball_actor.SetNumberOfCloudPoints(30000)
         return [line_actor, ball_actor]
 
-    def clear_trajectory(self):
+    def clear_trajectory(self, clear_isosurfaces=True):
         """Clear the vtk scene from atoms and bonds actors."""
 
         if not hasattr(self, "_actors"):
@@ -421,7 +421,8 @@ class MolecularViewer(QtWidgets.QWidget):
         if self._actors is None:
             return
 
-        self.on_clear_atomic_trace()
+        if clear_isosurfaces:
+            self.on_clear_atomic_trace()
         self._actors.VisibilityOff()
         self._actors.ReleaseGraphicsResources(self.get_render_window())
         self._renderer.RemoveActor(self._actors)
@@ -772,7 +773,7 @@ class MolecularViewer(QtWidgets.QWidget):
         Update the renderer
         """
         # deleting old frame
-        self.clear_trajectory()
+        self.clear_trajectory(clear_isosurfaces=False)
 
         # creating new polydata
         self._actors = vtk.vtkAssembly()

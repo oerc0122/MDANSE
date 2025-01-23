@@ -171,11 +171,4 @@ class IReader(abc.ABC):
         if index < 0 or index >= self._n_atoms:
             raise InvalidAtomError("Invalid atom index")
 
-        coords = []
-        for f in range(self._n_frames):
-            frame = self.read_frame(f)
-            coords.append(frame[index, :])
-
-        coords = np.array(coords)
-
-        return coords
+        return self._trajectory.read_atomic_trajectory(index)
