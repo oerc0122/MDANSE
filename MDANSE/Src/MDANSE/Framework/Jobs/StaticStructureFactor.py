@@ -177,7 +177,7 @@ class StaticStructureFactor(DistanceHistogram):
                 self.hIntra[idi, idj] += self.hIntra[idj, idi]
                 self.hInter[idi, idj] += self.hInter[idj, idi]
 
-            fact = nij * nFrames * shellVolumes
+            fact = 2 * nij * nFrames * shellVolumes
 
             pdfIntra = self.hIntra[idi, idj, :] / fact
             pdfInter = self.hInter[idi, idj, :] / fact
