@@ -80,7 +80,7 @@ class MolecularViewer(QtWidgets.QWidget):
     def __init__(self):
         super(MolecularViewer, self).__init__()
 
-        self._scale_factor = 0.8
+        self._scale_factor = 0.4
 
         self._datamodel = None
         self._element_database = None
@@ -357,7 +357,7 @@ class MolecularViewer(QtWidgets.QWidget):
         else:
             glyph.SetInputData(polydata)
 
-        temp_scale = float(0.2 * self._scale_factor)
+        temp_scale = float(1.0 * self._scale_factor)
         glyph.SetScaleModeToScaleByScalar()
         glyph.SetColorModeToColorByScalar()
         glyph.SetScaleFactor(temp_scale)

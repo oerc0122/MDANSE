@@ -481,6 +481,29 @@ class TestPeriodicRealConfiguration(unittest.TestCase):
         )
         self.assertEqual(unit_cell, result._unit_cell)
 
+    def test_contiguous_configuration_does_not_move_atoms_to_edges(self):
+        unit_cell = UnitCell(
+            np.array(
+                [
+                    [4.15821342e00, 0.00000000e00, 0.00000000e00],
+                    [2.54617138e-16, 4.15821342e00, 0.00000000e00],
+                    [2.85252415e-16, 2.85252415e-16, 4.65852547e00],
+                ]
+            )
+        )
+        coords = np.array(
+            [
+                [-1.8630077362060546, -0.4748522758483886, -0.5351669311523437],
+                [-1.9116626739501952, -0.4739928722381591, -0.6350426197052002],
+                [-1.7785566329956053, -0.5469871520996094, -0.5323768615722656],
+                [-1.8123033523559569, -0.3780877590179443, -0.5149454593658447],
+            ]
+        )
+        conf = PeriodicRealConfiguration(self.chem_system, coords.copy(), unit_cell)
+        result = conf.contiguous_configuration()
+        new_coords = result.coordinates
+        assert np.allclose(coords, new_coords)
+
     def test_continuous_configuration_without_bonds(self):
         coords = np.array(
             [

@@ -103,10 +103,10 @@ class CenterOfMassesTrajectory(IJob):
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
         )
-        unique_atoms = np.unique(new_element_list)
-        self._output_trajectory.write_atom_database(
-            unique_atoms, self.configuration["trajectory"]["instance"]
-        )
+        self._unique_atoms = np.unique(new_element_list)
+        self._molecule_radii = {
+            cluster_name: [] for cluster_name in chemical_system._clusters.keys()
+        }
 
     def run_step(self, index):
         """
@@ -128,6 +128,9 @@ class CenterOfMassesTrajectory(IJob):
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
         conf = conf.contiguous_configuration()
+        temp_radii = {
+            cluster_name: [] for cluster_name in chemical_system._clusters.keys()
+        }
 
         com_coords = np.empty((n_coms, 3), dtype=np.float64)
         mol_index = 0
@@ -139,9 +142,13 @@ class CenterOfMassesTrajectory(IJob):
                     )
                     for cluster_index in cluster
                 ]
-                com_coords[mol_index] = center_of_mass(
-                    conf.coordinates[cluster], masses
-                )
+                individual_coordinates = conf.coordinates[cluster]
+                centre_of_mass = center_of_mass(individual_coordinates, masses)
+                com_coords[mol_index] = centre_of_mass
+                average_radius = individual_coordinates - centre_of_mass.reshape(1, 3)
+                average_radius = np.linalg.norm(average_radius, axis=1)
+                average_radius = np.average(average_radius, weights=masses)
+                temp_radii[cluster_name].append(average_radius)
                 mol_index += 1
         for atom_index in chemical_system._atom_indices:
             if atom_index not in self._used_up_atoms:
@@ -160,6 +167,8 @@ class CenterOfMassesTrajectory(IJob):
         if self.configuration["fold"]["value"]:
             com_conf.fold_coordinates()
 
+        for cluster_name in temp_radii.keys():
+            self._molecule_radii[cluster_name].append(np.mean(temp_radii[cluster_name]))
         # The times corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
@@ -181,6 +190,16 @@ class CenterOfMassesTrajectory(IJob):
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
+        time_averaged_radii = {
+            cluster_name: np.mean(self._molecule_radii[cluster_name])
+            for cluster_name in self._molecule_radii.keys()
+        }
+
+        self._output_trajectory.write_atom_database(
+            self._unique_atoms,
+            self.configuration["trajectory"]["instance"],
+            time_averaged_radii,
+        )
         # The input trajectory is closed.
         self.configuration["trajectory"]["instance"].close()
 

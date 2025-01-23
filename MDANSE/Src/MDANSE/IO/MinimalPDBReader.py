@@ -189,10 +189,10 @@ class MinimalPDBReader:
                     residue_number = int(residue_number_string, base=16)
                 except ValueError:
                     continue
-            if residue_number in clusters.keys():
-                clusters[residue_number].append(atom_number)
+            if (residue_name, residue_number) in clusters.keys():
+                clusters[(residue_name, residue_number)].append(atom_number)
             else:
-                clusters[residue_number] = [atom_number]
+                clusters[(residue_name, residue_number)] = [atom_number]
         self._chemical_system.initialise_atoms(element_list, name_list)
         self._chemical_system.add_labels(label_dict)
         self._chemical_system.add_clusters(clusters.values())

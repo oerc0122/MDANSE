@@ -143,6 +143,12 @@ class TrajectoryEditor(IJob):
                     coords,
                 )
             coords = com_conf.contiguous_configuration().coordinates
+        else:
+            new_chemical_system.add_bonds(self._input_chemical_system._bonds)
+            for key in self._input_chemical_system._clusters.keys():
+                new_chemical_system.add_clusters(
+                    self._input_chemical_system._clusters[key]
+                )
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
@@ -169,7 +175,7 @@ class TrajectoryEditor(IJob):
         frameIndex = self.configuration["frames"]["value"][index]
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
-        conf = conf.contiguous_configuration()
+        conf = conf.contiguous_configuration(bring_to_centre=True)
         charges = self.configuration["trajectory"]["instance"].charges(frameIndex)
         coords = conf.coordinates
 
