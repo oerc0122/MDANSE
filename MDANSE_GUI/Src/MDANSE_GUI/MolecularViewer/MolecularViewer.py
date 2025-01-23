@@ -71,6 +71,37 @@ def array_to_3d_imagedata(data: np.ndarray, spacing: Tuple[float]):
     return image
 
 
+def smear_grid(grid: np.ndarray, fine_sampling: int) -> np.ndarray:
+    """Include atom radius effect in the array of atom counts on a grid.
+
+    Parameters
+    ----------
+    grid : np.ndarray
+        a 3D histogram of atom positions over time
+    fine_sampling : int
+        the fraction of the atom radius defining the binning grid
+
+    Returns
+    -------
+    np.ndarray
+        a 3D histogram of the volume taken by the atom
+    """
+    if fine_sampling < 2:
+        return grid
+    final_histogram = grid.copy()
+    for _ in range(1, fine_sampling):
+        n = 1
+        new_histogram = np.zeros_like(grid)
+        new_histogram[:, :, n:] += final_histogram[:, :, :-n]
+        new_histogram[:, :, :-n] += final_histogram[:, :, n:]
+        new_histogram[:, n:, :] += final_histogram[:, :-n, :]
+        new_histogram[:, :-n, :] += final_histogram[:, n:, :]
+        new_histogram[n:, :, :] += final_histogram[:-n, :, :]
+        new_histogram[:-n, :, :] += final_histogram[n:, :, :]
+        final_histogram += new_histogram
+    return final_histogram
+
+
 class MolecularViewer(QtWidgets.QWidget):
     """This class implements a molecular viewer."""
 
@@ -252,7 +283,7 @@ class MolecularViewer(QtWidgets.QWidget):
         )
         unique_indices, counts = np.unique(indices, return_counts=True, axis=0)
         grid[tuple(unique_indices.T)] += counts
-        self._atomic_trace_histogram = grid
+        self._atomic_trace_histogram = smear_grid(grid, fine_sampling)
 
         self._image = array_to_3d_imagedata(
             self._atomic_trace_histogram, (grid_step, grid_step, grid_step)
