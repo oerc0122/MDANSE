@@ -16,7 +16,7 @@
 import collections
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Units import measure
@@ -180,13 +180,15 @@ class DL_POLY(Converter):
         # The number of steps of the analysis.
         self.numberOfSteps = int(self._historyFile["n_frames"])
 
-        self._chemicalSystem = ChemicalSystem()
+        self._chemical_system = ChemicalSystem()
 
-        self._fieldFile.build_chemical_system(self._chemicalSystem, self._atomicAliases)
+        self._fieldFile.build_chemical_system(
+            self._chemical_system, self._atomicAliases
+        )
 
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
-            self._chemicalSystem,
+            self._chemical_system,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
@@ -232,9 +234,8 @@ class DL_POLY(Converter):
         if self._gradients is not None:
             conf["gradients"] = config[2]
 
-        self._trajectory.chemical_system.configuration = conf
-
         self._trajectory.dump_configuration(
+            conf,
             time,
             units={
                 "time": "ps",
@@ -268,6 +269,7 @@ class DL_POLY(Converter):
         self._historyFile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(DL_POLY, self).finalize()

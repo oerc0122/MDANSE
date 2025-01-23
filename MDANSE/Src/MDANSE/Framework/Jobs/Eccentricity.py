@@ -19,7 +19,6 @@ import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import center_of_mass
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class Eccentricity(IJob):
@@ -76,13 +75,13 @@ class Eccentricity(IJob):
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
-        self._indexes = np.array(
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
+        self._indices = np.array(
             [
                 idx
-                for idxs in self._configuration["atom_selection"]["indexes"]
+                for idxs in self._configuration["atom_selection"]["indices"]
                 for idx in idxs
             ]
         )
@@ -107,7 +106,7 @@ class Eccentricity(IJob):
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
         conf = conf.contiguous_configuration()
-        series = conf["coordinates"][self._indexes, :]
+        series = conf["coordinates"][self._indices, :]
 
         com = center_of_mass(series, masses=self._selectionMasses)
 

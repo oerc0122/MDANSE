@@ -20,41 +20,6 @@ import collections
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
 )
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
-
-LEVELS = collections.OrderedDict()
-LEVELS["atom"] = {
-    "atom": 0,
-    "atomcluster": 0,
-    "molecule": 0,
-    "nucleotidechain": 0,
-    "peptidechain": 0,
-    "protein": 0,
-}
-LEVELS["residue"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 1,
-    "peptidechain": 1,
-    "protein": 1,
-}
-LEVELS["chain"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 2,
-    "peptidechain": 2,
-    "protein": 2,
-}
-LEVELS["molecule"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 2,
-    "peptidechain": 2,
-    "protein": 2,
-}
 
 
 class GroupingLevelConfigurator(SingleChoiceConfigurator):
@@ -84,11 +49,12 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         :param choices: the level of granularities allowed for the input value. If None all levels are allowed.
         :type choices: one of ['atom','group','residue','chain','molecule'] or None
         """
+        usual_choices = ["atom", "molecule", "group"]
 
         if choices is None:
-            choices = list(LEVELS.keys())
+            choices = usual_choices
         else:
-            choices = list(set(LEVELS.keys()).intersection(choices))
+            choices += [x for x in usual_choices if x not in choices]
 
         SingleChoiceConfigurator.__init__(self, name, choices=choices, **kwargs)
 
@@ -112,22 +78,22 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         trajConfig = self._configurable[self._dependencies["trajectory"]]
         atomSelectionConfig = self._configurable[self._dependencies["atom_selection"]]
 
-        allAtoms = sorted_atoms(trajConfig["instance"].chemical_system.atom_list)
+        allAtoms = trajConfig["instance"].chemical_system.atom_list
 
         groups = collections.OrderedDict()
         for i in range(atomSelectionConfig["selection_length"]):
-            idx = atomSelectionConfig["indexes"][i][0]
+            idx = atomSelectionConfig["indices"][i][0]
             el = atomSelectionConfig["elements"][i][0]
             mass = atomSelectionConfig["masses"][i][0]
             at = allAtoms[idx]
-            lvl = LEVELS[value][at.top_level_chemical_entity.__class__.__name__.lower()]
+            lvl = trajConfig["instance"].chemical_system.grouping_level(idx)
             parent = self.find_parent(at, lvl)
             d = groups.setdefault(parent, {})
-            d.setdefault("indexes", []).append(idx)
+            d.setdefault("indices", []).append(idx)
             d.setdefault("elements", []).append(el)
             d.setdefault("masses", []).append(mass)
 
-        indexes = []
+        indices = []
         elements = []
         masses = []
         names = []
@@ -135,11 +101,11 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         for i, v in enumerate(groups.values()):
             names.append("group_%d" % i)
             elements.append(v["elements"])
-            indexes.append(v["indexes"])
+            indices.append(v["indices"])
             masses.append(v["masses"])
             group_indices.append(i)
 
-        atomSelectionConfig["indexes"] = indexes
+        atomSelectionConfig["indices"] = indices
         atomSelectionConfig["elements"] = elements
         atomSelectionConfig["masses"] = masses
         atomSelectionConfig["names"] = names

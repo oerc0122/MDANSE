@@ -17,7 +17,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
@@ -54,17 +54,21 @@ class CellFile(dict):
             words = line.strip().split()
 
             if len(words) != 12:
-                raise CellFileError("Invalid format for cell line")
+                raise CellFileError(f"Invalid format for cell line: {line}")
 
             try:
                 time_steps.append(float(words[1]))
             except ValueError:
-                raise CellFileError("Can not cast time step to floating")
+                raise CellFileError(
+                    f"Cannot cast time step {words[1]} to a floating point number"
+                )
 
             try:
                 cell = np.array(words[2:11], dtype=np.float64).reshape((3, 3))
             except ValueError:
-                raise CellFileError("Can not cast cell coordinates to floating")
+                raise CellFileError(
+                    f"Cannot cast cell coordinates {words[2:11]} to floating point numbers"
+                )
 
             self["cells"].append(cell)
 
@@ -150,7 +154,7 @@ class CP2K(Converter):
         "OutputTrajectoryConfigurator",
         {
             "formats": ["MDTFormat"],
-            "root": "xdatcar_file",
+            "root": "pos_file",
             "label": "MDANSE trajectory (filename, format)",
         },
     )
@@ -194,12 +198,13 @@ class CP2K(Converter):
         self.numberOfSteps = self._xyzFile["n_frames"]
 
         self._chemical_system = ChemicalSystem()
+        element_list = []
 
-        for i, symbol in enumerate(self._xyzFile["atoms"]):
+        for _, symbol in enumerate(self._xyzFile["atoms"]):
             element = get_element_from_mapping(self._atomicAliases, symbol)
-            self._chemical_system.add_chemical_entity(
-                Atom(symbol=element, name="%s_%d" % (symbol, i + 1))
-            )
+            element_list.append(element)
+
+        self._chemical_system.initialise_atoms(element_list)
 
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
@@ -236,19 +241,18 @@ class CP2K(Converter):
                 1.0, iunit="ang/fs"
             ).toval("nm/ps")
 
-        realConf = PeriodicRealConfiguration(
+        real_conf = PeriodicRealConfiguration(
             self._trajectory.chemical_system, coords, unitcell, **variables
         )
 
         if self._configuration["fold"]["value"]:
-            realConf.fold_coordinates()
-
-        self._trajectory.chemical_system.configuration = realConf
+            real_conf.fold_coordinates()
 
         time = index * self._xyzFile["time_step"] * measure(1.0, iunit="fs").toval("ps")
 
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(
+            real_conf,
             time,
             units={
                 "time": "ps",
@@ -286,6 +290,7 @@ class CP2K(Converter):
         self._cellFile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(CP2K, self).finalize()

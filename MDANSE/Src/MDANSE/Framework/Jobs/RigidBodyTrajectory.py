@@ -20,16 +20,14 @@ import numpy as np
 
 import h5py
 
-from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import AtomCluster
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.Mathematics.LinearAlgebra import Quaternion, Vector
 from MDANSE.Mathematics.Transformation import Translation
-from MDANSE.MolecularDynamics.Configuration import _Configuration, RealConfiguration
+from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import (
     RigidBodyTrajectoryGenerator,
     TrajectoryWriter,
-    sorted_atoms,
 )
 
 
@@ -120,16 +118,14 @@ class RigidBodyTrajectory(IJob):
             dtype=np.float64,
         )
 
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         self._groups = []
 
         for i in range(self.configuration["atom_selection"]["selection_length"]):
-            indexes = self.configuration["atom_selection"]["indexes"][i]
+            indices = self.configuration["atom_selection"]["indices"][i]
             self._groups.append(
-                AtomCluster("", [atoms[idx] for idx in indexes], parentless=True)
+                AtomCluster("", [atoms[idx] for idx in indices], parentless=True)
             )
 
         self.numberOfSteps = len(self._groups)
@@ -142,8 +138,8 @@ class RigidBodyTrajectory(IJob):
         unitCell = trajectory.unit_cell(self.referenceFrame)
 
         selectedAtoms = []
-        for indexes in self.configuration["atom_selection"]["indexes"]:
-            for idx in indexes:
+        for indices in self.configuration["atom_selection"]["indices"]:
+            for idx in indices:
                 selectedAtoms.append(atoms[idx])
 
         # Create trajectory
@@ -194,7 +190,7 @@ class RigidBodyTrajectory(IJob):
         """ """
 
         group_coms = [
-            group.center_of_mass(self._reference_configuration)
+            center_of_mass(self._reference_configuration[group])
             for group in self._groups
         ]
 
@@ -235,9 +231,10 @@ class RigidBodyTrajectory(IJob):
                         Vector(*xyz)
                     )
 
-            self._output_trajectory._chemical_system.configuration = real_configuration
             self._output_trajectory.dump_configuration(
-                time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+                real_configuration,
+                time,
+                units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
             )
 
         outputFile = h5py.File(self.configuration["output_files"]["file"], "r+")
@@ -261,7 +258,7 @@ class RigidBodyTrajectory(IJob):
 
         # Loop over the groups.
         for comp in range(self.configuration["atom_selection"]["selection_length"]):
-            aIndexes = self.configuration["atom_selection"]["indexes"][comp]
+            aIndexes = self.configuration["atom_selection"]["indices"][comp]
 
             outputFile.attrs["info"] += "Group %s: %s\n" % (
                 comp,

@@ -18,10 +18,6 @@ import re
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import (
-    Atom,
-    AtomCluster,
-)
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping, AtomLabel
 from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
@@ -138,28 +134,28 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
             charge_groups.append(np.array(num_molecules * list(charges)))
         return np.concatenate(charge_groups)
 
-    def build_chemical_system(self, chemicalSystem, aliases):
-        chemicalEntities = []
+    def build_chemical_system(self, chemical_system, aliases):
+        element_list = []
+        name_list = []
 
         for db_name, nMolecules, atomic_contents, masses, _ in self["molecules"]:
             # Loops over the number of molecules of the current type.
-            for i in range(nMolecules):
+            clusters = []
+            index = 0
+            for _ in range(nMolecules):
                 # This list will contains the instances of the atoms of the molecule.
-                atoms = []
                 # Loops over the atom of the molecule.
-                for j, (name, mass) in enumerate(zip(atomic_contents, masses)):
+                cluster = []
+                for _, (name, mass) in enumerate(zip(atomic_contents, masses)):
                     # The atom is created.
                     element = get_element_from_mapping(
                         aliases, name, molecule=db_name, mass=mass
                     )
-                    a = Atom(symbol=element, name="%s_%s_%s" % (db_name, name, j))
-                    atoms.append(a)
-
-                if len(atoms) > 1:
-                    ac = AtomCluster("{:s}".format(db_name), atoms)
-                    chemicalEntities.append(ac)
-                else:
-                    chemicalEntities.append(atoms[0])
-
-        for ce in chemicalEntities:
-            chemicalSystem.add_chemical_entity(ce)
+                    element_list.append(element)
+                    name_list.append(name)
+                    cluster.append(index)
+                    index += 1
+                if len(cluster) > 1:
+                    clusters.append(cluster)
+        chemical_system.initialise_atoms(element_list, name_list)
+        chemical_system.add_clusters(clusters)

@@ -22,7 +22,7 @@ import vtk
 from qtpy.QtGui import QStandardItemModel, QStandardItem, QColor
 from qtpy.QtCore import Signal, Slot, QObject, Qt
 
-from MDANSE.Chemistry.Databases import AtomsDatabase
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 RGB_COLOURS = []
 RGB_COLOURS.append((1.00, 0.20, 1.00))  # selection
@@ -149,7 +149,7 @@ class AtomProperties(QStandardItemModel):
     def reinitialise_from_database(
         self,
         atoms: list[str],
-        element_database: AtomsDatabase,
+        element_database: Trajectory,
         dummy_size: Optional[float] = None,
     ) -> list[int]:
         """Puts colours into the list based on chemical elements list
@@ -189,9 +189,12 @@ class AtomProperties(QStandardItemModel):
             ):
                 size = dummy_size
             else:
-                size = round(element_database[atom]["vdw_radius"], 2)
+                size = round(element_database.get_atom_property(atom, "vdw_radius"), 2)
             atom_entry = AtomEntry()
-            rgb = [int(x) for x in element_database[atom]["color"].split(";")]
+            rgb = [
+                int(x)
+                for x in element_database.get_atom_property(atom, "color").split(";")
+            ]
             colour_index_list.append(self.add_colour(rgb))
             item_row = atom_entry.set_values(
                 atom,

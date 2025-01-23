@@ -17,9 +17,10 @@
 import collections
 
 import numpy as np
+from mdtraj.formats.xtc import XTCTrajectoryFile
+from mdtraj.formats.trr import TRRTrajectoryFile
 
 from MDANSE.Core.Error import Error
-from MDANSE.Extensions import xtc, trr
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.IO.MinimalPDBReader import MinimalPDBReader
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
@@ -78,12 +79,12 @@ class Gromacs(Converter):
 
         # Create XTC or TRR object depending on which kind of trajectory was loaded
         if self.configuration["xtc_file"]["filename"][-4:] == ".xtc":
-            self._xdr_file = xtc.XTCTrajectoryFile(
+            self._xdr_file = XTCTrajectoryFile(
                 self.configuration["xtc_file"]["filename"], "r"
             )
             self._xtc = True
         elif self.configuration["xtc_file"]["filename"][-4:] == ".trr":
-            self._xdr_file = trr.TRRTrajectoryFile(
+            self._xdr_file = TRRTrajectoryFile(
                 self.configuration["xtc_file"]["filename"], "r"
             )
             self._xtc = False
@@ -173,12 +174,10 @@ class Gromacs(Converter):
         if self.configuration["fold"]["value"]:
             conf.fold_coordinates()
 
-        self._trajectory.chemical_system.configuration = conf
-
         # The current time.
         time = times[0]
 
-        self._trajectory.dump_configuration(time)
+        self._trajectory.dump_configuration(conf, time)
 
         return index, None
 
@@ -201,6 +200,7 @@ class Gromacs(Converter):
         self._xdr_file.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(Gromacs, self).finalize()

@@ -68,7 +68,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
             extension = "".join(Path(value).suffixes)[1:]
             supported = list(i[1:] for i in _TOPOLOGY_EXTS)
             if extension not in supported:
-                self.error_status = f"File '{extension}' not support should be one of the following: {supported}"
+                self.error_status = f"File '{extension}' not supported. Should be one of the following: {supported}"
                 return
             super().configure(value)
 

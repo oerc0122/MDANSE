@@ -15,13 +15,70 @@
 #
 
 import collections
+from typing import List
 
 import numpy as np
+from scipy.spatial import KDTree
 
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.MolecularDynamics.Configuration import padded_coordinates
 from MDANSE.Mathematics.Geometry import generate_sphere_points
-from MDANSE.Extensions import sas_fast_calc
+
+
+def solvent_accessible_surface(
+    coords: np.ndarray,
+    indexes: List[int],
+    vdwRadii: np.ndarray,
+    sphere_points: np.ndarray,
+    probe_radius_value: float,
+):
+
+    # Computes the Solvent Accessible Surface Based on the algorithm published by Shrake, A., and J. A. Rupley. JMB (1973) 79:351-371.
+
+    sas = 0.0
+    tree = KDTree(coords)
+    max_dist = np.max(vdwRadii) + probe_radius_value
+    min_dist = np.min(vdwRadii) + probe_radius_value
+    sphere_indices = set(range(len(sphere_points)))
+    for idx in indexes:
+        sphere_tree = KDTree(
+            coords[idx] + sphere_points * (vdwRadii[idx] + probe_radius_value)
+        )
+        distance_dict = sphere_tree.sparse_distance_matrix(tree, max_distance=max_dist)
+        pair_array = np.array([pair for pair in distance_dict.keys()])
+        value_array = np.array([value for value in distance_dict.values()])
+        combined_array = np.hstack(
+            [pair_array, value_array.reshape((len(value_array), 1))]
+        )[np.where(pair_array[:, 1] != idx)]
+        blocked_for_sure = set(
+            combined_array[:, 0][np.where(combined_array[:, 2] <= min_dist)]
+        )
+        free_for_sure = sphere_indices - set(combined_array[:, 0])
+        uncertain = sphere_indices - free_for_sure - blocked_for_sure
+        confirmed = set()
+        if len(uncertain) > 0:
+            uncertain_lines = np.array(
+                [line for line in combined_array if line[0] in uncertain]
+            )
+            neighbour_radii = np.array(
+                [vdwRadii[int(line[1])] for line in uncertain_lines]
+            )
+            confirmed = set(
+                uncertain_lines[:, 0][
+                    np.where(
+                        uncertain_lines[:, 2] < neighbour_radii + probe_radius_value
+                    )
+                ]
+            )
+        free_for_sure.update(uncertain - confirmed)
+        sas += (
+            len(free_for_sure)
+            / len(sphere_points)
+            * 4
+            * np.pi
+            * (vdwRadii[idx] + probe_radius_value) ** 2
+        )
+    return sas
 
 
 class SolventAccessibleSurface(IJob):
@@ -100,30 +157,17 @@ class SolventAccessibleSurface(IJob):
             generate_sphere_points(self.configuration["n_sphere_points"]["value"]),
             dtype=np.float64,
         )
-        # The solid angle increment used to convert the sas from a number of accessible point to a surface.
-        self.solidAngleIncr = 4.0 * np.pi / len(self.spherePoints)
 
-        # A mapping between the atom indexes and covalent_radius radius for the whole universe.
-        self.vdwRadii = dict(
-            [
-                (
-                    at.index,
-                    ATOMS_DATABASE.get_atom_property(at.symbol, "covalent_radius"),
-                )
-                for at in self.configuration["trajectory"][
-                    "instance"
-                ].chemical_system.atom_list
-            ]
-        )
-        self.vdwRadii_list = np.zeros(
-            (max(self.vdwRadii.keys()) + 1, 2), dtype=np.float64
-        )
-        for k, v in self.vdwRadii.items():
-            self.vdwRadii_list[k] = np.array([k, v])[:]
+        # A mapping between the atom indices and covalent_radius radius for the whole universe.
+        self.vdwRadii = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_property(
+            "vdw_radius"
+        )  # should it be covalent?
 
-        self._indexes = [
+        self._indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
 
@@ -143,12 +187,27 @@ class SolventAccessibleSurface(IJob):
 
         # The configuration is made continuous.
         conf = conf.continuous_configuration()
+        unit_cell = conf._unit_cell
 
-        # Loop over the indexes of the selected atoms for the sas calculation.
-        sas = sas_fast_calc.sas(
-            conf["coordinates"],
-            self._indexes,
-            self.vdwRadii_list,
+        if conf.is_periodic:
+            padding_thickness = 1.05 * max(
+                self.configuration["probe_radius"]["value"], np.max(self.vdwRadii)
+            )
+            coords, atom_indices = padded_coordinates(
+                conf["coordinates"],
+                unit_cell,
+                padding_thickness,
+            )
+            temp_vdw_radii = [self.vdwRadii[atom_index] for atom_index in atom_indices]
+        else:
+            coords = conf["coordinates"]
+            temp_vdw_radii = self.vdwRadii
+
+        # Loop over the indices of the selected atoms for the sas calculation.
+        sas = solvent_accessible_surface(
+            coords,
+            self._indices,
+            temp_vdw_radii,
             self.spherePoints,
             self.configuration["probe_radius"]["value"],
         )
@@ -171,9 +230,6 @@ class SolventAccessibleSurface(IJob):
         """
         Finalize the job.
         """
-
-        # The SAS is converted from a number of accessible points to a surface.
-        self._outputData["sas"] *= self.solidAngleIncr
 
         # Write the output variables.
         self._outputData.write(

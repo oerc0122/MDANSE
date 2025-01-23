@@ -40,7 +40,7 @@ class TrajectoryVariableConfigurator(IConfigurator):
 
         trajConfig = self._configurable[self._dependencies["trajectory"]]
 
-        if not value in trajConfig["instance"].chemical_system.configuration:
+        if value not in trajConfig["instance"].configuration():
             self.error_status = f"{value} is not registered as a trajectory variable."
             return
 
