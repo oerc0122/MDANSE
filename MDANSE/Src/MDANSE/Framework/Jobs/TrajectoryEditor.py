@@ -175,7 +175,7 @@ class TrajectoryEditor(IJob):
         frameIndex = self.configuration["frames"]["value"][index]
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
-        conf = conf.contiguous_configuration()
+        conf = conf.contiguous_configuration(bring_to_centre=True)
         charges = self.configuration["trajectory"]["instance"].charges(frameIndex)
         coords = conf.coordinates
 

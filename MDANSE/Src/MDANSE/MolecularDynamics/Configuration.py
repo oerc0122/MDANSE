@@ -30,7 +30,11 @@ if TYPE_CHECKING:
 
 
 def contiguous_coordinates_real(
-    coords: np.ndarray, cell: np.ndarray, rcell: np.ndarray, indices: List[Tuple[int]]
+    coords: np.ndarray,
+    cell: np.ndarray,
+    rcell: np.ndarray,
+    indices: List[Tuple[int]],
+    bring_to_centre: bool = False,
 ):
     """Translates atoms by a lattice vector. Returns a coordinate array
     in which atoms in each segment are separated from the first atom
@@ -47,6 +51,9 @@ def contiguous_coordinates_real(
     indices : List[Tuple[int]]
         a list of index group, as in [[1,2,3], [7,8]]
         (this would ensure 2 and 3 are close to 1, and 8 is close to 7)
+    bring_to_centre: bool
+        if true, atoms are shifted to minimise the distance from the average
+        position and not from the first atom
 
     Returns
     -------
@@ -62,17 +69,28 @@ def contiguous_coordinates_real(
 
         if len(idxs) < 2:
             continue
-        minimum_offsets = scaleconfig[idxs[1:]] - scaleconfig[idxs[0]]
-        minimum_offsets -= np.round(minimum_offsets)
-        newconfig = scaleconfig[idxs[0]] + minimum_offsets
-        newconfig = np.matmul(newconfig, cell)
-        contiguous_coords[idxs[1:]] = newconfig
+        if bring_to_centre:
+            centre = np.mean(scaleconfig[idxs], axis=0)
+            minimum_offsets = scaleconfig[idxs] - centre
+            minimum_offsets -= np.round(minimum_offsets)
+            newconfig = centre + minimum_offsets
+            newconfig = np.matmul(newconfig, cell)
+            contiguous_coords[idxs] = newconfig
+        else:
+            minimum_offsets = scaleconfig[idxs[1:]] - scaleconfig[idxs[0]]
+            minimum_offsets -= np.round(minimum_offsets)
+            newconfig = scaleconfig[idxs[0]] + minimum_offsets
+            newconfig = np.matmul(newconfig, cell)
+            contiguous_coords[idxs[1:]] = newconfig
 
     return contiguous_coords
 
 
 def contiguous_coordinates_box(
-    coords: np.ndarray, cell: np.ndarray, indices: List[Tuple[int]]
+    coords: np.ndarray,
+    cell: np.ndarray,
+    indices: List[Tuple[int]],
+    bring_to_centre: bool = False,
 ):
     """_summary_
 
@@ -85,6 +103,9 @@ def contiguous_coordinates_box(
     indices : List[Tuple[int]]
         a list of index group, as in [[1,2,3], [7,8]]
         (this would ensure 2 and 3 are close to 1, and 8 is close to 7)
+    bring_to_centre: bool
+        if true, atoms are shifted to minimise the distance from the average
+        position and not from the first atom
 
     Returns
     -------
@@ -100,10 +121,17 @@ def contiguous_coordinates_box(
             continue
 
         idxs = list(tupleidxs)
-        sdx = coords[idxs[1:]] - coords[idxs[0]]
-        sdx -= np.round(sdx)
-        newx = coords[idxs[0]] + sdx
-        contiguous_coords[idxs[1:]] = np.matmul(newx, cell)
+        if bring_to_centre:
+            centre = np.mean(coords[idxs], axis=0)
+            sdx = coords[idxs] - centre
+            sdx -= np.round(sdx)
+            newx = coords[idxs] + sdx
+            contiguous_coords[idxs] = np.matmul(newx, cell)
+        else:
+            sdx = coords[idxs[1:]] - coords[idxs[0]]
+            sdx -= np.round(sdx)
+            newx = coords[idxs[0]] + sdx
+            contiguous_coords[idxs[1:]] = np.matmul(newx, cell)
 
     return contiguous_coords
 
@@ -524,7 +552,9 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
 
         return real_conf
 
-    def contiguous_configuration(self) -> PeriodicBoxConfiguration:
+    def contiguous_configuration(
+        self, bring_to_centre: bool = False
+    ) -> PeriodicBoxConfiguration:
         """
         Return a configuration with chemical entities made contiguous.
 
@@ -540,6 +570,7 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
             self._variables["coordinates"],
             self.unit_cell.direct,
             indices_grouped,
+            bring_to_centre,
         )
 
         conf = self.clone()
@@ -589,7 +620,9 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         """
         return self._variables["coordinates"]
 
-    def contiguous_configuration(self) -> PeriodicRealConfiguration:
+    def contiguous_configuration(
+        self, bring_to_centre: bool = False
+    ) -> PeriodicRealConfiguration:
         """
         Return a configuration with chemical entities made contiguous.
 
@@ -606,6 +639,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
             self._unit_cell.direct,
             self._unit_cell.inverse,
             indices_grouped,
+            bring_to_centre,
         )
 
         conf = self.clone()
