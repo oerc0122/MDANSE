@@ -1,25 +1,21 @@
+import numpy as np
+
 from qtpy.QtWidgets import QWidget, QSizePolicy, QVBoxLayout, QLabel, QDialog
-from qtpy.Qt3DExtras import Qt3DWindow
-from qtpy.QtGui import QColor
-from qtpy.Qt3DRender import QDirectionalLight, QGeometryRenderer
+from qtpy.Qt3DRender import QDirectionalLight
 from qtpy.QtGui import QColor, QVector3D, QQuaternion, QFont
 from qtpy.Qt3DExtras import (
     QPhongMaterial,
     QCylinderMesh,
-    QCuboidMesh,
-    QPlaneMesh,
     QSphereMesh,
     Qt3DWindow,
     QOrbitCameraController,
 )
 from qtpy.QtCore import Qt as _Qt
 from qtpy.Qt3DCore import QEntity, QTransform
-from MDANSE.Chemistry import ATOMS_DATABASE
-import numpy as np
 
 
 class MoleculePreviewWidget(QDialog):
-    def __init__(self, parent, molecule_information, molecule_name):
+    def __init__(self, parent, molecule_information, molecule_name, atom_database):
         super().__init__(parent)
         self.setWindowTitle("Molecule Preview")
         self.resize(800, 600)
@@ -44,23 +40,23 @@ class MoleculePreviewWidget(QDialog):
         mass = []
         coords = []
         info_text = f"Molecule name: {molecule_name}\n"
-        for key in molecule_information["atom_number"]:
-            info_text += (
-                f"Number of {key} atoms: {molecule_information['atom_number'][key]}\n"
-            )
+        for key, value in molecule_information["atom_number"].items():
+            info_text += f"Number of {key} atoms: {value}\n"
 
         info_text += f"Number of such molecules in trajectory: {molecule_information['no_of_molecules']}\n"
 
-        for i, (index, atom) in enumerate(
-            molecule_information["atom_information"].items()
-        ):
-            x, y, z = atom["coords"]
+        coordinates = molecule_information["atom_coordinates"]
+        indices = molecule_information["atom_indices"]
+        atom_symbols = molecule_information["atom_symbols"]
+        bonds = molecule_information["bond_list"]
+        for at_number in range(len(coordinates)):
+            x, y, z = coordinates[at_number]
             x, y, z = (20 * x - 10, 20 * y - 10, 20 * z - 10)
-            symbol = atom["symbol"]
-            colour = ATOMS_DATABASE.get_atom_property(symbol, "color")
-            radius = ATOMS_DATABASE.get_atom_property(symbol, "covalent_radius")
-            mass.append(ATOMS_DATABASE.get_atom_property(symbol, "atomic_weight"))
-            coords.append(atom["coords"])
+            symbol = atom_symbols[at_number]
+            colour = atom_database.get_atom_property(symbol, "color")
+            radius = atom_database.get_atom_property(symbol, "covalent_radius")
+            mass.append(atom_database.get_atom_property(symbol, "atomic_weight"))
+            coords.append(coordinates[at_number])
             r, g, b = [int(x) for x in colour.split(";")]
             colour = QColor(r, g, b)
             m_sphereEntity = QEntity(self.rootEntity)
@@ -81,12 +77,8 @@ class MoleculePreviewWidget(QDialog):
             m_sphereEntity.addComponent(sphereTransform)
 
         atom_information = molecule_information["atom_information"]
-        for bond in molecule_information["bond_info"]:
-            i, j = bond
-            coord1, coord2 = (
-                atom_information[i]["coords"],
-                atom_information[j]["coords"],
-            )
+        for bond in bonds:
+            coord1, coord2 = bond[0], bond[1]
             coord1 = (20 * coord1[0] - 10, 20 * coord1[1] - 10, 20 * coord1[2] - 10)
             coord2 = (20 * coord2[0] - 10, 20 * coord2[1] - 10, 20 * coord2[2] - 10)
             direction = QVector3D(
