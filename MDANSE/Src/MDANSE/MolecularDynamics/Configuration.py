@@ -710,7 +710,9 @@ class RealConfiguration(_Configuration):
         """
         return self._variables["coordinates"]
 
-    def contiguous_configuration(self) -> RealConfiguration:
+    def contiguous_configuration(
+        self, bring_to_centre: bool = False
+    ) -> RealConfiguration:
         """
         Return a configuration with chemical entities made contiguous, which is always itself.
 
