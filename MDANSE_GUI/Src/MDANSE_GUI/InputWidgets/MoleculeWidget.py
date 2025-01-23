@@ -13,18 +13,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+
+import numpy as np
+
 from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QComboBox, QPushButton, QDialog
-from qtpy.QtWidgets import (
-    QHBoxLayout,
-    QVBoxLayout,
-    QWidget,
-    QSizePolicy,
-    QFrame,
-    QSizePolicy,
-    QPushButton,
-    QFileDialog,
-)
+from qtpy.QtWidgets import QComboBox, QPushButton
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.InputWidgets.MoleculePreviewWidget import MoleculePreviewWidget
 
@@ -38,7 +31,7 @@ class MoleculeWidget(WidgetBase):
         if trajectory_configurator is not None:
             option_list = trajectory_configurator[
                 "instance"
-            ].chemical_system.unique_molecule_names
+            ].chemical_system.unique_molecules()
             if len(option_list) > 0:
                 default_option = option_list[0]
         else:
@@ -51,36 +44,32 @@ class MoleculeWidget(WidgetBase):
             self._configurator._dependencies["trajectory"]
         ]
         hdf_traj = traj_config["hdf_trajectory"]
-        unique_molecules = hdf_traj.chemical_system.unique_molecules
+        unique_molecules = hdf_traj.chemical_system.unique_molecules()
         traj_bond_list = hdf_traj.chemical_system._bonds
+        self.atom_database = hdf_traj
         self.mol_dict = {}
         coords_0 = hdf_traj.trajectory.coordinates(0)
-        for i, mol in enumerate(unique_molecules):
-            indices = []
-            self.atom_information = {}
-            no_of_molecules = hdf_traj.chemical_system.number_of_molecules(mol.name)
-            self.atom_number = {}
-            for atom in mol._atoms:
-                element = atom.element
-                try:
-                    self.atom_number[element] += 1
-                except KeyError:
-                    self.atom_number[element] = 1
-                index = atom.index
-                indices.append(index)
-                symbol = atom.symbol
-                coords = coords_0[index]
-                atom_dict = {"symbol": symbol, "element": element, "coords": coords}
-                self.atom_information[index] = atom_dict
-
-            bond_list = [
-                bond for bond in traj_bond_list if all(atom in indices for atom in bond)
+        for mol_name in unique_molecules:
+            no_of_molecules = len(hdf_traj.chemical_system._clusters[mol_name])
+            atom_indices = hdf_traj.chemical_system._clusters[mol_name][0]
+            atom_symbols = [hdf_traj.chemical_system.atom_list[index] for index in atom_indices]
+            coordinates = coords_0[atom_indices]
+            unique_atoms, atom_counts = np.unique(atom_symbols, return_counts=True)
+            atom_counts = {
+                unique_atoms[n]: atom_counts[n] for n in range(len(unique_atoms))
+            }
+            bonds = [
+                (coords_0[bond[0]], coords_0[bond[1]])
+                for bond in traj_bond_list
+                if bond[0] in atom_indices or bond[1] in atom_indices
             ]
-            self.mol_dict[mol.name] = {
+            self.mol_dict[mol_name] = {
                 "no_of_molecules": no_of_molecules,
-                "atom_information": self.atom_information,
-                "atom_number": self.atom_number,
-                "bond_info": bond_list,
+                "atom_coordinates": coordinates,
+                "atom_number": atom_counts,
+                "atom_indices": atom_indices,
+                "atom_symbols": atom_symbols,
+                "bond_list": bonds,
             }
 
         self.field = QComboBox(self._base)
@@ -116,7 +105,7 @@ class MoleculeWidget(WidgetBase):
         self.selected_name = self.field.currentText()
         self.selected_mol = self.mol_dict[self.selected_name]
         self.window = MoleculePreviewWidget(
-            self._base, self.selected_mol, self.selected_name
+            self._base, self.selected_mol, self.selected_name, self.atom_database
         )
 
     @Slot()
@@ -125,7 +114,7 @@ class MoleculeWidget(WidgetBase):
         Opens a window that shows a preview of selected molecule
         """
         self.window = MoleculePreviewWidget(
-            self._base, self.selected_mol, self.selected_name
+            self._base, self.selected_mol, self.selected_name, self.atom_database
         )
         if self.window.isVisible():
             self.window.close()
