@@ -78,7 +78,7 @@ class LoggingTab(GeneralTab):
             return
         try:
             self._extra_handler.setLevel(new_level)
-        except:
+        except Exception:
             LOG.error(f"Could not set GuiLogHandler to log level {new_level}")
         else:
             self._visualiser.append_text(
@@ -88,7 +88,7 @@ class LoggingTab(GeneralTab):
     def add_handler(self, new_handler):
         try:
             current_level = self._loglevel_combo.currentText()
-        except:
+        except Exception:
             current_level = "INFO"
         self._extra_handler = new_handler
         self._extra_handler.add_visualiser(self._visualiser)

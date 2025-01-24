@@ -37,7 +37,7 @@ class PlotDataInfo(QTextBrowser):
     def update_panel(self, input_text):
         try:
             text = "\n".join([f"{key}: {item}" for key, item in input_text.items()])
-        except:
+        except Exception:
             text = str(input_text)
         filtered = self.filter(text)
         self.setHtml(filtered)

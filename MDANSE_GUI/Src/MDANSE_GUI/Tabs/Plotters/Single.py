@@ -146,7 +146,7 @@ class Single(Plotter):
                 conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
                     xaxis_unit
                 )
-            except:
+            except Exception:
                 continue
             else:
                 if dataset._n_dim == 1:
@@ -162,7 +162,7 @@ class Single(Plotter):
                     except ValueError:
                         try:
                             temp.set_marker(int(marker))
-                        except:
+                        except Exception:
                             pass
                     self._active_curves.append(temp)
                     self._backup_curves.append([temp.get_xdata(), temp.get_ydata()])

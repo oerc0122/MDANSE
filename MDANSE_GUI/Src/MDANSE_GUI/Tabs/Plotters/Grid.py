@@ -103,7 +103,7 @@ class Grid(Plotter):
                 except ValueError:
                     try:
                         temp_curve.set_marker(int(marker))
-                    except:
+                    except Exception:
                         pass
                 xlimits, ylimits = axes.get_xlim(), axes.get_ylim()
                 try:

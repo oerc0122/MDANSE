@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+
 from typing import List
 
 import numpy as np
@@ -199,9 +200,9 @@ class MolecularViewer(QtWidgets.QWidget):
 
         LOG.info("Computing isosurface ...")
 
-        initial_coords = self._reader.read_frame(0)
+        _initial_coords = self._reader.read_frame(0)
         coords, lower_bounds, upper_bounds = self._reader.read_atom_trajectory(index)
-        spacing, self._atomic_trace_histogram = histogram_3d(
+        spacing, self._atomic_trace_histogram = histogram_3d(  # noqa
             coords, lower_bounds, upper_bounds, 100, 100, 100
         )
 
@@ -548,7 +549,7 @@ class MolecularViewer(QtWidgets.QWidget):
         hist_max = self._atomic_trace_histogram.max()
         hist_mean = self._atomic_trace_histogram.mean()
 
-        dlg = AtomicTraceSettingsDialog(hist_min, hist_max, hist_mean, self)
+        dlg = AtomicTraceSettingsDialog(hist_min, hist_max, hist_mean, self)  # noqa
 
         dlg.rendering_type_changed.connect(self.on_change_atomic_trace_rendering_type)
         dlg.opacity_changed.connect(self.on_change_atomic_trace_opacity)

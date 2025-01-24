@@ -112,7 +112,7 @@ class JobTree(QStandardItemModel):
         """
         parent = self.invisibleRootItem()
         for cat_string in category_tuple:
-            if not cat_string in self._categories.keys():
+            if cat_string not in self._categories:
                 current_node = QStandardItem(cat_string)
                 parent.appendRow(current_node)
                 parent = current_node

@@ -95,7 +95,7 @@ class RangeWidget(WidgetBase):
             strval = field.text()
             try:
                 val = self._num_type(strval)
-            except:
+            except Exception:
                 val = self._num_type(self._default_values[n])
             result.append(val)
         return result
