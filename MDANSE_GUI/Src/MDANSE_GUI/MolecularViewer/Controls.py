@@ -96,7 +96,7 @@ QSpinBox::down-button  {
 class ViewerControls(QWidget):
     def __init__(self, *args, **kwargs):
         super(QWidget, self).__init__(*args, **kwargs)
-        layout = QGridLayout(self)
+        _layout = QGridLayout(self)
         self._viewer = None
         self._buttons = {}
         self._delegates = {}

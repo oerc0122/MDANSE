@@ -126,7 +126,7 @@ class WidgetBase(QObject):
             self.configure_using_default()
         try:
             self._configurator.configure(current_value)
-        except:
+        except Exception:
             self.mark_error(
                 "COULD NOT SET THIS VALUE - you may need to change the values in other widgets"
             )

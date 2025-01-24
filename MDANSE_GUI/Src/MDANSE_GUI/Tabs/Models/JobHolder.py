@@ -83,7 +83,7 @@ class JobThread(QThread):
         while self._keep_running:
             try:
                 status_update = self._pipe_end.recv()
-            except:
+            except Exception:
                 self.fail()
             else:
                 self._job_comm.status_update(status_update)
@@ -329,7 +329,7 @@ class JobHolder(QStandardItemModel):
             else:
                 try:
                     int(job_vars[1]["output_files"][1])
-                except:
+                except Exception:
                     item_th.for_loading.connect(self.results_for_loading)
                 else:
                     item_th.for_loading.connect(self.trajectory_for_loading)
@@ -341,7 +341,7 @@ class JobHolder(QStandardItemModel):
         watcher_thread.start()
         try:
             task_name = str(job_vars[0])
-        except:
+        except Exception:
             task_name = str("This should have been a job name")
         name_item = QStandardItem(task_name)
         name_item.setData(entry_number, role=Qt.ItemDataRole.UserRole)

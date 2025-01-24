@@ -103,7 +103,7 @@ class InputFileWidget(WidgetBase):
                     self._parent._default_path = str(
                         PurePath(os.path.split(new_value[0])[0])
                     )
-            except:
+            except Exception:
                 LOG.error(
                     f"session.set_path failed for {self._job_name}, {os.path.split(new_value[0])[0]}"
                 )

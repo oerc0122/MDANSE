@@ -1,4 +1,4 @@
-name: Black
+name: Lint
 
 on:
   push:
@@ -24,3 +24,12 @@ jobs:
         with:
           options: "--check --verbose"
           src: "MDANSE_GUI/Src"
+
+  lint_check_ruff_gui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          src: "./MDANSE_GUI/Src"
+          args: "check"
