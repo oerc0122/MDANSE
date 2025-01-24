@@ -28,17 +28,19 @@ class VectorModel(QStandardItemModel):
     type_changed = Signal()
     input_is_valid = Signal(bool)
 
-    def __init__(self, *args, chemical_system=None, **kwargs):
+    def __init__(self, *args, trajectory=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._generator = None
         self._defaults = []
-        self._chemical_system = chemical_system
+        self._trajectory = trajectory
 
     @Slot(str)
     def switch_qvector_type(self, vector_type: str, optional_settings: dict = None):
         self.clear()
         self._defaults = []
-        self._generator = IQVectors.create(vector_type, self._chemical_system)
+        self._generator = IQVectors.create(
+            vector_type, self._trajectory.configuration(0)
+        )
         settings = self._generator.settings
         for kv in settings.items():
             name = kv[0]  # dictionary key
@@ -111,12 +113,12 @@ class QVectorsWidget(WidgetBase):
         super().__init__(*args, **kwargs)
         self._relative_size = 3
         trajectory_configurator = kwargs.get("trajectory_configurator", None)
-        chemical_system = None
+        trajectory = None
         if trajectory_configurator is not None:
-            chemical_system = trajectory_configurator["instance"].chemical_system
+            trajectory = trajectory_configurator["instance"]
         self._selector = QComboBox(self._base)
         self._selector.addItems(IQVectors.indirect_subclasses())
-        self._model = VectorModel(self._base, chemical_system=chemical_system)
+        self._model = VectorModel(self._base, trajectory=trajectory)
         self._view = QTableView(self._base)
         self._layout.addWidget(self._selector)
         self._layout.addWidget(self._view)
