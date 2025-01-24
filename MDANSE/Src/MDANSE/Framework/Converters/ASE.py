@@ -188,22 +188,16 @@ class ASE(Converter):
                 )
             except ValueError:
                 self._keep_running = False
-                LOG.warning(
-                    f"Could not create configuration for frame {index}. Will skip the rest"
-                )
+                LOG.warning(f"Could not create configuration for frame {index}. Will skip the rest")
                 return index, None
             if self._configuration["fold"]["value"]:
                 real_conf.fold_coordinates()
         else:
             try:
-                real_conf = RealConfiguration(
-                    self._trajectory.chemical_system, coords, **variables
-                )
+                real_conf = RealConfiguration(self._trajectory.chemical_system, coords, **variables)
             except ValueError:
                 self._keep_running = False
-                LOG.warning(
-                    f"Could not create configuration for frame {index}. Will skip the rest"
-                )
+                LOG.warning(f"Could not create configuration for frame {index}. Will skip the rest")
                 return index, None
 
         # A snapshot is created out of the current configuration.
@@ -269,9 +263,7 @@ class ASE(Converter):
         else:
             first_frame = self._input[0]
             self._total_number_of_steps = len(self._input)
-            LOG.debug(
-                f"Length found using len(self._input)={self._total_number_of_steps}"
-            )
+            LOG.debug(f"Length found using len(self._input)={self._total_number_of_steps}")
 
         self._timeaxis = self._timestep * np.arange(self._total_number_of_steps)
 

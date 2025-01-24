@@ -33,7 +33,6 @@ from MDANSE.Framework.AtomMapping import AtomLabel, get_element_from_mapping
 
 
 class XTDFileConfigurator(FileWithAtomDataConfigurator):
-
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
         self._atoms = None
@@ -141,18 +140,14 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
                     atomsMapping[int(v)] for v in node.attrib["Connects"].split(",")
                 ]
                 idx1, idx2 = bondsMapping[idx]
-                self._bonds.append(
-                    (self._atoms[idx1]["index"], self._atoms[idx2]["index"])
-                )
+                self._bonds.append((self._atoms[idx1]["index"], self._atoms[idx2]["index"]))
                 self._atoms[idx1]["bonded_to"].add(idx2)
                 self._atoms[idx2]["bonded_to"].add(idx1)
 
     def build_chemical_system(self, aliases):
         self._chemical_system = ChemicalSystem()
 
-        coordinates = np.array(
-            [atom["xyz"] for atom in self._atoms.values()], dtype=np.float64
-        )
+        coordinates = np.array([atom["xyz"] for atom in self._atoms.values()], dtype=np.float64)
         element_list = [atom["element"] for atom in self._atoms.values()]
         name_list = [atom["atom_name"] for atom in self._atoms.values()]
         unique_labels = set(name_list)
@@ -166,15 +161,11 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         self._chemical_system.find_clusters_from_bonds()
 
         if self._pbc:
-            boxConf = PeriodicBoxConfiguration(
-                self._chemical_system, coordinates, self._cell
-            )
+            boxConf = PeriodicBoxConfiguration(self._chemical_system, coordinates, self._cell)
             real_conf = boxConf.to_real_configuration()
         else:
             coordinates *= measure(1.0, "ang").toval("nm")
-            real_conf = RealConfiguration(
-                self._chemical_system, coordinates, self._cell
-            )
+            real_conf = RealConfiguration(self._chemical_system, coordinates, self._cell)
 
         real_conf.fold_coordinates()
         self._configuration = real_conf

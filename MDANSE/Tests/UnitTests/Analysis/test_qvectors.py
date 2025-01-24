@@ -35,9 +35,7 @@ def test_disf(trajectory):
     parameters["weights"] = "b_incoherent2"
     for qvector_generator in IQVectors.indirect_subclasses():
         instance = IQVectors.create(qvector_generator, trajectory._data.configuration())
-        qvector_defaults = {
-            name: value[1]["default"] for name, value in instance.settings.items()
-        }
+        qvector_defaults = {name: value[1]["default"] for name, value in instance.settings.items()}
         if len(qvector_defaults) < 1:
             continue
         print(qvector_generator)

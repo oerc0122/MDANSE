@@ -28,9 +28,7 @@ class VectorConfigurator(IConfigurator):
 
     _default = [1.0, 0.0, 0.0]
 
-    def __init__(
-        self, name, valueType=int, normalize=False, notNull=False, dimension=3, **kwargs
-    ):
+    def __init__(self, name, valueType=int, normalize=False, notNull=False, dimension=3, **kwargs):
         """
         Initializes the configurator.
 

@@ -94,9 +94,7 @@ class DistanceHistogram(IJob):
         self.numberOfSteps = self.configuration["frames"]["number"]
 
         self._indices = [
-            idx
-            for idxs in self.configuration["atom_selection"]["indices"]
-            for idx in idxs
+            idx for idxs in self.configuration["atom_selection"]["indices"] for idx in idxs
         ]
         self._indices = np.array(self._indices, dtype=np.int32)
 
@@ -215,9 +213,7 @@ class DistanceHistogram(IJob):
             #. x (any): The returned result(s) of run_step
         """
 
-        nAtoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.number_of_atoms
+        nAtoms = self.configuration["trajectory"]["instance"].chemical_system.number_of_atoms
 
         self.averageDensity += nAtoms / x[0]
 

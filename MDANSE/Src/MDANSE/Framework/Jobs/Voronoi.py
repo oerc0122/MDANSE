@@ -34,6 +34,7 @@ def no_exc_min(numbers: List[float]):
     except TypeError:
         return -2
 
+
 class VoronoiError(Exception):
     pass
 
@@ -106,9 +107,7 @@ class Voronoi(IJob):
 
         try:
             cell = first_conf.unit_cell.direct
-            self.cell_param = np.array(
-                [cell[0, 0], cell[1, 1], cell[2, 2]], dtype=np.float64
-            )
+            self.cell_param = np.array([cell[0, 0], cell[1, 1], cell[2, 2]], dtype=np.float64)
         except Exception:
             raise VoronoiError(
                 "Voronoi analysis cannot be computed if simulation box is not defined. "
@@ -195,9 +194,7 @@ class Voronoi(IJob):
 
         # Volume Computation
         global_volumes = {}
-        for vrid, regions in list(
-            delaunay_regions_for_each_valid_voronoi_region.items()
-        ):
+        for vrid, regions in list(delaunay_regions_for_each_valid_voronoi_region.items()):
             regions_volumes = []
             for vidx in regions:
                 coords = vertices_coords[vidx]

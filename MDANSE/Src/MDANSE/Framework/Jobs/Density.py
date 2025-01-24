@@ -61,13 +61,9 @@ class Density(IJob):
 
         self._n_frames = self.numberOfSteps
 
-        self._n_atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.number_of_atoms
+        self._n_atoms = self.configuration["trajectory"]["instance"].chemical_system.number_of_atoms
 
-        self._symbols = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._symbols = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         # Will store the time.
         self._outputData.add(
@@ -174,9 +170,7 @@ class Density(IJob):
         self._outputData["avg_atomic_density"][:] = (
             np.cumsum(self._outputData["atomic_density"]) / norm
         )
-        self._outputData["avg_mass_density"][:] = (
-            np.cumsum(self._outputData["mass_density"]) / norm
-        )
+        self._outputData["avg_mass_density"][:] = np.cumsum(self._outputData["mass_density"]) / norm
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

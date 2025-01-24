@@ -142,7 +142,6 @@ class AtomTransmutationConfigurator(IConfigurator):
 
         self._nTransmutedAtoms = 0
         for idx, element in value.items():
-
             try:
                 idx = int(idx)
             except ValueError:
@@ -150,13 +149,13 @@ class AtomTransmutationConfigurator(IConfigurator):
                 return
 
             if idx not in idxs:
-                self.error_status = "Inputted setting not valid - atom index not found in the current system."
+                self.error_status = (
+                    "Inputted setting not valid - atom index not found in the current system."
+                )
                 return
 
             if element not in traj_config["instance"].atoms_in_database:
-                self.error_status = (
-                    f"the element {element} is not registered in the database"
-                )
+                self.error_status = f"the element {element} is not registered in the database"
                 return
 
             self.transmute(idx, element)

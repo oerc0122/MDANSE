@@ -41,9 +41,7 @@ class PseudoVoigt(IInstrumentResolution):
         muG = self._configuration["mu_gaussian"]["value"]
         sigmaG = self._configuration["sigma_gaussian"]["value"]
 
-        gaussian = (np.sqrt(2.0 * np.pi) / sigmaG) * np.exp(
-            -0.5 * ((omegas - muG) / sigmaG) ** 2
-        )
+        gaussian = (np.sqrt(2.0 * np.pi) / sigmaG) * np.exp(-0.5 * ((omegas - muG) / sigmaG) ** 2)
 
         lorentzian = (2.0 * sigmaL) / ((omegas - muL) ** 2 + sigmaL**2)
 

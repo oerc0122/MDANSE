@@ -200,9 +200,7 @@ class DynamicCoherentStructureFactor(IJob):
         else:
             traj = self.configuration["trajectory"]["instance"]
 
-            nQVectors = self.configuration["q_vectors"]["value"][shell][
-                "q_vectors"
-            ].shape[1]
+            nQVectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"].shape[1]
 
             rho = {}
             for element in self.configuration["atom_selection"]["unique_names"]:
@@ -238,9 +236,9 @@ class DynamicCoherentStructureFactor(IJob):
             for pair in self._elementsPairs:
                 # F_ab(Q,t) = F_ba(Q,t) this is valid as long as
                 # n_configs is sufficiently large
-                corr = correlate(x[pair[0]], x[pair[1]][:n_configs], mode="valid").T[
-                    0
-                ] / (n_configs * x[pair[0]].shape[1])
+                corr = correlate(x[pair[0]], x[pair[1]][:n_configs], mode="valid").T[0] / (
+                    n_configs * x[pair[0]].shape[1]
+                )
                 self._outputData["f(q,t)_%s%s" % pair][index, :] += corr.real
 
     def finalize(self):

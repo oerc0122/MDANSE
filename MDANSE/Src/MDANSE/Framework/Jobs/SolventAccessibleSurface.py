@@ -32,7 +32,6 @@ def solvent_accessible_surface(
     sphere_points: np.ndarray,
     probe_radius_value: float,
 ):
-
     # Computes the Solvent Accessible Surface Based on the algorithm published by Shrake, A., and J. A. Rupley. JMB (1973) 79:351-371.
 
     sas = 0.0
@@ -41,33 +40,23 @@ def solvent_accessible_surface(
     min_dist = np.min(vdwRadii) + probe_radius_value
     sphere_indices = set(range(len(sphere_points)))
     for idx in indexes:
-        sphere_tree = KDTree(
-            coords[idx] + sphere_points * (vdwRadii[idx] + probe_radius_value)
-        )
+        sphere_tree = KDTree(coords[idx] + sphere_points * (vdwRadii[idx] + probe_radius_value))
         distance_dict = sphere_tree.sparse_distance_matrix(tree, max_distance=max_dist)
         pair_array = np.array([pair for pair in distance_dict.keys()])
         value_array = np.array([value for value in distance_dict.values()])
-        combined_array = np.hstack(
-            [pair_array, value_array.reshape((len(value_array), 1))]
-        )[np.where(pair_array[:, 1] != idx)]
-        blocked_for_sure = set(
-            combined_array[:, 0][np.where(combined_array[:, 2] <= min_dist)]
-        )
+        combined_array = np.hstack([pair_array, value_array.reshape((len(value_array), 1))])[
+            np.where(pair_array[:, 1] != idx)
+        ]
+        blocked_for_sure = set(combined_array[:, 0][np.where(combined_array[:, 2] <= min_dist)])
         free_for_sure = sphere_indices - set(combined_array[:, 0])
         uncertain = sphere_indices - free_for_sure - blocked_for_sure
         confirmed = set()
         if len(uncertain) > 0:
-            uncertain_lines = np.array(
-                [line for line in combined_array if line[0] in uncertain]
-            )
-            neighbour_radii = np.array(
-                [vdwRadii[int(line[1])] for line in uncertain_lines]
-            )
+            uncertain_lines = np.array([line for line in combined_array if line[0] in uncertain])
+            neighbour_radii = np.array([vdwRadii[int(line[1])] for line in uncertain_lines])
             confirmed = set(
                 uncertain_lines[:, 0][
-                    np.where(
-                        uncertain_lines[:, 2] < neighbour_radii + probe_radius_value
-                    )
+                    np.where(uncertain_lines[:, 2] < neighbour_radii + probe_radius_value)
                 ]
             )
         free_for_sure.update(uncertain - confirmed)
@@ -159,16 +148,12 @@ class SolventAccessibleSurface(IJob):
         )
 
         # A mapping between the atom indices and covalent_radius radius for the whole universe.
-        self.vdwRadii = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_property(
+        self.vdwRadii = self.configuration["trajectory"]["instance"].chemical_system.atom_property(
             "vdw_radius"
         )  # should it be covalent?
 
         self._indices = [
-            idx
-            for idxs in self.configuration["atom_selection"]["indices"]
-            for idx in idxs
+            idx for idxs in self.configuration["atom_selection"]["indices"] for idx in idxs
         ]
 
     def run_step(self, index):

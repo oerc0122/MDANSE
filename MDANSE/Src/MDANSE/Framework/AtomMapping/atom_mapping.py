@@ -21,7 +21,6 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 
 
 class AtomLabel:
-
     def __init__(self, atm_label: str, **kwargs):
         """Creates an atom label object which is used for atom mapping
         and atom type guessing.
@@ -171,9 +170,7 @@ def guess_element(atm_label: str, mass: Union[float, int, None] = None) -> str:
     raise AttributeError(f"Unable to guess: {atm_label}")
 
 
-def get_element_from_mapping(
-    mapping: dict[str, dict[str, str]], label: str, **kwargs
-) -> str:
+def get_element_from_mapping(mapping: dict[str, dict[str, str]], label: str, **kwargs) -> str:
     """Determine the symbol of the element from the atom label and
     the information from the kwargs.
 
@@ -202,9 +199,7 @@ def get_element_from_mapping(
     return element
 
 
-def fill_remaining_labels(
-    mapping: dict[str, dict[str, str]], labels: list[AtomLabel]
-) -> None:
+def fill_remaining_labels(mapping: dict[str, dict[str, str]], labels: list[AtomLabel]) -> None:
     """Given a list of labels fill the remaining labels in the mapping
     dictionary.
 

@@ -168,9 +168,7 @@ class ImprovedASE(Converter):
         coords *= measure(1.0, "ang").toval("nm")
 
         if self._fractionalCoordinates:
-            conf = PeriodicBoxConfiguration(
-                self._trajectory.chemical_system, coords, unitCell
-            )
+            conf = PeriodicBoxConfiguration(self._trajectory.chemical_system, coords, unitCell)
             real_conf = conf.to_real_configuration()
         else:
             real_conf = PeriodicRealConfiguration(
@@ -257,9 +255,7 @@ class ImprovedASE(Converter):
         except FileNotFoundError:
             return
         except Exception:
-            for file_format in self.configuration[
-                "configuration_file"
-            ]._allowed_formats:
+            for file_format in self.configuration["configuration_file"]._allowed_formats:
                 try:
                     self._extra_input = read(
                         self.configuration["configuration_file"]["value"],

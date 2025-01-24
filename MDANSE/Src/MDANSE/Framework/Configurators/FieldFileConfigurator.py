@@ -51,9 +51,7 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
 
         self["n_molecular_types"] = int(self["n_molecular_types"])
 
-        molBlocks = [
-            i for i, line in enumerate(lines) if re.match("finish", line, re.IGNORECASE)
-        ]
+        molBlocks = [i for i, line in enumerate(lines) if re.match("finish", line, re.IGNORECASE)]
 
         if self["n_molecular_types"] != len(molBlocks):
             raise FieldFileError("Error in the definition of the molecular types")
@@ -66,9 +64,7 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
             moleculeName = lines[first]
 
             # Extract the number of molecular types
-            nMolecules = re.match(
-                "nummols\s+(\d+)", lines[first + 1], re.IGNORECASE
-            ).groups()[0]
+            nMolecules = re.match("nummols\s+(\d+)", lines[first + 1], re.IGNORECASE).groups()[0]
             nMolecules = int(nMolecules)
 
             for i in range(first + 2, last):
@@ -102,9 +98,7 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
 
                         comp += 1
 
-                    self["molecules"].append(
-                        [moleculeName, nMolecules, atoms, masses, charges]
-                    )
+                    self["molecules"].append([moleculeName, nMolecules, atoms, masses, charges])
 
                     break
 
@@ -148,9 +142,7 @@ class FieldFileConfigurator(FileWithAtomDataConfigurator):
                 cluster = []
                 for _, (name, mass) in enumerate(zip(atomic_contents, masses)):
                     # The atom is created.
-                    element = get_element_from_mapping(
-                        aliases, name, molecule=db_name, mass=mass
-                    )
+                    element = get_element_from_mapping(aliases, name, molecule=db_name, mass=mass)
                     element_list.append(element)
                     name_list.append(name)
                     cluster.append(index)

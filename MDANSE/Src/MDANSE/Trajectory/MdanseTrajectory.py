@@ -70,9 +70,7 @@ class MdanseTrajectory:
             result = False
         else:
             try:
-                temp_cs = ChemicalSystem(
-                    os.path.splitext(os.path.basename(filename))[0]
-                )
+                temp_cs = ChemicalSystem(os.path.splitext(os.path.basename(filename))[0])
                 temp_cs.load(file_object)
             except Exception:
                 LOG.warning(
@@ -234,9 +232,7 @@ class MdanseTrajectory:
 
         return grp["coordinates"].shape[0]
 
-    def read_com_trajectory(
-        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
-    ):
+    def read_com_trajectory(self, atom_indices, first=0, last=None, step=1, box_coordinates=False):
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
@@ -284,12 +280,8 @@ class MdanseTrajectory:
             coords = coords[np.newaxis, :, :]
 
         if self._unit_cells is not None:
-            direct_cells = np.array(
-                [uc.direct for uc in self._unit_cells[first:last:step]]
-            )
-            inverse_cells = np.array(
-                [uc.inverse for uc in self._unit_cells[first:last:step]]
-            )
+            direct_cells = np.array([uc.direct for uc in self._unit_cells[first:last:step]])
+            inverse_cells = np.array([uc.inverse for uc in self._unit_cells[first:last:step]])
             temp_coords = contiguous_coordinates_real(
                 coords,
                 direct_cells,
@@ -298,10 +290,7 @@ class MdanseTrajectory:
                 bring_to_centre=True,
             )
             com_coords = np.vstack(
-                [
-                    center_of_mass(temp_coords[tstep], masses)
-                    for tstep in range(len(temp_coords))
-                ]
+                [center_of_mass(temp_coords[tstep], masses) for tstep in range(len(temp_coords))]
             )
 
             com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
@@ -335,17 +324,13 @@ class MdanseTrajectory:
             comp = 0
             for i in range(first, last, step):
                 direct_cell = self._unit_cells[i].transposed_direct
-                real_coordinates[comp, :] = np.matmul(
-                    direct_cell, box_coordinates[comp, :]
-                )
+                real_coordinates[comp, :] = np.matmul(direct_cell, box_coordinates[comp, :])
                 comp += 1
             return real_coordinates
         else:
             return box_coordinates
 
-    def read_atomic_trajectory(
-        self, index, first=0, last=None, step=1, box_coordinates=False
-    ):
+    def read_atomic_trajectory(self, index, first=0, last=None, step=1, box_coordinates=False):
         """Read an atomic trajectory. The trajectory is corrected from box jumps.
 
         :param index: the index of the atom
@@ -371,20 +356,12 @@ class MdanseTrajectory:
 
         if self._unit_cells is not None:
             direct_cells = np.array(
-                [
-                    self._unit_cells[nf].transposed_direct
-                    for nf in range(first, last, step)
-                ]
+                [self._unit_cells[nf].transposed_direct for nf in range(first, last, step)]
             )
             inverse_cells = np.array(
-                [
-                    self._unit_cells[nf].transposed_inverse
-                    for nf in range(first, last, step)
-                ]
+                [self._unit_cells[nf].transposed_inverse for nf in range(first, last, step)]
             )
-            atomic_traj = atomic_trajectory(
-                coords, direct_cells, inverse_cells, box_coordinates
-            )
+            atomic_traj = atomic_trajectory(coords, direct_cells, inverse_cells, box_coordinates)
             return atomic_traj
         else:
             return coords
@@ -413,9 +390,7 @@ class MdanseTrajectory:
             last = len(self)
 
         if not self.has_variable(variable):
-            raise KeyError(
-                "The variable {} is not stored in the trajectory".format(variable)
-            )
+            raise KeyError("The variable {} is not stored in the trajectory".format(variable))
 
         grp = self._h5_file["/configuration"]
         variable = grp[variable][first:last:step, index, :].astype(np.float64)
@@ -447,22 +422,17 @@ class MdanseTrajectory:
         elif symbol not in self._h5_file["/atom_database"]:
             return ATOMS_DATABASE.get_atom_property(symbol, property)
         temp = np.where(
-            self._h5_file["/atom_database/property_labels"][:]
-            == property.encode("utf-8")
+            self._h5_file["/atom_database/property_labels"][:] == property.encode("utf-8")
         )[0]
         if len(temp) == 0:
             if property == "dummy":
                 try:
                     return ATOMS_DATABASE.get_atom_property(symbol, property)
                 except KeyError:
-                    if (
-                        "_" in symbol
-                    ):  # this is most likely an artificial atom from a molecule
+                    if "_" in symbol:  # this is most likely an artificial atom from a molecule
                         return 0  # the molecule atoms are not dummy
             else:
-                raise KeyError(
-                    f"Property {property} is not in the trajectory's internal database."
-                )
+                raise KeyError(f"Property {property} is not in the trajectory's internal database.")
         index = temp.flatten()[0]
         data_type = self._h5_file["/atom_database/property_types"][index]
         value = self._h5_file[f"/atom_database/{symbol}"][index]
@@ -486,8 +456,7 @@ class MdanseTrajectory:
             return ATOMS_DATABASE.properties
         else:
             return list(
-                label.decode("utf-8")
-                for label in self._h5_file["/atom_database/property_labels"]
+                label.decode("utf-8") for label in self._h5_file["/atom_database/property_labels"]
             )
 
     @property

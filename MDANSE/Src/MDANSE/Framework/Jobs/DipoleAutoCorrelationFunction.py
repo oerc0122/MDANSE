@@ -23,7 +23,6 @@ from MDANSE.Framework.Jobs.IJob import IJob
 
 
 class DipoleAutoCorrelationFunction(IJob):
-
     enabled = True
 
     label = "Dipole AutoCorrelation Function"
@@ -66,9 +65,7 @@ class DipoleAutoCorrelationFunction(IJob):
         """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
-        self.chemical_system = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system
+        self.chemical_system = self.configuration["trajectory"]["instance"].chemical_system
 
         self.molecules = self.chemical_system._clusters[
             self.configuration["molecule_name"]["value"]
@@ -107,9 +104,7 @@ class DipoleAutoCorrelationFunction(IJob):
             auto-correlation function for a molecule.
         """
         molecule = self.molecules[index]
-        dipoles = np.zeros(
-            (self.configuration["frames"]["number"], 3), dtype=np.float64
-        )
+        dipoles = np.zeros((self.configuration["frames"]["number"], 3), dtype=np.float64)
         for i, frame_index in enumerate(
             range(
                 self.configuration["frames"]["first"],
@@ -117,9 +112,7 @@ class DipoleAutoCorrelationFunction(IJob):
                 self.configuration["frames"]["step"],
             )
         ):
-            configuration = self.configuration["trajectory"]["instance"].configuration(
-                frame_index
-            )
+            configuration = self.configuration["trajectory"]["instance"].configuration(frame_index)
             masses = [
                 self.configuration["trajectory"]["instance"].get_atom_property(
                     self.chemical_system.atom_list[index], "atomic_weight"
@@ -136,14 +129,10 @@ class DipoleAutoCorrelationFunction(IJob):
                     q = self.configuration["atom_charges"]["charges"][idx]
                 except KeyError:
                     q = charges[idx]
-                dipoles[i] += q * (
-                    contiguous_configuration["coordinates"][idx, :] - com
-                )
+                dipoles[i] += q * (contiguous_configuration["coordinates"][idx, :] - com)
 
         n_configs = self.configuration["frames"]["n_configs"]
-        mol_dacf = correlate(dipoles, dipoles[:n_configs], mode="valid") / (
-            3 * n_configs
-        )
+        mol_dacf = correlate(dipoles, dipoles[:n_configs], mode="valid") / (3 * n_configs)
         return index, mol_dacf.T[0]
 
     def combine(self, index, x):

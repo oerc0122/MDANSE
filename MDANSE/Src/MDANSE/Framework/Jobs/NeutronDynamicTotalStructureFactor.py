@@ -81,13 +81,9 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Check time consistency
         if "time" not in self.configuration["dcsf_input_file"]["instance"]:
-            raise NeutronDynamicTotalStructureFactorError(
-                "No time found in dcsf input file"
-            )
+            raise NeutronDynamicTotalStructureFactorError("No time found in dcsf input file")
         if "time" not in self.configuration["disf_input_file"]["instance"]:
-            raise NeutronDynamicTotalStructureFactorError(
-                "No time found in disf input file"
-            )
+            raise NeutronDynamicTotalStructureFactorError("No time found in disf input file")
 
         dcsf_time = self.configuration["dcsf_input_file"]["instance"]["time"][:]
         disf_time = self.configuration["disf_input_file"]["instance"]["time"][:]
@@ -101,39 +97,25 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Check time window consistency
         if "time_window" not in self.configuration["dcsf_input_file"]["instance"]:
-            raise NeutronDynamicTotalStructureFactorError(
-                "No time window found in dcsf input file"
-            )
+            raise NeutronDynamicTotalStructureFactorError("No time window found in dcsf input file")
         if "time_window" not in self.configuration["disf_input_file"]["instance"]:
-            raise NeutronDynamicTotalStructureFactorError(
-                "No time window found in disf input file"
-            )
+            raise NeutronDynamicTotalStructureFactorError("No time window found in disf input file")
 
-        dcsf_time_window = self.configuration["dcsf_input_file"]["instance"][
-            "time_window"
-        ][:]
-        disf_time_window = self.configuration["disf_input_file"]["instance"][
-            "time_window"
-        ][:]
+        dcsf_time_window = self.configuration["dcsf_input_file"]["instance"]["time_window"][:]
+        disf_time_window = self.configuration["disf_input_file"]["instance"]["time_window"][:]
 
         if not np.all(dcsf_time_window == disf_time_window):
             raise NeutronDynamicTotalStructureFactorError(
                 "Inconsistent time windows between dcsf and disf input files"
             )
 
-        self._outputData.add(
-            "time_window", "LineOutputVariable", dcsf_time_window, units="au"
-        )
+        self._outputData.add("time_window", "LineOutputVariable", dcsf_time_window, units="au")
 
         # Check q values consistency
         if "q" not in self.configuration["dcsf_input_file"]["instance"]:
-            raise NeutronDynamicTotalStructureFactorError(
-                "No q values found in dcsf input file"
-            )
+            raise NeutronDynamicTotalStructureFactorError("No q values found in dcsf input file")
         if "q" not in self.configuration["disf_input_file"]["instance"]:
-            raise NeutronDynamicTotalStructureFactorError(
-                "No q values found in disf input file"
-            )
+            raise NeutronDynamicTotalStructureFactorError("No q values found in disf input file")
 
         dcsf_q = self.configuration["dcsf_input_file"]["instance"]["q"][:]
         disf_q = self.configuration["disf_input_file"]["instance"]["q"][:]
@@ -147,13 +129,9 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Check omega consistency
         if "omega" not in self.configuration["dcsf_input_file"]["instance"]:
-            raise NeutronDynamicTotalStructureFactorError(
-                "No omega found in dcsf input file"
-            )
+            raise NeutronDynamicTotalStructureFactorError("No omega found in dcsf input file")
         if "omega" not in self.configuration["disf_input_file"]["instance"]:
-            raise NeutronDynamicTotalStructureFactorError(
-                "No omega found in disf input file"
-            )
+            raise NeutronDynamicTotalStructureFactorError("No omega found in disf input file")
 
         dcsf_omegas = self.configuration["dcsf_input_file"]["instance"]["omega"][:]
         disf_omegas = self.configuration["disf_input_file"]["instance"]["omega"][:]
@@ -175,21 +153,15 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "No omega window found in disf input file"
             )
 
-        dcsf_omega_window = self.configuration["dcsf_input_file"]["instance"][
-            "omega_window"
-        ][:]
-        disf_omega_window = self.configuration["disf_input_file"]["instance"][
-            "omega_window"
-        ][:]
+        dcsf_omega_window = self.configuration["dcsf_input_file"]["instance"]["omega_window"][:]
+        disf_omega_window = self.configuration["disf_input_file"]["instance"]["omega_window"][:]
 
         if not np.all(dcsf_omega_window == disf_omega_window):
             raise NeutronDynamicTotalStructureFactorError(
                 "Inconsistent omega windows between dcsf and disf input files"
             )
 
-        self._outputData.add(
-            "omega_window", "LineOutputVariable", dcsf_omegas, units="au"
-        )
+        self._outputData.add("omega_window", "LineOutputVariable", dcsf_omegas, units="au")
 
         # Check f(q,t) and s(q,f) for dcsf
         self._elementsPairs = sorted(
@@ -198,44 +170,20 @@ class NeutronDynamicTotalStructureFactor(IJob):
             )
         )
         for pair in self._elementsPairs:
-            if (
-                "f(q,t)_{}{}".format(*pair)
-                not in self.configuration["dcsf_input_file"]["instance"]
-            ):
-                raise NeutronDynamicTotalStructureFactorError(
-                    "Missing f(q,t) in dcsf input file"
-                )
-            if (
-                "s(q,f)_{}{}".format(*pair)
-                not in self.configuration["dcsf_input_file"]["instance"]
-            ):
-                raise NeutronDynamicTotalStructureFactorError(
-                    "Missing s(q,f) in dcsf input file"
-                )
+            if "f(q,t)_{}{}".format(*pair) not in self.configuration["dcsf_input_file"]["instance"]:
+                raise NeutronDynamicTotalStructureFactorError("Missing f(q,t) in dcsf input file")
+            if "s(q,f)_{}{}".format(*pair) not in self.configuration["dcsf_input_file"]["instance"]:
+                raise NeutronDynamicTotalStructureFactorError("Missing s(q,f) in dcsf input file")
 
         for element in self.configuration["atom_selection"]["unique_names"]:
-            if (
-                "f(q,t)_{}".format(element)
-                not in self.configuration["disf_input_file"]["instance"]
-            ):
-                raise NeutronDynamicTotalStructureFactorError(
-                    "Missing f(q,t) in disf input file"
-                )
-            if (
-                "s(q,f)_{}".format(element)
-                not in self.configuration["disf_input_file"]["instance"]
-            ):
-                raise NeutronDynamicTotalStructureFactorError(
-                    "Missing s(q,f) in disf input file"
-                )
+            if "f(q,t)_{}".format(element) not in self.configuration["disf_input_file"]["instance"]:
+                raise NeutronDynamicTotalStructureFactorError("Missing f(q,t) in disf input file")
+            if "s(q,f)_{}".format(element) not in self.configuration["disf_input_file"]["instance"]:
+                raise NeutronDynamicTotalStructureFactorError("Missing s(q,f) in disf input file")
 
         for element in self.configuration["atom_selection"]["unique_names"]:
-            fqt = self.configuration["disf_input_file"]["instance"][
-                "f(q,t)_{}".format(element)
-            ]
-            sqf = self.configuration["disf_input_file"]["instance"][
-                "s(q,f)_{}".format(element)
-            ]
+            fqt = self.configuration["disf_input_file"]["instance"]["f(q,t)_{}".format(element)]
+            sqf = self.configuration["disf_input_file"]["instance"]["s(q,f)_{}".format(element)]
             self._outputData.add(
                 "f(q,t)_inc_%s" % element,
                 "SurfaceOutputVariable",
@@ -266,12 +214,8 @@ class NeutronDynamicTotalStructureFactor(IJob):
             )
 
         for pair in self._elementsPairs:
-            fqt = self.configuration["dcsf_input_file"]["instance"][
-                "f(q,t)_{}{}".format(*pair)
-            ]
-            sqf = self.configuration["dcsf_input_file"]["instance"][
-                "s(q,f)_{}{}".format(*pair)
-            ]
+            fqt = self.configuration["dcsf_input_file"]["instance"]["f(q,t)_{}{}".format(*pair)]
+            sqf = self.configuration["dcsf_input_file"]["instance"]["s(q,f)_{}{}".format(*pair)]
             self._outputData.add(
                 "f(q,t)_coh_%s%s" % pair,
                 "SurfaceOutputVariable",
@@ -401,16 +345,10 @@ class NeutronDynamicTotalStructureFactor(IJob):
             cj = nj / nTotalAtoms
 
             self._outputData["f(q,t)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["f(q,t)_coh_%s%s" % pair][:]
-                * np.sqrt(ci * cj)
-                * bi
-                * bj
+                self._outputData["f(q,t)_coh_%s%s" % pair][:] * np.sqrt(ci * cj) * bi * bj
             )
             self._outputData["s(q,f)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["s(q,f)_coh_%s%s" % pair][:]
-                * np.sqrt(ci * cj)
-                * bi
-                * bj
+                self._outputData["s(q,f)_coh_%s%s" % pair][:] * np.sqrt(ci * cj) * bi * bj
             )
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
                 self._outputData["f(q,t)_coh_total"][:] += self._outputData[
@@ -451,12 +389,10 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Compute total F(Q,t) = inc + coh
         self._outputData["f(q,t)_total"][:] = (
-            self._outputData["f(q,t)_coh_total"][:]
-            + self._outputData["f(q,t)_inc_total"][:]
+            self._outputData["f(q,t)_coh_total"][:] + self._outputData["f(q,t)_inc_total"][:]
         )
         self._outputData["s(q,f)_total"][:] = (
-            self._outputData["s(q,f)_coh_total"][:]
-            + self._outputData["s(q,f)_inc_total"][:]
+            self._outputData["s(q,f)_coh_total"][:] + self._outputData["s(q,f)_inc_total"][:]
         )
 
         self._outputData.write(

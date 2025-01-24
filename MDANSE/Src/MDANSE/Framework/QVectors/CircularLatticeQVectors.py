@@ -63,10 +63,7 @@ class CircularLatticeQVectors(LatticeQVectors):
 
         qVects = np.dot(self._inverseUnitCell, hkls)
 
-        qMax = (
-            self._configuration["shells"]["last"]
-            + 0.5 * self._configuration["width"]["value"]
-        )
+        qMax = self._configuration["shells"]["last"] + 0.5 * self._configuration["width"]["value"]
 
         uvMax = np.ceil([qMax / Vector(v).length() for v in qVects.T]) + 1
         # Enforce integers in uvMax

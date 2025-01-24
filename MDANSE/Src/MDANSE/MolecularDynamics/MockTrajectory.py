@@ -61,9 +61,7 @@ class MockTrajectory:
         self._multiplier = multiplier
         self._pbc = pbc
         self._time_step = time_step * measure(1.0, "fs").toval("ps")
-        self._time_axis = np.arange(
-            0.0, number_of_frames * self._time_step, self._time_step
-        )
+        self._time_axis = np.arange(0.0, number_of_frames * self._time_step, self._time_step)
         self._box_size = box_size * measure(1.0, "ang").toval("nm")
         self._real_length = 0
         self._num_atoms_in_box = len(atoms_in_box)
@@ -162,9 +160,7 @@ class MockTrajectory:
             if current_steps < period:
                 step = math.gcd([current_steps, period])
                 while len(self._coordinates) < period:
-                    self._coordinates = np.vstack(
-                        [self._coordinates, self._coordinates[-step:]]
-                    )
+                    self._coordinates = np.vstack([self._coordinates, self._coordinates[-step:]])
         nm_amp = amplitude * measure(1.0, "ang").toval("nm")
         unit_cell = UnitCell(self._full_box_size)
         inverse_cell = unit_cell._inverse_unit_cell
@@ -334,9 +330,7 @@ class MockTrajectory:
 
         return self._number_of_frames
 
-    def read_com_trajectory(
-        self, indices, first=0, last=None, step=1, box_coordinates=False
-    ):
+    def read_com_trajectory(self, indices, first=0, last=None, step=1, box_coordinates=False):
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
@@ -358,10 +352,7 @@ class MockTrajectory:
             last = len(self)
 
         masses = np.array(
-            [
-                self.chemical_system.atom_property("atomic_weight")[index]
-                for index in indices
-            ]
+            [self.chemical_system.atom_property("atomic_weight")[index] for index in indices]
         )
 
         frames = np.array([self.coordinates(fnum) for fnum in range(first, last, step)])
@@ -385,18 +376,13 @@ class MockTrajectory:
                 bring_to_centre=True,
             )
             com_coords = np.vstack(
-                [
-                    center_of_mass(temp_coords[tstep], masses)
-                    for tstep in range(len(temp_coords))
-                ]
+                [center_of_mass(temp_coords[tstep], masses) for tstep in range(len(temp_coords))]
             )
 
             com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
 
         else:
-            com_traj = np.sum(
-                coords[:, indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
-            )
+            com_traj = np.sum(coords[:, indices, :] * masses[np.newaxis, :, np.newaxis], axis=1)
             com_traj /= np.sum(masses)
 
         return com_traj
@@ -422,17 +408,13 @@ class MockTrajectory:
             comp = 0
             for i in range(first, last, step):
                 direct_cell = self.unit_cell(i).transposed_direct
-                real_coordinates[comp, :] = np.matmul(
-                    direct_cell, box_coordinates[comp, :]
-                )
+                real_coordinates[comp, :] = np.matmul(direct_cell, box_coordinates[comp, :])
                 comp += 1
             return real_coordinates
         else:
             return box_coordinates
 
-    def read_atomic_trajectory(
-        self, index, first=0, last=None, step=1, box_coordinates=False
-    ):
+    def read_atomic_trajectory(self, index, first=0, last=None, step=1, box_coordinates=False):
         """Read an atomic trajectory. The trajectory is corrected from box jumps.
 
         :param index: the index of the atom
@@ -458,20 +440,12 @@ class MockTrajectory:
 
         if self._pbc:
             direct_cells = np.array(
-                [
-                    self.unit_cell(fnum).transposed_direct
-                    for fnum in range(first, last, step)
-                ]
+                [self.unit_cell(fnum).transposed_direct for fnum in range(first, last, step)]
             )
             inverse_cells = np.array(
-                [
-                    self.unit_cell(fnum).transposed_inverse
-                    for fnum in range(first, last, step)
-                ]
+                [self.unit_cell(fnum).transposed_inverse for fnum in range(first, last, step)]
             )
-            atomic_traj = atomic_trajectory(
-                coords, direct_cells, inverse_cells, box_coordinates
-            )
+            atomic_traj = atomic_trajectory(coords, direct_cells, inverse_cells, box_coordinates)
             return atomic_traj
         else:
             return coords
@@ -502,9 +476,7 @@ class MockTrajectory:
         grp = self._variables
 
         if variable not in grp:
-            raise KeyError(
-                "The variable {} is not stored in the trajectory".format(variable)
-            )
+            raise KeyError("The variable {} is not stored in the trajectory".format(variable))
 
         variable = grp[variable][first:last:step, index, :].astype(np.float64)
 

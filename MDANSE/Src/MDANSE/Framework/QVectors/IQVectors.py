@@ -47,9 +47,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
                 self._status.finish()
             return True
         else:
-            LOG.error(
-                "Cannot generate vectors: q vector generator is not configured correctly."
-            )
+            LOG.error("Cannot generate vectors: q vector generator is not configured correctly.")
             return False
 
     def setStatus(self, status):

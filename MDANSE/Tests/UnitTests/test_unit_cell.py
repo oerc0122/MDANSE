@@ -11,9 +11,7 @@ class TestUnitCell(unittest.TestCase):
 
     def test_instantiation(self):
         self.assertTrue(
-            np.allclose(
-                np.array([[1, 0, 1], [0, 2, 0], [0, 0, 1 / 2]]), self.cell._unit_cell
-            ),
+            np.allclose(np.array([[1, 0, 1], [0, 2, 0], [0, 0, 1 / 2]]), self.cell._unit_cell),
             f"actual = {self.cell._unit_cell}",
         )
         self.assertTrue(
@@ -58,9 +56,7 @@ class TestUnitCell(unittest.TestCase):
 
     def test_matrices(self):
         self.assertTrue(
-            np.allclose(
-                np.array([[1, 0, 1], [0, 2, 0], [0, 0, 1 / 2]]), self.cell.direct
-            ),
+            np.allclose(np.array([[1, 0, 1], [0, 2, 0], [0, 0, 1 / 2]]), self.cell.direct),
             f"actual = {self.cell.direct}",
         )
         self.assertTrue(

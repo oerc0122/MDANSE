@@ -63,9 +63,7 @@ class HDFTrajectoryInputData(InputFileData):
         val.append("Configuration:")
         val.append("\tIs periodic: {}\n".format("unit_cell" in self._data.file))
         try:
-            val.append(
-                "First unit cell (nm):\n{}\n".format(self._data.unit_cell(0)._unit_cell)
-            )
+            val.append("First unit cell (nm):\n{}\n".format(self._data.unit_cell(0)._unit_cell))
         except Exception:
             val.append("No unit cell information\n")
         val.append("Frame times (1st, 2nd, ..., last) in ps:")

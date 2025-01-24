@@ -76,16 +76,12 @@ class InstrumentResolutionConfigurator(IConfigurator):
         self["omega"] = (
             2.0
             * np.pi
-            * np.fft.fftshift(
-                np.fft.fftfreq(2 * self["n_frames"] - 1, self["time_step"])
-            )
+            * np.fft.fftshift(np.fft.fftfreq(2 * self["n_frames"] - 1, self["time_step"]))
         )
         self["n_omegas"] = len(self["omega"])
 
         # generate the rfftfreq for the positive frequency only results
-        self["romega"] = (
-            2.0 * np.pi * np.fft.rfftfreq(2 * self["n_frames"] - 1, self["time_step"])
-        )
+        self["romega"] = 2.0 * np.pi * np.fft.rfftfreq(2 * self["n_frames"] - 1, self["time_step"])
         self["n_romegas"] = len(self["romega"])
 
         kernel, parameters = value
@@ -97,9 +93,7 @@ class InstrumentResolutionConfigurator(IConfigurator):
         resolution.set_kernel(self["omega"], self["time_step"])
         self["omega_window"] = resolution.omegaWindow
         self["time_window"] = resolution.timeWindow.real
-        self["time_window_positive"] = np.fft.ifftshift(self["time_window"])[
-            : len(time)
-        ]
+        self["time_window_positive"] = np.fft.ifftshift(self["time_window"])[: len(time)]
 
     def preview_output_axis(self):
         if not self.is_configured():

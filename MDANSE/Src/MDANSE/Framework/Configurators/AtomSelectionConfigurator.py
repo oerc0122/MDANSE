@@ -72,8 +72,7 @@ class AtomSelectionConfigurator(IConfigurator):
         self["names"] = [at for at in selectedAtoms]
         self["unique_names"] = sorted(set(self["names"]))
         self["masses"] = [
-            [trajConfig["instance"].get_atom_property(n, "atomic_weight")]
-            for n in self["names"]
+            [trajConfig["instance"].get_atom_property(n, "atomic_weight")] for n in self["names"]
         ]
         if self["selection_length"] == 0:
             self.error_status = "The atom selection is empty."

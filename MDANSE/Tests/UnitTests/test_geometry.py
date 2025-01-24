@@ -47,9 +47,7 @@ class TestGeometry(unittest.TestCase):
             )
         )
 
-        masses = numpy.array(
-            [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0], dtype=numpy.float64
-        )
+        masses = numpy.array([1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0], dtype=numpy.float64)
         self.assertTrue(
             numpy.array_equal(
                 center_of_mass(coords, masses=masses),

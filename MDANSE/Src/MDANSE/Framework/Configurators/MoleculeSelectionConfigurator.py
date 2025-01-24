@@ -65,15 +65,11 @@ class MoleculeSelectionConfigurator(IConfigurator):
             self.error_status = "Input file not selected."
             return
 
-        self._choices = trajectory_configurator[
-            "instance"
-        ].chemical_system.unique_molecules()
+        self._choices = trajectory_configurator["instance"].chemical_system.unique_molecules()
 
         if value in self._choices:
             self.error_status = "OK"
             self["value"] = value
         else:
-            self.error_status = (
-                "The specified molecule name is not present in the trajectory."
-            )
+            self.error_status = "The specified molecule name is not present in the trajectory."
             self["value"] = self._default

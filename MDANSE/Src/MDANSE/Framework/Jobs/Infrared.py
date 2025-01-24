@@ -24,7 +24,6 @@ from MDANSE.Mathematics.Signal import differentiate, get_spectrum
 
 
 class Infrared(IJob):
-
     enabled = True
 
     label = "Infrared Spectrum"
@@ -77,9 +76,7 @@ class Infrared(IJob):
     def initialize(self):
         super().initialize()
 
-        self.chemical_system = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system
+        self.chemical_system = self.configuration["trajectory"]["instance"].chemical_system
 
         self.molecules = self.chemical_system._clusters[
             self.configuration["molecule_name"]["value"]
@@ -145,9 +142,7 @@ class Infrared(IJob):
             auto-correlation function for a molecule.
         """
         molecule = self.molecules[index]
-        ddipole = np.zeros(
-            (self.configuration["frames"]["number"], 3), dtype=np.float64
-        )
+        ddipole = np.zeros((self.configuration["frames"]["number"], 3), dtype=np.float64)
         for i, frame_index in enumerate(
             range(
                 self.configuration["frames"]["first"],
@@ -155,9 +150,7 @@ class Infrared(IJob):
                 self.configuration["frames"]["step"],
             )
         ):
-            configuration = self.configuration["trajectory"]["instance"].configuration(
-                frame_index
-            )
+            configuration = self.configuration["trajectory"]["instance"].configuration(frame_index)
             masses = [
                 self.configuration["trajectory"]["instance"].get_atom_property(
                     self.chemical_system.atom_list[index], "atomic_weight"
@@ -174,9 +167,7 @@ class Infrared(IJob):
                     q = self.configuration["atom_charges"]["charges"][idx]
                 except KeyError:
                     q = charges[idx]
-                ddipole[i] += q * (
-                    contiguous_configuration["coordinates"][idx, :] - com
-                )
+                ddipole[i] += q * (contiguous_configuration["coordinates"][idx, :] - com)
 
         for axis in range(3):
             ddipole[:, axis] = differentiate(
@@ -186,9 +177,7 @@ class Infrared(IJob):
             )
 
         n_configs = self.configuration["frames"]["n_configs"]
-        mol_ddacf = correlate(ddipole, ddipole[:n_configs], mode="valid") / (
-            3 * n_configs
-        )
+        mol_ddacf = correlate(ddipole, ddipole[:n_configs], mode="valid") / (3 * n_configs)
         return index, mol_ddacf.T[0]
 
     def combine(self, index: int, x: np.ndarray):

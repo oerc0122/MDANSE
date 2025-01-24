@@ -25,7 +25,6 @@ from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 
 class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
-
     def configure(self, value: Optional[str]):
         """
         Parameters
@@ -42,9 +41,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
             self.error_status = "OK"
             self["filename"] = value
 
-            extension = self._configurable[
-                self._dependencies["coordinate_files"]
-            ].extension
+            extension = self._configurable[self._dependencies["coordinate_files"]].extension
 
             supported = list(i[1:] for i in _TOPOLOGY_EXTS)
             if extension not in supported:
@@ -68,18 +65,16 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
             extension = "".join(Path(value).suffixes)[1:]
             supported = list(i[1:] for i in _TOPOLOGY_EXTS)
             if extension not in supported:
-                self.error_status = f"File '{extension}' not supported. Should be one of the following: {supported}"
+                self.error_status = (
+                    f"File '{extension}' not supported. Should be one of the following: {supported}"
+                )
                 return
             super().configure(value)
 
     def parse(self) -> None:
-        coord_files = self._configurable[self._dependencies["coordinate_files"]][
-            "filenames"
-        ]
+        coord_files = self._configurable[self._dependencies["coordinate_files"]]["filenames"]
         if self["filename"]:
-            self.atoms = [
-                at for at in md.load(coord_files, top=self["filename"]).topology.atoms
-            ]
+            self.atoms = [at for at in md.load(coord_files, top=self["filename"]).topology.atoms]
 
         else:
             self.atoms = [at for at in md.load(coord_files).topology.atoms]

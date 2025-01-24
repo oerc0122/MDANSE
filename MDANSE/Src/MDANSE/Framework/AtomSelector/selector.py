@@ -21,11 +21,22 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE.Framework.AtomSelector.all_selector import select_all
 from MDANSE.Framework.AtomSelector.atom_selectors import (
-    select_atom_fullname, select_atom_name, select_dummy, select_element,
-    select_hs_on_element, select_hs_on_heteroatom, select_index)
+    select_atom_fullname,
+    select_atom_name,
+    select_dummy,
+    select_element,
+    select_hs_on_element,
+    select_hs_on_heteroatom,
+    select_index,
+)
 from MDANSE.Framework.AtomSelector.group_selectors import (
-    select_hydroxy, select_methyl, select_phosphate, select_primary_amine,
-    select_sulphate, select_thiol)
+    select_hydroxy,
+    select_methyl,
+    select_phosphate,
+    select_primary_amine,
+    select_sulphate,
+    select_thiol,
+)
 from MDANSE.Framework.AtomSelector.molecule_selectors import select_water
 
 
@@ -124,9 +135,7 @@ class Selector:
                 for k1 in v0.keys():
                     self.match_exists[k0][k1] = True
             else:
-                self.match_exists[k0] = self._funcs[k0](
-                    self.trajectory, check_exists=True
-                )
+                self.match_exists[k0] = self._funcs[k0](self.trajectory, check_exists=True)
 
         self.settings = self.create_default_settings()
 
@@ -166,9 +175,7 @@ class Selector:
             Raises a ValueError if the inputted settings are not valid.
         """
         if not self.check_valid_setting(settings):
-            raise ValueError(
-                f"Settings are not valid for the given chemical system - {settings}."
-            )
+            raise ValueError(f"Settings are not valid for the given chemical system - {settings}.")
 
         if reset_first:
             self.reset_settings()
@@ -191,7 +198,6 @@ class Selector:
         idxs = set([])
 
         for k, v in self.settings.items():
-
             if isinstance(v, dict):
                 args = [{self._kwarg_keys[k]: i} for i in v.keys()]
                 switches = v.values()
@@ -223,7 +229,6 @@ class Selector:
 
         added = set([])
         for k, v in self.settings.items():
-
             if k == "index":
                 continue
 
@@ -327,7 +332,6 @@ class Selector:
         setting_keys = self._default.keys()
         dict_setting_keys = self._kwarg_keys.keys()
         for k0, v0 in settings.items():
-
             if k0 not in setting_keys:
                 return False
 

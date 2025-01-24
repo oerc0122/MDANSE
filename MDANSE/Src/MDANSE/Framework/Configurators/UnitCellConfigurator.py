@@ -71,12 +71,8 @@ class UnitCellConfigurator(IConfigurator):
             )
 
         if not has_valid_cell:
-            traj_config = self._configurable[self._dependencies["trajectory"]][
-                "instance"
-            ]
-            self._recommended_cell = (
-                2.0 * np.eye(3) * np.linalg.norm(traj_config.max_span)
-            )
+            traj_config = self._configurable[self._dependencies["trajectory"]]["instance"]
+            self._recommended_cell = 2.0 * np.eye(3) * np.linalg.norm(traj_config.max_span)
             LOG.info(
                 "Setting recommended cell to twice the maximum distance found in the trajectory."
             )
@@ -98,9 +94,7 @@ class UnitCellConfigurator(IConfigurator):
             try:
                 input_array = np.array(value[0], dtype=float)
             except Exception:
-                self.error_status = (
-                    "Could not convert the inputs into a floating point array"
-                )
+                self.error_status = "Could not convert the inputs into a floating point array"
                 return
             else:
                 if input_array.shape != (3, 3):

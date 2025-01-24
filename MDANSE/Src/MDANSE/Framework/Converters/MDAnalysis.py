@@ -108,7 +108,7 @@ class MDAnalysis(Converter):
                 *coord_files,
                 continuous=self.configuration["continuous"]["value"],
                 format=coord_format,
-                topology_format=self.configuration["topology_file"]["format"]
+                topology_format=self.configuration["topology_file"]["format"],
             )
         else:
             coord_files = [(i, coord_format) for i in coord_files]
@@ -176,7 +176,7 @@ class MDAnalysis(Converter):
             self.configuration["output_files"]["file"],
             self._chemical_system,
             self.numberOfSteps,
-            **kwargs
+            **kwargs,
         )
         super().initialize()
 
@@ -209,8 +209,7 @@ class MDAnalysis(Converter):
                 self._trajectory._chemical_system,
                 self.u.trajectory.ts.positions * measure(1.0, "ang").toval("nm"),
                 UnitCell(
-                    self.u.trajectory.ts.triclinic_dimensions
-                    * measure(1.0, "ang").toval("nm")
+                    self.u.trajectory.ts.triclinic_dimensions * measure(1.0, "ang").toval("nm")
                 ),
             )
 

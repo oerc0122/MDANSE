@@ -79,9 +79,7 @@ class HDFInputFileConfigurator(InputFileConfigurator):
                 except Exception:
                     self._units[v] = "unitless"
             else:
-                self.error_status = (
-                    f"the variable {v} was not  found in {value} HDF file"
-                )
+                self.error_status = f"the variable {v} was not  found in {value} HDF file"
                 return
         self.error_status = "OK"
 

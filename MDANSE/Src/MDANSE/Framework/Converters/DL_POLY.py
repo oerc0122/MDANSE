@@ -37,7 +37,6 @@ class DL_POLYConverterError(Error):
 
 
 class HistoryFile(dict):
-
     def __init__(self, filename):
         super().__init__()
         self._dist_conversion = measure(1.0, "ang").toval("nm")
@@ -70,9 +69,7 @@ class HistoryFile(dict):
         if self["imcon"] > 0:
             cell_nums = []
             for _ in range(3):
-                cell_nums.append(
-                    [float(x) for x in self["instance"].readline().split()]
-                )
+                cell_nums.append([float(x) for x in self["instance"].readline().split()])
             cell = np.array(cell_nums, dtype=np.float64)
             cell = np.reshape(cell, (3, 3)).T
             cell *= self._dist_conversion
@@ -182,9 +179,7 @@ class DL_POLY(Converter):
 
         self._chemical_system = ChemicalSystem()
 
-        self._fieldFile.build_chemical_system(
-            self._chemical_system, self._atomicAliases
-        )
+        self._fieldFile.build_chemical_system(self._chemical_system, self._atomicAliases)
 
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
@@ -219,9 +214,7 @@ class DL_POLY(Converter):
         unitCell = UnitCell(unitCell)
 
         if self._historyFile["imcon"] > 0:
-            conf = PeriodicRealConfiguration(
-                self._trajectory.chemical_system, config[0], unitCell
-            )
+            conf = PeriodicRealConfiguration(self._trajectory.chemical_system, config[0], unitCell)
         else:
             conf = RealConfiguration(self._trajectory.chemical_system, config[0])
 

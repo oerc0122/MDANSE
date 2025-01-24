@@ -95,9 +95,7 @@ class TrajectoryEditor(IJob):
 
         self.numberOfSteps = self.configuration["frames"]["number"]
         self._input_trajectory = self.configuration["trajectory"]["instance"]
-        self._input_chemical_system = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system
+        self._input_chemical_system = self.configuration["trajectory"]["instance"].chemical_system
 
         if self.configuration["unit_cell"]["apply"]:
             self._new_unit_cell = UnitCell(self.configuration["unit_cell"]["value"])
@@ -106,11 +104,7 @@ class TrajectoryEditor(IJob):
             ]
 
         # The collection of atoms corresponding to the atoms selected for output.
-        indices = [
-            idx
-            for idxs in self.configuration["atom_selection"]["indices"]
-            for idx in idxs
-        ]
+        indices = [idx for idxs in self.configuration["atom_selection"]["indices"] for idx in idxs]
         self._indices = indices
         temp_copy = list(self._input_chemical_system.atom_list)
         indices_per_element = self.configuration["atom_selection"].get_indices()
@@ -146,9 +140,7 @@ class TrajectoryEditor(IJob):
         else:
             new_chemical_system.add_bonds(self._input_chemical_system._bonds)
             for key in self._input_chemical_system._clusters.keys():
-                new_chemical_system.add_clusters(
-                    self._input_chemical_system._clusters[key]
-                )
+                new_chemical_system.add_clusters(self._input_chemical_system._clusters[key])
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(

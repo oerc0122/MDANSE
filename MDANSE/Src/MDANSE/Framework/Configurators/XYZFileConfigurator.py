@@ -47,9 +47,7 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
         try:
             self["n_atoms"] = int(self["instance"].readline().strip())
         except ValueError:
-            raise XYZFileError(
-                "Could not read the number of atoms in %s file" % filename
-            )
+            raise XYZFileError("Could not read the number of atoms in %s file" % filename)
 
         self._nAtomsLineSize = self["instance"].tell()
         self["instance"].readline()
@@ -101,9 +99,7 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
         try:
             timeStep = float(matches[0])
         except ValueError:
-            raise XYZFileError(
-                "Could not cast the timestep to a floating point number."
-            )
+            raise XYZFileError("Could not cast the timestep to a floating point number.")
         else:
             return timeStep
 
@@ -118,9 +114,7 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
             ndarray -- an (N,3) array containing the coordinates of N atoms
                at the requested simulation step.
         """
-        starting_line = (
-            step * (self._frame_lines + self._header_lines) + self._header_lines
-        )
+        starting_line = step * (self._frame_lines + self._header_lines) + self._header_lines
         lines_to_skip = starting_line - self._lastline
         if lines_to_skip < 0:
             self["instance"].seek(0)
@@ -131,9 +125,7 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
 
         templines = []
         for _ in range(self._frame_lines):
-            templines.append(
-                [float(x) for x in self["instance"].readline().split()[1:]]
-            )
+            templines.append([float(x) for x in self["instance"].readline().split()[1:]])
             self._lastline += 1
 
         config = np.array(templines, dtype=np.float64)

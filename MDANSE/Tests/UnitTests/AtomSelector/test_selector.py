@@ -4,9 +4,7 @@ from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInput
 from MDANSE.Framework.AtomSelector.selector import Selector
 
 
-traj_2vb1 = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "Converted", "2vb1.mdt"
-)
+traj_2vb1 = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Converted", "2vb1.mdt")
 
 
 @pytest.fixture(scope="module")
@@ -119,9 +117,7 @@ def test_selector_json_dump_2(protein_trajectory):
 
 def test_selector_json_dump_3(protein_trajectory):
     selector = Selector(protein_trajectory)
-    selector.update_settings(
-        {"all": False, "element": {"S": True, "H": True}, "water": True}
-    )
+    selector.update_settings({"all": False, "element": {"S": True, "H": True}, "water": True})
     json_dump = selector.settings_to_json()
     assert json_dump == '{"all": false, "water": true, "element": ["H", "S"]}'
 
@@ -137,10 +133,7 @@ def test_selector_json_dump_4(protein_trajectory):
         }
     )
     json_dump = selector.settings_to_json()
-    assert (
-        json_dump
-        == '{"all": false, "water": true, "element": ["H", "S"], "index": [0, 1]}'
-    )
+    assert json_dump == '{"all": false, "water": true, "element": ["H", "S"], "index": [0, 1]}'
 
 
 def test_selector_json_dump_with_second_update(protein_trajectory):

@@ -44,9 +44,7 @@ class PartialChargeMapper:
                 self._original_map[at_num] = 0.0
         self._new_map = {}
 
-    def update_charges(
-        self, selection_dict: dict[str, Union[bool, dict]], charge: float
-    ) -> None:
+    def update_charges(self, selection_dict: dict[str, Union[bool, dict]], charge: float) -> None:
         """With the selection dictionary update the selector and then
         update the partial charge map.
 
@@ -138,9 +136,7 @@ class PartialChargeConfigurator(IConfigurator):
             try:
                 int(k)
             except ValueError:
-                self.error_status = (
-                    "Setting not valid - keys should be castable to an int."
-                )
+                self.error_status = "Setting not valid - keys should be castable to an int."
                 return
 
         traj_config = self._configurable[self._dependencies["trajectory"]]
@@ -148,7 +144,9 @@ class PartialChargeConfigurator(IConfigurator):
         idxs = system._atom_indices
 
         if any([int(i) not in idxs for i in value.keys()]):
-            self.error_status = "Inputted setting not valid - atom index not found in the current system."
+            self.error_status = (
+                "Inputted setting not valid - atom index not found in the current system."
+            )
             return
 
         for idx in idxs:

@@ -35,9 +35,7 @@ class Converter(IJob, metaclass=SubclassFactory):
     def write_metadata(self, output_file):
         string_dt = h5py.special_dtype(vlen=str)
         meta = output_file.create_group("metadata")
-        meta.create_dataset(
-            "task_name", (1,), data=str(self.__class__.__name__), dtype=string_dt
-        )
+        meta.create_dataset("task_name", (1,), data=str(self.__class__.__name__), dtype=string_dt)
         meta.create_dataset(
             "MDANSE_version",
             (1,),

@@ -51,13 +51,9 @@ class TestTrajectory(unittest.TestCase):
         t = Trajectory(tf)
 
         for i in range(len(t)):
-            self.assertTrue(
-                np.allclose(t[i]["unit_cell"][:], allUnitCells[i], rtol=1.0e-6)
-            )
+            self.assertTrue(np.allclose(t[i]["unit_cell"][:], allUnitCells[i], rtol=1.0e-6))
             self.assertTrue(np.allclose(t[i]["time"], allTimes[i], rtol=1.0e-6))
-            self.assertTrue(
-                np.allclose(t[i]["coordinates"][:], allCoordinates[i], rtol=1.0e-6)
-            )
+            self.assertTrue(np.allclose(t[i]["coordinates"][:], allCoordinates[i], rtol=1.0e-6))
 
         t.close()
 
@@ -85,16 +81,10 @@ class TestTrajectory(unittest.TestCase):
         t = Trajectory(tf)
 
         for i in range(len(t)):
-            self.assertTrue(
-                np.allclose(t[i]["unit_cell"][:], allUnitCells[i], rtol=1.0e-6)
-            )
+            self.assertTrue(np.allclose(t[i]["unit_cell"][:], allUnitCells[i], rtol=1.0e-6))
             self.assertTrue(np.allclose(t[i]["time"], allTimes[i], rtol=1.0e-6))
-            self.assertTrue(
-                np.allclose(t[i]["coordinates"][:], allCoordinates[i], rtol=1.0e-6)
-            )
-            self.assertTrue(
-                np.allclose(t[i]["velocities"][:], allVelocities[i], rtol=1.0e-6)
-            )
+            self.assertTrue(np.allclose(t[i]["coordinates"][:], allCoordinates[i], rtol=1.0e-6))
+            self.assertTrue(np.allclose(t[i]["velocities"][:], allVelocities[i], rtol=1.0e-6))
 
         t.close()
 
@@ -125,19 +115,11 @@ class TestTrajectory(unittest.TestCase):
         t = Trajectory(tf)
 
         for i in range(len(t)):
-            self.assertTrue(
-                np.allclose(t[i]["unit_cell"][:], allUnitCells[i], rtol=1.0e-6)
-            )
+            self.assertTrue(np.allclose(t[i]["unit_cell"][:], allUnitCells[i], rtol=1.0e-6))
             self.assertTrue(np.allclose(t[i]["time"], allTimes[i], rtol=1.0e-6))
-            self.assertTrue(
-                np.allclose(t[i]["coordinates"][:], allCoordinates[i], rtol=1.0e-6)
-            )
-            self.assertTrue(
-                np.allclose(t[i]["velocities"][:], allVelocities[i], rtol=1.0e-6)
-            )
-            self.assertTrue(
-                np.allclose(t[i]["gradients"][:], allGradients[i], rtol=1.0e-6)
-            )
+            self.assertTrue(np.allclose(t[i]["coordinates"][:], allCoordinates[i], rtol=1.0e-6))
+            self.assertTrue(np.allclose(t[i]["velocities"][:], allVelocities[i], rtol=1.0e-6))
+            self.assertTrue(np.allclose(t[i]["gradients"][:], allGradients[i], rtol=1.0e-6))
 
         t.close()
 

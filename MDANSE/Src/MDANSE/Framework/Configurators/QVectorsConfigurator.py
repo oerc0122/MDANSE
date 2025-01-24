@@ -62,9 +62,7 @@ class QVectorsConfigurator(IConfigurator):
             except ValueError:
                 self.error_status = f"Invalid q vectors settings {value}"
                 return
-            generator = IQVectors.create(
-                generator, trajConfig["instance"].configuration(0)
-            )
+            generator = IQVectors.create(generator, trajConfig["instance"].configuration(0))
             try:
                 generator.setup(parameters)
             except Exception:
@@ -122,8 +120,6 @@ class QVectorsConfigurator(IConfigurator):
             return "QVectors could not be configured correctly"
         else:
             for qValue, qVectors in list(self["q_vectors"].items()):
-                info.append(
-                    "Shell %s: %d Q vectors generated\n" % (qValue, len(qVectors))
-                )
+                info.append("Shell %s: %d Q vectors generated\n" % (qValue, len(qVectors)))
 
             return "".join(info)

@@ -50,9 +50,7 @@ class OutputFilesConfigurator(IConfigurator):
 
         IConfigurator.__init__(self, name, **kwargs)
 
-        self._formats = (
-            formats if formats is not None else OutputFilesConfigurator._default[-1]
-        )
+        self._formats = formats if formats is not None else OutputFilesConfigurator._default[-1]
         self._forbidden_files = []
 
     def configure(self, value):
@@ -85,13 +83,13 @@ class OutputFilesConfigurator(IConfigurator):
 
         for fmt in formats:
             if fmt not in self._formats:
-                self.error_status = (
-                    f"the output file format {fmt} is not a valid output format"
-                )
+                self.error_status = f"the output file format {fmt} is not a valid output format"
                 return
 
             if fmt not in IFormat.subclasses():
-                self.error_status = f"the output file format {fmt} is not registered as a valid file format."
+                self.error_status = (
+                    f"the output file format {fmt} is not registered as a valid file format."
+                )
                 return
 
         self["root"] = root
@@ -104,7 +102,9 @@ class OutputFilesConfigurator(IConfigurator):
                 self["files"].append(root + extension)
         for file in self["files"]:
             if PurePath(os.path.abspath(file)) in self._forbidden_files:
-                self.error_status = f"File {file} is either open or being written into. Please pick another name."
+                self.error_status = (
+                    f"File {file} is either open or being written into. Please pick another name."
+                )
                 return
 
         self["value"] = self["files"]

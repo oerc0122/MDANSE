@@ -106,9 +106,7 @@ class TestAtomsDatabase(unittest.TestCase):
                 ATOMS_DATABASE._load("user.json")
                 m.assert_called_with("user.json", "r")
                 self.assertDictEqual({"family": "str"}, ATOMS_DATABASE._properties)
-                self.assertDictEqual(
-                    {"H": {"family": "non-metal"}}, ATOMS_DATABASE._data
-                )
+                self.assertDictEqual({"H": {"family": "non-metal"}}, ATOMS_DATABASE._data)
 
     def test___contains__(self):
         self.assertFalse("fhsdjfsd" in ATOMS_DATABASE)
@@ -180,9 +178,7 @@ class TestAtomsDatabase(unittest.TestCase):
             ATOMS_DATABASE.get_isotopes("INVALID")
 
     def test_properties(self):
-        self.assertEqual(
-            sorted(list(self.properties.keys())), ATOMS_DATABASE.properties
-        )
+        self.assertEqual(sorted(list(self.properties.keys())), ATOMS_DATABASE.properties)
 
     def test_get_property_valid(self):
         self.assertEqual(
@@ -215,9 +211,7 @@ class TestAtomsDatabase(unittest.TestCase):
 
     def test_get_value_for_multiple_atoms_unknown_atom(self):
         with self.assertRaises(AtomsDatabaseError):
-            ATOMS_DATABASE.get_values_for_multiple_atoms(
-                ["H", "O", "O", "INVALID"], "nucleon"
-            )
+            ATOMS_DATABASE.get_values_for_multiple_atoms(["H", "O", "O", "INVALID"], "nucleon")
 
     def test_get_value_for_multiple_atoms_unknown_property(self):
         with self.assertRaises(AtomsDatabaseError):
@@ -310,9 +304,7 @@ class TestAtomsDatabase(unittest.TestCase):
         self.assertEqual(5, ATOMS_DATABASE.n_properties)
 
     def test_numeric_properties(self):
-        self.assertEqual(
-            ["nucleon", "electronegativity"], ATOMS_DATABASE.numeric_properties
-        )
+        self.assertEqual(["nucleon", "electronegativity"], ATOMS_DATABASE.numeric_properties)
 
     def test__reset(self):
         ATOMS_DATABASE._reset()
@@ -326,6 +318,4 @@ class TestAtomsDatabase(unittest.TestCase):
         ):
             ATOMS_DATABASE.save()
             op.assert_called_with(ATOMS_DATABASE._USER_DATABASE, "w")
-            dump.assert_called_with(
-                {"properties": self.properties, "atoms": self.data}, ANY
-            )
+            dump.assert_called_with({"properties": self.properties, "atoms": self.data}, ANY)

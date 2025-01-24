@@ -135,17 +135,13 @@ class PairDistributionFunction(DistanceHistogram):
             pdf_inter = self.hInter[idi, idj, :] / fact
             pdf_total = pdf_intra + pdf_inter
 
-            for i, pdf in zip(
-                ["intra", "inter", "total"], [pdf_intra, pdf_inter, pdf_total]
-            ):
+            for i, pdf in zip(["intra", "inter", "total"], [pdf_intra, pdf_inter, pdf_total]):
                 self._outputData["pdf_%s_%s%s" % (i, pair[0], pair[1])][:] = pdf
                 self._outputData["rdf_%s_%s%s" % (i, pair[0], pair[1])][:] = (
                     shellSurfaces * self.averageDensity * pdf
                 )
                 self._outputData["tcf_%s_%s%s" % (i, pair[0], pair[1])][:] = (
-                    densityFactor
-                    * self.averageDensity
-                    * (pdf if i == "intra" else pdf - 1)
+                    densityFactor * self.averageDensity * (pdf if i == "intra" else pdf - 1)
                 )
 
         weights = self.configuration["weights"].get_weights()
@@ -159,13 +155,9 @@ class PairDistributionFunction(DistanceHistogram):
                 "pdf{}_%s%s".format(i if i else "_total"),
             )
             self._outputData["pdf%s_total" % i][:] = pdf
-            self._outputData["rdf%s_total" % i][:] = (
-                shellSurfaces * self.averageDensity * pdf
-            )
+            self._outputData["rdf%s_total" % i][:] = shellSurfaces * self.averageDensity * pdf
             self._outputData["tcf%s_total" % i][:] = (
-                densityFactor
-                * self.averageDensity
-                * (pdf if i == "_intra" else pdf - 1)
+                densityFactor * self.averageDensity * (pdf if i == "_intra" else pdf - 1)
             )
 
         self._outputData.write(

@@ -183,9 +183,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             main_result=True,
         )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -212,9 +210,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         atomicSF = np.zeros((self._nQShells, self._nFrames), dtype=np.float64)
 
-        msd = mean_square_displacement(
-            series, self.configuration["frames"]["n_configs"]
-        )
+        msd = mean_square_displacement(series, self.configuration["frames"]["n_configs"])
 
         for i, q2 in enumerate(self._kSquare):
             gaussian = np.exp(-msd * q2 / 6.0)

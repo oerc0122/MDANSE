@@ -58,9 +58,7 @@ def atom_line_slice(keyword: str) -> slice:
 
 
 class MinimalPDBReader:
-
     def __init__(self, filename: str):
-
         self._unit_cell = None
         cell_params = self.find_unit_cell(filename)
         if len(cell_params) == 0:
@@ -148,9 +146,7 @@ class MinimalPDBReader:
                         processed_atom_name[0].upper() + processed_atom_name[1].lower()
                     )
             if len(chemical_element) == 2:
-                chemical_element = (
-                    chemical_element[0].upper() + chemical_element[1].lower()
-                )
+                chemical_element = chemical_element[0].upper() + chemical_element[1].lower()
             backup_element = atom_line.rstrip().split()[-1]
             backup_element2 = atom_line.split()[-2].strip()
             if atom_name[-2:].isnumeric():

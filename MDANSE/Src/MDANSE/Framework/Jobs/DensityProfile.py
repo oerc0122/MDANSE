@@ -149,9 +149,7 @@ class DensityProfile(IJob):
         dp_per_frame = {}
 
         for k, v in self._indices_per_element.items():
-            h = np.histogram(
-                box_coords[v, axis_index], bins=self._n_bins, range=[0.0, 1.0]
-            )
+            h = np.histogram(box_coords[v, axis_index], bins=self._n_bins, range=[0.0, 1.0])
             dp_per_frame[k] = h[0]
 
         return index, (axis_length, dp_per_frame)
@@ -187,9 +185,7 @@ class DensityProfile(IJob):
             "dp_%s",
         )
 
-        self._outputData.add(
-            "dp_total", "LineOutputVariable", dp_total, axis="r", units="au"
-        )
+        self._outputData.add("dp_total", "LineOutputVariable", dp_total, axis="r", units="au")
 
         self._extent /= self.numberOfSteps
 

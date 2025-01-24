@@ -9,9 +9,7 @@ from MDANSE.IO.MinimalPDBReader import MinimalPDBReader as PDBReader
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 
 
-fname = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "Data", "CO2GAS-dump-1.pdb"
-)
+fname = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Data", "CO2GAS-dump-1.pdb")
 
 
 @pytest.fixture()

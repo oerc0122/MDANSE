@@ -41,9 +41,7 @@ for name in modnames:
     if name in ["__init__"]:
         continue
     try:
-        tempmod = importlib.import_module(
-            "." + name, "MDANSE.NeutronInstruments.Resolution"
-        )
+        tempmod = importlib.import_module("." + name, "MDANSE.NeutronInstruments.Resolution")
     except ModuleNotFoundError:
         continue
     tempobject = getattr(tempmod, name)

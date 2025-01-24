@@ -69,9 +69,7 @@ def get_byte_order(filename):
             break
 
         if byteOrder is None:
-            raise ByteOrderError(
-                "Invalid byte order. %s is not a valid DCD file" % filename
-            )
+            raise ByteOrderError("Invalid byte order. %s is not a valid DCD file" % filename)
 
     return byteOrder
 
@@ -103,9 +101,7 @@ class FortranBinaryFile(object):
             raise StopIteration
         reclen = struct.unpack(self.byteOrder + "i", data)[0]
         data = self.file.read(reclen)
-        reclen2 = struct.unpack(
-            self.byteOrder + "i", self.file.read(struct.calcsize("i"))
-        )[0]
+        reclen2 = struct.unpack(self.byteOrder + "i", self.file.read(struct.calcsize("i")))[0]
         if reclen != reclen2:
             FortranBinaryFileError("Invalid block")
 
@@ -185,9 +181,7 @@ class DCDFile(FortranBinaryFile, dict):
         self["delta"] = temp[9]
 
         # The time step is in AKMA time
-        self["time_step"] = (
-            self["nsavc"] * self["delta"] * measure(1.0, "akma_time").toval("ps")
-        )
+        self["time_step"] = self["nsavc"] * self["delta"] * measure(1.0, "akma_time").toval("ps")
 
         self["has_pbc_data"] = temp[10]
 
@@ -200,9 +194,7 @@ class DCDFile(FortranBinaryFile, dict):
 
         self["title"] = []
         for i in range(nLines):
-            temp = struct.unpack(
-                self.byteOrder + "80c", data[4 + 80 * i : 4 + 80 * (i + 1)]
-            )
+            temp = struct.unpack(self.byteOrder + "80c", data[4 + 80 * i : 4 + 80 * (i + 1)])
             self["title"].append(b"".join(temp).strip())
 
         self["title"] = b"\n".join(self["title"])
@@ -352,9 +344,7 @@ class DCD(Converter):
         unit_cell = get_basis_vectors_from_cell_parameters(unit_cell)
         unit_cell = UnitCell(unit_cell)
 
-        conf = PeriodicRealConfiguration(
-            self._trajectory._chemical_system, config, unit_cell
-        )
+        conf = PeriodicRealConfiguration(self._trajectory._chemical_system, config, unit_cell)
 
         if self.configuration["fold"]["value"]:
             conf.fold_coordinates()

@@ -213,9 +213,7 @@ class Rotation(RigidBodyTransformation):
         elif hasattr(other, "is_translation"):
             return RotationTranslation(self.tensor, self.tensor * other.vector)
         elif hasattr(other, "is_rotation_translation"):
-            return RotationTranslation(
-                self.tensor.dot(other.tensor), self.tensor * other.vector
-            )
+            return RotationTranslation(self.tensor.dot(other.tensor), self.tensor * other.vector)
         else:
             return self.asLinearTransformation() * other.asLinearTransformation()
 
@@ -309,8 +307,7 @@ class Rotation(RigidBodyTransformation):
             raise ValueError("FAILURE 1, norm = 0")
         if abs(_c / _norm) > 1 + tolerance:
             raise ValueError(
-                "FAILURE 2"
-                + "malformed rotation Tensor (non orthogonal?) %.8f" % (_c / _norm)
+                "FAILURE 2" + "malformed rotation Tensor (non orthogonal?) %.8f" % (_c / _norm)
             )
         # if _c/_norm > 1: raise ValueError('Step1: No solution')
         _th = angleFromSineAndCosine(_b / _norm, _a / _norm)
@@ -407,9 +404,7 @@ class RotationTranslation(RigidBodyTransformation):
         if hasattr(other, "is_rotation"):
             return RotationTranslation(self.tensor.dot(other.tensor), self.vector)
         elif hasattr(other, "is_translation"):
-            return RotationTranslation(
-                self.tensor, self.tensor * other.vector + self.vector
-            )
+            return RotationTranslation(self.tensor, self.tensor * other.vector + self.vector)
         elif hasattr(other, "is_rotation_translation"):
             return RotationTranslation(
                 self.tensor.dot(other.tensor), self.tensor * other.vector + self.vector
@@ -441,9 +436,7 @@ class RotationTranslation(RigidBodyTransformation):
             angle = 0.0
         else:
             x = d * axis - self.vector
-            r0 = -0.5 * (
-                (np.cos(0.5 * angle) / np.sin(0.5 * angle)) * axis.cross(x) + x
-            )
+            r0 = -0.5 * ((np.cos(0.5 * angle) / np.sin(0.5 * angle)) * axis.cross(x) + x)
         return r0, axis, angle % (2.0 * np.pi), d
 
 
@@ -499,15 +492,8 @@ class Shear(Transformation):
             else:
                 self.tensor = Tensor(args[0])
                 assert self.tensor.rank == 2
-        elif (
-            len(args) == 3
-            and is_vector(args[0])
-            and is_vector(args[1])
-            and is_vector(args[2])
-        ):
-            self.tensor = Tensor(
-                [args[0].array, args[1].array, args[2].array]
-            ).transpose()
+        elif len(args) == 3 and is_vector(args[0]) and is_vector(args[1]) and is_vector(args[2]):
+            self.tensor = Tensor([args[0].array, args[1].array, args[2].array]).transpose()
 
     def asLinearTransformation(self):
         return LinearTransformation(self.tensor, nullVector)
@@ -570,9 +556,7 @@ if __name__ == "__main__":
     t = Translation(Vector(1.0, -2.0, 0))
     r = Rotation(Vector(0.1, -2.0, 0.5), 1.0e-10)
     q = r.asQuaternion()
-    angles = r.threeAngles(
-        Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0), Vector(0.0, 0.0, 1.0)
-    )
+    angles = r.threeAngles(Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0), Vector(0.0, 0.0, 1.0))
     c = t * r
     print(c.screwMotion())
     s = Scaling(2.0)

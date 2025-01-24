@@ -242,9 +242,7 @@ class VanHoveFunctionSelf(IJob):
         )
         cell_vols = np.array(
             [
-                self.configuration["trajectory"]["instance"]
-                .configuration(i)
-                .unit_cell.volume
+                self.configuration["trajectory"]["instance"].configuration(i).unit_cell.volume
                 for i in range(first, last, step)
             ]
         )

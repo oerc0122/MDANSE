@@ -244,9 +244,7 @@ class AtomsDatabase(_Database):
         """
 
         if atom in self._data:
-            raise AtomsDatabaseError(
-                "The atom {} is already stored in the database".format(atom)
-            )
+            raise AtomsDatabaseError("The atom {} is already stored in the database".format(atom))
 
         self._data[atom] = {}
 
@@ -304,9 +302,7 @@ class AtomsDatabase(_Database):
         # The isotopes are searched according to |symbol| property
         symbol = self._data[atom]["symbol"]
 
-        return [
-            iname for iname, props in self._data.items() if props["symbol"] == symbol
-        ]
+        return [iname for iname, props in self._data.items() if props["symbol"] == symbol]
 
     @property
     def properties(self) -> list[str]:
@@ -338,8 +334,7 @@ class AtomsDatabase(_Database):
         ptype = AtomsDatabase._TYPES[self._properties[pname]]
 
         return {
-            element: properties.get(pname, ptype())
-            for element, properties in self._data.items()
+            element: properties.get(pname, ptype()) for element, properties in self._data.items()
         }
 
     def get_value(self, atom: str, pname: str) -> Union[str, int, float, list]:
@@ -400,9 +395,7 @@ class AtomsDatabase(_Database):
         values = {name: self._data[name][prop] for name in unique_atoms}
         return [values[atom] for atom in atoms]
 
-    def set_value(
-        self, atom: str, pname: str, value: Union[str, int, float, list]
-    ) -> None:
+    def set_value(self, atom: str, pname: str, value: Union[str, int, float, list]) -> None:
         """
         Set the given property of the given atom to the given value.
 
@@ -425,9 +418,7 @@ class AtomsDatabase(_Database):
             )
 
         try:
-            self._data[atom][pname] = AtomsDatabase._TYPES[self._properties[pname]](
-                value
-            )
+            self._data[atom][pname] = AtomsDatabase._TYPES[self._properties[pname]](value)
         except ValueError:
             raise AtomsDatabaseError(
                 "Can not coerce {} to {} type".format(value, self._properties[pname])
@@ -482,9 +473,7 @@ class AtomsDatabase(_Database):
 
         # The values for all element's properties
         for pname in sorted(self._properties):
-            info.append(
-                " {0:<20}{1:>50}".format(pname, str(self._data[atom].get(pname, None)))
-            )
+            info.append(" {0:<20}{1:>50}".format(pname, str(self._data[atom].get(pname, None))))
 
         info.append(delimiter)
         info = "\n".join(info)
@@ -564,11 +553,7 @@ class AtomsDatabase(_Database):
         :return: the name of the numeric properties stored in the atoms database
         :rtype: list
         """
-        return [
-            pname
-            for pname, prop in self._properties.items()
-            if prop in ["int", "float"]
-        ]
+        return [pname for pname, prop in self._properties.items() if prop in ["int", "float"]]
 
     def _reset(self) -> None:
         """

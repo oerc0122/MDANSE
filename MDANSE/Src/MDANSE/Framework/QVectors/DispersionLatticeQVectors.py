@@ -43,9 +43,7 @@ class DispersionLatticeQVectors(LatticeQVectors):
         direction = self._configuration["direction"]["value"]
         n_steps = self._configuration["n_steps"]["value"]
 
-        hkls = np.array(start)[:, np.newaxis] + np.outer(
-            direction, np.arange(0, n_steps)
-        )
+        hkls = np.array(start)[:, np.newaxis] + np.outer(direction, np.arange(0, n_steps))
 
         # The k matrix (3,n_hkls)
         vects = np.dot(self._inverseUnitCell, hkls)
@@ -59,9 +57,7 @@ class DispersionLatticeQVectors(LatticeQVectors):
 
         for i, v in enumerate(dists):
             self._configuration["q_vectors"][v] = {}
-            self._configuration["q_vectors"][v]["q_vectors"] = vects[:, i][
-                :, np.newaxis
-            ]
+            self._configuration["q_vectors"][v]["q_vectors"] = vects[:, i][:, np.newaxis]
             self._configuration["q_vectors"][v]["n_q_vectors"] = 1
             self._configuration["q_vectors"][v]["q"] = v
             self._configuration["q_vectors"][v]["hkls"] = hkls[:, i][:, np.newaxis]

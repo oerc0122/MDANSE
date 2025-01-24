@@ -179,24 +179,12 @@ class CoordinationNumber(DistanceHistogram):
 
             invPair = pair[::-1]
 
-            self._outputData["cn_intra_%s%s" % pair][:] = (
-                self.averageDensity * cBeta * cnIntra
-            )
-            self._outputData["cn_inter_%s%s" % pair][:] = (
-                self.averageDensity * cBeta * cnInter
-            )
-            self._outputData["cn_total_%s%s" % pair][:] = (
-                self.averageDensity * cBeta * cnTotal
-            )
-            self._outputData["cn_intra_%s%s" % invPair][:] = (
-                self.averageDensity * cAlpha * cnIntra
-            )
-            self._outputData["cn_inter_%s%s" % invPair][:] = (
-                self.averageDensity * cAlpha * cnInter
-            )
-            self._outputData["cn_total_%s%s" % invPair][:] = (
-                self.averageDensity * cAlpha * cnTotal
-            )
+            self._outputData["cn_intra_%s%s" % pair][:] = self.averageDensity * cBeta * cnIntra
+            self._outputData["cn_inter_%s%s" % pair][:] = self.averageDensity * cBeta * cnInter
+            self._outputData["cn_total_%s%s" % pair][:] = self.averageDensity * cBeta * cnTotal
+            self._outputData["cn_intra_%s%s" % invPair][:] = self.averageDensity * cAlpha * cnIntra
+            self._outputData["cn_inter_%s%s" % invPair][:] = self.averageDensity * cAlpha * cnInter
+            self._outputData["cn_total_%s%s" % invPair][:] = self.averageDensity * cAlpha * cnTotal
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

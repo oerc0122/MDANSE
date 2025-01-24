@@ -70,9 +70,9 @@ class CircularQVectors(IQVectors):
         self._configuration["q_vectors"] = collections.OrderedDict()
 
         for q in self._configuration["shells"]["value"]:
-            fact = q * np.sign(
-                np.random.uniform(-0.5, 0.5, nVectors)
-            ) + width * np.random.uniform(-0.5, 0.5, nVectors)
+            fact = q * np.sign(np.random.uniform(-0.5, 0.5, nVectors)) + width * np.random.uniform(
+                -0.5, 0.5, nVectors
+            )
             v = random_points_on_circle(axis, radius=1.0, nPoints=nVectors)
 
             self._configuration["q_vectors"][q] = {}

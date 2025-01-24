@@ -111,9 +111,7 @@ class DynamicIncoherentStructureFactor(IJob):
 
         self._instrResolution = self.configuration["instrument_resolution"]
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         self._nOmegas = self._instrResolution["n_omegas"]
 
@@ -199,9 +197,7 @@ class DynamicIncoherentStructureFactor(IJob):
         indices = self.configuration["atom_selection"]["indices"][index]
 
         if len(indices) == 1:
-            series = self.configuration["trajectory"][
-                "instance"
-            ].read_atomic_trajectory(
+            series = self.configuration["trajectory"]["instance"].read_atomic_trajectory(
                 indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
@@ -227,9 +223,7 @@ class DynamicIncoherentStructureFactor(IJob):
             qVectors = self.configuration["q_vectors"]["value"][q]["q_vectors"]
 
             rho = np.exp(1j * np.dot(series, qVectors))
-            res = correlate(rho, rho[:n_configs], mode="valid").T[0] / (
-                n_configs * rho.shape[1]
-            )
+            res = correlate(rho, rho[:n_configs], mode="valid").T[0] / (n_configs * rho.shape[1])
 
             disf_per_q_shell[q] += res.real
 

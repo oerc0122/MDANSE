@@ -74,9 +74,7 @@ class McStasParametersConfigurator(IConfigurator):
 
         exePath = instrConfig["value"]
 
-        s = subprocess.Popen(
-            [exePath, "-h"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
+        s = subprocess.Popen([exePath, "-h"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         parameters_bytes = s.communicate()[0]
         parameters_string = parameters_bytes.decode(encoding="utf-8")
@@ -84,9 +82,7 @@ class McStasParametersConfigurator(IConfigurator):
         instrParameters = dict(
             [
                 (v[0], [v[1], v[2]])
-                for v in re.findall(
-                    "\s*(\w+)\s*\((\w+)\)\s*\[default='(\S+)'\]", parameters_string
-                )
+                for v in re.findall("\s*(\w+)\s*\((\w+)\)\s*\[default='(\S+)'\]", parameters_string)
                 if v[0] not in self._exclude
             ]
         )

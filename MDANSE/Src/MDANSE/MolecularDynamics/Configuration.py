@@ -95,7 +95,6 @@ def contiguous_coordinates_real(
     scaleconfig = np.matmul(coords, rcell)
 
     for idxs in indices:
-
         if len(idxs) < 2:
             continue
         if bring_to_centre:
@@ -146,7 +145,6 @@ def contiguous_coordinates_box(
     contiguous_coords = frac_coords.copy()
 
     for tupleidxs in indices:
-
         if len(tupleidxs) < 2:
             continue
 
@@ -460,9 +458,7 @@ class _PeriodicConfiguration(_Configuration):
         :param variables: keyword arguments for any other variables that should be saved to this configuration
         """
 
-        super(_PeriodicConfiguration, self).__init__(
-            chemical_system, coords, **variables
-        )
+        super(_PeriodicConfiguration, self).__init__(chemical_system, coords, **variables)
 
         if unit_cell.direct.shape != (3, 3):
             raise ValueError("Invalid unit cell dimensions")
@@ -479,10 +475,7 @@ class _PeriodicConfiguration(_Configuration):
         if chemical_system is None:
             chemical_system = self._chemical_system
         else:
-            if (
-                chemical_system.total_number_of_atoms
-                != self.chemical_system.total_number_of_atoms
-            ):
+            if chemical_system.total_number_of_atoms != self.chemical_system.total_number_of_atoms:
                 raise ConfigurationError(
                     "Mismatch between the chemical systems; the provided chemical system, "
                     f"{chemical_system.name}, has {chemical_system.total_number_of_atoms} atoms "
@@ -580,9 +573,7 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
 
         return real_conf
 
-    def contiguous_configuration(
-        self, bring_to_centre: bool = False
-    ) -> PeriodicBoxConfiguration:
+    def contiguous_configuration(self, bring_to_centre: bool = False) -> PeriodicBoxConfiguration:
         """
         Return a configuration with chemical entities made contiguous.
 
@@ -590,9 +581,7 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indices_grouped = reduce(
-            list.__add__, self._chemical_system._clusters.values(), []
-        )
+        indices_grouped = reduce(list.__add__, self._chemical_system._clusters.values(), [])
 
         contiguous_coords = contiguous_coordinates_box(
             self._variables["coordinates"],
@@ -647,9 +636,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         """
         return self._variables["coordinates"]
 
-    def contiguous_configuration(
-        self, bring_to_centre: bool = False
-    ) -> PeriodicRealConfiguration:
+    def contiguous_configuration(self, bring_to_centre: bool = False) -> PeriodicRealConfiguration:
         """
         Return a configuration with chemical entities made contiguous.
 
@@ -657,9 +644,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indices_grouped = reduce(
-            list.__add__, self._chemical_system._clusters.values(), []
-        )
+        indices_grouped = reduce(list.__add__, self._chemical_system._clusters.values(), [])
 
         contiguous_coords = contiguous_coordinates_real(
             self._variables["coordinates"],
@@ -696,9 +681,7 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
 class RealConfiguration(_Configuration):
     is_periodic = False
 
-    def clone(
-        self, chemical_system: Union[None, ChemicalSystem] = None
-    ) -> RealConfiguration:
+    def clone(self, chemical_system: Union[None, ChemicalSystem] = None) -> RealConfiguration:
         """
         Creates a deep copy of this configuration, using the provided chemical system.
 
@@ -712,10 +695,7 @@ class RealConfiguration(_Configuration):
         if chemical_system is None:
             chemical_system = self._chemical_system
         else:
-            if (
-                chemical_system.total_number_of_atoms
-                != self.chemical_system.total_number_of_atoms
-            ):
+            if chemical_system.total_number_of_atoms != self.chemical_system.total_number_of_atoms:
                 raise ConfigurationError("Mismatch between the chemical systems")
 
         variables = copy.deepcopy(self.variables)
@@ -737,9 +717,7 @@ class RealConfiguration(_Configuration):
         """
         return self._variables["coordinates"]
 
-    def contiguous_configuration(
-        self, bring_to_centre: bool = False
-    ) -> RealConfiguration:
+    def contiguous_configuration(self, bring_to_centre: bool = False) -> RealConfiguration:
         """
         Return a configuration with chemical entities made contiguous, which is always itself.
 

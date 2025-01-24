@@ -58,9 +58,7 @@ class Connectivity:
             chemical -- ChemicalSystem instance connected to the trajectory.
         """
         if self._selection is not None:
-            atom_elements = [
-                self._chemical_system.atom_list[index] for index in self._selection
-            ]
+            atom_elements = [self._chemical_system.atom_list[index] for index in self._selection]
         else:
             atom_elements = self._chemical_system.atom_list
         unique_elements = np.unique(atom_elements)
@@ -167,8 +165,7 @@ class Connectivity:
         samples = list(np.unique(samples))
         pairs = product(self._unique_elements, repeat=2)
         maxbonds = {
-            pair: (self._radii[pair[0]] + self._radii[pair[1]]) + tolerance
-            for pair in pairs
+            pair: (self._radii[pair[0]] + self._radii[pair[1]]) + tolerance for pair in pairs
         }
         total_max_length = np.max([x for x in maxbonds.values()])
         for _, frame_number in enumerate(samples):

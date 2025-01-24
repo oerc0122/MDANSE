@@ -193,9 +193,7 @@ class StaticStructureFactor(DistanceHistogram):
                 + self._outputData["ssf_inter_%s%s" % pair][:]
             )
 
-        self._outputData.add(
-            "ssf_intra", "LineOutputVariable", (nq,), axis="q", units="au"
-        )
+        self._outputData.add("ssf_intra", "LineOutputVariable", (nq,), axis="q", units="au")
         self._outputData.add(
             "ssf_inter",
             "LineOutputVariable",
@@ -203,20 +201,14 @@ class StaticStructureFactor(DistanceHistogram):
             axis="q",
             units="au",
         )
-        self._outputData.add(
-            "ssf_total", "LineOutputVariable", (nq,), axis="q", units="au"
-        )
+        self._outputData.add("ssf_total", "LineOutputVariable", (nq,), axis="q", units="au")
 
         weights = self.configuration["weights"].get_weights()
 
-        ssfIntra = weight(
-            weights, self._outputData, nAtomsPerElement, 2, "ssf_intra_%s%s"
-        )
+        ssfIntra = weight(weights, self._outputData, nAtomsPerElement, 2, "ssf_intra_%s%s")
         self._outputData["ssf_intra"][:] = ssfIntra
 
-        ssfInter = weight(
-            weights, self._outputData, nAtomsPerElement, 2, "ssf_inter_%s%s"
-        )
+        ssfInter = weight(weights, self._outputData, nAtomsPerElement, 2, "ssf_inter_%s%s")
 
         self._outputData["ssf_inter"][:] = ssfInter
 

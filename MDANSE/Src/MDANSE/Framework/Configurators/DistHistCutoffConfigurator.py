@@ -6,7 +6,6 @@ from .RangeConfigurator import RangeConfigurator
 
 
 class DistHistCutoffConfigurator(RangeConfigurator):
-
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
         self._max_value = kwargs.get("max_value", True)
@@ -20,9 +19,7 @@ class DistHistCutoffConfigurator(RangeConfigurator):
             A tuple of the range parameters.
         """
         if self._max_value and value[1] > floor(self.get_largest_cutoff() * 100) / 100:
-            self.error_status = (
-                "The cutoff distance goes into the simulation box periodic images."
-            )
+            self.error_status = "The cutoff distance goes into the simulation box periodic images."
             return
 
         super().configure(value)
@@ -39,10 +36,7 @@ class DistHistCutoffConfigurator(RangeConfigurator):
         traj_config = self._configurable[self._dependencies["trajectory"]]["instance"]
         try:
             trajectory_array = np.array(
-                [
-                    traj_config.unit_cell(frame)._unit_cell
-                    for frame in range(len(traj_config))
-                ]
+                [traj_config.unit_cell(frame)._unit_cell for frame in range(len(traj_config))]
             )
         except Exception:
             return np.linalg.norm(traj_config.min_span)

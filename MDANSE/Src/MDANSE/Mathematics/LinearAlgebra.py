@@ -234,8 +234,7 @@ class Vector:
         if not is_vector(other):
             raise TypeError("Angle between vector and non-vector")
         cosa = np.add.reduce(self.array * other.array) / np.sqrt(
-            np.add.reduce(self.array * self.array)
-            * np.add.reduce(other.array * other.array)
+            np.add.reduce(self.array * self.array) * np.add.reduce(other.array * other.array)
         )
         cosa = max(-1.0, min(1.0, cosa))
         return np.arccos(cosa)
@@ -559,9 +558,7 @@ class Tensor:
         @raises ValueError: if rank !=2
         """
         if self.rank == 2:
-            return Tensor(
-                0.5 * (self.array + np.transpose(self.array, np.array([1, 0]))), 1
-            )
+            return Tensor(0.5 * (self.array + np.transpose(self.array, np.array([1, 0]))), 1)
         else:
             raise ValueError("Not yet implemented")
 
@@ -572,9 +569,7 @@ class Tensor:
         @raises ValueError: if rank !=2
         """
         if self.rank == 2:
-            return Tensor(
-                0.5 * (self.array - np.transpose(self.array, np.array([1, 0]))), 1
-            )
+            return Tensor(0.5 * (self.array - np.transpose(self.array, np.array([1, 0]))), 1)
         else:
             raise ValueError("Not yet implemented")
 

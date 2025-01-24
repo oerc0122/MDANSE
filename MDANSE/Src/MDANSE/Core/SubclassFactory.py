@@ -70,9 +70,7 @@ def recursive_search(parent_class: type, name: str):
         return return_type
     else:
         for child in parent_class._registered_subclasses.keys():
-            return_type = recursive_search(
-                parent_class._registered_subclasses[child], name
-            )
+            return_type = recursive_search(parent_class._registered_subclasses[child], name)
             if return_type is not None:
                 return return_type
 
@@ -114,8 +112,7 @@ def recursive_dict(parent_class: type) -> dict:
     """
     try:
         results = {
-            ckey: parent_class._registered_subclasses[ckey]
-            for ckey in parent_class.subclasses()
+            ckey: parent_class._registered_subclasses[ckey] for ckey in parent_class.subclasses()
         }
     except Exception:
         return {}

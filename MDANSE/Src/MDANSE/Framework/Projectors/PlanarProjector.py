@@ -26,9 +26,7 @@ class PlanarProjector(IProjector):
         try:
             self._axis = Vector(axis)
         except (TypeError, ValueError):
-            raise ProjectorError(
-                "Wrong axis definition: must be a sequence of 3 floats"
-            )
+            raise ProjectorError("Wrong axis definition: must be a sequence of 3 floats")
 
         try:
             self._axis = self._axis.normal()

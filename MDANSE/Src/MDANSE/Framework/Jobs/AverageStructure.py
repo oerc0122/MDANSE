@@ -85,9 +85,7 @@ class AverageStructure(IJob):
 
         self.numberOfSteps = self.configuration["atom_selection"]["selection_length"]
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         target_unit = self.configuration["output_units"]["value"]
         if target_unit == "Angstrom":
@@ -106,9 +104,7 @@ class AverageStructure(IJob):
         )
 
         try:
-            unit_cells = [
-                trajectory.unit_cell(frame)._unit_cell for frame in frame_range
-            ]
+            unit_cells = [trajectory.unit_cell(frame)._unit_cell for frame in frame_range]
         except Exception:
             raise ValueError(
                 "Unit cell needs to be defined for the AverageStructure analysis. "
@@ -131,9 +127,7 @@ class AverageStructure(IJob):
         # get selected atom indices sublist
         indices = self.configuration["atom_selection"]["indices"][index]
         if len(indices) == 1:
-            series = self.configuration["trajectory"][
-                "instance"
-            ].read_atomic_trajectory(
+            series = self.configuration["trajectory"]["instance"].read_atomic_trajectory(
                 indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
@@ -183,9 +177,7 @@ class AverageStructure(IJob):
             correction = np.floor(temp)
             self._ase_atoms.set_scaled_positions(temp - correction)
 
-        PLATFORM.create_directory(
-            os.path.dirname(self.configuration["output_files"]["file"])
-        )
+        PLATFORM.create_directory(os.path.dirname(self.configuration["output_files"]["file"]))
         ase_write(
             self.configuration["output_files"]["file"],
             self._ase_atoms,

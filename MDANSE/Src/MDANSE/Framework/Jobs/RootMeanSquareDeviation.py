@@ -110,9 +110,7 @@ class RootMeanSquareDeviation(IJob):
             main_result=True,
         )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -163,9 +161,7 @@ class RootMeanSquareDeviation(IJob):
                 self._outputData["rmsd_{}".format(element)]
             )
 
-        self._outputData["rmsd_all"] /= self.configuration[
-            "atom_selection"
-        ].get_total_natoms()
+        self._outputData["rmsd_all"] /= self.configuration["atom_selection"].get_total_natoms()
         self._outputData["rmsd_all"] = np.sqrt(self._outputData["rmsd_all"])
 
         self._outputData.write(

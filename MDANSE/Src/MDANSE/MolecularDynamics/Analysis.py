@@ -117,9 +117,7 @@ def mean_square_fluctuation(coords: np.ndarray, root: bool = False) -> float:
     return msf
 
 
-def radius_of_gyration(
-    coords: np.ndarray, masses: np.ndarray = None, root: bool = False
-) -> float:
+def radius_of_gyration(coords: np.ndarray, masses: np.ndarray = None, root: bool = False) -> float:
     """
     Computes the radius of gyration for a set of coordinates and their corresponding masses. If no masses are provided,
     all masses are set to 1, in which case the ROG is equivalent to the centre of gravity. The following equation is

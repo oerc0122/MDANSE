@@ -4,9 +4,7 @@ from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInput
 from MDANSE.Framework.Configurators.AtomTransmutationConfigurator import AtomTransmuter
 
 
-traj_2vb1 = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "Converted", "2vb1.mdt"
-)
+traj_2vb1 = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Converted", "2vb1.mdt")
 
 
 @pytest.fixture(scope="module")
@@ -28,9 +26,7 @@ def test_atom_transmutation_return_dict_with_transmutations_with_incorrect_eleme
 ):
     atm_transmuter = AtomTransmuter(protein_trajectory)
     with pytest.raises(ValueError):
-        atm_transmuter.apply_transmutation(
-            {"all": False, "element": {"S": True}}, "CCC"
-        )
+        atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "CCC")
 
 
 def test_atom_transmutation_return_dict_with_transmutations_with_s_element_transmutation(
@@ -99,9 +95,7 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
 ):
     atm_transmuter = AtomTransmuter(protein_trajectory)
     atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
-    atm_transmuter.apply_transmutation(
-        {"all": False, "index": {98: True, 99: True}}, "S"
-    )
+    atm_transmuter.apply_transmutation({"all": False, "index": {98: True, 99: True}}, "S")
     mapping = atm_transmuter.get_setting()
     assert mapping == {
         99: "S",
@@ -120,9 +114,7 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
 def test_atom_transmutation_return_empty_dict_after_reset(protein_trajectory):
     atm_transmuter = AtomTransmuter(protein_trajectory)
     atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
-    atm_transmuter.apply_transmutation(
-        {"all": False, "index": {98: True, 99: True}}, "S"
-    )
+    atm_transmuter.apply_transmutation({"all": False, "index": {98: True, 99: True}}, "S")
     atm_transmuter.reset_setting()
     mapping = atm_transmuter.get_setting()
     assert mapping == {}

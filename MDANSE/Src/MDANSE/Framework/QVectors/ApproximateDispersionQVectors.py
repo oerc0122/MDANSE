@@ -59,15 +59,11 @@ class ApproximateDispersionQVectors(LatticeQVectors):
         try:
             n = (qEnd - qStart).normal()
         except ZeroDivisionError:
-            self._configuration["q_end"].error_status = (
-                "Zero-length vector cannot be used here"
-            )
+            self._configuration["q_end"].error_status = "Zero-length vector cannot be used here"
             return
         nSteps = int(d / qStep) + 1
 
-        vects = (
-            np.array(qStart)[:, np.newaxis] + np.outer(n, np.arange(0, nSteps)) * qStep
-        )
+        vects = np.array(qStart)[:, np.newaxis] + np.outer(n, np.arange(0, nSteps)) * qStep
 
         hkls = np.rint(np.dot(self._directUnitCell, vects))
 
@@ -75,9 +71,7 @@ class ApproximateDispersionQVectors(LatticeQVectors):
         dists = list(zip(range(len(dists)), dists))
         dists.sort(key=operator.itemgetter(1))
         qGroups = itertools.groupby(dists, key=operator.itemgetter(1))
-        qGroups = collections.OrderedDict(
-            [(k, [item[0] for item in v]) for k, v in qGroups]
-        )
+        qGroups = collections.OrderedDict([(k, [item[0] for item in v]) for k, v in qGroups])
 
         if self._status is not None:
             self._status.start(len(qGroups))

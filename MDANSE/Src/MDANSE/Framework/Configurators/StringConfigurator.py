@@ -64,9 +64,7 @@ class StringConfigurator(IConfigurator):
         if self._evalType is not None:
             value = ast.literal_eval(value)
             if not isinstance(value, self._evalType):
-                self.error_status = (
-                    f"the string can not be eval to {self._evalType.__name__} type"
-                )
+                self.error_status = f"the string can not be eval to {self._evalType.__name__} type"
                 return
 
         self["value"] = value

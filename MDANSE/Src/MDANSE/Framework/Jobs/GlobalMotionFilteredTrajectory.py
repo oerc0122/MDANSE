@@ -132,17 +132,13 @@ class GlobalMotionFilteredTrajectory(IJob):
         current_configuration = current_configuration.continuous_configuration()
         variables = copy.deepcopy(current_configuration.variables)
         coords = variables.pop("coordinates")
-        current_configuration = RealConfiguration(
-            trajectory.chemical_system, coords, **variables
-        )
+        current_configuration = RealConfiguration(trajectory.chemical_system, coords, **variables)
 
         # Case of the first frame.
         if frameIndex == self.configuration["frames"]["first"]:
             # A a linear transformation that shifts the center of mass of the reference atoms to the coordinate origin
             # and makes its principal axes of inertia parallel to the three coordinate axes is computed.
-            transfo = self._reference_atoms.normalizing_transformation(
-                current_configuration
-            )
+            transfo = self._reference_atoms.normalizing_transformation(current_configuration)
 
             # The first rms is set to zero by construction.
             rms = 0.0

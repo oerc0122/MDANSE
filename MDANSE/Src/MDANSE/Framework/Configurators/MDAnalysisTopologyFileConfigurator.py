@@ -22,7 +22,6 @@ from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 
 class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
-
     _default = ("", "AUTO")
 
     def configure(self, setting: str) -> None:
@@ -49,9 +48,7 @@ class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
         #  which will give us more control over what is guessed. We may
         #  want to change the MDAnalysis guessing options in the future
         #  so that it works better with the MDANSE atom mapping.
-        self.atoms = mda.Universe(
-            self["filename"], topology_format=self["format"]
-        ).atoms
+        self.atoms = mda.Universe(self["filename"], topology_format=self["format"]).atoms
 
     def atom_labels(self) -> Iterable[AtomLabel]:
         """

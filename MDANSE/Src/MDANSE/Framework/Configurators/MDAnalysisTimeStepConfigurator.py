@@ -19,7 +19,6 @@ from MDANSE.Framework.Configurators.FloatConfigurator import FloatConfigurator
 
 
 class MDAnalysisTimeStepConfigurator(FloatConfigurator):
-
     _default = 0.0
 
     def configure(self, value):
@@ -33,9 +32,7 @@ class MDAnalysisTimeStepConfigurator(FloatConfigurator):
 
         if value is None or value == "" or value == 0.0:
             file_configurator = self._configurable[self._dependencies["topology_file"]]
-            files_configurator = self._configurable[
-                self._dependencies["coordinate_files"]
-            ]
+            files_configurator = self._configurable[self._dependencies["coordinate_files"]]
             if file_configurator._valid and files_configurator._valid:
                 try:
                     coord_format = files_configurator["format"]
@@ -55,9 +52,7 @@ class MDAnalysisTimeStepConfigurator(FloatConfigurator):
                             topology_format=file_configurator["format"],
                         ).trajectory.ts.dt
                 except Exception as e:
-                    self.error_status = (
-                        f"Unable to determine a time step from MDAnalysis: {e}"
-                    )
+                    self.error_status = f"Unable to determine a time step from MDAnalysis: {e}"
                     return
             else:
                 self.error_status = "Unable to determine a time step from MDAnalysis"

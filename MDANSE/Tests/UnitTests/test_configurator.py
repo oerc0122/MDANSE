@@ -96,9 +96,7 @@ class TestConfigurator(unittest.TestCase):
         configurator.configure(("PlanarProjector", (1, 0, 0)))
         proj = configurator["projector"](data)
         self.assertTrue(
-            numpy.array_equal(
-                numpy.zeros((data.shape[0],), dtype=numpy.float64), proj[:, 0]
-            )
+            numpy.array_equal(numpy.zeros((data.shape[0],), dtype=numpy.float64), proj[:, 0])
         )
         self.assertTrue(numpy.array_equal(data[:, 1], proj[:, 1]))
         self.assertTrue(numpy.array_equal(data[:, 2], proj[:, 2]))

@@ -25,7 +25,6 @@ in a different set of equations depending on the type of an experiment
 performed. Initially, the plan is to start with time-of-flight diffraction,
 direct and indirect spectrometry."""
 
-
 import glob
 import importlib
 import os
@@ -44,9 +43,7 @@ for name in modnames:
     if name in ["__init__"]:
         continue
     try:
-        tempmod = importlib.import_module(
-            "." + name, "MDANSE.NeutronInstruments.Method"
-        )
+        tempmod = importlib.import_module("." + name, "MDANSE.NeutronInstruments.Method")
     except ModuleNotFoundError:
         continue
     tempobject = getattr(tempmod, name)

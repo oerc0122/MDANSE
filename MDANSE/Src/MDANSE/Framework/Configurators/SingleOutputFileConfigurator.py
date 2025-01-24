@@ -45,9 +45,7 @@ class SingleOutputFileConfigurator(IConfigurator):
 
         IConfigurator.__init__(self, name, **kwargs)
 
-        self._format = (
-            format if format is not None else SingleOutputFileConfigurator._default[-1]
-        )
+        self._format = format if format is not None else SingleOutputFileConfigurator._default[-1]
 
     def configure(self, value):
         """
@@ -78,13 +76,13 @@ class SingleOutputFileConfigurator(IConfigurator):
             return
 
         if format != self._format:
-            self.error_status = (
-                f"the output file format {format} is not a valid output format"
-            )
+            self.error_status = f"the output file format {format} is not a valid output format"
             return
 
         if format not in IFormat.subclasses():
-            self.error_status = f"the output file format {format} is not registered as a valid file format."
+            self.error_status = (
+                f"the output file format {format} is not registered as a valid file format."
+            )
             return
 
         self["root"] = root

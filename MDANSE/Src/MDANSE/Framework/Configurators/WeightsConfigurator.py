@@ -43,9 +43,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         self._aliases = {"mass": "atomic_weight"}
 
         filtered_choices = self.filter_choices()
-        SingleChoiceConfigurator.__init__(
-            self, name, choices=filtered_choices, **kwargs
-        )
+        SingleChoiceConfigurator.__init__(self, name, choices=filtered_choices, **kwargs)
 
     def filter_choices(self):
         full_choices = ATOMS_DATABASE.numeric_properties + list(self._aliases.keys())
@@ -64,12 +62,8 @@ class WeightsConfigurator(SingleChoiceConfigurator):
             "state",
         ]
         limited_choices = [x for x in full_choices if x not in to_discard]
-        self._optional_grouping["xray_group"] = [
-            x for x in limited_choices if "xray" in x
-        ]
-        self._optional_grouping["neutron_group"] = [
-            x for x in limited_choices if "b_" in x
-        ]
+        self._optional_grouping["xray_group"] = [x for x in limited_choices if "xray" in x]
+        self._optional_grouping["neutron_group"] = [x for x in limited_choices if "b_" in x]
         self._optional_grouping["atomic_group"] = [
             "mass",
             "nucleon",
@@ -86,9 +80,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         :type value: one of the numeric properties of MDANSE.Data.ElementsDatabase.ElementsDatabase
         """
         self._original_input = value
-        self._trajectory = self._configurable[self._dependencies["trajectory"]][
-            "instance"
-        ]
+        self._trajectory = self._configurable[self._dependencies["trajectory"]]["instance"]
 
         if not isinstance(value, str):
             self.error_status = "Invalid type for weight. Must be a string."
@@ -100,9 +92,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
             value = self._aliases[value]
 
         if value not in self._trajectory.properties_in_database:
-            self.error_status = (
-                f"weight {value} is not registered as a valid numeric property."
-            )
+            self.error_status = f"weight {value} is not registered as a valid numeric property."
             return
 
         self["property"] = value

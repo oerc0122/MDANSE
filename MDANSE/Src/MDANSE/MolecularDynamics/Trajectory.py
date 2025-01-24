@@ -176,9 +176,7 @@ class Trajectory:
             self.calculate_coordinate_span()
         return self._min_span
 
-    def read_com_trajectory(
-        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
-    ):
+    def read_com_trajectory(self, atom_indices, first=0, last=None, step=1, box_coordinates=False):
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
@@ -220,9 +218,7 @@ class Trajectory:
         """
         return self._trajectory.to_real_coordinates(box_coordinates, first, last, step)
 
-    def read_atomic_trajectory(
-        self, index, first=0, last=None, step=1, box_coordinates=False
-    ):
+    def read_atomic_trajectory(self, index, first=0, last=None, step=1, box_coordinates=False):
         """Read an atomic trajectory. The trajectory is corrected for box jumps.
 
         :param index: the index of the atom
@@ -285,8 +281,8 @@ class Trajectory:
 
     def get_atom_property(self, atom_symbol: str, property: str):
         if (atom_symbol, property) not in self._atom_cache.keys():
-            self._atom_cache[(atom_symbol, property)] = (
-                self._trajectory.get_atom_property(atom_symbol, property)
+            self._atom_cache[(atom_symbol, property)] = self._trajectory.get_atom_property(
+                atom_symbol, property
             )
         return self._atom_cache[(atom_symbol, property)]
 
@@ -417,9 +413,7 @@ def create_average_atom(
         temp = []
         total = 0
         for element_name, element_count in atom_dictionary.items():
-            temp.append(
-                [database.get_atom_property(element_name, property), element_count]
-            )
+            temp.append([database.get_atom_property(element_name, property), element_count])
         if property in additive_atom_properties:
             total = np.sum([float(x[0]) * int(x[1]) for x in temp])
         elif property in averaged_atom_properties:
@@ -430,8 +424,7 @@ def create_average_atom(
             total = constant_atom_properties[property]
         elif property in atom_radii:
             total = (
-                np.sum([float(x[0]) * int(x[1]) for x in temp])
-                / np.sum([int(x[1]) for x in temp])
+                np.sum([float(x[0]) * int(x[1]) for x in temp]) / np.sum([int(x[1]) for x in temp])
                 + radius_padding
             )
         else:
@@ -516,9 +509,7 @@ class TrajectoryWriter:
             self._chunking_limit = self._n_atoms
         else:
             self._chunk_tuple = (1, chunking_limit, 3)
-            self._padded_size = (
-                math.ceil(self._n_atoms / chunking_limit) * chunking_limit
-            )
+            self._padded_size = math.ceil(self._n_atoms / chunking_limit) * chunking_limit
             self._chunking_limit = chunking_limit
 
         self._compression = compression
@@ -543,9 +534,7 @@ class TrajectoryWriter:
         else:
             label_dataset = self._h5_file["/atom_database/property_labels"]
         if "property_types" not in group:
-            type_dataset = group.create_dataset(
-                "property_types", data=200 * [""], dtype=string_dt
-            )
+            type_dataset = group.create_dataset("property_types", data=200 * [""], dtype=string_dt)
         else:
             type_dataset = self._h5_file["/atom_database/property_types"]
         next_index = 0
@@ -587,9 +576,7 @@ class TrajectoryWriter:
             colour = [int(x) for x in properties["color"].split(";")]
         except AttributeError:
             colour = [int(x) for x in properties["color"][0].split(";")]
-        atom_dataset[mapping["color"]] = (
-            0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
-        )
+        atom_dataset[mapping["color"]] = 0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
 
     def write_atom_database(
         self,
@@ -623,9 +610,7 @@ class TrajectoryWriter:
                     atom_dict, database, radius_padding=molecule_radius
                 )
             if hasattr(database, "_properties"):
-                self.write_atom_properties(
-                    atom_symbol, property_dict, database._properties
-                )
+                self.write_atom_properties(atom_symbol, property_dict, database._properties)
             else:
                 self.write_atom_properties(atom_symbol, property_dict)
 
@@ -858,9 +843,7 @@ class RigidBodyTrajectoryGenerator:
         possq = np.zeros((n_steps,), np.float64)
         cross = np.zeros((n_steps, 3, 3), np.float64)
 
-        rcms = self._trajectory.read_com_trajectory(
-            atoms, first, last, step, box_coordinates=True
-        )
+        rcms = self._trajectory.read_com_trajectory(atoms, first, last, step, box_coordinates=True)
 
         # relative coords of the CONTIGUOUS reference
         r_ref = np.zeros((len(atoms), 3), np.float64)

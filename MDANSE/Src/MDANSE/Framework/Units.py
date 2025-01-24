@@ -155,9 +155,7 @@ def _str_to_unit(s):
 
 
 class _Unit(object):
-    def __init__(
-        self, uname, factor, kg=0, m=0, s=0, K=0, mol=0, A=0, cd=0, rad=0, sr=0
-    ):
+    def __init__(self, uname, factor, kg=0, m=0, s=0, K=0, mol=0, A=0, cd=0, rad=0, sr=0):
         self._factor = factor
 
         self._dimension = [kg, m, s, K, mol, A, cd, rad, sr]
@@ -694,21 +692,15 @@ class UnitsManagerEncoder(json.JSONEncoder):
 class UnitsManager(metaclass=Singleton):
     _UNITS = {}
 
-    _DEFAULT_DATABASE = os.path.join(
-        PLATFORM.base_directory(), "MDANSE", "Framework", "units.json"
-    )
+    _DEFAULT_DATABASE = os.path.join(PLATFORM.base_directory(), "MDANSE", "Framework", "units.json")
 
     _USER_DATABASE = os.path.join(PLATFORM.application_directory(), "units.json")
 
     def __init__(self):
         self.load()
 
-    def add_unit(
-        self, uname, factor, kg=0, m=0, s=0, K=0, mol=0, A=0, cd=0, rad=0, sr=0
-    ):
-        UnitsManager._UNITS[uname] = _Unit(
-            uname, factor, kg, m, s, K, mol, A, cd, rad, sr
-        )
+    def add_unit(self, uname, factor, kg=0, m=0, s=0, K=0, mol=0, A=0, cd=0, rad=0, sr=0):
+        UnitsManager._UNITS[uname] = _Unit(uname, factor, kg, m, s, K, mol, A, cd, rad, sr)
 
     def delete_unit(self, uname):
         if uname in UnitsManager._UNITS:
@@ -779,87 +771,47 @@ UNITS_MANAGER = UnitsManager()
 # au --> au
 add_equivalence((0, 0, 0, 0, 0, 0, 0, 0, 0), (0, 0, 0, 0, 0, 0, 0, 0, 0), 1.0)
 # 1J --> 1Hz
-add_equivalence(
-    (1, 2, -2, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 0, 0), 1.50919031167677e33
-)
+add_equivalence((1, 2, -2, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 0, 0), 1.50919031167677e33)
 # 1J --> 1K
-add_equivalence(
-    (1, 2, -2, 0, 0, 0, 0, 0, 0), (0, 0, 0, 1, 0, 0, 0, 0, 0), 7.242971666663e22
-)
+add_equivalence((1, 2, -2, 0, 0, 0, 0, 0, 0), (0, 0, 0, 1, 0, 0, 0, 0, 0), 7.242971666663e22)
 # 1J --> 1kg
-add_equivalence(
-    (1, 2, -2, 0, 0, 0, 0, 0, 0), (1, 0, 0, 0, 0, 0, 0, 0, 0), 1.112650055999e-17
-)
+add_equivalence((1, 2, -2, 0, 0, 0, 0, 0, 0), (1, 0, 0, 0, 0, 0, 0, 0, 0), 1.112650055999e-17)
 # 1J --> 1/m
-add_equivalence(
-    (1, 2, -2, 0, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 5.034117012218e24
-)
+add_equivalence((1, 2, -2, 0, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 5.034117012218e24)
 # 1J --> 1J/mol
-add_equivalence(
-    (1, 2, -2, 0, 0, 0, 0, 0, 0), (1, 2, -2, 0, -1, 0, 0, 0, 0), 6.02214076e23
-)
+add_equivalence((1, 2, -2, 0, 0, 0, 0, 0, 0), (1, 2, -2, 0, -1, 0, 0, 0, 0), 6.02214076e23)
 # 1J --> 1rad/s
-add_equivalence(
-    (1, 2, -2, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 9.482522392065263e33
-)
+add_equivalence((1, 2, -2, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 9.482522392065263e33)
 # 1Hz --> 1K
-add_equivalence(
-    (0, 0, -1, 0, 0, 0, 0, 0, 0), (0, 0, 0, 1, 0, 0, 0, 0, 0), 4.79924341590788e-11
-)
+add_equivalence((0, 0, -1, 0, 0, 0, 0, 0, 0), (0, 0, 0, 1, 0, 0, 0, 0, 0), 4.79924341590788e-11)
 # 1Hz --> 1kg
-add_equivalence(
-    (0, 0, -1, 0, 0, 0, 0, 0, 0), (1, 0, 0, 0, 0, 0, 0, 0, 0), 7.37249667845648e-51
-)
+add_equivalence((0, 0, -1, 0, 0, 0, 0, 0, 0), (1, 0, 0, 0, 0, 0, 0, 0, 0), 7.37249667845648e-51)
 # 1Hz --> 1/m
-add_equivalence(
-    (0, 0, -1, 0, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 3.33564095480276e-09
-)
+add_equivalence((0, 0, -1, 0, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 3.33564095480276e-09)
 # 1Hz --> 1J/mol
-add_equivalence(
-    (0, 0, -1, 0, 0, 0, 0, 0, 0), (1, 2, -2, 0, -1, 0, 0, 0, 0), 3.9903124e-10
-)
+add_equivalence((0, 0, -1, 0, 0, 0, 0, 0, 0), (1, 2, -2, 0, -1, 0, 0, 0, 0), 3.9903124e-10)
 # 1Hz --> 1rad/s
-add_equivalence(
-    (0, 0, -1, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 6.283185307179586
-)
+add_equivalence((0, 0, -1, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 6.283185307179586)
 # 1K --> 1kg
-add_equivalence(
-    (0, 0, 0, 1, 0, 0, 0, 0, 0), (1, 0, 0, 0, 0, 0, 0, 0, 0), 1.53617894312656e-40
-)
+add_equivalence((0, 0, 0, 1, 0, 0, 0, 0, 0), (1, 0, 0, 0, 0, 0, 0, 0, 0), 1.53617894312656e-40)
 # 1K --> 1/m
-add_equivalence(
-    (0, 0, 0, 1, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 6.95034751466497e01
-)
+add_equivalence((0, 0, 0, 1, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 6.95034751466497e01)
 # 1K --> 1J/mol
 add_equivalence((0, 0, 0, 1, 0, 0, 0, 0, 0), (1, 2, -2, 0, -1, 0, 0, 0, 0), 8.31435)
 # 1K --> 1rad/s
-add_equivalence(
-    (0, 0, 0, 1, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 130920329782.73508
-)
+add_equivalence((0, 0, 0, 1, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 130920329782.73508)
 # 1kg --> 1/m
-add_equivalence(
-    (1, 0, 0, 0, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 4.52443873532014e41
-)
+add_equivalence((1, 0, 0, 0, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 4.52443873532014e41)
 # 1kg --> 1J/mol
-add_equivalence(
-    (1, 0, 0, 0, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 5.412430195397762e40
-)
+add_equivalence((1, 0, 0, 0, 0, 0, 0, 0, 0), (0, -1, 0, 0, 0, 0, 0, 0, 0), 5.412430195397762e40)
 # 1kg --> 1rad/s
-add_equivalence(
-    (1, 0, 0, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 8.522466107774846e50
-)
+add_equivalence((1, 0, 0, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 8.522466107774846e50)
 # 1/m --> 1J/mol
-add_equivalence(
-    (0, -1, 0, 0, 0, 0, 0, 0, 0), (1, 2, -2, 0, -1, 0, 0, 0, 0), 0.000119627
-)
+add_equivalence((0, -1, 0, 0, 0, 0, 0, 0, 0), (1, 2, -2, 0, -1, 0, 0, 0, 0), 0.000119627)
 # 1/m --> 1rad/s
-add_equivalence(
-    (0, -1, 0, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 1883651565.7166505
-)
+add_equivalence((0, -1, 0, 0, 0, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 1883651565.7166505)
 # 1J/mol --> 1rad/s
-add_equivalence(
-    (1, 2, -2, 0, -1, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 15746098887.375164
-)
+add_equivalence((1, 2, -2, 0, -1, 0, 0, 0, 0), (0, 0, -1, 0, 0, 0, 0, 1, 0), 15746098887.375164)
 
 if __name__ == "__main__":
     m = measure(1.0, "m")

@@ -79,14 +79,10 @@ class Gromacs(Converter):
 
         # Create XTC or TRR object depending on which kind of trajectory was loaded
         if self.configuration["xtc_file"]["filename"][-4:] == ".xtc":
-            self._xdr_file = XTCTrajectoryFile(
-                self.configuration["xtc_file"]["filename"], "r"
-            )
+            self._xdr_file = XTCTrajectoryFile(self.configuration["xtc_file"]["filename"], "r")
             self._xtc = True
         elif self.configuration["xtc_file"]["filename"][-4:] == ".trr":
-            self._xdr_file = TRRTrajectoryFile(
-                self.configuration["xtc_file"]["filename"], "r"
-            )
+            self._xdr_file = TRRTrajectoryFile(self.configuration["xtc_file"]["filename"], "r")
             self._xtc = False
 
             # Extract information about whether velocities and forces are present in the TRR file
@@ -104,9 +100,10 @@ class Gromacs(Converter):
                     )
 
             # The TRRTrajectoryFile object returns ints for these values, so turn them into bools
-            self._read_velocities, self._read_forces = bool(
-                self._read_velocities
-            ), bool(self._read_forces)
+            self._read_velocities, self._read_forces = (
+                bool(self._read_velocities),
+                bool(self._read_forces),
+            )
 
             if self._read_velocities:
                 data_to_be_written.append("velocities")

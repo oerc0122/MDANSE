@@ -114,9 +114,7 @@ class PositionAutoCorrelationFunction(IJob):
                 partial_result=True,
             )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -143,9 +141,7 @@ class PositionAutoCorrelationFunction(IJob):
         series = self.configuration["projection"]["projector"](series)
 
         n_configs = self.configuration["frames"]["n_configs"]
-        atomicPACF = correlate(series, series[:n_configs], mode="valid") / (
-            3 * n_configs
-        )
+        atomicPACF = correlate(series, series[:n_configs], mode="valid") / (3 * n_configs)
         return index, atomicPACF.T[0]
 
     def combine(self, index, x):

@@ -40,7 +40,6 @@ class LAMMPSTrajectoryFileError(Error):
 
 
 class LAMMPSReader:
-
     def __init__(self, *args, **kwargs):
         self._units = kwargs.get("lammps_units", "real")
         self._timestep = kwargs.get("timestep", 1.0)
@@ -116,7 +115,6 @@ class LAMMPSReader:
 
 
 class LAMMPScustom(LAMMPSReader):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -135,7 +133,6 @@ class LAMMPScustom(LAMMPSReader):
         self._start = 0
 
     def parse_first_step(self, aliases, config):
-
         self._itemsPosition = collections.OrderedDict()
 
         comp = -1
@@ -275,9 +272,7 @@ class LAMMPScustom(LAMMPSReader):
             * measure(1.0, self._time_unit).toval("ps")
         )
 
-        for _ in range(
-            self._itemsPosition["TIMESTEP"][1], self._itemsPosition["BOX BOUNDS"][0]
-        ):
+        for _ in range(self._itemsPosition["TIMESTEP"][1], self._itemsPosition["BOX BOUNDS"][0]):
             self._file.readline()
 
         unitCell = np.zeros((9), dtype=np.float64)
@@ -325,19 +320,13 @@ class LAMMPScustom(LAMMPSReader):
         unitCell *= measure(1.0, self._length_unit).toval("nm")
         unitCell = UnitCell(unitCell)
 
-        for _ in range(
-            self._itemsPosition["BOX BOUNDS"][1], self._itemsPosition["ATOMS"][0]
-        ):
+        for _ in range(self._itemsPosition["BOX BOUNDS"][1], self._itemsPosition["ATOMS"][0]):
             self._file.readline()
 
-        coords = np.empty(
-            (self._trajectory.chemical_system.number_of_atoms, 3), dtype=np.float64
-        )
+        coords = np.empty((self._trajectory.chemical_system.number_of_atoms, 3), dtype=np.float64)
 
         if self._charge is not None:
-            charges = np.empty(
-                self._trajectory.chemical_system.number_of_atoms, dtype=np.float64
-            )
+            charges = np.empty(self._trajectory.chemical_system.number_of_atoms, dtype=np.float64)
 
         for i, _ in enumerate(
             range(self._itemsPosition["ATOMS"][0], self._itemsPosition["ATOMS"][1])
@@ -356,9 +345,7 @@ class LAMMPScustom(LAMMPSReader):
                 charges[idx] = float(temp[self._charge])
 
         if self._fractionalCoordinates:
-            conf = PeriodicBoxConfiguration(
-                self._trajectory.chemical_system, coords, unitCell
-            )
+            conf = PeriodicBoxConfiguration(self._trajectory.chemical_system, coords, unitCell)
             real_conf = conf.to_real_configuration()
         else:
             coords *= measure(1.0, self._length_unit).toval("nm")
@@ -377,9 +364,7 @@ class LAMMPScustom(LAMMPSReader):
             units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
         )
         if self._charge is not None:
-            self._trajectory.write_charges(
-                charges * self._charge_conversion_factor, index
-            )
+            self._trajectory.write_charges(charges * self._charge_conversion_factor, index)
 
         self._start += self._last
 
@@ -387,7 +372,6 @@ class LAMMPScustom(LAMMPSReader):
 
 
 class LAMMPSxyz(LAMMPSReader):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._full_cell = None
@@ -406,7 +390,6 @@ class LAMMPSxyz(LAMMPSReader):
         self._file = open(filename, "r")
 
     def read_any_step(self):
-
         line = self._file.readline()
         number_of_atoms = int(line)
         line = self._file.readline()
@@ -416,7 +399,6 @@ class LAMMPSxyz(LAMMPSReader):
         atom_types = np.empty(number_of_atoms, dtype=int)
 
         for at_num in range(number_of_atoms):
-
             line = self._file.readline()
 
             if not line:
@@ -433,7 +415,6 @@ class LAMMPSxyz(LAMMPSReader):
         return timestep, atom_types, positions
 
     def parse_first_step(self, aliases, config):
-
         _, atom_types, positions = self.read_any_step()
 
         self._nAtoms = len(atom_types)
@@ -502,9 +483,7 @@ class LAMMPSxyz(LAMMPSReader):
         time = timestep * self._timestep * measure(1.0, self._time_unit).toval("ps")
 
         if self._fractionalCoordinates:
-            conf = PeriodicBoxConfiguration(
-                self._trajectory.chemical_system, positions, unitCell
-            )
+            conf = PeriodicBoxConfiguration(self._trajectory.chemical_system, positions, unitCell)
             real_conf = conf.to_real_configuration()
         else:
             positions *= measure(1.0, self._length_unit).toval("nm")
@@ -527,7 +506,6 @@ class LAMMPSxyz(LAMMPSReader):
 
 
 class LAMMPSh5md(LAMMPSReader):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._charges_fixed = None
@@ -544,7 +522,6 @@ class LAMMPSh5md(LAMMPSReader):
         self._file = h5py.File(filename, "r")
 
     def parse_first_step(self, aliases, config):
-
         try:
             atom_types = self._file["/particles/all/species/value"][0]
         except KeyError:
@@ -557,9 +534,7 @@ class LAMMPSh5md(LAMMPSReader):
 
         self._fractionalCoordinates = False
         cell_edges = self._file["/particles/all/box/edges/value"][0]
-        full_cell = np.array(
-            [[cell_edges[0], 0, 0], [0, cell_edges[1], 0], [0, 0, cell_edges[2]]]
-        )
+        full_cell = np.array([[cell_edges[0], 0, 0], [0, cell_edges[1], 0], [0, 0, cell_edges[2]]])
         try:
             self._charges_fixed = self._file["/particles/all/charge"][:]
         except Exception:
@@ -609,9 +584,7 @@ class LAMMPSh5md(LAMMPSReader):
         time = timestep * self._timestep * measure(1.0, self._time_unit).toval("ps")
 
         if self._fractionalCoordinates:
-            conf = PeriodicBoxConfiguration(
-                self._trajectory.chemical_system, positions, unitCell
-            )
+            conf = PeriodicBoxConfiguration(self._trajectory.chemical_system, positions, unitCell)
             real_conf = conf.to_real_configuration()
         else:
             positions *= measure(1.0, self._length_unit).toval("nm")
@@ -635,9 +608,7 @@ class LAMMPSh5md(LAMMPSReader):
             except Exception:
                 pass
             else:
-                self._trajectory.write_charges(
-                    charge * self._charge_conversion_factor, index
-                )
+                self._trajectory.write_charges(charge * self._charge_conversion_factor, index)
 
         return index, 0
 
@@ -747,8 +718,7 @@ class LAMMPS(Converter):
             )
 
         charges_single_cell = (
-            np.array(self._lammpsConfig["charges"])
-            * self._reader._charge_conversion_factor
+            np.array(self._lammpsConfig["charges"]) * self._reader._charge_conversion_factor
         )
         if len(charges_single_cell) < self._chemical_system.number_of_atoms:
             charges = list(charges_single_cell) * int(

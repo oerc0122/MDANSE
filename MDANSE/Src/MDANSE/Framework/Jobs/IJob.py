@@ -258,7 +258,6 @@ class IJob(Configurable, metaclass=SubclassFactory):
         LOG.info("Single-core job completed all the steps")
 
     def process_tasks_queue(self, tasks, outputs, log_queues):
-
         queue_handlers = []
         for log_queue in log_queues:
             queue_handler = QueueHandler(log_queue)
@@ -351,9 +350,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
         listener : QueueListener
             The log listener that we need to stop.
         """
-        if not (
-            hasattr(self._status, "_queue_0") and hasattr(self._status, "_queue_1")
-        ):
+        if not (hasattr(self._status, "_queue_0") and hasattr(self._status, "_queue_1")):
             return
         if not self._status._queue_1.empty():
             if self._status._queue_1.get() == "terminate":
@@ -371,9 +368,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
                     time.sleep(10)
 
     def _run_remote(self):
-        raise NotImplementedError(
-            "Currently there is no replacement for the old Pyro remote runs."
-        )
+        raise NotImplementedError("Currently there is no replacement for the old Pyro remote runs.")
 
     _runner = {
         "single-core": _run_singlecore,
@@ -426,9 +421,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
     @classmethod
     def save_template(cls, shortname, classname):
         if shortname in IJob.subclasses():
-            raise KeyError(
-                "A job with %r name is already stored in the registry" % shortname
-            )
+            raise KeyError("A job with %r name is already stored in the registry" % shortname)
 
         templateFile = os.path.join(PLATFORM.macros_directory(), "%s.py" % classname)
 

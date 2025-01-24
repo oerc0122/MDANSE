@@ -136,8 +136,7 @@ class TextFormat(IFormat):
             else:
                 xValues = allData[xData]
                 fileobject.write(
-                    "# 1st column: %s (%s)\n"
-                    % (allData[xData].varname, allData[xData].units)
+                    "# 1st column: %s (%s)\n" % (allData[xData].varname, allData[xData].units)
                 )
 
             if yData == "index":
@@ -146,8 +145,7 @@ class TextFormat(IFormat):
             else:
                 yValues = allData[yData]
                 fileobject.write(
-                    "# 1st row: %s (%s)\n\n"
-                    % (allData[yData].varname, allData[yData].units)
+                    "# 1st row: %s (%s)\n\n" % (allData[yData].varname, allData[yData].units)
                 )
 
             zData = np.zeros((data.shape[0] + 1, data.shape[1] + 1), dtype=np.float64)
@@ -167,8 +165,7 @@ class TextFormat(IFormat):
             else:
                 xValues = allData[xData]
                 fileobject.write(
-                    "# 1st column: %s (%s)\n"
-                    % (allData[xData].varname, allData[xData].units)
+                    "# 1st column: %s (%s)\n" % (allData[xData].varname, allData[xData].units)
                 )
 
             fileobject.write("# 2nd column: %s (%s)\n\n" % (data.varname, data.units))

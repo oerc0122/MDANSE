@@ -71,11 +71,7 @@ class RootMeanSquareFluctuation(IJob):
         self.numberOfSteps = self.configuration["atom_selection"]["selection_length"]
 
         # Will store the indices.
-        indices = [
-            idx
-            for idxs in self.configuration["atom_selection"]["indices"]
-            for idx in idxs
-        ]
+        indices = [idx for idxs in self.configuration["atom_selection"]["indices"] for idx in idxs]
         if self.configuration["grouping_level"]["value"] == "atom":
             self._outputData.add("indices", "LineOutputVariable", indices)
         else:
@@ -95,9 +91,7 @@ class RootMeanSquareFluctuation(IJob):
             main_result=True,
         )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
     def run_step(self, index):
         """

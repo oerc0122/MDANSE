@@ -288,9 +288,7 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         if configured is None:
             names = [str(key) for key in self._configurable._configuration.keys()]
             configured = [
-                name
-                for name in names
-                if self._configurable._configuration[name].is_configured()
+                name for name in names if self._configurable._configuration[name].is_configured()
             ]
 
         for c in list(self._dependencies.values()):

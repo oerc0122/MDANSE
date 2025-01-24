@@ -75,22 +75,12 @@ class Eccentricity(IJob):
             main_result=True,
         )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
         self._indices = np.array(
-            [
-                idx
-                for idxs in self._configuration["atom_selection"]["indices"]
-                for idx in idxs
-            ]
+            [idx for idxs in self._configuration["atom_selection"]["indices"] for idx in idxs]
         )
         self._selectionMasses = np.array(
-            [
-                m
-                for masses in self._configuration["atom_selection"]["masses"]
-                for m in masses
-            ]
+            [m for masses in self._configuration["atom_selection"]["masses"] for m in masses]
         )
 
     def run_step(self, index: int):

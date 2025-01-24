@@ -22,7 +22,6 @@ from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 
 
 class MultiInputFileConfigurator(IConfigurator):
-
     _default = ""
 
     def __init__(self, name, wildcard="All files (*)", **kwargs):
@@ -54,9 +53,7 @@ class MultiInputFileConfigurator(IConfigurator):
                     self.error_status = f"Unable to evaluate string: {e}"
                     return
                 if type(values) is not list:
-                    self.error_status = (
-                        "Input values should be able to be evaluated as a list"
-                    )
+                    self.error_status = "Input values should be able to be evaluated as a list"
                     return
             else:
                 values = []

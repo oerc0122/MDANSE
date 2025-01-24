@@ -27,9 +27,7 @@ class IntegerConfigurator(IConfigurator):
 
     _default = 0
 
-    def __init__(
-        self, name, mini=None, maxi=None, choices=None, exclude=None, **kwargs
-    ):
+    def __init__(self, name, mini=None, maxi=None, choices=None, exclude=None, **kwargs):
         """
         Initializes the configurator.
 
@@ -87,7 +85,9 @@ class IntegerConfigurator(IConfigurator):
 
         if self._exclude:
             if value in self._exclude:
-                self.error_status = f"the input value is forbidden; forbidden values are {self._exclude}"
+                self.error_status = (
+                    f"the input value is forbidden; forbidden values are {self._exclude}"
+                )
                 return
 
         self["value"] = value

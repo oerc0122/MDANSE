@@ -53,10 +53,7 @@ class LinearLatticeQVectors(LatticeQVectors):
         # The Q vector corresponding to the input hkl.
         qVect = np.dot(self._inverseUnitCell, self._configuration["axis"]["vector"])
 
-        qMax = (
-            self._configuration["shells"]["last"]
-            + 0.5 * self._configuration["width"]["value"]
-        )
+        qMax = self._configuration["shells"]["last"] + 0.5 * self._configuration["width"]["value"]
 
         uMax = np.ceil(qMax / Vector(qVect).length()) + 1
 

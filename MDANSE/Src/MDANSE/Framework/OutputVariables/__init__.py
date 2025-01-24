@@ -31,9 +31,7 @@ for name in modnames:
     if name in ["__init__"]:
         continue
     try:
-        tempmod = importlib.import_module(
-            "." + name, "MDANSE.Framework.OutputVariables"
-        )
+        tempmod = importlib.import_module("." + name, "MDANSE.Framework.OutputVariables")
     except ModuleNotFoundError:
         continue
     tempobject = getattr(tempmod, name)

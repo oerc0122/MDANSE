@@ -103,16 +103,16 @@ class MDTraj(Converter):
             self.traj = md.load(
                 coord_files,
                 top=top_file,
-                discard_overlapping_frames=self.configuration[
-                    "discard_overlapping_frames"
-                ]["value"],
+                discard_overlapping_frames=self.configuration["discard_overlapping_frames"][
+                    "value"
+                ],
             )
         else:
             self.traj = md.load(
                 coord_files,
-                discard_overlapping_frames=self.configuration[
-                    "discard_overlapping_frames"
-                ]["value"],
+                discard_overlapping_frames=self.configuration["discard_overlapping_frames"][
+                    "value"
+                ],
             )
 
         self.numberOfSteps = self.traj.n_frames
@@ -156,7 +156,7 @@ class MDTraj(Converter):
             self.configuration["output_files"]["file"],
             self._chemical_system,
             self.numberOfSteps,
-            **kwargs
+            **kwargs,
         )
         super().initialize()
 

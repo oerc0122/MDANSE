@@ -134,9 +134,7 @@ class ElasticIncoherentStructureFactor(IJob):
             main_result=True,
         )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
     def run_step(self, index):
         """

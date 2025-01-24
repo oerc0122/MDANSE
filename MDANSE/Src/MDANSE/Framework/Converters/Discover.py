@@ -210,12 +210,7 @@ class HisFile(dict):
 
         time = index * self["time_step"]
 
-        hisfile.seek(
-            self._headerSize
-            + index * self._frameSize
-            + self._rec1Size
-            + self._rec14Size
-        )
+        hisfile.seek(self._headerSize + index * self._frameSize + self._rec1Size + self._rec14Size)
 
         cell = np.reshape(
             np.array(struct.unpack(self._recN2, hisfile.read(self._recN2Size))[6:]),

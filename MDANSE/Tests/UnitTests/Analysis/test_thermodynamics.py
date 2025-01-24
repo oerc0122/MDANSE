@@ -34,7 +34,6 @@ result_dir = os.path.join(
 )
 
 
-
 @pytest.mark.parametrize(
     "traj_info,interp_order",
     [
@@ -43,7 +42,7 @@ result_dir = os.path.join(
         (("mdmc_traj", mdmc_traj), 1),
         (("mdmc_traj", mdmc_traj), 3),
         (("com_traj", com_traj), 1),
-        (("com_traj", com_traj), 3)
+        (("com_traj", com_traj), 3),
     ],
 )
 def test_temperature(traj_info, interp_order):
@@ -59,14 +58,17 @@ def test_temperature(traj_info, interp_order):
 
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
-    result_file = os.path.join(
-        result_dir, f"temperature_{traj_info[0]}_{interp_order}.mda")
+    result_file = os.path.join(result_dir, f"temperature_{traj_info[0]}_{interp_order}.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         np.testing.assert_array_almost_equal(actual["/kinetic_energy"], desired["/kinetic_energy"])
         np.testing.assert_array_almost_equal(actual["/temperature"], desired["/temperature"])
-        np.testing.assert_array_almost_equal(actual["/avg_kinetic_energy"], desired["/avg_kinetic_energy"])
-        np.testing.assert_array_almost_equal(actual["/avg_temperature"], desired["/avg_temperature"])
+        np.testing.assert_array_almost_equal(
+            actual["/avg_kinetic_energy"], desired["/avg_kinetic_energy"]
+        )
+        np.testing.assert_array_almost_equal(
+            actual["/avg_temperature"], desired["/avg_temperature"]
+        )
 
     os.remove(temp_name + ".mda")
 
@@ -83,7 +85,7 @@ def test_temperature(traj_info, interp_order):
         (("mdmc_traj", mdmc_traj), "MDAFormat"),
         (("mdmc_traj", mdmc_traj), "TextFormat"),
         (("com_traj", com_traj), "MDAFormat"),
-        (("com_traj", com_traj), "TextFormat")
+        (("com_traj", com_traj), "TextFormat"),
     ],
 )
 def test_density(traj_info, output_format):
@@ -101,10 +103,16 @@ def test_density(traj_info, output_format):
         result_file = os.path.join(result_dir, f"density_{traj_info[0]}.mda")
 
         with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
-            np.testing.assert_array_almost_equal(actual["/atomic_density"], desired["/atomic_density"])
+            np.testing.assert_array_almost_equal(
+                actual["/atomic_density"], desired["/atomic_density"]
+            )
             np.testing.assert_array_almost_equal(actual["/mass_density"], desired["/mass_density"])
-            np.testing.assert_array_almost_equal(actual["/avg_atomic_density"], desired["/avg_atomic_density"])
-            np.testing.assert_array_almost_equal(actual["/avg_mass_density"], desired["/avg_mass_density"])
+            np.testing.assert_array_almost_equal(
+                actual["/avg_atomic_density"], desired["/avg_atomic_density"]
+            )
+            np.testing.assert_array_almost_equal(
+                actual["/avg_mass_density"], desired["/avg_mass_density"]
+            )
 
         os.remove(temp_name + ".mda")
     elif output_format == "TextFormat":

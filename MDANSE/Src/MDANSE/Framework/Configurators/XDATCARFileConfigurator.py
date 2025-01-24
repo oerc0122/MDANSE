@@ -66,15 +66,12 @@ def check_trajectory(filename: str):
         frame_numbers = False
     if direct_configuration_found > 0:
         if not frame_numbers:
-            raise ValueError(
-                "File contains both 'direct configuration' and empty lines"
-            )
+            raise ValueError("File contains both 'direct configuration' and empty lines")
         frame_numbers = True
     return fixed_cell, frame_numbers
 
 
 class XDATCARFileConfigurator(FileWithAtomDataConfigurator):
-
     def parse(self):
         filename = self["filename"]
         with open(filename, "r") as source:
@@ -107,11 +104,8 @@ class XDATCARFileConfigurator(FileWithAtomDataConfigurator):
         self._coordinates = np.empty((self["n_atoms"], 3))
 
     def read_step(self, step):
-
         if step > 0 and not self._has_fixed_cell:
-            unit_cell, atoms, atom_numbers, system_name = read_modern_header(
-                self["instance"]
-            )
+            unit_cell, atoms, atom_numbers, system_name = read_modern_header(self["instance"])
         else:
             unit_cell = self._init_cell
 
@@ -126,9 +120,7 @@ class XDATCARFileConfigurator(FileWithAtomDataConfigurator):
         self["step_number"] = step_number
 
         for atom_number in range(self["n_atoms"]):
-            self._coordinates[atom_number] = [
-                float(x) for x in self["instance"].readline().split()
-            ]
+            self._coordinates[atom_number] = [float(x) for x in self["instance"].readline().split()]
 
         return self._coordinates
 

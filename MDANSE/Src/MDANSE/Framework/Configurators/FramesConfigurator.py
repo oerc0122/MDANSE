@@ -79,7 +79,9 @@ class FramesConfigurator(RangeConfigurator):
 
         # check last setting
         if last <= 0 or last > n_steps or last <= first:
-            self.error_status = f"Last frame needs to be between 1 and {n_steps} and greater than the first frame"
+            self.error_status = (
+                f"Last frame needs to be between 1 and {n_steps} and greater than the first frame"
+            )
             return
 
         # check step setting
@@ -122,14 +124,11 @@ class FramesConfigurator(RangeConfigurator):
         """
 
         try:
-            result = (
-                "%d frames selected (first=%.3f ; last = %.3f ; time step = %.3f)\n"
-                % (
-                    self["n_frames"],
-                    self["time"][0],
-                    self["time"][-1],
-                    self["time_step"],
-                )
+            result = "%d frames selected (first=%.3f ; last = %.3f ; time step = %.3f)\n" % (
+                self["n_frames"],
+                self["time"][0],
+                self["time"][-1],
+                self["time_step"],
             )
         except KeyError:
             result = "FramesConfigurator could not be configured!"

@@ -59,9 +59,7 @@ class CellFile(dict):
             try:
                 time_steps.append(float(words[1]))
             except ValueError:
-                raise CellFileError(
-                    f"Cannot cast time step {words[1]} to a floating point number"
-                )
+                raise CellFileError(f"Cannot cast time step {words[1]} to a floating point number")
 
             try:
                 cell = np.array(words[2:11], dtype=np.float64).reshape((3, 3))
@@ -172,27 +170,19 @@ class CP2K(Converter):
         if self.configuration["vel_file"]:
             self._velFile = self.configuration["vel_file"]
             if abs(self._xyzFile["time_step"] - self._velFile["time_step"]) > 1.0e-09:
-                raise CP2KConverterError(
-                    "Inconsistent time step between pos and vel files"
-                )
+                raise CP2KConverterError("Inconsistent time step between pos and vel files")
 
             if self._xyzFile["n_frames"] != self._velFile["n_frames"]:
-                raise CP2KConverterError(
-                    "Inconsistent number of frames between pos and vel files"
-                )
+                raise CP2KConverterError("Inconsistent number of frames between pos and vel files")
 
         self._cellFile = CellFile(self.configuration["cell_file"]["filename"])
 
         if abs(self._cellFile["time_step"] - self._xyzFile["time_step"]) > 1.0e-09:
-            LOG.error(f'{self._cellFile["time_step"]}, {self._xyzFile["time_step"]}')
-            raise CP2KConverterError(
-                "Inconsistent time step between pos and cell files"
-            )
+            LOG.error(f"{self._cellFile['time_step']}, {self._xyzFile['time_step']}")
+            raise CP2KConverterError("Inconsistent time step between pos and cell files")
 
         if self._cellFile["n_frames"] != self._xyzFile["n_frames"]:
-            raise CP2KConverterError(
-                "Inconsistent number of frames between pos and cell files"
-            )
+            raise CP2KConverterError("Inconsistent number of frames between pos and cell files")
 
         # The number of steps of the analysis.
         self.numberOfSteps = self._xyzFile["n_frames"]
@@ -231,9 +221,7 @@ class CP2K(Converter):
         # Read the current coordinates in the XYZ file.
         coords = self._xyzFile.read_step(index) * measure(1.0, iunit="ang").toval("nm")
 
-        unitcell = UnitCell(
-            self._cellFile.read_step(index) * measure(1.0, iunit="ang").toval("nm")
-        )
+        unitcell = UnitCell(self._cellFile.read_step(index) * measure(1.0, iunit="ang").toval("nm"))
 
         variables = {}
         if self.configuration["vel_file"]:

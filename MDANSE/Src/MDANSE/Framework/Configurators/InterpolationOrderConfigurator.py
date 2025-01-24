@@ -69,17 +69,13 @@ class InterpolationOrderConfigurator(IntegerConfigurator):
             self["variable"] = "velocities"
 
         elif value > 5:
-            self.error_status = (
-                "Use an interpolation order greater than 5 is not implemented."
-            )
+            self.error_status = "Use an interpolation order greater than 5 is not implemented."
             return
 
         else:
             number = frames_configurator["number"]
             if number < value + 1:
-                self.error_status = (
-                    f"Not enough MD frames to apply derivatives of order {value}"
-                )
+                self.error_status = f"Not enough MD frames to apply derivatives of order {value}"
                 return
 
             self["variable"] = "coordinates"

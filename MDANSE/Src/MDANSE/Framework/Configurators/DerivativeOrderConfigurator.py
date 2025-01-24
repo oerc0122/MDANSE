@@ -61,9 +61,7 @@ class DerivativeOrderConfigurator(IntegerConfigurator):
 
         number = frames_configurator["number"]
         if number < value + 1:
-            self.error_status = (
-                f"Not enough MD frames to apply derivatives of order {value}"
-            )
+            self.error_status = f"Not enough MD frames to apply derivatives of order {value}"
             return
 
         self.error_status = "OK"

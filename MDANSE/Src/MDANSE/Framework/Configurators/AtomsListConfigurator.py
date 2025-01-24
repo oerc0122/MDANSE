@@ -69,9 +69,7 @@ class AtomsListConfigurator(IConfigurator):
             molecule, atoms = UD_STORE.get_definition(
                 traj_configurator["basename"], "%d_atoms_list" % self._nAtoms, value
             )
-        elif UD_STORE.has_definition(
-            traj_configurator["basename"], "AtomsListConfigurator", value
-        ):
+        elif UD_STORE.has_definition(traj_configurator["basename"], "AtomsListConfigurator", value):
             tempdict = UD_STORE.get_definition(
                 traj_configurator["basename"], "AtomsListConfigurator", value
             )
@@ -112,8 +110,6 @@ class AtomsListConfigurator(IConfigurator):
             return "No configured yet"
 
         info = []
-        info.append(
-            "Number of selected %d-tuplets:%d" % (self._nAtoms, self["n_values"])
-        )
+        info.append("Number of selected %d-tuplets:%d" % (self._nAtoms, self["n_values"]))
 
         return "\n".join(info) + "\n"

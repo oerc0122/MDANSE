@@ -158,9 +158,7 @@ class OrderParameter(IJob):
             units="au",
             main_result=True,
         )
-        self._outputData.add(
-            "s2", "LineOutputVariable", (self._nAxis,), axis="time", units="au"
-        )
+        self._outputData.add("s2", "LineOutputVariable", (self._nAxis,), axis="time", units="au")
 
         if self.configuration["per_axis"]["value"]:
             self._outputData.add(
@@ -246,10 +244,8 @@ class OrderParameter(IJob):
 
         # s2 calculation (s2 = lim (t->+inf) p2)
         s2 = (
-            0.75
-            * (np.sum(cos2phi * sintheta_sq) ** 2 + np.sum(sin2phi * sintheta_sq) ** 2)
-            + 3.00
-            * (np.sum(cosphi * cossintheta) ** 2 + np.sum(sinphi * cossintheta) ** 2)
+            0.75 * (np.sum(cos2phi * sintheta_sq) ** 2 + np.sum(sin2phi * sintheta_sq) ** 2)
+            + 3.00 * (np.sum(cosphi * cossintheta) ** 2 + np.sum(sinphi * cossintheta) ** 2)
             + 0.25 * np.sum(tr2) ** 2
         ) / self._nFrames**2
 

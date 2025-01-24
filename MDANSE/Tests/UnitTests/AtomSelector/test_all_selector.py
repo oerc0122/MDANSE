@@ -4,9 +4,7 @@ from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInput
 from MDANSE.Framework.AtomSelector.all_selector import select_all
 
 
-traj_2vb1 = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "Converted", "2vb1.mdt"
-)
+traj_2vb1 = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "Converted", "2vb1.mdt")
 
 
 @pytest.fixture(scope="module")

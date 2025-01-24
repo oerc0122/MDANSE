@@ -23,9 +23,7 @@ from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 
-FORCE_FACTOR = measure(1.0, "kcal_per_mole/ang", equivalent=True).toval(
-    "uma nm/ps2 mol"
-)
+FORCE_FACTOR = measure(1.0, "kcal_per_mole/ang", equivalent=True).toval("uma nm/ps2 mol")
 
 
 class TrjFile(dict):
@@ -92,9 +90,7 @@ class TrjFile(dict):
 
         rec = "!%di8x" % self["totmov"]
         recSize = struct.calcsize(rec)
-        self["mvofst"] = (
-            np.array(struct.unpack(rec, trjfile.read(recSize)), dtype=np.int32) - 1
-        )
+        self["mvofst"] = np.array(struct.unpack(rec, trjfile.read(recSize)), dtype=np.int32) - 1
 
         # Record 4a
         rec = "!i"
@@ -173,25 +169,17 @@ class TrjFile(dict):
         if self["velocities_written"]:
             if self["gradients_written"]:
                 # Frame record 8,9,10,11,12,13,14,15,16
-                self._configRec = "!" + ("%d%s8x" * 9) % (
-                    (self["totmov"], self._fp) * 9
-                )
+                self._configRec = "!" + ("%d%s8x" * 9) % ((self["totmov"], self._fp) * 9)
             else:
                 # Frame record 8,9,10,11,12,13
-                self._configRec = "!" + ("%d%s8x" * 6) % (
-                    (self["totmov"], self._fp) * 6
-                )
+                self._configRec = "!" + ("%d%s8x" * 6) % ((self["totmov"], self._fp) * 6)
         else:
             if self["gradients_written"]:
                 # Frame record 8,9,10,14,15,16
-                self._configRec = "!" + ("%d%s8x" * 6) % (
-                    (self["totmov"], self._fp) * 6
-                )
+                self._configRec = "!" + ("%d%s8x" * 6) % ((self["totmov"], self._fp) * 6)
             else:
                 # Frame record 8,9,10
-                self._configRec = "!" + ("%d%s8x" * 3) % (
-                    (self["totmov"], self._fp) * 3
-                )
+                self._configRec = "!" + ("%d%s8x" * 3) % ((self["totmov"], self._fp) * 3)
 
         self._configRecSize = struct.calcsize(self._configRec)
         trjfile.read(self._configRecSize)
@@ -340,9 +328,7 @@ class Forcite(Converter):
             self._velocities = None
 
         if self._trjfile["gradients_written"]:
-            self._gradients = np.zeros(
-                (self._chemical_system.number_of_atoms, 3), dtype=np.float64
-            )
+            self._gradients = np.zeros((self._chemical_system.number_of_atoms, 3), dtype=np.float64)
         else:
             self._gradients = None
 

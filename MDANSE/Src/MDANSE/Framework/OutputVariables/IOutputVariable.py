@@ -82,8 +82,7 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
 
         if value.ndim != cls._nDimensions:
             raise OutputVariableError(
-                "Invalid number of dimensions for an output variable of type %r"
-                % cls.name
+                "Invalid number of dimensions for an output variable of type %r" % cls.name
             )
 
         # Input array is an already formed ndarray instance

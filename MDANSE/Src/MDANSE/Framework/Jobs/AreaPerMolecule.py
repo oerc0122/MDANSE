@@ -98,8 +98,7 @@ class AreaPerMolecule(IJob):
         )
         if self._nMolecules == 0:
             raise AreaPerMoleculeError(
-                "No molecule matches %r name."
-                % self.configuration["molecule_name"]["value"]
+                "No molecule matches %r name." % self.configuration["molecule_name"]["value"]
             )
 
         self._outputData.add(
@@ -132,15 +131,11 @@ class AreaPerMolecule(IJob):
         # Get the frame index
         frame_index = self.configuration["frames"]["value"][index]
 
-        configuration = self.configuration["trajectory"]["instance"].configuration(
-            frame_index
-        )
+        configuration = self.configuration["trajectory"]["instance"].configuration(frame_index)
 
         try:
             unit_cell = configuration.unit_cell._unit_cell
-            normalVect = np.cross(
-                unit_cell[self._axisIndexes[0]], unit_cell[self._axisIndexes[1]]
-            )
+            normalVect = np.cross(unit_cell[self._axisIndexes[0]], unit_cell[self._axisIndexes[1]])
         except Exception:
             raise AreaPerMoleculeError(
                 "The unit cell must be defined for AreaPerMolecule. "

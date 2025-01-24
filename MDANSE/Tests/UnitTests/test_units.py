@@ -126,35 +126,25 @@ class TestUnits(unittest.TestCase):
         self.assertAlmostEqual(m.toval("1/m"), 4.0e-02, delta=1.0e-09)
 
     def test_floor_unit(self):
-        self.assertAlmostEqual(
-            measure(10.2, "m/s").floor().toval(), 10.0, delta=1.0e-09
-        )
+        self.assertAlmostEqual(measure(10.2, "m/s").floor().toval(), 10.0, delta=1.0e-09)
         self.assertAlmostEqual(
             measure(3.6, "m/s").ounit("km/h").floor().toval(), 12.0, delta=1.0e-09
         )
-        self.assertAlmostEqual(
-            measure(50.3, "km/h").floor().toval(), 50.0, delta=1.0e-09
-        )
+        self.assertAlmostEqual(measure(50.3, "km/h").floor().toval(), 50.0, delta=1.0e-09)
 
     def test_ceil_unit(self):
         self.assertAlmostEqual(measure(10.2, "m/s").ceil().toval(), 11.0, delta=1.0e-09)
         self.assertAlmostEqual(
             measure(3.6, "m/s").ounit("km/h").ceil().toval(), 13.0, delta=1.0e-09
         )
-        self.assertAlmostEqual(
-            measure(50.3, "km/h").ceil().toval(), 51.0, delta=1.0e-09
-        )
+        self.assertAlmostEqual(measure(50.3, "km/h").ceil().toval(), 51.0, delta=1.0e-09)
 
     def test_round_unit(self):
-        self.assertAlmostEqual(
-            measure(10.2, "m/s").round().toval(), 10.0, delta=1.0e-09
-        )
+        self.assertAlmostEqual(measure(10.2, "m/s").round().toval(), 10.0, delta=1.0e-09)
         self.assertAlmostEqual(
             measure(3.6, "m/s").ounit("km/h").round().toval(), 13.0, delta=1.0e-09
         )
-        self.assertAlmostEqual(
-            measure(50.3, "km/h").round().toval(), 50.0, delta=1.0e-09
-        )
+        self.assertAlmostEqual(measure(50.3, "km/h").round().toval(), 50.0, delta=1.0e-09)
 
     def test_int_unit(self):
         self.assertEqual(int(measure(10.2, "km/h")), 10)

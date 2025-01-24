@@ -81,9 +81,7 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
                 self["instance"].readline()
                 # Save the length of the cell data
                 self._frameInfo["cell_data"].append(
-                    self["instance"].tell()
-                    - self._frameInfo["cell_data"][0]
-                    - self._headerSize
+                    self["instance"].tell() - self._frameInfo["cell_data"][0] - self._headerSize
                 )
 
             # If the properties of the positional data have not been stored yet and the line stores this data
@@ -103,29 +101,18 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
 
         # Read the whole ionic data block (positions, velocities, and forces) of the first frame
         self["instance"].seek(self._headerSize + self._frameInfo["data"][0])
-        frame = (
-            self["instance"]
-            .read(self._frameInfo["data"][1])
-            .decode("UTF-8")
-            .splitlines()
-        )
-        self["n_atoms"] = (
-            len(frame) // 3
-        )  # Save the number of atoms (length of positional data)
+        frame = self["instance"].read(self._frameInfo["data"][1]).decode("UTF-8").splitlines()
+        self["n_atoms"] = len(frame) // 3  # Save the number of atoms (length of positional data)
 
         # Create a list storing the chemical symbol of the element described on each line of positional data
         tmp = [f.split()[0] for f in frame[: self["n_atoms"]]]
         # Save a list of tuples where each tuple consists of the symbol on the amount of those atoms in the simulation
-        self["atoms"] = [
-            (element, len(list(group))) for element, group in itertools.groupby(tmp)
-        ]
+        self["atoms"] = [(element, len(list(group))) for element, group in itertools.groupby(tmp)]
 
         # Move file handle to the end of the file
         self["instance"].seek(0, 2)
         # Save the number of frames
-        self["n_frames"] = (
-            self["instance"].tell() - self._headerSize
-        ) // self._frameSize
+        self["n_frames"] = (self["instance"].tell() - self._headerSize) // self._frameSize
         self["instance"].seek(0)  # Move file handle to the beginning of the file
 
     def read_step(self, step):
@@ -147,9 +134,7 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
         self["instance"].seek(start + self._frameInfo["time_step"][0])
 
         # Read the time stored in the line and convert its units
-        timeStep = float(
-            self["instance"].read(self._frameInfo["time_step"][1]).decode("UTF-8")
-        )
+        timeStep = float(self["instance"].read(self._frameInfo["time_step"][1]).decode("UTF-8"))
         timeStep *= HBAR / HARTREE
 
         # Read and process the cell data
@@ -157,15 +142,10 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
             start + self._frameInfo["cell_data"][0]
         )  # Move to the start of cell data
         unitCell = (
-            self["instance"]
-            .read(self._frameInfo["cell_data"][1])
-            .decode("UTF-8")
-            .splitlines()
+            self["instance"].read(self._frameInfo["cell_data"][1]).decode("UTF-8").splitlines()
         )  # Read the cell data by line
         # Generate an array of three vectors where each vector is constructed from its components stored in each line
-        unitCell = np.array(
-            [[float(bb) for bb in b.strip().split()[:3]] for b in unitCell]
-        )
+        unitCell = np.array([[float(bb) for bb in b.strip().split()[:3]] for b in unitCell])
         unitCell *= BOHR
         unitCell = UnitCell(unitCell)
 

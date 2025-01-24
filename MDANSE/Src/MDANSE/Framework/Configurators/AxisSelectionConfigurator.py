@@ -52,9 +52,7 @@ class AxisSelectionConfigurator(IConfigurator):
         trajConfig = self._configurable[self._dependencies["trajectory"]]
 
         if UD_STORE.has_definition(trajConfig["basename"], "axis_selection", value):
-            ud = UD_STORE.get_definition(
-                trajConfig["basename"], "axis_selection", value
-            )
+            ud = UD_STORE.get_definition(trajConfig["basename"], "axis_selection", value)
             self.update(ud)
         else:
             self.update(value)

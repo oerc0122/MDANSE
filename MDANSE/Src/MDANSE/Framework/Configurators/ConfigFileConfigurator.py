@@ -29,7 +29,6 @@ class LAMMPSConfigFileError(Error):
 
 
 def parse_unit_cell(inputs):
-
     unit_cell = np.zeros(9)
 
     xlo, xhi, xy = inputs[0], inputs[1], inputs[2]
@@ -53,7 +52,6 @@ def parse_unit_cell(inputs):
 
 
 class ConfigFileConfigurator(FileWithAtomDataConfigurator):
-
     def parse(self):
         self._filename = self["filename"]
 
@@ -119,14 +117,10 @@ class ConfigFileConfigurator(FileWithAtomDataConfigurator):
 
             if re.match("^\s*masses\s*$", line, re.I):
                 if self["n_atom_types"] is None:
-                    raise LAMMPSConfigFileError(
-                        "Did not find the number of atom types."
-                    )
+                    raise LAMMPSConfigFileError("Did not find the number of atom types.")
 
                 for j in range(1, self["n_atom_types"] + 1):
-                    data_line = (
-                        lines[i + j].strip().split("#")[0]
-                    )  # Remove comments, if present
+                    data_line = lines[i + j].strip().split("#")[0]  # Remove comments, if present
                     idx, mass = data_line.split()[0:2]
                     idx = int(idx)
                     mass = float(mass)
@@ -181,9 +175,7 @@ class ConfigFileConfigurator(FileWithAtomDataConfigurator):
         if np.trace(np.abs(self["unit_cell"])) < 1e-8:
             # print(f"Concatenated: {np.concatenate([x_inputs, y_inputs, z_inputs])}")
             try:
-                self["unit_cell"] = parse_unit_cell(
-                    np.concatenate([x_inputs, y_inputs, z_inputs])
-                )
+                self["unit_cell"] = parse_unit_cell(np.concatenate([x_inputs, y_inputs, z_inputs]))
             except Exception:
                 LOG.error("LAMMPS ConfigFileConfigurator failed to find a unit cell")
 

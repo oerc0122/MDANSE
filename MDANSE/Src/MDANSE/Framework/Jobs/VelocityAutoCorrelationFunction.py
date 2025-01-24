@@ -141,9 +141,7 @@ class VelocityAutoCorrelationFunction(IJob):
             main_result=True,
         )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -189,9 +187,7 @@ class VelocityAutoCorrelationFunction(IJob):
         series = self.configuration["projection"]["projector"](series)
 
         n_configs = self.configuration["frames"]["n_configs"]
-        atomicVACF = correlate(series, series[:n_configs], mode="valid") / (
-            3 * n_configs
-        )
+        atomicVACF = correlate(series, series[:n_configs], mode="valid") / (3 * n_configs)
         return index, atomicVACF.T[0]
 
     def combine(self, index, x):
@@ -226,9 +222,7 @@ class VelocityAutoCorrelationFunction(IJob):
                 self._outputData["vacf_%s" % element] = normalize(
                     self._outputData["vacf_%s" % element], axis=0
                 )
-            self._outputData["vacf_total"] = normalize(
-                self._outputData["vacf_total"], axis=0
-            )
+            self._outputData["vacf_total"] = normalize(self._outputData["vacf_total"], axis=0)
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

@@ -128,9 +128,7 @@ class CenterOfMassesTrajectory(IJob):
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
         conf = conf.contiguous_configuration()
-        temp_radii = {
-            cluster_name: [] for cluster_name in chemical_system._clusters.keys()
-        }
+        temp_radii = {cluster_name: [] for cluster_name in chemical_system._clusters.keys()}
 
         com_coords = np.empty((n_coms, 3), dtype=np.float64)
         mol_index = 0
@@ -160,9 +158,7 @@ class CenterOfMassesTrajectory(IJob):
                 self._output_trajectory.chemical_system, com_coords, conf.unit_cell
             )
         else:
-            com_conf = RealConfiguration(
-                self._output_trajectory.chemical_system, com_coords
-            )
+            com_conf = RealConfiguration(self._output_trajectory.chemical_system, com_coords)
 
         if self.configuration["fold"]["value"]:
             com_conf.fold_coordinates()

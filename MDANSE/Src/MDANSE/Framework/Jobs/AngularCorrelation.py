@@ -85,9 +85,9 @@ class AngularCorrelation(IJob):
         """
         super().initialize()
 
-        self.molecules = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system._clusters[self.configuration["molecule_name"]["value"]]
+        self.molecules = self.configuration["trajectory"]["instance"].chemical_system._clusters[
+            self.configuration["molecule_name"]["value"]
+        ]
 
         self.numberOfSteps = len(self.molecules)
 
@@ -108,9 +108,7 @@ class AngularCorrelation(IJob):
             "axis_index",
             "LineOutputVariable",
             np.arange(
-                self.configuration["trajectory"][
-                    "instance"
-                ].chemical_system.number_of_molecules(
+                self.configuration["trajectory"]["instance"].chemical_system.number_of_molecules(
                     self.configuration["molecule_name"]["value"]
                 )
             ),
@@ -168,9 +166,7 @@ class AngularCorrelation(IJob):
                 self.configuration["frames"]["step"],
             )
         ):
-            configuration = self.configuration["trajectory"]["instance"].configuration(
-                frame_index
-            )
+            configuration = self.configuration["trajectory"]["instance"].configuration(frame_index)
             coordinates = configuration.contiguous_configuration().coordinates
             centre_coordinates = center_of_mass(coordinates[molecule], masses)
             at1_traj[i] = centre_coordinates
@@ -206,9 +202,7 @@ class AngularCorrelation(IJob):
 
         self._outputData["ac"] /= self.configuration["trajectory"][
             "instance"
-        ].chemical_system.number_of_molecules(
-            self.configuration["molecule_name"]["value"]
-        )
+        ].chemical_system.number_of_molecules(self.configuration["molecule_name"]["value"])
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

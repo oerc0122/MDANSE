@@ -24,9 +24,8 @@ from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 from MDANSE.Mathematics.Arithmetic import weight
 
-def distance_array_2D(
-    ref_atoms: np.ndarray, other_atoms: np.ndarray, cell_array: np.ndarray
-):
+
+def distance_array_2D(ref_atoms: np.ndarray, other_atoms: np.ndarray, cell_array: np.ndarray):
     """Given two input arrays of atomic positions sized
     (N,3) and (M,3), returns an (M, N) array of distances
     between the atoms.
@@ -262,9 +261,7 @@ class VanHoveFunctionDistinct(IJob):
         self._nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         self.selectedElements = self.configuration["atom_selection"]["unique_names"]
         self.nElements = len(self.selectedElements)
-        self._elementsPairs = sorted(
-            it.combinations_with_replacement(self.selectedElements, 2)
-        )
+        self._elementsPairs = sorted(it.combinations_with_replacement(self.selectedElements, 2))
 
         self.n_mid_points = len(self.configuration["r_values"]["mid_points"])
 
@@ -339,9 +336,7 @@ class VanHoveFunctionDistinct(IJob):
             self.configuration["trajectory"]["instance"].chemical_system
         )
         self._indices = [
-            idx
-            for idxs in self.configuration["atom_selection"]["indices"]
-            for idx in idxs
+            idx for idxs in self.configuration["atom_selection"]["indices"] for idx in idxs
         ]
         self.indexToMolecule = np.array([lut[i] for i in self._indices], dtype=np.int32)
         self.indexToSymbol = np.array(
@@ -400,15 +395,11 @@ class VanHoveFunctionDistinct(IJob):
         # difference over a number of configuration
         for i in range(self.n_configs):
             frame_index_t0 = self.configuration["frames"]["value"][i]
-            conf_t0 = self.configuration["trajectory"]["instance"].configuration(
-                frame_index_t0
-            )
+            conf_t0 = self.configuration["trajectory"]["instance"].configuration(frame_index_t0)
             coords_t0 = conf_t0["coordinates"][self._indices]
 
             frame_index_t1 = self.configuration["frames"]["value"][i + time]
-            conf_t1 = self.configuration["trajectory"]["instance"].configuration(
-                frame_index_t1
-            )
+            conf_t1 = self.configuration["trajectory"]["instance"].configuration(frame_index_t1)
             coords_t1 = conf_t1["coordinates"][self._indices]
             direct_cell = conf_t1.unit_cell.transposed_direct
             inverse_cell = conf_t1.unit_cell.transposed_inverse
@@ -483,9 +474,7 @@ class VanHoveFunctionDistinct(IJob):
                 ["intra", "inter", "total"],
                 [van_hove_intra, van_hove_inter, van_hove_total],
             ):
-                self._outputData[f"g(r,t)_{i}_{''.join(pair)}"][
-                    ...
-                ] = van_h
+                self._outputData[f"g(r,t)_{i}_{''.join(pair)}"][...] = van_h
 
         weights = self.configuration["weights"].get_weights()
         for i in ["_intra", "_inter", ""]:

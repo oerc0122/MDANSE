@@ -347,9 +347,7 @@ class Configurable(object):
         settings = getattr(cls, "settings", {})
 
         if not isinstance(settings, dict):
-            raise ConfigurationError(
-                "Invalid type for settings: must be a mapping-like object"
-            )
+            raise ConfigurationError("Invalid type for settings: must be a mapping-like object")
 
         doclist = []
 
@@ -390,9 +388,7 @@ class Configurable(object):
         settings = getattr(cls, "settings", {})
 
         if not isinstance(settings, dict):
-            raise ConfigurationError(
-                "Invalid type for settings: must be a mapping-like object"
-            )
+            raise ConfigurationError("Invalid type for settings: must be a mapping-like object")
 
         params = collections.OrderedDict()
         for name, (typ, kwds) in list(settings.items()):

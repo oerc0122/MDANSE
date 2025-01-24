@@ -45,12 +45,8 @@ class TestMolecularDynamics(unittest.TestCase):
         )
         self.assertEqual(radius_of_gyration(coords, root=True), numpy.sqrt(0.75))
 
-        masses = numpy.array(
-            [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0], dtype=numpy.float64
-        )
-        self.assertEqual(
-            radius_of_gyration(coords, masses=masses, root=True), numpy.sqrt(0.5)
-        )
+        masses = numpy.array([1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0], dtype=numpy.float64)
+        self.assertEqual(radius_of_gyration(coords, masses=masses, root=True), numpy.sqrt(0.5))
 
     def test_mean_square_deviation(self):
         coords1 = numpy.array(
@@ -81,9 +77,7 @@ class TestMolecularDynamics(unittest.TestCase):
             dtype=numpy.float64,
         )
 
-        self.assertEqual(
-            mean_square_deviation(coords1, coords2, root=True), numpy.sqrt(3)
-        )
+        self.assertEqual(mean_square_deviation(coords1, coords2, root=True), numpy.sqrt(3))
 
         self.assertEqual(mean_square_deviation(coords1, coords2, root=False), 3)
 

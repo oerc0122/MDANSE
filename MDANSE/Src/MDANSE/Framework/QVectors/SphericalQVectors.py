@@ -53,9 +53,9 @@ class SphericalQVectors(IQVectors):
             self._status.start(len(self._configuration["shells"]["value"]))
 
         for q in self._configuration["shells"]["value"]:
-            fact = q * np.sign(
-                np.random.uniform(-0.5, 0.5, nVectors)
-            ) + width * np.random.uniform(-0.5, 0.5, nVectors)
+            fact = q * np.sign(np.random.uniform(-0.5, 0.5, nVectors)) + width * np.random.uniform(
+                -0.5, 0.5, nVectors
+            )
 
             v = random_points_on_sphere(radius=1.0, nPoints=nVectors)
 

@@ -82,17 +82,11 @@ class RadiusOfGyration(IJob):
         )
 
         self._indices = [
-            idx
-            for idxs in self.configuration["atom_selection"]["indices"]
-            for idx in idxs
+            idx for idxs in self.configuration["atom_selection"]["indices"] for idx in idxs
         ]
 
         self._masses = np.array(
-            [
-                m
-                for masses in self._configuration["atom_selection"]["masses"]
-                for m in masses
-            ],
+            [m for masses in self._configuration["atom_selection"]["masses"] for m in masses],
             dtype=np.float64,
         )
 

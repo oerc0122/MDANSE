@@ -64,11 +64,7 @@ class UnfoldedTrajectory(IJob):
         atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         # The collection of atoms corresponding to the atoms selected for output.
-        indices = [
-            idx
-            for idxs in self.configuration["atom_selection"]["indices"]
-            for idx in idxs
-        ]
+        indices = [idx for idxs in self.configuration["atom_selection"]["indices"] for idx in idxs]
         self._selectedAtoms = [atoms[ind] for ind in indices]
         self._selection_indices = indices
 
@@ -82,8 +78,7 @@ class UnfoldedTrajectory(IJob):
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
             initial_charges=[
-                self.configuration["trajectory"]["instance"].charges(0)[ind]
-                for ind in indices
+                self.configuration["trajectory"]["instance"].charges(0)[ind] for ind in indices
             ],
         )
 

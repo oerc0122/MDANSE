@@ -126,9 +126,7 @@ class GeneralAutoCorrelationFunction(IJob):
 
         indices = self.configuration["atom_selection"]["indices"][index]
 
-        series = self.configuration["trajectory"][
-            "instance"
-        ].read_configuration_trajectory(
+        series = self.configuration["trajectory"]["instance"].read_configuration_trajectory(
             indices[0],
             first=self.configuration["frames"]["first"],
             last=self.configuration["frames"]["last"] + 1,

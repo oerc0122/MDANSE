@@ -77,9 +77,7 @@ class MolecularTrace(IJob):
         minx, miny, minz = 10**9, 10**9, 10**9
         for i in range(self.numberOfSteps):
             frameIndex = self.configuration["frames"]["value"][i]
-            conf = self.configuration["trajectory"]["instance"].configuration(
-                frameIndex
-            )
+            conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
             conf = conf.continuous_configuration()
             coords = conf["coordinates"]
 
@@ -134,9 +132,7 @@ class MolecularTrace(IJob):
         )
 
         self._indices = [
-            idx
-            for idxs in self.configuration["atom_selection"]["indices"]
-            for idx in idxs
+            idx for idxs in self.configuration["atom_selection"]["indices"] for idx in idxs
         ]
 
     def run_step(self, index):
@@ -158,8 +154,7 @@ class MolecularTrace(IJob):
         resolution = self.configuration["spatial_resolution"]["value"]
 
         indices = np.floor(
-            (conf["coordinates"][self._indices, :] - self.min.reshape((1, 3)))
-            / resolution
+            (conf["coordinates"][self._indices, :] - self.min.reshape((1, 3))) / resolution
         ).astype(int)
         unique_indices, counts = np.unique(indices, return_counts=True, axis=0)
         grid[tuple(unique_indices.T)] += counts

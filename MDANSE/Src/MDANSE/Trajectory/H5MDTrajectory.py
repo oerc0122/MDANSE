@@ -127,9 +127,9 @@ class H5MDTrajectory:
                 vel_unit = self._h5_file["/particles/all/velocity/value"].attrs["unit"]
             except Exception:
                 vel_unit = "ang/fs"
-            configuration["velocities"] = self._h5_file[
-                "/particles/all/velocity/value"
-            ][frame, :, :] * measure(1.0, vel_unit).toval("nm/ps")
+            configuration["velocities"] = self._h5_file["/particles/all/velocity/value"][
+                frame, :, :
+            ] * measure(1.0, vel_unit).toval("nm/ps")
         except Exception:
             pass
 
@@ -313,9 +313,7 @@ class H5MDTrajectory:
 
         return grp.shape[0]
 
-    def read_com_trajectory(
-        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
-    ):
+    def read_com_trajectory(self, atom_indices, first=0, last=None, step=1, box_coordinates=False):
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
@@ -348,20 +346,13 @@ class H5MDTrajectory:
         atoms = self.chemical_system.atom_list
 
         try:
-            masses = self._h5_file["/particles/all/mass/value"][atom_indices].astype(
-                np.float64
-            )
+            masses = self._h5_file["/particles/all/mass/value"][atom_indices].astype(np.float64)
         except KeyError:
             try:
-                masses = self._h5_file["/particles/all/mass"][atom_indices].astype(
-                    np.float64
-                )
+                masses = self._h5_file["/particles/all/mass"][atom_indices].astype(np.float64)
             except KeyError:
                 masses = np.array(
-                    [
-                        ATOMS_DATABASE.get_atom_property(at, "atomic_weight")
-                        for at in atoms
-                    ]
+                    [ATOMS_DATABASE.get_atom_property(at, "atomic_weight") for at in atoms]
                 )[atom_indices]
         grp = self._h5_file["/particles/all/position/value"]
         try:
@@ -379,9 +370,7 @@ class H5MDTrajectory:
             coords = coords[np.newaxis, :, :]
 
         if self._unit_cells is not None:
-            direct_cells = np.array(
-                [self.unit_cell(nf).direct for nf in range(first, last, step)]
-            )
+            direct_cells = np.array([self.unit_cell(nf).direct for nf in range(first, last, step)])
             inverse_cells = np.array(
                 [self.unit_cell(nf).inverse for nf in range(first, last, step)]
             )
@@ -393,10 +382,7 @@ class H5MDTrajectory:
                 bring_to_centre=True,
             )
             com_coords = np.vstack(
-                [
-                    center_of_mass(temp_coords[tstep], masses)
-                    for tstep in range(len(temp_coords))
-                ]
+                [center_of_mass(temp_coords[tstep], masses) for tstep in range(len(temp_coords))]
             )
 
             com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
@@ -430,17 +416,13 @@ class H5MDTrajectory:
             comp = 0
             for i in range(first, last, step):
                 direct_cell = self.unit_cell(i).transposed_direct
-                real_coordinates[comp, :] = np.matmul(
-                    direct_cell, box_coordinates[comp, :]
-                )
+                real_coordinates[comp, :] = np.matmul(direct_cell, box_coordinates[comp, :])
                 comp += 1
             return real_coordinates
         else:
             return box_coordinates
 
-    def read_atomic_trajectory(
-        self, index, first=0, last=None, step=1, box_coordinates=False
-    ):
+    def read_atomic_trajectory(self, index, first=0, last=None, step=1, box_coordinates=False):
         """Read an atomic trajectory. The trajectory is corrected from box jumps.
 
         :param index: the index of the atom
@@ -474,20 +456,12 @@ class H5MDTrajectory:
 
         if self._unit_cells is not None:
             direct_cells = np.array(
-                [
-                    self.unit_cell(nf).transposed_direct
-                    for nf in range(first, last, step)
-                ]
+                [self.unit_cell(nf).transposed_direct for nf in range(first, last, step)]
             )
             inverse_cells = np.array(
-                [
-                    self.unit_cell(nf).transposed_inverse
-                    for nf in range(first, last, step)
-                ]
+                [self.unit_cell(nf).transposed_inverse for nf in range(first, last, step)]
             )
-            atomic_traj = atomic_trajectory(
-                coords, direct_cells, inverse_cells, box_coordinates
-            )
+            atomic_traj = atomic_trajectory(coords, direct_cells, inverse_cells, box_coordinates)
             return atomic_traj
         else:
             return coords
@@ -516,9 +490,7 @@ class H5MDTrajectory:
             last = len(self)
 
         if not self.has_variable(variable):
-            raise KeyError(
-                "The variable {} is not stored in the trajectory".format(variable)
-            )
+            raise KeyError("The variable {} is not stored in the trajectory".format(variable))
 
         grp = self._h5_file["/particles/all"]
         variable = grp[variable]["value"][first:last:step, index, :].astype(np.float64)

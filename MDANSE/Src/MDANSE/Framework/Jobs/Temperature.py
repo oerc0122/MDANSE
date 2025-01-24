@@ -111,9 +111,7 @@ class Temperature(IJob):
             units="K",
         )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -185,9 +183,7 @@ class Temperature(IJob):
             np.cumsum(self._outputData["kinetic_energy"]) / norm
         )
 
-        self._outputData["temperature"][:] = (
-            2.0 * self._outputData["kinetic_energy"] / (3.0 * KB)
-        )
+        self._outputData["temperature"][:] = 2.0 * self._outputData["kinetic_energy"] / (3.0 * KB)
         self._outputData["avg_temperature"][:] = (
             2.0 * self._outputData["avg_kinetic_energy"] / (3.0 * KB)
         )

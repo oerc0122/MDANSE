@@ -132,9 +132,7 @@ class MeanSquareDisplacement(IJob):
                 partial_result=True,
             )
 
-        self._atoms = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_list
+        self._atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -150,9 +148,7 @@ class MeanSquareDisplacement(IJob):
         # get selected atom indices sublist
         indices = self.configuration["atom_selection"]["indices"][index]
         if len(indices) == 1:
-            series = self.configuration["trajectory"][
-                "instance"
-            ].read_atomic_trajectory(
+            series = self.configuration["trajectory"]["instance"].read_atomic_trajectory(
                 indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
@@ -169,9 +165,7 @@ class MeanSquareDisplacement(IJob):
 
         series = self.configuration["projection"]["projector"](series)
 
-        msd = mean_square_displacement(
-            series, self.configuration["frames"]["n_configs"]
-        )
+        msd = mean_square_displacement(series, self.configuration["frames"]["n_configs"])
 
         return index, msd
 

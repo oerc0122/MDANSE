@@ -84,10 +84,7 @@ class RigidBodyTrajectory(IJob):
         """ """
         super().initialize()
 
-        if (
-            self.configuration["reference"]["value"]
-            >= self.configuration["trajectory"]["length"]
-        ):
+        if self.configuration["reference"]["value"] >= self.configuration["trajectory"]["length"]:
             raise JobError(
                 self,
                 "Invalid reference frame. Must be an integer in [%d,%d["
@@ -124,9 +121,7 @@ class RigidBodyTrajectory(IJob):
 
         for i in range(self.configuration["atom_selection"]["selection_length"]):
             indices = self.configuration["atom_selection"]["indices"][i]
-            self._groups.append(
-                AtomCluster("", [atoms[idx] for idx in indices], parentless=True)
-            )
+            self._groups.append(AtomCluster("", [atoms[idx] for idx in indices], parentless=True))
 
         self.numberOfSteps = len(self._groups)
 
@@ -155,9 +150,7 @@ class RigidBodyTrajectory(IJob):
 
         self._group_atoms = [group.atom_list for group in self._groups]
 
-        conf = RealConfiguration(
-            self._output_trajectory.chemical_system, coords, unitCell
-        )
+        conf = RealConfiguration(self._output_trajectory.chemical_system, coords, unitCell)
 
         self._reference_configuration = conf.continuous_configuration()
 
@@ -190,8 +183,7 @@ class RigidBodyTrajectory(IJob):
         """ """
 
         group_coms = [
-            center_of_mass(self._reference_configuration[group])
-            for group in self._groups
+            center_of_mass(self._reference_configuration[group]) for group in self._groups
         ]
 
         trajectory = self.configuration["trajectory"]["instance"]
@@ -223,13 +215,10 @@ class RigidBodyTrajectory(IJob):
                 for atom in self._group_atoms[group_id]:
                     # The coordinates of the atoms are centered around the center of mass of the group.
                     xyz = (
-                        self._reference_configuration["coordinates"][atom.index, :]
-                        - center_of_mass
+                        self._reference_configuration["coordinates"][atom.index, :] - center_of_mass
                     )
 
-                    real_configuration["coordinates"][atom.index, :] = transfo(
-                        Vector(*xyz)
-                    )
+                    real_configuration["coordinates"][atom.index, :] = transfo(Vector(*xyz))
 
             self._output_trajectory.dump_configuration(
                 real_configuration,
@@ -246,13 +235,9 @@ class RigidBodyTrajectory(IJob):
             "quaternions", shape=(n_groups, n_frames, 4), dtype=np.float64
         )
 
-        coms = outputFile.create_dataset(
-            "coms", shape=(n_groups, n_frames, 3), dtype=np.float64
-        )
+        coms = outputFile.create_dataset("coms", shape=(n_groups, n_frames, 3), dtype=np.float64)
 
-        fits = outputFile.create_dataset(
-            "fits", shape=(n_groups, n_frames), dtype=np.float64
-        )
+        fits = outputFile.create_dataset("fits", shape=(n_groups, n_frames), dtype=np.float64)
 
         outputFile.attrs["info"] = str(self)
 

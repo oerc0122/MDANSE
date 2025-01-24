@@ -84,9 +84,7 @@ def test_dos(trajectory, resolution_generator):
     temp_name = tempfile.mktemp()
     parameters["output_files"] = (temp_name, ("MDAFormat", "TextFormat"), "INFO")
     instance = IInstrumentResolution.create(resolution_generator)
-    resolution_defaults = {
-        name: value[1]["default"] for name, value in instance.settings.items()
-    }
+    resolution_defaults = {name: value[1]["default"] for name, value in instance.settings.items()}
     print(resolution_generator)
     print(resolution_defaults)
     parameters["instrument_resolution"] = (
@@ -97,10 +95,9 @@ def test_dos(trajectory, resolution_generator):
     disf.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
-    result_file = os.path.join(
-        result_dir, f"dos_{resolution_generator}.mda")
+    result_file = os.path.join(result_dir, f"dos_{resolution_generator}.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         np.testing.assert_array_almost_equal(actual["/dos_Cu"], desired["/dos_Cu"])
         np.testing.assert_array_almost_equal(actual["/dos_S"], desired["/dos_S"])
         np.testing.assert_array_almost_equal(actual["/dos_Sb"], desired["/dos_Sb"])

@@ -28,7 +28,6 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 
 
 class ChemicalSystem:
-
     def __init__(self, name: str = "", trajectory=None):
         """
 
@@ -80,9 +79,7 @@ class ChemicalSystem:
     def add_bonds(self, pair_list: List[Tuple[int]]):
         self._bonds += list(pair_list)
         for pair in pair_list:
-            self.rdkit_mol.AddBond(
-                int(pair[0]), int(pair[1]), Chem.rdchem.BondType.UNSPECIFIED
-            )
+            self.rdkit_mol.AddBond(int(pair[0]), int(pair[1]), Chem.rdchem.BondType.UNSPECIFIED)
 
     def add_labels(self, label_dict: Dict[str, List[int]]):
         for key, item in label_dict.items():
@@ -98,9 +95,7 @@ class ChemicalSystem:
                 continue
             atom_list = [self._atom_types[index] for index in group]
             unique_atoms, counts = np.unique(atom_list, return_counts=True)
-            name = "_".join(
-                [str(unique_atoms[n]) + str(counts[n]) for n in range(len(counts))]
-            )
+            name = "_".join([str(unique_atoms[n]) + str(counts[n]) for n in range(len(counts))])
             if name not in self._clusters:
                 self._clusters[name] = [sorted_group]
             else:
@@ -122,9 +117,7 @@ class ChemicalSystem:
         """
         return self.rdkit_mol.HasSubstructMatch(Chem.MolFromSmarts(smarts))
 
-    def get_substructure_matches(
-        self, smarts: str, maxmatches: int = 1000000
-    ) -> set[int]:
+    def get_substructure_matches(self, smarts: str, maxmatches: int = 1000000) -> set[int]:
         """Get the indices which match the smarts string. Note that
         the default bond type in MDANSE is
         Chem.rdchem.BondType.UNSPECIFIED.

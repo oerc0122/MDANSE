@@ -211,7 +211,6 @@ class RangeConfigurator(IConfigurator):
         """
 
         if self._valid:
-
             info = "%d values from %s to %s" % (
                 self["number"],
                 self["first"],

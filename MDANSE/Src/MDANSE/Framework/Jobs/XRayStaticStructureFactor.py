@@ -186,15 +186,9 @@ class XRayStaticStructureFactor(DistanceHistogram):
                 + self._outputData["xssf_inter_%s%s" % pair][:]
             )
 
-        self._outputData.add(
-            "xssf_intra", "LineOutputVariable", (nq,), axis="q", units="au"
-        )
-        self._outputData.add(
-            "xssf_inter", "LineOutputVariable", (nq,), axis="q", units="au"
-        )
-        self._outputData.add(
-            "xssf_total", "LineOutputVariable", (nq,), axis="q", units="au"
-        )
+        self._outputData.add("xssf_intra", "LineOutputVariable", (nq,), axis="q", units="au")
+        self._outputData.add("xssf_inter", "LineOutputVariable", (nq,), axis="q", units="au")
+        self._outputData.add("xssf_total", "LineOutputVariable", (nq,), axis="q", units="au")
 
         asf = dict(
             (
@@ -208,14 +202,10 @@ class XRayStaticStructureFactor(DistanceHistogram):
             for k in list(nAtomsPerElement.keys())
         )
 
-        xssfIntra = weight(
-            asf, self._outputData, nAtomsPerElement, 2, "xssf_intra_%s%s"
-        )
+        xssfIntra = weight(asf, self._outputData, nAtomsPerElement, 2, "xssf_intra_%s%s")
         self._outputData["xssf_intra"][:] = xssfIntra
 
-        xssfInter = weight(
-            asf, self._outputData, nAtomsPerElement, 2, "xssf_inter_%s%s"
-        )
+        xssfInter = weight(asf, self._outputData, nAtomsPerElement, 2, "xssf_inter_%s%s")
         self._outputData["xssf_inter"][:] = xssfInter
 
         self._outputData["xssf_total"][:] = xssfIntra + xssfInter

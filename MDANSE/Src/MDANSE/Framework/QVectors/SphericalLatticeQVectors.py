@@ -44,14 +44,9 @@ class SphericalLatticeQVectors(LatticeQVectors):
             np.random.seed(self._configuration["seed"]["value"])
             random.seed(self._configuration["seed"]["value"])
 
-        qMax = (
-            self._configuration["shells"]["last"]
-            + 0.5 * self._configuration["width"]["value"]
-        )
+        qMax = self._configuration["shells"]["last"] + 0.5 * self._configuration["width"]["value"]
 
-        hklMax = (
-            np.ceil([qMax / np.sqrt(np.sum(v**2)) for v in self._inverseUnitCell.T]) + 1
-        )
+        hklMax = np.ceil([qMax / np.sqrt(np.sum(v**2)) for v in self._inverseUnitCell.T]) + 1
 
         vects = np.mgrid[
             -hklMax[0] : hklMax[0] + 1,

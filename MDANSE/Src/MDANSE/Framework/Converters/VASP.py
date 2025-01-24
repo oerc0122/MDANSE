@@ -101,9 +101,7 @@ class VASP(Converter):
         self._chemical_system = ChemicalSystem()
         element_list = []
 
-        for symbol, number in zip(
-            self._xdatcarFile["atoms"], self._xdatcarFile["atom_numbers"]
-        ):
+        for symbol, number in zip(self._xdatcarFile["atoms"], self._xdatcarFile["atom_numbers"]):
             for i in range(number):
                 element = get_element_from_mapping(self._atomicAliases, symbol)
                 element_list.append(element)
@@ -133,9 +131,7 @@ class VASP(Converter):
 
         unitCell = UnitCell(self._xdatcarFile["cell_shape"])
 
-        conf = PeriodicBoxConfiguration(
-            self._trajectory.chemical_system, coords, unitCell
-        )
+        conf = PeriodicBoxConfiguration(self._trajectory.chemical_system, coords, unitCell)
 
         # The coordinates in VASP are in box format. Convert them into real coordinates.
         real_conf = conf.to_real_configuration()

@@ -39,8 +39,10 @@ MCSTAS_UNITS_LUT = {
 
 NAVOGADRO = 6.02214129e23
 
+
 def _startswith(key: str, line: str) -> bool:
     return line.strip().startswith(key)
+
 
 class McStasError(Error):
     pass
@@ -136,9 +138,7 @@ class McStasVirtualInstrument(IJob):
         self._mcStasPhysicalParameters["V_rho"] = 0.0
         self._mcStasPhysicalParameters["weight"] = sum(
             [
-                self.configuration["trajectory"]["instance"].get_atom_property(
-                    s, "atomic_weight"
-                )
+                self.configuration["trajectory"]["instance"].get_atom_property(s, "atomic_weight")
                 for s in symbols
             ]
         )
@@ -156,9 +156,7 @@ class McStasVirtualInstrument(IJob):
         self._mcStasPhysicalParameters["sigma_coh"] = (
             np.mean(
                 [
-                    self.configuration["trajectory"]["instance"].get_atom_property(
-                        s, "xs_coherent"
-                    )
+                    self.configuration["trajectory"]["instance"].get_atom_property(s, "xs_coherent")
                     for s in symbols
                 ]
             )
@@ -176,29 +174,19 @@ class McStasVirtualInstrument(IJob):
             * MCSTAS_UNITS_LUT["nm2"]
         )
         for frameIndex in self.configuration["frames"]["value"]:
-            configuration = self.configuration["trajectory"]["instance"].configuration(
-                frameIndex
-            )
+            configuration = self.configuration["trajectory"]["instance"].configuration(frameIndex)
             cellVolume = configuration._unit_cell.volume
             self._mcStasPhysicalParameters["density"] += (
                 self._mcStasPhysicalParameters["weight"] / cellVolume
             )
             self._mcStasPhysicalParameters["V_rho"] += (
-                self.configuration["trajectory"][
-                    "instance"
-                ].chemical_system.number_of_atoms
+                self.configuration["trajectory"]["instance"].chemical_system.number_of_atoms
                 / cellVolume
             )
-        self._mcStasPhysicalParameters["density"] /= self.configuration["frames"][
-            "n_frames"
-        ]
-        self._mcStasPhysicalParameters["V_rho"] /= self.configuration["frames"][
-            "n_frames"
-        ]
+        self._mcStasPhysicalParameters["density"] /= self.configuration["frames"]["n_frames"]
+        self._mcStasPhysicalParameters["V_rho"] /= self.configuration["frames"]["n_frames"]
         # The density is converty in g/cm3
-        self._mcStasPhysicalParameters["density"] /= NAVOGADRO / measure(
-            1.0, "cm3"
-        ).toval("nm3")
+        self._mcStasPhysicalParameters["density"] /= NAVOGADRO / measure(1.0, "cm3").toval("nm3")
         self._mcStasPhysicalParameters["V_rho"] *= measure(1.0, "1/nm3").toval("1/ang3")
 
     def run_step(self, index):
@@ -228,9 +216,7 @@ class McStasVirtualInstrument(IJob):
             for k, v in list(self._mcStasPhysicalParameters.items()):
                 fout.write("# %s %s \n" % (k, v))
 
-            fout.write(
-                "# Temperature %s \n" % self.configuration["temperature"]["value"]
-            )
+            fout.write("# Temperature %s \n" % self.configuration["temperature"]["value"])
             fout.write("#\n")
 
             for var in self.configuration[typ].variables:
@@ -243,9 +229,7 @@ class McStasVirtualInstrument(IJob):
                 try:
                     data *= MCSTAS_UNITS_LUT[data_unit]
                 except KeyError:
-                    LOG.error(
-                        f"Could not find the physical unit {data_unit} in the lookup table."
-                    )
+                    LOG.error(f"Could not find the physical unit {data_unit} in the lookup table.")
 
                 np.savetxt(fout, np.atleast_2d(data), delimiter=" ", newline="\n")
 
@@ -426,12 +410,8 @@ class McStasVirtualInstrument(IJob):
             x = FileStruct["data"][:, 0]
             y = FileStruct["data"][:, 1]
 
-            Title = self.unique(
-                self.treat_str_var(FileStruct["component"]), self._outputData
-            )
-            xlabel = self.unique(
-                self.treat_str_var(FileStruct["xlabel"]), self._outputData, x
-            )
+            Title = self.unique(self.treat_str_var(FileStruct["component"]), self._outputData)
+            xlabel = self.unique(self.treat_str_var(FileStruct["xlabel"]), self._outputData, x)
 
             self._outputData[xlabel] = IOutputVariable.create(
                 "LineOutputVariable", x, xlabel, units="au"
@@ -456,15 +436,9 @@ class McStasVirtualInstrument(IJob):
             x = np.linspace(Xmin, Xmax, mysize[1])
             y = np.linspace(Ymin, Ymax, mysize[0])
 
-            title = self.unique(
-                self.treat_str_var(FileStruct["component"]), self._outputData
-            )
-            xlabel = self.unique(
-                self.treat_str_var(FileStruct["xlabel"]), self._outputData, x
-            )
-            ylabel = self.unique(
-                self.treat_str_var(FileStruct["ylabel"]), self._outputData, y
-            )
+            title = self.unique(self.treat_str_var(FileStruct["component"]), self._outputData)
+            xlabel = self.unique(self.treat_str_var(FileStruct["xlabel"]), self._outputData, x)
+            ylabel = self.unique(self.treat_str_var(FileStruct["ylabel"]), self._outputData, y)
 
             self._outputData.add(xlabel, "LineOutputVariable", x, units="au")
             self._outputData.add(ylabel, "LineOutputVariable", y, units="au")

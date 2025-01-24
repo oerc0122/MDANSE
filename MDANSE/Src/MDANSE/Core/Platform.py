@@ -433,9 +433,7 @@ class PlatformPosix(Platform):
 
         days, hours, minutes, seconds = etime[-4:]
 
-        etime = datetime.timedelta(
-            days=days, hours=hours, minutes=minutes, seconds=seconds
-        )
+        etime = datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
         return (datetime.datetime.today() - etime).strftime("%d-%m-%Y %H:%M:%S")
 
@@ -457,9 +455,7 @@ class PlatformPosix(Platform):
         procs = [p.split() for p in procs if p]
 
         # A mapping between the active processes pid and their corresponding exectuable.
-        procs = dict(
-            [(int(p[0].strip()), self.etime_to_ctime(p[1].strip())) for p in procs]
-        )
+        procs = dict([(int(p[0].strip()), self.etime_to_ctime(p[1].strip())) for p in procs])
 
         return procs
 

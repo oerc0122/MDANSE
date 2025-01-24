@@ -66,7 +66,7 @@ def test_vacf(interp_order, normalise):
 
     result_file = os.path.join(result_dir, fname)
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         np.testing.assert_array_almost_equal(actual["/vacf_Cu"], desired["/vacf_Cu"])
         np.testing.assert_array_almost_equal(actual["/vacf_S"], desired["/vacf_S"])
         np.testing.assert_array_almost_equal(actual["/vacf_Sb"], desired["/vacf_Sb"])
@@ -92,7 +92,7 @@ def test_pps():
 
     result_file = os.path.join(result_dir, "pps.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         np.testing.assert_array_almost_equal(actual["/pacf_Cu"], desired["/pacf_Cu"])
         np.testing.assert_array_almost_equal(actual["/pacf_S"], desired["/pacf_S"])
         np.testing.assert_array_almost_equal(actual["/pacf_Sb"], desired["/pacf_Sb"])
@@ -162,9 +162,7 @@ for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", co
 
 
 @pytest.mark.parametrize("traj_info,job_info,running_mode,output_format", total_list)
-def test_dynamics_analysis(
-    parameters, traj_info, job_info, running_mode, output_format
-):
+def test_dynamics_analysis(parameters, traj_info, job_info, running_mode, output_format):
     temp_name = tempfile.mktemp()
     parameters["trajectory"] = traj_info[1]
     parameters["running_mode"] = running_mode
@@ -174,7 +172,9 @@ def test_dynamics_analysis(
     if output_format == "MDAFormat":
         assert path.exists(temp_name + ".mda")
         assert path.isfile(temp_name + ".mda")
-        result_file = os.path.join(result_dir, f"dynamics_analysis_{traj_info[0]}_{job_info[0]}.mda")
+        result_file = os.path.join(
+            result_dir, f"dynamics_analysis_{traj_info[0]}_{job_info[0]}.mda"
+        )
 
         with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
             keys = [i for i in desired.keys() if any([j in i for j in job_info[1]])]

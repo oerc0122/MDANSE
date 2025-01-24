@@ -67,9 +67,7 @@ def gzipped_trajectory(chemical_system, sample_configuration):
     # here we write to a file
     fdesc, fname = tempfile.mkstemp()
     os.close(fdesc)
-    writer = TrajectoryWriter(
-        fname, chemical_system, n_steps=N_TIMESTEPS, compression="gzip"
-    )
+    writer = TrajectoryWriter(fname, chemical_system, n_steps=N_TIMESTEPS, compression="gzip")
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
         writer.dump_configuration(sample_configuration, ts)
     return fname
@@ -80,9 +78,7 @@ def lzffed_trajectory(chemical_system, sample_configuration):
     # here we write to a file
     fdesc, fname = tempfile.mkstemp()
     os.close(fdesc)
-    writer = TrajectoryWriter(
-        fname, chemical_system, n_steps=N_TIMESTEPS, compression="lzf"
-    )
+    writer = TrajectoryWriter(fname, chemical_system, n_steps=N_TIMESTEPS, compression="lzf")
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
         writer.dump_configuration(sample_configuration, ts)
     return fname
@@ -121,9 +117,5 @@ def test_losslessness(sample_trajectory, gzipped_trajectory, lzffed_trajectory):
     assert len(traj) == len(traj_gz)
     assert len(traj) == len(traj_lzf)
     for step_number in range(len(traj)):
-        assert np.allclose(
-            traj.coordinates(step_number), traj_gz.coordinates(step_number)
-        )
-        assert np.allclose(
-            traj.coordinates(step_number), traj_lzf.coordinates(step_number)
-        )
+        assert np.allclose(traj.coordinates(step_number), traj_gz.coordinates(step_number))
+        assert np.allclose(traj.coordinates(step_number), traj_lzf.coordinates(step_number))
