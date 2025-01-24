@@ -92,7 +92,7 @@ class SelectionHelper(QDialog):
         self.selector = selector
         self._field = field
         self.settings = self.selector.settings
-        self.atm_full_names = [atm.full_name for atm in self.selector.system.atom_list]
+        self.atm_full_names = self.selector.system.name_list
 
         self.selection_textbox = QPlainTextEdit()
         self.selection_textbox.setReadOnly(True)

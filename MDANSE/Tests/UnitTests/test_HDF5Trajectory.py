@@ -19,7 +19,7 @@ import os
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
 
@@ -31,8 +31,7 @@ N_TIMESTEPS = 150
 def chemical_system():
     temp = ChemicalSystem("Dummy test system")
     nAtoms = N_ATOMS
-    for i in range(nAtoms):
-        temp.add_chemical_entity(Atom(symbol="H"))
+    temp.initialise_atoms(nAtoms * ["H"])
     return temp
 
 
@@ -59,8 +58,7 @@ def sample_trajectory(chemical_system, sample_configuration):
     os.close(fdesc)
     writer = TrajectoryWriter(fname, chemical_system, n_steps=N_TIMESTEPS)
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
-        writer.chemical_system.configuration = sample_configuration
-        writer.dump_configuration(ts)
+        writer.dump_configuration(sample_configuration, ts)
     return fname
 
 
@@ -73,8 +71,7 @@ def gzipped_trajectory(chemical_system, sample_configuration):
         fname, chemical_system, n_steps=N_TIMESTEPS, compression="gzip"
     )
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
-        writer.chemical_system.configuration = sample_configuration
-        writer.dump_configuration(ts)
+        writer.dump_configuration(sample_configuration, ts)
     return fname
 
 
@@ -87,16 +84,14 @@ def lzffed_trajectory(chemical_system, sample_configuration):
         fname, chemical_system, n_steps=N_TIMESTEPS, compression="lzf"
     )
     for n, ts in enumerate(np.arange(N_TIMESTEPS)):
-        writer.chemical_system.configuration = sample_configuration
-        writer.dump_configuration(ts)
+        writer.dump_configuration(sample_configuration, ts)
     return fname
 
 
 def test_identity(chemical_system):
     temp = ChemicalSystem("Dummy test system")
     nAtoms = N_ATOMS
-    for i in range(nAtoms):
-        temp.add_chemical_entity(Atom(symbol="H"))
+    temp.initialise_atoms(nAtoms * ["H"])
     # assert(temp == chemical_system)
     assert chemical_system == chemical_system
 
@@ -108,7 +103,7 @@ def test_copy(chemical_system):
     print(original.number_of_atoms)
     print(copied.atom_list)
     print(copied.number_of_atoms)
-    assert repr(original) == repr(copied)
+    assert original.atom_list == copied.atom_list
 
 
 def test_compression(sample_trajectory, gzipped_trajectory, lzffed_trajectory):

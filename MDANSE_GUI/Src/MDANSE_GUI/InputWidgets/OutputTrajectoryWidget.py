@@ -160,8 +160,6 @@ class OutputTrajectoryWidget(WidgetBase):
         filename = self._field.text()
         if len(filename) < 1:
             filename = self._default_value[0]
-        else:
-            self._parent.set_trajectory(os.path.abspath(filename))
         dtype = dtype_lookup[self.dtype_box.currentText()]
         chunk_size = self.chunk_box.value()
         compression = self.compression_box.currentText()

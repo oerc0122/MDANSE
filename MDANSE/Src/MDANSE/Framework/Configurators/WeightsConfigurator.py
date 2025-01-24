@@ -86,6 +86,9 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         :type value: one of the numeric properties of MDANSE.Data.ElementsDatabase.ElementsDatabase
         """
         self._original_input = value
+        self._trajectory = self._configurable[self._dependencies["trajectory"]][
+            "instance"
+        ]
 
         if not isinstance(value, str):
             self.error_status = "Invalid type for weight. Must be a string."
@@ -96,7 +99,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         if value in self._aliases.keys():
             value = self._aliases[value]
 
-        if not value in ATOMS_DATABASE.numeric_properties:
+        if value not in self._trajectory.properties_in_database:
             self.error_status = (
                 f"weight {value} is not registered as a valid numeric property."
             )

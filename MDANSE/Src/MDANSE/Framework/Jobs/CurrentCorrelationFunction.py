@@ -169,7 +169,7 @@ class CurrentCorrelationFunction(IJob):
             itertools.combinations_with_replacement(self._elements, 2)
         )
 
-        self._indexesPerElement = self.configuration["atom_selection"].get_indexes()
+        self._indicesPerElement = self.configuration["atom_selection"].get_indices()
 
         for pair in self._elementsPairs:
             self._outputData.add(
@@ -290,7 +290,7 @@ class CurrentCorrelationFunction(IJob):
                 dtype=np.complex64,
             )
 
-        for element, idxs in list(self._indexesPerElement.items()):
+        for element, idxs in list(self._indicesPerElement.items()):
             for idx in idxs:
                 coords = trajectory.read_atomic_trajectory(
                     idx,

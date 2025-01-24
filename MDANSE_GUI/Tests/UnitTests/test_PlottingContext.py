@@ -40,7 +40,8 @@ def test_single_dataset_2d(file_2d):
 def test_available_x_axes_1d(file_1d):
     temp = SingleDataset("dos_total", file_1d)
     axes = temp.available_x_axes()
-    assert axes == ["rad/ps"]
+    assert axes == ["omega"]
+    assert temp._axes_units[axes[0]] == "rad/ps"
     longest = temp.longest_axis()
     assert longest[0] == "rad/ps"
 
@@ -49,7 +50,7 @@ def test_available_x_axes_2d(file_2d):
     temp = SingleDataset("f(q,t)_total", file_2d)
     axes = temp.available_x_axes()
     print(axes)
-    assert axes == ["1/nm", "ps"]
+    assert [temp._axes_units[axis] for axis in axes] == ["1/nm", "ps"]
     longest = temp.longest_axis()
     print(longest)
     assert longest[0] == "ps"

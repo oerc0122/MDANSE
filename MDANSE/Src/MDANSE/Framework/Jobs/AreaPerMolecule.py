@@ -81,7 +81,7 @@ class AreaPerMolecule(IJob):
         # This will define the number of steps of the analysis. MUST be defined for all analysis.
         self.numberOfSteps = self.configuration["frames"]["number"]
 
-        # Extract the indexes corresponding to the axis selection (a=0,b=1,c=2).
+        # Extract the indices corresponding to the axis selection (a=0,b=1,c=2).
         axis_labels = self.configuration["axis"]["value"]
         if axis_labels == "ab":
             self._axisIndexes = [0, 1]
@@ -92,12 +92,8 @@ class AreaPerMolecule(IJob):
 
         # The number of molecules that match the input name. Must be > 0.
         self._nMolecules = len(
-            [
-                ce
-                for ce in self.configuration["trajectory"][
-                    "instance"
-                ].chemical_system.chemical_entities
-                if ce.name == self.configuration["molecule_name"]["value"]
+            self.configuration["trajectory"]["instance"].chemical_system._clusters[
+                self.configuration["molecule_name"]["value"]
             ]
         )
         if self._nMolecules == 0:

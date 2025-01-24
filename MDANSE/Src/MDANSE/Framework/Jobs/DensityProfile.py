@@ -70,7 +70,12 @@ class DensityProfile(IJob):
     settings["dr"] = ("FloatConfigurator", {"default": 0.01, "mini": 1.0e-9})
     settings["weights"] = (
         "WeightsConfigurator",
-        {"dependencies": {"atom_selection": "atom_selection"}},
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
     )
     settings["output_files"] = (
         "OutputFilesConfigurator",
@@ -91,9 +96,7 @@ class DensityProfile(IJob):
 
         axis_index = self.configuration["axis"]["index"]
 
-        first_conf = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.configuration
+        first_conf = self.configuration["trajectory"]["instance"].configuration()
 
         try:
             axis = first_conf.unit_cell.direct[axis_index, :]
@@ -108,9 +111,9 @@ class DensityProfile(IJob):
 
         self._outputData.add("r", "LineOutputVariable", (self._n_bins,), units="nm")
 
-        self._indexes_per_element = self.configuration["atom_selection"].get_indexes()
+        self._indices_per_element = self.configuration["atom_selection"].get_indices()
 
-        for element in self._indexes_per_element.keys():
+        for element in self._indices_per_element.keys():
             self._outputData.add(
                 "dp_%s" % element,
                 "LineOutputVariable",
@@ -145,7 +148,7 @@ class DensityProfile(IJob):
 
         dp_per_frame = {}
 
-        for k, v in self._indexes_per_element.items():
+        for k, v in self._indices_per_element.items():
             h = np.histogram(
                 box_coords[v, axis_index], bins=self._n_bins, range=[0.0, 1.0]
             )

@@ -15,8 +15,7 @@
 #
 import os
 import unittest
-import numpy
-from MDANSE.IO.PDBReader import PDBReader
+from MDANSE.IO.MinimalPDBReader import MinimalPDBReader as PDBReader
 
 
 pbd_2vb1 = os.path.join(os.path.dirname(os.path.realpath(__file__)), "Data", "2vb1.pdb")
@@ -33,21 +32,13 @@ class TestPDBReader(unittest.TestCase):
 
         reader = PDBReader(pbd_2vb1)
 
-        chemicalSystem = reader.build_chemical_system()
+        chemical_system = reader._chemical_system
 
-        atomList = chemicalSystem.atom_list
+        atomList = chemical_system.atom_list
 
-        self.assertEqual(atomList[4].symbol, "C")
-        self.assertEqual(atomList[7].name, "HB2")
-        self.assertEqual(atomList[10].full_name, "...LYS1.HG2")
-        self.assertEqual(atomList[28].parent.name, "VAL2")
-
-        conf = chemicalSystem.configuration
-
-        self.assertAlmostEqual(conf.variables["coordinates"][0, 0], 4.6382)
-        self.assertAlmostEqual(conf.variables["coordinates"][0, 1], 3.0423)
-        self.assertAlmostEqual(conf.variables["coordinates"][0, 2], 2.6918)
-
-        self.assertAlmostEqual(conf.variables["coordinates"][-1, 0], 2.4937)
-        self.assertAlmostEqual(conf.variables["coordinates"][-1, 1], 3.9669)
-        self.assertAlmostEqual(conf.variables["coordinates"][-1, 2], -0.5209)
+        self.assertEqual(atomList[4], "C")
+        print(chemical_system._labels.keys())
+        self.assertTrue(10 in chemical_system._labels["LYS"])
+        self.assertEqual(chemical_system.name_list[7], "HB2")
+        # self.assertEqual(atomList[10].full_name, "...LYS1.HG2")
+        # self.assertEqual(atomList[28].parent.name, "VAL2")

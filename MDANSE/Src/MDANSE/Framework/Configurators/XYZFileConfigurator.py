@@ -13,7 +13,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
 import re
+
 import numpy as np
 
 from MDANSE.Core.Error import Error
@@ -99,7 +101,9 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
         try:
             timeStep = float(matches[0])
         except ValueError:
-            raise XYZFileError("Could not cast the timestep to a floating")
+            raise XYZFileError(
+                "Could not cast the timestep to a floating point number."
+            )
         else:
             return timeStep
 
@@ -140,16 +144,12 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
         """Closes the file that was, until now, open for reading."""
         self["instance"].close()
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for atm_label in self["atoms"]:
-            label = AtomLabel(atm_label)
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(atm_label)

@@ -18,8 +18,6 @@ import itertools
 
 import numpy as np
 
-from MDANSE.MLogging import LOG
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
 
@@ -425,8 +423,8 @@ class NeutronDynamicTotalStructureFactor(IJob):
         all_b_incoh = []
         # Compute coherent functions and structure factor
         for pair in self._elementsPairs:
-            bi = ATOMS_DATABASE.get_atom_property(pair[0], "b_coherent")
-            bj = ATOMS_DATABASE.get_atom_property(pair[1], "b_coherent")
+            bi = self.configuration["trajectory"]["instance"].get_atom_property(pair[0], "b_coherent")
+            bj = self.configuration["trajectory"]["instance"].get_atom_property(pair[1], "b_coherent")
             ci = 1.0 / nTotalAtoms
             cj = 1.0 / nTotalAtoms
             all_b_coh += [bi, bj]
@@ -460,7 +458,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Compute incoherent functions and structure factor
         for element, ni in nAtomsPerElement.items():
-            bi = ATOMS_DATABASE.get_atom_property(element, "b_incoherent2")
+            bi = self.configuration["trajectory"]["instance"].get_atom_property(element, "b_incoherent2")
             ci = 1.0 / nTotalAtoms
             all_b_incoh.append(bi)
 

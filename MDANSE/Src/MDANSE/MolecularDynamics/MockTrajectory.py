@@ -16,14 +16,14 @@
 
 import math
 import json
-from typing import TypeVar
+from typing import TypeVar, List
 
 import numpy as np
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Units import measure
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
-from MDANSE.Extensions import com_trajectory
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
+from MDANSE.MolecularDynamics.CentreOfMassTrajectory import com_trajectory
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
@@ -76,9 +76,8 @@ class MockTrajectory:
         self._variables = {}
         self._coordinates = None
 
-        self._chemicalSystem = ChemicalSystem("MockSystem")
-        for atom in self._atom_types:
-            self._chemicalSystem.add_chemical_entity(Atom(symbol=atom))
+        self._chemical_system = ChemicalSystem("MockSystem")
+        self._chemical_system.initialise_atoms(self._atom_types)
 
     def set_coordinates(self, coords: np.ndarray):
         """Sets the initial (equlibrium) positions of atoms from
@@ -286,15 +285,26 @@ class MockTrajectory:
 
         if self._pbc:
             conf = PeriodicRealConfiguration(
-                self._chemicalSystem, coordinates, unit_cell, **variables
+                self._chemical_system, coordinates, unit_cell, **variables
             )
         else:
-            conf = RealConfiguration(self._chemicalSystem, coordinates, **variables)
+            conf = RealConfiguration(self._chemical_system, coordinates, **variables)
 
         return conf
 
     def _load_unit_cells(self):
         """Only added for compatibility with Trajectory."""
+
+    def get_atom_property(self, atom_symbol: str, property: str):
+        return ATOMS_DATABASE.get_atom_property(atom_symbol, property)
+
+    @property
+    def atoms_in_database(self) -> List[str]:
+        return ATOMS_DATABASE.atoms
+
+    @property
+    def properties_in_database(self) -> List[str]:
+        return ATOMS_DATABASE.properties
 
     def unit_cell(self, frame: int) -> UnitCell:
         """Returns the UnitCell the size of the system.
@@ -324,12 +334,12 @@ class MockTrajectory:
         return self._number_of_frames
 
     def read_com_trajectory(
-        self, atoms, first=0, last=None, step=1, box_coordinates=False
+        self, indices, first=0, last=None, step=1, box_coordinates=False
     ):
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
-        :type atoms: list MDANSE.Chemistry.ChemicalEntity.Atom
+        :type atoms: list MDANSE.Chemistry.ChemicalSystem.Atom
         :param first: the index of the first frame
         :type first: int
         :param last: the index of the last frame
@@ -346,59 +356,45 @@ class MockTrajectory:
         if last is None:
             last = len(self)
 
-        indexes = [at.index for at in atoms]
         masses = np.array(
             [
-                ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight")
-                for at in atoms
+                self.chemical_system.atom_property("atomic_weight")[index]
+                for index in indices
             ]
         )
 
         frames = np.array([self.coordinates(fnum) for fnum in range(first, last, step)])
-        coords = frames[:, indexes, :].astype(np.float64)
+        coords = frames[:, indices, :].astype(np.float64)
 
         if coords.ndim == 2:
             coords = coords[np.newaxis, :, :]
 
         if self._pbc:
             direct_cells = np.array(
-                [
-                    self.unit_cell(fnum).transposed_direct
-                    for fnum in range(first, last, step)
-                ]
+                [self.unit_cell(fnum).direct for fnum in range(first, last, step)]
             )
             inverse_cells = np.array(
-                [
-                    self.unit_cell(fnum).transposed_inverse
-                    for fnum in range(first, last, step)
-                ]
+                [self.unit_cell(fnum).inverse for fnum in range(first, last, step)]
             )
 
-            top_lvl_chemical_entities = set(
-                [at.top_level_chemical_entity for at in atoms]
-            )
-            top_lvl_chemical_entities_indexes = [
-                [at.index for at in e.atom_list] for e in top_lvl_chemical_entities
+            clusters = [
+                cluster_indices
+                for cluster_indices in self.chemical_system._clusters.values()
             ]
-            bonds = {}
-            for e in top_lvl_chemical_entities:
-                for at in e.atom_list:
-                    bonds[at.index] = [other_at.index for other_at in at.bonds]
 
-            com_traj = com_trajectory.com_trajectory(
+            com_traj = com_trajectory(
                 coords,
                 direct_cells,
                 inverse_cells,
                 masses,
-                top_lvl_chemical_entities_indexes,
-                indexes,
-                bonds,
+                clusters,
+                indices,
                 box_coordinates=box_coordinates,
             )
 
         else:
             com_traj = np.sum(
-                coords[:, indexes, :] * masses[np.newaxis, :, np.newaxis], axis=1
+                coords[:, indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
             )
             com_traj /= np.sum(masses)
 
@@ -518,9 +514,9 @@ class MockTrajectory:
         """Return the chemical system stored in the trajectory.
 
         :return: the chemical system
-        :rtype: MDANSE.Chemistry.ChemicalEntity.ChemicalSystem
+        :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         """
-        return self._chemicalSystem
+        return self._chemical_system
 
     @property
     def file(self) -> str:

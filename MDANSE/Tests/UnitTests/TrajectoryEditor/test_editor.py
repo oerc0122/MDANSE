@@ -153,8 +153,8 @@ def test_editor_transmute():
         original.trajectory.chemical_system.number_of_atoms
         == changed.trajectory.chemical_system.number_of_atoms
     )
-    old_symbols = [at.symbol for at in original.trajectory.chemical_system.atom_list]
-    new_symbols = [at.symbol for at in changed.trajectory.chemical_system.atom_list]
+    old_symbols = [at for at in original.trajectory.chemical_system.atom_list]
+    new_symbols = [at for at in changed.trajectory.chemical_system.atom_list]
     assert old_symbols != new_symbols
     assert "B" not in old_symbols
     assert "B" in new_symbols

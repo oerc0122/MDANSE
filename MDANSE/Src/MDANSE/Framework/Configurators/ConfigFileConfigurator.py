@@ -13,12 +13,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
 import re
+
 import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import AtomLabel
-
 from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 from MDANSE.MLogging import LOG
 
@@ -186,16 +187,12 @@ class ConfigFileConfigurator(FileWithAtomDataConfigurator):
             except:
                 LOG.error(f"LAMMPS ConfigFileConfigurator failed to find a unit cell")
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for idx, mass in self["elements"]:
-            label = AtomLabel(str(idx), mass=mass)
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(str(idx), mass=mass)

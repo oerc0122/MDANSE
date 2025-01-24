@@ -22,6 +22,8 @@ import inspect
 import os
 import re
 import subprocess
+import tempfile
+
 
 from MDANSE.Core.Error import Error
 
@@ -147,21 +149,52 @@ class Platform(object, metaclass=abc.ABCMeta):
 
         os.chdir(directory)
 
-    def is_directory_writable(self, path):
+    @classmethod
+    def is_file_writable(cls, filepath: str) -> bool:
+        """Check if the directories can be created and a file can be
+        written into it.
+
+        Parameters
+        ----------
+        filepath : str
+            The filepath to test if the file can be written.
+
+        Returns
+        -------
+        bool
+            True if a file can be written.
         """
-        Check whether a given directory is writable.
+        dirname = cls.get_path(os.path.dirname(filepath))
 
-        :param path: the directory to be tested for writable status
-        :type path: str
+        def recursive_check(head_0: str) -> bool:
+            """Builds the directories up and tests if the file can be
+            written and then removes everything so that no changes are
+            made to the filesystem.
+            """
+            if os.path.exists(dirname):
+                try:
+                    open(filepath, "w").close()
+                    os.remove(filepath)
+                except OSError:
+                    return False
+                return True
 
-        :return: true if the directory is writable, false otherwise
-        :rtype: bool
-        """
+            head, tail = os.path.split(head_0)
+            if os.path.exists(head):
+                try:
+                    os.mkdir(head_0)
+                except OSError:
+                    return False
+                writable = recursive_check(dirname)
+                os.rmdir(head_0)
+                return writable
+            else:
+                return recursive_check(head)
 
-        # Gets an absolute version of the path to check
-        path = self.get_path(path)
-
-        return os.access(path, os.W_OK | os.X_OK)
+        if os.path.isfile(filepath):
+            return os.access(filepath, os.W_OK)
+        else:
+            return recursive_check(dirname)
 
     def create_directory(self, path):
         """
@@ -187,7 +220,8 @@ class Platform(object, metaclass=abc.ABCMeta):
                 "{0}: /n {1}".format(str(path), e)
             )
 
-    def get_path(self, path):
+    @classmethod
+    def get_path(cls, path):
         """
         Return a normalized and absolute version of a given path
 

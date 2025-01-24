@@ -18,7 +18,7 @@ from typing import Union
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE.Framework.AtomSelector import Selector
 
 
@@ -27,17 +27,17 @@ class AtomTransmuter:
     transmutation setting with applications of the apply_transmutation
     method with a selection setting and symbol."""
 
-    def __init__(self, system: ChemicalSystem) -> None:
+    def __init__(self, trajectory: Trajectory) -> None:
         """
         Parameters
         ----------
         system : ChemicalSystem
             The chemical system object.
         """
-        self.selector = Selector(system)
+        self.selector = Selector(trajectory)
         self._original_map = {}
-        for at in system.atom_list:
-            self._original_map[at.index] = at.symbol
+        for number, element in enumerate(trajectory.chemical_system.atom_list):
+            self._original_map[number] = element
         self._new_map = {}
 
     def apply_transmutation(
@@ -49,7 +49,7 @@ class AtomTransmuter:
         Parameters
         ----------
         selection_dict: dict[str, Union[bool, dict]]
-            The selection setting to get the indexes to map the inputted
+            The selection setting to get the indices to map the inputted
             symbol.
         symbol: str
             The element to map the selected atoms to.
@@ -138,7 +138,7 @@ class AtomTransmutationConfigurator(IConfigurator):
 
         traj_config = self._configurable[self._dependencies["trajectory"]]
         system = traj_config["instance"].chemical_system
-        idxs = [at.index for at in system.atom_list]
+        idxs = system._atom_indices
 
         self._nTransmutedAtoms = 0
         for idx, element in value.items():
@@ -153,7 +153,7 @@ class AtomTransmutationConfigurator(IConfigurator):
                 self.error_status = "Inputted setting not valid - atom index not found in the current system."
                 return
 
-            if element not in ATOMS_DATABASE:
+            if element not in traj_config["instance"].atoms_in_database:
                 self.error_status = (
                     f"the element {element} is not registered in the database"
                 )
@@ -164,7 +164,7 @@ class AtomTransmutationConfigurator(IConfigurator):
         atomSelConfigurator = self._configurable[self._dependencies["atom_selection"]]
         atomSelConfigurator["unique_names"] = sorted(set(atomSelConfigurator["names"]))
         atomSelConfigurator["masses"] = [
-            [ATOMS_DATABASE.get_atom_property(n, "atomic_weight")]
+            [traj_config["instance"].get_atom_property(n, "atomic_weight")]
             for n in atomSelConfigurator["names"]
         ]
         self.error_status = "OK"
@@ -182,7 +182,7 @@ class AtomTransmutationConfigurator(IConfigurator):
         atomSelConfigurator = self._configurable[self._dependencies["atom_selection"]]
 
         try:
-            idxInSelection = atomSelConfigurator["flatten_indexes"].index(idx)
+            idxInSelection = atomSelConfigurator["flatten_indices"].index(idx)
         except ValueError:
             pass
         else:
@@ -214,5 +214,5 @@ class AtomTransmutationConfigurator(IConfigurator):
             chemical system.
         """
         traj_config = self._configurable[self._dependencies["trajectory"]]
-        transmuter = AtomTransmuter(traj_config["instance"].chemical_system)
+        transmuter = AtomTransmuter(traj_config["instance"])
         return transmuter

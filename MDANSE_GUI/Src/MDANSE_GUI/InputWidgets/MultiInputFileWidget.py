@@ -16,31 +16,21 @@
 import os
 from pathlib import PurePath
 
-import MDAnalysis as mda
-from qtpy.QtWidgets import QFileDialog
 from qtpy.QtCore import Slot
+from qtpy.QtWidgets import QFileDialog
 
 from MDANSE.MLogging import LOG
-from .TopologyFileWidget import TopologyFileWidget
+from .InputFileWidget import InputFileWidget
 
 
-class CoordinateFileWidget(TopologyFileWidget):
+class MultiInputFileWidget(InputFileWidget):
 
     def __init__(self, *args, file_dialog=QFileDialog.getOpenFileNames, **kwargs):
         super().__init__(
             *args,
             file_dialog=file_dialog,
-            format_options=sorted(mda._READERS.keys()),
             **kwargs,
         )
-        for widget in self.parent()._widgets:
-            if (
-                widget._configurator
-                is self._configurator._configurable[
-                    self._configurator._dependencies["input_file"]
-                ]
-            ):
-                widget.value_changed.connect(self.updateValue)
 
     @Slot()
     def valueFromDialog(self):

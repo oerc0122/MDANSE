@@ -13,19 +13,19 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Iterable
 import collections
 import xml.etree.ElementTree as ElementTree
 
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import Atom, AtomCluster, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
     RealConfiguration,
 )
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
-from MDANSE.Mathematics.Graph import Graph
 from MDANSE.Framework.Configurators.FileWithAtomDataConfigurator import (
     FileWithAtomDataConfigurator,
 )
@@ -38,11 +38,13 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         super().__init__(name, **kwargs)
         self._atoms = None
 
-        self._chemicalSystem = None
+        self._chemical_system = None
 
         self._pbc = False
 
         self._cell = None
+
+        self._configuration = None
 
     @property
     def clusters(self):
@@ -50,7 +52,7 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
 
     @property
     def chemicalSystem(self):
-        return self._chemicalSystem
+        return self._chemical_system
 
     @property
     def pbc(self):
@@ -126,6 +128,7 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         self._nAtoms = len(self._atoms)
 
         bondsMapping = {}
+        self._bonds = []
 
         comp = 0
         for node in ROOT.iter("Bond"):
@@ -138,67 +141,53 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
                     atomsMapping[int(v)] for v in node.attrib["Connects"].split(",")
                 ]
                 idx1, idx2 = bondsMapping[idx]
+                self._bonds.append(
+                    (self._atoms[idx1]["index"], self._atoms[idx2]["index"])
+                )
                 self._atoms[idx1]["bonded_to"].add(idx2)
                 self._atoms[idx2]["bonded_to"].add(idx1)
 
     def build_chemical_system(self, aliases):
-        self._chemicalSystem = ChemicalSystem()
+        self._chemical_system = ChemicalSystem()
 
-        coordinates = np.empty((self._nAtoms, 3), dtype=np.float64)
+        coordinates = np.array(
+            [atom["xyz"] for atom in self._atoms.values()], dtype=np.float64
+        )
+        element_list = [atom["element"] for atom in self._atoms.values()]
+        name_list = [atom["atom_name"] for atom in self._atoms.values()]
+        unique_labels = set(name_list)
+        label_dict = {label: [] for label in unique_labels}
+        for temp_index, atom in enumerate(self._atoms.values()):
+            label_dict[atom["atom_name"]].append(temp_index)
 
-        graph = Graph()
-
-        for idx, at in list(self._atoms.items()):
-            graph.add_node(name=idx, **at)
-
-        for idx, at in list(self._atoms.items()):
-            for bat in at["bonded_to"]:
-                graph.add_link(idx, bat)
-
-        clusters = graph.build_connected_components()
-
-        for cluster in clusters:
-            bruteFormula = collections.defaultdict(lambda: 0)
-
-            atoms = []
-            for node in cluster:
-                symbol = node.element
-                name = node.atom_name
-                element = get_element_from_mapping(aliases, symbol, type=name)
-                at = Atom(symbol=element, name=name, xtdIndex=node.xtd_index)
-                at.index = node.index
-                coordinates[at.index] = node.xyz
-                bruteFormula[element] += 1
-                atoms.append(at)
-            name = "".join(["%s%d" % (k, v) for k, v in sorted(bruteFormula.items())])
-            ac = AtomCluster(name, atoms)
-            self._chemicalSystem.add_chemical_entity(ac)
+        self._chemical_system.initialise_atoms(element_list, name_list)
+        self._chemical_system.add_bonds(self._bonds)
+        self._chemical_system.add_labels(label_dict)
+        self._chemical_system.find_clusters_from_bonds()
 
         if self._pbc:
             boxConf = PeriodicBoxConfiguration(
-                self._chemicalSystem, coordinates, self._cell
+                self._chemical_system, coordinates, self._cell
             )
-            realConf = boxConf.to_real_configuration()
+            real_conf = boxConf.to_real_configuration()
         else:
             coordinates *= measure(1.0, "ang").toval("nm")
-            realConf = RealConfiguration(self._chemicalSystem, coordinates, self._cell)
+            real_conf = RealConfiguration(
+                self._chemical_system, coordinates, self._cell
+            )
 
-        realConf.fold_coordinates()
-        self._chemicalSystem.configuration = realConf
+        real_conf.fold_coordinates()
+        self._configuration = real_conf
 
-    def get_atom_labels(self) -> list[AtomLabel]:
+    def atom_labels(self) -> Iterable[AtomLabel]:
         """
-        Returns
-        -------
-        list[AtomLabel]
-            An ordered list of atom labels.
+        Yields
+        ------
+        AtomLabel
+            An atom label.
         """
-        labels = []
         for info in self._atoms.values():
-            label = AtomLabel(info["element"], type=info["atom_name"])
-            if label not in labels:
-                labels.append(label)
-        return labels
+            yield AtomLabel(info["element"], type=info["atom_name"])
 
     def get_atom_charges(self) -> np.ndarray:
         """Returns an array of partial electric charges
