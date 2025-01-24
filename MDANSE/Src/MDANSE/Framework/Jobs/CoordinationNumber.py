@@ -46,8 +46,14 @@ class CoordinationNumber(DistanceHistogram):
         {"dependencies": {"trajectory": "trajectory"}},
     )
     settings["r_values"] = (
-        "RangeConfigurator",
-        {"valueType": float, "includeLast": True, "mini": 0.0},
+        "DistHistCutoffConfigurator",
+        {
+            "label": "r values (nm)",
+            "valueType": float,
+            "includeLast": True,
+            "mini": 0.0,
+            "dependencies": {"trajectory": "trajectory"},
+        },
     )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
@@ -159,7 +165,7 @@ class CoordinationNumber(DistanceHistogram):
                 self.hIntra[idi, idj] += self.hIntra[idj, idi]
                 self.hInter[idi, idj] += self.hInter[idj, idi]
 
-            fact = nij * nFrames * shellVolumes
+            fact = 2 * nij * nFrames * shellVolumes
 
             self.hIntra[idi, idj, :] /= fact
             self.hInter[idi, idj, :] /= fact
