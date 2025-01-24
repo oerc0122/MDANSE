@@ -1,6 +1,10 @@
 [build-system]
-requires = ["setuptools", "numpy", "wheel"]
-build-backend = "setuptools.build_meta"
+build-backend = "mesonpy"
+requires = ["meson-python",
+            "meson>=1.6",
+            "ninja",
+            "packaging",
+            "numpy>=1.24.0"]
 
 [project]
 name = "MDANSE"
@@ -46,9 +50,6 @@ dependencies = [
 homepage = "https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx"
 documentation = "https://mdanse.readthedocs.io/en/protos/"
 repository = "https://github.com/ISISNeutronMuon/MDANSE"
-
-[tool.setuptools]
-package-dir = {"" = "src"}
 
 [project.scripts]
 mdanse = "MDANSE.Scripts.mdanse:main"
