@@ -33,8 +33,8 @@ class ProjectionConfigurator(IConfigurator):
 
     def configure(self, value):
         """
-        Configure a projector. 
-                
+        Configure a projector.
+
         :param value: the input projector definition. It can be a 2-tuple whose 1st element if the name \
         of the projector (one of *'null'*,*'axial'* or *'planar'*) and the 2nd element the parameters for the selected \
         projector (None for *'null'*, a Scientific.Vector for *'axial'* and a list of two Scientific.Vector for *'planar'*) \
@@ -73,7 +73,7 @@ class ProjectionConfigurator(IConfigurator):
                 return
             else:
                 if np.allclose(vector, 0):
-                    self.error_status = f"Vector of 0 length does not define projection"
+                    self.error_status = "Vector of 0 length does not define projection"
                     return
             try:
                 self["projector"].set_axis(vector)

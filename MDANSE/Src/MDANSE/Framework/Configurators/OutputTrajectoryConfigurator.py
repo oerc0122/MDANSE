@@ -93,7 +93,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
         self["format"] = self._format
         self["extension"] = IFormat.create(self._format).extension
         temp_name = root
-        if not self["extension"] in temp_name[-5:]:  # capture most extension lengths
+        if self["extension"] not in temp_name[-5:]:  # capture most extension lengths
             temp_name += self["extension"]
         self["file"] = temp_name
         if PurePath(os.path.abspath(self["file"])) in self._forbidden_files:

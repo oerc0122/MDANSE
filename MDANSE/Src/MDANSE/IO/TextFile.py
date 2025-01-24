@@ -18,20 +18,19 @@
 Text files with line iteration and transparent compression
 """
 
-import os, string, sys
+import os
+import sys
+from contextlib import suppress
 
 # Use the gzip module for Python version 1.5.2 or higher
-gzip = None
-try:
-    _version = [int(c) for c in string.split(string.split(sys.version)[0], ".")]
-
-    if _version >= [1, 5, 2]:
+with suppress(Exception):
+    if sys.version_info >= (1, 5, 2):
         try:
             import gzip
         except ImportError:
             gzip = None
-except:
-    pass
+    else:
+        gzip = None
 
 
 class TextFile:
@@ -63,7 +62,9 @@ class TextFile:
         if filename.find(":/") > 1:  # URL
             if mode != "r":
                 raise IOError("can't write to a URL")
-            import urllib.request, urllib.parse, urllib.error
+            import urllib.request
+            import urllib.parse
+            import urllib.error
 
             self.file = urllib.request.urlopen(filename)
         else:
@@ -84,7 +85,7 @@ class TextFile:
                     try:
                         self.file = open(filename, mode)
                     except IOError as details:
-                        if type(details) == type(()):
+                        if isinstance(details, tuple):
                             details = details + (filename,)
                         raise IOError(details)
             elif mode == "w":
@@ -101,7 +102,7 @@ class TextFile:
                     try:
                         self.file = open(filename, mode)
                     except IOError as details:
-                        if type(details) == type(()):
+                        if isinstance(details, tuple):
                             details = details + (filename,)
                         raise IOError(details)
             elif mode == "a":

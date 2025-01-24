@@ -46,7 +46,7 @@ class HDFTrajectoryInputData(InputFileData):
         val = []
         try:
             time_axis = self._data.time()
-        except:
+        except Exception:
             timeline = "No time information!\n"
         else:
             if len(time_axis) < 1:
@@ -66,7 +66,7 @@ class HDFTrajectoryInputData(InputFileData):
             val.append(
                 "First unit cell (nm):\n{}\n".format(self._data.unit_cell(0)._unit_cell)
             )
-        except:
+        except Exception:
             val.append("No unit cell information\n")
         val.append("Frame times (1st, 2nd, ..., last) in ps:")
         val.append(timeline)
@@ -103,7 +103,7 @@ class HDFTrajectoryInputData(InputFileData):
         def put_into_dict(name, obj):
             try:
                 string = obj[:][0].decode()
-            except:
+            except Exception:
                 LOG.debug(f"Decode failed for {name}: {obj}")
             else:
                 try:

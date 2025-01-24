@@ -20,10 +20,9 @@ import datetime
 import getpass
 import inspect
 import os
+import platform
 import re
 import subprocess
-import tempfile
-
 
 from MDANSE.Core.Error import Error
 
@@ -521,7 +520,7 @@ class PlatformWin(Platform):
         exittime = ctypes.c_ulonglong()
         kerneltime = ctypes.c_ulonglong()
         usertime = ctypes.c_ulonglong()
-        rc = ctypes.windll.kernel32.GetProcessTimes(
+        ctypes.windll.kernel32.GetProcessTimes(
             process,
             ctypes.byref(creationtime),
             ctypes.byref(exittime),
@@ -622,8 +621,6 @@ class PlatformWin(Platform):
         # Close the handle.
         ctypes.windll.kernel32.CloseHandle(handle)
 
-
-import platform
 
 system = platform.system()
 

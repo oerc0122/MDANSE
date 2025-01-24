@@ -66,7 +66,7 @@ class MdanseTrajectory:
         result = True
         try:
             file_object = h5py.File(filename)
-        except FileNotFoundError:
+        except Exception:
             result = False
         else:
             try:

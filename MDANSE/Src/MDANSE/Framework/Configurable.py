@@ -31,14 +31,14 @@ class ConfigurationError(Error):
 class Configurable(object):
     """
     This class allows any object that derives from it to be configurable within the MDANSE framework.
-    
+
     Within that framework, to be configurable, a class must:
         #. derive from this class
         #. implement the "configurators"  class attribute as a list of 3-tuple whose:
             #.. 0-value is the type of the configurator that will be used to fetch the corresponding \
             MDANSE.Framework.Configurators.IConfigurator.IConfigurator derived class from the configurators registry
             #.. 1-value is the name of the configurator that will be used as the key of the _configuration attribute.
-            #.. 2-value is the dictionary of the keywords used when initializing the configurator.  
+            #.. 2-value is the dictionary of the keywords used when initializing the configurator.
     """
 
     enabled = True
@@ -93,7 +93,7 @@ class Configurable(object):
                     typ, name, configurable=self, **kwds
                 )
             # Any kind of error has to be caught
-            except:
+            except Exception:
                 raise ConfigurationError("Could not set %r configuration item" % name)
 
     def set_settings(self, settings):

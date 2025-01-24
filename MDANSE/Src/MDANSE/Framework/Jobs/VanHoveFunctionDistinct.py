@@ -24,7 +24,6 @@ from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 from MDANSE.Mathematics.Arithmetic import weight
 
-
 def distance_array_2D(
     ref_atoms: np.ndarray, other_atoms: np.ndarray, cell_array: np.ndarray
 ):
@@ -274,7 +273,7 @@ class VanHoveFunctionDistinct(IJob):
         )
         try:
             cell_volume = conf.unit_cell.volume
-        except:
+        except Exception:
             self.detailed_unit_cell_error()
         else:
             if cell_volume < 1e-9:
@@ -480,13 +479,13 @@ class VanHoveFunctionDistinct(IJob):
             van_hove_inter = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
             van_hove_total = van_hove_intra + van_hove_inter
 
-            for i, van_hove in zip(
+            for i, van_h in zip(
                 ["intra", "inter", "total"],
                 [van_hove_intra, van_hove_inter, van_hove_total],
             ):
-                self._outputData["g(r,t)_%s_%s%s" % (i, pair[0], pair[1])][
+                self._outputData[f"g(r,t)_{i}_{''.join(pair)}"][
                     ...
-                ] = van_hove
+                ] = van_h
 
         weights = self.configuration["weights"].get_weights()
         for i in ["_intra", "_inter", ""]:

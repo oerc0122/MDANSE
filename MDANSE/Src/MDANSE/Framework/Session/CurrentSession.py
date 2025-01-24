@@ -53,4 +53,4 @@ class CurrentSession:
 
     def loadSettings(self, fname=None):
         if fname is not None:
-            source = json.load(fname)
+            json.load(fname)
