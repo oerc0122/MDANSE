@@ -18,7 +18,10 @@ from typing import List
 
 import numpy as np
 
-from MDANSE.MolecularDynamics.Configuration import contiguous_coordinates_box
+from MDANSE.MolecularDynamics.Configuration import (
+    contiguous_coordinates_box,
+    remove_jumps,
+)
 
 
 def centre_of_mass(coords: np.ndarray, masses: np.ndarray) -> np.ndarray:
@@ -31,7 +34,7 @@ def com_single_frame(
     cell: np.ndarray,
     masses: List[float],
     clusters: List[List[int]],
-    selection: List[int],
+    selection: List[int] = None,
 ):
     """Calculates the centre of mass of a single trajectory frame.
     Assumes that the input coordinates are FRACTIONAL.
@@ -54,7 +57,9 @@ def com_single_frame(
         use fractional input coordinates, by default False
     """
     new_coordinates = contiguous_coordinates_box(coords, cell, clusters)
-    return centre_of_mass(new_coordinates[selection], masses[selection])
+    if selection is not None:
+        return centre_of_mass(new_coordinates[selection], masses[selection])
+    centre_of_mass(new_coordinates, masses)
 
 
 def com_trajectory(
@@ -63,7 +68,7 @@ def com_trajectory(
     rcells: np.ndarray,
     masses: List[float],
     clusters,
-    selection,
+    selection=None,
     box_coordinates=False,
 ):
 
@@ -75,10 +80,7 @@ def com_trajectory(
             frac_coordinates, cells[timestep], masses, clusters, selection
         )
 
-    for timestep in range(len(trajectory) - 1):
-        step = trajectory[timestep + 1] - trajectory[timestep]
-        step -= np.round(step)
-        trajectory[timestep + 1] = trajectory[timestep] + step
+    trajectory = remove_jumps(trajectory)
 
     if not box_coordinates:
         for timestep in range(len(trajectory)):

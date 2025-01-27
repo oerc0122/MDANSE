@@ -29,6 +29,35 @@ if TYPE_CHECKING:
     from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
+def remove_jumps(input_coords: np.ndarray) -> np.ndarray:
+    """Takes a series of particle positions in time
+    and makes the motion continuous by removing any jumps across
+    the simulation box boundary.
+
+    Parameters
+    ----------
+    input_coords : np.ndarray
+        An (n_time_steps, 3) array of FRACTIONAL atom coordinates
+
+    Returns
+    -------
+    np.ndarray
+        The same array of atom positions, corrected for jumps by 1
+        full box length
+    """
+    steps = np.round(input_coords[1:] - input_coords[:-1]).astype(int)
+    offsets = np.zeros_like(input_coords)
+    for axis_index in range(3):
+        changes = np.argwhere(steps[:, axis_index])
+        for time_step_with_jump in changes:
+            try:
+                time_index = time_step_with_jump[0]
+            except IndexError:
+                continue
+            offsets[time_index + 1 :, axis_index] -= steps[time_index, axis_index]
+    return input_coords + offsets
+
+
 def contiguous_coordinates_real(
     coords: np.ndarray,
     cell: np.ndarray,

@@ -256,6 +256,15 @@ class MdanseTrajectory:
         if last is None:
             last = len(self)
 
+        if len(atom_indices) == 1:
+            return self.read_atomic_trajectory(
+                atom_indices[0],
+                first=first,
+                last=last,
+                step=step,
+                box_coordinates=box_coordinates,
+            )
+
         try:
             masses = self.chemical_system.atom_property("atomic_weight")
         except KeyError:
@@ -267,7 +276,7 @@ class MdanseTrajectory:
             )
         grp = self._h5_file["/configuration"]
 
-        coords = grp["coordinates"][first:last:step, :, :].astype(np.float64)
+        coords = grp["coordinates"][first:last:step, atom_indices, :].astype(np.float64)
 
         if coords.ndim == 2:
             coords = coords[np.newaxis, :, :]
