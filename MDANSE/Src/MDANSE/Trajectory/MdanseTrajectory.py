@@ -276,7 +276,7 @@ class MdanseTrajectory:
             )
         grp = self._h5_file["/configuration"]
 
-        coords = grp["coordinates"][first:last:step, atom_indices, :].astype(np.float64)
+        coords = grp["coordinates"][first:last:step, :, :].astype(np.float64)
 
         if coords.ndim == 2:
             coords = coords[np.newaxis, :, :]
@@ -285,17 +285,11 @@ class MdanseTrajectory:
             direct_cells = np.array([uc.direct for uc in self._unit_cells])
             inverse_cells = np.array([uc.inverse for uc in self._unit_cells])
 
-            clusters = [
-                cluster_indices
-                for cluster_indices in self.chemical_system._clusters.values()
-            ]
-
             com_traj = com_trajectory(
                 coords,
                 direct_cells,
                 inverse_cells,
                 np.array(masses),
-                clusters,
                 atom_indices,
                 box_coordinates=box_coordinates,
             )

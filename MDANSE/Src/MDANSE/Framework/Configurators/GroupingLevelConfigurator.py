@@ -74,36 +74,31 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         if value == "atom":
             return
-
         trajConfig = self._configurable[self._dependencies["trajectory"]]
         atomSelectionConfig = self._configurable[self._dependencies["atom_selection"]]
-
-        allAtoms = trajConfig["instance"].chemical_system.atom_list
-
-        groups = collections.OrderedDict()
-        for i in range(atomSelectionConfig["selection_length"]):
-            idx = atomSelectionConfig["indices"][i][0]
-            el = atomSelectionConfig["elements"][i][0]
-            mass = atomSelectionConfig["masses"][i][0]
-            at = allAtoms[idx]
-            lvl = trajConfig["instance"].chemical_system.grouping_level(idx)
-            parent = self.find_parent(at, lvl)
-            d = groups.setdefault(parent, {})
-            d.setdefault("indices", []).append(idx)
-            d.setdefault("elements", []).append(el)
-            d.setdefault("masses", []).append(mass)
-
+        chemical_system = trajConfig["instance"].chemical_system
         indices = []
         elements = []
-        masses = []
         names = []
-        group_indices = []
-        for i, v in enumerate(groups.values()):
-            names.append("group_%d" % i)
-            elements.append(v["elements"])
-            indices.append(v["indices"])
-            masses.append(v["masses"])
-            group_indices.append(i)
+        masses = []
+        mass_lookup = chemical_system.atom_property("atomic_weight")
+
+        if value == "molecule":
+            for mol_name in chemical_system._clusters.keys():
+                for mol_number, cluster in enumerate(
+                    chemical_system._clusters[mol_name]
+                ):
+                    indices.append(cluster)
+                    elements.append([chemical_system.atom_list[x] for x in cluster])
+                    names.append(f"{mol_name}_mol{mol_number+1}")
+                    masses.append([mass_lookup[x] for x in cluster])
+        elif value == "group":
+            for group_name in chemical_system._labels.keys():
+                for cluster in enumerate(chemical_system._labels[group_name]):
+                    indices.append(cluster)
+                    elements.append([chemical_system.atom_list[x] for x in cluster])
+                    names.append(f"{group_name}")
+                    masses.append([mass_lookup[x] for x in cluster])
 
         atomSelectionConfig["indices"] = indices
         atomSelectionConfig["elements"] = elements
@@ -113,7 +108,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         atomSelectionConfig["unique_names"] = sorted(set(atomSelectionConfig["names"]))
 
         self["level"] = value
-        self["group_indices"] = group_indices
+        self["group_indices"] = list(range(len(names)))
 
     @staticmethod
     def find_parent(atom, level):

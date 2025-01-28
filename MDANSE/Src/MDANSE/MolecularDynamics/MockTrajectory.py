@@ -377,17 +377,11 @@ class MockTrajectory:
                 [self.unit_cell(fnum).inverse for fnum in range(first, last, step)]
             )
 
-            clusters = [
-                cluster_indices
-                for cluster_indices in self.chemical_system._clusters.values()
-            ]
-
             com_traj = com_trajectory(
                 coords,
                 direct_cells,
                 inverse_cells,
                 masses,
-                clusters,
                 indices,
                 box_coordinates=box_coordinates,
             )

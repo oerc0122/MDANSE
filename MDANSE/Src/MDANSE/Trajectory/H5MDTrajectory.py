@@ -374,17 +374,11 @@ class H5MDTrajectory:
                 [self.unit_cell(nf).inverse for nf in range(first, last, step)]
             )
 
-            clusters = [
-                cluster_indices
-                for cluster_indices in self.chemical_system._clusters.values()
-            ]
-
             com_traj = com_trajectory(
                 coords,
                 direct_cells,
                 inverse_cells,
                 np.array(masses),
-                clusters,
                 atom_indices,
                 box_coordinates=box_coordinates,
             )

@@ -33,9 +33,8 @@ def com_single_frame(
     coords: np.ndarray,
     cell: np.ndarray,
     masses: List[float],
-    clusters: List[List[int]],
     selection: List[int] = None,
-):
+) -> np.ndarray:
     """Calculates the centre of mass of a single trajectory frame.
     Assumes that the input coordinates are FRACTIONAL.
 
@@ -56,10 +55,13 @@ def com_single_frame(
     box_coordinates : bool, optional
         use fractional input coordinates, by default False
     """
-    new_coordinates = contiguous_coordinates_box(coords, cell, clusters)
-    if selection is not None:
-        return centre_of_mass(new_coordinates[selection], masses[selection])
-    centre_of_mass(new_coordinates, masses)
+    try:
+        len(selection[0])
+    except TypeError:
+        new_coordinates = contiguous_coordinates_box(coords, cell, [selection])
+    else:
+        new_coordinates = contiguous_coordinates_box(coords, cell, selection)
+    return centre_of_mass(new_coordinates, masses)
 
 
 def com_trajectory(
@@ -67,7 +69,6 @@ def com_trajectory(
     cells: np.ndarray,
     rcells: np.ndarray,
     masses: List[float],
-    clusters,
     selection=None,
     box_coordinates=False,
 ):
@@ -77,7 +78,7 @@ def com_trajectory(
     for timestep in range(len(trajectory)):
         frac_coordinates = np.matmul(coords_vs_time[timestep], rcells[timestep])
         trajectory[timestep] = com_single_frame(
-            frac_coordinates, cells[timestep], masses, clusters, selection
+            frac_coordinates, cells[timestep], masses, selection
         )
 
     trajectory = remove_jumps(trajectory)
