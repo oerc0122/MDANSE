@@ -2,6 +2,9 @@ import sys
 import tempfile
 import os
 from os import path
+
+import h5py
+import numpy as np
 import pytest
 
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
@@ -15,12 +18,16 @@ short_traj = os.path.join(
     "Data",
     "short_trajectory_after_changes.mdt",
 )
-
 mdmc_traj = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
     "Data",
     "Ar_mdmc_h5md.h5",
+)
+result_dir = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Results",
 )
 
 
@@ -54,6 +61,20 @@ def test_vacf(trajectory, interp_order, normalise):
     vacf.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
+
+    if normalise:
+        fname = f"vacf_{interp_order}_normalised.mda"
+    else:
+        fname = f"vacf_{interp_order}.mda"
+
+    result_file = os.path.join(result_dir, fname)
+
+    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/vacf_Cu"], desired["/vacf_Cu"])
+        np.testing.assert_array_almost_equal(actual["/vacf_S"], desired["/vacf_S"])
+        np.testing.assert_array_almost_equal(actual["/vacf_Sb"], desired["/vacf_Sb"])
+        np.testing.assert_array_almost_equal(actual["/vacf_total"], desired["/vacf_total"])
+
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + ".log")
     assert path.isfile(temp_name + ".log")
@@ -71,6 +92,19 @@ def test_pps(trajectory):
     pps.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
+
+    result_file = os.path.join(result_dir, "pps.mda")
+
+    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/pacf_Cu"], desired["/pacf_Cu"])
+        np.testing.assert_array_almost_equal(actual["/pacf_S"], desired["/pacf_S"])
+        np.testing.assert_array_almost_equal(actual["/pacf_Sb"], desired["/pacf_Sb"])
+        np.testing.assert_array_almost_equal(actual["/pacf_total"], desired["/pacf_total"])
+        np.testing.assert_array_almost_equal(actual["/pps_Cu"], desired["/pps_Cu"])
+        np.testing.assert_array_almost_equal(actual["/pps_S"], desired["/pps_S"])
+        np.testing.assert_array_almost_equal(actual["/pps_Sb"], desired["/pps_Sb"])
+        np.testing.assert_array_almost_equal(actual["/pps_total"], desired["/pps_total"])
+
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + ".log")
     assert path.isfile(temp_name + ".log")
@@ -112,37 +146,141 @@ def parameters():
 
 total_list = []
 
-for tp in [short_traj, mdmc_traj]:
+for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj)]:
     for jt in [
         # "AngularCorrelation",
         # "GeneralAutoCorrelationFunction",
-        "CurrentCorrelationFunction",
-        "DensityOfStates",
-        "MeanSquareDisplacement",
-        "VelocityAutoCorrelationFunction",
-        "VanHoveFunctionDistinct",
-        "VanHoveFunctionSelf",
+        ("DensityOfStates", {
+            "mdmc_traj": [
+                "dos_Ar",
+                "dos_total",
+                "vacf_Ar",
+                "vacf_total"
+            ],
+            "short_traj": [
+                "dos_Cu",
+                "dos_S",
+                "dos_Sb",
+                "dos_total",
+                "vacf_Cu",
+                "vacf_S",
+                "vacf_Sb",
+                "vacf_total",
+            ]
+        }),
+        ("MeanSquareDisplacement", {
+            "mdmc_traj": [
+                "msd_Ar",
+                "msd_total",
+            ],
+            "short_traj": [
+                "msd_Cu",
+                "msd_S",
+                "msd_Sb",
+                "msd_total",
+            ]
+        }),
+        ("VelocityAutoCorrelationFunction", {
+            "mdmc_traj": [
+                "vacf_Ar",
+                "vacf_total"
+            ],
+            "short_traj": [
+                "vacf_Cu",
+                "vacf_S",
+                "vacf_Sb",
+                "vacf_total",
+            ]
+        }),
+        ("VanHoveFunctionDistinct", {
+            "mdmc_traj": [
+                "g(r,t)_inter_ArAr",
+                "g(r,t)_inter_total",
+                "g(r,t)_intra_ArAr",
+                "g(r,t)_intra_total",
+                "g(r,t)_total",
+                "g(r,t)_total_ArAr",
+            ],
+            "short_traj": [
+                "g(r,t)_inter_CuCu",
+                "g(r,t)_inter_CuS",
+                "g(r,t)_inter_CuSb",
+                "g(r,t)_inter_SS",
+                "g(r,t)_inter_SSb",
+                "g(r,t)_inter_SbSb",
+                "g(r,t)_inter_total",
+                "g(r,t)_intra_CuCu",
+                "g(r,t)_intra_CuS",
+                "g(r,t)_intra_CuSb",
+                "g(r,t)_intra_SS",
+                "g(r,t)_intra_SSb",
+                "g(r,t)_intra_SbSb",
+                "g(r,t)_intra_total",
+                "g(r,t)_total_CuCu",
+                "g(r,t)_total_CuS",
+                "g(r,t)_total_CuSb",
+                "g(r,t)_total_SS",
+                "g(r,t)_total_SSb",
+                "g(r,t)_total_SbSb",
+                "g(r,t)_total",
+            ]
+        }),
+        ("VanHoveFunctionSelf", {
+            "mdmc_traj": [
+                "4_pi_r2_g(r,t)_Ar",
+                "4_pi_r2_g(r,t)_total",
+                "g(r,t)_Ar",
+                "g(r,t)_total",
+            ],
+            "short_traj": [
+                "4_pi_r2_g(r,t)_Cu",
+                "4_pi_r2_g(r,t)_S",
+                "4_pi_r2_g(r,t)_Sb",
+                "4_pi_r2_g(r,t)_total",
+                "g(r,t)_Cu",
+                "g(r,t)_S",
+                "g(r,t)_Sb",
+                "g(r,t)_total",
+            ]
+        }),
         # "OrderParameter",
-        "PositionAutoCorrelationFunction",
+        ("PositionAutoCorrelationFunction", {
+            "mdmc_traj": [
+                "pacf_Ar",
+                "pacf_total"
+            ],
+            "short_traj": [
+                "pacf_Cu",
+                "pacf_S",
+                "pacf_Sb",
+                "pacf_total",
+            ]
+        }),
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
                 total_list.append((tp, jt, rm, of))
 
 
-@pytest.mark.parametrize("traj_path,job_type,running_mode,output_format", total_list)
+@pytest.mark.parametrize("traj_info,job_info,running_mode,output_format", total_list)
 def test_dynamics_analysis(
-    parameters, traj_path, job_type, running_mode, output_format
+    parameters, traj_info, job_info, running_mode, output_format
 ):
     temp_name = tempfile.mktemp()
-    parameters["trajectory"] = traj_path
+    parameters["trajectory"] = traj_info[1]
     parameters["running_mode"] = running_mode
     parameters["output_files"] = (temp_name, (output_format,), "INFO")
-    job = IJob.create(job_type)
+    job = IJob.create(job_info[0])
     job.run(parameters, status=True)
     if output_format == "MDAFormat":
         assert path.exists(temp_name + ".mda")
         assert path.isfile(temp_name + ".mda")
+        result_file = os.path.join(result_dir, f"dynamics_analysis_{traj_info[0]}_{job_info[0]}.mda")
+
+        with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+            for key in job_info[1][traj_info[0]]:
+                np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
+
         os.remove(temp_name + ".mda")
     elif output_format == "TextFormat":
         assert path.exists(temp_name + "_text.tar")

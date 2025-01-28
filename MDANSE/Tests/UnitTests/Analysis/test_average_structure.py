@@ -32,7 +32,7 @@ for u in units:
 
 
 @pytest.mark.parametrize("output_unit,output_format", inputs)
-def test_temperature(trajectory, output_unit, output_format):
+def test_avg_structure(trajectory, output_unit, output_format):
     temp_name = tempfile.mktemp()
     parameters = {}
     parameters["frames"] = (0, 10, 1)

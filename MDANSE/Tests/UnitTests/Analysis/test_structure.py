@@ -2,6 +2,9 @@ import sys
 import tempfile
 import os
 from os import path
+
+import numpy as np
+import h5py
 import pytest
 
 from MDANSE.Framework.Jobs.IJob import IJob
@@ -20,6 +23,11 @@ mdmc_traj = os.path.join(
     "..",
     "Data",
     "Ar_mdmc_h5md.h5",
+)
+result_dir = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Results",
 )
 
 
@@ -58,35 +66,113 @@ def parameters():
 
 total_list = []
 
-for tp in (short_traj, mdmc_traj):
+for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj)]:
     for jt in [
-        "RadiusOfGyration",
-        "SolventAccessibleSurface",
-        "RootMeanSquareDeviation",
-        "RootMeanSquareFluctuation",
-        "DensityProfile",
-        "MolecularTrace",
-        "Voronoi",
-        "Eccentricity",
+        ("RadiusOfGyration", {
+            "short_traj": [
+                "rog"
+            ],
+            "mdmc_traj": [
+                "rog"
+            ]
+        }),
+        ("SolventAccessibleSurface", {
+            "short_traj": [
+                "sas"
+            ],
+            "mdmc_traj": [
+                "sas"
+            ]
+        }),
+        ("RootMeanSquareDeviation", {
+            "short_traj": [
+                "rmsd_Cu",
+                "rmsd_S",
+                "rmsd_Sb",
+                "rmsd_all"
+            ],
+            "mdmc_traj": [
+                "rmsd_Ar",
+                "rmsd_all"
+            ]
+        }),
+        ("RootMeanSquareFluctuation", {
+            "short_traj": [
+                "rmsf"
+            ],
+            "mdmc_traj": [
+                "rmsf"
+            ]
+        }),
+        ("DensityProfile", {
+            "short_traj": [
+                "dp_Cu",
+                "dp_S",
+                "dp_Sb",
+                "dp_total"
+            ],
+            "mdmc_traj": [
+                "dp_Ar",
+                "dp_total"
+            ]
+        }),
+        ("MolecularTrace", {
+            "short_traj": [
+                "molecular_trace",
+                "x_position",
+                "y_position",
+                "z_position"
+            ],
+            "mdmc_traj": [
+                "molecular_trace",
+                "x_position",
+                "y_position",
+                "z_position"
+            ]
+        }),
+        ("Voronoi", {
+            "short_traj": [
+                "mean_volume",
+                "neighbourhood_histogram"
+            ],
+            "mdmc_traj": [
+                "mean_volume",
+                "neighbourhood_histogram"
+            ]
+        }),
+        ("Eccentricity", {
+            "short_traj": [
+                "eccentricity"
+            ],
+            "mdmc_traj": [
+                "eccentricity"
+            ]
+        }),
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
                 total_list.append((tp, jt, rm, of))
 
 
-@pytest.mark.parametrize("traj_path,job_type,running_mode,output_format", total_list)
+@pytest.mark.parametrize("traj_info,job_info,running_mode,output_format", total_list)
 def test_structure_analysis(
-    parameters, traj_path, job_type, running_mode, output_format
+    parameters, traj_info, job_info, running_mode, output_format
 ):
     temp_name = tempfile.mktemp()
-    parameters["trajectory"] = traj_path
+    parameters["trajectory"] = traj_info[1]
     parameters["running_mode"] = running_mode
     parameters["output_files"] = (temp_name, (output_format,), "INFO")
-    job = IJob.create(job_type)
+    job = IJob.create(job_info[0])
     job.run(parameters, status=True)
     if output_format == "MDAFormat":
         assert path.exists(temp_name + ".mda")
         assert path.isfile(temp_name + ".mda")
+        result_file = os.path.join(result_dir, f"structure_analysis_{traj_info[0]}_{job_info[0]}.mda")
+
+        with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+            for key in job_info[1][traj_info[0]]:
+                np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
+
         os.remove(temp_name + ".mda")
     elif output_format == "TextFormat":
         assert path.exists(temp_name + "_text.tar")

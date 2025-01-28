@@ -2,6 +2,9 @@ import sys
 import tempfile
 import os
 from os import path
+
+import numpy as np
+import h5py
 import pytest
 
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
@@ -14,6 +17,11 @@ short_traj = os.path.join(
     "..",
     "Data",
     "short_trajectory_after_changes.mdt",
+)
+result_dir = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Results",
 )
 
 
@@ -88,6 +96,31 @@ def test_dcsf(trajectory, qvector_spherical_lattice):
     parameters["trajectory"] = short_traj
     parameters["weights"] = "b_coherent"
     dcsf = IJob.create("DynamicCoherentStructureFactor")
+    dcsf.run(parameters, status=True)
+    assert path.exists(temp_name + ".mda")
+    assert path.isfile(temp_name + ".mda")
+    os.remove(temp_name + ".mda")
+    assert path.exists(temp_name + "_text.tar")
+    assert path.isfile(temp_name + "_text.tar")
+    os.remove(temp_name + "_text.tar")
+    assert path.exists(temp_name + ".log")
+    assert path.isfile(temp_name + ".log")
+    os.remove(temp_name + ".log")
+
+
+def test_ccf(trajectory, qvector_spherical_lattice):
+    temp_name = tempfile.mktemp()
+    parameters = {}
+    parameters["atom_selection"] = None
+    parameters["atom_transmutation"] = None
+    parameters["frames"] = (0, 10, 1, 5)
+    parameters["instrument_resolution"] = ("Ideal", {})
+    parameters["output_files"] = (temp_name, ("MDAFormat", "TextFormat"), "INFO")
+    parameters["q_vectors"] = qvector_spherical_lattice
+    parameters["running_mode"] = ("single-core",)
+    parameters["trajectory"] = short_traj
+    parameters["weights"] = "equal"
+    dcsf = IJob.create("CurrentCorrelationFunction")
     dcsf.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
@@ -184,6 +217,18 @@ def test_gdisf(trajectory):
     gdisf.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
+    result_file = os.path.join(result_dir, f"gdisf.mda")
+
+    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/f(q,t)_Cu"], desired["/f(q,t)_Cu"])
+        np.testing.assert_array_almost_equal(actual["/f(q,t)_S"], desired["/f(q,t)_S"])
+        np.testing.assert_array_almost_equal(actual["/f(q,t)_Sb"], desired["/f(q,t)_Sb"])
+        np.testing.assert_array_almost_equal(actual["/f(q,t)_total"], desired["/f(q,t)_total"])
+        np.testing.assert_array_almost_equal(actual["/s(q,f)_Cu"], desired["/s(q,f)_Cu"])
+        np.testing.assert_array_almost_equal(actual["/s(q,f)_S"], desired["/s(q,f)_S"])
+        np.testing.assert_array_almost_equal(actual["/s(q,f)_Sb"], desired["/s(q,f)_Sb"])
+        np.testing.assert_array_almost_equal(actual["/s(q,f)_total"], desired["/s(q,f)_total"])
+
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")
     assert path.isfile(temp_name + "_text.tar")
