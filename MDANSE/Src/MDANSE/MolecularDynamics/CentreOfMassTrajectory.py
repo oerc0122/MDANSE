@@ -31,7 +31,6 @@ def centre_of_mass(coords: np.ndarray, masses: np.ndarray) -> np.ndarray:
 
 def com_single_frame(
     coords: np.ndarray,
-    cell: np.ndarray,
     masses: List[float],
     selection: List[int] = None,
 ) -> np.ndarray:
@@ -58,9 +57,13 @@ def com_single_frame(
     try:
         len(selection[0])
     except TypeError:
-        new_coordinates = contiguous_coordinates_box(coords, cell, [selection])
+        new_coordinates = contiguous_coordinates_box(
+            coords, [selection], bring_to_centre=True
+        )
     else:
-        new_coordinates = contiguous_coordinates_box(coords, cell, selection)
+        new_coordinates = contiguous_coordinates_box(
+            coords, selection, bring_to_centre=True
+        )
     return centre_of_mass(new_coordinates, masses)
 
 
@@ -77,10 +80,7 @@ def com_trajectory(
 
     for timestep in range(len(trajectory)):
         frac_coordinates = np.matmul(coords_vs_time[timestep], rcells[timestep])
-        trajectory[timestep] = com_single_frame(
-            frac_coordinates, cells[timestep], masses, selection
-        )
-
+        trajectory[timestep] = com_single_frame(frac_coordinates, masses, selection)
     trajectory = remove_jumps(trajectory)
 
     if not box_coordinates:

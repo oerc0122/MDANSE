@@ -116,12 +116,13 @@ def contiguous_coordinates_real(
 
 
 def contiguous_coordinates_box(
-    coords: np.ndarray,
-    cell: np.ndarray,
+    frac_coords: np.ndarray,
     indices: List[Tuple[int]],
     bring_to_centre: bool = False,
 ):
-    """_summary_
+    """Translates atoms by a lattice vector. Returns a FRACTIONAL coordinate array
+    in which atoms in each segment are separated from the first atom
+    by less than half the simulation box length.
 
     Parameters
     ----------
@@ -142,7 +143,7 @@ def contiguous_coordinates_box(
         array of atom coordinates with the translations applied
     """
 
-    contiguous_coords = coords.copy()
+    contiguous_coords = frac_coords.copy()
 
     for tupleidxs in indices:
 
@@ -151,16 +152,14 @@ def contiguous_coordinates_box(
 
         idxs = list(tupleidxs)
         if bring_to_centre:
-            centre = np.mean(coords[idxs], axis=0)
-            sdx = coords[idxs] - centre
+            centre = np.mean(frac_coords[idxs], axis=0)
+            sdx = frac_coords[idxs] - centre
             sdx -= np.round(sdx)
-            newx = coords[idxs] + sdx
-            contiguous_coords[idxs] = np.matmul(newx, cell)
+            contiguous_coords[idxs] = frac_coords[idxs] + sdx
         else:
-            sdx = coords[idxs[1:]] - coords[idxs[0]]
+            sdx = frac_coords[idxs[1:]] - frac_coords[idxs[0]]
             sdx -= np.round(sdx)
-            newx = coords[idxs[0]] + sdx
-            contiguous_coords[idxs[1:]] = np.matmul(newx, cell)
+            contiguous_coords[idxs[1:]] = frac_coords[idxs[0]] + sdx
 
     return contiguous_coords
 
@@ -597,7 +596,6 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
 
         contiguous_coords = contiguous_coordinates_box(
             self._variables["coordinates"],
-            self.unit_cell.direct,
             indices_grouped,
             bring_to_centre,
         )
