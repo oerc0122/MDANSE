@@ -13,7 +13,7 @@ sys.setrecursionlimit(100000)
 short_traj = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
-    "Data",
+    "Converted",
     "Ar_mdmc_h5md.h5",
 )
 result_dir = os.path.join(

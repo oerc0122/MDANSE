@@ -15,7 +15,7 @@ sys.setrecursionlimit(100000)
 short_traj = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
-    "Data",
+    "Converted",
     "short_trajectory_after_changes.mdt",
 )
 result_dir = os.path.join(
