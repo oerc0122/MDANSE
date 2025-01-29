@@ -28,7 +28,7 @@ from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
     _Configuration,
-    contiguous_coordinates_real
+    contiguous_coordinates_real,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import atomic_trajectory
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
@@ -377,8 +377,19 @@ class MockTrajectory:
             inverse_cells = np.array(
                 [self.unit_cell(fnum).inverse for fnum in range(first, last, step)]
             )
-            temp_coords = contiguous_coordinates_real(coords, direct_cells, inverse_cells, [list(range(len(coords)))], bring_to_centre=True)
-            com_coords = np.vstack([center_of_mass(temp_coords[tstep], masses) for tstep in range(len(temp_coords))])
+            temp_coords = contiguous_coordinates_real(
+                coords,
+                direct_cells,
+                inverse_cells,
+                [list(range(len(coords)))],
+                bring_to_centre=True,
+            )
+            com_coords = np.vstack(
+                [
+                    center_of_mass(temp_coords[tstep], masses)
+                    for tstep in range(len(temp_coords))
+                ]
+            )
 
             com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
 

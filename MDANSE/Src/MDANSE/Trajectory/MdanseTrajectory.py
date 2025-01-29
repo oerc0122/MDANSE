@@ -27,7 +27,7 @@ from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
-    contiguous_coordinates_real
+    contiguous_coordinates_real,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import (
     atomic_trajectory,
@@ -284,10 +284,25 @@ class MdanseTrajectory:
             coords = coords[np.newaxis, :, :]
 
         if self._unit_cells is not None:
-            direct_cells = np.array([uc.direct for uc in self._unit_cells[first:last:step]])
-            inverse_cells = np.array([uc.inverse for uc in self._unit_cells[first:last:step]])
-            temp_coords = contiguous_coordinates_real(coords, direct_cells, inverse_cells, [list(range(len(coords)))], bring_to_centre=True)
-            com_coords = np.vstack([center_of_mass(temp_coords[tstep], masses) for tstep in range(len(temp_coords))])
+            direct_cells = np.array(
+                [uc.direct for uc in self._unit_cells[first:last:step]]
+            )
+            inverse_cells = np.array(
+                [uc.inverse for uc in self._unit_cells[first:last:step]]
+            )
+            temp_coords = contiguous_coordinates_real(
+                coords,
+                direct_cells,
+                inverse_cells,
+                [list(range(len(coords)))],
+                bring_to_centre=True,
+            )
+            com_coords = np.vstack(
+                [
+                    center_of_mass(temp_coords[tstep], masses)
+                    for tstep in range(len(temp_coords))
+                ]
+            )
 
             com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
 
