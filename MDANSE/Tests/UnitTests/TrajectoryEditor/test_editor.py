@@ -21,22 +21,26 @@ short_traj = os.path.join(
 
 
 def test_jumps_removed_correctly():
-    input_coords = np.array([
-        [0.8,0.2,0.3],
-        [0.88, 0.22, 0.33],
-        [0.97, 0.2, 0.3],
-        [0.05, 0.22, 0.31],
-        [0.03, 0.2, 0.3],
-        [0.99, 0.22, 0.32]
-    ])
-    expected_coords = np.array([
-        [0.8,0.2,0.3],
-        [0.88, 0.22, 0.33],
-        [0.97, 0.2, 0.3],
-        [1.05, 0.22, 0.31],
-        [1.03, 0.2, 0.3],
-        [0.99, 0.22, 0.32]
-    ])
+    input_coords = np.array(
+        [
+            [0.8, 0.2, 0.3],
+            [0.88, 0.22, 0.33],
+            [0.97, 0.2, 0.3],
+            [0.05, 0.22, 0.31],
+            [0.03, 0.2, 0.3],
+            [0.99, 0.22, 0.32],
+        ]
+    )
+    expected_coords = np.array(
+        [
+            [0.8, 0.2, 0.3],
+            [0.88, 0.22, 0.33],
+            [0.97, 0.2, 0.3],
+            [1.05, 0.22, 0.31],
+            [1.03, 0.2, 0.3],
+            [0.99, 0.22, 0.32],
+        ]
+    )
     corrected_coords = remove_jumps(input_coords)
     assert np.allclose(corrected_coords, expected_coords)
 
