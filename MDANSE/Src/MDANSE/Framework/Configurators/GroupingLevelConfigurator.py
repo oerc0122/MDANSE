@@ -93,12 +93,20 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     names.append(f"{mol_name}_mol{mol_number+1}")
                     masses.append([mass_lookup[x] for x in cluster])
         elif value == "group":
-            for group_name in chemical_system._labels.keys():
-                for cluster in enumerate(chemical_system._labels[group_name]):
-                    indices.append(cluster)
-                    elements.append([chemical_system.atom_list[x] for x in cluster])
-                    names.append(f"{group_name}")
-                    masses.append([mass_lookup[x] for x in cluster])
+            for group_name, group_indices in chemical_system._labels.items():
+                residue = set(group_indices)
+                counter = 1
+                for clustername, clusterlist in chemical_system._clusters.items():
+                    for cluster in clusterlist:
+                        molecule = set(cluster)
+                        if molecule.issubset(residue) or residue.issubset(molecule):
+                            indices.append(list(molecule.intersection(residue)))
+                            elements.append(
+                                [chemical_system.atom_list[x] for x in cluster]
+                            )
+                            names.append(f"{group_name}_num{counter}_in_{clustername}")
+                            masses.append([mass_lookup[x] for x in cluster])
+                            counter += 1
 
         atomSelectionConfig["indices"] = indices
         atomSelectionConfig["elements"] = elements
@@ -109,6 +117,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         self["level"] = value
         self["group_indices"] = list(range(len(names)))
+        if atomSelectionConfig["selection_length"] == 0:
+            self.error_status = "This option resulted in nothing being selected in the current trajectory"
 
     @staticmethod
     def find_parent(atom, level):

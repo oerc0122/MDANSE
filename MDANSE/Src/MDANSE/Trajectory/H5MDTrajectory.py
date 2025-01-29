@@ -22,12 +22,13 @@ import h5py
 
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Units import measure
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.MolecularDynamics.CentreOfMassTrajectory import com_trajectory
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
+    contiguous_coordinates_real
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import (
     atomic_trajectory,
@@ -373,15 +374,10 @@ class H5MDTrajectory:
             inverse_cells = np.array(
                 [self.unit_cell(nf).inverse for nf in range(first, last, step)]
             )
+            temp_coords = contiguous_coordinates_real(coords, direct_cells, inverse_cells, [list(range(len(coords)))], bring_to_centre=True)
+            com_coords = np.vstack([center_of_mass(temp_coords[tstep], masses) for tstep in range(len(temp_coords))])
 
-            com_traj = com_trajectory(
-                coords,
-                direct_cells,
-                inverse_cells,
-                np.array(masses),
-                atom_indices,
-                box_coordinates=box_coordinates,
-            )
+            com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
 
         else:
             com_traj = np.sum(
