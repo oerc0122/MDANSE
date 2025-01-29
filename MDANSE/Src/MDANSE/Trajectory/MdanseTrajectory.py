@@ -23,10 +23,11 @@ import h5py
 from MDANSE.MLogging import LOG
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.MolecularDynamics.CentreOfMassTrajectory import com_trajectory
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
+    contiguous_coordinates_real,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import (
     atomic_trajectory,
@@ -256,6 +257,15 @@ class MdanseTrajectory:
         if last is None:
             last = len(self)
 
+        if len(atom_indices) == 1:
+            return self.read_atomic_trajectory(
+                atom_indices[0],
+                first=first,
+                last=last,
+                step=step,
+                box_coordinates=box_coordinates,
+            )
+
         try:
             masses = self.chemical_system.atom_property("atomic_weight")
         except KeyError:
@@ -265,31 +275,36 @@ class MdanseTrajectory:
                     for at in self.chemical_system.atom_list
                 ]
             )
+        masses = [masses[index] for index in atom_indices]
         grp = self._h5_file["/configuration"]
 
-        coords = grp["coordinates"][first:last:step, :, :].astype(np.float64)
+        coords = grp["coordinates"][first:last:step, atom_indices, :].astype(np.float64)
 
         if coords.ndim == 2:
             coords = coords[np.newaxis, :, :]
 
         if self._unit_cells is not None:
-            direct_cells = np.array([uc.direct for uc in self._unit_cells])
-            inverse_cells = np.array([uc.inverse for uc in self._unit_cells])
-
-            clusters = [
-                cluster_indices
-                for cluster_indices in self.chemical_system._clusters.values()
-            ]
-
-            com_traj = com_trajectory(
+            direct_cells = np.array(
+                [uc.direct for uc in self._unit_cells[first:last:step]]
+            )
+            inverse_cells = np.array(
+                [uc.inverse for uc in self._unit_cells[first:last:step]]
+            )
+            temp_coords = contiguous_coordinates_real(
                 coords,
                 direct_cells,
                 inverse_cells,
-                np.array(masses),
-                clusters,
-                atom_indices,
-                box_coordinates=box_coordinates,
+                [list(range(len(coords)))],
+                bring_to_centre=True,
             )
+            com_coords = np.vstack(
+                [
+                    center_of_mass(temp_coords[tstep], masses)
+                    for tstep in range(len(temp_coords))
+                ]
+            )
+
+            com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
 
         else:
             com_traj = np.sum(
