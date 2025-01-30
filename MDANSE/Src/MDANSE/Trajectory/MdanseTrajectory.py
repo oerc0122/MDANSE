@@ -14,20 +14,22 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import os
+from typing import List
+import traceback
 
 import numpy as np
 import h5py
 
 from MDANSE.MLogging import LOG
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
-from MDANSE.Extensions import com_trajectory
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
+    contiguous_coordinates_real,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import (
-    resolve_undefined_molecules_name,
     atomic_trajectory,
 )
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
@@ -52,40 +54,32 @@ class MdanseTrajectory:
 
         # Load the chemical system
         self._chemical_system = ChemicalSystem(
-            os.path.splitext(os.path.basename(self._h5_filename))[0]
+            os.path.splitext(os.path.basename(self._h5_filename))[0], self
         )
-        self._chemical_system.load(self._h5_filename)
+        self._chemical_system.load(self._h5_file)
 
         # Load all the unit cells
         self._load_unit_cells()
-
-        # Load the first configuration
-        coords = self._h5_file["/configuration/coordinates"][0, :, :]
-        if self._unit_cells:
-            unit_cell = self._unit_cells[0]
-            conf = PeriodicRealConfiguration(self._chemical_system, coords, unit_cell)
-        else:
-            conf = RealConfiguration(self._chemical_system, coords)
-        self._chemical_system.configuration = conf
-
-        # Define a default name for all chemical entities which have no name
-        resolve_undefined_molecules_name(self._chemical_system)
 
     @classmethod
     def file_is_right(self, filename):
         result = True
         try:
-            temp = h5py.File(filename)
-        except:
+            file_object = h5py.File(filename)
+        except FileNotFoundError:
             result = False
         else:
             try:
                 temp_cs = ChemicalSystem(
                     os.path.splitext(os.path.basename(filename))[0]
                 )
-                temp_cs.load(filename)
-            except:
+                temp_cs.load(file_object)
+            except Exception:
+                LOG.warning(
+                    f"Could not load ChemicalSystem from {filename}. MDANSE will try to read it as H5MD next."
+                )
                 result = False
+            file_object.close()
         return result
 
     def close(self):
@@ -241,12 +235,12 @@ class MdanseTrajectory:
         return grp["coordinates"].shape[0]
 
     def read_com_trajectory(
-        self, atoms, first=0, last=None, step=1, box_coordinates=False
+        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
     ):
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
-        :type atoms: list MDANSE.Chemistry.ChemicalEntity.Atom
+        :type atoms: list MDANSE.Chemistry.ChemicalSystem.Atom
         :param first: the index of the first frame
         :type first: int
         :param last: the index of the last frame
@@ -263,49 +257,58 @@ class MdanseTrajectory:
         if last is None:
             last = len(self)
 
-        indexes = [at.index for at in atoms]
-        masses = np.array(
-            [
-                ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight")
-                for at in atoms
-            ]
-        )
+        if len(atom_indices) == 1:
+            return self.read_atomic_trajectory(
+                atom_indices[0],
+                first=first,
+                last=last,
+                step=step,
+                box_coordinates=box_coordinates,
+            )
+
+        try:
+            masses = self.chemical_system.atom_property("atomic_weight")
+        except KeyError:
+            masses = np.array(
+                [
+                    ATOMS_DATABASE.get_atom_property(at, "atomic_weight")
+                    for at in self.chemical_system.atom_list
+                ]
+            )
+        masses = [masses[index] for index in atom_indices]
         grp = self._h5_file["/configuration"]
 
-        coords = grp["coordinates"][first:last:step, :, :].astype(np.float64)
+        coords = grp["coordinates"][first:last:step, atom_indices, :].astype(np.float64)
 
         if coords.ndim == 2:
             coords = coords[np.newaxis, :, :]
 
         if self._unit_cells is not None:
-            direct_cells = np.array([uc.transposed_direct for uc in self._unit_cells])
-            inverse_cells = np.array([uc.transposed_inverse for uc in self._unit_cells])
-
-            top_lvl_chemical_entities = set(
-                [at.top_level_chemical_entity for at in atoms]
+            direct_cells = np.array(
+                [uc.direct for uc in self._unit_cells[first:last:step]]
             )
-            top_lvl_chemical_entities_indexes = [
-                [at.index for at in e.atom_list] for e in top_lvl_chemical_entities
-            ]
-            bonds = {}
-            for e in top_lvl_chemical_entities:
-                for at in e.atom_list:
-                    bonds[at.index] = [other_at.index for other_at in at.bonds]
-
-            com_traj = com_trajectory.com_trajectory(
+            inverse_cells = np.array(
+                [uc.inverse for uc in self._unit_cells[first:last:step]]
+            )
+            temp_coords = contiguous_coordinates_real(
                 coords,
                 direct_cells,
                 inverse_cells,
-                masses,
-                top_lvl_chemical_entities_indexes,
-                indexes,
-                bonds,
-                box_coordinates=box_coordinates,
+                [list(range(len(coords)))],
+                bring_to_centre=True,
             )
+            com_coords = np.vstack(
+                [
+                    center_of_mass(temp_coords[tstep], masses)
+                    for tstep in range(len(temp_coords))
+                ]
+            )
+
+            com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
 
         else:
             com_traj = np.sum(
-                coords[:, indexes, :] * masses[np.newaxis, :, np.newaxis], axis=1
+                coords[:, atom_indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
             )
             com_traj /= np.sum(masses)
 
@@ -438,12 +441,61 @@ class MdanseTrajectory:
         else:
             return False
 
+    def get_atom_property(self, symbol: str, property: str):
+        if "atom_database" not in self._h5_file:
+            return ATOMS_DATABASE.get_atom_property(symbol, property)
+        elif symbol not in self._h5_file["/atom_database"]:
+            return ATOMS_DATABASE.get_atom_property(symbol, property)
+        temp = np.where(
+            self._h5_file["/atom_database/property_labels"][:]
+            == property.encode("utf-8")
+        )[0]
+        if len(temp) == 0:
+            if property == "dummy":
+                try:
+                    return ATOMS_DATABASE.get_atom_property(symbol, property)
+                except KeyError:
+                    if (
+                        "_" in symbol
+                    ):  # this is most likely an artificial atom from a molecule
+                        return 0  # the molecule atoms are not dummy
+            else:
+                raise KeyError(
+                    f"Property {property} is not in the trajectory's internal database."
+                )
+        index = temp.flatten()[0]
+        data_type = self._h5_file["/atom_database/property_types"][index]
+        value = self._h5_file[f"/atom_database/{symbol}"][index]
+        if data_type == b"int":
+            return int(value)
+        if property == "color":
+            num1 = round(value // 0x10000)
+            num2 = round((value - num1 * 0x10000) // 0x100)
+            num3 = round((value - num1 * 0x10000 - num2 * 0x100))
+            return ";".join([str(int(x)) for x in [num1, num2, num3]])
+        return value
+
+    def atoms_in_database(self) -> List[str]:
+        if "atom_database" not in self._h5_file:
+            return ATOMS_DATABASE.atoms
+        else:
+            return list(self._h5_file["/atom_database"].keys())
+
+    def properties_in_database(self) -> List[str]:
+        if "atom_database" not in self._h5_file:
+            return ATOMS_DATABASE.properties
+        else:
+            return list(
+                label.decode("utf-8")
+                for label in self._h5_file["/atom_database/property_labels"]
+            )
+
     @property
     def chemical_system(self):
         """Return the chemical system stored in the trajectory.
 
         :return: the chemical system
-        :rtype: MDANSE.Chemistry.ChemicalEntity.ChemicalSystem
+        :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         """
         return self._chemical_system
 

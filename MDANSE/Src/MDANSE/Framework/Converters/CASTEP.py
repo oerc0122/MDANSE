@@ -15,7 +15,7 @@
 #
 import collections
 
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Units import measure
@@ -87,13 +87,14 @@ class CASTEP(Converter):
         # Create a bound universe
         self._chemical_system = ChemicalSystem()
 
+        element_list = []
         # Populate the universe with atoms based on how many of each atom is in the read trajectory
         for symbol, number in self._castepFile["atoms"]:
-            for i in range(number):
+            for _ in range(number):
                 element = get_element_from_mapping(self._atomicAliases, symbol)
-                self._chemical_system.add_chemical_entity(
-                    Atom(symbol=element, name="%s_%d" % (symbol, i))
-                )
+                element_list.append(element)
+
+        self._chemical_system.initialise_atoms(element_list)
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
@@ -135,9 +136,8 @@ class CASTEP(Converter):
         if self.configuration["fold"]["value"]:
             conf.fold_coordinates()
 
-        self._trajectory.chemical_system.configuration = conf
-
         self._trajectory.dump_configuration(
+            conf,
             time_step,
             units={
                 "time": "ps",
@@ -169,6 +169,7 @@ class CASTEP(Converter):
         self._castepFile.close()  # Close the .md file.
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(CASTEP, self).finalize()

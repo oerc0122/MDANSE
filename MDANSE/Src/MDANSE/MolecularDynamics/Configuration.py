@@ -16,16 +16,264 @@
 from __future__ import annotations
 import abc
 import copy
-from typing import Union, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING, List, Tuple
+from functools import reduce
 
 import numpy as np
+import networkx as nx
 from numpy.typing import ArrayLike
 
 if TYPE_CHECKING:
-    from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom, _ChemicalEntity
+    from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
     from MDANSE.Mathematics.Transformation import RigidBodyTransformation
     from MDANSE.MolecularDynamics.UnitCell import UnitCell
-from MDANSE.Extensions import atoms_in_shell, contiguous_coordinates
+
+
+def remove_jumps(input_coords: np.ndarray) -> np.ndarray:
+    """Takes a series of particle positions in time
+    and makes the motion continuous by removing any jumps across
+    the simulation box boundary.
+
+    Parameters
+    ----------
+    input_coords : np.ndarray
+        An (n_time_steps, 3) array of FRACTIONAL atom coordinates
+
+    Returns
+    -------
+    np.ndarray
+        The same array of atom positions, corrected for jumps by 1
+        full box length
+    """
+    steps = np.round(input_coords[1:] - input_coords[:-1]).astype(int)
+    offsets = np.zeros_like(input_coords)
+    for axis_index in range(3):
+        changes = np.argwhere(steps[:, axis_index])
+        for time_step_with_jump in changes:
+            try:
+                time_index = time_step_with_jump[0]
+            except IndexError:
+                continue
+            offsets[time_index + 1 :, axis_index] -= steps[time_index, axis_index]
+    return input_coords + offsets
+
+
+def contiguous_coordinates_real(
+    coords: np.ndarray,
+    cell: np.ndarray,
+    rcell: np.ndarray,
+    indices: List[Tuple[int]],
+    bring_to_centre: bool = False,
+):
+    """Translates atoms by a lattice vector. Returns a coordinate array
+    in which atoms in each segment are separated from the first atom
+    by less than half the simulation box length.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of atom coordinates
+    cell : np.ndarray
+        3x3 unit cell array
+    rcell : np.ndarray
+        3x3 reciprocal cell array
+    indices : List[Tuple[int]]
+        a list of index group, as in [[1,2,3], [7,8]]
+        (this would ensure 2 and 3 are close to 1, and 8 is close to 7)
+    bring_to_centre: bool
+        if true, atoms are shifted to minimise the distance from the average
+        position and not from the first atom
+
+    Returns
+    -------
+    np.ndarray
+        new coordinate array with the translations applied
+    """
+
+    contiguous_coords = coords.copy()
+
+    scaleconfig = np.matmul(coords, rcell)
+
+    for idxs in indices:
+
+        if len(idxs) < 2:
+            continue
+        if bring_to_centre:
+            centre = np.mean(scaleconfig[idxs], axis=0)
+            minimum_offsets = scaleconfig[idxs] - centre
+            minimum_offsets -= np.round(minimum_offsets)
+            newconfig = centre + minimum_offsets
+            newconfig = np.matmul(newconfig, cell)
+            contiguous_coords[idxs] = newconfig
+        else:
+            minimum_offsets = scaleconfig[idxs[1:]] - scaleconfig[idxs[0]]
+            minimum_offsets -= np.round(minimum_offsets)
+            newconfig = scaleconfig[idxs[0]] + minimum_offsets
+            newconfig = np.matmul(newconfig, cell)
+            contiguous_coords[idxs[1:]] = newconfig
+
+    return contiguous_coords
+
+
+def contiguous_coordinates_box(
+    frac_coords: np.ndarray,
+    indices: List[Tuple[int]],
+    bring_to_centre: bool = False,
+):
+    """Translates atoms by a lattice vector. Returns a FRACTIONAL coordinate array
+    in which atoms in each segment are separated from the first atom
+    by less than half the simulation box length.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of fractional coordinates
+    cell : np.ndarray
+        3x3 unit cell array
+    indices : List[Tuple[int]]
+        a list of index group, as in [[1,2,3], [7,8]]
+        (this would ensure 2 and 3 are close to 1, and 8 is close to 7)
+    bring_to_centre: bool
+        if true, atoms are shifted to minimise the distance from the average
+        position and not from the first atom
+
+    Returns
+    -------
+    np.ndarray
+        array of atom coordinates with the translations applied
+    """
+
+    contiguous_coords = frac_coords.copy()
+
+    for tupleidxs in indices:
+
+        if len(tupleidxs) < 2:
+            continue
+
+        idxs = list(tupleidxs)
+        if bring_to_centre:
+            centre = np.mean(frac_coords[idxs], axis=0)
+            sdx = frac_coords[idxs] - centre
+            sdx -= np.round(sdx)
+            contiguous_coords[idxs] = frac_coords[idxs] + sdx
+        else:
+            sdx = frac_coords[idxs[1:]] - frac_coords[idxs[0]]
+            sdx -= np.round(sdx)
+            contiguous_coords[idxs[1:]] = frac_coords[idxs[0]] + sdx
+
+    return contiguous_coords
+
+
+def continuous_coordinates(
+    coords: np.ndarray,
+    cell: np.ndarray,
+    rcell: np.ndarray,
+    bond_list: List[Tuple[int]],
+):
+    """Translates atoms by lattice vectors to ensure that
+    no bonds are broken. Does nothing if no bonds are defined
+    in the system.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of atom coordinates
+    cell : np.ndarray
+        3x3 unit cell array
+    rcell : np.ndarray
+        3x3 reciprocal cell array
+    bond_list : List[Tuple[int]]
+        List of bonds in the system
+
+    Returns
+    -------
+    np.ndarray
+        new array of atom coordinates with translations applied
+    """
+    atom_pool = list(range(len(coords)))
+    total_graph = nx.Graph()
+    total_graph.add_nodes_from(atom_pool)
+    total_graph.add_edges_from(bond_list)
+    segments = []
+    while len(atom_pool) > 0:
+        last_atom = atom_pool.pop()
+        temp_dict = nx.dfs_successors(total_graph, last_atom)
+        others = reduce(list.__add__, temp_dict.values(), [])
+        for atom in others:
+            atom_pool.pop(atom_pool.index(atom))
+        segment = [last_atom] + others
+        segments.append(sorted(segment))
+    return contiguous_coordinates_real(coords, cell, rcell, segments)
+
+
+def padded_coordinates(
+    coords: np.ndarray,
+    unit_cell: "UnitCell",
+    thickness: float,
+    fold_into_box: bool = True,
+) -> np.ndarray:
+    """Repeats coordinates in copies of the unit cell, and removes
+    the atoms that are now within the specified distance from the cell wall.
+    The returned coordinate array contains all the original atoms,
+    and additionally the atoms from the copies within the thickness
+    from the original cell walls.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of all the atoms in the unit cell
+    unit_cell : UnitCell
+        an instance of the UnitCell class, defining the simulation box
+    thickness : float
+        thickness of the outer layer to be included
+    fold_into_box : bool
+        if True, translates all the atoms so their fractional coordinates are in [0.0, 1.0)
+
+    Returns
+    -------
+    np.ndarray
+        Array of atom coordinates, together with their copies
+
+    Raises
+    ------
+    VoronoiError
+        Any error that may indicate that a Voronoi job failed
+    """
+    if abs(thickness) < 1e-6:
+        return coords, np.arange(len(coords), dtype=int)
+    vectors = (
+        unit_cell.a_vector,
+        unit_cell.b_vector,
+        unit_cell.c_vector,
+    )
+    fractional_lengths = [thickness / np.linalg.norm(vector) for vector in vectors]
+    all_indices = np.arange(len(coords), dtype=int)
+    for axis in range(3):
+        extra_arrays = []
+        extra_indices = []
+        cutoff_max = 1 + fractional_lengths[axis]
+        cutoff_min = -fractional_lengths[axis]
+        for shift in [-1, 1]:
+            offset = vectors[axis] * shift
+            new_points = coords + offset.reshape((1, 3))
+            frac_points = np.matmul(new_points, unit_cell.inverse)
+            if fold_into_box:
+                frac_points -= np.floor(frac_points)
+            if shift > 0:
+                criterion = np.where(frac_points[:, axis] < cutoff_max)
+                new_points = new_points[criterion]
+                new_indices = all_indices[criterion]
+            else:
+                criterion = np.where(frac_points[:, axis] > cutoff_min)
+                new_points = new_points[criterion]
+                new_indices = all_indices[criterion]
+            if len(new_points) > 0:
+                extra_arrays.append(new_points)
+                extra_indices.append(new_indices)
+        if len(extra_arrays) > 0:
+            coords = np.vstack([coords] + extra_arrays)
+            all_indices = np.concatenate([all_indices] + extra_indices)
+    return coords, all_indices
 
 
 class ConfigurationError(Exception):
@@ -40,7 +288,7 @@ class _Configuration(metaclass=abc.ABCMeta):
         Constructor.
 
         :param chemical_system: The chemical system described by this configuration.
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
         :param coords: the coordinates of all the particles in the chemical system
         :type coords: numpy.ndarray
@@ -144,7 +392,7 @@ class _Configuration(metaclass=abc.ABCMeta):
         Returns the chemical system stored in this configuration.
 
         :return: the chemical system that this configuration describes
-        :rtype: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :rtype: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
         """
         return self._chemical_system
 
@@ -154,7 +402,7 @@ class _Configuration(metaclass=abc.ABCMeta):
         Clones this configuration.
 
         :param chemical_system: the chemical system that this configuration describes
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
         """
         pass
 
@@ -201,7 +449,7 @@ class _PeriodicConfiguration(_Configuration):
         Constructor.
 
         :param chemical_system: The chemical system described by this configuration.
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
         :param coords: the coordinates of all the particles in the chemical system
         :type coords: numpy.ndarray
@@ -226,7 +474,7 @@ class _PeriodicConfiguration(_Configuration):
 
         :param chemical_system: the chemical system that is to be used for copying. It must have the same number of
                                 atoms as the chemical system that this configuration describes
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem):
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem):
         """
         if chemical_system is None:
             chemical_system = self._chemical_system
@@ -332,40 +580,9 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
 
         return real_conf
 
-    def atoms_in_shell(
-        self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> list[Atom]:
-        """
-        Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
-        atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
-        radius mini are returned. Atoms that are exactly mini or maxi distance away from the reference atom ARE counted
-        For more details, see :func: `MDANSE.Extensions.atoms_in_shell.atoms_in_shell_box`, which is called under the
-        hood.
-
-        :param ref: the index of the reference atom
-        :type ref: int
-
-        :param mini: the inner radius of the shell
-        :type mini: float
-
-        :param maxi: the outer radius of the shell
-        :type maxi: float
-
-        :return: list of atoms within the defined shell
-        :rtype: list
-        """
-
-        indexes = atoms_in_shell.atoms_in_shell_box(
-            self._variables["coordinates"].astype(np.float64), ref, mini, maxi
-        )
-
-        atom_list = self._chemical_system.atom_list
-
-        selected_atoms = [atom_list[idx] for idx in indexes]
-
-        return selected_atoms
-
-    def contiguous_configuration(self) -> PeriodicBoxConfiguration:
+    def contiguous_configuration(
+        self, bring_to_centre: bool = False
+    ) -> PeriodicBoxConfiguration:
         """
         Return a configuration with chemical entities made contiguous.
 
@@ -373,61 +590,19 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indexes = []
-        for ce in self._chemical_system.chemical_entities:
-            indexes.append([at.index for at in ce.atom_list])
+        indices_grouped = reduce(
+            list.__add__, self._chemical_system._clusters.values(), []
+        )
 
-        contiguous_coords = contiguous_coordinates.contiguous_coordinates_box(
-            self._variables["coordinates"], self._unit_cell.transposed_direct, indexes
+        contiguous_coords = contiguous_coordinates_box(
+            self._variables["coordinates"],
+            indices_grouped,
+            bring_to_centre,
         )
 
         conf = self.clone()
         conf._variables["coordinates"] = contiguous_coords
         return conf
-
-    def contiguous_offsets(
-        self, chemical_entities: list[_ChemicalEntity] = None
-    ) -> np.ndarray:
-        """
-        Returns the contiguity offsets for a list of chemical entities.
-
-        :param chemical_entities: the list of chemical entities whose offsets are to be calculated or None for all
-                                  entities in the chemical system
-        :type chemical_entities: list
-
-        :return: the offsets
-        :rtype: numpy.ndarray
-        """
-
-        if chemical_entities is None:
-            chemical_entities = self._chemical_system.chemical_entities
-        else:
-            for i, ce in enumerate(chemical_entities):
-                root = ce.root_chemical_system
-                if root is not self._chemical_system:
-                    raise ConfigurationError(
-                        "All the entities provided in the chemical_entities parameter must belong "
-                        "to the chemical system registered with this configuration, which is "
-                        f"{self._chemical_system.name}. However, the entity at index {i}, "
-                        f"{str(ce)}, is in chemical system "
-                        f"{root.name if root is not None else None}.\nExpected chemical system: "
-                        f"{repr(self._chemical_system)}\nActual chemical system: {repr(root)}\n"
-                        f"Faulty chemical entity: {repr(ce)}"
-                    )
-
-        indexes = []
-        for ce in chemical_entities:
-            indexes.append([at.index for at in ce.atom_list])
-
-        offsets = contiguous_coordinates.contiguous_offsets_box(
-            self._variables["coordinates"][
-                [item for sublist in indexes for item in sublist]
-            ],
-            self._unit_cell.transposed_direct,
-            indexes,
-        )
-
-        return offsets
 
 
 class PeriodicRealConfiguration(_PeriodicConfiguration):
@@ -472,45 +647,9 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         """
         return self._variables["coordinates"]
 
-    def atoms_in_shell(
-        self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> list[Atom]:
-        """
-        Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
-        atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
-        radius mini are returned. Atoms that are exactly mini or maxi distance away from the reference atom ARE counted
-        For more details, see :func: `MDANSE.Extensions.atoms_in_shell.atoms_in_shell_real`, which is called under the
-        hood.
-
-        :param ref: the index of the reference atom
-        :type ref: int
-
-        :param mini: the inner radius of the shell
-        :type mini: float
-
-        :param maxi: the outer radius of the shell
-        :type maxi: float
-
-        :return: list of atoms within the defined shell
-        :rtype: list
-        """
-
-        indexes = atoms_in_shell.atoms_in_shell_real(
-            self._variables["coordinates"].astype(np.float64),
-            self._unit_cell.transposed_direct,
-            self._unit_cell.transposed_inverse,
-            ref,
-            mini,
-            maxi,
-        )
-
-        atom_list = self._chemical_system.atom_list
-
-        selected_atoms = [atom_list[idx] for idx in indexes]
-
-        return selected_atoms
-
-    def contiguous_configuration(self) -> PeriodicRealConfiguration:
+    def contiguous_configuration(
+        self, bring_to_centre: bool = False
+    ) -> PeriodicRealConfiguration:
         """
         Return a configuration with chemical entities made contiguous.
 
@@ -518,15 +657,16 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        indexes = []
-        for ce in self._chemical_system.chemical_entities:
-            indexes.append([at.index for at in ce.atom_list])
+        indices_grouped = reduce(
+            list.__add__, self._chemical_system._clusters.values(), []
+        )
 
-        contiguous_coords = contiguous_coordinates.contiguous_coordinates_real(
+        contiguous_coords = contiguous_coordinates_real(
             self._variables["coordinates"],
-            self._unit_cell.transposed_direct,
-            self._unit_cell.transposed_inverse,
-            indexes,
+            self._unit_cell.direct,
+            self._unit_cell.inverse,
+            indices_grouped,
+            bring_to_centre,
         )
 
         conf = self.clone()
@@ -541,60 +681,16 @@ class PeriodicRealConfiguration(_PeriodicConfiguration):
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.PeriodicBoxConfiguration`
         """
 
-        contiguous_coords = contiguous_coordinates.continuous_coordinates(
+        continuous_coords = continuous_coordinates(
             self._variables["coordinates"],
-            self._unit_cell.transposed_direct,
-            self._unit_cell.transposed_inverse,
-            self._chemical_system,
+            self._unit_cell.direct,
+            self._unit_cell.inverse,
+            self.chemical_system._bonds,
         )
 
         conf = self.clone()
-        conf._variables["coordinates"] = contiguous_coords
+        conf._variables["coordinates"] = continuous_coords
         return conf
-
-    def contiguous_offsets(
-        self, chemical_entities: Union[None, list[_ChemicalEntity]] = None
-    ) -> np.ndarray:
-        """
-        Returns the contiguity offsets for a list of chemical entities.
-
-        :param chemical_entities: the list of chemical entities whose offsets are to be calculated or None for all
-                                  entities in the chemical system
-        :type chemical_entities: list
-
-        :return: the offsets
-        :rtype: numpy.ndarray
-        """
-
-        if chemical_entities is None:
-            chemical_entities = self._chemical_system.chemical_entities
-        else:
-            for i, ce in enumerate(chemical_entities):
-                root = ce.root_chemical_system
-                if root is not self._chemical_system:
-                    raise ConfigurationError(
-                        "All the entities provided in the chemical_entities parameter must belong "
-                        "to the chemical system registered with this configuration, which is "
-                        f"{self._chemical_system.name}. However, the entity at index {i}, "
-                        f"{str(ce)}, is in chemical system "
-                        f"{root.name if root is not None else None}.\nExpected chemical system: "
-                        f"{repr(self._chemical_system)}\nActual chemical system: {repr(root)}\n"
-                        f"Faulty chemical entity: {repr(ce)}"
-                    )
-        indexes = []
-        for ce in chemical_entities:
-            indexes.append([at.index for at in ce.atom_list])
-
-        offsets = contiguous_coordinates.contiguous_offsets_real(
-            self._variables["coordinates"][
-                [item for sublist in indexes for item in sublist]
-            ],
-            self._unit_cell.transposed_direct,
-            self._unit_cell.transposed_inverse,
-            indexes,
-        )
-
-        return offsets
 
 
 class RealConfiguration(_Configuration):
@@ -608,7 +704,7 @@ class RealConfiguration(_Configuration):
 
         :param chemical_system: the chemical system that is to be used for copying. It must have the same number of
                                 atoms as the chemical system that this configuration describes
-        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalEntity.ChemicalSystem`
+        :type chemical_system: :class: `MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`
 
         :return: the cloned configuration
         :rtype: :class: `MDANSE.MolecularDynamics.Configuration.RealConfiguration`
@@ -641,40 +737,9 @@ class RealConfiguration(_Configuration):
         """
         return self._variables["coordinates"]
 
-    def atoms_in_shell(
-        self, ref: int, mini: float = 0.0, maxi: float = 10.0
-    ) -> list[Atom]:
-        """
-        Returns all atoms found in a shell around a reference atom. The shell is a (hollow) sphere around the reference
-        atom defined by parameters mini and maxi. All atoms within the sphere with radius maxi but not within that of
-        radius mini are returned. Atoms that are exactly mini or maxi distance away from the reference atom ARE counted
-        For more details, see :func: `MDANSE.Extensions.atoms_in_shell.atoms_in_shell_nopbc`, which is called under the
-        hood.
-
-        :param ref: the index of the reference atom
-        :type ref: int
-
-        :param mini: the inner radius of the shell
-        :type mini: float
-
-        :param maxi: the outer radius of the shell
-        :type maxi: float
-
-        :return: list of atoms within the defined shell
-        :rtype: list
-        """
-
-        indexes = atoms_in_shell.atoms_in_shell_nopbc(
-            self._variables["coordinates"].astype(np.float64), ref, mini, maxi
-        )
-
-        atom_list = self._chemical_system.atom_list
-
-        selected_atoms = [atom_list[idx] for idx in indexes]
-
-        return selected_atoms
-
-    def contiguous_configuration(self) -> RealConfiguration:
+    def contiguous_configuration(
+        self, bring_to_centre: bool = False
+    ) -> RealConfiguration:
         """
         Return a configuration with chemical entities made contiguous, which is always itself.
 
@@ -692,54 +757,13 @@ class RealConfiguration(_Configuration):
         """
         return self
 
-    def contiguous_offsets(
-        self, chemical_entities: Union[None, list[_ChemicalEntity]] = None
-    ) -> np.ndarray:
-        """
-        Returns the contiguity offsets for a list of chemical entities, which are always zero for every atom.
-
-        :param chemical_entities: the list of chemical entities whose offsets are to be calculated or None for all
-                                  entities in the chemical system
-        :type chemical_entities: list
-
-        :return: the offsets
-        :rtype: numpy.ndarray
-        """
-
-        if chemical_entities is None:
-            chemical_entities = self._chemical_system.chemical_entities
-        else:
-            for j, ce in enumerate(chemical_entities):
-                root = ce.root_chemical_system
-                if root is not self._chemical_system:
-                    raise ConfigurationError(
-                        "All the entities provided in the chemical_entities parameter must belong "
-                        "to the chemical system registered with this configuration, which is "
-                        f"{self._chemical_system.name}. However, the entity at index {j}, "
-                        f"{str(ce)}, is in chemical system "
-                        f"{root.name if root is not None else None}.\nExpected chemical system: "
-                        f"{repr(self._chemical_system)}\nActual chemical system: {repr(root)}\n"
-                        f"Faulty chemical entity: {repr(ce)}"
-                    )
-
-        number_of_particles = sum(
-            [ce.total_number_of_atoms for ce in chemical_entities]
-        )
-
-        offsets = np.zeros((number_of_particles, 3))
-
-        return offsets
-
 
 if __name__ == "__main__":
     np.random.seed(1)
 
-    from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
-
     n_atoms = 2
     cs = ChemicalSystem()
-    for i in range(n_atoms):
-        cs.add_chemical_entity(Atom(symbol="H"))
+    cs.initialise_atoms(["H", "H"])
 
     coordinates = np.empty((n_atoms, 3), dtype=float)
     coordinates[0, :] = [1, 1, 1]
@@ -748,5 +772,3 @@ if __name__ == "__main__":
     uc = np.array([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]])
 
     conf = RealConfiguration(cs, coordinates)
-
-    print(conf.atoms_in_shell(0, 0, 5))

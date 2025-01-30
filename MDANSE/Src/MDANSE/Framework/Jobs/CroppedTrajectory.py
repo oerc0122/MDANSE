@@ -16,7 +16,6 @@
 import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.MolecularDynamics.Trajectory import sorted_atoms
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 
@@ -59,31 +58,29 @@ class CroppedTrajectory(IJob):
 
         self.numberOfSteps = self.configuration["frames"]["number"]
 
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         # The collection of atoms corresponding to the atoms selected for output.
-        indexes = [
+        indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
-        self._selectedAtoms = [atoms[ind] for ind in indexes]
-        self._selected_indices = indexes
+        self._selectedAtoms = [atoms[ind] for ind in indices]
+        self._selected_indices = indices
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self.configuration["trajectory"]["instance"].chemical_system,
             self.numberOfSteps,
-            self._selectedAtoms,
+            self._selected_indices,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
             initial_charges=[
                 self.configuration["trajectory"]["instance"].charges(0)[ind]
-                for ind in indexes
+                for ind in indices
             ],
         )
 
@@ -105,15 +102,13 @@ class CroppedTrajectory(IJob):
 
         cloned_conf = conf.clone(self._output_trajectory.chemical_system)
 
-        self._output_trajectory.chemical_system.configuration = cloned_conf
-
         time = self.configuration["frames"]["time"][index]
 
         charge = self.configuration["trajectory"]["instance"].charges(index)[
             self._selected_indices
         ]
 
-        self._output_trajectory.dump_configuration(time)
+        self._output_trajectory.dump_configuration(cloned_conf, time)
 
         self._output_trajectory.write_charges(charge, index)
 

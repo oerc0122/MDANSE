@@ -88,22 +88,24 @@ def build_cartesian_axes(origin, p1, p2, dtype=np.float64):
     return n1, n2, n3
 
 
-def generate_sphere_points(n):
+def generate_sphere_points(n: int) -> np.ndarray:
     """Returns list of 3d coordinates of points on a sphere using the
     Golden Section Spiral algorithm.
     """
 
-    points = []
+    inputs = np.arange(int(n))
+    points = np.empty([len(inputs), 3])
 
     inc = np.pi * (3 - np.sqrt(5))
 
     offset = 2 / float(n)
 
-    for k in range(int(n)):
-        y = k * offset - 1 + (offset / 2)
-        r = np.sqrt(1 - y * y)
-        phi = k * inc
-        points.append([np.cos(phi) * r, y, np.sin(phi) * r])
+    y = inputs * offset - 1 + (offset / 2)
+    r = np.sqrt(1 - y * y)
+    phi = inputs * inc
+    points[:, 0] = np.cos(phi) * r
+    points[:, 1] = y
+    points[:, 2] = np.sin(phi) * r
 
     return points
 

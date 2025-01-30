@@ -18,7 +18,6 @@ import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class UnfoldedTrajectory(IJob):
@@ -62,31 +61,29 @@ class UnfoldedTrajectory(IJob):
 
         self.numberOfSteps = self.configuration["frames"]["number"]
 
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
 
         # The collection of atoms corresponding to the atoms selected for output.
-        indexes = [
+        indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
-        self._selectedAtoms = [atoms[ind] for ind in indexes]
-        self._selection_indices = indexes
+        self._selectedAtoms = [atoms[ind] for ind in indices]
+        self._selection_indices = indices
 
         # The output trajectory is opened for writing.
         self._outputTraj = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self.configuration["trajectory"]["instance"].chemical_system,
             self.numberOfSteps,
-            self._selectedAtoms,
+            self._selection_indices,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
             initial_charges=[
                 self.configuration["trajectory"]["instance"].charges(0)[ind]
-                for ind in indexes
+                for ind in indices
             ],
         )
 
@@ -110,8 +107,6 @@ class UnfoldedTrajectory(IJob):
 
         cloned_conf = conf.clone(self._outputTraj.chemical_system)
 
-        self._outputTraj.chemical_system.configuration = cloned_conf
-
         # The time corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
@@ -119,7 +114,7 @@ class UnfoldedTrajectory(IJob):
             self._selection_indices
         ]
         # Write the step.
-        self._outputTraj.dump_configuration(time)
+        self._outputTraj.dump_configuration(cloned_conf, time)
 
         self._outputTraj.write_charges(charge, index)
 

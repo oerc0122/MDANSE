@@ -22,7 +22,7 @@ from ase.io import read as ase_read
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Units import measure
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
     PeriodicRealConfiguration,
@@ -109,7 +109,7 @@ class MinimalPDBReader:
                     result.append(line)
                 elif "HETATM" in line[0:6]:
                     result.append(line)
-                if "ENDMDL" in line[0:6]:
+                if "END" in line[0:3]:
                     fail_count += 1
                 if fail_count > 0:
                     break
@@ -119,7 +119,7 @@ class MinimalPDBReader:
         """Build the chemical system.
 
         Returns:
-            MDANSE.Chemistry.ChemicalEntity.ChemicalSystem: the chemical system
+            MDANSE.Chemistry.ChemicalSystem.ChemicalSystem: the chemical system
         """
 
         coordinates = []
@@ -128,16 +128,25 @@ class MinimalPDBReader:
         posx_slice = atom_line_slice("pos_x")
         posy_slice = atom_line_slice("pos_y")
         posz_slice = atom_line_slice("pos_z")
-        pos_scaling = measure(1.0, "ang").toval("nm")
+        residue_slice = atom_line_slice("residue_name")
+        residue_number_slice = atom_line_slice("residue_number")
 
-        for atom_line in atom_lines:
+        element_list = []
+        name_list = []
+        label_dict = {}
+        clusters = {}
+
+        for atom_number, atom_line in enumerate(atom_lines):
             chemical_element = atom_line[element_slice].strip()
             atom_name = atom_line[name_slice]
             processed_atom_name = atom_name[:2].strip()
             if len(processed_atom_name) == 2:
-                processed_atom_name = (
-                    processed_atom_name[0].upper() + processed_atom_name[1].lower()
-                )
+                if processed_atom_name[0].isnumeric():
+                    processed_atom_name = processed_atom_name[1].upper()
+                else:
+                    processed_atom_name = (
+                        processed_atom_name[0].upper() + processed_atom_name[1].lower()
+                    )
             if len(chemical_element) == 2:
                 chemical_element = (
                     chemical_element[0].upper() + chemical_element[1].lower()
@@ -149,34 +158,41 @@ class MinimalPDBReader:
             else:
                 backup_element3 = "fail"
             if backup_element in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=backup_element, name=atom_name)
+                element_list.append(backup_element)
             elif backup_element2 in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=backup_element2, name=atom_name)
+                element_list.append(backup_element2)
             elif backup_element3 in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=backup_element3, name=atom_name)
+                element_list.append(backup_element3)
             elif chemical_element in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=chemical_element, name=atom_name)
+                element_list.append(chemical_element)
             elif processed_atom_name in ATOMS_DATABASE.atoms:
-                atom = Atom(symbol=processed_atom_name, name=atom_name)
+                element_list.append(processed_atom_name)
             else:
-                LOG.warning(f"Dummy atom introduce from line {atom_line}")
-                atom = Atom(symbol="Du", name=atom_name)
-            self._chemical_system.add_chemical_entity(atom)
+                LOG.warning(f"Dummy atom introduced from line {atom_line}")
+                element_list.append("Du")
             x, y, z = (
                 atom_line[posx_slice],
                 atom_line[posy_slice],
                 atom_line[posz_slice],
             )
             coordinates.append([float(aaa) for aaa in [x, y, z]])
-
-        coordinates = np.array(coordinates)
-        coordinates *= pos_scaling
-
-        if self._unit_cell is None:
-            self._chemical_system.configuration = RealConfiguration(
-                self._chemical_system, coordinates
-            )
-        else:
-            self._chemical_system.configuration = PeriodicRealConfiguration(
-                self._chemical_system, coordinates, UnitCell(self._unit_cell)
-            )
+            residue_name = atom_line[residue_slice]
+            if residue_name not in label_dict.keys():
+                label_dict[residue_name] = []
+            label_dict[residue_name].append(atom_number)
+            name_list.append(atom_name.strip())
+            residue_number_string = atom_line[residue_number_slice]
+            try:
+                residue_number = int(residue_number_string)
+            except ValueError:
+                try:
+                    residue_number = int(residue_number_string, base=16)
+                except ValueError:
+                    continue
+            if (residue_name, residue_number) in clusters.keys():
+                clusters[(residue_name, residue_number)].append(atom_number)
+            else:
+                clusters[(residue_name, residue_number)] = [atom_number]
+        self._chemical_system.initialise_atoms(element_list, name_list)
+        self._chemical_system.add_labels(label_dict)
+        self._chemical_system.add_clusters(clusters.values())

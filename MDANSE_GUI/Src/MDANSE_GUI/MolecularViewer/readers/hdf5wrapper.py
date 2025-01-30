@@ -14,26 +14,31 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+import typing
 import numpy as np
 
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
+
+if typing.TYPE_CHECKING:
+    from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
+    from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from MDANSE_GUI.MolecularViewer.readers.i_reader import IReader
 
 
 class HDF5Wrapper(IReader):
-    def __init__(self, fname, trajectory, chemical):
+    def __init__(self, fname, trajectory: "Trajectory", chemical: "ChemicalSystem"):
         super(HDF5Wrapper, self).__init__(fname)
-        self._n_atoms = chemical._number_of_atoms
+        self._n_atoms = chemical.number_of_atoms
         self._n_frames = len(trajectory)
         self._trajectory = trajectory
         self._chemical_system = chemical
         self._filename = fname
-        self._atom_ids = [atom.index for atom in chemical.atoms]
-        self._atom_types = [atom.symbol for atom in chemical.atoms]
+        self._atom_ids = chemical._atom_indices
+        self._atom_types = chemical.atom_list
         self._atom_names = [
-            "_".join([str(x) for x in [atom.symbol, atom.index]])
-            for atom in chemical.atoms
+            str(element) + "_" + str(index)
+            for element, index in zip(chemical.atom_list, chemical._atom_indices)
         ]
 
     def read_frame(self, frame: int) -> "np.array":

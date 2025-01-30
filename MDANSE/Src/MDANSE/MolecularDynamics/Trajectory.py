@@ -15,7 +15,10 @@
 #
 import os
 from ast import operator
-from typing import Collection
+from typing import Collection, List, Dict, TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from MDANSE.Chemistry.Databases import AtomsDatabase
 import math
 
 import numpy as np
@@ -25,13 +28,9 @@ from MDANSE.MLogging import LOG
 from MDANSE.Trajectory.MdanseTrajectory import MdanseTrajectory
 from MDANSE.Trajectory.H5MDTrajectory import H5MDTrajectory
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem, _ChemicalEntity
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import (
     RealConfiguration,
-)
-from MDANSE.MolecularDynamics.TrajectoryUtils import (
-    sorted_atoms,
-    resolve_undefined_molecules_name,
 )
 from MDANSE import PLATFORM
 
@@ -56,6 +55,7 @@ class Trajectory:
         self._trajectory = self.open_trajectory(self._format)
         self._min_span = np.zeros(3)
         self._max_span = np.zeros(3)
+        self._atom_cache = {}
 
     def guess_correct_format(self):
         """This is a placeholder for now. As the number of
@@ -122,7 +122,7 @@ class Trajectory:
 
         return self._trajectory.coordinates(frame)
 
-    def configuration(self, frame):
+    def configuration(self, frame: int = 0):
         """Build and return a configuration at a given frame.
 
         :param frame: the frame
@@ -177,12 +177,12 @@ class Trajectory:
         return self._min_span
 
     def read_com_trajectory(
-        self, atoms, first=0, last=None, step=1, box_coordinates=False
+        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
     ):
         """Build the trajectory of the center of mass of a set of atoms.
 
         :param atoms: the atoms for which the center of mass should be computed
-        :type atoms: list MDANSE.Chemistry.ChemicalEntity.Atom
+        :type atoms: list MDANSE.Chemistry.ChemicalSystem.Atom
         :param first: the index of the first frame
         :type first: int
         :param last: the index of the last frame
@@ -196,7 +196,11 @@ class Trajectory:
         :rtype: ndarray
         """
         return self._trajectory.read_com_trajectory(
-            atoms, first=first, last=last, step=step, box_coordinates=box_coordinates
+            atom_indices,
+            first=first,
+            last=last,
+            step=step,
+            box_coordinates=box_coordinates,
         )
 
     def to_real_coordinates(self, box_coordinates, first, last, step):
@@ -219,7 +223,7 @@ class Trajectory:
     def read_atomic_trajectory(
         self, index, first=0, last=None, step=1, box_coordinates=False
     ):
-        """Read an atomic trajectory. The trajectory is corrected from box jumps.
+        """Read an atomic trajectory. The trajectory is corrected for box jumps.
 
         :param index: the index of the atom
         :type index: int
@@ -279,12 +283,48 @@ class Trajectory:
         """
         return self._trajectory.has_variable(variable)
 
+    def get_atom_property(self, atom_symbol: str, property: str):
+        if (atom_symbol, property) not in self._atom_cache.keys():
+            self._atom_cache[(atom_symbol, property)] = (
+                self._trajectory.get_atom_property(atom_symbol, property)
+            )
+        return self._atom_cache[(atom_symbol, property)]
+
+    def has_atom(self, symbol: str):
+        return symbol in self.atoms_in_database
+
+    def get_property_dict(self, symbol: str) -> Dict[str, Any]:
+        """Returns a dictionary of all the properties of an atom type.
+
+        Parameters
+        ----------
+        symbol : str
+            Symbol of the atom.
+
+        Returns
+        -------
+        Union[int, float, str]
+            The atom property.
+        """
+        return {
+            property_name: self.get_atom_property(symbol, property_name)
+            for property_name in self.properties_in_database
+        }
+
+    @property
+    def atoms_in_database(self) -> List[str]:
+        return self._trajectory.atoms_in_database()
+
+    @property
+    def properties_in_database(self) -> List[str]:
+        return self._trajectory.properties_in_database()
+
     @property
     def chemical_system(self):
         """Return the chemical system stored in the trajectory.
 
         :return: the chemical system
-        :rtype: MDANSE.Chemistry.ChemicalEntity.ChemicalSystem
+        :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         """
         return self._trajectory.chemical_system
 
@@ -325,6 +365,93 @@ class Trajectory:
         return self._trajectory.variables()
 
 
+additive_atom_properties = [
+    "nucleon",
+    "b_incoherent2",
+    "xray_asf_b4",
+    "proton",
+    "atomic_weight",
+    "ionization_energy",
+    "xs_absorption",
+    "xs_scattering",
+    "b_incoherent",
+    "b_coherent",
+    "charge",
+    "xray_asf_c",
+    "neutron",
+    "xray_asf_a4",
+    "xray_asf_a2",
+    "xray_asf_a3",
+    "xray_asf_a1",
+    "xray_asf_b3",
+    "xray_asf_b2",
+    "xray_asf_b1",
+    "xs_incoherent",
+    "xs_coherent",
+    "nuclear_spin",
+]
+averaged_atom_properties = [
+    "electronegativity",
+    "electroaffinity",
+    "atomic_number",
+    "group",
+    "serie",
+]
+constant_atom_properties = {
+    "equal": 1.0,
+    "abundance": 100.0,
+}
+atom_radii = [
+    "covalent_radius",
+    "vdw_radius",
+    "atomic_radius",
+]
+
+
+def create_average_atom(
+    atom_dictionary: Dict[str, int], database: Trajectory, radius_padding: float = 0.0
+):
+    all_properties = database.properties_in_database
+    values = {}
+    for property in all_properties:
+        temp = []
+        total = 0
+        for element_name, element_count in atom_dictionary.items():
+            temp.append(
+                [database.get_atom_property(element_name, property), element_count]
+            )
+        if property in additive_atom_properties:
+            total = np.sum([float(x[0]) * int(x[1]) for x in temp])
+        elif property in averaged_atom_properties:
+            total = np.sum([float(x[0]) * int(x[1]) for x in temp]) / np.sum(
+                [int(x[1]) for x in temp]
+            )
+        elif property in constant_atom_properties.keys():
+            total = constant_atom_properties[property]
+        elif property in atom_radii:
+            total = (
+                np.sum([float(x[0]) * int(x[1]) for x in temp])
+                / np.sum([int(x[1]) for x in temp])
+                + radius_padding
+            )
+        else:
+            for entry in temp:
+                try:
+                    converted = float(entry[0])
+                except TypeError:
+                    total = entry
+                except ValueError:
+                    total = entry
+                else:
+                    total += converted * entry[1]
+        values[property] = total
+    is_dummy = 1
+    for element_name, _ in atom_dictionary.items():
+        is_dummy = is_dummy and database.get_atom_property(element_name, "dummy")
+    values["dummy"] = is_dummy
+    return values
+
+
 class TrajectoryWriterError(Exception):
     pass
 
@@ -348,11 +475,11 @@ class TrajectoryWriter:
         :param h5_filename: the trajectory filename
         :type h5_filename: str
         :param chemical_system: the chemical system
-        :type h5_filename: MDANSE.Chemistry.ChemicalEntity.ChemicalSystem
+        :type h5_filename: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         :param h5_filename: the number of steps
         :type h5_filename: int
         :param selected_atoms: the selected atoms of the chemical system to write
-        :type selected_atoms: list of MDANSE.Chemistry.ChemicalEntity.Atom
+        :type selected_atoms: list of MDANSE.Chemistry.ChemicalSystem.Atom
         """
 
         self._h5_filename = h5_filename
@@ -360,23 +487,14 @@ class TrajectoryWriter:
         self._h5_file = h5py.File(self._h5_filename, "w")
 
         self._chemical_system = chemical_system
+        self._last_configuration = None
 
         if selected_atoms is None:
-            self._selected_atoms = self._chemical_system.atom_list
+            self._selected_atoms = list(self._chemical_system._atom_indices)
         else:
-            for at in selected_atoms:
-                if at.root_chemical_system != chemical_system:
-                    LOG.error(
-                        f"atom.chemical_system={at.root_chemical_system} and traj.chemical_system={chemical_system}"
-                    )
-                    raise TrajectoryWriterError(
-                        "One or more atoms of the selection comes from a different chemical system"
-                    )
-            self._selected_atoms = sorted_atoms(selected_atoms)
+            self._selected_atoms = selected_atoms
 
-        self._selected_atoms = [at.index for at in self._selected_atoms]
-
-        all_atoms = self._chemical_system.atom_list
+        all_atoms = list(self._chemical_system.atom_list)
         for idx in self._selected_atoms:
             all_atoms[idx] = False
 
@@ -410,6 +528,132 @@ class TrajectoryWriter:
         else:
             self._initial_charges = initial_charges
 
+    def write_atom_properties(
+        self, symbol: str, properties: Dict[str, Any], ptypes: Dict[str, str] = None
+    ):
+        if "atom_database" not in self._h5_file.keys():
+            group = self._h5_file.create_group("/atom_database")
+        else:
+            group = self._h5_file["/atom_database"]
+        string_dt = h5py.special_dtype(vlen=str)
+        if "property_labels" not in group:
+            label_dataset = group.create_dataset(
+                "property_labels", data=200 * [""], dtype=string_dt
+            )
+        else:
+            label_dataset = self._h5_file["/atom_database/property_labels"]
+        if "property_types" not in group:
+            type_dataset = group.create_dataset(
+                "property_types", data=200 * [""], dtype=string_dt
+            )
+        else:
+            type_dataset = self._h5_file["/atom_database/property_types"]
+        next_index = 0
+        for label in label_dataset[:]:
+            if len(label) > 0:
+                next_index += 1
+            else:
+                break
+        properties["dummy"] = 0
+        if symbol == "Du":
+            properties["dummy"] = 1
+        if "element" in properties.keys():
+            if properties["element"] == "dummy":
+                properties["dummy"] = 1
+        new_labels = [str(x) for x in properties.keys()]
+        if ptypes is None:
+            ptypes = ATOMS_DATABASE._properties
+        ptypes["dummy"] = "int"
+        for label in new_labels:
+            if label.encode("utf-8") not in label_dataset:
+                label_dataset[next_index] = label
+                type_dataset[next_index] = ptypes[label]
+                next_index += 1
+        mapping = {
+            property_label.decode("utf-8"): index
+            for index, property_label in enumerate(label_dataset[:])
+        }
+        atom_dataset = group.create_dataset(symbol, data=200 * [-1.0])
+        for key, value in properties.items():
+            try:
+                float(value)
+            except ValueError:
+                continue
+            except TypeError:
+                continue
+            else:
+                atom_dataset[mapping[key]] = value
+        try:
+            colour = [int(x) for x in properties["color"].split(";")]
+        except AttributeError:
+            colour = [int(x) for x in properties["color"][0].split(";")]
+        atom_dataset[mapping["color"]] = (
+            0x10000 * colour[0] + 0x100 * colour[1] + colour[2]
+        )
+
+    def write_atom_database(
+        self,
+        symbols: List[str],
+        database: "AtomsDatabase",
+        optional_molecule_radii: Dict[str, float] = None,
+    ):
+        for atom_symbol in symbols:
+            if database.has_atom(atom_symbol):
+                property_dict = database.get_property_dict(atom_symbol)
+            else:
+                atom_dict = {}
+                molecule_radius = 0.0
+                for token in atom_symbol.split("_"):
+                    symbol = ""
+                    number = ""
+                    noletters = True
+                    for char in token:
+                        if char.isnumeric():
+                            if noletters:
+                                symbol += char
+                            else:
+                                number += char
+                        else:
+                            symbol += char
+                            noletters = False
+                    atom_dict[symbol] = int(number)
+                if optional_molecule_radii is not None:
+                    molecule_radius = optional_molecule_radii.get(atom_symbol, 0.0)
+                property_dict = create_average_atom(
+                    atom_dict, database, radius_padding=molecule_radius
+                )
+            if hasattr(database, "_properties"):
+                self.write_atom_properties(
+                    atom_symbol, property_dict, database._properties
+                )
+            else:
+                self.write_atom_properties(atom_symbol, property_dict)
+
+    def write_standard_atom_database(self):
+        symbols = list(np.unique(self._chemical_system.atom_list))
+        database = ATOMS_DATABASE
+        for atom_symbol in symbols:
+            if database.has_atom(atom_symbol):
+                property_dict = database.get_property_dict(atom_symbol)
+            else:
+                atom_dict = {}
+                for token in atom_symbol.split("_"):
+                    symbol = ""
+                    number = ""
+                    noletters = True
+                    for char in token:
+                        if char.isnumeric():
+                            if noletters:
+                                symbol += char
+                            else:
+                                number += char
+                        else:
+                            symbol += char
+                            noletters = False
+                    atom_dict[symbol] = int(number)
+                property_dict = create_average_atom(atom_dict, database)
+            self.write_atom_properties(atom_symbol, property_dict, database._properties)
+
     def _dump_chemical_system(self):
         """Dump the chemical system to the trajectory file."""
 
@@ -423,11 +667,10 @@ class TrajectoryWriter:
         """Close the trajectory file"""
         self.validate_charges()
 
-        configuration = self._chemical_system.configuration
         n_atoms = self._chemical_system.total_number_of_atoms
-        if configuration is not None:
+        if self._last_configuration is not None:
             configuration_grp = self._h5_file["/configuration"]
-            for k, v in configuration.variables.items():
+            for k, v in self._last_configuration.variables.items():
                 dset = configuration_grp.get(k, None)
                 dset.resize((self._current_index, n_atoms, 3))
             try:
@@ -488,7 +731,7 @@ class TrajectoryWriter:
             if variable_charge_dset is not None:
                 del self._h5_file[variable_charge_dset.name]
 
-    def dump_configuration(self, time, units=None):
+    def dump_configuration(self, configuration, time, units=None):
         """Dump the chemical system configuration at a given time.
 
         :param time: the time
@@ -503,7 +746,6 @@ class TrajectoryWriter:
                 f"The current index {self._current_index} is greater than the actual number of steps of the trajectory {self._n_steps}"
             )
 
-        configuration = self._chemical_system.configuration
         if configuration is None:
             return
 
@@ -560,6 +802,7 @@ class TrajectoryWriter:
         time_dset[self._current_index] = time
 
         self._current_index += 1
+        self._last_configuration = configuration
 
 
 class RigidBodyTrajectoryGenerator:
@@ -575,7 +818,7 @@ class RigidBodyTrajectoryGenerator:
     def __init__(
         self,
         trajectory,
-        chemical_entity: _ChemicalEntity,
+        chemical_entity: List[int],
         reference,
         first=0,
         last=None,
@@ -586,7 +829,7 @@ class RigidBodyTrajectoryGenerator:
         :param trajectory: the input trajectory
         :type trajectory: MDANSE.Trajectory.Trajectory
         :param chemical_entity: the chemical enitty for which the Rigig-Body trajectory should be computed
-        :type chemical_entity: MDANSE.Chemistry.ChemicalEntity.ChemicalEntity
+        :type chemical_entity: MDANSE.Chemistry.ChemicalSystem.ChemicalEntity
         :param reference: the reference configuration. Must be continuous.
         :type reference: MDANSE.MolecularDynamics.Configuration.Configuration
         :param first: the index of the first frame
@@ -604,9 +847,7 @@ class RigidBodyTrajectoryGenerator:
 
         atoms = chemical_entity.atom_list
 
-        masses = [
-            ATOMS_DATABASE.get_atom_property(at.symbol, "atomic_weight") for at in atoms
-        ]
+        masses = [ATOMS_DATABASE.get_atom_property(at, "atomic_weight") for at in atoms]
 
         mass = sum(masses)
 
@@ -624,7 +865,7 @@ class RigidBodyTrajectoryGenerator:
         # relative coords of the CONTIGUOUS reference
         r_ref = np.zeros((len(atoms), 3), np.float64)
         for i, at in enumerate(atoms):
-            r_ref[i] = reference["coordinates"][at.index, :] - ref_com
+            r_ref[i] = reference["coordinates"][i, :] - ref_com
 
         unit_cells, inverse_unit_cells = self._trajectory.get_unit_cells()
         if unit_cells is not None:
@@ -632,9 +873,7 @@ class RigidBodyTrajectoryGenerator:
             inverse_unit_cells = inverse_unit_cells[first:last:step, :, :]
 
         for i, at in enumerate(atoms):
-            r = self._trajectory.read_atomic_trajectory(
-                at.index, first, last, step, True
-            )
+            r = self._trajectory.read_atomic_trajectory(i, first, last, step, True)
             r = r - rcms
 
             r = r[:, np.newaxis, :]
@@ -745,7 +984,7 @@ def read_atoms_trajectory(
 
     # from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 
-    # from MDANSE.Chemistry.ChemicalEntity import Atom
+    # from MDANSE.Chemistry.ChemicalSystem import Atom
     # cs = ChemicalSystem()
     # for i in range(768):
     #     cs.add_chemical_entity(Atom(symbol='H'))
@@ -769,8 +1008,6 @@ def read_atoms_trajectory(
 
 if __name__ == "__main__":
     from MDANSE.MolecularDynamics.Configuration import RealConfiguration
-
-    from MDANSE.Chemistry.ChemicalEntity import Atom
 
     cs = ChemicalSystem()
     for i in range(2):

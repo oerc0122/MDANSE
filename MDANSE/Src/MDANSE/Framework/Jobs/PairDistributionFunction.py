@@ -129,7 +129,7 @@ class PairDistributionFunction(DistanceHistogram):
                 self.hIntra[idi, idj] += self.hIntra[idj, idi]
                 self.hInter[idi, idj] += self.hInter[idj, idi]
 
-            fact = nij * nFrames * shellVolumes
+            fact = 2 * nij * nFrames * shellVolumes
 
             pdf_intra = self.hIntra[idi, idj, :] / fact
             pdf_inter = self.hInter[idi, idj, :] / fact

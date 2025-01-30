@@ -60,13 +60,13 @@ class AxisSelectionConfigurator(IConfigurator):
             self.update(value)
 
         e1 = find_atoms_in_molecule(
-            trajConfig["instance"]._chemical_system,
+            trajConfig["instance"].chemical_system,
             self["molecule"],
             self["endpoint1"],
             True,
         )
         e2 = find_atoms_in_molecule(
-            trajConfig["instance"]._chemical_system,
+            trajConfig["instance"].chemical_system,
             self["molecule"],
             self["endpoint2"],
             True,

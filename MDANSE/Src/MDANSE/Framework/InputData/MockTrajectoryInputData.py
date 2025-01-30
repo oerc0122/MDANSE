@@ -48,11 +48,8 @@ class MockTrajectoryInputData(InputFileData):
         val.append("%s\n" % len(self._data))
         mol_types = {}
         val.append("\nMolecular types found:")
-        for ce in self._data.chemical_system.chemical_entities:
-            if ce.__class__.__name__ in mol_types:
-                mol_types[ce.__class__.__name__] += 1
-            else:
-                mol_types[ce.__class__.__name__] = 1
+        for name, list in self._data.chemical_system._clusters.items():
+            mol_types[name] = len(list)
 
         for k, v in mol_types.items():
             val.append("\t- {:d} {}".format(v, k))

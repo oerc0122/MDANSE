@@ -84,7 +84,7 @@ class AtomsListConfigurator(IConfigurator):
                     + str(natoms)
                     + " were found."
                 )
-            atoms = tempdict["indexes"]
+            atoms = tempdict["indices"]
             self["value"] = value
             self["atoms"] = atoms
             self["n_values"] = len(self["atoms"])
