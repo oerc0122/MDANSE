@@ -1,4 +1,3 @@
-import sys
 import tempfile
 import os
 from os import path
@@ -10,7 +9,6 @@ import pytest
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
-sys.setrecursionlimit(100000)
 file_wd = os.path.dirname(os.path.realpath(__file__))
 mock_json = os.path.join(file_wd, "..", "Data", "mock.json")
 result_dir = os.path.join(

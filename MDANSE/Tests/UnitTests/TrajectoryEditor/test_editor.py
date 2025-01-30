@@ -1,17 +1,15 @@
-import sys
 import tempfile
 import os
 from os import path
-import pytest
 
 import numpy as np
 import h5py
+
 from MDANSE.MolecularDynamics.Configuration import remove_jumps
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
-sys.setrecursionlimit(100000)
 short_traj = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
