@@ -7,7 +7,6 @@ import numpy as np
 import h5py
 import pytest
 
-from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
@@ -18,17 +17,22 @@ short_traj = os.path.join(
     "Converted",
     "short_trajectory_after_changes.mdt",
 )
+mdmc_traj = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Converted",
+    "Ar_mdmc_h5md.h5",
+)
+com_traj = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Converted",
+    "com_trajectory.mdt",
+)
 result_dir = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
     "Results",
-)
-
-com_traj = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "..",
-    "Data",
-    "com_trajectory.mdt",
 )
 
 
@@ -86,7 +90,7 @@ def disf():
 
 @pytest.mark.parametrize(
     "trajectory",
-    [short_traj, com_traj],
+    [short_traj, mdmc_traj, com_traj],
 )
 def test_dcsf(trajectory, qvector_spherical_lattice):
     temp_name = tempfile.mktemp()
@@ -113,7 +117,7 @@ def test_dcsf(trajectory, qvector_spherical_lattice):
     os.remove(temp_name + ".log")
 
 
-def test_ccf(trajectory, qvector_spherical_lattice):
+def test_ccf(qvector_spherical_lattice):
     temp_name = tempfile.mktemp()
     parameters = {}
     parameters["atom_selection"] = None
@@ -159,7 +163,7 @@ def test_output_axis_preview(qvector_spherical_lattice):
 
 @pytest.mark.parametrize(
     "trajectory",
-    [short_traj, com_traj],
+    [short_traj, mdmc_traj, com_traj],
 )
 def test_disf(trajectory, qvector_spherical_lattice):
     temp_name = tempfile.mktemp()
@@ -188,7 +192,7 @@ def test_disf(trajectory, qvector_spherical_lattice):
 
 @pytest.mark.parametrize(
     "trajectory",
-    [short_traj, com_traj],
+    [short_traj, mdmc_traj, com_traj],
 )
 def test_eisf(trajectory, qvector_spherical_lattice):
     temp_name = tempfile.mktemp()
@@ -215,10 +219,10 @@ def test_eisf(trajectory, qvector_spherical_lattice):
 
 
 @pytest.mark.parametrize(
-    "trajectory",
-    [short_traj, com_traj],
+    "traj_info",
+    [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)],
 )
-def test_gdisf(trajectory):
+def test_gdisf(traj_info):
     temp_name = tempfile.mktemp()
     parameters = {}
     parameters["atom_selection"] = None
@@ -228,23 +232,18 @@ def test_gdisf(trajectory):
     parameters["output_files"] = (temp_name, ("MDAFormat", "TextFormat"), "INFO")
     parameters["q_shells"] = (2.0, 12.2, 2.0)
     parameters["running_mode"] = ("single-core",)
-    parameters["trajectory"] = trajectory
+    parameters["trajectory"] = traj_info[1]
     parameters["weights"] = "b_incoherent2"
     gdisf = IJob.create("GaussianDynamicIncoherentStructureFactor")
     gdisf.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
-    result_file = os.path.join(result_dir, f"gdisf.mda")
 
+    result_file = os.path.join(result_dir, f"gdisf_{traj_info[0]}.mda")
     with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        np.testing.assert_array_almost_equal(actual["/f(q,t)_Cu"], desired["/f(q,t)_Cu"])
-        np.testing.assert_array_almost_equal(actual["/f(q,t)_S"], desired["/f(q,t)_S"])
-        np.testing.assert_array_almost_equal(actual["/f(q,t)_Sb"], desired["/f(q,t)_Sb"])
-        np.testing.assert_array_almost_equal(actual["/f(q,t)_total"], desired["/f(q,t)_total"])
-        np.testing.assert_array_almost_equal(actual["/s(q,f)_Cu"], desired["/s(q,f)_Cu"])
-        np.testing.assert_array_almost_equal(actual["/s(q,f)_S"], desired["/s(q,f)_S"])
-        np.testing.assert_array_almost_equal(actual["/s(q,f)_Sb"], desired["/s(q,f)_Sb"])
-        np.testing.assert_array_almost_equal(actual["/s(q,f)_total"], desired["/s(q,f)_total"])
+        keys = [i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])]
+        for key in keys:
+            np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")

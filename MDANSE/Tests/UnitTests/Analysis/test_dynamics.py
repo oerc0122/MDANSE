@@ -7,7 +7,6 @@ import h5py
 import numpy as np
 import pytest
 
-from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
@@ -24,16 +23,16 @@ mdmc_traj = os.path.join(
     "Converted",
     "Ar_mdmc_h5md.h5",
 )
-result_dir = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "..",
-    "Results",
-)
 com_traj = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
     "Converted",
     "com_trajectory.mdt",
+)
+result_dir = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Results",
 )
 
 
@@ -132,7 +131,7 @@ def parameters():
         },
     )
     parameters["q_values"] = (0.0, 10.0, 0.1)
-    parameters["r_values"] = (0.0, 1.0, 0.01)
+    parameters["r_values"] = (0.0, 0.9, 0.01)
     parameters["per_axis"] = False
     parameters["reference_direction"] = (0, 0, 1)
     parameters["instrument_resolution"] = ("Gaussian", {"sigma": 1.0, "mu": 0.0})
@@ -150,112 +149,13 @@ for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", co
     for jt in [
         # "AngularCorrelation",
         # "GeneralAutoCorrelationFunction",
-        ("DensityOfStates", {
-            "mdmc_traj": [
-                "dos_Ar",
-                "dos_total",
-                "vacf_Ar",
-                "vacf_total"
-            ],
-            "short_traj": [
-                "dos_Cu",
-                "dos_S",
-                "dos_Sb",
-                "dos_total",
-                "vacf_Cu",
-                "vacf_S",
-                "vacf_Sb",
-                "vacf_total",
-            ]
-        }),
-        ("MeanSquareDisplacement", {
-            "mdmc_traj": [
-                "msd_Ar",
-                "msd_total",
-            ],
-            "short_traj": [
-                "msd_Cu",
-                "msd_S",
-                "msd_Sb",
-                "msd_total",
-            ]
-        }),
-        ("VelocityAutoCorrelationFunction", {
-            "mdmc_traj": [
-                "vacf_Ar",
-                "vacf_total"
-            ],
-            "short_traj": [
-                "vacf_Cu",
-                "vacf_S",
-                "vacf_Sb",
-                "vacf_total",
-            ]
-        }),
-        ("VanHoveFunctionDistinct", {
-            "mdmc_traj": [
-                "g(r,t)_inter_ArAr",
-                "g(r,t)_inter_total",
-                "g(r,t)_intra_ArAr",
-                "g(r,t)_intra_total",
-                "g(r,t)_total",
-                "g(r,t)_total_ArAr",
-            ],
-            "short_traj": [
-                "g(r,t)_inter_CuCu",
-                "g(r,t)_inter_CuS",
-                "g(r,t)_inter_CuSb",
-                "g(r,t)_inter_SS",
-                "g(r,t)_inter_SSb",
-                "g(r,t)_inter_SbSb",
-                "g(r,t)_inter_total",
-                "g(r,t)_intra_CuCu",
-                "g(r,t)_intra_CuS",
-                "g(r,t)_intra_CuSb",
-                "g(r,t)_intra_SS",
-                "g(r,t)_intra_SSb",
-                "g(r,t)_intra_SbSb",
-                "g(r,t)_intra_total",
-                "g(r,t)_total_CuCu",
-                "g(r,t)_total_CuS",
-                "g(r,t)_total_CuSb",
-                "g(r,t)_total_SS",
-                "g(r,t)_total_SSb",
-                "g(r,t)_total_SbSb",
-                "g(r,t)_total",
-            ]
-        }),
-        ("VanHoveFunctionSelf", {
-            "mdmc_traj": [
-                "4_pi_r2_g(r,t)_Ar",
-                "4_pi_r2_g(r,t)_total",
-                "g(r,t)_Ar",
-                "g(r,t)_total",
-            ],
-            "short_traj": [
-                "4_pi_r2_g(r,t)_Cu",
-                "4_pi_r2_g(r,t)_S",
-                "4_pi_r2_g(r,t)_Sb",
-                "4_pi_r2_g(r,t)_total",
-                "g(r,t)_Cu",
-                "g(r,t)_S",
-                "g(r,t)_Sb",
-                "g(r,t)_total",
-            ]
-        }),
+        ("DensityOfStates", ["dos", "vacf"]),
+        ("MeanSquareDisplacement", ["msd"]),
+        ("VelocityAutoCorrelationFunction", ["vacf"]),
+        ("VanHoveFunctionDistinct", ["g(r,t)"]),
+        ("VanHoveFunctionSelf", ["g(r,t)"]),
         # "OrderParameter",
-        ("PositionAutoCorrelationFunction", {
-            "mdmc_traj": [
-                "pacf_Ar",
-                "pacf_total"
-            ],
-            "short_traj": [
-                "pacf_Cu",
-                "pacf_S",
-                "pacf_Sb",
-                "pacf_total",
-            ]
-        }),
+        ("PositionAutoCorrelationFunction", ["pacf"]),
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
@@ -278,7 +178,8 @@ def test_dynamics_analysis(
         result_file = os.path.join(result_dir, f"dynamics_analysis_{traj_info[0]}_{job_info[0]}.mda")
 
         with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
-            for key in job_info[1][traj_info[0]]:
+            keys = [i for i in desired.keys() if any([j in i for j in job_info[1]])]
+            for key in keys:
                 np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
 
         os.remove(temp_name + ".mda")

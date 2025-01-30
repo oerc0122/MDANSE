@@ -17,7 +17,6 @@ short_traj = os.path.join(
     "Converted",
     "short_trajectory_after_changes.mdt",
 )
-
 mdmc_traj = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
@@ -75,48 +74,15 @@ total_list = []
 
 for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)]:
     for jt in [
-        ("RadiusOfGyration", {
-            "short_traj": [
-                "rog"
-            ],
-            "mdmc_traj": [
-                "rog"
-            ]
-        }),
-        ("DensityProfile", {
-            "short_traj": [
-                "dp_Cu",
-                "dp_S",
-                "dp_Sb",
-                "dp_total"
-            ],
-            "mdmc_traj": [
-                "dp_Ar",
-                "dp_total"
-            ]
-        }),
-        ("MolecularTrace", {
-            "short_traj": [
+        ("RadiusOfGyration", ["rog"]),
+        ("DensityProfile", ["dp"]),
+        ("MolecularTrace", [
                 "molecular_trace",
                 "x_position",
                 "y_position",
                 "z_position"
-            ],
-            "mdmc_traj": [
-                "molecular_trace",
-                "x_position",
-                "y_position",
-                "z_position"
-            ]
-        }),
-        ("Eccentricity", {
-            "short_traj": [
-                "eccentricity"
-            ],
-            "mdmc_traj": [
-                "eccentricity"
-            ]
-        }),
+        ]),
+        ("Eccentricity", ["eccentricity"]),
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
@@ -124,44 +90,10 @@ for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", co
 
 for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)]:
     for jt in [
-        ("SolventAccessibleSurface", {
-            "short_traj": [
-                "sas"
-            ],
-            "mdmc_traj": [
-                "sas"
-            ]
-        }),
-        ("RootMeanSquareDeviation", {
-            "short_traj": [
-                "rmsd_Cu",
-                "rmsd_S",
-                "rmsd_Sb",
-                "rmsd_all"
-            ],
-            "mdmc_traj": [
-                "rmsd_Ar",
-                "rmsd_all"
-            ]
-        }),
-        ("RootMeanSquareFluctuation", {
-            "short_traj": [
-                "rmsf"
-            ],
-            "mdmc_traj": [
-                "rmsf"
-            ]
-        }),
-        ("Voronoi", {
-            "short_traj": [
-                "mean_volume",
-                "neighbourhood_histogram"
-            ],
-            "mdmc_traj": [
-                "mean_volume",
-                "neighbourhood_histogram"
-            ]
-        }),
+        ("SolventAccessibleSurface", ["sas"]),
+        ("RootMeanSquareDeviation", ["rmsd"]),
+        ("RootMeanSquareFluctuation", ["rmsf"]),
+        ("Voronoi", ["mean_volume", "neighbourhood_histogram"]),
     ]:
         for rm in [("single-core", 1)]:
             for of in ["MDAFormat"]:
@@ -184,7 +116,8 @@ def test_structure_analysis(
         result_file = os.path.join(result_dir, f"structure_analysis_{traj_info[0]}_{job_info[0]}.mda")
 
         with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
-            for key in job_info[1][traj_info[0]]:
+            keys = [i for i in desired.keys() if any([j in i for j in job_info[1]])]
+            for key in keys:
                 np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
 
         os.remove(temp_name + ".mda")
