@@ -22,12 +22,13 @@ import h5py
 
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Units import measure
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.MolecularDynamics.CentreOfMassTrajectory import com_trajectory
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
+    contiguous_coordinates_real,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import (
     atomic_trajectory,
@@ -86,12 +87,12 @@ class H5MDTrajectory:
         result = True
         try:
             temp = h5py.File(filename)
-        except:
+        except FileNotFoundError:
             result = False
         else:
             try:
                 temp["h5md"]
-            except:
+            except KeyError:
                 result = False
         return result
 
@@ -337,20 +338,33 @@ class H5MDTrajectory:
         if last is None:
             last = len(self)
 
+        if len(atom_indices) == 1:
+            return self.read_atomic_trajectory(
+                atom_indices[0],
+                first=first,
+                last=last,
+                step=step,
+                box_coordinates=box_coordinates,
+            )
+
         atoms = self.chemical_system.atom_list
 
         try:
-            masses = self._h5_file["/particles/all/mass/value"][:].astype(np.float64)
+            masses = self._h5_file["/particles/all/mass/value"][atom_indices].astype(
+                np.float64
+            )
         except KeyError:
             try:
-                masses = self._h5_file["/particles/all/mass"][:].astype(np.float64)
+                masses = self._h5_file["/particles/all/mass"][atom_indices].astype(
+                    np.float64
+                )
             except KeyError:
                 masses = np.array(
                     [
                         ATOMS_DATABASE.get_atom_property(at, "atomic_weight")
                         for at in atoms
                     ]
-                )
+                )[atom_indices]
         grp = self._h5_file["/particles/all/position/value"]
         try:
             pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
@@ -361,7 +375,7 @@ class H5MDTrajectory:
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
 
-        coords = grp[first:last:step, :, :].astype(np.float64) * conv_factor
+        coords = grp[first:last:step, atom_indices, :].astype(np.float64) * conv_factor
 
         if coords.ndim == 2:
             coords = coords[np.newaxis, :, :]
@@ -373,21 +387,21 @@ class H5MDTrajectory:
             inverse_cells = np.array(
                 [self.unit_cell(nf).inverse for nf in range(first, last, step)]
             )
-
-            clusters = [
-                cluster_indices
-                for cluster_indices in self.chemical_system._clusters.values()
-            ]
-
-            com_traj = com_trajectory(
+            temp_coords = contiguous_coordinates_real(
                 coords,
                 direct_cells,
                 inverse_cells,
-                np.array(masses),
-                clusters,
-                atom_indices,
-                box_coordinates=box_coordinates,
+                [list(range(len(coords)))],
+                bring_to_centre=True,
             )
+            com_coords = np.vstack(
+                [
+                    center_of_mass(temp_coords[tstep], masses)
+                    for tstep in range(len(temp_coords))
+                ]
+            )
+
+            com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
 
         else:
             com_traj = np.sum(

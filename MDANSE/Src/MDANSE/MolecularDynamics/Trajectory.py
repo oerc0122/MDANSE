@@ -223,7 +223,7 @@ class Trajectory:
     def read_atomic_trajectory(
         self, index, first=0, last=None, step=1, box_coordinates=False
     ):
-        """Read an atomic trajectory. The trajectory is corrected from box jumps.
+        """Read an atomic trajectory. The trajectory is corrected for box jumps.
 
         :param index: the index of the atom
         :type index: int

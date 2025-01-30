@@ -28,7 +28,6 @@ from MDANSE.Core.Error import Error
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
-    PeriodicBoxConfiguration,
     PeriodicRealConfiguration,
     RealConfiguration,
 )
