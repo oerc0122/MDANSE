@@ -16,7 +16,8 @@
 import json
 import copy
 from typing import Union
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE.Framework.AtomSelector.all_selector import select_all
 from MDANSE.Framework.AtomSelector.atom_selectors import *
 from MDANSE.Framework.AtomSelector.group_selectors import *
@@ -24,7 +25,7 @@ from MDANSE.Framework.AtomSelector.molecule_selectors import *
 
 
 class Selector:
-    """Used to get the indexes of a subset of atoms of a chemical system.
+    """Used to get the indices of a subset of atoms of a chemical system.
 
     Attributes
     ----------
@@ -62,7 +63,7 @@ class Selector:
         "hs_on_heteroatom": select_hs_on_heteroatom,
         "primary_amine": select_primary_amine,
         "hydroxy": select_hydroxy,
-        "methyl": select_methly,
+        "methyl": select_methyl,
         "phosphate": select_phosphate,
         "sulphate": select_sulphate,
         "thiol": select_thiol,
@@ -82,18 +83,20 @@ class Selector:
         "index": "index",
     }
 
-    def __init__(self, system: ChemicalSystem) -> None:
+    def __init__(self, trajectory: Trajectory) -> None:
         """
         Parameters
         ----------
-        system: ChemicalSystem
+        trajectory: Trajectory
             The chemical system to apply the selection to.
         """
+        system = trajectory.chemical_system
         self.system = system
-        self.all_idxs = set([at.index for at in system.atom_list])
+        self.trajectory = trajectory
+        self.all_idxs = set(system._atom_indices)
         self.settings = copy.deepcopy(self._default)
 
-        symbols = set([at.symbol for at in system.atom_list])
+        symbols = set(system.atom_list)
         # all possible values for the system
         self._kwarg_vals = {
             "element": symbols,
@@ -101,11 +104,11 @@ class Selector:
                 [
                     symbol
                     for symbol in symbols
-                    if select_hs_on_element(system, symbol, check_exists=True)
+                    if select_hs_on_element(trajectory, symbol, check_exists=True)
                 ]
             ),
-            "name": set([at.name for at in system.atom_list]),
-            "fullname": set([at.full_name for at in system.atom_list]),
+            "name": set(system.atom_list),
+            "fullname": set(system.name_list),
             "index": self.all_idxs,
         }
 
@@ -116,7 +119,9 @@ class Selector:
                 for k1 in v0.keys():
                     self.match_exists[k0][k1] = True
             else:
-                self.match_exists[k0] = self._funcs[k0](self.system, check_exists=True)
+                self.match_exists[k0] = self._funcs[k0](
+                    self.trajectory, check_exists=True
+                )
 
         self.settings = self.create_default_settings()
 
@@ -171,12 +176,12 @@ class Selector:
                 self.settings[k0] = v0
 
     def get_idxs(self) -> set[int]:
-        """The atom indexes after applying the selection to the system.
+        """The atom indices after applying the selection to the system.
 
         Returns
         -------
         set[int]
-            The atoms indexes.
+            The atoms indices.
         """
         idxs = set([])
 
@@ -193,7 +198,7 @@ class Selector:
                 if not switch:
                     continue
 
-                idxs.update(self._funcs[k](self.system, **arg))
+                idxs.update(self._funcs[k](self.trajectory, **arg))
 
         return idxs
 
@@ -206,7 +211,7 @@ class Selector:
         Parameters
         ----------
         idxs : set[int]
-            With the indexes of the atom selection.
+            With the indices of the atom selection.
         """
         new_settings = self.create_default_settings()
         new_settings["all"] = False
@@ -228,7 +233,7 @@ class Selector:
                 if not switch:
                     continue
 
-                selection = self._funcs[k](self.system, **arg)
+                selection = self._funcs[k](self.trajectory, **arg)
                 if not idxs.issuperset(selection):
                     continue
 

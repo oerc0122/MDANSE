@@ -30,6 +30,13 @@ result_dir = os.path.join(
     "Results",
 )
 
+com_traj = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Converted",
+    "com_trajectory.mdt",
+)
+
 
 ################################################################
 # Job parameters                                               #
@@ -66,7 +73,7 @@ def parameters():
 
 total_list = []
 
-for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj)]:
+for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)]:
     for jt in [
         ("RadiusOfGyration", {
             "short_traj": [
@@ -74,34 +81,6 @@ for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj)]:
             ],
             "mdmc_traj": [
                 "rog"
-            ]
-        }),
-        ("SolventAccessibleSurface", {
-            "short_traj": [
-                "sas"
-            ],
-            "mdmc_traj": [
-                "sas"
-            ]
-        }),
-        ("RootMeanSquareDeviation", {
-            "short_traj": [
-                "rmsd_Cu",
-                "rmsd_S",
-                "rmsd_Sb",
-                "rmsd_all"
-            ],
-            "mdmc_traj": [
-                "rmsd_Ar",
-                "rmsd_all"
-            ]
-        }),
-        ("RootMeanSquareFluctuation", {
-            "short_traj": [
-                "rmsf"
-            ],
-            "mdmc_traj": [
-                "rmsf"
             ]
         }),
         ("DensityProfile", {
@@ -130,16 +109,6 @@ for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj)]:
                 "z_position"
             ]
         }),
-        ("Voronoi", {
-            "short_traj": [
-                "mean_volume",
-                "neighbourhood_histogram"
-            ],
-            "mdmc_traj": [
-                "mean_volume",
-                "neighbourhood_histogram"
-            ]
-        }),
         ("Eccentricity", {
             "short_traj": [
                 "eccentricity"
@@ -151,6 +120,51 @@ for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj)]:
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
+                total_list.append((tp, jt, rm, of))
+
+for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)]:
+    for jt in [
+        ("SolventAccessibleSurface", {
+            "short_traj": [
+                "sas"
+            ],
+            "mdmc_traj": [
+                "sas"
+            ]
+        }),
+        ("RootMeanSquareDeviation", {
+            "short_traj": [
+                "rmsd_Cu",
+                "rmsd_S",
+                "rmsd_Sb",
+                "rmsd_all"
+            ],
+            "mdmc_traj": [
+                "rmsd_Ar",
+                "rmsd_all"
+            ]
+        }),
+        ("RootMeanSquareFluctuation", {
+            "short_traj": [
+                "rmsf"
+            ],
+            "mdmc_traj": [
+                "rmsf"
+            ]
+        }),
+        ("Voronoi", {
+            "short_traj": [
+                "mean_volume",
+                "neighbourhood_histogram"
+            ],
+            "mdmc_traj": [
+                "mean_volume",
+                "neighbourhood_histogram"
+            ]
+        }),
+    ]:
+        for rm in [("single-core", 1)]:
+            for of in ["MDAFormat"]:
                 total_list.append((tp, jt, rm, of))
 
 

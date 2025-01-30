@@ -30,18 +30,7 @@ EXCLUDE_DIRECTORIES = (
     "*.egg-info",
 )
 
-EXTENSIONS_PATH = "Extensions"
-
 INCLUDE_DIR = [numpy.get_include()]
-
-QHULL_DIR = os.path.join("Extensions", "qhull_lib")
-
-QHULL_INCLUDE_DIR = (
-    INCLUDE_DIR
-    + [EXTENSIONS_PATH]
-    + [os.path.join(QHULL_DIR, "ext")]
-    + [os.path.join(QHULL_DIR, "src")]
-)
 
 #################################
 # Helper function

@@ -18,7 +18,6 @@ import json
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.AtomSelector import Selector
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
@@ -36,13 +35,13 @@ class PartialChargeMapper:
         """
         system = trajectory.chemical_system
         charges = trajectory.charges(0)
-        self.selector = Selector(system)
+        self.selector = Selector(trajectory)
         self._original_map = {}
         for at_num, at in enumerate(system.atom_list):
             try:
-                self._original_map[at.index] = charges[at_num]
+                self._original_map[at_num] = charges[at_num]
             except:
-                self._original_map[at.index] = 0.0
+                self._original_map[at_num] = 0.0
         self._new_map = {}
 
     def update_charges(
@@ -54,7 +53,7 @@ class PartialChargeMapper:
         Parameters
         ----------
         selection_dict: dict[str, Union[bool, dict]]
-            The selection setting to get the indexes to map the inputted
+            The selection setting to get the indices to map the inputted
             partial charge.
         charge: float
             The partial charge to map the selected atoms to.
@@ -146,7 +145,7 @@ class PartialChargeConfigurator(IConfigurator):
 
         traj_config = self._configurable[self._dependencies["trajectory"]]
         system = traj_config["instance"].chemical_system
-        idxs = [at.index for at in system.atom_list]
+        idxs = system._atom_indices
 
         if any([int(i) not in idxs for i in value.keys()]):
             self.error_status = "Inputted setting not valid - atom index not found in the current system."

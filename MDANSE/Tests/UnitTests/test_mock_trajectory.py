@@ -14,7 +14,6 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import os
-import tempfile
 
 import pytest
 import numpy as np
@@ -72,7 +71,7 @@ def test_com_trajectory(static_trajectory):
     """Centre of Mass (COM) trajectory should be identical
     to the static trajectory, since the atoms never moved"""
     com_trajectory = static_trajectory.read_com_trajectory(
-        static_trajectory._chemicalSystem.atoms, 0, 10, 1
+        list(range(static_trajectory._num_atoms_in_box)), 0, 10, 1
     )
     conf_static = static_trajectory[3]
     conf_com = com_trajectory[3]

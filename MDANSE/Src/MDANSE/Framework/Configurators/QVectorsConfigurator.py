@@ -63,7 +63,7 @@ class QVectorsConfigurator(IConfigurator):
                 self.error_status = f"Invalid q vectors settings {value}"
                 return
             generator = IQVectors.create(
-                generator, trajConfig["instance"].chemical_system
+                generator, trajConfig["instance"].configuration(0)
             )
             try:
                 generator.setup(parameters)

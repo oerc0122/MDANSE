@@ -29,12 +29,12 @@ result_dir = os.path.join(
     "..",
     "Results",
 )
-
-
-@pytest.fixture(scope="module")
-def trajectory():
-    trajectory = HDFTrajectoryInputData(short_traj)
-    yield trajectory
+com_traj = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Converted",
+    "com_trajectory.mdt",
+)
 
 
 @pytest.mark.parametrize(
@@ -48,7 +48,7 @@ def trajectory():
         (3, False),
     ],
 )
-def test_vacf(trajectory, interp_order, normalise):
+def test_vacf(interp_order, normalise):
     temp_name = tempfile.mktemp()
     parameters = {}
     parameters["frames"] = (0, 10, 1, 5)
@@ -81,7 +81,7 @@ def test_vacf(trajectory, interp_order, normalise):
     os.remove(temp_name + ".log")
 
 
-def test_pps(trajectory):
+def test_pps():
     temp_name = tempfile.mktemp()
     parameters = {}
     parameters["frames"] = (0, 10, 1, 5)
@@ -146,7 +146,7 @@ def parameters():
 
 total_list = []
 
-for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj)]:
+for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)]:
     for jt in [
         # "AngularCorrelation",
         # "GeneralAutoCorrelationFunction",

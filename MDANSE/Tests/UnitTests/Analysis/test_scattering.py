@@ -24,15 +24,16 @@ result_dir = os.path.join(
     "Results",
 )
 
+com_traj = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Data",
+    "com_trajectory.mdt",
+)
+
 
 @pytest.fixture(scope="module")
-def trajectory():
-    trajectory = HDFTrajectoryInputData(short_traj)
-    yield trajectory
-
-
-@pytest.fixture(scope="module")
-def qvector_spherical_lattice(trajectory):
+def qvector_spherical_lattice():
     return (
         "SphericalLatticeQVectors",
         {"seed": 0, "shells": (5.0, 36, 10.0), "n_vectors": 10, "width": 9.0},
@@ -83,6 +84,10 @@ def disf():
     os.remove(temp_name + ".mda")
 
 
+@pytest.mark.parametrize(
+    "trajectory",
+    [short_traj, com_traj],
+)
 def test_dcsf(trajectory, qvector_spherical_lattice):
     temp_name = tempfile.mktemp()
     parameters = {}
@@ -93,7 +98,7 @@ def test_dcsf(trajectory, qvector_spherical_lattice):
     parameters["output_files"] = (temp_name, ("MDAFormat", "TextFormat"), "INFO")
     parameters["q_vectors"] = qvector_spherical_lattice
     parameters["running_mode"] = ("single-core",)
-    parameters["trajectory"] = short_traj
+    parameters["trajectory"] = trajectory
     parameters["weights"] = "b_coherent"
     dcsf = IJob.create("DynamicCoherentStructureFactor")
     dcsf.run(parameters, status=True)
@@ -152,6 +157,10 @@ def test_output_axis_preview(qvector_spherical_lattice):
     assert len(axes) == 3  # two configurators return valid arrays
 
 
+@pytest.mark.parametrize(
+    "trajectory",
+    [short_traj, com_traj],
+)
 def test_disf(trajectory, qvector_spherical_lattice):
     temp_name = tempfile.mktemp()
     parameters = {}
@@ -162,7 +171,7 @@ def test_disf(trajectory, qvector_spherical_lattice):
     parameters["output_files"] = (temp_name, ("MDAFormat", "TextFormat"), "INFO")
     parameters["q_vectors"] = qvector_spherical_lattice
     parameters["running_mode"] = ("single-core",)
-    parameters["trajectory"] = short_traj
+    parameters["trajectory"] = trajectory
     parameters["weights"] = "b_incoherent2"
     disf = IJob.create("DynamicIncoherentStructureFactor")
     disf.run(parameters, status=True)
@@ -177,6 +186,10 @@ def test_disf(trajectory, qvector_spherical_lattice):
     os.remove(temp_name + ".log")
 
 
+@pytest.mark.parametrize(
+    "trajectory",
+    [short_traj, com_traj],
+)
 def test_eisf(trajectory, qvector_spherical_lattice):
     temp_name = tempfile.mktemp()
     parameters = {}
@@ -186,7 +199,7 @@ def test_eisf(trajectory, qvector_spherical_lattice):
     parameters["output_files"] = (temp_name, ("MDAFormat", "TextFormat"), "INFO")
     parameters["q_vectors"] = qvector_spherical_lattice
     parameters["running_mode"] = ("single-core",)
-    parameters["trajectory"] = short_traj
+    parameters["trajectory"] = trajectory
     parameters["weights"] = "b_incoherent"
     eisf = IJob.create("ElasticIncoherentStructureFactor")
     eisf.run(parameters, status=True)
@@ -201,6 +214,10 @@ def test_eisf(trajectory, qvector_spherical_lattice):
     os.remove(temp_name + ".log")
 
 
+@pytest.mark.parametrize(
+    "trajectory",
+    [short_traj, com_traj],
+)
 def test_gdisf(trajectory):
     temp_name = tempfile.mktemp()
     parameters = {}
@@ -211,7 +228,7 @@ def test_gdisf(trajectory):
     parameters["output_files"] = (temp_name, ("MDAFormat", "TextFormat"), "INFO")
     parameters["q_shells"] = (2.0, 12.2, 2.0)
     parameters["running_mode"] = ("single-core",)
-    parameters["trajectory"] = short_traj
+    parameters["trajectory"] = trajectory
     parameters["weights"] = "b_incoherent2"
     gdisf = IJob.create("GaussianDynamicIncoherentStructureFactor")
     gdisf.run(parameters, status=True)

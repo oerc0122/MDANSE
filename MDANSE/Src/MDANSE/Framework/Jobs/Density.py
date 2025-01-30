@@ -18,10 +18,8 @@ import collections
 
 import numpy as np
 
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Units import measure
-from MDANSE.MolecularDynamics.Trajectory import sorted_atoms
 
 NAVOGADRO = 6.02214129e23
 
@@ -67,10 +65,9 @@ class Density(IJob):
             "instance"
         ].chemical_system.number_of_atoms
 
-        self._symbols = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list,
-            "symbol",
-        )
+        self._symbols = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
         # Will store the time.
         self._outputData.add(
@@ -143,7 +140,9 @@ class Density(IJob):
         mass_density = (
             sum(
                 [
-                    ATOMS_DATABASE.get_atom_property(s, "atomic_weight")
+                    self.configuration["trajectory"]["instance"].get_atom_property(
+                        s, "atomic_weight"
+                    )
                     for s in self._symbols
                 ]
             )

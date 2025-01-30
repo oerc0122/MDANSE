@@ -133,9 +133,9 @@ class MolecularTrace(IJob):
             main_result=True,
         )
 
-        self._indexes = [
+        self._indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
 
@@ -158,7 +158,7 @@ class MolecularTrace(IJob):
         resolution = self.configuration["spatial_resolution"]["value"]
 
         indices = np.floor(
-            (conf["coordinates"][self._indexes, :] - self.min.reshape((1, 3)))
+            (conf["coordinates"][self._indices, :] - self.min.reshape((1, 3)))
             / resolution
         ).astype(int)
         unique_indices, counts = np.unique(indices, return_counts=True, axis=0)

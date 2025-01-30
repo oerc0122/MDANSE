@@ -61,20 +61,20 @@ class MultipleChoicesConfigurator(IConfigurator):
                 self.error_status = f"invalid number of choices."
                 return
 
-        indexes = []
+        indices = []
         for v in value:
             try:
-                indexes.append(self._choices.index(v))
+                indices.append(self._choices.index(v))
             except ValueError:
                 self.error_status = f"{v} item is not a valid choice"
                 return
 
-        if not indexes:
+        if not indices:
             self.error_status = "Empty choices selection."
             return
 
-        self["indexes"] = indexes
-        self["choices"] = [self._choices[i] for i in indexes]
+        self["indices"] = indices
+        self["choices"] = [self._choices[i] for i in indices]
         self["value"] = self["choices"]
         self.error_status = "OK"
 

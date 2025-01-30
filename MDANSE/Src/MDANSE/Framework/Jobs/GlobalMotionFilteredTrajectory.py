@@ -21,10 +21,9 @@ import numpy as np
 
 import h5py
 
-from MDANSE.Chemistry.ChemicalEntity import AtomGroup
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
-from MDANSE.MolecularDynamics.Trajectory import sorted_atoms, TrajectoryWriter
+from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 
 class GlobalMotionFilteredTrajectory(IJob):
@@ -87,20 +86,16 @@ class GlobalMotionFilteredTrajectory(IJob):
         self.numberOfSteps = self.configuration["frames"]["number"]
 
         # The collection of atoms corresponding to the atoms selected for output.
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        atoms = self.configuration["trajectory"]["instance"].chemical_system.atom_list
         self._selected_atoms = []
-        for indexes in self.configuration["atom_selection"]["indexes"]:
-            for idx in indexes:
+        for indices in self.configuration["atom_selection"]["indices"]:
+            for idx in indices:
                 self._selected_atoms.append(atoms[idx])
-        self._selected_atoms = AtomGroup(self._selected_atoms)
 
         self._reference_atoms = []
-        for indexes in self.configuration["reference_selection"]["indexes"]:
-            for idx in indexes:
+        for indices in self.configuration["reference_selection"]["indices"]:
+            for idx in indices:
                 self._reference_atoms.append(atoms[idx])
-        self._reference_atoms = AtomGroup(self._reference_atoms)
 
         self._output_trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
@@ -141,8 +136,6 @@ class GlobalMotionFilteredTrajectory(IJob):
             trajectory.chemical_system, coords, **variables
         )
 
-        trajectory.chemical_system.configuration = current_configuration
-
         # Case of the first frame.
         if frameIndex == self.configuration["frames"]["first"]:
             # A a linear transformation that shifts the center of mass of the reference atoms to the coordinate origin
@@ -173,14 +166,14 @@ class GlobalMotionFilteredTrajectory(IJob):
         new_configuration = RealConfiguration(
             self._output_trajectory.chemical_system, coords, None, **variables
         )
-        self._output_trajectory.chemical_system.configuration = new_configuration
-
         # The times corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
         # Write the step.
         self._output_trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            new_configuration,
+            time,
+            units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
         )
 
         return index, rms

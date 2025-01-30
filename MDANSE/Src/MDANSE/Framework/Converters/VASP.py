@@ -16,7 +16,7 @@
 import collections
 
 from MDANSE.Core.Error import Error
-from MDANSE.Chemistry.ChemicalEntity import Atom, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import PeriodicBoxConfiguration
@@ -98,21 +98,21 @@ class VASP(Converter):
         # The number of steps of the analysis.
         self.numberOfSteps = int(self._xdatcarFile["n_frames"])
 
-        self._chemicalSystem = ChemicalSystem()
+        self._chemical_system = ChemicalSystem()
+        element_list = []
 
         for symbol, number in zip(
             self._xdatcarFile["atoms"], self._xdatcarFile["atom_numbers"]
         ):
             for i in range(number):
                 element = get_element_from_mapping(self._atomicAliases, symbol)
-                self._chemicalSystem.add_chemical_entity(
-                    Atom(symbol=element, name="{:s}_{:d}".format(symbol, i))
-                )
+                element_list.append(element)
+        self._chemical_system.initialise_atoms(element_list)
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
-            self._chemicalSystem,
+            self._chemical_system,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
@@ -144,9 +144,6 @@ class VASP(Converter):
             # The real coordinates are folded then into the simulation box (-L/2,L/2).
             real_conf.fold_coordinates()
 
-        # Bind the configuration to the chemcial system
-        self._trajectory.chemical_system.configuration = real_conf
-
         # Compute the actual time
         time = (
             self._xdatcarFile["step_number"]
@@ -156,7 +153,9 @@ class VASP(Converter):
 
         # Dump the configuration to the output trajectory
         self._trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            real_conf,
+            time,
+            units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
         )
 
         return index, None
@@ -180,6 +179,7 @@ class VASP(Converter):
         self._xdatcarFile.close()
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(VASP, self).finalize()

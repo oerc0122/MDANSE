@@ -25,7 +25,6 @@ from MDANSE.IO.MinimalPDBReader import MinimalPDBReader
 from MDANSE.Mathematics.Geometry import get_basis_vectors_from_cell_parameters
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import (
-    resolve_undefined_molecules_name,
     TrajectoryWriter,
 )
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
@@ -328,8 +327,6 @@ class DCD(Converter):
         pdb_reader = MinimalPDBReader(self.configuration["pdb_file"]["filename"])
         self._chemical_system = pdb_reader._chemical_system
 
-        resolve_undefined_molecules_name(self._chemical_system)
-
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
@@ -362,14 +359,12 @@ class DCD(Converter):
         if self.configuration["fold"]["value"]:
             conf.fold_coordinates()
 
-        self._trajectory._chemical_system.configuration = conf
-
         # The current time.
         time = index * self.configuration["time_step"]["value"]
 
         # Store a snapshot of the current configuration in the output trajectory.
         self._trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            conf, time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
         )
 
         return index, None
@@ -390,6 +385,7 @@ class DCD(Converter):
         """
 
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(DCD, self).finalize()

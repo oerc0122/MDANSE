@@ -15,14 +15,14 @@
 #
 
 from itertools import product
-from typing import List, Dict
+from typing import List
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial import KDTree
 
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
@@ -39,10 +39,11 @@ class Connectivity:
         **kwargs,
     ):
         self._chemical_system = trajectory.chemical_system
+        self._input_trajectory = trajectory
         self._selection = selection
         self._frames = trajectory
-        self._unit_cell = self._chemical_system.configuration
-        self._periodic = self._chemical_system.configuration.is_periodic
+        self._unit_cell = self._input_trajectory.configuration(0)
+        self._periodic = self._input_trajectory.configuration(0).is_periodic
         self.check_composition(self._chemical_system)
         self._bonds = None
         self._bond_mapping = None
@@ -58,10 +59,10 @@ class Connectivity:
         """
         if self._selection is not None:
             atom_elements = [
-                atom.symbol for atom in chemical.atoms if atom.index in self._selection
+                self._chemical_system.atom_list[index] for index in self._selection
             ]
         else:
-            atom_elements = [atom.symbol for atom in chemical.atoms]
+            atom_elements = self._chemical_system.atom_list
         unique_elements = np.unique(atom_elements)
         radii = {
             element: ATOMS_DATABASE.get_atom_property(element, "covalent_radius")
@@ -126,7 +127,7 @@ class Connectivity:
             NDArray -- an (N,N) array of squared distances between all the atom pairs,
                 one for each combination of the unit cell vectors.
         """
-        unit_cell = self._chemical_system.configuration.unit_cell
+        unit_cell = self._input_trajectory.configuration(frame_number).unit_cell
         vector_a, vector_b, vector_c = (
             unit_cell.a_vector,
             unit_cell.b_vector,
@@ -168,7 +169,7 @@ class Connectivity:
             for pair in pairs
         }
         total_max_length = np.max([x for x in maxbonds.values()])
-        for nstep, frame_number in enumerate(samples):
+        for _, frame_number in enumerate(samples):
             distances = self.internal_distances(
                 frame_number=frame_number, max_distance=total_max_length
             )
@@ -193,59 +194,9 @@ class Connectivity:
         self._bond_mapping = bond_mapping
         self._unique_bonds = np.unique(np.sort(bonds, axis=1), axis=0)
 
-    def find_molecules(self, tolerance: float = 0.2):
-        """Uses the internal list of bonds to find atoms that belong to the same
-        molecules. The grouping of atoms is saved internally.
-        """
-        if self._bond_mapping is None:
-            self.find_bonds(tolerance=tolerance)
-
-        def recursive_walk(
-            number: int, bond_mapping: Dict[int, int], atom_pool: List[int]
-        ):
-            """Returns a list of atoms connected by bonds to the input atom.
-            Called recursively in order to find the entire molecule.
-
-            Arguments:
-                number -- number (index) of the starting atom on the atom list.
-                bond_mapping -- dictionary of the interatomic connections,
-                    determined using the find_bonds method.
-                atom_pool -- a list of all the atom numbers, each atom to be used
-                    once only. Once an atom number has been assigned to a molecule,
-                    it will also be removed from this list.
-
-            Returns:
-                List[int] -- a list of atom numbers (indices)
-            """
-            connected_atoms = [number]
-            for at_number in bond_mapping[number]:
-                if at_number in atom_pool:
-                    connected_atoms.append(at_number)
-                    atom_pool.pop(atom_pool.index(at_number))
-                    connected_atoms += recursive_walk(
-                        at_number, bond_mapping, atom_pool
-                    )
-            return connected_atoms
-
-        molecules = []
-        atom_pool = list(range(len(self._elements)))
-        while len(atom_pool):
-            new_molecule = recursive_walk(
-                atom_pool.pop(), self._bond_mapping, atom_pool
-            )
-            molecules.append(list(np.unique(new_molecule)))
-        self._molecules = molecules
-
-    def add_bond_information(self):
-        for bond in self._unique_bonds:
-            ind1, ind2 = bond
-            at1, at2 = (
-                self._chemical_system.atoms[bond[0]],
-                self._chemical_system.atoms[bond[1]],
-            )
-            at1.bonds.append(at2)
-            at2.bonds.append(at1)
-            self._chemical_system._bonds.append((ind1, ind2))
+    def add_bond_information(self, new_chemical_system: ChemicalSystem):
+        new_chemical_system.add_bonds(self._unique_bonds)
+        new_chemical_system.find_clusters_from_bonds()
 
     def add_point(self, index: int, point: np.ndarray, radius: float) -> bool:
         return True

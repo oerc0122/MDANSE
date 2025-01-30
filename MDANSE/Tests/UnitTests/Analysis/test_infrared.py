@@ -45,7 +45,7 @@ def test_dacf_analysis():
         '"50": -0.36, "51": 0.72, "52": -0.36, "53": -0.36, "54": 0.72, '
         '"55": -0.36, "56": -0.36, "57": 0.72, "58": -0.36, "59": -0.36}'
     )
-    parameters["molecule_name"] = "InChI=1S/CO2/c2-1-3"
+    parameters["molecule_name"] = "C1_O2"
     job = IJob.create("DipoleAutoCorrelationFunction")
     job.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
@@ -85,7 +85,7 @@ def test_ir_analysis():
         '"50": -0.36, "51": 0.72, "52": -0.36, "53": -0.36, "54": 0.72, '
         '"55": -0.36, "56": -0.36, "57": 0.72, "58": -0.36, "59": -0.36}'
     )
-    parameters["molecule_name"] = "InChI=1S/CO2/c2-1-3"
+    parameters["molecule_name"] = "C1_O2"
     job = IJob.create("Infrared")
     job.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")

@@ -18,7 +18,6 @@ import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Analysis import mean_square_fluctuation
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class RootMeanSquareFluctuation(IJob):
@@ -71,17 +70,17 @@ class RootMeanSquareFluctuation(IJob):
 
         self.numberOfSteps = self.configuration["atom_selection"]["selection_length"]
 
-        # Will store the indexes.
-        indexes = [
+        # Will store the indices.
+        indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
         if self.configuration["grouping_level"]["value"] == "atom":
-            self._outputData.add("indexes", "LineOutputVariable", indexes)
+            self._outputData.add("indices", "LineOutputVariable", indices)
         else:
             self._outputData.add(
-                "indexes",
+                "indices",
                 "LineOutputVariable",
                 self.configuration["grouping_level"]["group_indices"],
             )
@@ -91,14 +90,14 @@ class RootMeanSquareFluctuation(IJob):
             "rmsf",
             "LineOutputVariable",
             (self.configuration["atom_selection"]["selection_length"],),
-            axis="indexes",
+            axis="indices",
             units="nm",
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -111,11 +110,10 @@ class RootMeanSquareFluctuation(IJob):
             #. rmsf (np.array): the calculated root mean square fluctuation for atom index
         """
         # read the particle trajectory
-        indexes = self.configuration["atom_selection"]["indexes"][index]
-        atoms = [self._atoms[idx] for idx in indexes]
+        indices = self.configuration["atom_selection"]["indices"][index]
 
         series = self.configuration["trajectory"]["instance"].read_com_trajectory(
-            atoms,
+            indices,
             first=self.configuration["frames"]["first"],
             last=self.configuration["frames"]["last"] + 1,
             step=self.configuration["frames"]["step"],

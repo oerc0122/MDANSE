@@ -20,41 +20,6 @@ import collections
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
 )
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
-
-LEVELS = collections.OrderedDict()
-LEVELS["atom"] = {
-    "atom": 0,
-    "atomcluster": 0,
-    "molecule": 0,
-    "nucleotidechain": 0,
-    "peptidechain": 0,
-    "protein": 0,
-}
-LEVELS["residue"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 1,
-    "peptidechain": 1,
-    "protein": 1,
-}
-LEVELS["chain"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 2,
-    "peptidechain": 2,
-    "protein": 2,
-}
-LEVELS["molecule"] = {
-    "atom": 0,
-    "atomcluster": 1,
-    "molecule": 1,
-    "nucleotidechain": 2,
-    "peptidechain": 2,
-    "protein": 2,
-}
 
 
 class GroupingLevelConfigurator(SingleChoiceConfigurator):
@@ -84,11 +49,12 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         :param choices: the level of granularities allowed for the input value. If None all levels are allowed.
         :type choices: one of ['atom','group','residue','chain','molecule'] or None
         """
+        usual_choices = ["atom", "molecule", "group"]
 
         if choices is None:
-            choices = list(LEVELS.keys())
+            choices = usual_choices
         else:
-            choices = list(set(LEVELS.keys()).intersection(choices))
+            choices += [x for x in usual_choices if x not in choices]
 
         SingleChoiceConfigurator.__init__(self, name, choices=choices, **kwargs)
 
@@ -108,38 +74,41 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         if value == "atom":
             return
-
         trajConfig = self._configurable[self._dependencies["trajectory"]]
         atomSelectionConfig = self._configurable[self._dependencies["atom_selection"]]
-
-        allAtoms = sorted_atoms(trajConfig["instance"].chemical_system.atom_list)
-
-        groups = collections.OrderedDict()
-        for i in range(atomSelectionConfig["selection_length"]):
-            idx = atomSelectionConfig["indexes"][i][0]
-            el = atomSelectionConfig["elements"][i][0]
-            mass = atomSelectionConfig["masses"][i][0]
-            at = allAtoms[idx]
-            lvl = LEVELS[value][at.top_level_chemical_entity.__class__.__name__.lower()]
-            parent = self.find_parent(at, lvl)
-            d = groups.setdefault(parent, {})
-            d.setdefault("indexes", []).append(idx)
-            d.setdefault("elements", []).append(el)
-            d.setdefault("masses", []).append(mass)
-
-        indexes = []
+        chemical_system = trajConfig["instance"].chemical_system
+        indices = []
         elements = []
-        masses = []
         names = []
-        group_indices = []
-        for i, v in enumerate(groups.values()):
-            names.append("group_%d" % i)
-            elements.append(v["elements"])
-            indexes.append(v["indexes"])
-            masses.append(v["masses"])
-            group_indices.append(i)
+        masses = []
+        mass_lookup = chemical_system.atom_property("atomic_weight")
 
-        atomSelectionConfig["indexes"] = indexes
+        if value == "molecule":
+            for mol_name in chemical_system._clusters.keys():
+                for mol_number, cluster in enumerate(
+                    chemical_system._clusters[mol_name]
+                ):
+                    indices.append(cluster)
+                    elements.append([chemical_system.atom_list[x] for x in cluster])
+                    names.append(f"{mol_name}_mol{mol_number+1}")
+                    masses.append([mass_lookup[x] for x in cluster])
+        elif value == "group":
+            for group_name, group_indices in chemical_system._labels.items():
+                residue = set(group_indices)
+                counter = 1
+                for clustername, clusterlist in chemical_system._clusters.items():
+                    for cluster in clusterlist:
+                        molecule = set(cluster)
+                        if molecule.issubset(residue) or residue.issubset(molecule):
+                            indices.append(list(molecule.intersection(residue)))
+                            elements.append(
+                                [chemical_system.atom_list[x] for x in cluster]
+                            )
+                            names.append(f"{group_name}_num{counter}_in_{clustername}")
+                            masses.append([mass_lookup[x] for x in cluster])
+                            counter += 1
+
+        atomSelectionConfig["indices"] = indices
         atomSelectionConfig["elements"] = elements
         atomSelectionConfig["masses"] = masses
         atomSelectionConfig["names"] = names
@@ -147,7 +116,9 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         atomSelectionConfig["unique_names"] = sorted(set(atomSelectionConfig["names"]))
 
         self["level"] = value
-        self["group_indices"] = group_indices
+        self["group_indices"] = list(range(len(names)))
+        if atomSelectionConfig["selection_length"] == 0:
+            self.error_status = "This option resulted in nothing being selected in the current trajectory"
 
     @staticmethod
     def find_parent(atom, level):

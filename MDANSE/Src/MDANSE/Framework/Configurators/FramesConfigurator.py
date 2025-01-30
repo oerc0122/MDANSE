@@ -22,7 +22,7 @@ class FramesConfigurator(RangeConfigurator):
     
     The frame selection can be input as:
     
-    #. a 3-tuple where the 1st, 2nd will correspond respectively to the indexes of the first and \
+    #. a 3-tuple where the 1st, 2nd will correspond respectively to the indices of the first and \
     last (excluded) frames to be selected while the 3rd element will correspond to the step number between two frames. For example (1,11,3) will give 1,4,7,10
     #. *'all'* keyword, in such case, all the frames of the trajectory are selected
     #. ``None`` keyword, in such case, all the frames of the trajectory are selected

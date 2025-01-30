@@ -139,9 +139,7 @@ class TransmutationHelper(SelectionHelper):
         text = [f"Number of atoms transmuted:\n{len(map)}\n\nTransmuted atoms:\n"]
         atoms = self.selector.system.atom_list
         for idx, symbol in map.items():
-            text.append(
-                f"{idx}  ({atoms[idx].full_name}): {atoms[idx].symbol} -> {symbol}\n"
-            )
+            text.append(f"{idx}  {atoms[idx]} -> {symbol}\n")
 
         self.transmutation_textbox.setText("".join(text))
 

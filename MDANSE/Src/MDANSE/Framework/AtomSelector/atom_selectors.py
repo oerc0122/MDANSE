@@ -14,8 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from typing import Union
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
-from MDANSE.Chemistry import ATOMS_DATABASE
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 __all__ = [
@@ -30,7 +29,7 @@ __all__ = [
 
 
 def select_element(
-    system: ChemicalSystem, symbol: str, check_exists: bool = False
+    trajectory: Trajectory, symbol: str, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects all atoms for the input element.
 
@@ -48,7 +47,8 @@ def select_element(
     Union[set[int], bool]
         The atom indices of the matched atoms.
     """
-    pattern = f"[#{ATOMS_DATABASE.get_atom_property(symbol, 'atomic_number')}]"
+    system = trajectory.chemical_system
+    pattern = f"[#{trajectory.get_atom_property(symbol, 'atomic_number')}]"
     if check_exists:
         return system.has_substructure_match(pattern)
     else:
@@ -56,7 +56,7 @@ def select_element(
 
 
 def select_dummy(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects all dummy atoms in the chemical system.
 
@@ -72,17 +72,30 @@ def select_dummy(
     Union[set[int], bool]
         All dummy atom indices or a bool if checking match.
     """
+    system = trajectory.chemical_system
+    dummy_list = ["Du", "dummy"]
     if check_exists:
         for atm in system.atom_list:
-            if atm.element == "dummy":
+            if atm in dummy_list:
+                return True
+            elif trajectory.get_atom_property(atm, "dummy"):
                 return True
         return False
     else:
-        return set([at.index for at in system.atom_list if at.element == "dummy"])
+        for atm in system._unique_elements:
+            if trajectory.get_atom_property(atm, "dummy"):
+                dummy_list.append(atm)
+        return set(
+            [
+                index
+                for index, element in enumerate(system.atom_list)
+                if element in dummy_list
+            ]
+        )
 
 
 def select_atom_name(
-    system: ChemicalSystem, name: str, check_exists: bool = False
+    trajectory: Trajectory, name: str, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects all atoms with the input name in the chemical system.
 
@@ -100,17 +113,19 @@ def select_atom_name(
     Union[set[int], bool]
         All atom indices or a bool if checking match.
     """
+    system = trajectory.chemical_system
     if check_exists:
-        for atm in system.atom_list:
-            if atm.name == name:
-                return True
+        if name in system.atom_list:
+            return True
         return False
     else:
-        return set([at.index for at in system.atom_list if at.name == name])
+        return set(
+            [index for index, element in enumerate(system.atom_list) if element == name]
+        )
 
 
 def select_atom_fullname(
-    system: ChemicalSystem, fullname: str, check_exists: bool = False
+    trajectory: Trajectory, fullname: str, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects all atoms with the input fullname in the chemical system.
 
@@ -128,17 +143,19 @@ def select_atom_fullname(
     Union[set[int], bool]
         All atom indices or a bool if checking match.
     """
+    system = trajectory.chemical_system
     if check_exists:
-        for atm in system.atom_list:
-            if atm.full_name == fullname:
-                return True
+        if fullname in system.name_list:
+            return True
         return False
     else:
-        return set([at.index for at in system.atom_list if at.full_name == fullname])
+        return set(
+            [index for index, name in enumerate(system.name_list) if name == fullname]
+        )
 
 
 def select_hs_on_element(
-    system: ChemicalSystem, symbol: str, check_exists: bool = False
+    trajectory: Trajectory, symbol: str, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects all H atoms bonded to the input element.
 
@@ -156,7 +173,8 @@ def select_hs_on_element(
     Union[set[int], bool]
         The atom indices of the matched atoms.
     """
-    num = ATOMS_DATABASE.get_atom_property(symbol, "atomic_number")
+    system = trajectory.chemical_system
+    num = trajectory.get_atom_property(symbol, "atomic_number")
     if check_exists:
         return system.has_substructure_match(f"[#{num}]~[H]")
     else:
@@ -166,7 +184,7 @@ def select_hs_on_element(
 
 
 def select_hs_on_heteroatom(
-    system: ChemicalSystem, check_exists: bool = False
+    trajectory: Trajectory, check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects all H atoms bonded to any atom except carbon and
     hydrogen.
@@ -183,6 +201,7 @@ def select_hs_on_heteroatom(
     Union[set[int], bool]
         The atom indices of the matched atoms.
     """
+    system = trajectory.chemical_system
     if check_exists:
         return system.has_substructure_match("[!#6&!#1]~[H]")
     else:
@@ -192,7 +211,7 @@ def select_hs_on_heteroatom(
 
 
 def select_index(
-    system: ChemicalSystem, index: Union[int, str], check_exists: bool = False
+    trajectory: Trajectory, index: Union[int, str], check_exists: bool = False
 ) -> Union[set[int], bool]:
     """Selects atom with index - just returns the set with the
     index in it.

@@ -65,7 +65,10 @@ def test_lammps_mdt_conversion_file_exists_and_loads_up_successfully(compression
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "lammps.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -101,7 +104,10 @@ def test_lammps_mdt_conversion_unit_system(unit_system):
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, f"lammps_{unit_system}.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -139,7 +145,10 @@ def test_lammps_mdt_conversion_trajectory_format(trajectory_file, trajectory_for
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, f"lammps_moly_{trajectory_format}.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -185,7 +194,10 @@ def test_vasp_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     vasp = Converter.create("VASP")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "vasp.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -215,7 +227,10 @@ def test_discover_mdt_conversion_file_exists_and_loads_up_successfully(compressi
     vasp = Converter.create("discover")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "discover.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -247,7 +262,10 @@ def test_cp2k_mdt_conversion_file_exists_and_loads_up_successfully(velocity):
     vasp = Converter.create("cp2k")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     if velocity:
         result_file = os.path.join(conv_dir, "cp2k_velocity.mdt")
@@ -284,7 +302,10 @@ def test_charmm_mdt_conversion_file_exists_and_loads_up_successfully(compression
     vasp = Converter.create("charmm")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "hem_cam.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -316,7 +337,10 @@ def test_ase_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     ase_conv = Converter.create("ase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "ase.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -348,7 +372,10 @@ def test_improvedase_mdt_conversion_file_exists_and_loads_up_successfully(trajec
     ase_conv = Converter.create("improvedase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -375,7 +402,10 @@ def test_improvedase_lammps_two_files():
     ase_conv = Converter.create("improvedase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -401,7 +431,10 @@ def test_xyz_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     ase_conv = Converter.create("ase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "ase_xyz.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -434,7 +467,10 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_versi
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "dlp_v2.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -467,7 +503,10 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_versi
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "dlp_v4.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -564,7 +603,10 @@ def test_castep_md_conversion_file_exists_and_loads_up_successfully(compression)
     castep = Converter.create("CASTEP")
     castep.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "castep.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -597,7 +639,10 @@ def test_dftb_conversion_file_exists_and_loads_up_successfully(compression):
     dftb = Converter.create("DFTB")
     dftb.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "dftb.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -630,7 +675,10 @@ def test_forcite_conversion_file_exists_and_loads_up_successfully(compression):
     forcite = Converter.create("Forcite")
     forcite.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "forcite.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -662,7 +710,10 @@ def test_gromacs_conversion_file_exists_and_loads_up_successfully(compression):
     gromacs = Converter.create("Gromacs")
     gromacs.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "md.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
@@ -691,7 +742,10 @@ def test_mdanalysis_conversion_file_exists_and_loads_up_successfully(compression
     mdanalysis = Converter.create("MDAnalysis")
     mdanalysis.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     # remove offset files generated by mdanalysis
     os.remove(os.path.join(file_wd, "Data", ".md.xtc_offsets.lock"))
@@ -725,7 +779,10 @@ def test_mdtraj_conversion_file_exists_and_loads_up_successfully(compression):
     mdanalysis = Converter.create("MDTraj")
     mdanalysis.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "hem_cam.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:

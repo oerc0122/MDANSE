@@ -22,15 +22,19 @@ result_dir = os.path.join(
     "..",
     "Results",
 )
+com_traj = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..",
+    "Converted",
+    "com_trajectory.mdt",
+)
 
-@pytest.fixture(scope="module")
-def trajectory():
-    trajectory = HDFTrajectoryInputData(short_traj)
-    yield trajectory
 
-
-@pytest.mark.parametrize("interp_order", [1, 2, 3])
-def test_temperature(trajectory, interp_order):
+@pytest.mark.parametrize(
+    "trajectory_name,interp_order",
+    [(short_traj, 1), (short_traj, 3), (com_traj, 1), (com_traj, 3)],
+)
+def test_temperature(trajectory_name, interp_order):
     temp_name = tempfile.mktemp()
     parameters = {}
     parameters["frames"] = (0, 10, 1)
@@ -44,7 +48,7 @@ def test_temperature(trajectory, interp_order):
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
     result_file = os.path.join(
-        result_dir, f"temperature_{interp_order}.mda")
+        result_dir, f"temperature_{trajectory_name}_{interp_order}.mda")
 
     with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
         np.testing.assert_array_almost_equal(actual["/kinetic_energy"], desired["/kinetic_energy"])
@@ -59,8 +63,16 @@ def test_temperature(trajectory, interp_order):
     os.remove(temp_name + ".log")
 
 
-@pytest.mark.parametrize("output_format", ["MDAFormat", "TextFormat"])
-def test_density(trajectory, output_format):
+@pytest.mark.parametrize(
+    "trajectory_name,output_format",
+    [
+        (short_traj, "MDAFormat"),
+        (com_traj, "MDAFormat"),
+        (short_traj, "TextFormat"),
+        (com_traj, "TextFormat"),
+    ],
+)
+def test_density(trajectory_name, output_format):
     temp_name = tempfile.mktemp()
     parameters = {}
     parameters["frames"] = (0, 10, 1)
