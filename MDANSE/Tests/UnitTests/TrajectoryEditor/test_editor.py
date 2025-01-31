@@ -222,7 +222,7 @@ def test_editor_find_molecules():
     parameters = {}
     parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
-    parameters["molecule_tolerance"] = [True, 0.25]
+    parameters["molecule_tolerance"] = [True, 0.04]
     parameters["frames"] = (0, 501, 1)
     temp = IJob.create("TrajectoryEditor")
     temp.run(parameters, status=True)
