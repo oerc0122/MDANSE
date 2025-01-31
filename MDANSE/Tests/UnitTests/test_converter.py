@@ -538,7 +538,10 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_with_
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     result_file = os.path.join(conv_dir, "dlp_with_grad.mdt")
     with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
