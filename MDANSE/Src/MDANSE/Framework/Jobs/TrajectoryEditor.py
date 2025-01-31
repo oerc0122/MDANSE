@@ -78,7 +78,7 @@ class TrajectoryEditor(IJob):
     settings["molecule_tolerance"] = (
         "OptionalFloatConfigurator",
         {
-            "default": [False, 0.25],
+            "default": [False, 0.04],
             "label_text": "Search for molecules (using the following bond length tolerance)",
         },
     )
