@@ -42,7 +42,9 @@ class UnitCellWidget(WidgetBase):
             self.start_values = self._configurator._default
         for row in range(3):
             for column in range(3):
-                temp = QLineEdit(str(round(self.start_values[row][column], 5)), self._base)
+                temp = QLineEdit(
+                    str(round(self.start_values[row][column], 5)), self._base
+                )
                 temp.setValidator(QDoubleValidator())
                 temp.setEnabled(False)
                 temp.setPlaceholderText(str(round(self.start_values[row][column], 5)))
