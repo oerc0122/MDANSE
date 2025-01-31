@@ -63,7 +63,13 @@ class H5MDTrajectory:
         self._chemical_system = ChemicalSystem(
             os.path.splitext(os.path.basename(self._h5_filename))[0]
         )
-        self._chemical_system.initialise_atoms(chemical_elements)
+        try:
+            self._chemical_system.initialise_atoms(chemical_elements)
+        except Exception:
+            LOG.error(
+                "It was not possible to read chemical element information from an H5MD file."
+            )
+            return
 
         # Load all the unit cells
         self._load_unit_cells()
@@ -75,7 +81,7 @@ class H5MDTrajectory:
         except:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang":
+            if pos_unit == "Ang" or pos_unit == "Angstrom":
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         coords *= conv_factor
@@ -94,6 +100,7 @@ class H5MDTrajectory:
                 temp["h5md"]
             except KeyError:
                 result = False
+            temp.close()
         return result
 
     def close(self):
@@ -117,7 +124,7 @@ class H5MDTrajectory:
         except:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang":
+            if pos_unit == "Ang" or pos_unit == "Angstrom":
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         configuration = {}
@@ -195,7 +202,7 @@ class H5MDTrajectory:
         except:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang":
+            if pos_unit == "Ang" or pos_unit == "Angstrom":
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
 
@@ -248,7 +255,7 @@ class H5MDTrajectory:
         except:
             conv_factor = 1.0
         else:
-            if box_unit == "Ang":
+            if box_unit == "Ang" or box_unit == "Angstrom":
                 box_unit = "ang"
             conv_factor = measure(1.0, box_unit).toval("nm")
         try:
@@ -371,7 +378,7 @@ class H5MDTrajectory:
         except:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang":
+            if pos_unit == "Ang" or pos_unit == "Angstrom":
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
 
@@ -469,7 +476,7 @@ class H5MDTrajectory:
         except:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang":
+            if pos_unit == "Ang" or pos_unit == "Angstrom":
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         coords = grp[first:last:step, index, :].astype(np.float64) * conv_factor
