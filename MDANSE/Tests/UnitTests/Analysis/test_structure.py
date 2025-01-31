@@ -56,7 +56,7 @@ def parameters():
         },
     )
     parameters["q_values"] = (0.0, 10.0, 0.1)
-    parameters["r_values"] = (0.0, 10.0, 0.1)
+    parameters["r_values"] = (0.0, 0.9, 0.1)
     parameters["per_axis"] = False
     parameters["reference_direction"] = (0, 0, 1)
     parameters["instrument_resolution"] = ("Gaussian", {"sigma": 1.0, "mu": 0.0})
@@ -92,6 +92,10 @@ for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", co
         ("RootMeanSquareDeviation", ["rmsd"]),
         ("RootMeanSquareFluctuation", ["rmsf"]),
         ("Voronoi", ["mean_volume", "neighbourhood_histogram"]),
+        ("CoordinationNumber", ["cn"]),
+        ("PairDistributionFunction", ["pdf", "rdf", "tcf"]),
+        ("StaticStructureFactor", ["ssf"]),
+        ("XRayStaticStructureFactor", ["xssf"]),
     ]:
         for rm in [("single-core", 1)]:
             for of in ["MDAFormat"]:

@@ -154,6 +154,7 @@ for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", co
         ("VanHoveFunctionSelf", ["g(r,t)"]),
         # "OrderParameter",
         ("PositionAutoCorrelationFunction", ["pacf"]),
+        ("PositionPowerSpectrum", ["pacf", "pps"]),
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
