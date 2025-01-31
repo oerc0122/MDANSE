@@ -30,6 +30,7 @@ from qtpy.QtWidgets import (
     QColorDialog,
     QGroupBox,
     QCheckBox,
+    QStackedLayout,
 )
 from qtpy.QtGui import (
     QPaintEvent,
@@ -38,7 +39,7 @@ from qtpy.QtGui import (
 )
 
 from MDANSE_GUI.Tabs.Views.Delegates import ColourPicker, RadiusSpinBox
-from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
+from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer, TraceWidget
 
 button_lookup = {
     "start": QStyle.StandardPixmap.SP_MediaSkipBackward,
@@ -180,9 +181,13 @@ class ViewerControls(QWidget):
 
     def createSidePanel(self):
         """Adds widgets for finer control of the playback"""
+        absolute_base = QWidget(self)
+        self._side_base = absolute_base
+        self._side_layout = QStackedLayout(absolute_base)
         base = QWidget(self)
         layout = QVBoxLayout(base)
         base.setLayout(layout)
+        self._side_layout.addWidget(base)
         # colour changes
         wrapper0 = QGroupBox("Colour settings", base)
         layout0 = QHBoxLayout(wrapper0)
@@ -267,7 +272,21 @@ class ViewerControls(QWidget):
         layout.addWidget(wrapper5)
         # the database of atom types
         # self._database = TrajectoryAtomData()
-        self.layout().addWidget(base, 0, 2, 2, 1)  # row, column, rowSpan, columnSpan
+        self.layout().addWidget(
+            absolute_base, 0, 2, 2, 1
+        )  # row, column, rowSpan, columnSpan
+
+    def createTracePanel(self, viewer):
+        """Adds widgets for finer control of the playback"""
+        base = QWidget(self)
+        layout = QVBoxLayout(base)
+        base.setLayout(layout)
+        self._side_layout.addWidget(base)
+        # colour changes
+        self._trace_widget = TraceWidget(viewer)
+        self._trace_widget.initialise_values(viewer)
+        layout.addWidget(self._trace_widget)
+        return self._trace_widget
 
     @Slot()
     def set_background_colour(self):
@@ -288,7 +307,7 @@ class ViewerControls(QWidget):
 
     @Slot()
     def calculate_trace(self):
-        self._viewer.show_trace_settings_dialog()
+        self._side_layout.setCurrentIndex(1)
 
     @Slot()
     def toggle_projection(self):

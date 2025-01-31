@@ -28,7 +28,6 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QDoubleSpinBox,
     QSpinBox,
-    QLabel,
 )
 
 import vtk
@@ -42,6 +41,7 @@ from MDANSE.MLogging import LOG
 from MDANSE_GUI.MolecularViewer.readers import hdf5wrapper
 from MDANSE_GUI.MolecularViewer.Dummy import PyConnectivity
 from MDANSE_GUI.MolecularViewer.Contents import TrajectoryAtomData
+from MDANSE_GUI.MolecularViewer.TraceWidget import TraceWidget
 from MDANSE_GUI.MolecularViewer.AtomProperties import (
     AtomProperties,
     ndarray_to_vtkarray,
@@ -184,7 +184,6 @@ class MolecularViewer(QtWidgets.QWidget):
         self.dummy_size = 0.0
 
         self.reset_camera = False
-        self.create_trace_dialog()
 
     def setDataModel(self, datamodel: TrajectoryAtomData):
         self._datamodel = datamodel
@@ -627,19 +626,8 @@ class MolecularViewer(QtWidgets.QWidget):
         self._surfaces = []
         self.changed_trace.emit()
 
-    def show_trace_settings_dialog(self):
-        dialog = self._trace_dialog
-        if dialog.isVisible():
-            if dialog.isMaximized():
-                dialog.showMaximized()
-            else:
-                dialog.showNormal()
-            dialog.activateWindow()
-        else:
-            dialog.show()
-
-    def create_trace_dialog(self):
-        self._trace_dialog = AtomTraceDialog(self)
+    def create_trace_dialog(self, viewer_controls):
+        self._trace_dialog = viewer_controls.createTracePanel(self)
         self._trace_dialog.new_atom_trace.connect(self.trace_from_dialog)
         self._trace_dialog.remove_atom_trace.connect(self.delete_from_dialog)
         self.changed_trace.connect(self._trace_dialog.update_limits)

@@ -32,6 +32,7 @@ class View3D(QWidget):
         controls = ViewerControls(self)
         viewer.setParent(controls)
         controls.setViewer(viewer)
+        viewer.create_trace_dialog(controls)
         layout.addWidget(controls)
         self._viewer = viewer
         self._controls = controls
