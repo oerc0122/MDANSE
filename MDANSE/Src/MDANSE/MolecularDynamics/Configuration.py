@@ -29,6 +29,35 @@ if TYPE_CHECKING:
     from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
+def remove_jumps(input_coords: np.ndarray) -> np.ndarray:
+    """Takes a series of particle positions in time
+    and makes the motion continuous by removing any jumps across
+    the simulation box boundary.
+
+    Parameters
+    ----------
+    input_coords : np.ndarray
+        An (n_time_steps, 3) array of FRACTIONAL atom coordinates
+
+    Returns
+    -------
+    np.ndarray
+        The same array of atom positions, corrected for jumps by 1
+        full box length
+    """
+    steps = np.round(input_coords[1:] - input_coords[:-1]).astype(int)
+    offsets = np.zeros_like(input_coords)
+    for axis_index in range(3):
+        changes = np.argwhere(steps[:, axis_index])
+        for time_step_with_jump in changes:
+            try:
+                time_index = time_step_with_jump[0]
+            except IndexError:
+                continue
+            offsets[time_index + 1 :, axis_index] -= steps[time_index, axis_index]
+    return input_coords + offsets
+
+
 def contiguous_coordinates_real(
     coords: np.ndarray,
     cell: np.ndarray,
@@ -87,12 +116,13 @@ def contiguous_coordinates_real(
 
 
 def contiguous_coordinates_box(
-    coords: np.ndarray,
-    cell: np.ndarray,
+    frac_coords: np.ndarray,
     indices: List[Tuple[int]],
     bring_to_centre: bool = False,
 ):
-    """_summary_
+    """Translates atoms by a lattice vector. Returns a FRACTIONAL coordinate array
+    in which atoms in each segment are separated from the first atom
+    by less than half the simulation box length.
 
     Parameters
     ----------
@@ -113,7 +143,7 @@ def contiguous_coordinates_box(
         array of atom coordinates with the translations applied
     """
 
-    contiguous_coords = coords.copy()
+    contiguous_coords = frac_coords.copy()
 
     for tupleidxs in indices:
 
@@ -122,16 +152,14 @@ def contiguous_coordinates_box(
 
         idxs = list(tupleidxs)
         if bring_to_centre:
-            centre = np.mean(coords[idxs], axis=0)
-            sdx = coords[idxs] - centre
+            centre = np.mean(frac_coords[idxs], axis=0)
+            sdx = frac_coords[idxs] - centre
             sdx -= np.round(sdx)
-            newx = coords[idxs] + sdx
-            contiguous_coords[idxs] = np.matmul(newx, cell)
+            contiguous_coords[idxs] = frac_coords[idxs] + sdx
         else:
-            sdx = coords[idxs[1:]] - coords[idxs[0]]
+            sdx = frac_coords[idxs[1:]] - frac_coords[idxs[0]]
             sdx -= np.round(sdx)
-            newx = coords[idxs[0]] + sdx
-            contiguous_coords[idxs[1:]] = np.matmul(newx, cell)
+            contiguous_coords[idxs[1:]] = frac_coords[idxs[0]] + sdx
 
     return contiguous_coords
 
@@ -568,7 +596,6 @@ class PeriodicBoxConfiguration(_PeriodicConfiguration):
 
         contiguous_coords = contiguous_coordinates_box(
             self._variables["coordinates"],
-            self.unit_cell.direct,
             indices_grouped,
             bring_to_centre,
         )

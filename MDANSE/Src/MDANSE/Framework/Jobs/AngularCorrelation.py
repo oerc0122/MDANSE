@@ -19,7 +19,7 @@ import collections
 import numpy as np
 from scipy.signal import correlate
 
-from MDANSE.MolecularDynamics.CentreOfMassTrajectory import centre_of_mass
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
@@ -172,7 +172,7 @@ class AngularCorrelation(IJob):
                 frame_index
             )
             coordinates = configuration.contiguous_configuration().coordinates
-            centre_coordinates = centre_of_mass(coordinates[molecule], masses)
+            centre_coordinates = center_of_mass(coordinates[molecule], masses)
             at1_traj[i] = centre_coordinates
             at2_traj[i] = coordinates[molecule[0]]
 
