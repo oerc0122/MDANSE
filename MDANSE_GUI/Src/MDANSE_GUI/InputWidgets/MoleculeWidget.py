@@ -52,7 +52,9 @@ class MoleculeWidget(WidgetBase):
         for mol_name in unique_molecules:
             no_of_molecules = len(hdf_traj.chemical_system._clusters[mol_name])
             atom_indices = hdf_traj.chemical_system._clusters[mol_name][0]
-            atom_symbols = [hdf_traj.chemical_system.atom_list[index] for index in atom_indices]
+            atom_symbols = [
+                hdf_traj.chemical_system.atom_list[index] for index in atom_indices
+            ]
             coordinates = coords_0[atom_indices]
             unique_atoms, atom_counts = np.unique(atom_symbols, return_counts=True)
             atom_counts = {
