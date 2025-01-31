@@ -79,7 +79,7 @@ class TrajectoryEditor(IJob):
         "OptionalFloatConfigurator",
         {
             "default": [False, 0.04],
-            "label_text": "Search for molecules (using the following bond length tolerance)",
+            "label_text": "Search for molecules (covalent radii plus the tolerance in nm)",
         },
     )
     settings["output_files"] = (
