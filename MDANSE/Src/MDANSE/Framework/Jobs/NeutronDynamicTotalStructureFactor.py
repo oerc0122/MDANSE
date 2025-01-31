@@ -15,6 +15,7 @@
 #
 import collections
 import itertools
+from typing import List
 
 import numpy as np
 
@@ -24,6 +25,37 @@ from MDANSE.Framework.Jobs.IJob import IJob
 
 class NeutronDynamicTotalStructureFactorError(Error):
     pass
+
+
+def create_fake_b(
+    b_coh: List[float], b_inc: List[float], atom_counts: List[int]
+) -> List[float]:
+    """Creates random values of b (scattering length) for atoms in the
+    simulation. By definition, b_coh is the average of b,
+    and b_inc is the standard deviation of b.
+    Therefore, a random b value can be assigned to each atom
+    which reproduces the b_coh and b_inc of individual atoms,
+    at the same time allowing to calculate the average
+    b_inc for the entire system
+
+    Parameters
+    ----------
+    b_coh : List[float]
+        list of coherent scattering length values per element
+    b_inc : List[float]
+        list of incoherent scattering length values per element
+    atom_counts : List[int]
+        total number of atoms of each element
+
+    Returns
+    -------
+    List[float]
+        a list of random scattering lengths b for each atom
+    """
+    new_b = []
+    for n in range(len(atom_counts)):
+        new_b += list(np.random.normal(b_coh[n], b_inc[n], atom_counts[n]))
+    return new_b
 
 
 class NeutronDynamicTotalStructureFactor(IJob):
@@ -419,8 +451,23 @@ class NeutronDynamicTotalStructureFactor(IJob):
         for val in list(nAtomsPerElement.values()):
             nTotalAtoms += val
 
-        all_b_coh = []
-        all_b_incoh = []
+        b_coh_list, b_inc_list, atom_count_list = [], [], []
+        for element, ni in nAtomsPerElement.items():
+            bcoh = self.configuration["trajectory"]["instance"].get_atom_property(
+                element, "b_coherent"
+            )
+            binc = self.configuration["trajectory"]["instance"].get_atom_property(
+                element, "b_incoherent"
+            )
+            b_coh_list.append(bcoh)
+            b_inc_list.append(binc)
+            atom_count_list.append(ni)
+
+        fake_b_values = create_fake_b(b_coh_list, b_inc_list, atom_count_list)
+        effective_b_coh = np.mean(fake_b_values)
+        effective_b_inc = np.std(fake_b_values)
+
+        norm_natoms = 1.0 / nTotalAtoms
         # Compute coherent functions and structure factor
         for pair in self._elementsPairs:
             bi = self.configuration["trajectory"]["instance"].get_atom_property(
@@ -429,21 +476,12 @@ class NeutronDynamicTotalStructureFactor(IJob):
             bj = self.configuration["trajectory"]["instance"].get_atom_property(
                 pair[1], "b_coherent"
             )
-            ci = 1.0 / nTotalAtoms
-            cj = 1.0 / nTotalAtoms
-            all_b_coh += [bi, bj]
 
             self._outputData["f(q,t)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["f(q,t)_coh_%s%s" % pair][:]
-                * np.sqrt(ci * cj)
-                * bi
-                * bj
+                self._outputData["f(q,t)_coh_%s%s" % pair][:] * bi * bj
             )
             self._outputData["s(q,f)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["s(q,f)_coh_%s%s" % pair][:]
-                * np.sqrt(ci * cj)
-                * bi
-                * bj
+                self._outputData["s(q,f)_coh_%s%s" % pair][:] * bi * bj
             )
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
                 self._outputData["f(q,t)_coh_total"][:] += self._outputData[
@@ -462,17 +500,12 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Compute incoherent functions and structure factor
         for element, ni in nAtomsPerElement.items():
-            bi = self.configuration["trajectory"]["instance"].get_atom_property(
-                element, "b_incoherent2"
-            )
-            ci = 1.0 / nTotalAtoms
-            all_b_incoh.append(bi)
 
             self._outputData["f(q,t)_inc_weighted_%s" % element][:] = (
-                self._outputData["f(q,t)_inc_%s" % element][:] * ci * bi
+                self._outputData["f(q,t)_inc_%s" % element][:] * effective_b_inc**2
             )
             self._outputData["s(q,f)_inc_weighted_%s" % element][:] = (
-                self._outputData["s(q,f)_inc_%s" % element][:] * ci * bi
+                self._outputData["s(q,f)_inc_%s" % element][:] * effective_b_inc**2
             )
 
             self._outputData["f(q,t)_inc_total"][:] += self._outputData[
@@ -482,15 +515,20 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "s(q,f)_inc_weighted_%s" % element
             ][:]
 
-        norm_coh = np.mean(all_b_coh) ** 2
-        norm_incoh = np.mean(all_b_incoh)
+        sigma_coh = 4 * np.pi * effective_b_coh**2
+        sigma_inc = 4 * np.pi * effective_b_inc**2
+
         # Compute total F(Q,t) = inc + coh
         self._outputData["f(q,t)_total"][:] = (
-            self._outputData["f(q,t)_coh_total"][:]
-            + self._outputData["f(q,t)_inc_total"][:]
+            self._outputData["f(q,t)_coh_total"][:] * norm_natoms
+            + self._outputData["f(q,t)_inc_total"][:] * norm_natoms
         )
-        self._outputData["s(q,f)_coh_total"][:] *= norm_coh
-        self._outputData["s(q,f)_inc_total"][:] *= norm_incoh
+        self._outputData["s(q,f)_coh_total"][:] *= (
+            norm_natoms * sigma_coh / (sigma_coh + sigma_inc)
+        )
+        self._outputData["s(q,f)_inc_total"][:] *= (
+            norm_natoms * sigma_inc / (sigma_coh + sigma_inc)
+        )
 
         self._outputData["s(q,f)_total"][:] = (
             self._outputData["s(q,f)_coh_total"][:]
