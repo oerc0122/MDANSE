@@ -74,9 +74,9 @@ class MdanseTrajectory:
                     os.path.splitext(os.path.basename(filename))[0]
                 )
                 temp_cs.load(file_object)
-            except Exception as ex:
-                LOG.error(
-                    f"Loading the ChemicalSystem from {filename} failed: {ex}, {traceback.format_exc()}"
+            except Exception:
+                LOG.warning(
+                    f"Could not load ChemicalSystem from {filename}. MDANSE will try to read it as H5MD next."
                 )
                 result = False
             file_object.close()

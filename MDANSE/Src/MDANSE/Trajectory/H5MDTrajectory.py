@@ -87,12 +87,12 @@ class H5MDTrajectory:
         result = True
         try:
             temp = h5py.File(filename)
-        except:
+        except FileNotFoundError:
             result = False
         else:
             try:
                 temp["h5md"]
-            except:
+            except KeyError:
                 result = False
         return result
 
@@ -338,20 +338,33 @@ class H5MDTrajectory:
         if last is None:
             last = len(self)
 
+        if len(atom_indices) == 1:
+            return self.read_atomic_trajectory(
+                atom_indices[0],
+                first=first,
+                last=last,
+                step=step,
+                box_coordinates=box_coordinates,
+            )
+
         atoms = self.chemical_system.atom_list
 
         try:
-            masses = self._h5_file["/particles/all/mass/value"][:].astype(np.float64)
+            masses = self._h5_file["/particles/all/mass/value"][atom_indices].astype(
+                np.float64
+            )
         except KeyError:
             try:
-                masses = self._h5_file["/particles/all/mass"][:].astype(np.float64)
+                masses = self._h5_file["/particles/all/mass"][atom_indices].astype(
+                    np.float64
+                )
             except KeyError:
                 masses = np.array(
                     [
                         ATOMS_DATABASE.get_atom_property(at, "atomic_weight")
                         for at in atoms
                     ]
-                )
+                )[atom_indices]
         grp = self._h5_file["/particles/all/position/value"]
         try:
             pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
@@ -362,7 +375,7 @@ class H5MDTrajectory:
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
 
-        coords = grp[first:last:step, :, :].astype(np.float64) * conv_factor
+        coords = grp[first:last:step, atom_indices, :].astype(np.float64) * conv_factor
 
         if coords.ndim == 2:
             coords = coords[np.newaxis, :, :]
