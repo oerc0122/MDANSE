@@ -78,7 +78,10 @@ class MoleculeWidget(WidgetBase):
         self.field.addItems(option_list)
         self.field.setCurrentText(default_option)
         self.selected_name = self.field.currentText()
-        self.selected_mol = self.mol_dict[self.selected_name]
+        if self.selected_name in self.mol_dict.keys():
+            self.selected_mol = self.mol_dict[self.selected_name]
+        else:
+            self.selected_mol = None
         self.field.currentTextChanged.connect(self.updateValue)
         self.field.currentTextChanged.connect(self.molecule_changed)
         button = QPushButton(self._base)
@@ -105,16 +108,22 @@ class MoleculeWidget(WidgetBase):
         Change molecule preview and molecule information
         """
         self.selected_name = self.field.currentText()
-        self.selected_mol = self.mol_dict[self.selected_name]
-        self.window = MoleculePreviewWidget(
-            self._base, self.selected_mol, self.selected_name, self.atom_database
-        )
+        try:
+            self.selected_mol = self.mol_dict[self.selected_name]
+        except KeyError:
+            self.selected_mol = None
+        else:
+            self.window = MoleculePreviewWidget(
+                self._base, self.selected_mol, self.selected_name, self.atom_database
+            )
 
     @Slot()
     def button_clicked(self):
         """
         Opens a window that shows a preview of selected molecule
         """
+        if self.selected_mol is None:
+            return
         self.window = MoleculePreviewWidget(
             self._base, self.selected_mol, self.selected_name, self.atom_database
         )
@@ -137,4 +146,6 @@ class MoleculeWidget(WidgetBase):
             self._tooltip = "You only have one option. Choose wisely."
 
     def get_widget_value(self):
-        return self._field.currentText()
+        mol_key = self._field.currentText()
+        if mol_key in self.mol_dict.keys():
+            return mol_key
