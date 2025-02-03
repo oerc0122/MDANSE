@@ -365,7 +365,8 @@ class Discover(Converter):
         conf["coordinates"][movableAtoms, :] = config
         conf["velocities"][movableAtoms, :] = vel
 
-        conf.fold_coordinates()
+        if self.configuration["fold"]["value"]:
+            conf.fold_coordinates()
 
         self._trajectory.dump_configuration(
             conf,
