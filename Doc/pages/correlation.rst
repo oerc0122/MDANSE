@@ -28,7 +28,7 @@ the length of our correlation function. The correlation function of
 
    c_{ab}(m) = \frac{1}{N_t - N_c + 1} \sum\limits_{k=0}^{N_t - N_c + 1} a^{*}(k)b(k + m) \qquad m = 0, \ldots, N_{c} - 1.
 
-and :math:`c_{ab}(m) = c^{*}_{ab}(-m)`. In case that :math:`a(k)` and
+In case that :math:`a(k)` and
 :math:`b(k)` are identical, the corresponding correlation function
 :math:`c_{aa}(m)` is called an *autocorrelation* function. Notice that
 the prefactor is the same for all time steps :math:`m`, in previous
@@ -66,5 +66,5 @@ Its widths in the time and frequency domain are :math:`\sigma_t = \alpha/T`
 and :math:`\sigma_\nu = 1/(2\pi\sigma_t)`, respectively.
 :math:`\sigma_\nu` corresponds to the width of the resolution
 function of the Fourier spectrum and
-:math:`T_{c} =(N_c-1)\cdot\Delta t` is the length of the correlation
+:math:`T_{c} =(N_c-1)\Delta t` is the length of the correlation
 function.

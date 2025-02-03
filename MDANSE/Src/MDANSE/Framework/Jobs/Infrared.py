@@ -48,7 +48,10 @@ class Infrared(IJob):
     )
     settings["derivative_order"] = (
         "DerivativeOrderConfigurator",
-        {"label": "d/dt dipole numerical derivative"},
+        {
+            "label": "d/dt dipole numerical derivative",
+            "dependencies": {"frames": "frames"},
+        },
     )
     settings["molecule_name"] = (
         "MoleculeSelectionConfigurator",
