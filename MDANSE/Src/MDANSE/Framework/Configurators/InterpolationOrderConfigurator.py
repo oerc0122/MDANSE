@@ -48,6 +48,10 @@ class InterpolationOrderConfigurator(IntegerConfigurator):
         :param value: the interpolation order to be configured.
         :type value: str one of *'no interpolation'*,*'1st order'*,*'2nd order'*,*'3rd order'*,*'4th order'* or *'5th order'*.
         """
+        frames_configurator = self._configurable[self._dependencies["frames"]]
+        if not frames_configurator._valid:
+            self.error_status = f"Frames configurator is not valid."
+            return
 
         self._original_input = value
         if value is None or value == "":
@@ -71,5 +75,12 @@ class InterpolationOrderConfigurator(IntegerConfigurator):
             return
 
         else:
+            number = frames_configurator["number"]
+            if number < value + 1:
+                self.error_status = (
+                    f"Not enough MD frames to apply derivatives of order {value}"
+                )
+                return
+
             self["variable"] = "coordinates"
         self.error_status = "OK"
