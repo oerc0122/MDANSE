@@ -52,7 +52,7 @@ class CurrentCorrelationFunction(IJob):
 
     category = (
         "Analysis",
-        "Dynamics",
+        "Scattering",
     )
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
@@ -71,8 +71,7 @@ class CurrentCorrelationFunction(IJob):
         "InterpolationOrderConfigurator",
         {
             "label": "velocities",
-            "dependencies": {"trajectory": "trajectory"},
-            "default": 1,
+            "dependencies": {"trajectory": "trajectory", "frames": "frames"},
         },
     )
     settings["q_vectors"] = (
