@@ -144,8 +144,9 @@ def normalisation_factor(x, axis=0):
     s[axis] = slice(0, 1, 1)
 
     s = tuple(s)
+    scaling_factor = x.scaling_factor
 
-    return 1 / x[s]
+    return 1 / (scaling_factor * x[s])
 
 
 def differentiate(a, dt=1.0, order=1):

@@ -69,7 +69,7 @@ def test_vacf(interp_order, normalise):
     with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         for key in ["vacf_Cu", "vacf_S", "vacf_Sb", "vacf_total"]:
             np.testing.assert_array_almost_equal(
-                actual[f"/{key}"] * actual[f"/{key}"].attrs[f"/{key}"],
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
                 desired[f"/{key}"],
             )
 
@@ -105,7 +105,7 @@ def test_pps():
             "pps_total",
         ]:
             np.testing.assert_array_almost_equal(
-                actual[f"/{key}"] * actual[f"/{key}"].attrs[f"/{key}"],
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
                 desired[f"/{key}"],
             )
 
