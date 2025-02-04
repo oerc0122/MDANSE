@@ -19,7 +19,7 @@ from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
-from MDANSE.Mathematics.Signal import differentiate, normalize
+from MDANSE.Mathematics.Signal import differentiate, normalisation_factor
 
 
 class VelocityAutoCorrelationFunction(IJob):
@@ -224,10 +224,12 @@ class VelocityAutoCorrelationFunction(IJob):
 
         if self.configuration["normalize"]["value"]:
             for element in nAtomsPerElement.keys():
-                self._outputData["vacf_%s" % element][:] = normalize(
+                self._outputData[
+                    "vacf_%s" % element
+                ].scaling_factor *= normalisation_factor(
                     self._outputData["vacf_%s" % element], axis=0
                 )
-            self._outputData["vacf_total"][:] = normalize(
+            self._outputData["vacf_total"].scaling_factor *= normalisation_factor(
                 self._outputData["vacf_total"], axis=0
             )
 

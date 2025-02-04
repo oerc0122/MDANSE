@@ -18,7 +18,7 @@ import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
-from MDANSE.Mathematics.Signal import correlation, normalize
+from MDANSE.Mathematics.Signal import correlation, normalisation_factor
 
 
 class GeneralAutoCorrelationFunction(IJob):
@@ -168,7 +168,9 @@ class GeneralAutoCorrelationFunction(IJob):
                 if self._outputData["gacf_{}}".format(element)][0] == 0:
                     raise ValueError("The normalization factor is equal to zero")
                 else:
-                    self._outputData["gacf_{}".format(element)][:] = normalize(
+                    self._outputData[
+                        "gacf_{}".format(element)
+                    ].scaling_factor *= normalisation_factor(
                         self._outputData["gacf_%s" % element], axis=0
                     )
 

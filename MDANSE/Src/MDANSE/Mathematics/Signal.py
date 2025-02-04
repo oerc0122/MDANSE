@@ -139,6 +139,15 @@ def normalize(x, axis=0):
     return nx
 
 
+def normalisation_factor(x, axis=0):
+    s = [slice(None)] * x.ndim
+    s[axis] = slice(0, 1, 1)
+
+    s = tuple(s)
+
+    return 1 / x[s]
+
+
 def differentiate(a, dt=1.0, order=1):
     if order not in INTERPOLATION_ORDER:
         raise SignalError("Invalid differentiation order")

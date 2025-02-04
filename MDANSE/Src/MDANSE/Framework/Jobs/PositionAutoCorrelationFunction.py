@@ -20,7 +20,7 @@ from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
-from MDANSE.Mathematics.Signal import normalize
+from MDANSE.Mathematics.Signal import normalisation_factor
 
 
 class PositionAutoCorrelationFunction(IJob):
@@ -178,7 +178,9 @@ class PositionAutoCorrelationFunction(IJob):
                 if self._outputData["pacf_%s" % element][0] == 0:
                     raise ValueError("The normalization factor is equal to zero !!!")
                 else:
-                    self._outputData["pacf_%s" % element][:] = normalize(
+                    self._outputData[
+                        "pacf_%s" % element
+                    ].scaling_factor *= normalisation_factor(
                         self._outputData["pacf_%s" % element], axis=0
                     )
 
