@@ -1,6 +1,4 @@
-import tempfile
-import os
-from os import path
+from pathlib import Path
 
 import numpy as np
 import h5py
@@ -8,31 +6,11 @@ import pytest
 
 from MDANSE.Framework.Jobs.IJob import IJob
 
-
-short_traj = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "..",
-    "Converted",
-    "short_trajectory_after_changes.mdt",
-)
-mdmc_traj = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "..",
-    "Converted",
-    "Ar_mdmc_h5md.h5",
-)
-result_dir = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "..",
-    "Results",
-)
-
-com_traj = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "..",
-    "Converted",
-    "com_trajectory.mdt",
-)
+BASE_PATH = Path(__file__).parent.parent.resolve()
+short_traj = BASE_PATH / "Converted" / "short_trajectory_after_changes.mdt"
+mdmc_traj = BASE_PATH / "Converted" / "Ar_mdmc_h5md.h5"
+com_traj = BASE_PATH / "Converted" / "com_trajectory.mdt"
+result_dir = BASE_PATH / "Results"
 
 
 ################################################################
@@ -44,8 +22,9 @@ def parameters():
     # parameters['atom_selection'] = None
     # parameters['atom_transmutation'] = None
     # parameters['frames'] = (0, 1000, 1)
-    parameters["trajectory"] = short_traj
-    parameters["running_mode"] = ("multicore", -4)
+    # Set and overridden in function
+    # parameters["trajectory"] = short_traj
+    # parameters["running_mode"] = ("multicore", -4)
     parameters["q_vectors"] = (
         "SphericalLatticeQVectors",
         {
@@ -68,65 +47,70 @@ def parameters():
     return parameters
 
 
-total_list = []
+@pytest.mark.parametrize("traj_info", (("short_traj", short_traj),
+                                       ("mdmc_traj", mdmc_traj),
+                                       ("com_traj", com_traj)))
+@pytest.mark.parametrize(
+    "job_info",
+    (
+        ("RadiusOfGyration", {"rog"}),
+        ("DensityProfile", {"dp"}),
+        ("MolecularTrace", {
+            "molecular_trace",
+            "x_position",
+            "y_position",
+            "z_position"
+        }),
+        ("Eccentricity", {"eccentricity"}),
 
-for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)]:
-    for jt in [
-        ("RadiusOfGyration", ["rog"]),
-        ("DensityProfile", ["dp"]),
-        ("MolecularTrace", [
-                "molecular_trace",
-                "x_position",
-                "y_position",
-                "z_position"
-        ]),
-        ("Eccentricity", ["eccentricity"]),
-    ]:
-        for rm in [("single-core", 1), ("multicore", -4)]:
-            for of in ["MDAFormat", "TextFormat"]:
-                total_list.append((tp, jt, rm, of))
+        pytest.param(("SolventAccessibleSurface", {"sas"}), marks=pytest.mark.long),
+        pytest.param(("RootMeanSquareDeviation", {"rmsd"}), marks=pytest.mark.long),
+        pytest.param(("RootMeanSquareFluctuation", {"rmsf"}), marks=pytest.mark.long),
+        pytest.param(("Voronoi", {"mean_volume",
+                                  "neighbourhood_histogram"}), marks=pytest.mark.long),
+        pytest.param(("CoordinationNumber", {"cn"}), marks=pytest.mark.long),
+        pytest.param(("PairDistributionFunction", {"pdf",
+                                                   "rdf",
+                                                   "tcf"}), marks=pytest.mark.long),
+        pytest.param(("StaticStructureFactor", {"ssf"}), marks=pytest.mark.long),
+        pytest.param(("XRayStaticStructureFactor", {"xssf"}), marks=pytest.mark.long),
 
-for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)]:
-    for jt in [
-        ("SolventAccessibleSurface", ["sas"]),
-        ("RootMeanSquareDeviation", ["rmsd"]),
-        ("RootMeanSquareFluctuation", ["rmsf"]),
-        ("Voronoi", ["mean_volume", "neighbourhood_histogram"]),
-        ("CoordinationNumber", ["cn"]),
-        ("PairDistributionFunction", ["pdf", "rdf", "tcf"]),
-        ("StaticStructureFactor", ["ssf"]),
-        ("XRayStaticStructureFactor", ["xssf"]),
-    ]:
-        for rm in [("single-core", 1)]:
-            for of in ["MDAFormat"]:
-                total_list.append((tp, jt, rm, of))
-
-
-@pytest.mark.parametrize("traj_info,job_info,running_mode,output_format", total_list)
+    )
+)
+@pytest.mark.parametrize("running_mode", (("single-core", 1), ("multicore", -4)))
+@pytest.mark.parametrize("output_format", ("MDAFormat", "TextFormat"))
 def test_structure_analysis(
-    parameters, traj_info, job_info, running_mode, output_format
+        request, tmp_path, parameters, traj_info, job_info, running_mode, output_format
 ):
-    temp_name = tempfile.mktemp()
-    parameters["trajectory"] = traj_info[1]
+
+    if (
+            any(mark.name == "long" for mark in request.node.own_markers) and
+            (running_mode[0] == "multicore" or output_format == "TextFormat")
+    ):
+        pytest.skip("Test is long.")
+
+    temp_name = tmp_path / "temp"
+    log_file = tmp_path / "temp.log"
+    parameters["trajectory"] = str(traj_info[1])
     parameters["running_mode"] = running_mode
-    parameters["output_files"] = (temp_name, (output_format,), "INFO")
+    parameters["output_files"] = (str(temp_name), (output_format,), "INFO")
     job = IJob.create(job_info[0])
     job.run(parameters, status=True)
-    if output_format == "MDAFormat":
-        assert path.exists(temp_name + ".mda")
-        assert path.isfile(temp_name + ".mda")
-        result_file = os.path.join(result_dir, f"structure_analysis_{traj_info[0]}_{job_info[0]}.mda")
 
-        with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
-            keys = [i for i in desired.keys() if any([j in i for j in job_info[1]])]
+    if output_format == "MDAFormat":
+        out_file = tmp_path / "temp.mda"
+        assert out_file.exists() and out_file.is_file()
+
+        result_file = result_dir / f"structure_analysis_{traj_info[0]}_{job_info[0]}.mda"
+
+        with h5py.File(out_file) as actual, h5py.File(result_file) as desired:
+            keys = [key for key in desired if any(key.startswith(typ)
+                                                  for typ in job_info[1])]
             for key in keys:
                 np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
 
-        os.remove(temp_name + ".mda")
     elif output_format == "TextFormat":
-        assert path.exists(temp_name + "_text.tar")
-        assert path.isfile(temp_name + "_text.tar")
-        os.remove(temp_name + "_text.tar")
-    assert path.exists(temp_name + ".log")
-    assert path.isfile(temp_name + ".log")
-    os.remove(temp_name + ".log")
+        out_file = tmp_path / "temp_text.tar"
+        assert out_file.exists() and out_file.is_file()
+
+    assert log_file.exists() and log_file.is_file()
