@@ -42,13 +42,20 @@ def test_h5md_temperature(trajectory, interp_order):
     parameters["trajectory"] = short_traj
     temp = IJob.create("Temperature")
     temp.run(parameters, status=True)
-    result_file = os.path.join(
-        result_dir, f"h5md_temperature_{interp_order}.mda")
+    result_file = os.path.join(result_dir, f"h5md_temperature_{interp_order}.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        np.testing.assert_array_almost_equal(actual["/kinetic_energy"], desired["/kinetic_energy"])
-        np.testing.assert_array_almost_equal(actual["/temperature"], desired["/temperature"])
-        np.testing.assert_array_almost_equal(actual["/avg_kinetic_energy"], desired["/avg_kinetic_energy"])
-        np.testing.assert_array_almost_equal(actual["/avg_temperature"], desired["/avg_temperature"])
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(
+            actual["/kinetic_energy"], desired["/kinetic_energy"]
+        )
+        np.testing.assert_array_almost_equal(
+            actual["/temperature"], desired["/temperature"]
+        )
+        np.testing.assert_array_almost_equal(
+            actual["/avg_kinetic_energy"], desired["/avg_kinetic_energy"]
+        )
+        np.testing.assert_array_almost_equal(
+            actual["/avg_temperature"], desired["/avg_temperature"]
+        )
 
     os.remove(temp_name + ".mda")

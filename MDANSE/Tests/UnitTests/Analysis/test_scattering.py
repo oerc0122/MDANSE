@@ -36,7 +36,10 @@ result_dir = os.path.join(
 
 @pytest.fixture(scope="module")
 def qvector_grid():
-    return ("GridQVectors", {"hrange": [0, 3, 1], "krange": [0, 3, 1], "lrange": [0, 3, 1], "qstep": 1})
+    return (
+        "GridQVectors",
+        {"hrange": [0, 3, 1], "krange": [0, 3, 1], "lrange": [0, 3, 1], "qstep": 1},
+    )
 
 
 @pytest.fixture(scope="module")
@@ -105,10 +108,15 @@ def test_dcsf(traj_info, qvector_grid):
     assert path.isfile(temp_name + ".mda")
 
     result_file = os.path.join(result_dir, f"dcsf_{traj_info[0]}.mda")
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        keys = [i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])]
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        keys = [
+            i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])
+        ]
         for key in keys:
-            np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
+            np.testing.assert_array_almost_equal(
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"],
+            )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")
@@ -141,10 +149,15 @@ def test_ccf(traj_info, qvector_grid):
     assert path.isfile(temp_name + ".mda")
 
     result_file = os.path.join(result_dir, f"ccf_{traj_info[0]}.mda")
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        keys = [i for i in desired.keys() if any([j in i for j in ["J(q,f)", "j(q,t)"]])]
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        keys = [
+            i for i in desired.keys() if any([j in i for j in ["J(q,f)", "j(q,t)"]])
+        ]
         for key in keys:
-            np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
+            np.testing.assert_array_almost_equal(
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"],
+            )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")
@@ -196,10 +209,15 @@ def test_disf(traj_info, qvector_grid):
     assert path.isfile(temp_name + ".mda")
 
     result_file = os.path.join(result_dir, f"disf_{traj_info[0]}.mda")
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        keys = [i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])]
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        keys = [
+            i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])
+        ]
         for key in keys:
-            np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
+            np.testing.assert_array_almost_equal(
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"],
+            )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")
@@ -231,10 +249,13 @@ def test_eisf(traj_info, qvector_grid):
     assert path.isfile(temp_name + ".mda")
 
     result_file = os.path.join(result_dir, f"eisf_{traj_info[0]}.mda")
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         keys = [i for i in desired.keys() if "eisf" in i]
         for key in keys:
-            np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
+            np.testing.assert_array_almost_equal(
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"],
+            )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")
@@ -267,10 +288,15 @@ def test_gdisf(traj_info):
     assert path.isfile(temp_name + ".mda")
 
     result_file = os.path.join(result_dir, f"gdisf_{traj_info[0]}.mda")
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        keys = [i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])]
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        keys = [
+            i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])
+        ]
         for key in keys:
-            np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
+            np.testing.assert_array_almost_equal(
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"],
+            )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")

@@ -451,22 +451,6 @@ class NeutronDynamicTotalStructureFactor(IJob):
         for val in list(nAtomsPerElement.values()):
             nTotalAtoms += val
 
-        b_coh_list, b_inc_list, atom_count_list = [], [], []
-        for element, ni in nAtomsPerElement.items():
-            bcoh = self.configuration["trajectory"]["instance"].get_atom_property(
-                element, "b_coherent"
-            )
-            binc = self.configuration["trajectory"]["instance"].get_atom_property(
-                element, "b_incoherent"
-            )
-            b_coh_list.append(bcoh)
-            b_inc_list.append(binc)
-            atom_count_list.append(ni)
-
-        fake_b_values = create_fake_b(b_coh_list, b_inc_list, atom_count_list)
-        effective_b_coh = np.mean(fake_b_values)
-        effective_b_inc = np.std(fake_b_values)
-
         norm_natoms = 1.0 / nTotalAtoms
         # Compute coherent functions and structure factor
         for pair in self._elementsPairs:
@@ -499,13 +483,15 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 )
 
         # Compute incoherent functions and structure factor
-        for element, ni in nAtomsPerElement.items():
-
+        for element in nAtomsPerElement.keys():
+            bi = self.configuration["trajectory"]["instance"].get_atom_property(
+                element, "b_incoherent2"
+            )
             self._outputData["f(q,t)_inc_weighted_%s" % element][:] = (
-                self._outputData["f(q,t)_inc_%s" % element][:] * effective_b_inc**2
+                self._outputData["f(q,t)_inc_%s" % element][:] * bi
             )
             self._outputData["s(q,f)_inc_weighted_%s" % element][:] = (
-                self._outputData["s(q,f)_inc_%s" % element][:] * effective_b_inc**2
+                self._outputData["s(q,f)_inc_%s" % element][:] * bi
             )
 
             self._outputData["f(q,t)_inc_total"][:] += self._outputData[
@@ -515,20 +501,13 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "s(q,f)_inc_weighted_%s" % element
             ][:]
 
-        sigma_coh = 4 * np.pi * effective_b_coh**2
-        sigma_inc = 4 * np.pi * effective_b_inc**2
-
         # Compute total F(Q,t) = inc + coh
         self._outputData["f(q,t)_total"][:] = (
             self._outputData["f(q,t)_coh_total"][:] * norm_natoms
             + self._outputData["f(q,t)_inc_total"][:] * norm_natoms
         )
-        self._outputData["s(q,f)_coh_total"][:] *= (
-            norm_natoms * sigma_coh / (sigma_coh + sigma_inc)
-        )
-        self._outputData["s(q,f)_inc_total"][:] *= (
-            norm_natoms * sigma_inc / (sigma_coh + sigma_inc)
-        )
+        self._outputData["s(q,f)_coh_total"][:] *= norm_natoms
+        self._outputData["s(q,f)_inc_total"][:] *= norm_natoms
 
         self._outputData["s(q,f)_total"][:] = (
             self._outputData["s(q,f)_coh_total"][:]

@@ -117,7 +117,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         for i in range(atom_selection_configurator["selection_length"]):
             name = atom_selection_configurator["names"][i]
             for element in atom_selection_configurator["elements"][i]:
-                property = ATOMS_DATABASE.get_atom_property(element, self["property"])
+                property = self._trajectory.get_atom_property(element, self["property"])
                 if name in weights:
                     weights[name] += property
                 else:
