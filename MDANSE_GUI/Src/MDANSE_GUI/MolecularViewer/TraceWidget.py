@@ -19,11 +19,12 @@ from typing import TYPE_CHECKING
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import (
     QWidget,
-    QFormLayout,
+    QVBoxLayout,
     QPushButton,
     QLineEdit,
     QDoubleSpinBox,
     QSpinBox,
+    QGroupBox,
 )
 
 if TYPE_CHECKING:
@@ -40,7 +41,7 @@ class TraceWidget(QWidget):
         self._molviewer = None
 
         self.setWindowTitle("Add atom trace to the view")
-        layout = QFormLayout(self)
+        layout = QVBoxLayout(self)
         self.setLayout(layout)
 
         self._n_atoms = 0
@@ -85,13 +86,23 @@ class TraceWidget(QWidget):
         self._opacity_spinbox.setMaximum(1.0)
         self._opacity_spinbox.setValue(0.5)
         self._opacity_spinbox.setSingleStep(0.01)
-        layout.addRow("Selected atom index: ", self._atom_spinbox)
-        layout.addRow("Sampling step (1=coarse, 10=fine)", self._grid_spinbox)
-        layout.addRow("Trace percentile for isovalue", self._fraction_spinbox)
-        layout.addRow("Isosurface opacity", self._opacity_spinbox)
-        layout.addRow("Isosurface colour (R,G,B)", self._colour_lineedit)
+        for pair in [
+            ("Selected atom index: ", self._atom_spinbox),
+            ("Sampling step (1=coarse, 10=fine)", self._grid_spinbox),
+            ("Trace percentile for isovalue", self._fraction_spinbox),
+            ("Isosurface opacity", self._opacity_spinbox),
+            ("Isosurface colour (R,G,B)", self._colour_lineedit),
+        ]:
+            temp_box = QGroupBox(pair[0], self)
+            temp_layout = QVBoxLayout(temp_box)
+            temp_layout.addWidget(pair[1])
+            layout.addWidget(temp_box)
         layout.addWidget(self.add_trace_button)
-        layout.addRow("Remove the surface with index: ", self._surface_spinbox)
+        for pair in [("Remove the surface with index: ", self._surface_spinbox)]:
+            temp_box = QGroupBox(pair[0], self)
+            temp_layout = QVBoxLayout(temp_box)
+            temp_layout.addWidget(pair[1])
+            layout.addWidget(temp_box)
         layout.addWidget(self.remove_trace_button)
 
     @Slot()

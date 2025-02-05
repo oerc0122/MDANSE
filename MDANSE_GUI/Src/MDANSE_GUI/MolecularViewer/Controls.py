@@ -31,11 +31,7 @@ from qtpy.QtWidgets import (
     QGroupBox,
     QCheckBox,
     QStackedLayout,
-)
-from qtpy.QtGui import (
-    QPaintEvent,
-    QPainter,
-    QColor,
+    QTabWidget,
 )
 
 from MDANSE_GUI.Tabs.Views.Delegates import ColourPicker, RadiusSpinBox
@@ -181,25 +177,24 @@ class ViewerControls(QWidget):
 
     def createSidePanel(self):
         """Adds widgets for finer control of the playback"""
-        absolute_base = QWidget(self)
+        absolute_base = QTabWidget(self)
+        absolute_base.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
         self._side_base = absolute_base
-        self._side_layout = QStackedLayout(absolute_base)
         base = QWidget(self)
         layout = QVBoxLayout(base)
         base.setLayout(layout)
-        self._side_layout.addWidget(base)
+        self._side_base.addTab(base, "Controls")
         # colour changes
         wrapper0 = QGroupBox("Colour settings", base)
         layout0 = QHBoxLayout(wrapper0)
         bkg_button = QPushButton("Background", wrapper0)
         proj_button = QPushButton("Toggle projection", wrapper0)
-        trace_button = QPushButton("Molecular trace", wrapper0)
         bkg_button.clicked.connect(self.set_background_colour)
         proj_button.clicked.connect(self.toggle_projection)
-        trace_button.clicked.connect(self.calculate_trace)
         layout0.addWidget(bkg_button)
         layout0.addWidget(proj_button)
-        layout0.addWidget(trace_button)
         layout.addWidget(wrapper0)
         # the table of chemical elements
         wrapper1 = QGroupBox("Atom properties", base)
@@ -279,9 +274,10 @@ class ViewerControls(QWidget):
     def createTracePanel(self, viewer):
         """Adds widgets for finer control of the playback"""
         base = QWidget(self)
+        base.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         layout = QVBoxLayout(base)
         base.setLayout(layout)
-        self._side_layout.addWidget(base)
+        self._side_base.addTab(base, "Atom trace")
         # colour changes
         self._trace_widget = TraceWidget(viewer)
         self._trace_widget.initialise_values(viewer)
@@ -304,10 +300,6 @@ class ViewerControls(QWidget):
             colour = dialog.currentColor()
             rgb = colour.red() / 255, colour.green() / 255, colour.blue() / 255
             self._viewer._renderer.SetBackground(rgb)
-
-    @Slot()
-    def calculate_trace(self):
-        self._side_layout.setCurrentIndex(1)
 
     @Slot()
     def toggle_projection(self):
