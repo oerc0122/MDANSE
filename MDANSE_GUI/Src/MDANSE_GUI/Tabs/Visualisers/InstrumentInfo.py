@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from qtpy.QtCore import Slot, Signal
+
 from qtpy.QtWidgets import QTextBrowser
 from qtpy.QtCore import Signal, Slot, Qt
 from qtpy.QtGui import QStandardItem
@@ -84,7 +84,6 @@ class SimpleInstrument:
     def create_resolution_params(self):
         if not self._configured:
             return
-        general_resolution = ("gaussian", {"mu": 0.0, "sigma": 0.2})
         calculator = ResolutionCalculator()
         try:
             calculator.update_model(self._resolution_type)
@@ -131,7 +130,7 @@ class SimpleInstrument:
         _q_step, _q_min, _q_max, _q_width = self.sanitize_numbers()
         try:
             conversion_factor = measure(1.0, iunit=self._q_unit).toval("1/nm")
-        except:
+        except Exception:
             raise ValueError(f"Could not convert unit: {self._q_unit}")
         else:
             conversion_factor = float(conversion_factor)
@@ -164,7 +163,7 @@ class SimpleInstrument:
     def filter_qvector_generator(self):
         new_list = [str(x) for x in self.qvector_options]
         if self._sample == "isotropic":
-            new_list = [str(x) for x in new_list if not "Lattice" in x]
+            new_list = [str(x) for x in new_list if "Dispersion" not in x]
         if self._technique == "QENS":
             new_list = [str(x) for x in new_list if "Spherical" in x]
         return new_list
@@ -172,7 +171,7 @@ class SimpleInstrument:
     def pick_qvector_generator(self) -> str:
         qgenerator = "SphericalQVectors"
         if self._sample == "isotropic" and self._technique == "QENS":
-            qgenerator = "SphericalQVectors"
+            qgenerator = "SphericalLatticeQVectors"
         return qgenerator
 
 

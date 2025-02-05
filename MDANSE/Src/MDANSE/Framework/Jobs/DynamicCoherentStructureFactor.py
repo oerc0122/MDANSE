@@ -20,6 +20,7 @@ import itertools
 import numpy as np
 from scipy.signal import correlate
 
+from MDANSE.MLogging import LOG
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
@@ -183,17 +184,27 @@ class DynamicCoherentStructureFactor(IJob):
             main_result=True,
         )
 
-        self._average_unit_cell = UnitCell(
-            np.mean(
-                [
-                    self.configuration["trajectory"]["instance"]
-                    .unit_cell(frame)
-                    ._unit_cell
-                    for frame in self.configuration["frames"]["value"]
-                ],
-                axis=0,
+        self._cell_std = 0.0
+        try:
+            all_cells = [
+                self.configuration["trajectory"]["instance"].unit_cell(frame)._unit_cell
+                for frame in self.configuration["frames"]["value"]
+            ]
+        except TypeError:
+            self._average_unit_cell = None
+        else:
+            self._average_unit_cell = UnitCell(
+                np.mean(
+                    all_cells,
+                    axis=0,
+                )
             )
-        )
+            self._cell_std = UnitCell(
+                np.std(
+                    all_cells,
+                    axis=0,
+                )
+            )
 
     def run_step(self, index):
         """
@@ -208,7 +219,7 @@ class DynamicCoherentStructureFactor(IJob):
 
         shell = self.configuration["q_vectors"]["shells"][index]
 
-        if not shell in self.configuration["q_vectors"]["value"]:
+        if shell not in self.configuration["q_vectors"]["value"]:
             return index, None
 
         else:
@@ -225,18 +236,30 @@ class DynamicCoherentStructureFactor(IJob):
                     dtype=np.complex64,
                 )
 
+            cell_present = True
+            cell_fixed = True
             # loop over the trajectory time steps
             for i, frame in enumerate(self.configuration["frames"]["value"]):
-                # unit_cell = traj.unit_cell(frame)
-                unit_cell = self._average_unit_cell
-                try:
-                    hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
-                except KeyError:
+                unit_cell = traj.unit_cell(frame)
+                if unit_cell is None:
+                    cell_present = False
+                elif not np.allclose(
+                    unit_cell._unit_cell, self._average_unit_cell._unit_cell
+                ):
+                    cell_fixed = False
+                if not cell_present:
                     qVectors = self.configuration["q_vectors"]["value"][shell][
                         "q_vectors"
                     ]
                 else:
-                    qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
+                    try:
+                        hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
+                    except KeyError:
+                        qVectors = self.configuration["q_vectors"]["value"][shell][
+                            "q_vectors"
+                        ]
+                    else:
+                        qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
 
                 coords = traj.configuration(frame)["coordinates"]
 
@@ -245,6 +268,14 @@ class DynamicCoherentStructureFactor(IJob):
                     rho[element][i, :] = np.sum(
                         np.exp(1j * np.dot(selectedCoordinates, qVectors)), axis=0
                     )
+            if not cell_present:
+                LOG.warning(
+                    "You are running the DCSF calculation on a trajectory without periodic boundary conditons."
+                )
+            if not cell_fixed:
+                LOG.warning(
+                    f"The unit cell is variable with the standard deviation of {self._cell_std}. PLEASE CHECK YOUR RESULTS CAREFULLY."
+                )
 
             return index, rho
 
