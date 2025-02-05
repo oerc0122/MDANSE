@@ -30,12 +30,12 @@ from qtpy.QtWidgets import (
     QColorDialog,
     QGroupBox,
     QCheckBox,
-    QStackedLayout,
     QTabWidget,
 )
 
 from MDANSE_GUI.Tabs.Views.Delegates import ColourPicker, RadiusSpinBox
-from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer, TraceWidget
+from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
+from MDANSE_GUI.MolecularViewer.TraceWidget import TraceWidget
 
 button_lookup = {
     "start": QStyle.StandardPixmap.SP_MediaSkipBackward,
@@ -93,7 +93,7 @@ QSpinBox::down-button  {
 class ViewerControls(QWidget):
     def __init__(self, *args, **kwargs):
         super(QWidget, self).__init__(*args, **kwargs)
-        layout = QGridLayout(self)
+        _ = QGridLayout(self)
         self._viewer = None
         self._buttons = {}
         self._delegates = {}
