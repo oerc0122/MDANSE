@@ -1,4 +1,3 @@
-import sys
 import tempfile
 import os
 from os import path
@@ -11,11 +10,10 @@ from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
-sys.setrecursionlimit(100000)
 short_traj = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
-    "Data",
+    "Converted",
     "short_trajectory_after_changes.mdt",
 )
 
@@ -66,7 +64,7 @@ def test_disf(trajectory):
     parameters["trajectory"] = short_traj
     parameters["weights"] = "b_incoherent2"
     for qvector_generator in IQVectors.indirect_subclasses():
-        instance = IQVectors.create(qvector_generator, trajectory.chemical_system)
+        instance = IQVectors.create(qvector_generator, trajectory._data.configuration())
         qvector_defaults = {
             name: value[1]["default"] for name, value in instance.settings.items()
         }

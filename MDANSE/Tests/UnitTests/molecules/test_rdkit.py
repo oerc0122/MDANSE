@@ -5,8 +5,8 @@ from rdkit.Chem.rdchem import Mol, GetPeriodicTable
 from rdkit.Chem.rdmolops import SanitizeMol
 from rdkit.Chem.rdmolops import GetMolFrags
 import pytest
-from MDANSE.IO.PDBReader import PDBReader
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.IO.MinimalPDBReader import MinimalPDBReader as PDBReader
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 
 
 fname = os.path.join(
@@ -17,8 +17,7 @@ fname = os.path.join(
 @pytest.fixture()
 def chem_from_pdb():
     reader = PDBReader(fname)
-    chem = reader.build_chemical_system()
-    yield chem
+    yield reader._chemical_system
 
 
 @pytest.fixture()

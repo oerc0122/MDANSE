@@ -1,6 +1,10 @@
 import os
 import tempfile
+
 import pytest
+import numpy as np
+import h5py
+
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Jobs.IJob import JobError
 from MDANSE.Framework.Configurators.HDFTrajectoryConfigurator import (
@@ -9,13 +13,17 @@ from MDANSE.Framework.Configurators.HDFTrajectoryConfigurator import (
 
 
 file_wd = os.path.dirname(os.path.realpath(__file__))
+conv_dir = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "Converted",
+)
 
 lammps_config = os.path.join(file_wd, "Data", "lammps_test.config")
 lammps_lammps = os.path.join(file_wd, "Data", "lammps_test.lammps")
 lammps_moly = os.path.join(file_wd, "Data", "structure_moly.lammps")
 lammps_custom = os.path.join(file_wd, "Data", "lammps_moly_custom.txt")
 lammps_xyz = os.path.join(file_wd, "Data", "lammps_moly_xyz.txt")
-lammps_h5md = os.path.join(file_wd, "Data", "lammps_moly_h5md.h5")
+lammps_h5md = os.path.join(file_wd, "Converted", "lammps_moly_h5md.h5")
 vasp_xdatcar = os.path.join(file_wd, "Data", "XDATCAR_version5")
 discover_his = os.path.join(file_wd, "Data", "sushi.his")
 discover_xtd = os.path.join(file_wd, "Data", "sushi.xtd")
@@ -57,7 +65,17 @@ def test_lammps_mdt_conversion_file_exists_and_loads_up_successfully(compression
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "lammps.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+        np.testing.assert_array_almost_equal(actual["/charge"], desired["/charge"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -86,7 +104,17 @@ def test_lammps_mdt_conversion_unit_system(unit_system):
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, f"lammps_{unit_system}.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+        np.testing.assert_array_almost_equal(actual["/charge"], desired["/charge"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -117,7 +145,16 @@ def test_lammps_mdt_conversion_trajectory_format(trajectory_file, trajectory_for
     lammps = Converter.create("LAMMPS")
     lammps.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, f"lammps_moly_{trajectory_format}.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -157,7 +194,16 @@ def test_vasp_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     vasp = Converter.create("VASP")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "vasp.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -181,7 +227,18 @@ def test_discover_mdt_conversion_file_exists_and_loads_up_successfully(compressi
     vasp = Converter.create("discover")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "discover.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/configuration/velocities"], desired["/configuration/velocities"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+        np.testing.assert_array_almost_equal(actual["/charge"], desired["/charge"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -205,7 +262,22 @@ def test_cp2k_mdt_conversion_file_exists_and_loads_up_successfully(velocity):
     vasp = Converter.create("cp2k")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    if velocity:
+        result_file = os.path.join(conv_dir, "cp2k_velocity.mdt")
+    else:
+        result_file = os.path.join(conv_dir, "cp2k.mdt")
+
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        if velocity:
+            np.testing.assert_array_almost_equal(actual["/configuration/velocities"], desired["/configuration/velocities"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -230,7 +302,16 @@ def test_charmm_mdt_conversion_file_exists_and_loads_up_successfully(compression
     vasp = Converter.create("charmm")
     vasp.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "hem_cam.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -256,7 +337,16 @@ def test_ase_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     ase_conv = Converter.create("ase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "ase.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/configuration/velocities"], desired["/configuration/velocities"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -282,7 +372,10 @@ def test_improvedase_mdt_conversion_file_exists_and_loads_up_successfully(trajec
     ase_conv = Converter.create("improvedase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -309,7 +402,10 @@ def test_improvedase_lammps_two_files():
     ase_conv = Converter.create("improvedase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -335,7 +431,17 @@ def test_xyz_mdt_conversion_file_exists_and_loads_up_successfully(compression):
     ase_conv = Converter.create("ase")
     ase_conv.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "ase_xyz.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/configuration/velocities"], desired["/configuration/velocities"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -361,7 +467,17 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_versi
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "dlp_v2.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+        np.testing.assert_array_almost_equal(actual["/charge"], desired["/charge"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -387,7 +503,16 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_versi
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "dlp_v4.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -413,12 +538,19 @@ def test_dlp_mdt_conversion_file_exists_and_loads_up_successfully_with_dlp_with_
     dl_poly = Converter.create("DL_POLY")
     dl_poly.run(parameters, status=True)
 
-    # check trajectory has velocity and gradient data
-    traj = HDFTrajectoryConfigurator("trajectory")
-    traj.configure(temp_name + ".mdt")
-    assert traj["instance"].has_variable("velocities")
-    assert traj["instance"].has_variable("gradients")
-    traj["instance"].close()
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "dlp_with_grad.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/configuration/velocities"], desired["/configuration/velocities"])
+        np.testing.assert_array_almost_equal(actual["/configuration/gradients"], desired["/configuration/gradients"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+        np.testing.assert_array_almost_equal(actual["/charge"], desired["/charge"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -449,8 +581,14 @@ def test_namd_mdt_conversion_file_exists_and_loads_up_successfully_and_chemical_
     hdftradj = HDFTrajectoryConfigurator("trajectory")
     hdftradj.configure(temp_name + ".mdt")
     assert hdftradj["instance"].chemical_system.number_of_atoms == 12397
-
     hdftradj["instance"].close()
+
+    result_file = os.path.join(conv_dir, "namd.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+
     os.remove(temp_name + ".mdt")
 
 
@@ -468,7 +606,18 @@ def test_castep_md_conversion_file_exists_and_loads_up_successfully(compression)
     castep = Converter.create("CASTEP")
     castep.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "castep.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/configuration/velocities"], desired["/configuration/velocities"])
+        np.testing.assert_array_almost_equal(actual["/configuration/gradients"], desired["/configuration/gradients"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -493,7 +642,18 @@ def test_dftb_conversion_file_exists_and_loads_up_successfully(compression):
     dftb = Converter.create("DFTB")
     dftb.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "dftb.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/configuration/velocities"], desired["/configuration/velocities"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+        np.testing.assert_array_almost_equal(actual["/charge"], desired["/charge"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -518,7 +678,18 @@ def test_forcite_conversion_file_exists_and_loads_up_successfully(compression):
     forcite = Converter.create("Forcite")
     forcite.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "forcite.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/configuration/velocities"], desired["/configuration/velocities"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+        np.testing.assert_array_almost_equal(actual["/charge"], desired["/charge"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -542,7 +713,16 @@ def test_gromacs_conversion_file_exists_and_loads_up_successfully(compression):
     gromacs = Converter.create("Gromacs")
     gromacs.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "md.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -565,11 +745,20 @@ def test_mdanalysis_conversion_file_exists_and_loads_up_successfully(compression
     mdanalysis = Converter.create("MDAnalysis")
     mdanalysis.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
 
     # remove offset files generated by mdanalysis
     os.remove(os.path.join(file_wd, "Data", ".md.xtc_offsets.lock"))
     os.remove(os.path.join(file_wd, "Data", ".md.xtc_offsets.npz"))
+
+    result_file = os.path.join(conv_dir, "md.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")
@@ -587,12 +776,22 @@ def test_mdtraj_conversion_file_exists_and_loads_up_successfully(compression):
         "topology_file": hem_cam_pdb,
         "coordinate_files": [hem_cam_dcd],
         "output_files": (temp_name, 64, 128, compression, "INFO"),
+        "time_step": 1.0,
     }
 
     mdanalysis = Converter.create("MDTraj")
     mdanalysis.run(parameters, status=True)
 
-    HDFTrajectoryConfigurator("trajectory").configure(temp_name + ".mdt")
+    traj_conf = HDFTrajectoryConfigurator("trajectory")
+    traj_conf.configure(temp_name + ".mdt")
+    traj_conf.get_information()
+    traj_conf["hdf_trajectory"].close()
+
+    result_file = os.path.join(conv_dir, "hem_cam.mdt")
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/unit_cell"], desired["/unit_cell"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
 
     assert os.path.exists(temp_name + ".mdt")
     assert os.path.isfile(temp_name + ".mdt")

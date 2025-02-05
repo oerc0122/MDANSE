@@ -336,7 +336,7 @@ class Action(QWidget):
             self.allow_execution()
             LOG.info("Show output prediction")
             pardict = self.set_parameters()
-            self._job_instance.setup(pardict)
+            self._job_instance.setup(pardict, rebuild=False)
             axes = self._job_instance.preview_output_axis()
             LOG.info(f"Axes = {axes.keys()}")
             text = "<p><b>The results will cover the following range:</b></p>"

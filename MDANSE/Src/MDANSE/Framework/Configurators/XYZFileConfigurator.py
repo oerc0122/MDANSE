@@ -101,7 +101,9 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
         try:
             timeStep = float(matches[0])
         except ValueError:
-            raise XYZFileError("Could not cast the timestep to a floating")
+            raise XYZFileError(
+                "Could not cast the timestep to a floating point number."
+            )
         else:
             return timeStep
 

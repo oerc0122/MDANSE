@@ -19,17 +19,14 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
-from MDANSE.MolecularDynamics.Trajectory import sorted_atoms
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
 )
-from MDANSE.MolecularDynamics.TrajectoryUtils import brute_formula
 from MDANSE.MolecularDynamics.Connectivity import Connectivity
-from MDANSE.Chemistry.Structrures import MoleculeTester
 
 
 class TrajectoryEditor(IJob):
@@ -81,8 +78,8 @@ class TrajectoryEditor(IJob):
     settings["molecule_tolerance"] = (
         "OptionalFloatConfigurator",
         {
-            "default": [False, 0.25],
-            "label_text": "Search for molecules (using the following bond length tolerance)",
+            "default": [False, 0.04],
+            "label_text": "Search for molecules (covalent radii plus the tolerance in nm)",
         },
     )
     settings["output_files"] = (
@@ -98,6 +95,9 @@ class TrajectoryEditor(IJob):
 
         self.numberOfSteps = self.configuration["frames"]["number"]
         self._input_trajectory = self.configuration["trajectory"]["instance"]
+        self._input_chemical_system = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system
 
         if self.configuration["unit_cell"]["apply"]:
             self._new_unit_cell = UnitCell(self.configuration["unit_cell"]["value"])
@@ -105,37 +105,36 @@ class TrajectoryEditor(IJob):
                 self._new_unit_cell for _ in range(len(self._input_trajectory))
             ]
 
-        atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
-
         # The collection of atoms corresponding to the atoms selected for output.
-        indexes = [
+        indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
-        self._indices = indexes
-        self._selectedAtoms = [atoms[ind] for ind in indexes]
-        elements = self.configuration["atom_selection"]["elements"]
+        self._indices = indices
+        temp_copy = list(self._input_chemical_system.atom_list)
+        indices_per_element = self.configuration["atom_selection"].get_indices()
+        for element, numbers in indices_per_element.items():
+            for num in numbers:
+                temp_copy[num] = element
+        self._selectedAtoms = [temp_copy[ind] for ind in indices]
+        name_list = [self._input_chemical_system.name_list[ind] for ind in indices]
 
         new_chemical_system = ChemicalSystem("Edited system")
-        new_chemical_system.from_element_list([entry[0] for entry in elements])
+        new_chemical_system.initialise_atoms(self._selectedAtoms, name_list)
         if self.configuration["molecule_tolerance"]["use_it"]:
             tolerance = self.configuration["molecule_tolerance"]["value"]
-            conn = Connectivity(trajectory=self._input_trajectory, selection=indexes)
-            conn.find_molecules(tolerance=tolerance)
-            conn.add_bond_information()
-            new_chemical_system.rebuild(conn._molecules)
+            conn = Connectivity(trajectory=self._input_trajectory, selection=indices)
+            conn.find_bonds(tolerance=tolerance)
+            conn.add_bond_information(new_chemical_system)
             conf = self.configuration["trajectory"]["instance"].configuration(
                 self.configuration["frames"]["value"][0]
             )
-            conf = conf.contiguous_configuration()
-            coords = conf.coordinates[indexes]
+            coords = conf.coordinates[indices]
             if conf.is_periodic:
                 com_conf = PeriodicRealConfiguration(
                     new_chemical_system,
-                    coords[self._indices],
+                    coords,
                     conf.unit_cell,
                 )
             else:
@@ -143,19 +142,13 @@ class TrajectoryEditor(IJob):
                     new_chemical_system,
                     coords,
                 )
-            new_chemical_system.configuration = com_conf
             coords = com_conf.contiguous_configuration().coordinates
-            for entity in new_chemical_system.chemical_entities:
-                if entity.number_of_atoms > 1:
-                    moltester = MoleculeTester(entity, coords)
-                    try:
-                        inchistring = moltester.identify_molecule()
-                    except:
-                        inchistring = ""
-                    if len(inchistring) > 0:
-                        entity.name = inchistring
-                    else:
-                        entity.name = brute_formula(entity)
+        else:
+            new_chemical_system.add_bonds(self._input_chemical_system._bonds)
+            for key in self._input_chemical_system._clusters.keys():
+                new_chemical_system.add_clusters(
+                    self._input_chemical_system._clusters[key]
+                )
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
@@ -182,7 +175,7 @@ class TrajectoryEditor(IJob):
         frameIndex = self.configuration["frames"]["value"][index]
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
-        conf = conf.contiguous_configuration()
+        conf = conf.contiguous_configuration(bring_to_centre=True)
         charges = self.configuration["trajectory"]["instance"].charges(frameIndex)
         coords = conf.coordinates
 
@@ -214,8 +207,6 @@ class TrajectoryEditor(IJob):
                 **variables,
             )
 
-        self._output_trajectory.chemical_system.configuration = com_conf
-
         new_charges = np.zeros(len(self._indices))
         for number, at_index in enumerate(self._indices):
             try:
@@ -227,7 +218,7 @@ class TrajectoryEditor(IJob):
         # The times corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
-        self._output_trajectory.dump_configuration(time)
+        self._output_trajectory.dump_configuration(com_conf, time)
         self._output_trajectory.write_charges(new_charges, index)
 
         return index, None

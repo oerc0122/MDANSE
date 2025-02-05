@@ -16,20 +16,23 @@
 
 import collections
 import math
+from typing import List
 
 import numpy as np
 from scipy.spatial import Voronoi as scipyVoronoi
 from scipy.spatial import Delaunay as scipyDelaunay
 
-from MDANSE.Extensions import mic_fast_calc
+from MDANSE.MolecularDynamics.Configuration import padded_coordinates
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
-def no_exc_min(l):
+def no_exc_min(numbers: List[float]):
     try:
-        return min(l)
-    except:
-        return -np.pi
+        return min(numbers)
+    except ValueError:
+        return -1
+    except TypeError:
+        return -2
 
 
 class VoronoiError(Exception):
@@ -38,11 +41,14 @@ class VoronoiError(Exception):
 
 class Voronoi(IJob):
     """
-    Computes the volume of each Voronoi cell and corresponding 'neighbourhood' statistics for 3d systems.
-    Delaunay triangulation is used for the decomposition of polytops into simplexes,
-    Voronoi and Delaunay tessellation are calculated using a cython wrapping of the Qhull library (scipy wrapping used as Externals)
+    Computes the volume of each Voronoi cell and corresponding 'neighbourhood'
+    statistics for 3d systems. Vornoi diagram and Delaunay tesselation are
+    used as implemented in scipy.spatial module. Replicas of atoms from
+    the simulation box will be included in the calculation within
+    a finite distance from the box wall (given in nm).
 
-    Voronoi analysis is another commonly-used, complementary method for characterising the local structure of a system.
+    Voronoi analysis is another commonly-used, complementary method for
+    characterising the local structure of a system.
 
     **Acknowledgement:**\n
     Gael Goret, PELLEGRINI Eric
@@ -68,7 +74,7 @@ class Voronoi(IJob):
         "BooleanConfigurator",
         {"label": "apply periodic_boundary_condition", "default": True},
     )
-    settings["pbc_border_size"] = ("FloatConfigurator", {"mini": 0.0, "default": 0.0})
+    settings["pbc_border_size"] = ("FloatConfigurator", {"mini": 0.0, "default": 0.2})
     settings["output_files"] = (
         "OutputFilesConfigurator",
         {"formats": ["MDAFormat", "TextFormat"]},
@@ -97,9 +103,7 @@ class Voronoi(IJob):
         # Will store neighbourhood histogram for voronoi regions.
         self.neighbourhood_hist = {}
 
-        first_conf = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.configuration
+        first_conf = self.configuration["trajectory"]["instance"].configuration()
 
         try:
             cell = first_conf.unit_cell.direct
@@ -126,28 +130,31 @@ class Voronoi(IJob):
         frameIndex = self.configuration["frames"]["value"][index]
 
         conf = self.configuration["trajectory"]["instance"].configuration(frameIndex)
+        unit_cell = conf._unit_cell
 
         if self.configuration["pbc"]["value"]:
-            conf, _ = mic_fast_calc.mic_generator_3D(
+            coords, _ = padded_coordinates(
                 conf["coordinates"],
+                unit_cell,
                 self.configuration["pbc_border_size"]["value"],
-                self.cell_param,
             )
+        else:
+            coords = conf["coordinates"]
 
-        # Computing Voronoi Diagram ...
-        Voronoi = scipyVoronoi(conf)
+        # Computing Voronoi Diagram
+        Voronoi = scipyVoronoi(coords)
         vertices_coords = Voronoi.vertices  # Option qhull v p
 
-        # Extracting valid Voronoi regions ...
+        # Extracting valid Voronoi regions
         points_ids = Voronoi.regions  # Option qhull v FN
         valid_regions_points_ids = []
         valid_region_id = []
         region_id = -1
         for p in Voronoi.point_region:
             region_id += 1
-            l = points_ids[p]
-            if no_exc_min(l) >= 0:
-                valid_regions_points_ids.append(l)
+            id_list = points_ids[p]
+            if no_exc_min(id_list) >= 0:
+                valid_regions_points_ids.append(id_list)
                 valid_region_id.append(region_id)
 
         valid_regions = {}
@@ -155,11 +162,11 @@ class Voronoi(IJob):
             vrid = valid_region_id[i]
             valid_regions[vrid] = valid_regions_points_ids[i]
 
-        # Extracting ridges of the valid Voronoi regions ...
+        # Extracting ridges of the valid Voronoi regions
         input_sites = Voronoi.ridge_points  # Option qhull v Fv (part of)
         self.max_region_id = input_sites.max()
 
-        # Calculating neighbourhood ...
+        # Calculating neighbourhood
         neighbourhood = np.zeros((self.max_region_id + 1), dtype=np.int32)
         for s in input_sites.ravel():
             neighbourhood[s] += 1
@@ -168,12 +175,12 @@ class Voronoi(IJob):
         for i in range(len(neighbourhood)):
             v = neighbourhood[i]
             if i in valid_region_id:
-                if v not in self.neighbourhood_hist:
+                if v not in self.neighbourhood_hist.keys():
                     self.neighbourhood_hist[v] = 1
                 else:
                     self.neighbourhood_hist[v] += 1
 
-        # Delaunay Tesselation of each valid voronoi region ...
+        # Delaunay Tesselation of each valid voronoi region
         delaunay_regions_for_each_valid_voronoi_region = {}
         for vrid, ids in list(valid_regions.items()):
             if vrid >= self.nb_init_pts:
@@ -187,7 +194,7 @@ class Voronoi(IJob):
                 lut[dv] for dv in Delaunay.simplices
             ]
 
-        # Volume Computation ... "
+        # Volume Computation
         global_volumes = {}
         for vrid, regions in list(
             delaunay_regions_for_each_valid_voronoi_region.items()

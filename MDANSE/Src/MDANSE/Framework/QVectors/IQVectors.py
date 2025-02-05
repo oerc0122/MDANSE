@@ -35,10 +35,10 @@ class QVectorsError(Error):
 class IQVectors(Configurable, metaclass=SubclassFactory):
     is_lattice = False
 
-    def __init__(self, chemical_system, status=None):
+    def __init__(self, atom_configuration, status=None):
         Configurable.__init__(self)
 
-        self._chemical_system = chemical_system
+        self._atom_configuration = atom_configuration
 
         self._status = status
 

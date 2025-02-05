@@ -33,5 +33,5 @@ class MDTrajTrajectoryFileConfigurator(MultiInputFileConfigurator):
 
         supported = list(i[1:] for i in FormatRegistry.loaders.keys())
         if self.extension not in supported:
-            self.error_status = f"File '{self.extension}' not support should be one of the following: {supported}"
+            self.error_status = f"File '{self.extension}' not supported. Should be one of the following: {supported}"
             return

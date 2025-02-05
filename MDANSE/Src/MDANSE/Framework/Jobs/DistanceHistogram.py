@@ -19,7 +19,10 @@ import itertools
 
 import numpy as np
 
-from MDANSE.Extensions import van_hove
+from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
+    van_hove_distinct,
+    find_index_groups,
+)
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 
@@ -69,7 +72,12 @@ class DistanceHistogram(IJob):
     )
     settings["weights"] = (
         "WeightsConfigurator",
-        {"dependencies": {"atom_selection": "atom_selection"}},
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
     )
     settings["output_files"] = (
         "OutputFilesConfigurator",
@@ -85,12 +93,12 @@ class DistanceHistogram(IJob):
 
         self.numberOfSteps = self.configuration["frames"]["number"]
 
-        self._indexes = [
+        self._indices = [
             idx
-            for idxs in self.configuration["atom_selection"]["indexes"]
+            for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
-        self._indexes = np.array(self._indexes, dtype=np.int32)
+        self._indices = np.array(self._indices, dtype=np.int32)
 
         self.selectedElements = self.configuration["atom_selection"]["unique_names"]
 
@@ -106,7 +114,7 @@ class DistanceHistogram(IJob):
             self.configuration["trajectory"]["instance"].chemical_system
         )
 
-        self.indexToMolecule = np.array([lut[i] for i in self._indexes], dtype=np.int32)
+        self.indexToMolecule = np.array([lut[i] for i in self._indices], dtype=np.int32)
 
         nElements = len(self.selectedElements)
 
@@ -137,6 +145,7 @@ class DistanceHistogram(IJob):
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(self.selectedElements, 2)
         )
+        self.indices_intra = find_index_groups(self.indexToMolecule, self.indexToSymbol)
 
     def detailed_unit_cell_error(self):
         raise ValueError(
@@ -175,18 +184,18 @@ class DistanceHistogram(IJob):
             if cell_volume < 1e-9:
                 self.detailed_unit_cell_error()
 
-        coords = conf["coordinates"]
+        coords = conf["coordinates"][self._indices]
         scaleconfig = coords @ inverse_cell
 
         hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
-        hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
+        hTotalTemp = np.zeros(self.hInter.shape, dtype=np.float64)
 
-        van_hove.van_hove_distinct(
+        van_hove_distinct(
             direct_cell,
-            self.indexToMolecule,
+            self.indices_intra,
             self.indexToSymbol,
             hIntraTemp,
-            hInterTemp,
+            hTotalTemp,
             scaleconfig,
             scaleconfig,
             self.configuration["r_values"]["first"],
@@ -194,9 +203,9 @@ class DistanceHistogram(IJob):
         )
 
         np.multiply(hIntraTemp, cell_volume, hIntraTemp)
-        np.multiply(hInterTemp, cell_volume, hInterTemp)
+        np.multiply(hTotalTemp, cell_volume, hTotalTemp)
 
-        return index, (cell_volume, hIntraTemp, hInterTemp)
+        return index, (cell_volume, hIntraTemp, hTotalTemp)
 
     def combine(self, index, x):
         """
@@ -216,7 +225,7 @@ class DistanceHistogram(IJob):
         # volume can variate during the MD (e.g. NPT conditions). This volume is the one that intervene in the density
         # calculation.
         self.hIntra += x[1]
-        self.hInter += x[2]
+        self.hInter += x[2] - x[1]
 
         for k, v in list(self._nAtomsPerElement.items()):
             self._concentrations[k] += float(v) / nAtoms

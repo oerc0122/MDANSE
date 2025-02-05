@@ -18,11 +18,9 @@ import collections
 
 import numpy as np
 
-from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Units import measure
 from MDANSE.Mathematics.Signal import differentiate
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 KB = measure(1.380649e-23, "kg m2/s2 K").toval("uma nm2/ps2 K")
 
@@ -56,8 +54,7 @@ class Temperature(IJob):
         "InterpolationOrderConfigurator",
         {
             "label": "velocities",
-            "dependencies": {"trajectory": "trajectory"},
-            "default": 1,
+            "dependencies": {"trajectory": "trajectory", "frames": "frames"},
         },
     )
     settings["output_files"] = (
@@ -114,9 +111,9 @@ class Temperature(IJob):
             units="K",
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -129,11 +126,11 @@ class Temperature(IJob):
             #. kineticEnergy (np.array): The calculated kinetic energy
         """
 
-        atom = self._atoms[index]
+        symbol = self._atoms[index]
 
-        symbol = atom.symbol
-
-        mass = ATOMS_DATABASE.get_atom_property(symbol, "atomic_weight")
+        mass = self.configuration["trajectory"]["instance"].get_atom_property(
+            symbol, "atomic_weight"
+        )
 
         trajectory = self.configuration["trajectory"]["instance"]
 

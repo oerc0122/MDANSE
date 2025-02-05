@@ -20,7 +20,7 @@ import MDAnalysis as mda
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Chemistry.ChemicalEntity import ChemicalSystem, Atom
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -122,14 +122,31 @@ class MDAnalysis(Converter):
         self.numberOfSteps = len(self.u.trajectory)
 
         self._chemical_system = ChemicalSystem()
+        element_list = []
+        name_list = []
+        label_dict = {}
 
-        for at in self.u.atoms:
+        for at_number, at in enumerate(self.u.atoms):
             kwargs = {}
             for arg in ["element", "name", "type", "resname", "mass"]:
                 if hasattr(at, arg):
                     kwargs[arg] = getattr(at, arg)
             # the first out of the list above will be the main label
             (k, main_label) = next(iter(kwargs.items()))
+            # label_list will be populated too
+            if "resname" in kwargs:
+                tag = kwargs["resname"]
+            elif "type" in kwargs:
+                tag = kwargs["type"]
+            elif "name" in kwargs:
+                tag = kwargs["name"]
+            else:
+                tag = None
+            if tag:
+                if tag in label_dict.keys():
+                    label_dict[tag] += [at_number]
+                else:
+                    label_dict[tag] = [at_number]
             kwargs.pop(k)
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"], main_label, **kwargs
@@ -140,7 +157,12 @@ class MDAnalysis(Converter):
                 if hasattr(at, arg):
                     name = getattr(at, arg)
                     break
-            self._chemical_system.add_chemical_entity(Atom(symbol=element, name=name))
+            element_list.append(element)
+            name_list.append(name)
+        if None in name_list:
+            name_list = None
+        self._chemical_system.initialise_atoms(element_list, name_list)
+        self._chemical_system.add_labels(label_dict)
 
         kwargs = {
             "positions_dtype": self.configuration["output_files"]["dtype"],
@@ -201,14 +223,13 @@ class MDAnalysis(Converter):
             if hasattr(self.u.trajectory.ts, "forces"):
                 conf["gradients"] = self.u.trajectory.ts.forces
 
-        self._trajectory._chemical_system.configuration = conf
-
         if float(self.configuration["time_step"]["value"]) == 0.0:
             time = index * self.u.trajectory.ts.dt
         else:
             time = index * float(self.configuration["time_step"]["value"])
 
         self._trajectory.dump_configuration(
+            conf,
             time,
             units={
                 "time": "ps",
@@ -225,5 +246,6 @@ class MDAnalysis(Converter):
         pass
 
     def finalize(self):
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
         super(MDAnalysis, self).finalize()

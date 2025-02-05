@@ -38,7 +38,7 @@ class DerivativeOrderWidget(WidgetBase):
         self._field.setValue(3)
         label = QLabel("Interpolation order", self._base)
         self.numerator = QLabel("st order")
-        self.adjust_numerator(3)
+        self.adjust_numerator_and_update(3)
 
         self._layout.addWidget(label)
         self._layout.addWidget(self._field)
@@ -53,7 +53,16 @@ class DerivativeOrderWidget(WidgetBase):
 
         self._field.setToolTip(tooltip_text)
         self.numerator.setToolTip(tooltip_text)
-        self._field.valueChanged.connect(self.adjust_numerator)
+        self._field.valueChanged.connect(self.adjust_numerator_and_update)
+
+        for widget in self.parent()._widgets:
+            if (
+                widget._configurator
+                is self._configurator._configurable[
+                    self._configurator._dependencies["frames"]
+                ]
+            ):
+                widget.value_changed.connect(self.updateValue)
 
     def configure_using_default(self):
         """This is too simple to have a default value"""
@@ -65,10 +74,11 @@ class DerivativeOrderWidget(WidgetBase):
             self._tooltip = "The order of the polynomial function used for interpolating time-dependent variables."
 
     @Slot(int)
-    def adjust_numerator(self, order: int):
+    def adjust_numerator_and_update(self, order: int):
         text_order = str(order)
         new_numerator = suffix_dict.get(text_order[-1])
         self.numerator.setText(new_numerator)
+        self.updateValue()
 
     def get_widget_value(self):
         value = self._field.value()

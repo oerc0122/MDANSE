@@ -1,22 +1,46 @@
-import sys
 import tempfile
 import os
 from os import path
-import pytest
 
 import numpy as np
 import h5py
+
+from MDANSE.MolecularDynamics.Configuration import remove_jumps
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
-sys.setrecursionlimit(100000)
 short_traj = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "..",
-    "Data",
+    "Converted",
     "trajectory_no_unit_cell.mdt",
 )
+
+
+def test_jumps_removed_correctly():
+    input_coords = np.array(
+        [
+            [0.8, 0.2, 0.3],
+            [0.88, 0.22, 0.33],
+            [0.97, 0.2, 0.3],
+            [0.05, 0.22, 0.31],
+            [0.03, 0.2, 0.3],
+            [0.99, 0.22, 0.32],
+        ]
+    )
+    expected_coords = np.array(
+        [
+            [0.8, 0.2, 0.3],
+            [0.88, 0.22, 0.33],
+            [0.97, 0.2, 0.3],
+            [1.05, 0.22, 0.31],
+            [1.03, 0.2, 0.3],
+            [0.99, 0.22, 0.32],
+        ]
+    )
+    corrected_coords = remove_jumps(input_coords)
+    assert np.allclose(corrected_coords, expected_coords)
 
 
 def test_editor_null():
@@ -41,6 +65,11 @@ def test_editor_null():
     )
     original.close()
     changed.close()
+
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(short_traj) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")
 
@@ -68,6 +97,11 @@ def test_editor_frames():
     )
     original.close()
     changed.close()
+
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(short_traj) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"][0:501:10])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"][0:501:10])
+
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")
 
@@ -96,6 +130,11 @@ def test_editor_atoms():
     assert changed.trajectory.chemical_system.number_of_atoms > 0
     original.close()
     changed.close()
+
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(short_traj) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"][:,6:20,:])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")
 
@@ -126,6 +165,11 @@ def test_editor_unit_cell():
     )
     original.close()
     changed.close()
+
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(short_traj) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")
 
@@ -153,13 +197,18 @@ def test_editor_transmute():
         original.trajectory.chemical_system.number_of_atoms
         == changed.trajectory.chemical_system.number_of_atoms
     )
-    old_symbols = [at.symbol for at in original.trajectory.chemical_system.atom_list]
-    new_symbols = [at.symbol for at in changed.trajectory.chemical_system.atom_list]
+    old_symbols = [at for at in original.trajectory.chemical_system.atom_list]
+    new_symbols = [at for at in changed.trajectory.chemical_system.atom_list]
     assert old_symbols != new_symbols
     assert "B" not in old_symbols
     assert "B" in new_symbols
     original.close()
     changed.close()
+
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(short_traj) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")
 
@@ -187,6 +236,11 @@ def test_editor_set_charges():
     assert abs(np.sum(changed.trajectory.charges(0)) - 0.2) < 1e-5
     original.close()
     changed.close()
+
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(short_traj) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")
 
@@ -196,7 +250,7 @@ def test_editor_find_molecules():
     parameters = {}
     parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
-    parameters["molecule_tolerance"] = [True, 0.25]
+    parameters["molecule_tolerance"] = [True, 0.04]
     parameters["frames"] = (0, 501, 1)
     temp = IJob.create("TrajectoryEditor")
     temp.run(parameters, status=True)
@@ -211,5 +265,10 @@ def test_editor_find_molecules():
     assert len(changed.trajectory.chemical_system.unique_molecules()) > 0
     original.close()
     changed.close()
+
+    with h5py.File(temp_name + ".mdt") as actual,  h5py.File(short_traj) as desired:
+        np.testing.assert_array_almost_equal(actual["/configuration/coordinates"], desired["/configuration/coordinates"])
+        np.testing.assert_array_almost_equal(actual["/time"], desired["/time"])
+
     os.remove(temp_name + ".mdt")
     os.remove(temp_name + ".log")

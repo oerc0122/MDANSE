@@ -22,13 +22,13 @@ from MDANSE.Framework.QVectors.IQVectors import IQVectors, QVectorsError
 class LatticeQVectors(IQVectors):
     is_lattice = True
 
-    def __init__(self, chemical_system, status=None):
-        super(LatticeQVectors, self).__init__(chemical_system, status)
+    def __init__(self, atom_configuration, status=None):
+        super(LatticeQVectors, self).__init__(atom_configuration, status)
 
-        if self._chemical_system.configuration is None:
+        if atom_configuration is None:
             raise QVectorsError("No configuration set for the chemical system")
 
-        if not self._chemical_system.configuration.is_periodic:
+        if not atom_configuration.is_periodic:
             raise QVectorsError(
                 "The universe must be periodic for building lattice-based Q vectors"
             )

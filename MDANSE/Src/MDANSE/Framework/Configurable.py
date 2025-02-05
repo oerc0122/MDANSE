@@ -124,17 +124,21 @@ class Configurable(object):
 
         return self._configuration
 
-    def setup(self, parameters):
-        """
-        Setup the configuration according to a set of input parameters.
+    def setup(self, parameters: dict, rebuild: bool = True):
+        """Builds and sets the configuration according to a set of
+        input parameters.
 
-        :param parameters: the input parameters
-        :type parameters: dict
+        Parameters
+        ----------
+        parameters : dict
+            A dictionary of setting parameters.
+        rebuild : bool
+            Rebuilds all the configurators if true.
         """
-
         self._configured = False
 
-        self.build_configuration()
+        if rebuild:
+            self.build_configuration()
 
         # If no configurator has to be configured, just return
         if not self._configuration:

@@ -19,11 +19,10 @@ from ase.io import iread, read
 from ase.io.trajectory import Trajectory as ASETrajectory
 import numpy as np
 
-from MDANSE.Chemistry.ChemicalEntity import Atom, AtomCluster, ChemicalSystem
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Units import measure
-from MDANSE.Mathematics.Graph import Graph
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
     PeriodicRealConfiguration,
@@ -101,7 +100,7 @@ class ImprovedASE(Converter):
         {
             "label": "MDANSE trajectory (filename, format)",
             "formats": ["MDTFormat"],
-            "root": "config_file",
+            "root": "trajectory_file",
         },
     )
 
@@ -111,7 +110,7 @@ class ImprovedASE(Converter):
         """
         super().initialize()
 
-        self._chemicalSystem = None
+        self._chemical_system = None
         self._fractionalCoordinates = None
         self._nAtoms = None
         self._masses = None
@@ -132,15 +131,11 @@ class ImprovedASE(Converter):
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
-            self._chemicalSystem,
+            self._chemical_system,
             self.numberOfSteps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
-        )
-
-        self._nameToIndex = dict(
-            [(at.name, at.index) for at in self._trajectory.chemical_system.atom_list]
         )
 
         LOG.info(f"total steps: {self.numberOfSteps}")
@@ -176,17 +171,16 @@ class ImprovedASE(Converter):
             conf = PeriodicBoxConfiguration(
                 self._trajectory.chemical_system, coords, unitCell
             )
-            realConf = conf.to_real_configuration()
+            real_conf = conf.to_real_configuration()
         else:
-            realConf = PeriodicRealConfiguration(
+            real_conf = PeriodicRealConfiguration(
                 self._trajectory.chemical_system, coords, unitCell
             )
-
-        self._trajectory.chemical_system.configuration = realConf
-
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(
-            time, units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"}
+            real_conf,
+            time,
+            units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
         )
 
         return index, None
@@ -213,6 +207,7 @@ class ImprovedASE(Converter):
         except:
             pass
         # Close the output trajectory.
+        self._trajectory.write_standard_atom_database()
         self._trajectory.close()
 
         super(ImprovedASE, self).finalize()
@@ -232,9 +227,6 @@ class ImprovedASE(Converter):
             except:
                 pass
 
-        g = Graph()
-
-        element_count = {}
         if self.configuration["elements_from_mass"]["value"]:
             tolerance = self.configuration["mass_tolerance"]["value"]
             if self._masses is None:
@@ -251,39 +243,10 @@ class ImprovedASE(Converter):
         else:
             if self._nAtoms is None:
                 self._nAtoms = len(element_list)
-            if self._chemicalSystem is None:
-                self._chemicalSystem = ChemicalSystem()
+            if self._chemical_system is None:
+                self._chemical_system = ChemicalSystem()
 
-                for atnum, element in enumerate(element_list):
-                    if element in element_count.keys():
-                        element_count[element] += 1
-                    else:
-                        element_count[element] = 1
-                    g.add_node(atnum, element=element, atomName=f"{element}_{atnum+1}")
-
-                for cluster in g.build_connected_components():
-                    if len(cluster) == 1:
-                        node = cluster.pop()
-                        try:
-                            obj = Atom(node.element, name=node.atomName)
-                        except TypeError:
-                            LOG.error("EXCEPTION in ASE loader")
-                            LOG.error(f"node.element = {node.element}")
-                            LOG.error(f"node.atomName = {node.atomName}")
-                            LOG.error(f"rankToName = {self._rankToName}")
-                        obj.index = node.name
-                    else:
-                        atList = []
-                        for atom in cluster:
-                            at = Atom(symbol=atom.element, name=atom.atomName)
-                            atList.append(at)
-                        c = collections.Counter([at.element for at in cluster])
-                        name = "".join(
-                            ["{:s}{:d}".format(k, v) for k, v in sorted(c.items())]
-                        )
-                        obj = AtomCluster(name, atList)
-
-                    self._chemicalSystem.add_chemical_entity(obj)
+                self._chemical_system.initialise_atoms(element_list)
 
     def parse_optional_config(self):
         try:

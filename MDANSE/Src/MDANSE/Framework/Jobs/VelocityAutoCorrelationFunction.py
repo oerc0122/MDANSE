@@ -20,7 +20,6 @@ from scipy.signal import correlate
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
 from MDANSE.Mathematics.Signal import differentiate, normalize
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class VelocityAutoCorrelationFunction(IJob):
@@ -68,7 +67,10 @@ class VelocityAutoCorrelationFunction(IJob):
     )
     settings["interpolation_order"] = (
         "InterpolationOrderConfigurator",
-        {"label": "velocities", "dependencies": {"trajectory": "trajectory"}},
+        {
+            "label": "velocities",
+            "dependencies": {"trajectory": "trajectory", "frames": "frames"},
+        },
     )
     settings["projection"] = (
         "ProjectionConfigurator",
@@ -90,7 +92,12 @@ class VelocityAutoCorrelationFunction(IJob):
     )
     settings["weights"] = (
         "WeightsConfigurator",
-        {"dependencies": {"atom_selection": "atom_selection"}},
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
     )
     settings["output_files"] = (
         "OutputFilesConfigurator",
@@ -134,9 +141,9 @@ class VelocityAutoCorrelationFunction(IJob):
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -153,11 +160,11 @@ class VelocityAutoCorrelationFunction(IJob):
         trajectory = self.configuration["trajectory"]["instance"]
 
         # get atom index
-        indexes = self.configuration["atom_selection"]["indexes"][index]
+        indices = self.configuration["atom_selection"]["indices"][index]
 
         if self.configuration["interpolation_order"]["value"] == 0:
             series = trajectory.read_configuration_trajectory(
-                indexes[0],
+                indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
                 step=self.configuration["frames"]["step"],
@@ -165,7 +172,7 @@ class VelocityAutoCorrelationFunction(IJob):
             )
         else:
             series = trajectory.read_atomic_trajectory(
-                indexes[0],
+                indices[0],
                 first=self.configuration["frames"]["first"],
                 last=self.configuration["frames"]["last"] + 1,
                 step=self.configuration["frames"]["step"],

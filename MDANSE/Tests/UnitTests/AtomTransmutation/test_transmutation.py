@@ -1,33 +1,32 @@
 import os
 import pytest
-from MDANSE.IO.PDBReader import PDBReader
+from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.Configurators.AtomTransmutationConfigurator import AtomTransmuter
 
 
-pbd_2vb1 = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "..", "Data", "2vb1.pdb"
+traj_2vb1 = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "..", "Converted", "2vb1.mdt"
 )
 
 
 @pytest.fixture(scope="module")
-def protein_chemical_system():
-    reader = PDBReader(pbd_2vb1)
-    protein_chemical_system = reader.build_chemical_system()
-    return protein_chemical_system
+def protein_trajectory():
+    protein_trajectory = HDFTrajectoryInputData(traj_2vb1)
+    return protein_trajectory.trajectory
 
 
 def test_atom_transmutation_returns_empty_dictionary_when_no_transmutations_are_made(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    atm_transmuter = AtomTransmuter(protein_chemical_system)
+    atm_transmuter = AtomTransmuter(protein_trajectory)
     mapping = atm_transmuter.get_setting()
     assert mapping == {}
 
 
 def test_atom_transmutation_return_dict_with_transmutations_with_incorrect_element_raises_exception(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    atm_transmuter = AtomTransmuter(protein_chemical_system)
+    atm_transmuter = AtomTransmuter(protein_trajectory)
     with pytest.raises(ValueError):
         atm_transmuter.apply_transmutation(
             {"all": False, "element": {"S": True}}, "CCC"
@@ -35,9 +34,9 @@ def test_atom_transmutation_return_dict_with_transmutations_with_incorrect_eleme
 
 
 def test_atom_transmutation_return_dict_with_transmutations_with_s_element_transmutation(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    atm_transmuter = AtomTransmuter(protein_chemical_system)
+    atm_transmuter = AtomTransmuter(protein_trajectory)
     atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
     mapping = atm_transmuter.get_setting()
     assert mapping == {
@@ -55,9 +54,9 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
 
 
 def test_atom_transmutation_return_dict_with_transmutations_with_s_element_transmutation_and_index_98_transmutation_0(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    atm_transmuter = AtomTransmuter(protein_chemical_system)
+    atm_transmuter = AtomTransmuter(protein_trajectory)
     atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
     atm_transmuter.apply_transmutation({"all": False, "index": {98: True}}, "N")
     mapping = atm_transmuter.get_setting()
@@ -76,9 +75,9 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
 
 
 def test_atom_transmutation_return_dict_with_transmutations_with_s_element_transmutation_and_index_98_transmutation_1(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    atm_transmuter = AtomTransmuter(protein_chemical_system)
+    atm_transmuter = AtomTransmuter(protein_trajectory)
     atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
     atm_transmuter.apply_transmutation({"all": False, "index": {98: True}}, "S")
     mapping = atm_transmuter.get_setting()
@@ -96,9 +95,9 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
 
 
 def test_atom_transmutation_return_dict_with_transmutations_with_s_element_transmutation_and_index_98_transmutation_2(
-    protein_chemical_system,
+    protein_trajectory,
 ):
-    atm_transmuter = AtomTransmuter(protein_chemical_system)
+    atm_transmuter = AtomTransmuter(protein_trajectory)
     atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
     atm_transmuter.apply_transmutation(
         {"all": False, "index": {98: True, 99: True}}, "S"
@@ -118,8 +117,8 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
     }
 
 
-def test_atom_transmutation_return_empty_dict_after_reset(protein_chemical_system):
-    atm_transmuter = AtomTransmuter(protein_chemical_system)
+def test_atom_transmutation_return_empty_dict_after_reset(protein_trajectory):
+    atm_transmuter = AtomTransmuter(protein_trajectory)
     atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
     atm_transmuter.apply_transmutation(
         {"all": False, "index": {98: True, 99: True}}, "S"

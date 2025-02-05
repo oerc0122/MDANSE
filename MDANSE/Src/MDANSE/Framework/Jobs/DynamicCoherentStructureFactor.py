@@ -147,7 +147,7 @@ class DynamicCoherentStructureFactor(IJob):
                 self.configuration["atom_selection"]["unique_names"], 2
             )
         )
-        self._indexesPerElement = self.configuration["atom_selection"].get_indexes()
+        self._indicesPerElement = self.configuration["atom_selection"].get_indices()
 
         for pair in self._elementsPairs:
             self._outputData.add(
@@ -240,7 +240,7 @@ class DynamicCoherentStructureFactor(IJob):
 
                 coords = traj.configuration(frame)["coordinates"]
 
-                for element, idxs in self._indexesPerElement.items():
+                for element, idxs in self._indicesPerElement.items():
                     selectedCoordinates = np.take(coords, idxs, axis=0)
                     rho[element][i, :] = np.sum(
                         np.exp(1j * np.dot(selectedCoordinates, qVectors)), axis=0

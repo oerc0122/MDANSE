@@ -22,7 +22,6 @@ from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import weight
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MolecularDynamics.Analysis import mean_square_displacement
-from MDANSE.MolecularDynamics.TrajectoryUtils import sorted_atoms
 
 
 class GaussianDynamicIncoherentStructureFactor(IJob):
@@ -84,7 +83,10 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         "WeightsConfigurator",
         {
             "default": "b_incoherent2",
-            "dependencies": {"atom_selection": "atom_selection"},
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            },
         },
     )
     settings["output_files"] = (
@@ -181,9 +183,9 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             main_result=True,
         )
 
-        self._atoms = sorted_atoms(
-            self.configuration["trajectory"]["instance"].chemical_system.atom_list
-        )
+        self._atoms = self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.atom_list
 
     def run_step(self, index):
         """
@@ -197,11 +199,10 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         """
 
         # get atom index
-        indexes = self.configuration["atom_selection"]["indexes"][index]
-        atoms = [self._atoms[idx] for idx in indexes]
+        indices = self.configuration["atom_selection"]["indices"][index]
 
         series = self.configuration["trajectory"]["instance"].read_com_trajectory(
-            atoms,
+            indices,
             first=self.configuration["frames"]["first"],
             last=self.configuration["frames"]["last"] + 1,
             step=self.configuration["frames"]["step"],
