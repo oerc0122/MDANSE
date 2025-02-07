@@ -279,13 +279,7 @@ class H5MDTrajectory:
                     if cell.shape == (3, 3):
                         temp_array = np.array(cell)
                     else:
-                        temp_array = np.array(
-                            [
-                                [cell[0], 0.0, 0.0],
-                                [0.0, cell[1], 0.0],
-                                [0.0, 0.0, cell[2]],
-                            ]
-                        )
+                        temp_array = np.diag(cell)
                     uc = UnitCell(temp_array)
                     self._unit_cells.append(uc)
             else:
