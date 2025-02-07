@@ -91,7 +91,7 @@ class H5MDTrajectory:
         except Exception:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang" or pos_unit == "Angstrom":
+            if pos_unit in ("Ang", "Angstrom"):
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         coords *= conv_factor
@@ -273,18 +273,12 @@ class H5MDTrajectory:
         except KeyError:
             self._unit_cells = None
         else:
-            if len(cells.shape) > 1:
+            if cells.ndim > 1:
                 for cell in cells:
                     if cell.shape == (3, 3):
                         temp_array = np.array(cell)
-                    else:
-                        temp_array = np.array(
-                            [
-                                [cell[0], 0.0, 0.0],
-                                [0.0, cell[1], 0.0],
-                                [0.0, 0.0, cell[2]],
-                            ]
-                        )
+                    elif cell.shape = (3,):
+                        temp_array = np.diag(cell)
                     uc = UnitCell(temp_array)
                     self._unit_cells.append(uc)
             else:

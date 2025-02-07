@@ -42,9 +42,7 @@ from MDANSE_GUI.MolecularViewer.AtomProperties import (
 
 
 def array_to_3d_imagedata(data: np.ndarray, spacing: Tuple[float]):
-    nx = data.shape[0]
-    ny = data.shape[1]
-    nz = data.shape[2]
+    nx, ny, nz = data.shape
     image = vtk.vtkImageData()
     image.SetDimensions(nx, ny, nz)
     dx, dy, dz = spacing

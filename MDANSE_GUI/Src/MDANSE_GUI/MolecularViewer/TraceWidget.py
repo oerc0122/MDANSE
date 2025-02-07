@@ -119,14 +119,8 @@ class TraceWidget(QWidget):
     def enable_buttons(self):
         if self._molviewer is None:
             return
-        if len(self._molviewer._surfaces) == 0:
-            self.remove_trace_button.setEnabled(False)
-        else:
-            self.remove_trace_button.setEnabled(True)
-        if self._molviewer._n_atoms < 1:
-            self.add_trace_button.setEnabled(False)
-        else:
-            self.add_trace_button.setEnabled(True)
+        self.remove_trace_button.setEnabled(len(self._molviewer._surfaces) != 0)
+        self.add_trace_button.setEnabled(self._molviewer._n_atoms > 0)
 
     def get_values(self):
         params = {
