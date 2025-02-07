@@ -277,8 +277,12 @@ class H5MDTrajectory:
                 for cell in cells:
                     if cell.shape == (3, 3):
                         temp_array = np.array(cell)
-                    elif cell.shape = (3,):
+                    elif cell.shape == (3,):
                         temp_array = np.diag(cell)
+                    else:
+                        raise ValueError(
+                            f"Cell array {cell} has a wrong shape {cell.shape}"
+                        )
                     uc = UnitCell(temp_array)
                     self._unit_cells.append(uc)
             else:
