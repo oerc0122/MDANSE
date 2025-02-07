@@ -278,7 +278,7 @@ class H5MDTrajectory:
                 for cell in cells:
                     if cell.shape == (3, 3):
                         temp_array = np.array(cell)
-                    else:
+                    elif cell.shape = (3,):
                         temp_array = np.diag(cell)
                     uc = UnitCell(temp_array)
                     self._unit_cells.append(uc)
