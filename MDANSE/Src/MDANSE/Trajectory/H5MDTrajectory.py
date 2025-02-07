@@ -92,7 +92,7 @@ class H5MDTrajectory:
         except Exception:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang" or pos_unit == "Angstrom":
+            if pos_unit in ("Ang", "Angstrom"):
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         coords *= conv_factor
