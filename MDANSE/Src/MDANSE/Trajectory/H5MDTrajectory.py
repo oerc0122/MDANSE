@@ -274,7 +274,7 @@ class H5MDTrajectory:
         except KeyError:
             self._unit_cells = None
         else:
-            if len(cells.shape) > 1:
+            if cells.ndim > 1:
                 for cell in cells:
                     if cell.shape == (3, 3):
                         temp_array = np.array(cell)
