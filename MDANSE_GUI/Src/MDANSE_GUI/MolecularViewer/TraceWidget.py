@@ -15,6 +15,7 @@
 #
 
 from typing import TYPE_CHECKING
+from contextlib import suppress
 
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import (
@@ -86,22 +87,24 @@ class TraceWidget(QWidget):
         self._opacity_spinbox.setMaximum(1.0)
         self._opacity_spinbox.setValue(0.5)
         self._opacity_spinbox.setSingleStep(0.01)
-        for pair in [
+        for label, widget in [
             ("Selected atom index: ", self._atom_spinbox),
             ("Sampling step (1=coarse, 10=fine)", self._grid_spinbox),
             ("Trace percentile for isovalue", self._fraction_spinbox),
             ("Isosurface opacity", self._opacity_spinbox),
             ("Isosurface colour (R,G,B)", self._colour_lineedit),
         ]:
-            temp_box = QGroupBox(pair[0], self)
+            temp_box = QGroupBox(label, self)
             temp_layout = QVBoxLayout(temp_box)
-            temp_layout.addWidget(pair[1])
+            temp_layout.addWidget(widget)
             layout.addWidget(temp_box)
         layout.addWidget(self.add_trace_button)
-        for pair in [("Remove the surface with index: ", self._surface_spinbox)]:
-            temp_box = QGroupBox(pair[0], self)
+        for label, widget in [
+            ("Remove the surface with index: ", self._surface_spinbox)
+        ]:
+            temp_box = QGroupBox(label, self)
             temp_layout = QVBoxLayout(temp_box)
-            temp_layout.addWidget(pair[1])
+            temp_layout.addWidget(widget)
             layout.addWidget(temp_box)
         layout.addWidget(self.remove_trace_button)
 
@@ -136,14 +139,10 @@ class TraceWidget(QWidget):
         }
         params["atom_number"] = self._atom_spinbox.value()
         params["surface_number"] = self._surface_spinbox.value()
-        try:
+        with suppress(ValueError, TypeError):
             params["surface_colour"] = [
                 float(x) / 256 for x in self._colour_lineedit.text().split(",")
             ]
-        except ValueError:
-            pass
-        except TypeError:
-            pass
         params["trace_cutoff"] = self._fraction_spinbox.value()
         params["fine_sampling"] = self._grid_spinbox.value()
         params["surface_opacity"] = self._opacity_spinbox.value()

@@ -565,32 +565,34 @@ class MolecularViewer(QtWidgets.QWidget):
     def iren(self):
         return self._iren
 
-    def on_change_atomic_trace_opacity(self, surface_number, opacity):
+    def on_change_atomic_trace_opacity(self, surface_index: int, opacity: float):
         """Event handler called when the opacity level is changed."""
 
-        if len(self._surfaces) <= surface_number:
+        if surface_index >= len(self._surfaces):
             return
 
-        self._surfaces[surface_number].GetProperty().SetOpacity(opacity)
+        self._surfaces[surface_index].GetProperty().SetOpacity(opacity)
         self._iren.Render()
 
-    def on_change_atomic_trace_isocontour_level(self, surface_number, level):
+    def on_change_atomic_trace_isocontour_level(self, surface_index: int, level: float):
         """Event handler called when the user change the isocontour level."""
 
-        if len(self._surfaces) <= surface_number:
+        if surface_index >= len(self._surfaces):
             return
 
-        self._isocontours[surface_number].SetValue(0, level)
-        self._isocontours[surface_number].Update()
+        self._isocontours[surface_index].SetValue(0, level)
+        self._isocontours[surface_index].Update()
         self._iren.Render()
 
-    def on_change_atomic_trace_rendering_type(self, surface_number, rendering_type):
+    def on_change_atomic_trace_rendering_type(
+        self, surface_index: int, rendering_type: str
+    ):
         """Event handler called when the user change the rendering type for the atomic trace."""
 
-        if len(self._surfaces) <= surface_number:
+        if surface_index >= len(self._surfaces):
             return
 
-        surface = self._surfaces[surface_number]
+        surface = self._surfaces[surface_index]
 
         if rendering_type == "wireframe":
             surface.GetProperty().SetRepresentationToWireframe()
