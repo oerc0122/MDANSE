@@ -91,7 +91,7 @@ class H5MDTrajectory:
         except Exception:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang" or pos_unit == "Angstrom":
+            if pos_unit in ("Ang", "Angstrom"):
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         coords *= conv_factor
@@ -128,13 +128,12 @@ class H5MDTrajectory:
         :rtype: dict of ndarray
         """
 
-        grp = self._h5_file["/particles/all/position/value"]
         try:
             pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
-        except:
+        except Exception:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang" or pos_unit == "Angstrom":
+            if pos_unit in ("Ang", "Angstrom"):
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         configuration = {}
@@ -144,12 +143,12 @@ class H5MDTrajectory:
         try:
             try:
                 vel_unit = self._h5_file["/particles/all/velocity/value"].attrs["unit"]
-            except:
+            except Exception:
                 vel_unit = "ang/fs"
             configuration["velocities"] = self._h5_file[
                 "/particles/all/velocity/value"
             ][frame, :, :] * measure(1.0, vel_unit).toval("nm/ps")
-        except:
+        except Exception:
             pass
 
         configuration["time"] = self.time()[frame]
@@ -186,7 +185,7 @@ class H5MDTrajectory:
         except KeyError:
             LOG.debug(f"No charge information in trajectory {self._h5_filename}")
             charge = np.zeros(self._chemical_system.number_of_atoms)
-        except:
+        except Exception:
             try:
                 charge = self._h5_file["/particles/all/charge"][:]
             except KeyError:
@@ -209,10 +208,10 @@ class H5MDTrajectory:
             raise IndexError(f"Invalid frame number: {frame}")
         try:
             pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
-        except:
+        except Exception:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang" or pos_unit == "Angstrom":
+            if pos_unit in ("Ang", "Angstrom"):
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
 
@@ -243,7 +242,7 @@ class H5MDTrajectory:
             if k not in self._variables_to_skip:
                 try:
                     variables[k] = self.variable(k)[frame, :, :].astype(np.float64)
-                except:
+                except Exception:
                     self._variables_to_skip.append(k)
 
         coordinates = self.coordinates(frame)
@@ -395,10 +394,10 @@ class H5MDTrajectory:
         grp = self._h5_file["/particles/all/position/value"]
         try:
             pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
-        except:
+        except Exception:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang" or pos_unit == "Angstrom":
+            if pos_unit in ("Ang", "Angstrom"):
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
 
@@ -493,10 +492,10 @@ class H5MDTrajectory:
         grp = self._h5_file["/particles/all/position/value"]
         try:
             pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
-        except:
+        except Exception:
             conv_factor = 1.0
         else:
-            if pos_unit == "Ang" or pos_unit == "Angstrom":
+            if pos_unit in ("Ang", "Angstrom"):
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         coords = grp[first:last:step, index, :].astype(np.float64) * conv_factor
