@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 
 
 class Grid(Plotter):
-
     def __init__(self) -> None:
         super().__init__()
         self._figure = None

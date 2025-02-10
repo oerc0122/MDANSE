@@ -29,7 +29,6 @@ from qtpy.QtGui import QColor
 
 
 class ColourPicker(QStyledItemDelegate):
-
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
@@ -51,7 +50,6 @@ class ColourPicker(QStyledItemDelegate):
 
 
 class MainAxisCombo(QItemDelegate):
-
     def __init__(self, *args, **kwargs) -> None:
         self._items = []
         super().__init__(*args, **kwargs)
@@ -85,7 +83,6 @@ class MainAxisCombo(QItemDelegate):
 
 
 class MplStyleCombo(QItemDelegate):
-
     def __init__(self, *args, mpl_items=None, **kwargs) -> None:
         self._items = list([str(x) for x in mpl_items.keys()])
         super().__init__(*args, **kwargs)
@@ -118,7 +115,6 @@ class MplStyleCombo(QItemDelegate):
 
 
 class RadiusSpinBox(QItemDelegate):
-
     def __init__(self, *args, mpl_items=None, **kwargs) -> None:
         self._minimum = 0.0
         self._step = 0.01
@@ -144,7 +140,6 @@ class RadiusSpinBox(QItemDelegate):
 
 
 class ProgressDelegate(QItemDelegate):
-
     progress_role = Qt.UserRole + 1000
 
     def paint(self, painter, option, index):

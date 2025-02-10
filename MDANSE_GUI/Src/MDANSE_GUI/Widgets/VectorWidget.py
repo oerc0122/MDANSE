@@ -26,7 +26,6 @@ from qtpy.QtCore import Signal, Slot, Qt, QSortFilterProxyModel
 
 
 class VectorWidget(QWidget):
-
     value_changed = Signal(list)
 
     def __init__(self, *args, dtype=None, **kwargs) -> None:

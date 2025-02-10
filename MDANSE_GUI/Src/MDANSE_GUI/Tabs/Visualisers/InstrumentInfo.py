@@ -24,7 +24,6 @@ from MDANSE_GUI.Widgets.ResolutionWidget import ResolutionCalculator, widget_tex
 
 
 class SimpleInstrument:
-
     sample_options = ["isotropic", "crystal"]
     technique_options = ["QENS", "INS"]
     resolution_options = [str(x) for x in widget_text_map.keys()]

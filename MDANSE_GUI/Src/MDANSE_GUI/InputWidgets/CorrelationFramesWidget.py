@@ -22,7 +22,6 @@ from .FramesWidget import FramesWidget
 
 
 class CorrelationFramesWidget(FramesWidget):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

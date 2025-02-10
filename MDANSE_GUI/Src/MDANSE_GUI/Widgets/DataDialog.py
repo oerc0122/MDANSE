@@ -39,7 +39,7 @@ class DataDialog(QDialog):
         input_data: List[np.ndarray],
         input_units: List[str],
         is_input=False,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
 

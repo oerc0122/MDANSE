@@ -23,7 +23,6 @@ from .MultiInputFileWidget import MultiInputFileWidget
 class MDAnalysisCoordinateFileWidget(
     MultiInputFileWidget, MDAnalysisTopologyFileWidget
 ):
-
     def __init__(self, *args, file_dialog=QFileDialog.getOpenFileNames, **kwargs):
         super().__init__(
             *args,

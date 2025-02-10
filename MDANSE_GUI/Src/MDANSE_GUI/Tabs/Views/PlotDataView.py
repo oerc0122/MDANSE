@@ -148,6 +148,5 @@ class PlotDataView(QTreeView):
             self.item_details.connect(visualiser.update_panel)
         else:
             raise NotImplementedError(
-                f"Unable to connect view {type(self)} to visualiser "
-                f"{type(visualiser)}"
+                f"Unable to connect view {type(self)} to visualiser {type(visualiser)}"
             )
