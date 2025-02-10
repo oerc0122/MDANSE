@@ -152,7 +152,7 @@ class ProgressDelegate(QItemDelegate):
         progress_max = max(index.data(self.progress_role + 1) - 1, 1)
         try:
             int(progress)
-        except:
+        except Exception:
             progress = 0
         opt = QStyleOptionProgressBar()
         opt.rect = option.rect

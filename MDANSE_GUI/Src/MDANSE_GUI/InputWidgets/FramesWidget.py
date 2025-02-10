@@ -28,7 +28,7 @@ class FramesWidget(WidgetBase):
         if trajectory_configurator is not None:
             try:
                 self._last_frame = trajectory_configurator["length"]
-            except:
+            except Exception:
                 self._last_frame = -1
         else:
             self._last_frame = -1
@@ -93,7 +93,7 @@ class FramesWidget(WidgetBase):
             strval = field.text()
             try:
                 val = int(strval)
-            except:
+            except Exception:
                 val = int(self._default_values[n])
             result.append(val)
         return result

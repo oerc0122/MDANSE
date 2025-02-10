@@ -175,7 +175,7 @@ class PlotWidget(QWidget):
     def set_plotter(self, plotter_option: str):
         try:
             self._plotter = Plotter.create(plotter_option)
-        except:
+        except Exception:
             self._plotter = Plotter()
         self.change_slider_labels.emit(self._plotter.slider_labels())
         self.change_slider_limits.emit(self._plotter.slider_limits())

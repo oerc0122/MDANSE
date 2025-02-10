@@ -135,7 +135,7 @@ class UserSettingsModel(QStandardItemModel):
                     group.set(item_key, new_value)
                 elif column_number == 2:
                     group.set_comment(item_key, new_value)
-        except:
+        except Exception:
             LOG.warning(
                 f"Could not store {new_value} in group[{group_key}]->[{item_key}]"
             )

@@ -58,7 +58,7 @@ class BasicPlotDataItem(QStandardItem):
                 child.setData(key, role=Qt.ItemDataRole.UserRole)
                 try:
                     file[key][:]
-                except:
+                except Exception:
                     child._item_type = "group"
                 self.appendRow(child)
 
