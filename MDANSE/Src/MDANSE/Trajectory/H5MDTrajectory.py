@@ -103,12 +103,12 @@ class H5MDTrajectory:
         result = True
         try:
             temp = h5py.File(filename)
-        except FileNotFoundError:
+        except Exception:
             result = False
         else:
             try:
                 temp["h5md"]
-            except KeyError:
+            except Exception:
                 result = False
             temp.close()
         return result
@@ -127,9 +127,9 @@ class H5MDTrajectory:
         :return: the configuration
         :rtype: dict of ndarray
         """
-
+        grp = self._h5_file["/particles/all/position/value"]
         try:
-            pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
+            pos_unit = grp.attrs["unit"]
         except Exception:
             conv_factor = 1.0
         else:
@@ -137,9 +137,7 @@ class H5MDTrajectory:
                 pos_unit = "ang"
             conv_factor = measure(1.0, pos_unit).toval("nm")
         configuration = {}
-        configuration["coordinates"] = (
-            self._h5_file["/particles/all/position/value"][frame, :, :] * conv_factor
-        )
+        configuration["coordinates"] = grp[frame, :, :] * conv_factor
         try:
             try:
                 vel_unit = self._h5_file["/particles/all/velocity/value"].attrs["unit"]
