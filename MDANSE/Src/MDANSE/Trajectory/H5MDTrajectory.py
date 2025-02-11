@@ -263,7 +263,7 @@ class H5MDTrajectory:
         except (AttributeError, KeyError):
             conv_factor = 0.1
         else:
-            if box_unit == "Ang" or box_unit == "Angstrom":
+            if box_unit in ("Ang", "Angstrom"):
                 box_unit = "ang"
             conv_factor = measure(1.0, box_unit).toval("nm")
         try:
