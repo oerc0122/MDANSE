@@ -111,7 +111,7 @@ class LocalSession(QObject):
         try:
             with open(fname, "w") as target:
                 target.write(output)
-        except:
+        except Exception:
             return
         else:
             self._filename = fname
@@ -122,7 +122,7 @@ class LocalSession(QObject):
         try:
             with open(fname, "r") as source:
                 all_items_text = source.readline()
-        except:
+        except Exception:
             LOG.warning(f"Failed to read session settings from {fname}")
         else:
             all_items = json_decoder.decode(all_items_text)

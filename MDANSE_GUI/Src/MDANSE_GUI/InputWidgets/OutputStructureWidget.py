@@ -46,7 +46,7 @@ class OutputStructureWidget(WidgetBase):
         try:
             parent = kwargs.get("parent", None)
             guess_name = str(PurePath(os.path.join(self.default_path, "POSCAR")))
-        except:
+        except Exception:
             guess_name = str(PurePath(default_value[0]))
             LOG.error("It was not possible to get the job name from the parent")
         else:

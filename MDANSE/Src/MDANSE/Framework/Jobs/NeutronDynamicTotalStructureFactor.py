@@ -198,15 +198,16 @@ class NeutronDynamicTotalStructureFactor(IJob):
             )
         )
         for pair in self._elementsPairs:
+            pair_str = "".join(map(str, pair))
             if (
-                "f(q,t)_{}{}".format(*pair)
+                f"f(q,t)_{pair_str}"
                 not in self.configuration["dcsf_input_file"]["instance"]
             ):
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing f(q,t) in dcsf input file"
                 )
             if (
-                "s(q,f)_{}{}".format(*pair)
+                f"s(q,f)_{pair_str}"
                 not in self.configuration["dcsf_input_file"]["instance"]
             ):
                 raise NeutronDynamicTotalStructureFactorError(
@@ -215,14 +216,14 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             if (
-                "f(q,t)_{}".format(element)
+                f"f(q,t)_{element}"
                 not in self.configuration["disf_input_file"]["instance"]
             ):
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing f(q,t) in disf input file"
                 )
             if (
-                "s(q,f)_{}".format(element)
+                f"s(q,f)_{element}"
                 not in self.configuration["disf_input_file"]["instance"]
             ):
                 raise NeutronDynamicTotalStructureFactorError(
@@ -230,35 +231,31 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 )
 
         for element in self.configuration["atom_selection"]["unique_names"]:
-            fqt = self.configuration["disf_input_file"]["instance"][
-                "f(q,t)_{}".format(element)
-            ]
-            sqf = self.configuration["disf_input_file"]["instance"][
-                "s(q,f)_{}".format(element)
-            ]
+            fqt = self.configuration["disf_input_file"]["instance"][f"f(q,t)_{element}"]
+            sqf = self.configuration["disf_input_file"]["instance"][f"s(q,f)_{element}"]
             self._outputData.add(
-                "f(q,t)_inc_%s" % element,
+                f"f(q,t)_inc_{element}",
                 "SurfaceOutputVariable",
                 fqt,
                 axis="q|time",
                 units="au",
             )
             self._outputData.add(
-                "s(q,f)_inc_%s" % element,
+                f"s(q,f)_inc_{element}",
                 "SurfaceOutputVariable",
                 sqf,
                 axis="q|omega",
                 units="nm2/ps",
             )
             self._outputData.add(
-                "f(q,t)_inc_weighted_%s" % element,
+                f"f(q,t)_inc_weighted_{element}",
                 "SurfaceOutputVariable",
                 fqt.shape,
                 axis="q|time",
                 units="au",
             )
             self._outputData.add(
-                "s(q,f)_inc_weighted_%s" % element,
+                f"s(q,f)_inc_weighted_{element}",
                 "SurfaceOutputVariable",
                 sqf.shape,
                 axis="q|omega",
@@ -266,35 +263,36 @@ class NeutronDynamicTotalStructureFactor(IJob):
             )
 
         for pair in self._elementsPairs:
+            pair_str = "".join(map(str, pair))
             fqt = self.configuration["dcsf_input_file"]["instance"][
-                "f(q,t)_{}{}".format(*pair)
+                f"f(q,t)_{pair_str}"
             ]
             sqf = self.configuration["dcsf_input_file"]["instance"][
-                "s(q,f)_{}{}".format(*pair)
+                f"s(q,f)_{pair_str}"
             ]
             self._outputData.add(
-                "f(q,t)_coh_%s%s" % pair,
+                f"f(q,t)_coh_{pair_str}",
                 "SurfaceOutputVariable",
                 fqt,
                 axis="q|time",
                 units="au",
             )
             self._outputData.add(
-                "s(q,f)_coh_%s%s" % pair,
+                f"s(q,f)_coh_{pair_str}",
                 "SurfaceOutputVariable",
                 sqf,
                 axis="q|omega",
                 units="nm2/ps",
             )
             self._outputData.add(
-                "f(q,t)_coh_weighted_%s%s" % pair,
+                f"f(q,t)_coh_weighted_{pair_str}",
                 "SurfaceOutputVariable",
                 fqt.shape,
                 axis="q|time",
                 units="au",
             )
             self._outputData.add(
-                "s(q,f)_coh_weighted_%s%s" % pair,
+                f"s(q,f)_coh_weighted_{pair_str}",
                 "SurfaceOutputVariable",
                 sqf.shape,
                 axis="q|omega",
@@ -389,6 +387,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Compute coherent functions and structure factor
         for pair in self._elementsPairs:
+            pair_str = "".join(map(str, pair))
             bi = self.configuration["trajectory"]["instance"].get_atom_property(
                 pair[0], "b_coherent"
             )
@@ -400,31 +399,31 @@ class NeutronDynamicTotalStructureFactor(IJob):
             ci = ni / nTotalAtoms
             cj = nj / nTotalAtoms
 
-            self._outputData["f(q,t)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["f(q,t)_coh_%s%s" % pair][:]
+            self._outputData[f"f(q,t)_coh_weighted_{pair_str}"][:] = (
+                self._outputData[f"f(q,t)_coh_{pair_str}"][:]
                 * np.sqrt(ci * cj)
                 * bi
                 * bj
             )
-            self._outputData["s(q,f)_coh_weighted_%s%s" % pair][:] = (
-                self._outputData["s(q,f)_coh_%s%s" % pair][:]
+            self._outputData[f"s(q,f)_coh_weighted_{pair_str}"][:] = (
+                self._outputData[f"s(q,f)_coh_{pair_str}"][:]
                 * np.sqrt(ci * cj)
                 * bi
                 * bj
             )
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
                 self._outputData["f(q,t)_coh_total"][:] += self._outputData[
-                    "f(q,t)_coh_weighted_%s%s" % pair
+                    f"f(q,t)_coh_weighted_{pair_str}"
                 ][:]
                 self._outputData["s(q,f)_coh_total"][:] += self._outputData[
-                    "s(q,f)_coh_weighted_%s%s" % pair
+                    f"s(q,f)_coh_weighted_{pair_str}"
                 ][:]
             else:
                 self._outputData["f(q,t)_coh_total"][:] += (
-                    2 * self._outputData["f(q,t)_coh_weighted_%s%s" % pair][:]
+                    2 * self._outputData[f"f(q,t)_coh_weighted_{pair_str}"][:]
                 )
                 self._outputData["s(q,f)_coh_total"][:] += (
-                    2 * self._outputData["s(q,f)_coh_weighted_%s%s" % pair][:]
+                    2 * self._outputData[f"s(q,f)_coh_weighted_{pair_str}"][:]
                 )
 
         # Compute incoherent functions and structure factor
@@ -435,18 +434,18 @@ class NeutronDynamicTotalStructureFactor(IJob):
             ni = nAtomsPerElement[element]
             ci = ni / nTotalAtoms
 
-            self._outputData["f(q,t)_inc_weighted_%s" % element][:] = (
-                self._outputData["f(q,t)_inc_%s" % element][:] * ci * bi
+            self._outputData[f"f(q,t)_inc_weighted_{element}"][:] = (
+                self._outputData[f"f(q,t)_inc_{element}"][:] * ci * bi
             )
-            self._outputData["s(q,f)_inc_weighted_%s" % element][:] = (
-                self._outputData["s(q,f)_inc_%s" % element][:] * ci * bi
+            self._outputData[f"s(q,f)_inc_weighted_{element}"][:] = (
+                self._outputData[f"s(q,f)_inc_{element}"][:] * ci * bi
             )
 
             self._outputData["f(q,t)_inc_total"][:] += self._outputData[
-                "f(q,t)_inc_weighted_%s" % element
+                f"f(q,t)_inc_weighted_{element}"
             ][:]
             self._outputData["s(q,f)_inc_total"][:] += self._outputData[
-                "s(q,f)_inc_weighted_%s" % element
+                f"s(q,f)_inc_weighted_{element}"
             ][:]
 
         # Compute total F(Q,t) = inc + coh

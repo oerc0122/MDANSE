@@ -154,7 +154,7 @@ class GeneralTab(QObject):
             conversion_factor = measure(1.0, input_unit, equivalent=True).toval(
                 target_unit
             )
-        except:
+        except Exception:
             target_unit = self._settings.default_value("units", property)
             conversion_factor = measure(1.0, input_unit, equivalent=True).toval(
                 target_unit
