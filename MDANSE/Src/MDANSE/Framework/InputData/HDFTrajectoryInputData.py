@@ -61,7 +61,7 @@ class HDFTrajectoryInputData(InputFileData):
         val.append("Number of steps:")
         val.append(f"{self._data}\n")
         val.append("Configuration:")
-        val.append(f"\tIs periodic: {'unit_cell' in self._data.file}\n")
+        val.append(f"\tIs periodic: {self._data.unit_cell(0) is not None}\n")
         try:
             val.append(f"First unit cell (nm):\n{self._data.unit_cell(0)._unit_cell}\n")
         except Exception:
