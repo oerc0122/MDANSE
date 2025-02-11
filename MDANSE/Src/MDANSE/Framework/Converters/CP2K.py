@@ -122,11 +122,10 @@ class CP2K(Converter):
         },
     )
     settings["vel_file"] = (
-        "XYZFileConfigurator",
+        "OptionalXYZFileConfigurator",
         {
             "wildcard": "XYZ files (*.xyz);;All files (*)",
-            "default": "INPUT_FILENAME.xyz",
-            "optional": True,
+            "default": "",
             "label": "Velocity file (XYZ, optional)",
         },
     )
@@ -169,7 +168,7 @@ class CP2K(Converter):
         self._atomicAliases = self.configuration["atom_aliases"]["value"]
         self._xyzFile = self.configuration["pos_file"]
 
-        if self.configuration["vel_file"]:
+        if self.configuration["vel_file"]["value"]:
             self._velFile = self.configuration["vel_file"]
             if abs(self._xyzFile["time_step"] - self._velFile["time_step"]) > 1.0e-09:
                 raise CP2KConverterError(
@@ -216,7 +215,7 @@ class CP2K(Converter):
         )
 
         data_to_be_written = ["configuration", "time"]
-        if self.configuration["vel_file"]:
+        if self.configuration["vel_file"]["value"]:
             data_to_be_written.append("velocities")
 
     def run_step(self, index):
@@ -236,7 +235,7 @@ class CP2K(Converter):
         )
 
         variables = {}
-        if self.configuration["vel_file"]:
+        if self.configuration["vel_file"]["value"]:
             variables["velocities"] = self._velFile.read_step(index) * measure(
                 1.0, iunit="ang/fs"
             ).toval("nm/ps")
@@ -284,7 +283,7 @@ class CP2K(Converter):
 
         self._xyzFile.close()
 
-        if self.configuration["vel_file"]:
+        if self.configuration["vel_file"]["value"]:
             self._velFile.close()
 
         self._cellFile.close()

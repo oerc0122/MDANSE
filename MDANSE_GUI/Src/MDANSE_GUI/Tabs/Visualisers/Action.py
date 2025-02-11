@@ -64,6 +64,7 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "XDATCARFileConfigurator": InputFileWidget,
     "XTDFileConfigurator": InputFileWidget,
     "XYZFileConfigurator": InputFileWidget,
+    "OptionalXYZFileConfigurator": InputFileWidget,
     "RunningModeConfigurator": RunningModeWidget,
     "WeightsConfigurator": ComboWidget,
     "MultipleChoicesConfigurator": MultipleCombosWidget,
