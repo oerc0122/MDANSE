@@ -122,7 +122,6 @@ class MinimalPDBReader:
             Each atom line in PDB file.
         """
         with open(filename, "r") as source:
-
             for line in source:
                 if line.startswith(("ATOM", "HETATM")):
                     yield line
@@ -153,7 +152,6 @@ class MinimalPDBReader:
         clusters = {}
 
         for atom_number, atom_line in enumerate(atom_lines):
-
             chemical_element = atom_line[element_slice].strip().capitalize()
             atom_name = atom_line[name_slice]
             processed_atom_name = atom_name[:2].strip()
@@ -167,7 +165,7 @@ class MinimalPDBReader:
             if atom_name[-2:].isnumeric():
                 backup_elements.append(atom_name[0])
 
-            for trial in (chemical_element, processed_atom_name, *backup_elements):
+            for trial in (*backup_elements, chemical_element, processed_atom_name):
                 if trial in ATOMS_DATABASE.atoms:
                     element_list.append(trial)
                     break
