@@ -94,7 +94,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
         self["extension"] = IFormat.create(self._format).extension
         temp_name = root
         if self["extension"] != root.suffix:  # capture most extension lengths
-            temp_name = temp_name.with_suffix(temp_name.suffix + self["extension"])
+            temp_name = root.with_suffix(root.suffix + self["extension"])
         self["file"] = temp_name
 
         if self["file"].absolute() in self._forbidden_files:
@@ -126,7 +126,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
         :rtype: str
         """
         try:
-            info = "Output file: %s\n" % self["file"]
+            info = f"Output file: {self['file']}\n"
         except KeyError:
             info = "Output Trajectory has not been defined"
 

@@ -71,11 +71,7 @@ class Vector:
     __deepcopy__ = __copy__
 
     def __repr__(self):
-        return "Vector(%s,%s,%s)" % (
-            repr(self.array[0]),
-            repr(self.array[1]),
-            repr(self.array[2]),
-        )
+        return f"Vector({','.join(map(repr, self.array))})"
 
     def __str__(self):
         return repr(list(self.array))
@@ -492,7 +488,7 @@ class Tensor:
 
     def __getitem__(self, index):
         elements = self.array[index]
-        if type(elements) == type(self.array):
+        if type(elements) is type(self.array):
             return Tensor(elements)
         else:
             return elements

@@ -14,28 +14,64 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import os
-from pathlib import PurePath
 import traceback
+from pathlib import PurePath
 
 import numpy as np
+from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.MLogging import LOG
+from MDANSE_GUI.InputWidgets import (
+    AseInputFileWidget,
+    AtomMappingWidget,
+    AtomSelectionWidget,
+    AtomTransmutationWidget,
+    BackupWidget,
+    BooleanWidget,
+    ComboWidget,
+    CorrelationFramesWidget,
+    DerivativeOrderWidget,
+    DistHistCutoffWidget,
+    FloatWidget,
+    FramesWidget,
+    HDFTrajectoryWidget,
+    InputDirectoryWidget,
+    InputFileWidget,
+    InstrumentResolutionWidget,
+    IntegerWidget,
+    InterpolationOrderWidget,
+    MDAnalysisCoordinateFileWidget,
+    MDAnalysisMDTrajTimeStepWidget,
+    MDAnalysisTopologyFileWidget,
+    MDTrajTopologyFileWidget,
+    MoleculeWidget,
+    MultiInputFileWidget,
+    MultipleCombosWidget,
+    OptionalFloatWidget,
+    OutputDirectoryWidget,
+    OutputFilesWidget,
+    OutputStructureWidget,
+    OutputTrajectoryWidget,
+    PartialChargeWidget,
+    ProjectionWidget,
+    QVectorsWidget,
+    RangeWidget,
+    RunningModeWidget,
+    StringWidget,
+    UnitCellWidget,
+    VectorWidget,
+)
+from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
+from MDANSE_GUI.Widgets.DelayedButton import DelayedButton
+from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import (
-    QPushButton,
+    QCheckBox,
     QFileDialog,
+    QHBoxLayout,
+    QPushButton,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
-    QHBoxLayout,
-    QCheckBox,
-    QTextEdit,
 )
-from qtpy.QtCore import Signal, Slot
-
-from MDANSE.MLogging import LOG
-from MDANSE.Framework.Jobs.IJob import IJob
-
-from MDANSE_GUI.Widgets.DelayedButton import DelayedButton
-from MDANSE_GUI.InputWidgets import *
-from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
-
 
 widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "FloatConfigurator": FloatWidget,
@@ -190,8 +226,7 @@ class Action(QWidget):
             dtype = value[0]
             ddict = value[1]
             configurator = job_instance.configuration[key]
-            if not "label" in ddict.keys():
-                ddict["label"] = key
+            ddict.setdefault("label", key)
             ddict["configurator"] = configurator
             ddict["source_object"] = self._input_trajectory
             widget_class = widget_lookup[dtype]
@@ -208,12 +243,11 @@ class Action(QWidget):
             dtype = value[0]
             ddict = value[1]
             configurator = job_instance.configuration[key]
-            if not "label" in ddict.keys():
-                ddict["label"] = key
+            ddict.setdefault("label", key)
             ddict["configurator"] = configurator
             ddict["source_object"] = self._input_trajectory
             ddict["trajectory_configurator"] = self._trajectory_configurator
-            if not dtype in widget_lookup.keys():
+            if dtype not in widget_lookup:
                 ddict["tooltip"] = (
                     "This is not implemented in the MDANSE GUI at the moment, and it MUST BE!"
                 )
@@ -258,8 +292,8 @@ class Action(QWidget):
             default_check_status = (
                 self._parent_tab._settings.group("Execution").get("auto-load") == "True"
             )
-        except:
-            LOG.debug(f"Converter tab could not load auto-load settings")
+        except Exception:
+            LOG.debug("Converter tab could not load auto-load settings")
             default_check_status = False
         if default_check_status:
             self.post_execute_checkbox.setChecked(True)
@@ -373,8 +407,8 @@ class Action(QWidget):
     @Slot()
     def save_dialog(self):
         try:
-            cname = self._job_name
-        except:
+            _cname = self._job_name
+        except Exception:
             currentpath = PurePath(os.path.abspath("."))
         else:
             currentpath = PurePath(
@@ -390,8 +424,8 @@ class Action(QWidget):
             return None
         path = PurePath(os.path.split(result)[0])
         try:
-            cname = self._job_name
-        except:
+            _cname = self._job_name
+        except Exception:
             pass
         else:
             self._parent_tab.set_path(self._job_name + "_script", str(path))

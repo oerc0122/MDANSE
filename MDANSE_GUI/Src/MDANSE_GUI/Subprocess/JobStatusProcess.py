@@ -53,12 +53,12 @@ class JobCommunicator(QObject):
         LOG.info(f"JobCommunicator PID: {os.getpid()} started 'terminate_the_process")
         try:
             self._process.terminate()
-        except:
+        except Exception:
             return
         else:
             try:
                 self._process.close()
-            except:
+            except Exception:
                 return
 
 
@@ -91,7 +91,7 @@ class JobStatusProcess(Status):
         LOG.info(f"JobStatusProcess PID: {os.getpid()} started 'start_status")
         try:
             temp = int(self._nSteps)
-        except:
+        except Exception:
             self._pipe.send(("STARTED", None))
         else:
             self._pipe.send(("STARTED", temp))

@@ -154,4 +154,4 @@ class DataPlotter(QWidget):
         if self._model is None:
             return
         self._model.clear()
-        LOG.info(f"Cleared the plot")
+        LOG.info("Cleared the plot")

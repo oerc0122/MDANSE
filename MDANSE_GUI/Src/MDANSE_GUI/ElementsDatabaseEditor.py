@@ -146,7 +146,7 @@ class ElementModel(QStandardItemModel):
         ne_dialog = InputDialog(fields=dialog_variables)
         ne_dialog.got_values.connect(self.add_new_line)
         ne_dialog.show()
-        result = ne_dialog.exec()
+        _result = ne_dialog.exec()
 
     @Slot()
     def new_column_dialog(self):
@@ -173,7 +173,7 @@ class ElementModel(QStandardItemModel):
         ne_dialog = InputDialog(fields=dialog_variables)
         ne_dialog.got_values.connect(self.add_new_column)
         ne_dialog.show()
-        result = ne_dialog.exec()
+        _result = ne_dialog.exec()
 
     @Slot(dict)
     def add_new_line(self, input_variables: dict):
@@ -182,7 +182,7 @@ class ElementModel(QStandardItemModel):
             new_label = input_variables["atom_name"]
         except KeyError:
             return None
-        if not new_label in self.database.atoms:
+        if new_label not in self.database.atoms:
             self.database.add_atom(new_label)
             row = []
             for key in self.all_column_names:
@@ -209,7 +209,7 @@ class ElementModel(QStandardItemModel):
             new_type = input_variables["property_type"]
         except KeyError:
             return None
-        if not new_label in self.database.atoms:
+        if new_label not in self.database.atoms:
             self.database.add_property(new_label, new_type)
             column = []
             for key in self.all_row_names:

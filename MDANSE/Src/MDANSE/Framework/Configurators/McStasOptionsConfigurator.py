@@ -34,10 +34,10 @@ def parse_dictionary(input: str) -> Dict[str, Any]:
         value = value.strip(" '")
         try:
             value = int(value)
-        except:
+        except Exception:
             try:
                 value = float(value)
-            except:
+            except Exception:
                 pass
         result[key] = value
     return result
@@ -84,13 +84,13 @@ class McStasOptionsConfigurator(IConfigurator):
                 if Path(v).exists():
                     v = self._default["dir"]
                 self["mcstas_output_directory"] = Path(v)
-            tmp.append("--%s=%s" % (k, v))
+            tmp.append(f"--{k}={v}")
 
         dirname = self["mcstas_output_directory"].parent
 
         try:
             PLATFORM.create_directory(dirname)
-        except:
+        except Exception:
             self.error_status = f"The directory {dirname} is not writable"
             return
 
@@ -107,4 +107,4 @@ class McStasOptionsConfigurator(IConfigurator):
         if "value" not in self:
             return "Not configured yet\n"
 
-        return "McStas command line options: %s\n" % self["value"]
+        return f"McStas command line options: {self['value']}\n"

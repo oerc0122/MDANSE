@@ -161,11 +161,11 @@ class Translation(RigidBodyTransformation):
         return Translation(-self.vector)
 
     def screwMotion(self):
-        l = self.vector.length()
-        if l == 0.0:
+        length = self.vector.length()
+        if length == 0.0:
             return Vector(0.0, 0.0, 0.0), Vector(0.0, 0.0, 1.0), 0.0, 0.0
         else:
-            return Vector(0.0, 0.0, 0.0), self.vector / l, 0.0, l
+            return Vector(0.0, 0.0, 0.0), self.vector / length, 0.0, length
 
 
 #
@@ -309,8 +309,7 @@ class Rotation(RigidBodyTransformation):
             raise ValueError("FAILURE 1, norm = 0")
         if abs(_c / _norm) > 1 + tolerance:
             raise ValueError(
-                "FAILURE 2"
-                + "malformed rotation Tensor (non orthogonal?) %.8f" % (_c / _norm)
+                f"FAILURE 2 malformed rotation Tensor (non orthogonal?) {_c / _norm:.8f}"
             )
         # if _c/_norm > 1: raise ValueError('Step1: No solution')
         _th = angleFromSineAndCosine(_b / _norm, _a / _norm)
