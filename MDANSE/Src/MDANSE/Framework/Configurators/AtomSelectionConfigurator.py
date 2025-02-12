@@ -54,7 +54,7 @@ class AtomSelectionConfigurator(IConfigurator):
             return
 
         try:
-            self.selector.read_from_json(value)
+            self.selector.load_from_json(value)
         except JSONDecodeError:
             self.error_status = "Invalid JSON string."
             return

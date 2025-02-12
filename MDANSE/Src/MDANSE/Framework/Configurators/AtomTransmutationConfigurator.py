@@ -57,7 +57,7 @@ class AtomTransmuter:
         if symbol not in ATOMS_DATABASE:
             raise ValueError(f"{symbol} not found in the atom database.")
 
-        self.selector.read_from_json(selection_string)
+        self.selector.load_from_json(selection_string)
         indices = self.selector.select_in_trajectory(self._current_trajectory)
         for idx in indices:
             self._new_map[idx] = symbol

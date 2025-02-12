@@ -109,7 +109,7 @@ class ReusableSelection:
         """
         return json.dumps(self.operations)
 
-    def read_from_json(self, json_string: str):
+    def load_from_json(self, json_string: str):
         """_summary_
 
         Parameters
