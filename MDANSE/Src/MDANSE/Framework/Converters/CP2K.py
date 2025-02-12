@@ -129,6 +129,14 @@ class CP2K(Converter):
             "label": "Velocity file (XYZ, optional)",
         },
     )
+    settings["force_file"] = (
+        "OptionalXYZFileConfigurator",
+        {
+            "wildcard": "XYZ files (*.xyz);;All files (*)",
+            "default": "",
+            "label": "Force file (XYZ, optional)",
+        },
+    )
     settings["cell_file"] = (
         "InputFileConfigurator",
         {
@@ -180,6 +188,18 @@ class CP2K(Converter):
                     "Inconsistent number of frames between pos and vel files"
                 )
 
+        if self.configuration["force_file"]["value"]:
+            self._forceFile = self.configuration["force_file"]
+            if abs(self._xyzFile["time_step"] - self._forceFile["time_step"]) > 1.0e-09:
+                raise CP2KConverterError(
+                    "Inconsistent time step between pos and force files"
+                )
+
+            if self._xyzFile["n_frames"] != self._forceFile["n_frames"]:
+                raise CP2KConverterError(
+                    "Inconsistent number of frames between pos and force files"
+                )
+
         self._cellFile = CellFile(self.configuration["cell_file"]["filename"])
 
         if abs(self._cellFile["time_step"] - self._xyzFile["time_step"]) > 1.0e-09:
@@ -217,6 +237,8 @@ class CP2K(Converter):
         data_to_be_written = ["configuration", "time"]
         if self.configuration["vel_file"]["value"]:
             data_to_be_written.append("velocities")
+        if self.configuration["force_file"]["value"]:
+            data_to_be_written.append("forces")
 
     def run_step(self, index):
         """Runs a single step of the job.
@@ -239,6 +261,10 @@ class CP2K(Converter):
             variables["velocities"] = self._velFile.read_step(index) * measure(
                 1.0, iunit="ang/fs"
             ).toval("nm/ps")
+        if self.configuration["force_file"]["value"]:
+            variables["forces"] = self._forceFile.read_step(index) * measure(
+                1.0, iunit="uma ang / fs2"
+            ).toval("uma nm / ps2")
 
         real_conf = PeriodicRealConfiguration(
             self._trajectory.chemical_system, coords, unitcell, **variables
@@ -284,6 +310,9 @@ class CP2K(Converter):
         self._xyzFile.close()
 
         if self.configuration["vel_file"]["value"]:
+            self._velFile.close()
+
+        if self.configuration["force_file"]["value"]:
             self._velFile.close()
 
         self._cellFile.close()

@@ -248,7 +248,7 @@ def test_discover_mdt_conversion_file_exists_and_loads_up_successfully(compressi
     os.remove(temp_name + ".log")
 
 
-@pytest.mark.parametrize("velocity", [cp2k_vel, None])
+@pytest.mark.parametrize("velocity", [cp2k_vel, "", None])
 def test_cp2k_mdt_conversion_file_exists_and_loads_up_successfully(velocity):
     temp_name = tempfile.mktemp()
 
