@@ -53,3 +53,9 @@ def select_none(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -
         An empty set.
     """
     return set()
+
+
+def invert_selection(trajectory: Trajectory, selection: Set[int]) -> Set[int]:
+    all_indices = select_all(trajectory)
+    inverted = all_indices.difference(selection)
+    return inverted
