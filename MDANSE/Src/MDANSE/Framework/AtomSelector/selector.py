@@ -13,16 +13,32 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import copy
+
 import json
 from typing import Union, Dict, Any, Set
-from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
-from MDANSE.Framework.AtomSelector.all_selector import select_all
-from MDANSE.Framework.AtomSelector.general_selection import select_all, select_none
+from MDANSE.Framework.AtomSelector.general_selection import (
+    select_all,
+    select_none,
+    invert_selection,
+)
+from MDANSE.Framework.AtomSelector.atom_selection import select_atoms
+from MDANSE.Framework.AtomSelector.molecule_selection import select_molecules
+from MDANSE.Framework.AtomSelector.group_selection import select_labels, select_pattern
 
 
-function_lookup = {function.__name__: function for function in [select_all, select_none]}
+function_lookup = {
+    function.__name__: function
+    for function in [
+        select_all,
+        select_none,
+        invert_selection,
+        select_atoms,
+        select_molecules,
+        select_labels,
+        select_pattern,
+    ]
+}
 
 
 class ReusableSelection:
@@ -51,6 +67,11 @@ class ReusableSelection:
     ):
         if number is None:
             number = len(self.operations)
+        else:
+            try:
+                number = int(number)
+            except TypeError:
+                number = len(self.operations)
         self.operations[number] = function_parameters
 
     def select_in_trajectory(self, trajectory: Trajectory) -> Set[int]:
@@ -61,11 +82,11 @@ class ReusableSelection:
             return self.all_idxs
         for number in sequence:
             function_parameters = self.operations[number]
-            function_name = function_parameters.pop("function_name", "select_all")
+            function_name = function_parameters.get("function_name", "select_all")
             if function_name == "invert_selection":
                 selection = self.all_idxs.difference(selection)
             else:
-                operation_type = function_parameters.pop("operation_type", "union")
+                operation_type = function_parameters.get("operation_type", "union")
                 function = function_lookup[function_name]
                 temp_selection = function(trajectory, **function_parameters)
                 if operation_type == "union":
@@ -99,4 +120,4 @@ class ReusableSelection:
         json_setting = json.loads(json_string)
         for k0, v0 in json_setting.items():
             if isinstance(v0, dict):
-                self.append_operation(k0, v0)
+                self.set_selection(k0, v0)
