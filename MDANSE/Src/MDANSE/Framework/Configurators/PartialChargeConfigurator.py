@@ -17,6 +17,7 @@ from typing import Union
 import json
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
@@ -34,6 +35,7 @@ class PartialChargeMapper:
         """
         system = trajectory.chemical_system
         charges = trajectory.charges(0)
+        self._current_trajectory = trajectory
         self._original_map = {}
         for at_num, at in enumerate(system.atom_list):
             try:
@@ -43,7 +45,7 @@ class PartialChargeMapper:
         self._new_map = {}
 
     def update_charges(
-        self, selection_dict: dict[str, Union[bool, dict]], charge: float
+        self, selection_string: str, charge: float
     ) -> None:
         """With the selection dictionary update the selector and then
         update the partial charge map.
@@ -56,8 +58,10 @@ class PartialChargeMapper:
         charge: float
             The partial charge to map the selected atoms to.
         """
-        self.selector.update_settings(selection_dict, reset_first=True)
-        for idx in self.selector.get_idxs():
+        selector = ReusableSelection()
+        selector.read_from_json(selection_string)
+        indices = selector.select_in_trajectory(self._current_trajectory)
+        for idx in indices:
             self._new_map[idx] = charge
 
     def get_full_setting(self) -> dict[int, float]:

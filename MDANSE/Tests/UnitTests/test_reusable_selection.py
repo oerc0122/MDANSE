@@ -40,6 +40,16 @@ def test_select_all(trajectory):
 
 
 @pytest.mark.parametrize("trajectory", [short_traj, mdmc_traj, com_traj])
+def test_empty_json_string_selects_all(trajectory):
+    traj_object = HDFTrajectoryInputData(trajectory)
+    n_atoms = len(traj_object.chemical_system.atom_list)
+    reusable_selection = ReusableSelection()
+    reusable_selection.read_from_json('{}')
+    selection = reusable_selection.select_in_trajectory(traj_object.trajectory)
+    assert len(selection) == n_atoms
+
+
+@pytest.mark.parametrize("trajectory", [short_traj, mdmc_traj, com_traj])
 def test_select_none(trajectory):
     traj_object = HDFTrajectoryInputData(trajectory)
     reusable_selection = ReusableSelection()
@@ -174,3 +184,21 @@ def test_select_pattern_selects_water():
     another_selection.read_from_json(json_string)
     water_selection = another_selection.select_in_trajectory(traj_object.trajectory)
     assert len(water_selection) == 28746
+
+
+def test_selection_with_multiple_steps():
+    """This tests if the ReusableSelection can select oxygen only in
+    the water molecules. It combines two steps:
+    1. water is selected using rdkit pattern matching
+    2. oxygen is selected using simple atom type matching; intersection of the selections is applied
+    The selection is then saved to a JSON string, loaded from the string and applied to the trajectory.
+    """
+    traj_object = HDFTrajectoryInputData(traj_2vb1)
+    reusable_selection = ReusableSelection()
+    reusable_selection.set_selection(None, {'function_name': 'select_pattern', 'rdkit_pattern': "[#8X2;H2](~[H])~[H]"})
+    reusable_selection.set_selection(None, {'function_name': 'select_atoms', 'atom_types': ['O'], 'operation_type': 'intersection'})
+    json_string = reusable_selection.convert_to_json()
+    another_selection = ReusableSelection()
+    another_selection.read_from_json(json_string)
+    water_oxygen_selection = another_selection.select_in_trajectory(traj_object.trajectory)
+    assert len(water_oxygen_selection) == int(28746/3)

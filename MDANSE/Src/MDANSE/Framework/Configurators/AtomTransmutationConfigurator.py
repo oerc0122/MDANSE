@@ -18,6 +18,7 @@ from typing import Union
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Chemistry import ATOMS_DATABASE
+from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
@@ -33,31 +34,32 @@ class AtomTransmuter:
         system : ChemicalSystem
             The chemical system object.
         """
-        self.selector = Selector(trajectory)
+        self.selector = ReusableSelection()
         self._original_map = {}
         for number, element in enumerate(trajectory.chemical_system.atom_list):
             self._original_map[number] = element
         self._new_map = {}
+        self._current_trajectory = trajectory
 
     def apply_transmutation(
-        self, selection_dict: dict[str, Union[bool, dict]], symbol: str
+        self, selection_string: str, symbol: str
     ) -> None:
         """With the selection dictionary update selector and then
         update the transmutation map.
 
         Parameters
         ----------
-        selection_dict: dict[str, Union[bool, dict]]
-            The selection setting to get the indices to map the inputted
-            symbol.
+        selection_string: str
+            the JSON string of the selection operation to use.
         symbol: str
             The element to map the selected atoms to.
         """
         if symbol not in ATOMS_DATABASE:
             raise ValueError(f"{symbol} not found in the atom database.")
 
-        self.selector.update_settings(selection_dict, reset_first=True)
-        for idx in self.selector.get_idxs():
+        self.selector.read_from_json(selection_string)
+        indices = self.selector.select_in_trajectory(self._current_trajectory)
+        for idx in indices:
             self._new_map[idx] = symbol
 
     def get_setting(self) -> dict[int, str]:

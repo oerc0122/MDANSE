@@ -14,7 +14,12 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+from json import JSONDecodeError
+
+import numpy as np
+
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 
 
 class AtomSelectionConfigurator(IConfigurator):
@@ -28,7 +33,7 @@ class AtomSelectionConfigurator(IConfigurator):
         The defaults selection setting.
     """
 
-    _default = '{"all": true}'
+    _default = '{}'
 
     def configure(self, value: str) -> None:
         """Configure an input value.
@@ -39,6 +44,7 @@ class AtomSelectionConfigurator(IConfigurator):
             The selection setting in a json readable format.
         """
         trajConfig = self._configurable[self._dependencies["trajectory"]]
+        self.selector = ReusableSelection()
 
         if value is None:
             value = self._default
@@ -47,19 +53,18 @@ class AtomSelectionConfigurator(IConfigurator):
             self.error_status = "Invalid input value."
             return
 
-        selector = Selector(trajConfig["instance"])
-        if not selector.check_valid_json_settings(value):
+        try:
+            self.selector.read_from_json(value)
+        except JSONDecodeError:
             self.error_status = "Invalid JSON string."
             return
 
         self["value"] = value
 
-        selector.load_from_json(value)
-        indices = selector.get_idxs()
+        self.selector.load_from_json(value)
+        indices = self.selector.select_in_trajectory(trajConfig["instance"])
 
         self["flatten_indices"] = sorted(list(indices))
-
-        trajConfig = self._configurable[self._dependencies["trajectory"]]
 
         atoms = trajConfig["instance"].chemical_system.atom_list
         selectedAtoms = [atoms[idx] for idx in self["flatten_indices"]]
@@ -87,12 +92,8 @@ class AtomSelectionConfigurator(IConfigurator):
         dict
             A dictionary of the number of atom per element.
         """
-        nAtomsPerElement = {}
-        for v in self["names"]:
-            if v in nAtomsPerElement:
-                nAtomsPerElement[v] += 1
-            else:
-                nAtomsPerElement[v] = 1
+        names, counts = np.unique(self["names"], return_counts=True)
+        nAtomsPerElement = {names[n]:counts[n] for n in range(len(names))}
 
         return nAtomsPerElement
 
@@ -131,14 +132,11 @@ class AtomSelectionConfigurator(IConfigurator):
 
         return "\n".join(info) + "\n"
 
-    def get_selector(self):
+    def get_selector(self) -> 'ReusableSelection':
         """
         Returns
         -------
-        Selector
-            The atom selector object initialised with the trajectories
-            chemical system.
+        ReusableSelection
+            the instance of the class which selects atoms in a trajectory
         """
-        traj_config = self._configurable[self._dependencies["trajectory"]]
-        selector = Selector(traj_config["instance"])
-        return selector
+        return self.selector

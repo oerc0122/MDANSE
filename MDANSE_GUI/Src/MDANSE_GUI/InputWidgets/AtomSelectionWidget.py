@@ -30,6 +30,7 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
 from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewerWithPicking
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
+from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 from .CheckableComboBox import CheckableComboBox
 
 
@@ -66,7 +67,6 @@ class SelectionHelper(QDialog):
 
     def __init__(
         self,
-        selector,
         traj_data: tuple[str, HDFTrajectoryInputData],
         field: QLineEdit,
         parent,
@@ -76,9 +76,6 @@ class SelectionHelper(QDialog):
         """
         Parameters
         ----------
-        selector : Selector
-            The MDANSE selector initialized with the current chemical
-            system.
         traj_data : tuple[str, HDFTrajectoryInputData]
             A tuple of the trajectory data used to load the 3D viewer.
         field : QLineEdit
@@ -88,10 +85,13 @@ class SelectionHelper(QDialog):
         super().__init__(parent, *args, **kwargs)
         self.setWindowTitle(self._helper_title)
 
-        self.selector = selector
+        self.selector = ReusableSelection()
+        self.trajectory = traj_data[1].trajectory
+        self.system = self.trajectory.chemical_system
         self._field = field
-        self.settings = self.selector.settings
-        self.atm_full_names = self.selector.system.name_list
+        self.atm_full_names = self.system.name_list
+        self.molecule_names = [str(x) for x in self.system._clusters.keys()]
+        self.labels = [str(x) for x in self.system._labels.keys()]
 
         self.selection_textbox = QPlainTextEdit()
         self.selection_textbox.setReadOnly(True)
