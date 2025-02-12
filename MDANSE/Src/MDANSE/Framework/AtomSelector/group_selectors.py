@@ -52,9 +52,7 @@ def select_primary_amine(
         return system.get_substructure_matches(pattern)
 
 
-def select_hydroxy(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
+def select_hydroxy(trajectory: Trajectory, check_exists: bool = False) -> Union[set[int], bool]:
     """Selects the O and H atoms of all hydroxy groups including water.
 
     Parameters
@@ -77,9 +75,7 @@ def select_hydroxy(
         return system.get_substructure_matches(pattern)
 
 
-def select_methyl(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
+def select_methyl(trajectory: Trajectory, check_exists: bool = False) -> Union[set[int], bool]:
     """Selects the C and H atoms of all methyl groups.
 
     Parameters
@@ -102,9 +98,7 @@ def select_methyl(
         return system.get_substructure_matches(pattern)
 
 
-def select_phosphate(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
+def select_phosphate(trajectory: Trajectory, check_exists: bool = False) -> Union[set[int], bool]:
     """Selects the P and O atoms of all phosphate groups.
 
     Parameters
@@ -127,9 +121,7 @@ def select_phosphate(
         return system.get_substructure_matches(pattern)
 
 
-def select_sulphate(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
+def select_sulphate(trajectory: Trajectory, check_exists: bool = False) -> Union[set[int], bool]:
     """Selects the S and O atoms of all sulphate groups.
 
     Parameters
@@ -152,9 +144,7 @@ def select_sulphate(
         return system.get_substructure_matches(pattern)
 
 
-def select_thiol(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
+def select_thiol(trajectory: Trajectory, check_exists: bool = False) -> Union[set[int], bool]:
     """Selects the S and H atoms of all thiol groups.
 
     Parameters

@@ -26,7 +26,6 @@ from qtpy.QtWidgets import (
     QPlainTextEdit,
     QWidget,
 )
-from MDANSE.Framework.AtomSelector import Selector
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
 from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewerWithPicking
@@ -67,7 +66,7 @@ class SelectionHelper(QDialog):
 
     def __init__(
         self,
-        selector: Selector,
+        selector,
         traj_data: tuple[str, HDFTrajectoryInputData],
         field: QLineEdit,
         parent,

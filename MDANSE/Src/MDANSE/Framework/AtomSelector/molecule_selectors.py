@@ -22,9 +22,7 @@ __all__ = [
 ]
 
 
-def select_water(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
+def select_water(trajectory: Trajectory, check_exists: bool = False) -> Union[set[int], bool]:
     """Selects the O and H atoms of all water molecules.
 
     Parameters

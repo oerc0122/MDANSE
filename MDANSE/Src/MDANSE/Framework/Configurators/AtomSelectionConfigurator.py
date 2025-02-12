@@ -15,7 +15,6 @@
 #
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
-from MDANSE.Framework.AtomSelector import Selector
 
 
 class AtomSelectionConfigurator(IConfigurator):
@@ -132,7 +131,7 @@ class AtomSelectionConfigurator(IConfigurator):
 
         return "\n".join(info) + "\n"
 
-    def get_selector(self) -> Selector:
+    def get_selector(self):
         """
         Returns
         -------

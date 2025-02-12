@@ -19,7 +19,6 @@ from typing import Union
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
-from MDANSE.Framework.AtomSelector import Selector
 
 
 class AtomTransmuter:

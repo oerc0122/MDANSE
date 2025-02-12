@@ -17,7 +17,6 @@ from typing import Union
 import json
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
-from MDANSE.Framework.AtomSelector import Selector
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
@@ -35,7 +34,6 @@ class PartialChargeMapper:
         """
         system = trajectory.chemical_system
         charges = trajectory.charges(0)
-        self.selector = Selector(trajectory)
         self._original_map = {}
         for at_num, at in enumerate(system.atom_list):
             try:

@@ -55,9 +55,7 @@ def select_element(
         return system.get_substructure_matches(pattern)
 
 
-def select_dummy(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
+def select_dummy(trajectory: Trajectory, check_exists: bool = False) -> Union[set[int], bool]:
     """Selects all dummy atoms in the chemical system.
 
     Parameters
@@ -86,11 +84,7 @@ def select_dummy(
             if trajectory.get_atom_property(atm, "dummy"):
                 dummy_list.append(atm)
         return set(
-            [
-                index
-                for index, element in enumerate(system.atom_list)
-                if element in dummy_list
-            ]
+            [index for index, element in enumerate(system.atom_list) if element in dummy_list]
         )
 
 
@@ -119,9 +113,7 @@ def select_atom_name(
             return True
         return False
     else:
-        return set(
-            [index for index, element in enumerate(system.atom_list) if element == name]
-        )
+        return set([index for index, element in enumerate(system.atom_list) if element == name])
 
 
 def select_atom_fullname(
@@ -149,9 +141,7 @@ def select_atom_fullname(
             return True
         return False
     else:
-        return set(
-            [index for index, name in enumerate(system.name_list) if name == fullname]
-        )
+        return set([index for index, name in enumerate(system.name_list) if name == fullname])
 
 
 def select_hs_on_element(

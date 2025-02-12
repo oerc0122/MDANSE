@@ -19,9 +19,7 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_all(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
-) -> Set[int]:
+def select_all(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
     """Selects all the atoms in the trajectory.
 
     Parameters
@@ -39,9 +37,7 @@ def select_all(
     return set(range(len(trajectory.chemical_system.atom_list)))
 
 
-def select_none(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
-) -> Set[int]:
+def select_none(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
     """Returns an empty selection.
 
     Parameters

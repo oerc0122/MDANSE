@@ -17,9 +17,7 @@ from typing import Union
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_all(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
+def select_all(trajectory: Trajectory, check_exists: bool = False) -> Union[set[int], bool]:
     """Selects all atoms in the chemical system except for the dummy
     atoms.
 
@@ -45,10 +43,4 @@ def select_all(
         for atm in system._unique_elements:
             if trajectory.get_atom_property(atm, "dummy"):
                 dummy_list.append(atm)
-        return set(
-            [
-                index
-                for index in system._atom_indices
-                if atom_list[index] not in dummy_list
-            ]
-        )
+        return set([index for index in system._atom_indices if atom_list[index] not in dummy_list])

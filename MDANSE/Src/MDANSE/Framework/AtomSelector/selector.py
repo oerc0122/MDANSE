@@ -22,9 +22,7 @@ from MDANSE.Framework.AtomSelector.all_selector import select_all
 from MDANSE.Framework.AtomSelector.general_selection import select_all, select_none
 
 
-function_lookup = {
-    function.__name__: function for function in [select_all, select_none]
-}
+function_lookup = {function.__name__: function for function in [select_all, select_none]}
 
 
 class ReusableSelection:
