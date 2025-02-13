@@ -74,6 +74,49 @@ class ReusableSelection:
                 number = len(self.operations)
         self.operations[number] = function_parameters
 
+    def validate_selection_string(self, json_string: str, trajectory: Trajectory, current_selection: Set[int]) -> bool:
+        """Checks if the selection operation encoded in the input JSON string
+        will add any new atoms to the current selection on the given trajectory.
+
+        Parameters
+        ----------
+        json_string : str
+            new selection operation in a JSON string
+        trajectory : Trajectory
+            a trajectory instance for which current_selection is defined
+        current_selection : Set[int]
+            set of currently selected atom indices
+
+        Returns
+        -------
+        bool
+            True if the selection adds atoms, False otherwise
+        """
+        function_parameters = json.loads(json_string)
+        if len(self.operations) == 0:
+            return True
+        function_name = function_parameters.get("function_name", "select_all")
+        if function_name == "invert_selection":
+            selection = invert_selection(trajectory, current_selection)
+            return True
+        else:
+            operation_type = function_parameters.get("operation_type", "union")
+            function = function_lookup[function_name]
+            temp_selection = function(trajectory, **function_parameters)
+            if operation_type == "union":
+                selection = selection.union(temp_selection)
+            elif operation_type == "intersection":
+                selection = selection.intersection(temp_selection)
+            elif operation_type == "difference":
+                selection = selection.difference(temp_selection)
+            else:
+                selection = temp_selection
+        if len(selection.difference(current_selection)) > 0 and operation_type == "union":
+            return True
+        elif len(current_selection.difference(selection)) > 0 and operation_type != "union":
+            return True
+        return False
+
     def select_in_trajectory(self, trajectory: Trajectory) -> Set[int]:
         selection = set()
         self.all_idxs = set(range(len(trajectory.chemical_system.atom_list)))
@@ -93,6 +136,8 @@ class ReusableSelection:
                     selection = selection.union(temp_selection)
                 elif operation_type == "intersection":
                     selection = selection.intersection(temp_selection)
+                elif operation_type == "difference":
+                    selection = selection.difference(temp_selection)
                 else:
                     selection = temp_selection
         return selection

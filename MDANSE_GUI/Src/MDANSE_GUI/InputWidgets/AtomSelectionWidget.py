@@ -13,25 +13,88 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from qtpy.QtCore import Qt, Slot
+
+from typing import Set
+import json
+
+from qtpy.QtCore import Slot, Signal
+from qtpy.QtGui import QStandardItemModel, QStandardItem
 from qtpy.QtWidgets import (
     QLineEdit,
     QPushButton,
     QDialog,
-    QCheckBox,
     QVBoxLayout,
     QHBoxLayout,
     QGroupBox,
     QLabel,
     QPlainTextEdit,
     QWidget,
+    QListView,
 )
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
 from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewerWithPicking
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
-from .CheckableComboBox import CheckableComboBox
+from MDANSE_GUI.Widgets.SelectionWidgets import AllAtomSelection
+
+
+VALID_SELECTION = "Valid selection"
+USELESS_SELECTION = "Selection did not change. This operation is not needed."
+MALFORMED_SELECTION = "This is not a valid JSON string."
+
+
+class SelectionModel(QStandardItemModel):
+    selection_changed = Signal()
+
+    def __init__(self, trajectory):
+        super().__init__(None)
+        self._trajectory = trajectory
+        self._selection = ReusableSelection()
+        self._current_selection = set()
+
+    def rebuild_selection(self, last_operation: str):
+        self._selection = ReusableSelection()
+        self._current_selection = set()
+        for row in range(self.rowCount()):
+            index = self.index(row, 0)
+            item = self.itemFromIndex(index)
+            json_string = item.text()
+            self._selection.load_from_json(json_string)
+        self._current_selection = self._selection.select_in_trajectory(self._trajectory)
+        if last_operation:
+            try:
+                valid = self._selection.validate_selection_string(
+                    last_operation, self._trajectory, self._current_selection
+                )
+            except json.JSONDecodeError:
+                return MALFORMED_SELECTION
+            if valid:
+                self._selection.load_from_json(json_string)
+                return VALID_SELECTION
+            else:
+                return USELESS_SELECTION
+
+    def current_selection(self, last_operation: str = "") -> Set[int]:
+        self.rebuild_selection(last_operation)
+        return self._selection.select_in_trajectory(self._trajectory)
+
+    def current_steps(self) -> str:
+        result = {}
+        for row in range(self.rowCount()):
+            index = self.index(row, 0)
+            item = self.itemFromIndex(index)
+            json_string = item.text()
+            python_object = json.loads(json_string)
+            result[row] = python_object
+        return json.dumps(result)
+
+    @Slot(str)
+    def accept_from_widget(self, json_string: str):
+        new_item = QStandardItem(json_string)
+        new_item.setEditable(False)
+        self.appendRow(new_item)
+        self.selection_changed.emit()
 
 
 class SelectionHelper(QDialog):
@@ -85,9 +148,9 @@ class SelectionHelper(QDialog):
         super().__init__(parent, *args, **kwargs)
         self.setWindowTitle(self._helper_title)
 
-        self.selector = ReusableSelection()
         self.trajectory = traj_data[1].trajectory
         self.system = self.trajectory.chemical_system
+        self.selection_model = SelectionModel(self.trajectory)
         self._field = field
         self.atm_full_names = self.system.name_list
         self.molecule_names = [str(x) for x in self.system._clusters.keys()]
@@ -114,7 +177,6 @@ class SelectionHelper(QDialog):
             helper_layout.addLayout(layout)
 
         self.setLayout(helper_layout)
-        self.update_others()
 
         self.all_selection = True
         self.selected = set([])
@@ -180,81 +242,41 @@ class SelectionHelper(QDialog):
             List of QWidgets to add to the left layout from
             create_layouts.
         """
-        match_exists = self.selector.match_exists
 
         select = QGroupBox("selection")
         select_layout = QVBoxLayout()
 
-        self.check_boxes = []
-        self.combo_boxes = []
+        self.selection_widgets = [AllAtomSelection(self)]
 
-        for k, v in self.settings.items():
-
-            if isinstance(v, bool):
-                check_layout = QHBoxLayout()
-                checkbox = QCheckBox()
-                checkbox.setChecked(v)
-                checkbox.setLayoutDirection(Qt.RightToLeft)
-                label = QLabel(self._cbox_text[k])
-                checkbox.setObjectName(k)
-                checkbox.stateChanged.connect(self.update_others)
-                if not match_exists[k]:
-                    checkbox.setEnabled(False)
-                    label.setStyleSheet("color: grey;")
-                self.check_boxes.append(checkbox)
-                check_layout.addWidget(label)
-                check_layout.addWidget(checkbox)
-                select_layout.addLayout(check_layout)
-
-            elif isinstance(v, dict):
-                combo_layout = QHBoxLayout()
-                combo = CheckableComboBox()
-                items = [str(i) for i in v.keys() if match_exists[k][i]]
-                # we blocksignals here as there can be some
-                # performance issues with a large number of items
-                combo.model().blockSignals(True)
-                combo.addItems(items)
-                combo.model().blockSignals(False)
-                combo.setObjectName(k)
-                combo.model().dataChanged.connect(self.update_others)
-                label = QLabel(self._cbox_text[k])
-                if len(items) == 0:
-                    combo.setEnabled(False)
-                    label.setStyleSheet("color: grey;")
-                self.combo_boxes.append(combo)
-                combo_layout.addWidget(label)
-                combo_layout.addWidget(combo)
-                select_layout.addLayout(combo_layout)
+        for widget in self.selection_widgets:
+            select_layout.addWidget(widget)
+            widget.new_selection.connect(self.selection_model.accept_from_widget)
 
         invert_layout = QHBoxLayout()
-        label = QLabel("Invert selection:")
+        label = QLabel("Current selection:")
+        self.selection_line = QLineEdit("", self)
         apply = QPushButton("Apply")
-        apply.clicked.connect(self.invert_selection)
+        apply.clicked.connect(self.append_selection)
         invert_layout.addWidget(label)
+        invert_layout.addWidget(self.selection_line)
         invert_layout.addWidget(apply)
         select_layout.addLayout(invert_layout)
 
         select.setLayout(select_layout)
-        return [select]
 
-    def update_others(self) -> None:
-        """Using the checkbox and combobox widgets: update the settings,
-        get the selection and update the textedit box with details of
-        the current selection and the 3d view to match the selection.
-        """
-        for check_box in self.check_boxes:
-            self.settings[check_box.objectName()] = check_box.isChecked()
-        for combo_box in self.combo_boxes:
-            for i in range(combo_box.n_items):
-                txt = combo_box.text[i]
-                if combo_box.objectName() == "index":
-                    key = int(txt)
-                else:
-                    key = txt
-                self.settings[combo_box.objectName()][key] = combo_box.checked[i]
+        preview = QGroupBox("Selection operations")
+        preview_layout = QVBoxLayout()
+        preview.setLayout(preview_layout)
+        self.selection_operations_view = QListView(preview)
+        self.selection_operations_view.setDragEnabled(True)
+        self.selection_operations_view.setModel(self.selection_model)
+        self.selection_model.selection_changed.connect(self.recalculate_selection)
+        preview_layout.addWidget(self.selection_operations_view)
+        return [select, preview]
 
-        self.selector.update_settings(self.settings)
-        self.selected = self.selector.get_idxs()
+    @Slot()
+    def recalculate_selection(self):
+        self.selected = self.selection_model.current_selection()
         self.view_3d._viewer.change_picked(self.selected)
         self.update_selection_textbox()
 
@@ -267,46 +289,34 @@ class SelectionHelper(QDialog):
         selection : set[int]
             Selection indexes from the 3d view.
         """
-        self.selector.update_with_idxs(selection)
-        self.settings = self.selector.settings
-        self.update_selection_widgets()
-        self.selected = self.selector.get_idxs()
         self.update_selection_textbox()
 
-    def invert_selection(self):
-        """Inverts the selection."""
-        self.selected = self.selector.all_idxs - self.selected
-        self.selector.update_with_idxs(self.selected)
-        self.settings = self.selector.settings
-        self.update_selection_widgets()
+    @Slot(str)
+    def update_operation(self, new_json_string: str):
+        self.selection_line.setText(new_json_string)
         self.view_3d._viewer.change_picked(self.selected)
         self.update_selection_textbox()
 
-    def update_selection_widgets(self) -> None:
-        """Updates the selection widgets so that it matches the full
-        setting.
-        """
-        for check_box in self.check_boxes:
-            check_box.blockSignals(True)
-            if self.settings[check_box.objectName()]:
-                check_box.setCheckState(Qt.Checked)
-            else:
-                check_box.setCheckState(Qt.Unchecked)
-            check_box.blockSignals(False)
-        for combo_box in self.combo_boxes:
-            combo_box.model().blockSignals(True)
-            for i in range(combo_box.n_items):
-                txt = combo_box.text[i]
-                if combo_box.objectName() == "index":
-                    key = int(txt)
-                else:
-                    key = txt
-                combo_box.set_item_checked_state(
-                    i, self.settings[combo_box.objectName()][key]
-                )
-            combo_box.update_all_selected()
-            combo_box.update_line_edit()
-            combo_box.model().blockSignals(False)
+    @Slot()
+    def append_selection(self):
+        self.selection_line.setStyleSheet("")
+        self.selection_line.setToolTip("")
+        selection_text = self.selection_line.text()
+        validation = self.selection_model.rebuild_selection(selection_text)
+        if validation == MALFORMED_SELECTION:
+            self.selection_line.setStyleSheet(
+                "QWidget#InputWidget { background-color:rgb(180,20,180); font-weight: bold }"
+            )
+            self.selection_line.setToolTip(validation)
+        elif validation == USELESS_SELECTION:
+            self.selection_line.setStyleSheet(
+                "QWidget#InputWidget { background-color:rgb(180,20,180); font-weight: bold }"
+            )
+            self.selection_line.setToolTip(validation)
+        elif validation == VALID_SELECTION:
+            self.selection_model.appendRow(QStandardItem(selection_text))
+            self.view_3d._viewer.change_picked(self.selected)
+            self.update_selection_textbox()
 
     def update_selection_textbox(self) -> None:
         """Update the selection textbox."""
@@ -320,16 +330,11 @@ class SelectionHelper(QDialog):
         """Set the field of the AtomSelectionWidget to the currently
         chosen setting in this widget.
         """
-        self.selector.update_settings(self.settings)
-        self._field.setText(self.selector.settings_to_json())
+        self._field.setText(self.selection_model.current_steps())
 
     def reset(self) -> None:
         """Resets the helper to the default state."""
-        self.selector.reset_settings()
-        self.selector.settings["all"] = self.all_selection
-        self.settings = self.selector.settings
-        self.update_selection_widgets()
-        self.selected = self.selector.get_idxs()
+        self.selection_model.clear()
         self.view_3d._viewer.change_picked(self.selected)
         self.update_selection_textbox()
 
@@ -376,8 +381,7 @@ class AtomSelectionWidget(WidgetBase):
         SelectionHelper
             Create and return the selection helper QDialog.
         """
-        selector = self._configurator.get_selector()
-        return SelectionHelper(selector, traj_data, self._field, self._base)
+        return SelectionHelper(traj_data, self._field, self._base)
 
     @Slot()
     def helper_dialog(self) -> None:
