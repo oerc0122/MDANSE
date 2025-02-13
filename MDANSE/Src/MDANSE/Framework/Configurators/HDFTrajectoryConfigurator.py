@@ -14,8 +14,6 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-import os
-
 from MDANSE import PLATFORM
 
 from MDANSE.Framework.Configurators.InputFileConfigurator import InputFileConfigurator
@@ -60,7 +58,7 @@ class HDFTrajectoryConfigurator(InputFileConfigurator):
 
         self["filename"] = PLATFORM.get_path(inputTraj.filename)
 
-        self["basename"] = os.path.basename(self["filename"])
+        self["basename"] = self["filename"].name
 
         self["length"] = len(self["instance"])
 
@@ -82,14 +80,13 @@ class HDFTrajectoryConfigurator(InputFileConfigurator):
         :rtype: str
         """
         try:
-            info = ["HDF input trajectory: %r\n" % self["filename"]]
-            info.append("Number of steps: %d\n" % self["length"])
+            info = [f"HDF input trajectory: {self['filename']!r}\n"]
+            info.append(f"Number of steps: {self['length']:d}\n")
         except KeyError:
             info = "Input trajectory has not been configured"
         else:
             info.append(
-                "Size of the chemical system: %d\n"
-                % self["instance"].chemical_system.number_of_atoms
+                f"Size of the chemical system: {self['instance'].chemical_system.number_of_atoms:d}\n"
             )
 
             if self["has_velocities"]:

@@ -20,8 +20,8 @@ import numpy as np
 
 import h5py
 
-from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
+from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Mathematics.LinearAlgebra import Quaternion, Vector
 from MDANSE.Mathematics.Transformation import Translation
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
@@ -90,8 +90,8 @@ class RigidBodyTrajectory(IJob):
         ):
             raise JobError(
                 self,
-                "Invalid reference frame. Must be an integer in [%d,%d["
-                % (0, self.configuration["trajectory"]["length"]),
+                "Invalid reference frame. Must be an integer in "
+                f"[{0},{self.configuration['trajectory']['length']}[",
             )
 
         self._quaternions = np.zeros(
@@ -260,10 +260,7 @@ class RigidBodyTrajectory(IJob):
         for comp in range(self.configuration["atom_selection"]["selection_length"]):
             aIndexes = self.configuration["atom_selection"]["indices"][comp]
 
-            outputFile.attrs["info"] += "Group %s: %s\n" % (
-                comp,
-                [index for index in aIndexes],
-            )
+            outputFile.attrs["info"] += f"Group {comp}: {list(aIndexes)}\n"
 
             quaternions[comp, :, :] = self._quaternions[comp, :, :]
             coms[comp, :, :] = self._coms[comp, :, :]

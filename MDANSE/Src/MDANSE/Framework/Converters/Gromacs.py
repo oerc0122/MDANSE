@@ -15,6 +15,7 @@
 #
 
 import collections
+from pathlib import Path
 
 import numpy as np
 from mdtraj.formats.xtc import XTCTrajectoryFile
@@ -77,16 +78,13 @@ class Gromacs(Converter):
 
         data_to_be_written = ["configuration", "time"]
 
+        filename = Path(self.configuration["xtc_file"]["filename"])
         # Create XTC or TRR object depending on which kind of trajectory was loaded
-        if self.configuration["xtc_file"]["filename"][-4:] == ".xtc":
-            self._xdr_file = XTCTrajectoryFile(
-                self.configuration["xtc_file"]["filename"], "r"
-            )
+        if filename.suffix == ".xtc":
+            self._xdr_file = XTCTrajectoryFile(bytes(filename), "r")
             self._xtc = True
-        elif self.configuration["xtc_file"]["filename"][-4:] == ".trr":
-            self._xdr_file = TRRTrajectoryFile(
-                self.configuration["xtc_file"]["filename"], "r"
-            )
+        elif filename.suffix == ".trr":
+            self._xdr_file = TRRTrajectoryFile(bytes(filename), "r")
             self._xtc = False
 
             # Extract information about whether velocities and forces are present in the TRR file
@@ -115,7 +113,7 @@ class Gromacs(Converter):
         else:
             raise GromacsConverterError(
                 "Invalid file format: Gromacs converter can only convert XTC and TRR files, "
-                "but %s was provided." % self.configuration["xtc_file"]["filename"][-4:]
+                f"but {self.configuration['xtc_file']['filename'][-4:]} was provided."
             )
 
         # The number of steps of the analysis.

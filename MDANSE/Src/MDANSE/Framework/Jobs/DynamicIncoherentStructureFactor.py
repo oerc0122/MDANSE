@@ -153,14 +153,14 @@ class DynamicIncoherentStructureFactor(IJob):
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             self._outputData.add(
-                "f(q,t)_%s" % element,
+                f"f(q,t)_{element}",
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nFrames),
                 axis="q|time",
                 units="au",
             )
             self._outputData.add(
-                "s(q,f)_%s" % element,
+                f"s(q,f)_{element}",
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nOmegas),
                 axis="q|omega",
@@ -245,7 +245,7 @@ class DynamicIncoherentStructureFactor(IJob):
 
         element = self.configuration["atom_selection"]["names"][index]
         for i, v in enumerate(disf_per_q_shell.values()):
-            self._outputData["f(q,t)_{}".format(element)][i, :] += v
+            self._outputData[f"f(q,t)_{element}"][i, :] += v
 
     def finalize(self):
         """
@@ -259,9 +259,9 @@ class DynamicIncoherentStructureFactor(IJob):
         assign_weights(self._outputData, weight_dict, "s(q,f)_%s")
         for element, number in list(nAtomsPerElement.items()):
             extra_scaling = 1.0 / number
-            self._outputData["f(q,t)_%s" % element].scaling_factor *= extra_scaling
-            self._outputData["s(q,f)_%s" % element][:] = get_spectrum(
-                self._outputData["f(q,t)_%s" % element],
+            self._outputData[f"f(q,t)_{element}"].scaling_factor *= extra_scaling
+            self._outputData[f"s(q,f)_{element}"][:] = get_spectrum(
+                self._outputData[f"f(q,t)_{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,

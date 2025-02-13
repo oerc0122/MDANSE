@@ -13,8 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import os
 import collections
+from pathlib import Path
 
 import numpy as np
 from ase.io import write as ase_write
@@ -109,7 +109,7 @@ class AverageStructure(IJob):
             unit_cells = [
                 trajectory.unit_cell(frame)._unit_cell for frame in frame_range
             ]
-        except:
+        except Exception:
             raise ValueError(
                 "Unit cell needs to be defined for the AverageStructure analysis. "
                 "You can add a unit cell using TrajectoryEditor."
@@ -166,13 +166,13 @@ class AverageStructure(IJob):
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        trajectory = self.configuration["trajectory"]["instance"]
+        # trajectory = self.configuration["trajectory"]["instance"]
 
-        frame_range = range(
-            self.configuration["frames"]["first"],
-            self.configuration["frames"]["last"] + 1,
-            self.configuration["frames"]["step"],
-        )
+        # frame_range = range(
+        #     self.configuration["frames"]["first"],
+        #     self.configuration["frames"]["last"] + 1,
+        #     self.configuration["frames"]["step"],
+        # )
 
         average_unit_cell = np.mean(self._unit_cells, axis=0) * self._conversion_factor
 
@@ -184,7 +184,7 @@ class AverageStructure(IJob):
             self._ase_atoms.set_scaled_positions(temp - correction)
 
         PLATFORM.create_directory(
-            os.path.dirname(self.configuration["output_files"]["file"])
+            Path(self.configuration["output_files"]["file"]).parent
         )
         ase_write(
             self.configuration["output_files"]["file"],

@@ -108,27 +108,27 @@ class SingleDataset:
             if ":" in token:
                 try:
                     slice_parts = [int(x) for x in token.split(":")]
-                except:
+                except Exception:
                     continue
                 if len(slice_parts) < 4:
                     complete_subset_list += list(range(*slice_parts))
             elif "-" in token:
                 try:
                     slice_parts = [int(x) for x in token.split("-")]
-                except:
+                except Exception:
                     continue
                 if len(slice_parts) == 2:
                     complete_subset_list += list(range(slice_parts[0], slice_parts[1]))
             elif "," in token:
                 try:
                     slice_parts = [int(x) for x in token.split(",")]
-                except:
+                except Exception:
                     continue
                 complete_subset_list += list(slice_parts)
             else:
                 try:
                     complete_subset_list += [int(token)]
-                except:
+                except Exception:
                     continue
         if len(complete_subset_list) == 0:
             self._data_limits = None
@@ -212,7 +212,7 @@ class SingleDataset:
     def planes_vs_axis(self, axis_number: int) -> List[np.ndarray]:
         self._planes = {}
         self._plane_labels = {}
-        found = -1
+        _found = -1
         total_ndim = len(self._data.shape)
         if total_ndim == 1:
             return
@@ -350,7 +350,7 @@ class PlottingContext(QStandardItemModel):
         backup_cmap = "viridis"
         try:
             cmap = self._unit_lookup._settings.group("colours").get("colormap")
-        except:
+        except Exception:
             return backup_cmap
         else:
             if cmap in mpl.colormaps():

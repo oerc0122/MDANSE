@@ -99,7 +99,7 @@ def assign_weights(
     np.ndarray
         total sum of all the component arrays scaled by their weights
     """
-    matches = dict([(key % k, k) for k in list(weights.keys()) if k not in ["sum"]])
+    matches = {key % k: k for k in weights if k not in ["sum"]}
     dim = key.count("%s")
 
     for k in values.keys():
@@ -142,7 +142,7 @@ def weighted_sum(
         total sum of all the component arrays scaled by their weights
     """
     weightedSum = None
-    matches = dict([(key % k, k) for k in list(weights.keys()) if k not in ["sum"]])
+    matches = {key % k: k for k in weights if k not in ["sum"]}
 
     for k, val in values.items():
         if k not in matches:

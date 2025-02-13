@@ -81,7 +81,7 @@ class UnitCellWidget(WidgetBase):
             for key, value in self._array_fields.items():
                 try:
                     array[key[0]][key[1]] = float(value.text())
-                except:
+                except Exception:
                     LOG.error(
                         f"Could not set value ({key[0]}, {key[1]}) to {value.text()}"
                     )

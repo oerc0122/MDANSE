@@ -196,7 +196,7 @@ class UnitsEditor(QDialog):
         nu_dialog = InputDialog(fields=dialog_variables)
         nu_dialog.got_values.connect(self.model.addNewUnit)
         nu_dialog.show()
-        result = nu_dialog.exec()
+        _result = nu_dialog.exec()
 
 
 if __name__ == "__main__":

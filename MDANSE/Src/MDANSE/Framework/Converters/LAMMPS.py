@@ -51,7 +51,7 @@ class LAMMPSReader:
     def close(self):
         try:
             self._file.close()
-        except:
+        except Exception:
             LOG.error(f"Could not close file: {self._file}")
 
     def set_output(self, output_trajectory):
@@ -222,7 +222,7 @@ class LAMMPScustom(LAMMPSReader):
                             )
                     label = str(config["elements"][ty][0])
                     mass = str(config["elements"][ty][1])
-                    name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
+                    name = f"{label}_{idx:d}"
                     try:
                         temp_index = int(temp[0])
                     except ValueError:
@@ -470,7 +470,7 @@ class LAMMPSxyz(LAMMPSReader):
             ty = atom_types[i] - 1
             label = str(config["elements"][ty][0])
             mass = str(config["elements"][ty][1])
-            name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
+            name = f"{label}_{idx:d}"
             self._rankToName[idx] = name
             element_list.append(get_element_from_mapping(aliases, label, mass=mass))
             name_list.append(str(ty + 1))
@@ -562,7 +562,7 @@ class LAMMPSh5md(LAMMPSReader):
         )
         try:
             self._charges_fixed = self._file["/particles/all/charge"][:]
-        except:
+        except Exception:
             pass
 
         full_cell *= measure(1.0, self._length_unit).toval("nm")
@@ -579,7 +579,7 @@ class LAMMPSh5md(LAMMPSReader):
             ty = atom_types[i] - 1
             label = str(config["elements"][ty][0])
             mass = str(config["elements"][ty][1])
-            name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
+            name = f"{label}_{idx:d}"
             self._rankToName[idx] = name
             element_list.append(get_element_from_mapping(aliases, label, mass=mass))
             name_list.append(str(ty + 1))
@@ -632,7 +632,7 @@ class LAMMPSh5md(LAMMPSReader):
         if self._charges_fixed is None:
             try:
                 charge = self._file["/particles/all/charge/value"][index]
-            except:
+            except Exception:
                 pass
             else:
                 self._trajectory.write_charges(

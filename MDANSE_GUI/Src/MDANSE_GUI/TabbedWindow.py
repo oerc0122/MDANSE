@@ -177,7 +177,7 @@ class TabbedWindow(QMainWindow):
         version = ""
         version += f"MDANSE version: {metadata.version('MDANSE')}\n"
         version += f"MDANSE_GUI version: {metadata.version('MDANSE_GUI')}\n"
-        popup = QMessageBox.about(self, "MDANSE Version Information", version)
+        _popup = QMessageBox.about(self, "MDANSE Version Information", version)
 
     def setupToolbar(self):
         self._toolBar = QToolBar("Main MDANSE toolbar", self)

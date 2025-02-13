@@ -186,7 +186,7 @@ class DatasetFormatter:
             conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
                 xaxis_unit
             )
-        except:
+        except Exception:
             return f"Could not convert {best_unit} to {xaxis_unit}."
         else:
             header_lines.append(f"{self._comment} units of x axis here: {xaxis_unit}")
@@ -316,7 +316,7 @@ class DatasetFormatter:
             )
         LOG.debug(f"Data shape: {dataset._data.shape}")
         temp = []
-        ncols = len(new_axes) + 1
+        _ncols = len(new_axes) + 1
         ax_lengths = [len(new_axes[ax_num]) for ax_num in axis_numbers.values()]
         total_lines = reduce(lambda x, y: x * y, ax_lengths)
         if is_preview:
@@ -472,7 +472,7 @@ class Text(Plotter):
             self._toolbar = toolbar
         self._pc_backup = plotting_context
         self._figure = target
-        xaxis_unit = None
+        _xaxis_unit = None
         self._active_curves = []
         self._backup_curves = []
         self.apply_settings(plotting_context, colours)

@@ -18,7 +18,6 @@ from logging import FileHandler
 from logging.handlers import QueueHandler, QueueListener
 
 import abc
-import glob
 import os
 import multiprocessing
 import queue
@@ -28,6 +27,7 @@ import string
 import time
 import sys
 import traceback
+from pathlib import Path
 
 from MDANSE import PLATFORM
 from MDANSE.Core.Error import Error
@@ -63,7 +63,7 @@ class JobError(Error):
 
         self._message = str(message)
 
-        trace.append("\n%s" % self._message)
+        trace.append(f"\n{self._message}")
 
         trace = "\n".join(trace)
 
@@ -83,7 +83,7 @@ def key_generator(keySize, chars=None, prefix=""):
 
     key = "".join(random.choice(chars) for _ in range(keySize))
     if prefix:
-        key = "%s_%s" % (prefix, key)
+        key = f"{prefix}_{key}"
 
     return key
 
@@ -103,19 +103,18 @@ class IJob(Configurable, metaclass=SubclassFactory):
         Sets a name for the job that is not already in use by another running job.
         """
 
-        prefix = "%s_%d" % (PLATFORM.username()[:4], PLATFORM.pid())
+        prefix = f"{PLATFORM.username()[:4]}_{PLATFORM.pid():d}"
 
         # The list of the registered jobs.
         registeredJobs = [
-            os.path.basename(f)
-            for f in glob.glob(os.path.join(PLATFORM.temporary_files_directory(), "*"))
+            f.name for f in PLATFORM.temporary_files_directory().glob("*")
         ]
 
         while True:
             # Followed by 4 random letters.
             name = key_generator(6, prefix=prefix)
 
-            if not name in registeredJobs:
+            if name not in registeredJobs:
                 break
 
         return name
@@ -164,7 +163,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 "output_files" in self.configuration
                 and self.configuration["output_files"]["write_logs"]
             ):
-                log_filename = self.configuration["output_files"]["root"] + ".log"
+                log_filename = str(self.configuration["output_files"]["root"]) + ".log"
                 self.add_log_file_handler(
                     log_filename, self.configuration["output_files"]["log_level"]
                 )
@@ -198,7 +197,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
         # The first line contains the call to the python executable. This is necessary for the file to
         # be autostartable.
-        f.write("#!%s\n\n" % sys.executable)
+        f.write(f"#!{sys.executable}\n\n")
 
         # Writes the input file header.
         f.write("########################################################\n")
@@ -231,8 +230,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
         f.write("\n")
 
         f.write('if __name__ == "__main__":\n')
-        f.write("    %s = IJob.create(%r)\n" % (cls.__name__.lower(), cls.__name__))
-        f.write("    %s.run(parameters, status=True)\n" % (cls.__name__.lower()))
+        f.write(f"    {cls.__name__.lower()} = IJob.create({cls.__name__!r})\n")
+        f.write(f"    {cls.__name__.lower()}.run(parameters, status=True)\n")
 
         f.close()
 
@@ -387,7 +386,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
         """
 
         try:
-            self._name = "%s_%s" % (self.__class__.__name__, IJob.define_unique_name())
+            self._name = f"{self.__class__.__name__}_{IJob.define_unique_name()}"
 
             if status and self._status is None:
                 self._status = self._status_constructor(self)
@@ -401,7 +400,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 self._status.state["info"] = str(self)
 
             if getattr(self, "numberOfSteps", 0) <= 0:
-                raise JobError(self, "Invalid number of steps for job %s" % self._name)
+                raise JobError(self, f"Invalid number of steps for job {self._name}")
 
             if "running_mode" in self.configuration:
                 mode = self.configuration["running_mode"]["mode"]
@@ -414,7 +413,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
             if self._status is not None:
                 self._status.finish()
-        except:
+        except Exception:
             tb = traceback.format_exc()
             LOG.critical(f"Job failed with traceback: {tb}")
             raise JobError(self, tb)
@@ -427,39 +426,39 @@ class IJob(Configurable, metaclass=SubclassFactory):
     def save_template(cls, shortname, classname):
         if shortname in IJob.subclasses():
             raise KeyError(
-                "A job with %r name is already stored in the registry" % shortname
+                f"A job with {shortname!r} name is already stored in the registry"
             )
 
-        templateFile = os.path.join(PLATFORM.macros_directory(), "%s.py" % classname)
+        templateFile = PLATFORM.macros_directory() / f"{classname}.py"
 
         try:
-            f = open(templateFile, "w")
-
-            f.write(
-                '''import collections
+            label = "label of the class"
+            with templateFile.open("w") as f:
+                f.write(
+                    f'''import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
 
-class %(classname)s(IJob):
+class {classname}(IJob):
     """
     You should enter the description of your job here ...
     """
-        
+
     # You should enter the label under which your job will be viewed from the gui.
-    label = %(label)r
+    label = {label!r}
 
     # You should enter the category under which your job will be references.
     category = ('My jobs',)
-    
+
     ancestor = ["hdf_trajectory"]
 
     # You should enter the configuration of your job here
     # Here a basic example of a job that will use a HDF trajectory, a frame selection and an output file in HDF5 and Text file formats
     settings = collections.OrderedDict()
-    settings['trajectory']=('hdf_trajectory',{})
-    settings['frames']=('frames', {"dependencies":{'trajectory':'trajectory'}})
-    settings['output_files']=('output_files', {"formats":["HDFFormat","netcdf","TextFormat"]})
-            
+    settings['trajectory']=('hdf_trajectory',{{}})
+    settings['frames']=('frames', {{"dependencies":{{'trajectory':'trajectory'}}}})
+    settings['output_files']=('output_files', {{"formats":["HDFFormat","netcdf","TextFormat"]}})
+
     def initialize(self):
         """
         Initialize the input parameters and analysis self variables
@@ -468,7 +467,7 @@ class %(classname)s(IJob):
         # Compulsory. You must enter the number of steps of your job.
         # Here for example the number of selected frames
         self.numberOfSteps = self.configuration['frames']['number']
-                        
+
         # Create an output data for the selected frames.
         self._outputData.add("time", "LineOutputVariable", self.configuration['frames']['time'], units='ps')
 
@@ -477,40 +476,33 @@ class %(classname)s(IJob):
         """
         Runs a single step of the job.
         """
-                                
+
         return index, None
-    
-    
+
+
     def combine(self, index, x):
         """
         Synchronize the output of each individual run_step output.
-        """     
-                    
+        """
+
     def finalize(self):
         """
         Finalizes the job (e.g. averaging the total term, output files creations ...).
-        """ 
+        """
 
         # The output data are written
         self._outputData.write(self.configuration['output_files']['root'], self.configuration['output_files']['formats'], self._info,
             self.output_configuration())
-        
+
         # The trajectory is closed
-        self.configuration['trajectory']['instance'].close()        
+        self.configuration['trajectory']['instance'].close()
 
 '''
-                % {
-                    "classname": classname,
-                    "label": "label of the class",
-                    "shortname": shortname,
-                }
-            )
+                )
 
         except IOError:
             return None
-        else:
-            f.close()
-            return templateFile
+        return templateFile
 
     def add_log_file_handler(self, filename: str, level: str) -> None:
         """Adds a file handle which is used to write the jobs logs.
@@ -523,8 +515,8 @@ class %(classname)s(IJob):
             The log level.
         """
         self._log_filename = filename
-        PLATFORM.create_directory(os.path.dirname(filename))
-        fh = FileHandler(filename, mode="w")
+        PLATFORM.create_directory(Path(self._log_filename).parent)
+        fh = FileHandler(self._log_filename, mode="w")
         # set the name so that we can track it and then close it later,
         # tracking the fh by storing it in this object causes issues
         # with multiprocessing jobs
