@@ -36,7 +36,11 @@ from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
 from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewerWithPicking
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
-from MDANSE_GUI.Widgets.SelectionWidgets import AllAtomSelection
+from MDANSE_GUI.Widgets.SelectionWidgets import (
+    AllAtomSelection,
+    AtomSelection,
+    IndexSelection,
+)
 
 
 VALID_SELECTION = "Valid selection"
@@ -246,7 +250,11 @@ class SelectionHelper(QDialog):
         select = QGroupBox("selection")
         select_layout = QVBoxLayout()
 
-        self.selection_widgets = [AllAtomSelection(self)]
+        self.selection_widgets = [
+            AllAtomSelection(self),
+            AtomSelection(self, self.trajectory),
+            IndexSelection(self),
+        ]
 
         for widget in self.selection_widgets:
             select_layout.addWidget(widget)
@@ -335,8 +343,7 @@ class SelectionHelper(QDialog):
     def reset(self) -> None:
         """Resets the helper to the default state."""
         self.selection_model.clear()
-        self.view_3d._viewer.change_picked(self.selected)
-        self.update_selection_textbox()
+        self.recalculate_selection()
 
 
 class AtomSelectionWidget(WidgetBase):

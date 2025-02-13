@@ -74,7 +74,9 @@ class ReusableSelection:
                 number = len(self.operations)
         self.operations[number] = function_parameters
 
-    def validate_selection_string(self, json_string: str, trajectory: Trajectory, current_selection: Set[int]) -> bool:
+    def validate_selection_string(
+        self, json_string: str, trajectory: Trajectory, current_selection: Set[int]
+    ) -> bool:
         """Checks if the selection operation encoded in the input JSON string
         will add any new atoms to the current selection on the given trajectory.
 

@@ -42,6 +42,12 @@ class CheckableComboBox(QComboBox):
         self.addItem("select all", underline=True)
         self.lineEdit().setText("")
 
+    def clear(self):
+        result = super().clear()
+        self.addItem("select all", underline=True)
+        self.lineEdit().setText("")
+        return result
+
     def eventFilter(self, a0: Union[QObject, None], a1: Union[QEvent, None]) -> bool:
         """Updates the check state of the items and the lineEdit.
 
