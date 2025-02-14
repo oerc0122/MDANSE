@@ -170,15 +170,18 @@ class IndexSelection(BasicSelectionWidget):
         if new_mode == "list":
             self.selection_field.setPlaceholderText("0,1,2")
             self.selection_keyword = "index_list"
+            self.selection_separator = ','
         if new_mode == "range":
             self.selection_field.setPlaceholderText("0-20")
             self.selection_keyword = "index_range"
+            self.selection_separator = '-'
         if new_mode == "slice":
             self.selection_field.setPlaceholderText("first:last:step")
             self.selection_keyword = "index_slice"
+            self.selection_separator = ':'
 
     def parameter_dictionary(self):
         function_parameters = {"function_name": "select_atoms"}
         selection = self.selection_field.text()
-        function_parameters[self.selection_keyword] = selection
+        function_parameters[self.selection_keyword] = [int(x) for x in selection.split(self.selection_separator)]
         return function_parameters

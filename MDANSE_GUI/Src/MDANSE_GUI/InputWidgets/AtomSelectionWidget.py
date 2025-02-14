@@ -60,11 +60,13 @@ class SelectionModel(QStandardItemModel):
     def rebuild_selection(self, last_operation: str):
         self._selection = ReusableSelection()
         self._current_selection = set()
+        total_dict = {}
         for row in range(self.rowCount()):
             index = self.index(row, 0)
             item = self.itemFromIndex(index)
             json_string = item.text()
-            self._selection.load_from_json(json_string)
+            total_dict[row] = json.loads(json_string)
+        self._selection.load_from_json(json.dumps(total_dict))
         self._current_selection = self._selection.select_in_trajectory(self._trajectory)
         if last_operation:
             try:
