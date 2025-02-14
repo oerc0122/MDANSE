@@ -205,7 +205,6 @@ class ElasticIncoherentStructureFactor(IJob):
             self._outputData,
             weight_dict,
             "eisf_%s",
-            update_partials=False,
         )
 
         self._outputData.write(

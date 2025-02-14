@@ -158,14 +158,14 @@ for tp in [
     for jt in [
         # "AngularCorrelation",
         # "GeneralAutoCorrelationFunction",
-        ("DensityOfStates", ["dos", "vacf"]),
-        ("MeanSquareDisplacement", ["msd"]),
-        ("VelocityAutoCorrelationFunction", ["vacf"]),
-        ("VanHoveFunctionDistinct", ["g(r,t)"]),
-        ("VanHoveFunctionSelf", ["g(r,t)"]),
+        ("DensityOfStates", ["dos", "vacf"], True),
+        ("MeanSquareDisplacement", ["msd"], False),
+        ("VelocityAutoCorrelationFunction", ["vacf"], False),
+        ("VanHoveFunctionDistinct", ["g(r,t)"], False),
+        ("VanHoveFunctionSelf", ["g(r,t)"], True),
         # "OrderParameter",
-        ("PositionAutoCorrelationFunction", ["pacf"]),
-        ("PositionPowerSpectrum", ["pacf", "pps"]),
+        ("PositionAutoCorrelationFunction", ["pacf"], False),
+        ("PositionPowerSpectrum", ["pacf", "pps"], True),
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
@@ -192,9 +192,13 @@ def test_dynamics_analysis(
         with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
             keys = [i for i in desired.keys() if any([j in i for j in job_info[1]])]
             for key in keys:
+                # reference results may or may not have been scaled
+                if job_info[2]:
+                    scale_factor = actual[f"/{key}"].attrs["scaling_factor"]
+                else:
+                    scale_factor = 1
                 np.testing.assert_array_almost_equal(
-                    actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
-                    desired[f"/{key}"],
+                    actual[f"/{key}"] * scale_factor, desired[f"/{key}"],
                 )
 
         os.remove(temp_name + ".mda")
