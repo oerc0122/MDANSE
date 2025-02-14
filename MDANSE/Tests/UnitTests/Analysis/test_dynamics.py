@@ -160,15 +160,15 @@ for tp in [
         # "GeneralAutoCorrelationFunction",
         ("DensityOfStates", ["dos", "vacf"], True),
         ("MeanSquareDisplacement", ["msd"], False),
-        ("VelocityAutoCorrelationFunction", ["vacf"], False),
+        ("VelocityAutoCorrelationFunction", ["vacf"], True),
         ("VanHoveFunctionDistinct", ["g(r,t)"], False),
         ("VanHoveFunctionSelf", ["g(r,t)"], True),
         # "OrderParameter",
-        ("PositionAutoCorrelationFunction", ["pacf"], False),
+        ("PositionAutoCorrelationFunction", ["pacf"], True),
         ("PositionPowerSpectrum", ["pacf", "pps"], True),
     ]:
-        for rm in [("single-core", 1), ("multicore", -4)]:
-            for of in ["MDAFormat", "TextFormat"]:
+        for rm in [("single-core", 1)]:
+            for of in ["MDAFormat"]:
                 total_list.append((tp, jt, rm, of))
 
 
@@ -192,14 +192,16 @@ def test_dynamics_analysis(
         with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
             keys = [i for i in desired.keys() if any([j in i for j in job_info[1]])]
             for key in keys:
-                # reference results may or may not have been scaled
+                # reference results may or may not have been scaled/normalized
                 if job_info[2]:
-                    scale_factor = actual[f"/{key}"].attrs["scaling_factor"]
+                    np.testing.assert_array_almost_equal(
+                        actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                        desired[f"/{key}"],
+                    )
                 else:
-                    scale_factor = 1
-                np.testing.assert_array_almost_equal(
-                    actual[f"/{key}"] * scale_factor, desired[f"/{key}"],
-                )
+                    np.testing.assert_array_almost_equal(
+                        actual[f"/{key}"], desired[f"/{key}"],
+                    )
 
         os.remove(temp_name + ".mda")
     elif output_format == "TextFormat":

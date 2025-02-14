@@ -173,17 +173,6 @@ class PositionAutoCorrelationFunction(IJob):
         for element, number in list(nAtomsPerElement.items()):
             self._outputData[f"pacf_{element}"] /= number
 
-        if self.configuration["normalize"]["value"]:
-            for element in list(nAtomsPerElement.keys()):
-                if self._outputData[f"pacf_{element}"][0] == 0:
-                    raise ValueError("The normalization factor is equal to zero !!!")
-                else:
-                    self._outputData[
-                        f"pacf_{element}"
-                    ].scaling_factor *= normalisation_factor(
-                        self._outputData[f"pacf_{element}"], axis=0
-                    )
-
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
         assign_weights(self._outputData, weight_dict, "pacf_%s")
@@ -197,6 +186,24 @@ class PositionAutoCorrelationFunction(IJob):
             units="nm2",
             main_result=True,
         )
+
+        if self.configuration["normalize"]["value"]:
+            for element in nAtomsPerElement.keys():
+                if self._outputData[f"pacf_{element}"][0] == 0:
+                    raise ValueError("The normalization factor is equal to zero !!!")
+                else:
+                    self._outputData[
+                        f"pacf_{element}"
+                    ].scaling_factor *= normalisation_factor(
+                        self._outputData[f"pacf_{element}"], axis=0
+                    )
+            if self._outputData["pacf_total"][0] == 0:
+                raise ValueError(
+                    "The normalization factor is equal to zero !!!")
+            else:
+                self._outputData["pacf_total"].scaling_factor *= normalisation_factor(
+                    self._outputData["pacf_total"], axis=0
+                )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],
