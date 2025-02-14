@@ -41,7 +41,7 @@ def select_labels(trajectory: Trajectory, **function_parameters: Dict[str, Any])
     atom_labels = function_parameters.get("atom_labels", None)
     for label in atom_labels:
         if label in system._labels:
-            selection = selection.union(reduce(list.__add__, system._labels[label]))
+            selection = selection.union(system._labels[label])
     return selection
 
 

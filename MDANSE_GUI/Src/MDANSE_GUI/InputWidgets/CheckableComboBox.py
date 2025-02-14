@@ -44,6 +44,10 @@ class CheckableComboBox(QComboBox):
 
     def clear(self):
         result = super().clear()
+        self.items = []
+        self.checked = []
+        self.text = []
+        self.select_all_item = None
         self.addItem("select all", underline=True)
         self.lineEdit().setText("")
         return result

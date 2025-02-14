@@ -30,11 +30,6 @@ from qtpy.QtWidgets import (
 
 from MDANSE_GUI.InputWidgets.CheckableComboBox import CheckableComboBox
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
-from MDANSE.Framework.AtomSelector.general_selection import (
-    select_all,
-    select_none,
-    invert_selection,
-)
 
 
 class BasicSelectionWidget(QGroupBox):
@@ -143,7 +138,7 @@ class AtomSelection(BasicSelectionWidget):
 
 
 class IndexSelection(BasicSelectionWidget):
-    def __init__(self, parent=None, widget_label="Select atoms"):
+    def __init__(self, parent=None, widget_label="Index selection"):
         super().__init__(parent, widget_label)
         self.selection_keyword = "index_list"
 
@@ -170,18 +165,112 @@ class IndexSelection(BasicSelectionWidget):
         if new_mode == "list":
             self.selection_field.setPlaceholderText("0,1,2")
             self.selection_keyword = "index_list"
-            self.selection_separator = ','
+            self.selection_separator = ","
         if new_mode == "range":
             self.selection_field.setPlaceholderText("0-20")
             self.selection_keyword = "index_range"
-            self.selection_separator = '-'
+            self.selection_separator = "-"
         if new_mode == "slice":
             self.selection_field.setPlaceholderText("first:last:step")
             self.selection_keyword = "index_slice"
-            self.selection_separator = ':'
+            self.selection_separator = ":"
 
     def parameter_dictionary(self):
         function_parameters = {"function_name": "select_atoms"}
         selection = self.selection_field.text()
-        function_parameters[self.selection_keyword] = [int(x) for x in selection.split(self.selection_separator)]
+        function_parameters[self.selection_keyword] = [
+            int(x) for x in selection.split(self.selection_separator)
+        ]
+        return function_parameters
+
+
+class MoleculeSelection(BasicSelectionWidget):
+    def __init__(
+        self,
+        parent=None,
+        trajectory: Trajectory = None,
+        widget_label="Select molecules",
+    ):
+        self.molecule_names = []
+        if trajectory:
+            self.molecule_names = list(trajectory.chemical_system._clusters.keys())
+        super().__init__(parent, widget_label)
+
+    def add_specific_widgets(self):
+        layout = self.layout()
+        layout.addWidget(QLabel("Select molecules named: "))
+        self.selection_field = CheckableComboBox(self)
+        layout.addWidget(self.selection_field)
+        self.selection_field.addItems(self.molecule_names)
+
+    def parameter_dictionary(self):
+        function_parameters = {"function_name": "select_molecules"}
+        selection = self.selection_field.checked_values()
+        function_parameters["molecule_names"] = selection
+        return function_parameters
+
+
+class LabelSelection(BasicSelectionWidget):
+    def __init__(
+        self,
+        parent=None,
+        trajectory: Trajectory = None,
+        widget_label="Select by label",
+    ):
+        self.labels = []
+        if trajectory:
+            self.labels = list(trajectory.chemical_system._labels.keys())
+        super().__init__(parent, widget_label)
+
+    def add_specific_widgets(self):
+        layout = self.layout()
+        layout.addWidget(QLabel("Select atoms with label: "))
+        self.selection_field = CheckableComboBox(self)
+        layout.addWidget(self.selection_field)
+        self.selection_field.addItems(self.labels)
+
+    def parameter_dictionary(self):
+        function_parameters = {"function_name": "select_labels"}
+        selection = self.selection_field.checked_values()
+        function_parameters["atom_labels"] = selection
+        return function_parameters
+
+
+class PatternSelection(BasicSelectionWidget):
+    def __init__(
+        self,
+        parent=None,
+        widget_label="SMARTS pattern matching",
+    ):
+        self.pattern_dictionary = {
+            "primary amine": "[#7X3;H2;!$([#7][#6X3][!#6]);!$([#7][#6X2][!#6])](~[H])~[H]",
+            "hydroxy": "[#8;H1,H2]~[H]",
+            "methyl": "[#6;H3](~[H])(~[H])~[H]",
+            "phosphate": "[#15X4](~[#8])(~[#8])(~[#8])~[#8]",
+            "sulphate": "[#16X4](~[#8])(~[#8])(~[#8])~[#8]",
+            "thiol": "[#16X2;H1]~[H]",
+        }
+        super().__init__(parent, widget_label)
+
+    def add_specific_widgets(self):
+        layout = self.layout()
+        layout.addWidget(QLabel("Pick a group"))
+        self.selection_field = QComboBox(self)
+        layout.addWidget(self.selection_field)
+        self.selection_field.addItems(self.pattern_dictionary.keys())
+        layout.addWidget(QLabel("pattern:"))
+        self.input_field = QLineEdit("", self)
+        self.input_field.setPlaceholderText("can be edited")
+        layout.addWidget(self.input_field)
+        self.selection_field.currentTextChanged.connect(self.update_string)
+
+    @Slot(str)
+    def update_string(self, key_string: str):
+        if key_string in self.pattern_dictionary:
+            self.input_field.setText(self.pattern_dictionary[key_string])
+
+    def parameter_dictionary(self):
+        function_parameters = {"function_name": "select_pattern"}
+        selection = self.input_field.text()
+        function_parameters["rdkit_pattern"] = selection
         return function_parameters

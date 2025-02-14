@@ -30,6 +30,8 @@ from qtpy.QtWidgets import (
     QPlainTextEdit,
     QWidget,
     QListView,
+    QAbstractItemView,
+    QScrollArea,
 )
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
@@ -40,6 +42,9 @@ from MDANSE_GUI.Widgets.SelectionWidgets import (
     AllAtomSelection,
     AtomSelection,
     IndexSelection,
+    MoleculeSelection,
+    PatternSelection,
+    LabelSelection,
 )
 
 
@@ -110,29 +115,9 @@ class SelectionHelper(QDialog):
     ----------
     _helper_title : str
         The title of the helper dialog window.
-    _cbox_text : dict
-        The dictionary that maps the selector settings to text used in
-        the helper dialog.
     """
 
     _helper_title = "Atom selection helper"
-    _cbox_text = {
-        "all": "All atoms (excl. dummy atoms):",
-        "dummy": "All dummy atoms:",
-        "hs_on_heteroatom": "Hs on heteroatoms:",
-        "primary_amine": "Primary amine groups:",
-        "hydroxy": "Hydroxy groups:",
-        "methyl": "Methyl groups:",
-        "phosphate": "Phosphate groups:",
-        "sulphate": "Sulphate groups:",
-        "thiol": "Thiol groups:",
-        "water": "Water molecules:",
-        "hs_on_element": "Hs on elements:",
-        "element": "Elements:",
-        "name": "Atom name:",
-        "fullname": "Atom fullname:",
-        "index": "Indexes:",
-    }
 
     def __init__(
         self,
@@ -176,16 +161,19 @@ class SelectionHelper(QDialog):
         for button in self.create_buttons():
             bottom.addWidget(button)
 
-        layouts[-1].addLayout(bottom)
-
         helper_layout = QHBoxLayout()
-        for layout in layouts:
-            helper_layout.addLayout(layout)
+        sub_layout = QVBoxLayout()
+        helper_layout.addLayout(layouts[0])
+        helper_layout.addLayout(sub_layout)
+        for layout in layouts[1:]:
+            sub_layout.addLayout(layout)
+        sub_layout.addLayout(bottom)
 
         self.setLayout(helper_layout)
 
         self.all_selection = True
         self.selected = set([])
+        self.reset()
 
     def closeEvent(self, a0):
         """Hide the window instead of closing. Some issues occur in the
@@ -224,7 +212,7 @@ class SelectionHelper(QDialog):
         for widget in self.left_widgets():
             left.addWidget(widget)
 
-        right = QVBoxLayout()
+        right = QHBoxLayout()
         for widget in self.right_widgets():
             right.addWidget(widget)
 
@@ -238,7 +226,7 @@ class SelectionHelper(QDialog):
             List of QWidgets to add to the right layout from
             create_layouts.
         """
-        return [self.selection_textbox]
+        return [self.selection_operations_view, self.selection_textbox]
 
     def left_widgets(self) -> list[QWidget]:
         """
@@ -251,11 +239,16 @@ class SelectionHelper(QDialog):
 
         select = QGroupBox("selection")
         select_layout = QVBoxLayout()
+        scroll_area = QScrollArea()
+        scroll_area.setLayout(select_layout)
 
         self.selection_widgets = [
             AllAtomSelection(self),
             AtomSelection(self, self.trajectory),
             IndexSelection(self),
+            MoleculeSelection(self, self.trajectory),
+            PatternSelection(self),
+            LabelSelection(self, self.trajectory),
         ]
 
         for widget in self.selection_widgets:
@@ -274,15 +267,15 @@ class SelectionHelper(QDialog):
 
         select.setLayout(select_layout)
 
-        preview = QGroupBox("Selection operations")
-        preview_layout = QVBoxLayout()
-        preview.setLayout(preview_layout)
-        self.selection_operations_view = QListView(preview)
+        self.selection_operations_view = QListView(self)
         self.selection_operations_view.setDragEnabled(True)
+        self.selection_operations_view.setAcceptDrops(True)
+        self.selection_operations_view.setDragDropMode(
+            QAbstractItemView.DragDropMode.InternalMove
+        )
         self.selection_operations_view.setModel(self.selection_model)
         self.selection_model.selection_changed.connect(self.recalculate_selection)
-        preview_layout.addWidget(self.selection_operations_view)
-        return [select, preview]
+        return [select]
 
     @Slot()
     def recalculate_selection(self):
