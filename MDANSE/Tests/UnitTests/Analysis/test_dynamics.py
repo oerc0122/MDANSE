@@ -167,8 +167,8 @@ for tp in [
         ("PositionAutoCorrelationFunction", ["pacf"], True),
         ("PositionPowerSpectrum", ["pacf", "pps"], True),
     ]:
-        for rm in [("single-core", 1)]:
-            for of in ["MDAFormat"]:
+        for rm in [("single-core", 1), ("multicore", -4)]:
+            for of in ["MDAFormat", "TextFormat"]:
                 total_list.append((tp, jt, rm, of))
 
 
