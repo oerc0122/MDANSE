@@ -311,6 +311,7 @@ plotting_column_labels = [
     "Colour",
     "Line style",
     "Marker",
+    "Scaling",
 ]
 plotting_column_index = {
     label: number for number, label in enumerate(plotting_column_labels)
@@ -415,6 +416,12 @@ class PlottingContext(QStandardItemModel):
                 ).checkState()
                 == Qt.CheckState.Checked
             )
+            set_scaling = (
+                self.itemFromIndex(
+                    self.index(row, plotting_column_index["Scaling"])
+                ).checkState()
+                == Qt.CheckState.Checked
+            )
             data_number_string = self.itemFromIndex(
                 self.index(row, plotting_column_index["Use it?"])
             ).text()
@@ -435,6 +442,11 @@ class PlottingContext(QStandardItemModel):
                 result[key] = (self._datasets[key], colour, style, marker, ds_num, axis)
             else:
                 self._datasets[key]._data_limits = None
+            if set_scaling:
+                self._datasets[key]._use_scaling = True
+            else:
+                self._datasets[key]._use_scaling = False
+
         return result
 
     def add_dataset(self, new_dataset: SingleDataset):
@@ -456,6 +468,7 @@ class PlottingContext(QStandardItemModel):
                 self.next_colour(),
                 "-",
                 "",
+                "",
             ]
         ]
         for item in items:
@@ -463,6 +476,10 @@ class PlottingContext(QStandardItemModel):
         for item in items[:4]:
             item.setEditable(False)
         temp = items[plotting_column_index["Use it?"]]
+        temp.setCheckable(True)
+        temp.setCheckState(Qt.CheckState.Checked)
+        temp = items[plotting_column_index["Scaling"]]
+        temp.setEditable(False)
         temp.setCheckable(True)
         temp.setCheckState(Qt.CheckState.Checked)
         self.itemChanged.connect(self.needs_an_update)
