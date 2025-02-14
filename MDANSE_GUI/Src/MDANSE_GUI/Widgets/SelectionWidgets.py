@@ -95,10 +95,8 @@ class AtomSelection(BasicSelectionWidget):
         self.atom_names = []
         if trajectory:
             self.atom_types = list(np.unique(trajectory.chemical_system.atom_list))
-            if trajectory.chemical_system._atom_names:
-                self.atom_names = list(
-                    np.unique(trajectory.chemical_system._atom_names)
-                )
+            if trajectory.chemical_system.name_list:
+                self.atom_names = list(np.unique(trajectory.chemical_system.name_list))
         self.selection_types = []
         self.selection_keyword = ""
         if self.atom_types:
@@ -127,7 +125,7 @@ class AtomSelection(BasicSelectionWidget):
             self.selection_field.addItems(self.atom_types)
             self.selection_keyword = "atom_types"
         elif new_mode == "name":
-            self.selection_field.addItems(self.atom_types)
+            self.selection_field.addItems(self.atom_names)
             self.selection_keyword = "atom_names"
 
     def parameter_dictionary(self):

@@ -113,9 +113,15 @@ class ReusableSelection:
                 selection = selection.difference(temp_selection)
             else:
                 selection = temp_selection
-        if len(selection.difference(current_selection)) > 0 and operation_type == "union":
+        if (
+            len(selection.difference(current_selection)) > 0
+            and operation_type == "union"
+        ):
             return True
-        elif len(current_selection.difference(selection)) > 0 and operation_type != "union":
+        elif (
+            len(current_selection.difference(selection)) > 0
+            and operation_type != "union"
+        ):
             return True
         return False
 

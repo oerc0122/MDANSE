@@ -44,9 +44,7 @@ class PartialChargeMapper:
                 self._original_map[at_num] = 0.0
         self._new_map = {}
 
-    def update_charges(
-        self, selection_string: str, charge: float
-    ) -> None:
+    def update_charges(self, selection_string: str, charge: float) -> None:
         """With the selection dictionary update the selector and then
         update the partial charge map.
 

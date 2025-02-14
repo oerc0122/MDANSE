@@ -21,7 +21,9 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_molecules(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
+def select_molecules(
+    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+) -> Set[int]:
     """Selects all the atoms in the trajectory.
 
     Parameters
@@ -41,5 +43,7 @@ def select_molecules(trajectory: Trajectory, **function_parameters: Dict[str, An
     molecule_names = function_parameters.get("molecule_names", None)
     for molecule in molecule_names:
         if molecule in system._clusters:
-            selection = selection.union(reduce(list.__add__, system._clusters[molecule]))
+            selection = selection.union(
+                reduce(list.__add__, system._clusters[molecule])
+            )
     return selection

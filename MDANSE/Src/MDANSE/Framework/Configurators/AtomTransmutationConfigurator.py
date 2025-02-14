@@ -41,9 +41,7 @@ class AtomTransmuter:
         self._new_map = {}
         self._current_trajectory = trajectory
 
-    def apply_transmutation(
-        self, selection_string: str, symbol: str
-    ) -> None:
+    def apply_transmutation(self, selection_string: str, symbol: str) -> None:
         """With the selection dictionary update selector and then
         update the transmutation map.
 

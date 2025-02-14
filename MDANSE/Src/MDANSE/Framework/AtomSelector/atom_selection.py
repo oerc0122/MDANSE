@@ -20,7 +20,9 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_atoms(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
+def select_atoms(
+    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+) -> Set[int]:
     """Selects all the atoms in the trajectory.
 
     Parameters
@@ -46,7 +48,9 @@ def select_atoms(trajectory: Trajectory, **function_parameters: Dict[str, Any]) 
     if index_list is not None:
         selection = selection.union(indices.intersection(index_list))
     if index_range is not None:
-        selection = selection.union(indices.intersection(range(index_range[0], index_range[1])))
+        selection = selection.union(
+            indices.intersection(range(index_range[0], index_range[1]))
+        )
     if index_slice is not None:
         selection = selection.union(
             indices.intersection(range(index_slice[0], index_slice[1], index_slice[2]))

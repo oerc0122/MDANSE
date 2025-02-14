@@ -169,6 +169,22 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 )
         except KeyError:
             LOG.error("IJob did not find 'write_logs' in output_files")
+        if "atom_selection" in self.configuration:
+            try:
+                array_length = self.configuration["atom_selection"][
+                    "total_number_of_atoms"
+                ]
+            except KeyError:
+                LOG.warning(
+                    "Job could not find total number of atoms in atom selection."
+                )
+            else:
+                valid_indices = self.configuration["atom_selection"]["flatten_indices"]
+                self._outputData.add(
+                    "selected_atoms",
+                    "LineOutputVariable",
+                    [index in valid_indices for index in range(array_length)],
+                )
 
     @abc.abstractmethod
     def run_step(self, index):

@@ -33,7 +33,7 @@ class AtomSelectionConfigurator(IConfigurator):
         The defaults selection setting.
     """
 
-    _default = '{}'
+    _default = "{}"
 
     def configure(self, value: str) -> None:
         """Configure an input value.
@@ -43,6 +43,8 @@ class AtomSelectionConfigurator(IConfigurator):
         value : str
             The selection setting in a json readable format.
         """
+        self._original_input = value
+
         trajConfig = self._configurable[self._dependencies["trajectory"]]
         self.selector = ReusableSelection()
 
@@ -67,6 +69,7 @@ class AtomSelectionConfigurator(IConfigurator):
         self["flatten_indices"] = sorted(list(indices))
 
         atoms = trajConfig["instance"].chemical_system.atom_list
+        self["total_number_of_atoms"] = len(atoms)
         selectedAtoms = [atoms[idx] for idx in self["flatten_indices"]]
 
         self["selection_length"] = len(self["flatten_indices"])
@@ -93,7 +96,7 @@ class AtomSelectionConfigurator(IConfigurator):
             A dictionary of the number of atom per element.
         """
         names, counts = np.unique(self["names"], return_counts=True)
-        nAtomsPerElement = {names[n]:counts[n] for n in range(len(names))}
+        nAtomsPerElement = {names[n]: counts[n] for n in range(len(names))}
 
         return nAtomsPerElement
 
@@ -132,7 +135,7 @@ class AtomSelectionConfigurator(IConfigurator):
 
         return "\n".join(info) + "\n"
 
-    def get_selector(self) -> 'ReusableSelection':
+    def get_selector(self) -> "ReusableSelection":
         """
         Returns
         -------
