@@ -198,8 +198,7 @@ class PositionAutoCorrelationFunction(IJob):
                         self._outputData[f"pacf_{element}"], axis=0
                     )
             if self._outputData["pacf_total"][0] == 0:
-                raise ValueError(
-                    "The normalization factor is equal to zero !!!")
+                raise ValueError("The normalization factor is equal to zero !!!")
             else:
                 self._outputData["pacf_total"].scaling_factor *= normalisation_factor(
                     self._outputData["pacf_total"], axis=0
