@@ -250,13 +250,11 @@ class DensityOfStates(IJob):
             self._outputData,
             weight_dict,
             "vacf_%s",
-            update_partials=False,
         )
         self._outputData["dos_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "dos_%s",
-            update_partials=False,
         )
 
         self._outputData.write(

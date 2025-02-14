@@ -27,37 +27,6 @@ class NeutronDynamicTotalStructureFactorError(Error):
     pass
 
 
-def create_fake_b(
-    b_coh: List[float], b_inc: List[float], atom_counts: List[int]
-) -> List[float]:
-    """Creates random values of b (scattering length) for atoms in the
-    simulation. By definition, b_coh is the average of b,
-    and b_inc is the standard deviation of b.
-    Therefore, a random b value can be assigned to each atom
-    which reproduces the b_coh and b_inc of individual atoms,
-    at the same time allowing to calculate the average
-    b_inc for the entire system
-
-    Parameters
-    ----------
-    b_coh : List[float]
-        list of coherent scattering length values per element
-    b_inc : List[float]
-        list of incoherent scattering length values per element
-    atom_counts : List[int]
-        total number of atoms of each element
-
-    Returns
-    -------
-    List[float]
-        a list of random scattering lengths b for each atom
-    """
-    new_b = []
-    for n in range(len(atom_counts)):
-        new_b += list(np.random.normal(b_coh[n], b_inc[n], atom_counts[n]))
-    return new_b
-
-
 class NeutronDynamicTotalStructureFactor(IJob):
     """
     Computes the dynamic total structure factor for a set of atoms as the sum of the incoherent and coherent structure factors

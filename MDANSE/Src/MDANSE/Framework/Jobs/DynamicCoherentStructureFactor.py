@@ -274,14 +274,12 @@ class DynamicCoherentStructureFactor(IJob):
             self._outputData,
             weight_dict,
             "f(q,t)_%s%s",
-            update_partials=False,
         )
 
         self._outputData["s(q,f)_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "s(q,f)_%s%s",
-            update_partials=False,
         )
 
         self._outputData.write(

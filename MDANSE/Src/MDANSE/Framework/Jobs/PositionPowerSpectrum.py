@@ -227,13 +227,11 @@ class PositionPowerSpectrum(IJob):
             self._outputData,
             weight_dict,
             "pacf_%s",
-            update_partials=False,
         )
         self._outputData["pps_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "pps_%s",
-            update_partials=False,
         )
 
         self._outputData.write(

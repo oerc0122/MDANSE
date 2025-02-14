@@ -91,8 +91,6 @@ def assign_weights(
         A string data set name with formatting elements (placeholders for chemical element labels)
     symmetric : bool, optional
         do not generate results for the same elements in a different sequence, by default True
-    update_partials : bool, optional
-        Partial results will be rescaled if this is true, by default False
 
     Returns
     -------
@@ -119,7 +117,6 @@ def weighted_sum(
     values: Dict[str, np.ndarray],
     weights: Dict[str, float],
     key: str,
-    update_partials: bool = False,
 ):
     """Sums up partial datasets multiplied by their scaling factors.
     The scaling factors have to be set before, typically by calling
@@ -133,8 +130,6 @@ def weighted_sum(
         Dictionary of scaling factors per dataset
     key : str
         A string data set name with formatting elements (placeholders for chemical element labels)
-    update_partials : bool, optional
-        Partial results will be rescaled if this is true, by default False
 
     Returns
     -------
@@ -152,8 +147,5 @@ def weighted_sum(
             weightedSum = val * val.scaling_factor
         else:
             weightedSum += val * val.scaling_factor
-
-        if update_partials:
-            values[k][:] = val * val.scaling_factor
 
     return weightedSum

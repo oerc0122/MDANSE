@@ -258,14 +258,12 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             self._outputData,
             weight_dict,
             "f(q,t)_%s",
-            update_partials=False,
         )
 
         self._outputData["s(q,f)_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
             "s(q,f)_%s",
-            update_partials=False,
         )
 
         self._outputData.write(
