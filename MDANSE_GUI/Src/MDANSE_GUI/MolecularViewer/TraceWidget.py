@@ -61,13 +61,13 @@ class RGBValidator(QValidator):
                 else:
                     state = QValidator.State.Invalid
             else:
-                if len(rgb) > 3:
+                if any([x > 255 for x in rgb]):
+                    state = QValidator.State.Invalid
+                elif len(rgb) > 3:
                     state = QValidator.State.Invalid
                 elif len(rgb) == 3:
                     if all([(x >= 0) and (x < 256) for x in rgb]):
                         state = QValidator.State.Acceptable
-                    elif any([x > 255 for x in rgb]):
-                        state = QValidator.State.Invalid
                 else:
                     state = QValidator.State.Intermediate
         return state, input_string, position

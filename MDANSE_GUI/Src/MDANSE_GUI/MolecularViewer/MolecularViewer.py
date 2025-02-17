@@ -56,10 +56,8 @@ def array_to_3d_imagedata(data: np.ndarray, spacing: Tuple[float]):
     else:
         image.AllocateScalars(vtk.VTK_DOUBLE, 1)
 
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                image.SetScalarComponentFromDouble(i, j, k, 0, data[i, j, k])
+    for (i, j, k), val in np.ndenumerate(data):
+        image.SetScalarComponentFromDouble(i, j, k, 0, val)
 
     return image
 
@@ -262,13 +260,11 @@ class MolecularViewer(QtWidgets.QWidget):
         grid_step = radius / fine_sampling
 
         span = upper_limit - lower_limit
-        grid_steps = [int(x) for x in span / grid_step]
-        gdim = (grid_steps[0], grid_steps[1], grid_steps[2])
+        grid_steps = list((span // grid_step).astype(int))
+        gdim = tuple(grid_steps[0:3])
         grid = np.zeros(gdim, dtype=np.int32)
 
-        indices = np.floor((coords - lower_limit.reshape((1, 3))) / grid_step).astype(
-            int
-        )
+        indices = ((coords - lower_limit.reshape((1, 3))) // grid_step).astype(int)
         unique_indices, counts = np.unique(indices, return_counts=True, axis=0)
         grid[tuple(unique_indices.T)] += counts
         self._atomic_trace_histogram = smear_grid(grid, fine_sampling)
