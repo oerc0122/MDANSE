@@ -159,7 +159,7 @@ class DataWidget(QWidget):
             nsets = len(self._plotter._pc_backup.datasets())
         except AttributeError:
             return
-        except:
+        except Exception:
             LOG.warning("DataWidget could not determine the number of datasets.")
         else:
             if nsets == 0:  # do not create a file if there are no data
@@ -167,7 +167,7 @@ class DataWidget(QWidget):
         try:
             PLATFORM.create_directory(os.path.dirname(self._output_widget.text()))
             target = open(target_path, "w", newline="")
-        except:
+        except Exception:
             LOG.error(f"Could not open file for writing: {target_path}")
         else:
             writer = csv.writer(
@@ -181,13 +181,13 @@ class DataWidget(QWidget):
                     writer.writerow(row)
             target.close()
 
-    @Slot(object)
-    def slider_change(self, new_values: object):
-        """Not used for text output."""
+    # @Slot(object)
+    # def slider_change(self, new_values: object):
+    #     """Not used for text output."""
 
-    @Slot(bool)
-    def set_slider_values(self, reset_needed: bool):
-        """Not used for text output."""
+    # @Slot(bool)
+    # def set_slider_values(self, reset_needed: bool):
+    #     """Not used for text output."""
 
     def set_context(self, new_context: "PlottingContext"):
         self._plotting_context = new_context

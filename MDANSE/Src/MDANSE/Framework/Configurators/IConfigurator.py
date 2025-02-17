@@ -59,9 +59,8 @@ class ConfiguratorError(Error):
         """
 
         if self._configurator is not None:
-            self._message = "Configurator: %r --> %s" % (
-                self._configurator.name,
-                self._message,
+            self._message = (
+                f"Configurator: {self._configurator.name!r} --> {self._message}"
             )
 
         return self._message
@@ -295,7 +294,7 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         :rtype: bool
         """
 
-        if configured == None:
+        if configured is None:
             names = [str(key) for key in self._configurable._configuration.keys()]
             configured = [
                 name

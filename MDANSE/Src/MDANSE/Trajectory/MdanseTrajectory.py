@@ -64,7 +64,7 @@ class MdanseTrajectory:
         result = True
         try:
             file_object = h5py.File(filename)
-        except FileNotFoundError:
+        except Exception:
             result = False
         else:
             try:
@@ -409,9 +409,7 @@ class MdanseTrajectory:
             last = len(self)
 
         if not self.has_variable(variable):
-            raise KeyError(
-                "The variable {} is not stored in the trajectory".format(variable)
-            )
+            raise KeyError(f"The variable {variable} is not stored in the trajectory")
 
         grp = self._h5_file["/configuration"]
         variable = grp[variable][first:last:step, index, :].astype(np.float64)

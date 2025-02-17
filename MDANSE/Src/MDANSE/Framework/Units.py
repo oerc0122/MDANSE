@@ -95,11 +95,11 @@ def _parse_unit(iunit):
             iunit = iunit[i:]
             break
     else:
-        raise UnitError("The unit {} is unknown".format(iunit))
+        raise UnitError(f"The unit {iunit} is unknown")
 
     if prefix:
         if prefix not in _PREFIXES:
-            raise UnitError("The prefix {} is unknown".format(prefix))
+            raise UnitError(f"The prefix {prefix} is unknown")
         prefix = _PREFIXES[prefix]
     else:
         prefix = 1.0
@@ -150,7 +150,7 @@ def _str_to_unit(s):
             return unit
 
         else:
-            raise UnitError("Invalid unit: {}".format(s))
+            raise UnitError(f"Invalid unit: {s}")
 
 
 class _Unit(object):
@@ -389,55 +389,37 @@ class _Unit(object):
     def __str__(self):
         unit = copy.copy(self)
 
-        fmt = "{:%s}" % self._format
-
         if self._ounit is None:
-            s = fmt.format(unit._factor)
+            s = format(unit._factor, self._format)
 
             positive_units = []
             negative_units = []
             for uname, uval in zip(_UNAMES, unit._dimension):
                 if uval == 0:
                     continue
-                elif uval > 0:
-                    if uval == 1:
-                        positive_units.append("{:s}".format(uname))
-                    else:
-                        if isinstance(uval, int):
-                            positive_units.append("{:s}{:d}".format(uname, int(uval)))
-                        else:
-                            positive_units.append("{:s}{}".format(uname, uval))
-                elif uval < 0:
-                    if uval == -1:
-                        negative_units.append("{:s}".format(uname))
-                    else:
-                        if isinstance(uval, int):
-                            negative_units.append("{:s}{:d}".format(uname, int(-uval)))
-                        else:
-                            negative_units.append("{:s}{}".format(uname, -uval))
 
-            positive_units_str = ""
-            if positive_units:
-                positive_units_str = " ".join(positive_units)
+                ref = positive_units if uval > 0 else negative_units
+                unit = str(uname) + (
+                    format(abs(uval), "d") if isinstance(uval, int) else str(uval)
+                )
+                ref.append(unit)
 
-            negative_units_str = ""
-            if negative_units:
-                negative_units_str = " ".join(negative_units)
+            positive_units_str = " ".join(positive_units)
+            negative_units_str = " ".join(negative_units)
 
             if positive_units_str:
-                s += " {:s}".format(positive_units_str)
+                s += f" {positive_units_str}"
 
             if negative_units_str:
                 if not positive_units_str:
                     s += " 1"
-                s += " / {}".format(negative_units_str)
+                s += f" / {negative_units_str}"
 
         else:
             u = copy.deepcopy(self)
             u._div_by(self._out_factor)
 
-            s = fmt.format(u._factor)
-            s += " {}".format(self._ounit)
+            s = f"{u._factor:{self._format}} {self._ounit}"
 
         return s
 
@@ -728,7 +710,7 @@ class UnitsManager(metaclass=Singleton):
         try:
             with open(UnitsManager._USER_DATABASE, "r") as fin:
                 d.update(json.load(fin))
-        except:
+        except Exception:
             self.save()
         finally:
             for uname, udict in list(d.items()):

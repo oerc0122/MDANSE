@@ -130,8 +130,8 @@ class Heatmap(Plotter):
         self._backup_images = {}
         self._backup_arrays = {}
         self._backup_scale_interpolators = {}
-        xaxis_unit = None
-        yaxis_unit = None
+        _xaxis_unit = None
+        _yaxis_unit = None
         self._axes = []
         if not update_only:
             self._last_axes_units = {}
@@ -158,7 +158,7 @@ class Heatmap(Plotter):
                 nplots += 1
             try:
                 self._backup_scale_interpolators[ds_num](51.2)
-            except:
+            except Exception:
                 percentiles = np.linspace(0, 100.0, 21)
                 results = [np.percentile(ds._data, perc) for perc in percentiles]
                 self._backup_scale_interpolators[ds_num] = interp1d(
@@ -200,7 +200,7 @@ class Heatmap(Plotter):
                     conversion_factor = measure(1.0, value, equivalent=True).toval(
                         target_unit
                     )
-                except:
+                except Exception:
                     limits += [axis_array[0], axis_array[-1]]
                     axis_units.append(value)
                 else:

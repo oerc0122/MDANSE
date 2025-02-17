@@ -149,7 +149,7 @@ class InstrumentDetails(QWidget):
                 else:
                     widget.setEnabled(True)
             if "axis_2" in name:
-                if not "Circular" in self._current_instrument._qvector_type:
+                if "Circular" not in self._current_instrument._qvector_type:
                     widget.setEnabled(False)
                 else:
                     widget.setEnabled(True)
