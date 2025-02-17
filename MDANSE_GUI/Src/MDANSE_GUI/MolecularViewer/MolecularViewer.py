@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from typing import List, Tuple, Dict, Any
+import copy
 
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
@@ -35,6 +36,7 @@ from MDANSE.MLogging import LOG
 from MDANSE_GUI.MolecularViewer.readers import hdf5wrapper
 from MDANSE_GUI.MolecularViewer.Dummy import PyConnectivity
 from MDANSE_GUI.MolecularViewer.Contents import TrajectoryAtomData
+from MDANSE_GUI.MolecularViewer.TraceWidget import TRACE_PARAMETERS
 from MDANSE_GUI.MolecularViewer.AtomProperties import (
     AtomProperties,
     ndarray_to_vtkarray,
@@ -245,16 +247,12 @@ class MolecularViewer(QtWidgets.QWidget):
             return
 
         LOG.info("Computing isosurface ...")
-        if params is not None:
-            fine_sampling = params.get("fine_sampling", 5)
-            r, g, b = params.get("surface_colour", (0, 0.5, 0.75))
-            opacity = params.get("surface_opacity", 0.5)
-            trace_cutoff = params.get("trace_cutoff", 90)
-        else:
-            fine_sampling = 5
-            r, g, b = 0, 0.5, 0.75
-            opacity = 0.5
-            trace_cutoff = 90
+        if params is None:
+            params = copy.copy(TRACE_PARAMETERS)
+        fine_sampling = params.get("fine_sampling", 5)
+        rgb = params.get("surface_colour", (0, 0.5, 0.75))
+        opacity = params.get("surface_opacity", 0.5)
+        trace_cutoff = params.get("trace_cutoff", 90)
 
         coords = self._reader.read_atom_trajectory(index)
         element = self._reader._atom_types[index]
@@ -304,7 +302,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         new_surface = vtk.vtkActor()
         new_surface.SetMapper(mapper)
-        new_surface.GetProperty().SetColor((r, g, b))
+        new_surface.GetProperty().SetColor(rgb)
         new_surface.GetProperty().SetOpacity(opacity)
         new_surface.PickableOff()
 

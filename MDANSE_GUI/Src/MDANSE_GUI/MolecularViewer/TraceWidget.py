@@ -16,8 +16,10 @@
 
 from typing import TYPE_CHECKING
 from contextlib import suppress
+import copy
 
 from qtpy.QtCore import Signal, Slot
+from qtpy.QtGui import QValidator
 from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -30,6 +32,45 @@ from qtpy.QtWidgets import (
 
 if TYPE_CHECKING:
     from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
+
+
+TRACE_PARAMETERS = {
+    "atom_number": 0,
+    "fine_sampling": 3,
+    "surface_colour": (0, 0.5, 0.75),
+    "surface_opacity": 0.5,
+    "trace_cutoff": 5,
+    "surface_number": -1,
+}
+
+
+class RGBValidator(QValidator):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def validate(self, input_string: str, position: int):
+        state = QValidator.State.Intermediate
+        comma_count = input_string.count(",")
+        if len(input_string) > 0:
+            try:
+                rgb = [int(x) for x in input_string.split(",")]
+            except (TypeError, ValueError):
+                if input_string[-1] == "," and comma_count < 3:
+                    state = QValidator.State.Intermediate
+                else:
+                    state = QValidator.State.Invalid
+            else:
+                if len(rgb) > 3:
+                    state = QValidator.State.Invalid
+                elif len(rgb) == 3:
+                    if all([(x >= 0) and (x < 256) for x in rgb]):
+                        state = QValidator.State.Acceptable
+                    elif any([x > 255 for x in rgb]):
+                        state = QValidator.State.Invalid
+                else:
+                    state = QValidator.State.Intermediate
+        return state, input_string, position
 
 
 class TraceWidget(QWidget):
@@ -70,6 +111,10 @@ class TraceWidget(QWidget):
         self._grid_spinbox = QSpinBox(self)
         self._opacity_spinbox = QDoubleSpinBox(self)
         self._colour_lineedit = QLineEdit("0,128,192", self)
+        self._colour_lineedit.setPlaceholderText("0,128,192 (red,green,blue)")
+        self._colour_validator = RGBValidator(self._colour_lineedit)
+        self._colour_lineedit.setValidator(self._colour_validator)
+        self._colour_lineedit.textChanged.connect(self.check_rgb)
         for sbox in [
             self._atom_spinbox,
             self._surface_spinbox,
@@ -116,6 +161,13 @@ class TraceWidget(QWidget):
         self._surface_spinbox.setMaximum(max(len(self._molviewer._surfaces) - 1, 0))
         self.enable_buttons()
 
+    @Slot(str)
+    def check_rgb(self, colour_string: str):
+        tokens = colour_string.split(",")
+        non_empty = all([len(token) > 0 for token in tokens])
+        colour_count = len(tokens)
+        self.add_trace_button.setEnabled(non_empty and colour_count == 3)
+
     def enable_buttons(self):
         if self._molviewer is None:
             return
@@ -123,14 +175,7 @@ class TraceWidget(QWidget):
         self.add_trace_button.setEnabled(self._molviewer._n_atoms > 0)
 
     def get_values(self):
-        params = {
-            "atom_number": 0,
-            "fine_sampling": 3,
-            "surface_colour": (0, 0.5, 0.75),
-            "surface_opacity": 0.5,
-            "trace_cutoff": 5,
-            "surface_number": -1,
-        }
+        params = copy.copy(TRACE_PARAMETERS)
         params["atom_number"] = self._atom_spinbox.value()
         params["surface_number"] = self._surface_spinbox.value()
         with suppress(ValueError, TypeError):
