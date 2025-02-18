@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple, Dict, Any
 from contextlib import suppress
 import copy
 
@@ -45,11 +45,35 @@ TRACE_PARAMETERS = {
 
 
 class RGBValidator(QValidator):
+    """A custom validator for a QLineEdit.
+    It is intended to limit the input to a string
+    of 3 integer numbers in the range of 0-255
+    separated by commas.
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    Additional checks are necessary later in the code,
+    since the validator cannot exclude the cases of
+    1 or 2 comma-separated values, since they are
+    a preliminary step when typing in 3 numbers.
+    """
 
-    def validate(self, input_string: str, position: int):
+    def validate(self, input_string: str, position: int) -> Tuple[int, str]:
+        """Implementation of the virtual method of QValidator.
+        It takes in the string from a QLineEdit and the cursor position,
+        and an enum value of the validator state. Widgets will reject
+        inputs which change the state to Invalid.
+
+        Parameters
+        ----------
+        input_string : str
+            current contents of a text input field
+        position : int
+            position of the cursor in the text input field
+
+        Returns
+        -------
+        Tuple[int,str]
+            a tuple of (validator state, input string, cursor position)
+        """
         state = QValidator.State.Intermediate
         comma_count = input_string.count(",")
         if len(input_string) > 0:
@@ -74,7 +98,6 @@ class RGBValidator(QValidator):
 
 
 class TraceWidget(QWidget):
-
     new_atom_trace = Signal(dict)
     remove_atom_trace = Signal(int)
 
@@ -87,19 +110,29 @@ class TraceWidget(QWidget):
         self.setLayout(layout)
 
         self._n_atoms = 0
-        self._opacity = 0.5
-        self._color = (0, 0.5, 0.75)
-        self._iso_percentile = 90
+        initial_parameters = copy.copy(TRACE_PARAMETERS)
+        self._opacity = initial_parameters["surface_opacity"]
+        self._color = initial_parameters["surface_colour"]
+        self._iso_percentile = initial_parameters["trace_cutoff"]
         self.populate_layout()
 
     def initialise_values(self, viewer: "MolecularViewer"):
+        """An instance of MolecularViewer will be saved as
+        an internal attribute to allow this widget to
+        access attributes and call methods directly.
+
+        Parameters
+        ----------
+        viewer : MolecularViewer
+            One of the 3D viewer instances in the MDANSE GUI
+        """
         self._molviewer = viewer
         self._n_atoms = viewer._n_atoms
-        self._opacity = 0.5
-        self._color = (0, 0.5, 0.75)
-        self._iso_percentile = 90
 
     def populate_layout(self):
+        """Creates all the widgets, places them in the layout
+        and connects their signals and slots.
+        """
         layout = self.layout()
         self.add_trace_button = QPushButton("Calculate and add atom trace", self)
         self.remove_trace_button = QPushButton("Remove atom trace", self)
@@ -155,6 +188,9 @@ class TraceWidget(QWidget):
 
     @Slot()
     def update_limits(self):
+        """Changes the limits of the spinboxes when the current trajectory
+        is changed or an isosurface is added/removed.
+        """
         if self._molviewer is None:
             return
         self._atom_spinbox.setMaximum(max(self._molviewer._n_atoms - 1, 0))
@@ -163,18 +199,39 @@ class TraceWidget(QWidget):
 
     @Slot(str)
     def check_rgb(self, colour_string: str):
+        """This method disables the button which creates an isosurface,
+        if the coulor input field text contains less than three numbers,
+        and re-enables it if it reaches three numbers.
+
+        Parameters
+        ----------
+        colour_string : str
+            The current contents of the colour input QLineEdit
+        """
         tokens = colour_string.split(",")
         non_empty = all([len(token) > 0 for token in tokens])
         colour_count = len(tokens)
         self.add_trace_button.setEnabled(non_empty and colour_count == 3)
 
     def enable_buttons(self):
+        """This method disables the button removing an isosurface
+        if no isosurfaces are present. It also disables the isosurface
+        creation button if the current view contains no atoms.
+        """
         if self._molviewer is None:
             return
         self.remove_trace_button.setEnabled(len(self._molviewer._surfaces) != 0)
         self.add_trace_button.setEnabled(self._molviewer._n_atoms > 0)
 
-    def get_values(self):
+    def get_values(self) -> Dict[str, Any]:
+        """Reads the values of the input widgets and returns
+        a dictionary containing these values.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A dictionary of all the input parameters from the widgets
+        """
         params = copy.copy(TRACE_PARAMETERS)
         params["atom_number"] = self._atom_spinbox.value()
         params["surface_number"] = self._surface_spinbox.value()
@@ -188,9 +245,14 @@ class TraceWidget(QWidget):
         return params
 
     def new_trace_details(self):
+        """This method triggers the calculation of an isosurface
+        by sending the parameter dictionary via a Qt signal.
+        """
         params = self.get_values()
         self.new_atom_trace.emit(params)
 
     def remove_trace(self):
+        """This method sends a Qt signal to instruct a 3D view
+        to delete the currently selected isosurface."""
         params = self.get_values()
         self.remove_atom_trace.emit(params["surface_number"])
