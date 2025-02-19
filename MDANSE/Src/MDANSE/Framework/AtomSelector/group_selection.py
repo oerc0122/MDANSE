@@ -21,9 +21,7 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_labels(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
-) -> Set[int]:
+def select_labels(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
     """Selects all the atoms in the trajectory.
 
     Parameters
@@ -47,9 +45,7 @@ def select_labels(
     return selection
 
 
-def select_pattern(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
-) -> Set[int]:
+def select_pattern(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
     """Selects all the atoms in the trajectory.
 
     Parameters
