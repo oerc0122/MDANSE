@@ -266,7 +266,6 @@ class ViewerControls(QWidget):
             layout5.addWidget(box)
         layout.addWidget(wrapper5)
         # the database of atom types
-        # self._database = TrajectoryAtomData()
         self.layout().addWidget(
             absolute_base, 0, 2, 2, 1
         )  # row, column, rowSpan, columnSpan

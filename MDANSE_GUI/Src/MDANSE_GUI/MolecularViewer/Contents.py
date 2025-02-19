@@ -15,8 +15,7 @@
 #
 
 import numpy as np
-from qtpy.QtGui import QStandardItemModel, QStandardItem
-from qtpy.QtWidgets import QTableView, QColorDialog
+from qtpy.QtGui import QStandardItemModel
 
 from MDANSE_GUI.MolecularViewer.readers.i_reader import IReader
 
@@ -54,19 +53,3 @@ class TrajectoryAtomData(QStandardItemModel):
             ireader -- a trajectory reader for the MolecularViewer.
         """
         self._reader = ireader
-
-    def parseInformation(self, unique=True):
-        if self._reader is None or self._viewer is None:
-            return
-        atom_names = self._reader.atom_names
-        atom_types = self._reader.atom_types
-        atom_ids = self._reader.atom_ids
-        grouped_by_type = {}
-        name_by_type = {}
-        _colour_by_type = {}
-        _radius_by_type = {}
-        unique_types = np.unique(atom_types)
-        for type in unique_types:
-            crit = np.where(atom_types == type)
-            grouped_by_type[type] = atom_ids[crit]
-            name_by_type[type] = atom_names[crit][0]

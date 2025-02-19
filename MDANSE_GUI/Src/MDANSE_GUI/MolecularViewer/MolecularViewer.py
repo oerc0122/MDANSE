@@ -35,7 +35,6 @@ from MDANSE.MLogging import LOG
 
 from MDANSE_GUI.MolecularViewer.readers import hdf5wrapper
 from MDANSE_GUI.MolecularViewer.Dummy import PyConnectivity
-from MDANSE_GUI.MolecularViewer.Contents import TrajectoryAtomData
 from MDANSE_GUI.MolecularViewer.TraceWidget import TRACE_PARAMETERS
 from MDANSE_GUI.MolecularViewer.AtomProperties import (
     AtomProperties,
@@ -94,7 +93,8 @@ def smear_grid(grid: np.ndarray, fine_sampling: int) -> np.ndarray:
 
 
 class MolecularViewer(QtWidgets.QWidget):
-    """This class implements a molecular viewer."""
+    """MolecularViewer is a Qt widget containing a 3D viewer
+    of molecular structures, currently implemented in VTK."""
 
     new_max_frames = Signal(int)
     changed_trace = Signal()
@@ -104,7 +104,6 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._scale_factor = 0.4
 
-        self._datamodel = None
         self._element_database = None
 
         self._iren = QVTKRenderWindowInteractor(self)
@@ -176,9 +175,6 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self.reset_camera = False
 
-    def setDataModel(self, datamodel: TrajectoryAtomData):
-        self._datamodel = datamodel
-
     def _new_trajectory_object(self, fname: str, data: HDFTrajectoryInputData):
         reader = hdf5wrapper.HDF5Wrapper(fname, data.trajectory, data.chemical_system)
         self.set_reader(reader)
@@ -206,7 +202,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
     @Slot()
     def _new_atom_parameters(self):
-        if self._polydata is None or self._datamodel is None:
+        if self._polydata is None:
             return
 
         # we need to add the new colours to LUT
@@ -741,7 +737,6 @@ class MolecularViewer(QtWidgets.QWidget):
         self._polydata.GetPointData().SetScalars(scalars)
         self.update_all_polydata()
         self.update_renderer()
-        # self._datamodel.setReader(reader)
 
     def update_renderer(self):
         """
