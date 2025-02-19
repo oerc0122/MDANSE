@@ -22,14 +22,14 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_molecules(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
-    """Selects all the atoms in the trajectory.
+    """Selects all the atoms belonging to the specified molecule types.
 
     Parameters
     ----------
-    selection : Set[int]
-        A set of atom indices
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
+    function_parameters : Dict[str, Any]
+        should include a list of str molecule names under key "atom_labels"
 
     Returns
     -------

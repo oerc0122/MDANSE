@@ -21,14 +21,23 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_atoms(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
-    """Selects all the atoms in the trajectory.
+    """Selects specific atoms in the trajectory. These can be selected based
+    on indices, atom type or trajectory-specific atom name.
+    The atom type is normally the chemical element, while
+    the atom name can be more specific and depend on the
+    force field used.
 
     Parameters
     ----------
-    selection : Set[int]
-        A set of atom indices
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
+    function_parameters : Dict[str, Any]
+        may include any combination of the following
+        "index_list" : List[int]
+        "index_range" : a start, stop pair of indices for range(start, stop)
+        "index_slice" : s start, stop, step sequence of indices for range(start, stop, step)
+        "atom_types" : List[str]
+        "atom_names" : List[str]
 
     Returns
     -------
@@ -45,9 +54,9 @@ def select_atoms(trajectory: Trajectory, **function_parameters: Dict[str, Any]) 
     index_slice = function_parameters.get("index_slice")
     if index_list is not None:
         selection |= indices & index_list
-    elif index_range is not None:
+    if index_range is not None:
         selection |= indices & set(range(*index_range))
-    elif index_slice is not None:
+    if index_slice is not None:
         selection |= indices & set(range(*index_slice))
     atom_types = function_parameters.get("atom_types", ())
     if atom_types:

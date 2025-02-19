@@ -22,14 +22,15 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_labels(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
-    """Selects all the atoms in the trajectory.
+    """Selects atoms with a specific label in the trajectory.
+    A residue name can be read as a label by MDANSE.
 
     Parameters
     ----------
-    selection : Set[int]
-        A set of atom indices
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
+    function_parameters : Dict[str, Any]
+        should include a list of string labels under key "atom_labels"
 
     Returns
     -------
@@ -46,14 +47,17 @@ def select_labels(trajectory: Trajectory, **function_parameters: Dict[str, Any])
 
 
 def select_pattern(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
-    """Selects all the atoms in the trajectory.
+    """Selects atoms according to the SMARTS string given as input.
+    This will only work if molecules and bonds have been detected in the system.
+    If the bond information was not read from the input trajectory on conversion,
+    it can still be determined in a TrajectoryEditor run.
 
     Parameters
     ----------
-    selection : Set[int]
-        A set of atom indices
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
+    function_parameters : Dict[str, Any]
+        should include a SMARTS string under key "rdkit_pattern"
 
     Returns
     -------

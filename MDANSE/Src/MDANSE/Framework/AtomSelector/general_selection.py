@@ -24,8 +24,6 @@ def select_all(trajectory: Trajectory, **function_parameters: Dict[str, Any]) ->
 
     Parameters
     ----------
-    selection : Set[int]
-        A set of atom indices
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
 
@@ -42,10 +40,8 @@ def select_none(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -
 
     Parameters
     ----------
-    selection : Set[int]
-        A set of atom indices
     trajectory : Trajectory
-        A trajectory instance to which the selection is applied
+        A trajectory instance, ignored in this selection
 
     Returns
     -------
@@ -56,6 +52,21 @@ def select_none(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -
 
 
 def invert_selection(trajectory: Trajectory, selection: Set[int]) -> Set[int]:
+    """Returns a set of all the indices that are present in the trajectory
+    and were not included in the input selection.
+
+    Parameters
+    ----------
+    trajectory : Trajectory
+        a trajectory containing atoms to be selected
+    selection : Set[int]
+        set of indices to be excluded from the set of all indices
+
+    Returns
+    -------
+    Set[int]
+        set of all the indices in the trajectory which were not in the selection
+    """
     all_indices = select_all(trajectory)
     inverted = all_indices - selection
     return inverted
