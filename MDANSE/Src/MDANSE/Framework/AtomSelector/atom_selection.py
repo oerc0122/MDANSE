@@ -42,25 +42,21 @@ def select_atoms(
     element_list = system.atom_list
     name_list = system.name_list
     indices = set(range(len(element_list)))
-    index_list = function_parameters.get("index_list", None)
-    index_range = function_parameters.get("index_range", None)
-    index_slice = function_parameters.get("index_slice", None)
+    index_list = function_parameters.get("index_list")
+    index_range = function_parameters.get("index_range")
+    index_slice = function_parameters.get("index_slice")
     if index_list is not None:
-        selection = selection.union(indices.intersection(index_list))
+        selection |= indices & index_list
     if index_range is not None:
-        selection = selection.union(
-            indices.intersection(range(index_range[0], index_range[1]))
-        )
+        selection |= indices & set(range(*index_range))
     if index_slice is not None:
-        selection = selection.union(
-            indices.intersection(range(index_slice[0], index_slice[1], index_slice[2]))
-        )
-    atom_types = function_parameters.get("atom_types", None)
+        selection |= indices & set(range(*index_slice))
+    atom_types = function_parameters.get("atom_types", ())
     if atom_types:
-        new_indices = [index for index in indices if element_list[index] in atom_types]
-        selection = selection.union(new_indices)
-    atom_names = function_parameters.get("atom_names", None)
+        new_indices = {index for index in indices if element_list[index] in atom_types}
+        selection |= new_indices
+    atom_names = function_parameters.get("atom_names", ())
     if atom_names:
-        new_indices = [index for index in indices if name_list[index] in atom_names]
-        selection = selection.union(new_indices)
+        new_indices = {index for index in indices if name_list[index] in atom_names}
+        selection |= new_indices
     return selection
