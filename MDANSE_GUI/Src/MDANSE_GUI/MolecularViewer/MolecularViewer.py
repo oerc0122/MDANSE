@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Iterable
 import copy
 
 import numpy as np
@@ -34,7 +34,6 @@ from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInput
 from MDANSE.MLogging import LOG
 
 from MDANSE_GUI.MolecularViewer.readers import hdf5wrapper
-from MDANSE_GUI.MolecularViewer.Dummy import PyConnectivity
 from MDANSE_GUI.MolecularViewer.TraceWidget import TRACE_PARAMETERS
 from MDANSE_GUI.MolecularViewer.AtomProperties import (
     AtomProperties,
@@ -176,21 +175,43 @@ class MolecularViewer(QtWidgets.QWidget):
         self.reset_camera = False
 
     def _new_trajectory_object(self, fname: str, data: HDFTrajectoryInputData):
-        reader = hdf5wrapper.HDF5Wrapper(fname, data.trajectory, data.chemical_system)
-        self.set_reader(reader)
+        """Creates and sets a new trajectory reader for the input trajectory.
 
-    @Slot(str)
-    def _new_trajectory(self, fname: str):
-        data = HDFTrajectoryInputData(fname)
+        Parameters
+        ----------
+        fname : str
+            trajectory file name
+        data : HDFTrajectoryInputData
+            instance of the MDANSE input trajectory handler
+        """
         reader = hdf5wrapper.HDF5Wrapper(fname, data.trajectory, data.chemical_system)
         self.set_reader(reader)
 
     @Slot(float)
     def _new_scaling(self, scale_factor: float):
+        """Updates the scale factor by which all the atom radii are multiplied.
+        Scale factor 1.0 means that the covalent radii of atoms are used as
+        radii of the spheres in the 3D view. By default the atom size is scaled
+        down to allow the user to see atoms behind the first layer and the
+        bonds between atoms.
+
+        Parameters
+        ----------
+        scale_factor : float
+            Sphere radii in 3D view will be multiplied by this factor
+        """
         self._scale_factor = scale_factor
         self.update_renderer()
 
     def _new_visibility(self, flags: List[bool]):
+        """Takes the new values of boolean flags which make
+        different actors in the 3D scene (in)visible.
+
+        Parameters
+        ----------
+        flags : List[bool]
+            Each actor will be visible if its flag is True.
+        """
         self._atoms_visible = flags[0]
         self._bonds_visible = flags[1]
         self._axes_visible = flags[2]
@@ -200,28 +221,26 @@ class MolecularViewer(QtWidgets.QWidget):
         if result is False:
             self.update_renderer()
 
-    @Slot()
-    def _new_atom_parameters(self):
-        if self._polydata is None:
-            return
-
-        # we need to add the new colours to LUT
-        # then assign new colour NUMBERS to _atom_colours
-
-        # we also need to assign new atom radii to _atom_scales
-
-        scalars = ndarray_to_vtkarray(
-            self._atom_colours, self._atom_scales, self._n_atoms
-        )
-
-        self._polydata.GetPointData().SetScalars(scalars)
-
-        self.update_renderer()
-
     def trace_from_dialog(self, params: Dict[str, Any]):
+        """Passes the input parameter dictionary to the method
+        which draws an isosurface in the 3D view.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            dictionary of input parameters from TraceWidget.py
+        """
         self._draw_isosurface(params["atom_number"], params)
 
-    def delete_from_dialog(self, trace_number: int):
+    def delete_isosurface_from_dialog(self, trace_number: int):
+        """Deletes from the 3D scene the isosurface with a specified
+        index, if it exists.
+
+        Parameters
+        ----------
+        trace_number : int
+            index of the isosurface
+        """
         try:
             surface = self._surfaces[trace_number]
         except IndexError:
@@ -234,13 +253,23 @@ class MolecularViewer(QtWidgets.QWidget):
             self._iren.Render()
             self.changed_trace.emit()
 
-    def _draw_isosurface(self, index: int, params=None):
-        """Draw the isosurface of an atom with the given index"""
+    def _draw_isosurface(self, index: int, params: Dict[str, Any] = None):
+        """Calculates the total volume used by an atom in the trajectory
+        and draws an isosurface around it.
+
+        Parameters
+        ----------
+        index : int
+            index of the atom in the system
+        params : Dict[str, Any], optional
+            A dictionary of isosurface parameters. If None, defaults from
+            TraceWidget.py will be used instead.
+        """
 
         if self._reader is None:
             return
 
-        LOG.info("Computing isosurface ...")
+        LOG.info(f"Computing isosurface of atom {index}")
         if params is None:
             params = copy.copy(TRACE_PARAMETERS)
         fine_sampling = params.get("fine_sampling", 5)
@@ -312,10 +341,17 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._iren.Render()
 
-        LOG.info("... done")
+        LOG.info(f"Finished calculating the trace of atom {index}")
         self.changed_trace.emit()
 
-    def create_all_actors(self):
+    def create_all_actors(self) -> List[vtk.vtkActor]:
+        """Collects all the VTK actors that should be shown in 3D view.
+
+        Returns
+        -------
+        List[vtk.vtkActor]
+            typically actors for unit cell, bonds and atoms
+        """
         actors = []
         if self._polydata is None:
             return actors
@@ -342,7 +378,28 @@ class MolecularViewer(QtWidgets.QWidget):
         uc_actor.SetMapper(uc_mapper)
         return uc_actor
 
-    def create_traj_actors(self, polydata, line_opacity=1.0, ball_opacity=1.0):
+    def create_traj_actors(
+        self,
+        polydata: vtk.vtkPolyData,
+        line_opacity: float = 1.0,
+        ball_opacity: float = 1.0,
+    ) -> List[vtk.vtkActor]:
+        """Creates VTK actors which visualise atoms and bonds.
+
+        Parameters
+        ----------
+        polydata : vtk.vtkPolyData
+            VTK object storing the atom properties used in 3D view (colour, radius)
+        line_opacity : float, optional
+            opacity (alpha) of bond lines, by default 1.0
+        ball_opacity : float, optional
+            opacity (alpha) of atom spheres, by default 1.0
+
+        Returns
+        -------
+            Two vtk.vtkLODActor instances, for bonds and atoms
+
+        """
         line_mapper = vtk.vtkPolyDataMapper()
         if vtk.vtkVersion.GetVTKMajorVersion() < 6:
             line_mapper.SetInput(polydata)
@@ -394,7 +451,16 @@ class MolecularViewer(QtWidgets.QWidget):
         return [line_actor, ball_actor]
 
     def clear_trajectory(self, clear_isosurfaces=True):
-        """Clear the vtk scene from atoms and bonds actors."""
+        """Removes all the actors from the 3D view.
+
+        When updating the animation frame, it usually makes sense to keep
+        the isosurfaces in the view, which is allowed by the keyword argument.
+
+        Parameters
+        ----------
+        clear_isosurfaces : bool, optional
+            if True, isosurfaces are removed too, by default True
+        """
 
         if not hasattr(self, "_actors"):
             return
@@ -438,6 +504,9 @@ class MolecularViewer(QtWidgets.QWidget):
         self.update_uc_polydata()
 
     def update_polydata(self):
+        """Triggers an update of the VTK actors, making them use the
+        latest parameters from the input widgets.
+        """
         coords = self._reader.read_frame(self._current_frame)
 
         if self._atoms_visible or self._bonds_visible:
@@ -458,7 +527,36 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._polydata_bonds_exist = False
 
-    def create_bond_cell_array(self, rs, covs, not_du, tolerance=0.04):
+    def create_bond_cell_array(
+        self,
+        rs: np.ndarray,
+        covs: Iterable[float],
+        not_du: Iterable[bool],
+        tolerance: float = 0.04,
+    ):
+        """Finds the pairs of atoms which should be connected by bonds,
+        based on their positions, covalent radii and tolerance of distances.
+        Dummy atoms can be excluded from forming bonds.
+
+        This does NOT consider periodic boundary conditions.
+
+        Parameters
+        ----------
+        rs : np.ndarray
+            an (N,3) array of atom coordinates
+        covs : Iterable[float]
+            an (N,) array of covalent radii
+        not_du : Iterable[bool]
+            an (N,) list of boolean flags. A dummy atom is marked with False
+        tolerance : float, optional
+            bond is formed if |pos_1 - pos_2| < radius_1 + radius_2 + tolerance.
+            By default 0.04 nm
+
+        Returns
+        -------
+        vtk.vtkCellArray, bool
+            a VTK array of pairs of atom indices, and a flag True if some bonds were found
+        """
         # determine and set bonds without PBC applied
         bonds = vtk.vtkCellArray()
 
@@ -498,6 +596,9 @@ class MolecularViewer(QtWidgets.QWidget):
         return bonds, len(ls) > 0
 
     def update_uc_polydata(self):
+        """Updates the unit cell actor using the unit cell parameters
+        from the current trajectory frame.
+        """
         uc = self._reader.read_pbc(self._current_frame)
         if self._cell_visible and uc is not None:
             # update the unit cell
@@ -554,7 +655,16 @@ class MolecularViewer(QtWidgets.QWidget):
         return self._iren
 
     def on_change_atomic_trace_opacity(self, surface_index: int, opacity: float):
-        """Event handler called when the opacity level is changed."""
+        """This method should allow changing the opacity of an already existing
+        isosurface. Currently not connected to any widgets.
+
+        Parameters
+        ----------
+        surface_index : int
+            index of the isosurface in self._surfaces
+        opacity : float
+            new opacity value for the isosurface
+        """
 
         if surface_index >= len(self._surfaces):
             return
@@ -563,7 +673,16 @@ class MolecularViewer(QtWidgets.QWidget):
         self._iren.Render()
 
     def on_change_atomic_trace_isocontour_level(self, surface_index: int, level: float):
-        """Event handler called when the user change the isocontour level."""
+        """This method should allow changing the isocontour level for an already existing
+        isosurface. Currently not connected to any widgets.
+
+        Parameters
+        ----------
+        surface_index : int
+            index of the isosurface in self._surfaces
+        level : float
+            new value of isocontour level
+        """
 
         if surface_index >= len(self._surfaces):
             return
@@ -575,7 +694,16 @@ class MolecularViewer(QtWidgets.QWidget):
     def on_change_atomic_trace_rendering_type(
         self, surface_index: int, rendering_type: str
     ):
-        """Event handler called when the user change the rendering type for the atomic trace."""
+        """Method for changing the rendering style of an existing isosurface.
+        Currently not connected to any widgets.
+
+        Parameters
+        ----------
+        surface_index : int
+            index of the isosurface in self._surfaces
+        rendering_type : str
+            one of the following: wireframe, surface, points
+        """
 
         if surface_index >= len(self._surfaces):
             return
@@ -610,44 +738,32 @@ class MolecularViewer(QtWidgets.QWidget):
         self.changed_trace.emit()
 
     def create_trace_dialog(self, viewer_controls):
+        """Creates and connects an additional panel of the GUI which contains
+        an instance of TraceWidget.
+
+        Parameters
+        ----------
+        viewer_controls : ViewerControls
+            instance of the ViewerControls widget from View3D
+        """
         self._trace_dialog = viewer_controls.createTracePanel(self)
         self._trace_dialog.new_atom_trace.connect(self.trace_from_dialog)
-        self._trace_dialog.remove_atom_trace.connect(self.delete_from_dialog)
+        self._trace_dialog.remove_atom_trace.connect(self.delete_isosurface_from_dialog)
         self.changed_trace.connect(self._trace_dialog.update_limits)
-
-    def on_show_atomic_trace(self):
-        if self._previously_picked_atom is None:
-            LOG.warning("No atom selected for computing atomic trace")
-            return
-
-        self._draw_isosurface(self._previously_picked_atom[0])
 
     @property
     def renderer(self):
         return self._renderer
 
-    def set_connectivity_builder(self, coords, covalent_radii):
-        # Compute the bounding box of the system
-        lower_bound = coords.min(axis=0)
-        upper_bound = coords.max(axis=0)
-
-        # Enlarge it a bit to not miss any atom
-        lower_bound -= 1.0e-6
-        upper_bound += 1.0e-6
-
-        # Initializes the octree used to build the connectivity
-        self._connectivity_builder = PyConnectivity(lower_bound, upper_bound, 0, 10, 18)
-
-        # Add the points to the octree
-        for index, xyz, radius in zip(range(self._n_atoms), coords, covalent_radii):
-            self._connectivity_builder.add_point(index, xyz, radius)
-
     @Slot(int)
     def set_coordinates(self, frame: int):
-        """Sets a new configuration.
+        """Changes the atom positions in the 3D view to those from
+        the selected frame of the trajectory.
 
-        @param frame: the configuration number
-        @type frame: integer
+        Parameters
+        ----------
+        frame : int
+            index of the trajectory frame
         """
         if self._reader is None:
             return False
@@ -661,10 +777,13 @@ class MolecularViewer(QtWidgets.QWidget):
         self.update_renderer()
 
     def set_reader(self, reader):
-        """Set the trajectory at a given frame
+        """Sets the input object to be the new source of atom data for
+        the 3D viewer.
 
-        Args:
-            reader (IReader): the trajectory object
+        Parameters
+        ----------
+        reader : IReader
+            typically an instance of HDF5Wrapper from MolecularViewer
         """
 
         if (self._reader is not None) and (reader.filename == self._reader.filename):
