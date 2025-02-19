@@ -61,5 +61,5 @@ def select_none(
 
 def invert_selection(trajectory: Trajectory, selection: Set[int]) -> Set[int]:
     all_indices = select_all(trajectory)
-    inverted = all_indices.difference(selection)
+    inverted = all_indices - selection
     return inverted

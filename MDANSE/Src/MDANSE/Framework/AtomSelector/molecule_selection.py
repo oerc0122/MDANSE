@@ -41,9 +41,5 @@ def select_molecules(
     selection = set()
     system = trajectory.chemical_system
     molecule_names = function_parameters.get("molecule_names", None)
-    for molecule in molecule_names:
-        if molecule in system._clusters:
-            selection = selection.union(
-                reduce(list.__add__, system._clusters[molecule])
-            )
+    selection = {cluster for cluster in system._clusters.get(molecule, ()) for molecule in molecule_names}
     return selection

@@ -66,7 +66,6 @@ def select_pattern(
     """
     selection = set()
     system = trajectory.chemical_system
-    pattern = function_parameters.get("rdkit_pattern", None)
-    if pattern:
+    if pattern := function_parameters.get("rdkit_pattern"):
         selection = system.get_substructure_matches(pattern)
     return selection
