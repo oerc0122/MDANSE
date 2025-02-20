@@ -14,11 +14,12 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Dict, Any
+from typing import Dict, Any, TYPE_CHECKING, Tuple
 import json
 
 import numpy as np
 from qtpy.QtCore import Signal, Slot
+from qtpy.QtGui import QValidator
 from qtpy.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
@@ -30,6 +31,58 @@ from qtpy.QtWidgets import (
 
 from MDANSE_GUI.InputWidgets.CheckableComboBox import CheckableComboBox
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
+
+if TYPE_CHECKING:
+    from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
+
+
+class XYZValidator(QValidator):
+    """A custom validator for a QLineEdit.
+    It is intended to limit the input to a string
+    of 3 comma-separated float numbers.
+
+    Additional checks are necessary later in the code,
+    since the validator cannot exclude the cases of
+    1 or 2 comma-separated values, since they are
+    a preliminary step when typing in 3 numbers.
+    """
+
+    def validate(self, input_string: str, position: int) -> Tuple[int, str]:
+        """Implementation of the virtual method of QValidator.
+        It takes in the string from a QLineEdit and the cursor position,
+        and an enum value of the validator state. Widgets will reject
+        inputs which change the state to Invalid.
+
+        Parameters
+        ----------
+        input_string : str
+            current contents of a text input field
+        position : int
+            position of the cursor in the text input field
+
+        Returns
+        -------
+        Tuple[int,str]
+            a tuple of (validator state, input string, cursor position)
+        """
+        state = QValidator.State.Intermediate
+        comma_count = input_string.count(",")
+        if len(input_string) > 0:
+            try:
+                values = [int(x) for x in input_string.split(",")]
+            except (TypeError, ValueError):
+                if input_string[-1] == "," and comma_count < 3:
+                    state = QValidator.State.Intermediate
+                else:
+                    state = QValidator.State.Invalid
+            else:
+                if len(values) > 3:
+                    state = QValidator.State.Invalid
+                elif len(values) == 3:
+                    state = QValidator.State.Acceptable
+                else:
+                    state = QValidator.State.Intermediate
+        return state, input_string, position
 
 
 class BasicSelectionWidget(QGroupBox):
@@ -278,3 +331,63 @@ class PatternSelection(BasicSelectionWidget):
         selection = self.input_field.text()
         function_parameters["rdkit_pattern"] = selection
         return function_parameters
+
+
+class PositionSelection(BasicSelectionWidget):
+    def __init__(
+        self,
+        parent=None,
+        trajectory: Trajectory = None,
+        molecular_viewer: "MolecularViewer" = None,
+        widget_label="ALL ATOMS",
+    ):
+        self._viewer = molecular_viewer
+        self._lower_limit = np.zeros(3)
+        self._upper_limit = np.linalg.norm(trajectory.unit_cell(0), axis=1)
+        self._current_lower_limit = self._lower_limit.copy()
+        self._current_upper_limit = self._upper_limit.copy()
+        super().__init__(parent, widget_label)
+
+    def add_specific_widgets(self):
+        layout = self.layout()
+        layout.addWidget(QLabel("Lower limits"))
+        self._lower_limit_input = QLineEdit(
+            ",".join([str(round(x, 3)) for x in self._lower_limit])
+        )
+        layout.addWidget(self._lower_limit_input)
+        layout.addWidget(QLabel("Upper limits"))
+        self._upper_limit_input = QLineEdit(
+            ",".join([str(round(x, 3)) for x in self._upper_limit])
+        )
+        layout.addWidget(self._upper_limit_input)
+        for field in [self._lower_limit_input, self._upper_limit_input]:
+            field.setValidator(XYZValidator(self))
+            field.textChanged.connect(self.check_inputs)
+
+    @Slot()
+    def check_inputs(self):
+        enable = True
+        try:
+            self._current_lower_limit = [
+                float(x) for x in self._lower_limit_input.text().split(",")
+            ]
+            self._current_upper_limit = [
+                float(x) for x in self._upper_limit_input.text().split(",")
+            ]
+        except (TypeError, ValueError):
+            enable = False
+        else:
+            if (
+                len(self._current_lower_limit) != 3
+                or len(self._current_upper_limit) != 3
+            ):
+                enable = False
+        self.commit_button.setEnabled(enable)
+
+    def parameter_dictionary(self):
+        return {
+            "function_name": "select_positions",
+            "frame_number": self._viewer._current_frame,
+            "lower_limits": self._current_lower_limit,
+            "upper_limits": self._current_upper_limit,
+        }

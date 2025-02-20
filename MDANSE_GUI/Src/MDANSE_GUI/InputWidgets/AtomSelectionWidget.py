@@ -46,6 +46,7 @@ from MDANSE_GUI.Widgets.SelectionWidgets import (
     MoleculeSelection,
     PatternSelection,
     LabelSelection,
+    PositionSelection,
 )
 
 
@@ -242,7 +243,8 @@ class SelectionHelper(QDialog):
         select = QGroupBox("selection")
         select_layout = QVBoxLayout()
         scroll_area = QScrollArea()
-        scroll_area.setLayout(select_layout)
+        scroll_area.setWidget(select)
+        scroll_area.setWidgetResizable(True)
 
         self.selection_widgets = [
             AllAtomSelection(self),
@@ -251,6 +253,7 @@ class SelectionHelper(QDialog):
             MoleculeSelection(self, self.trajectory),
             PatternSelection(self),
             LabelSelection(self, self.trajectory),
+            PositionSelection(self, self.trajectory, self.view_3d._viewer),
         ]
 
         for widget in self.selection_widgets:
@@ -277,7 +280,7 @@ class SelectionHelper(QDialog):
         )
         self.selection_operations_view.setModel(self.selection_model)
         self.selection_model.selection_changed.connect(self.recalculate_selection)
-        return [select]
+        return [scroll_area]
 
     @Slot()
     def recalculate_selection(self):

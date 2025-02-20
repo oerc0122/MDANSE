@@ -25,7 +25,7 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 def select_positions(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
     """Selects atoms based on their positions at a specified frame number.
-
+    Lower and upper limits of x, y and z coordinates can be given as input.
 
     Parameters
     ----------

@@ -25,6 +25,7 @@ from MDANSE.Framework.AtomSelector.general_selection import (
 from MDANSE.Framework.AtomSelector.atom_selection import select_atoms
 from MDANSE.Framework.AtomSelector.molecule_selection import select_molecules
 from MDANSE.Framework.AtomSelector.group_selection import select_labels, select_pattern
+from MDANSE.Framework.AtomSelector.spatial_selection import select_positions, select_sphere
 
 
 function_lookup = {
@@ -37,6 +38,8 @@ function_lookup = {
         select_molecules,
         select_labels,
         select_pattern,
+        select_positions,
+        select_sphere,
     ]
 }
 
