@@ -110,7 +110,8 @@ def test_dcsf(traj_info, qvector_grid):
     result_file = os.path.join(result_dir, f"dcsf_{traj_info[0]}.mda")
     with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         keys = [
-            i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])
+            key for key in desired.keys() 
+            if any(key.startswith(j) for j in ["f(q,t)", "s(q,f)"])
         ]
         for key in keys:
             np.testing.assert_array_almost_equal(

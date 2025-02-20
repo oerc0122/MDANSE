@@ -20,8 +20,9 @@ import numpy as np
 
 
 def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
-    """Calculates the scaling factors to be applied to output datasets
-    of an analysis. Returns an dictionary of scaling factors, where the
+    """Calculate the scaling factors to be applied to output datasets. 
+    
+    Returns a dictionary of scaling factors, where the
     chemical elements identifying each dataset are the keys.
 
     Parameters
@@ -38,11 +39,11 @@ def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
     Tuple(Dict[Tuple[str], float], float)
         Dictionary of scaling factors per dataset key, and a sum of all the factors
     """
-    normFactor = None
+    normFactor = 0.0
 
     weights = {}
 
-    cartesianProduct = set(itertools.product(list(props.keys()), repeat=dim))
+    cartesianProduct = itertools.product(props, repeat=dim)
     for elements in cartesianProduct:
         atom_number_product = np.prod([contents[el] for el in elements])
         property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
@@ -52,11 +53,7 @@ def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
         # factor = 5*5 * b_coh(Cu)*b_coh(Cu)
 
         weights[elements] = np.float64(np.copy(factor))
-
-        if normFactor is None:
-            normFactor = factor
-        else:
-            normFactor += factor
+        normFactor += factor
 
     normalise = True
     try:
@@ -100,13 +97,11 @@ def assign_weights(
     matches = {key % k: k for k in weights if k not in ["sum"]}
     dim = key.count("%s")
 
-    for k in values.keys():
-        if k not in matches:
-            continue
+    for k in values.keys() & matches:
 
         if symmetric:
-            permutations = set(itertools.permutations(matches[k], r=dim))
-            w = sum([weights[p] for p in permutations])
+            permutations = itertools.permutations(matches[k], r=dim)
+            w = sum(weights[p] for p in permutations)
         else:
             w = weights[matches[k]]
 
@@ -136,16 +131,10 @@ def weighted_sum(
     np.ndarray
         total sum of all the component arrays scaled by their weights
     """
-    weightedSum = None
-    matches = {key % k: k for k in weights if k not in ["sum"]}
+    weightedSum = 0.0
+    matches = {key % k for k in weights if k not in ["sum"]}
 
-    for k, val in values.items():
-        if k not in matches:
-            continue
-
-        if weightedSum is None:
-            weightedSum = val * val.scaling_factor
-        else:
-            weightedSum += val * val.scaling_factor
+    for val in (val for key, val in values.items() if key in matches):
+        weightedSum += val * val.scaling_factor
 
     return weightedSum

@@ -153,6 +153,12 @@ class SingleDataset:
 
     @property
     def data(self):
+        """
+        Returns
+        -------
+        np.ndarray
+            The plot data, scaled if set.
+        """
         if self._use_scaling:
             return self._data * self._scaling_factor
         return self._data
@@ -202,12 +208,6 @@ class SingleDataset:
                     self._curves[tuple(indices[n])] = self._data[slicers[n]].squeeze()
                 self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
         return self._curves
-        # slicer = tuple(slicer)
-        # temp = self._data[slicer].squeeze()
-        # for line in temp:
-        #     if len(line) != xlen:
-        #         print("Wrong data length in the curves_vs_axis method of PlottingContext")
-        # return temp
 
     def planes_vs_axis(self, axis_number: int) -> List[np.ndarray]:
         self._planes = {}
@@ -442,10 +442,7 @@ class PlottingContext(QStandardItemModel):
                 result[key] = (self._datasets[key], colour, style, marker, ds_num, axis)
             else:
                 self._datasets[key]._data_limits = None
-            if set_scaling:
-                self._datasets[key]._use_scaling = True
-            else:
-                self._datasets[key]._use_scaling = False
+            self._datasets[key]._use_scaling = set_scaling
 
         return result
 

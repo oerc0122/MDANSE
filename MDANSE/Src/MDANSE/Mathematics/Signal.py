@@ -129,17 +129,22 @@ def correlation(x, y=None, axis=0, sumOverAxis=None, average=None):
     return corr
 
 
-def normalize(x, axis=0):
-    s = [slice(None)] * x.ndim
-    s[axis] = slice(0, 1, 1)
+def normalisation_factor(x: np.ndarray, axis: int = 0) -> np.ndarray:
+    """Normalizes the signal by dividing x by the zeroth elements
+    along the input axis.
 
-    s = tuple(s)
+    Parameters
+    ----------
+    x : np.ndarray
+        The input array to normalize.
+    axis : int
+        The axis to normalize the array along.
 
-    nx = x / x[s]
-    return nx
-
-
-def normalisation_factor(x, axis=0):
+    Returns
+    -------
+    np.ndarray
+        The normalization factors.
+    """
     s = [slice(None)] * x.ndim
     s[axis] = slice(0, 1, 1)
 

@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
+import itertools
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
@@ -114,18 +114,19 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         ]
 
         weights = {}
-        for i in range(atom_selection_configurator["selection_length"]):
-            name = atom_selection_configurator["names"][i]
-            for element in atom_selection_configurator["elements"][i]:
+        for name, elements in itertools.islice(
+            zip(atom_selection_configurator["names"],
+                atom_selection_configurator["elements"]),
+            atom_selection_configurator["selection_length"]
+        ):
+            for element in elements:
                 property = self._trajectory.get_atom_property(element, self["property"])
                 if name in weights:
                     weights[name] += property
                 else:
                     weights[name] = property
 
-        for element, num_atoms in list(
-            atom_selection_configurator.get_natoms().items()
-        ):
+        for element, num_atoms in atom_selection_configurator.get_natoms().items():
             weights[element] /= num_atoms
 
         return weights

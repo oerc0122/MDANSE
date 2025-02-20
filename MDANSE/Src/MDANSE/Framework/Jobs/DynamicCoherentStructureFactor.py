@@ -268,7 +268,7 @@ class DynamicCoherentStructureFactor(IJob):
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
-            self._outputData["s(q,f)_%s%s" % pair].scaling_factor *= extra_scaling
+            self._outputData[f"s(q,f)_{pair_str}"].scaling_factor *= extra_scaling
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,

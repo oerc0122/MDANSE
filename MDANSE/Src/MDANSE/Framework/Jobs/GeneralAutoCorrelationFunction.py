@@ -167,12 +167,11 @@ class GeneralAutoCorrelationFunction(IJob):
             for element in nAtomsPerElement.keys():
                 if self._outputData[f"gacf_{element}"][0] == 0:
                     raise ValueError("The normalization factor is equal to zero")
-                else:
-                    self._outputData[
-                        f"gacf_{element}"
-                    ].scaling_factor *= normalisation_factor(
-                        self._outputData[f"gacf_{element}"], axis=0
-                    )
+                self._outputData[
+                    f"gacf_{element}"
+                ].scaling_factor *= normalisation_factor(
+                    self._outputData[f"gacf_{element}"], axis=0
+                )
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
