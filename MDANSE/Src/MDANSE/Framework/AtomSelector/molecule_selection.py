@@ -21,7 +21,9 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_molecules(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
+def select_molecules(
+    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+) -> Set[int]:
     """Selects all the atoms belonging to the specified molecule types.
 
     Parameters

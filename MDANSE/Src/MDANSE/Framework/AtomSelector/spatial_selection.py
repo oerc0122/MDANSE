@@ -23,7 +23,9 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_positions(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
+def select_positions(
+    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+) -> Set[int]:
     """Selects atoms based on their positions at a specified frame number.
     Lower and upper limits of x, y and z coordinates can be given as input.
 
@@ -50,7 +52,9 @@ def select_positions(trajectory: Trajectory, **function_parameters: Dict[str, An
     return set(np.where(np.logical_and(mask1, mask2))[0])
 
 
-def select_sphere(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
+def select_sphere(
+    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+) -> Set[int]:
     """Selects atoms within a distance from a fixed point in space,
     based on coordinates at a specific frame number.
 

@@ -25,7 +25,10 @@ from MDANSE.Framework.AtomSelector.general_selection import (
 from MDANSE.Framework.AtomSelector.atom_selection import select_atoms
 from MDANSE.Framework.AtomSelector.molecule_selection import select_molecules
 from MDANSE.Framework.AtomSelector.group_selection import select_labels, select_pattern
-from MDANSE.Framework.AtomSelector.spatial_selection import select_positions, select_sphere
+from MDANSE.Framework.AtomSelector.spatial_selection import (
+    select_positions,
+    select_sphere,
+)
 
 
 function_lookup = {
@@ -116,9 +119,15 @@ class ReusableSelection:
                 selection = selection.difference(temp_selection)
             else:
                 selection = temp_selection
-        if len(selection.difference(current_selection)) > 0 and operation_type == "union":
+        if (
+            len(selection.difference(current_selection)) > 0
+            and operation_type == "union"
+        ):
             return True
-        elif len(current_selection.difference(selection)) > 0 and operation_type != "union":
+        elif (
+            len(current_selection.difference(selection)) > 0
+            and operation_type != "union"
+        ):
             return True
         return False
 

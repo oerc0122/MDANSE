@@ -21,7 +21,9 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_labels(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
+def select_labels(
+    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+) -> Set[int]:
     """Selects atoms with a specific label in the trajectory.
     A residue name can be read as a label by MDANSE.
 
@@ -46,7 +48,9 @@ def select_labels(trajectory: Trajectory, **function_parameters: Dict[str, Any])
     return selection
 
 
-def select_pattern(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
+def select_pattern(
+    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+) -> Set[int]:
     """Selects atoms according to the SMARTS string given as input.
     This will only work if molecules and bonds have been detected in the system.
     If the bond information was not read from the input trajectory on conversion,

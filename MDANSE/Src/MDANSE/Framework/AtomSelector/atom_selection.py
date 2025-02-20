@@ -20,7 +20,9 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_atoms(trajectory: Trajectory, **function_parameters: Dict[str, Any]) -> Set[int]:
+def select_atoms(
+    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+) -> Set[int]:
     """Selects specific atoms in the trajectory. These can be selected based
     on indices, atom type or trajectory-specific atom name.
     The atom type is normally the chemical element, while
