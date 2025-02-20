@@ -68,8 +68,7 @@ class DataPlotter(QWidget):
             unit_lookup=self._unit_lookup,
         )
         self._selection_viewer.setModel(self._model)
-        for col_num in range(4, 10):
-            self._selection_viewer.hideColumn(col_num)
+        self.hide_columns()
 
     @Slot(object)
     def add_dataset(self, dataset: SingleDataset):
@@ -77,6 +76,10 @@ class DataPlotter(QWidget):
             return
         self._model.add_dataset(dataset)
         self._selection_viewer.resizeColumnsToContents()
+        self.hide_columns()
+
+    def hide_columns(self):
+        """Only show the first four columns of plotting_column_labels."""
         for col_num in range(4, 10):
             self._selection_viewer.hideColumn(col_num)
 

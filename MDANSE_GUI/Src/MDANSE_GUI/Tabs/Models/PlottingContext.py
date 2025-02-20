@@ -191,21 +191,10 @@ class SingleDataset:
         for n in range(len(indices)):
             if self._data_limits is not None:
                 if n in self._data_limits:
-                    if self._use_scaling:
-                        temp_data = (
-                            self._data[slicers[n]].squeeze() * self._scaling_factor
-                        )
-                    else:
-                        temp_data = self._data[slicers[n]].squeeze()
-                    self._curves[tuple(indices[n])] = temp_data
+                    self._curves[tuple(indices[n])] = self.data[slicers[n]].squeeze()
                     self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
             else:
-                if self._use_scaling:
-                    self._curves[tuple(indices[n])] = (
-                        self._data[slicers[n]].squeeze() * self._scaling_factor
-                    )
-                else:
-                    self._curves[tuple(indices[n])] = self._data[slicers[n]].squeeze()
+                self._curves[tuple(indices[n])] = self.data[slicers[n]].squeeze()
                 self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
         return self._curves
 
@@ -235,22 +224,14 @@ class SingleDataset:
                 if plane_number in self._data_limits:
                     fixed_argument = perpendicular_axis[plane_number]
                     slice_def[axis_number] = plane_number
-                    data = self._data[tuple(slice_def)]
-                    if self._use_scaling:
-                        self._planes[plane_number] = data * self._scaling_factor
-                    else:
-                        self._planes[plane_number] = data
+                    self._planes[plane_number] = self.data[tuple(slice_def)]
                     self._plane_labels[plane_number] = (
                         f"{perpendicular_axis_name}={fixed_argument}"
                     )
             else:
                 fixed_argument = perpendicular_axis[plane_number]
                 slice_def[axis_number] = plane_number
-                data = self._data[tuple(slice_def)]
-                if self._use_scaling:
-                    self._planes[plane_number] = data * self._scaling_factor
-                else:
-                    self._planes[plane_number] = data
+                self._planes[plane_number] = self.data[tuple(slice_def)]
                 self._plane_labels[plane_number] = (
                     f"{perpendicular_axis_name}={fixed_argument}"
                 )
