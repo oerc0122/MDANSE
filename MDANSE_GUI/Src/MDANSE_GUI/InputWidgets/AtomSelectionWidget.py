@@ -47,6 +47,7 @@ from MDANSE_GUI.Widgets.SelectionWidgets import (
     PatternSelection,
     LabelSelection,
     PositionSelection,
+    SphereSelection,
 )
 
 
@@ -254,6 +255,7 @@ class SelectionHelper(QDialog):
             PatternSelection(self),
             LabelSelection(self, self.trajectory),
             PositionSelection(self, self.trajectory, self.view_3d._viewer),
+            SphereSelection(self, self.trajectory, self.view_3d._viewer),
         ]
 
         for widget in self.selection_widgets:

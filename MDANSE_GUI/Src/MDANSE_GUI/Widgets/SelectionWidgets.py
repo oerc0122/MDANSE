@@ -19,7 +19,7 @@ import json
 
 import numpy as np
 from qtpy.QtCore import Signal, Slot
-from qtpy.QtGui import QValidator
+from qtpy.QtGui import QValidator, QDoubleValidator
 from qtpy.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
@@ -69,7 +69,7 @@ class XYZValidator(QValidator):
         comma_count = input_string.count(",")
         if len(input_string) > 0:
             try:
-                values = [int(x) for x in input_string.split(",")]
+                values = [float(x) for x in input_string.split(",")]
             except (TypeError, ValueError):
                 if input_string[-1] == "," and comma_count < 3:
                     state = QValidator.State.Intermediate
@@ -339,11 +339,11 @@ class PositionSelection(BasicSelectionWidget):
         parent=None,
         trajectory: Trajectory = None,
         molecular_viewer: "MolecularViewer" = None,
-        widget_label="ALL ATOMS",
+        widget_label="Select by position",
     ):
         self._viewer = molecular_viewer
         self._lower_limit = np.zeros(3)
-        self._upper_limit = np.linalg.norm(trajectory.unit_cell(0), axis=1)
+        self._upper_limit = np.linalg.norm(trajectory.unit_cell(0)._unit_cell, axis=1)
         self._current_lower_limit = self._lower_limit.copy()
         self._current_upper_limit = self._upper_limit.copy()
         super().__init__(parent, widget_label)
@@ -388,6 +388,58 @@ class PositionSelection(BasicSelectionWidget):
         return {
             "function_name": "select_positions",
             "frame_number": self._viewer._current_frame,
-            "lower_limits": self._current_lower_limit,
-            "upper_limits": self._current_upper_limit,
+            "position_minimum": list(self._current_lower_limit),
+            "position_maximum": list(self._current_upper_limit),
+        }
+
+
+class SphereSelection(BasicSelectionWidget):
+    def __init__(
+        self,
+        parent=None,
+        trajectory: Trajectory = None,
+        molecular_viewer: "MolecularViewer" = None,
+        widget_label="Select in a sphere",
+    ):
+        self._viewer = molecular_viewer
+        self._current_sphere_centre = np.diag(trajectory.unit_cell(0)._unit_cell) * 0.5
+        self._current_sphere_radius = np.min(self._current_sphere_centre)
+        super().__init__(parent, widget_label)
+
+    def add_specific_widgets(self):
+        layout = self.layout()
+        layout.addWidget(QLabel("Sphere centre"))
+        self._sphere_centre_input = QLineEdit(
+            ",".join([str(round(x, 3)) for x in self._current_sphere_centre]), self
+        )
+        layout.addWidget(self._sphere_centre_input)
+        layout.addWidget(QLabel("Sphere radius (nm)"))
+        self._sphere_radius_input = QLineEdit("0.5", self)
+        layout.addWidget(self._sphere_radius_input)
+        self._sphere_centre_input.setValidator(XYZValidator())
+        self._sphere_centre_input.textChanged.connect(self.check_inputs)
+        self._sphere_radius_input.setValidator(QDoubleValidator())
+        self._sphere_radius_input.textChanged.connect(self.check_inputs)
+
+    @Slot()
+    def check_inputs(self):
+        enable = True
+        try:
+            self._current_sphere_centre = [
+                float(x) for x in self._sphere_centre_input.text().split(",")
+            ]
+            self._current_sphere_radius = float(self._sphere_radius_input.text())
+        except (TypeError, ValueError):
+            enable = False
+        else:
+            if len(self._current_sphere_centre) != 3:
+                enable = False
+        self.commit_button.setEnabled(enable)
+
+    def parameter_dictionary(self):
+        return {
+            "function_name": "select_sphere",
+            "frame_number": self._viewer._current_frame,
+            "sphere_centre": list(self._current_sphere_centre),
+            "sphere_radius": self._current_sphere_radius,
         }

@@ -43,10 +43,8 @@ def select_positions(trajectory: Trajectory, **function_parameters: Dict[str, An
         Set of all the atom indices
     """
     coordinates = trajectory.coordinates(function_parameters.get("frame_number", 0))
-    lower_limits = trajectory.coordinates(
-        function_parameters.get("position_minimum", 3 * [-np.inf])
-    )
-    upper_limits = trajectory.coordinates(function_parameters.get("position_maximum", 3 * [np.inf]))
+    lower_limits = np.array(function_parameters.get("position_minimum", 3 * [-np.inf]))
+    upper_limits = np.array(function_parameters.get("position_maximum", 3 * [np.inf]))
     mask1 = np.all(coordinates > lower_limits.reshape((1, 3)), axis=1)
     mask2 = np.all(coordinates < upper_limits.reshape((1, 3)), axis=1)
     return set(np.where(np.logical_and(mask1, mask2))[0])
@@ -72,7 +70,7 @@ def select_sphere(trajectory: Trajectory, **function_parameters: Dict[str, Any])
         Set of all the atom indices
     """
     coordinates = trajectory.coordinates(function_parameters.get("frame_number", 0))
-    sphere_centre = function_parameters.get("sphere_centre", np.zeros(3))
+    sphere_centre = np.array(function_parameters.get("sphere_centre", 3 * [0.0]))
     sphere_radius = function_parameters.get("sphere_radius", 1.0)
     kdtree = KDTree(coordinates)
     indices = kdtree.query_ball_point(sphere_centre, sphere_radius)
