@@ -81,7 +81,13 @@ class AllAtomSelection(BasicSelectionWidget):
 
     def add_specific_widgets(self):
         layout = self.layout()
+        inversion_button = QPushButton("INVERT selection", self)
+        inversion_button.clicked.connect(self.invert_selection)
+        layout.addWidget(inversion_button)
         layout.addWidget(QLabel("Add/remove ALL atoms"))
+
+    def invert_selection(self):
+        self.new_selection.emit(json.dumps({"function_name": "invert_selection"}))
 
     def parameter_dictionary(self):
         return {"function_name": "select_all"}

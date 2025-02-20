@@ -16,6 +16,7 @@
 
 from typing import Set
 import json
+from enum import Enum
 
 from qtpy.QtCore import Slot, Signal
 from qtpy.QtGui import QStandardItemModel, QStandardItem
@@ -48,9 +49,10 @@ from MDANSE_GUI.Widgets.SelectionWidgets import (
 )
 
 
-VALID_SELECTION = "Valid selection"
-USELESS_SELECTION = "Selection did not change. This operation is not needed."
-MALFORMED_SELECTION = "This is not a valid JSON string."
+class SelectionValidity(Enum):
+    VALID_SELECTION = "Valid selection"
+    USELESS_SELECTION = "Selection did not change. This operation is not needed."
+    MALFORMED_SELECTION = "This is not a valid JSON string."
 
 
 class SelectionModel(QStandardItemModel):
@@ -79,12 +81,12 @@ class SelectionModel(QStandardItemModel):
                     last_operation, self._trajectory, self._current_selection
                 )
             except json.JSONDecodeError:
-                return MALFORMED_SELECTION
+                return SelectionValidity.MALFORMED_SELECTION
             if valid:
                 self._selection.load_from_json(json_string)
-                return VALID_SELECTION
+                return SelectionValidity.VALID_SELECTION
             else:
-                return USELESS_SELECTION
+                return SelectionValidity.USELESS_SELECTION
 
     def current_selection(self, last_operation: str = "") -> Set[int]:
         self.rebuild_selection(last_operation)
@@ -306,17 +308,17 @@ class SelectionHelper(QDialog):
         self.selection_line.setToolTip("")
         selection_text = self.selection_line.text()
         validation = self.selection_model.rebuild_selection(selection_text)
-        if validation == MALFORMED_SELECTION:
+        if validation == SelectionValidity.MALFORMED_SELECTION:
             self.selection_line.setStyleSheet(
                 "QWidget#InputWidget { background-color:rgb(180,20,180); font-weight: bold }"
             )
             self.selection_line.setToolTip(validation)
-        elif validation == USELESS_SELECTION:
+        elif validation == SelectionValidity.USELESS_SELECTION:
             self.selection_line.setStyleSheet(
                 "QWidget#InputWidget { background-color:rgb(180,20,180); font-weight: bold }"
             )
             self.selection_line.setToolTip(validation)
-        elif validation == VALID_SELECTION:
+        elif validation == SelectionValidity.VALID_SELECTION:
             self.selection_model.appendRow(QStandardItem(selection_text))
             self.view_3d._viewer.change_picked(self.selected)
             self.update_selection_textbox()
