@@ -100,7 +100,7 @@ def assign_weights(
     for k in values.keys() & matches:
 
         if symmetric:
-            permutations = itertools.permutations(matches[k], r=dim)
+            permutations = set(itertools.permutations(matches[k], r=dim))
             w = sum(weights[p] for p in permutations)
         else:
             w = weights[matches[k]]
