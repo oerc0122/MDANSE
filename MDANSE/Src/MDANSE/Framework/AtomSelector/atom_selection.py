@@ -55,7 +55,7 @@ def select_atoms(
     index_range = function_parameters.get("index_range")
     index_slice = function_parameters.get("index_slice")
     if index_list is not None:
-        selection |= indices & index_list
+        selection |= indices & set(index_list)
     if index_range is not None:
         selection |= indices & set(range(*index_range))
     if index_slice is not None:
