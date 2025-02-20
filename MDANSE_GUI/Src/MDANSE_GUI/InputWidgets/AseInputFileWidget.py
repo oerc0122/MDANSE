@@ -87,7 +87,7 @@ class AseInputFileWidget(WidgetBase):
             self.updateValue()
             try:
                 type_guess = filetype(new_value[0])
-            except:
+            except Exception:
                 type_guess = "guess"
             self._type_combo.setCurrentText(type_guess)
 

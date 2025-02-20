@@ -32,7 +32,7 @@ class VectorWidget(QWidget):
     def __init__(self, *args, dtype=None, **kwargs) -> None:
         label_text = kwargs.pop("label", "Vector input")
         super().__init__(*args, **kwargs)
-        if dtype is "int":
+        if dtype == "int":
             self._dtype = "int"
         else:
             self._dtype = "float"
@@ -76,7 +76,7 @@ class VectorWidget(QWidget):
             self.set_value(
                 [converter(x) for x in input_string.strip("[]()").split(",")]
             )
-        except:
+        except Exception:
             self.set_value([0, 0, 0])
 
     def text(self):

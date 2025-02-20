@@ -50,7 +50,7 @@ class OutputFilesWidget(WidgetBase):
             guess_name = str(
                 PurePath(os.path.join(self.default_path, jobname + "_result1"))
             )
-        except:
+        except Exception:
             guess_name = str(PurePath(default_value[0]))
             LOG.error("It was not possible to get the job name from the parent")
         while os.path.exists(guess_name + ".mda"):

@@ -104,7 +104,7 @@ class PlotDataView(QTreeView):
                 for attr in mda_data_structure.attrs:
                     text += f"{attr}: {mda_data_structure.attrs[attr]}\n"
                 self.item_details.emit(text)
-            except:
+            except Exception:
                 self.item_details.emit("No additional information included.")
 
     @Slot(QModelIndex)

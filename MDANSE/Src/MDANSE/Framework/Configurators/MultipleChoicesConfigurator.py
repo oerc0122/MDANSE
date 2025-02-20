@@ -58,7 +58,7 @@ class MultipleChoicesConfigurator(IConfigurator):
 
         if self._nChoices is not None:
             if len(value) != self._nChoices:
-                self.error_status = f"invalid number of choices."
+                self.error_status = "invalid number of choices."
                 return
 
         indices = []
@@ -102,7 +102,7 @@ class MultipleChoicesConfigurator(IConfigurator):
 
     def get_information(self):
         try:
-            info = "Selected items: %r\n" % self["choices"]
+            info = f"Selected items: {self['choices']!r}\n"
         except KeyError:
             info = "MultipleChoicesConfigurator could not be set up"
         return info

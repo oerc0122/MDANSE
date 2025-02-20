@@ -45,8 +45,8 @@ class QVectorsConfigurator(IConfigurator):
 
     def configure(self, value):
         """
-        Configure a Q vectors generator. 
-                
+        Configure a Q vectors generator.
+
         :param configuration: the current configuration.
         :type configuration: a MDANSE.Framework.Configurable.Configurable object
         :param value: the Q vectors generator definition. It can be a 2-tuple, whose 1st element is the name of the Q vector generator \
@@ -67,13 +67,13 @@ class QVectorsConfigurator(IConfigurator):
             )
             try:
                 generator.setup(parameters)
-            except:
+            except Exception:
                 self.error_status = f"Could not configure q vectors using {parameters}"
                 return
 
             try:
                 generator_success = generator.generate()
-            except:
+            except Exception:
                 self.error_status = "Q Vector parameters were parsed correctly, but caused an error. Invalid values?"
                 return
             else:
@@ -81,7 +81,7 @@ class QVectorsConfigurator(IConfigurator):
                     self.error_status = "Q Vector parameters were parsed correctly, but caused an error. Invalid values?"
                     return
 
-            if not "q_vectors" in generator.configuration:
+            if "q_vectors" not in generator.configuration:
                 self.error_status = "Wrong inputs for q-vector generation. At the moment there are no valid Q points."
                 return
             elif not generator.configuration["q_vectors"]:
@@ -117,13 +117,11 @@ class QVectorsConfigurator(IConfigurator):
         """
 
         try:
-            info = ["%d Q shells generated\n" % self["n_shells"]]
+            info = [f"{self['n_shells']} Q shells generated\n"]
         except KeyError:
             return "QVectors could not be configured correctly"
         else:
-            for qValue, qVectors in list(self["q_vectors"].items()):
-                info.append(
-                    "Shell %s: %d Q vectors generated\n" % (qValue, len(qVectors))
-                )
+            for qValue, qVectors in self["q_vectors"].items():
+                info.append(f"Shell {qValue}: {len(qVectors)} Q vectors generated\n")
 
             return "".join(info)

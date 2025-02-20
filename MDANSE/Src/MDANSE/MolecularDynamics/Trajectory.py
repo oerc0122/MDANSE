@@ -13,27 +13,23 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import os
-from ast import operator
-from typing import Collection, List, Dict, TYPE_CHECKING, Any
+import operator
+from typing import TYPE_CHECKING, Any, Collection, Dict, List, Union
 
 if TYPE_CHECKING:
     from MDANSE.Chemistry.Databases import AtomsDatabase
+
 import math
+from pathlib import Path
 
-import numpy as np
 import h5py
-
-from MDANSE.MLogging import LOG
-from MDANSE.Trajectory.MdanseTrajectory import MdanseTrajectory
-from MDANSE.Trajectory.H5MDTrajectory import H5MDTrajectory
+import numpy as np
+from MDANSE import PLATFORM
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.MolecularDynamics.Configuration import (
-    RealConfiguration,
-)
-from MDANSE import PLATFORM
-
+from MDANSE.MolecularDynamics.Configuration import RealConfiguration
+from MDANSE.Trajectory.H5MDTrajectory import H5MDTrajectory
+from MDANSE.Trajectory.MdanseTrajectory import MdanseTrajectory
 
 available_formats = {
     "MDANSE": MdanseTrajectory,
@@ -153,7 +149,7 @@ class Trajectory:
 
         return self._trajectory.unit_cell(frame)
 
-    def calculate_coordinate_span(self) -> np.ndarray:
+    def calculate_coordinate_span(self) -> None:
         min_span = np.array(3 * [1e11])
         max_span = np.zeros(3)
         for frame in range(len(self)):
@@ -461,7 +457,7 @@ class TrajectoryWriter:
 
     def __init__(
         self,
-        h5_filename,
+        h5_filename: Union[Path, str],
         chemical_system: ChemicalSystem,
         n_steps,
         selected_atoms=None,
@@ -482,8 +478,8 @@ class TrajectoryWriter:
         :type selected_atoms: list of MDANSE.Chemistry.ChemicalSystem.Atom
         """
 
-        self._h5_filename = h5_filename
-        PLATFORM.create_directory(os.path.dirname(h5_filename))
+        self._h5_filename = Path(h5_filename)
+        PLATFORM.create_directory(self._h5_filename.parent)
         self._h5_file = h5py.File(self._h5_filename, "w")
 
         self._chemical_system = chemical_system
@@ -877,9 +873,10 @@ class RigidBodyTrajectoryGenerator:
             r = r - rcms
 
             r = r[:, np.newaxis, :]
-            r = fold_coordinates.fold_coordinates(
-                r, unit_cells, inverse_unit_cells, True
-            )
+            # Fold coordinates doesn't exist?
+            # r = fold_coordinates.fold_coordinates(
+            #     r, unit_cells, inverse_unit_cells, True
+            # )
             r = np.squeeze(r)
 
             r = self._trajectory.to_real_coordinates(r, first, last, step)
@@ -963,9 +960,9 @@ def read_atoms_trajectory(
     if last is None:
         last = len(trajectory)
 
-    nFrames = len(list(range(first, last, step)))
+    # nFrames = len(range(first, last, step))
 
-    serie = np.zeros((nFrames, 3), dtype=dtype)
+    # serie = np.zeros((nFrames, 3), dtype=dtype)
 
     if weights is None or len(atoms) == 1:
         weights = [1.0] * len(atoms)
@@ -1007,6 +1004,7 @@ def read_atoms_trajectory(
 
 
 if __name__ == "__main__":
+    from MDANSE.Chemistry.ChemicalEntity import Atom
     from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 
     cs = ChemicalSystem()

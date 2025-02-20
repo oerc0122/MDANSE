@@ -46,14 +46,14 @@ class AnalysisInfo(QTextBrowser):
     def summarise_chemical_system(self, job_name):
         try:
             temp_instance = IJob.create(job_name)
-        except:
+        except Exception:
             return ""
         text = "\n ==== Input Parameter summary ==== \n"
         params = temp_instance.get_default_parameters()
         for key, value in params.items():
             try:
                 text += f"parameters['{key}'] = {value[0]} # {value[1]} \n"
-            except:
+            except Exception:
                 continue
         text += " ===== \n"
         return text

@@ -14,12 +14,12 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-import os
 import io
 import tarfile
 import codecs
 import time
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Union
 from importlib import metadata
 
 import numpy as np
@@ -47,7 +47,13 @@ class TextFormat(IFormat):
     extensions = [".dat", ".txt"]
 
     @classmethod
-    def write(cls, filename, data, header: str = "", run_instance: "IJob" = None):
+    def write(
+        cls,
+        filename: Union[Path, str],
+        data,
+        header: str = "",
+        run_instance: "IJob" = None,
+    ):
         """
         Write a set of output variables into a set of Text files.
 
@@ -61,10 +67,10 @@ class TextFormat(IFormat):
         :type header: str
         """
 
-        filename = os.path.splitext(filename)[0]
-        filename = "%s_text.tar" % filename
+        filename = Path(filename)
+        filename = filename.parent / (filename.stem + "_text.tar")
 
-        PLATFORM.create_directory(os.path.dirname(filename))
+        PLATFORM.create_directory(filename.parent)
         tf = tarfile.open(filename, "w")
 
         if header:
@@ -102,7 +108,7 @@ class TextFormat(IFormat):
             cls.write_data(tempStr, var, data)
             real_buffer.seek(0)
 
-            info = tarfile.TarInfo(name="%s%s" % (var.varname, cls.extensions[0]))
+            info = tarfile.TarInfo(name=f"{var.varname}{cls.extensions[0]}")
             info.size = length_stringio(real_buffer)
             info.mtime = time.time()
             tf.addfile(tarinfo=info, fileobj=real_buffer)
@@ -132,23 +138,17 @@ class TextFormat(IFormat):
 
             if xData == "index":
                 xValues = np.arange(data.shape[0])
-                fileobject.write("# 1st column: %s (%s)\n" % (xData, "au"))
+                fileobject.write(f"# 1st column: {xData} (au)\n")
             else:
                 xValues = allData[xData]
-                fileobject.write(
-                    "# 1st column: %s (%s)\n"
-                    % (allData[xData].varname, allData[xData].units)
-                )
+                fileobject.write(f"# 1st column: {xValues.varname} ({xValues.units})\n")
 
             if yData == "index":
                 yValues = np.arange(data.shape[1])
-                fileobject.write("# 1st row: %s (%s)\n\n" % (yData, "au"))
+                fileobject.write(f"# 1st row: {yData} (au)\n\n")
             else:
                 yValues = allData[yData]
-                fileobject.write(
-                    "# 1st row: %s (%s)\n\n"
-                    % (allData[yData].varname, allData[yData].units)
-                )
+                fileobject.write(f"# 1st row: {yValues.varname} ({yValues.units})\n\n")
 
             zData = np.zeros((data.shape[0] + 1, data.shape[1] + 1), dtype=np.float64)
             zData[1:, 0] = xValues
@@ -163,15 +163,12 @@ class TextFormat(IFormat):
 
             if xData == "index":
                 xValues = np.arange(data.size)
-                fileobject.write("# 1st column: %s (%s)\n" % (xData, "au"))
+                fileobject.write(f"# 1st column: {xData} (au)\n")
             else:
                 xValues = allData[xData]
-                fileobject.write(
-                    "# 1st column: %s (%s)\n"
-                    % (allData[xData].varname, allData[xData].units)
-                )
+                fileobject.write(f"# 1st column: {xValues.varname} ({xValues.units})\n")
 
-            fileobject.write("# 2nd column: %s (%s)\n\n" % (data.varname, data.units))
+            fileobject.write(f"# 2nd column: {data.varname} ({data.units})\n\n")
 
             np.savetxt(fileobject, np.column_stack([xValues, data]))
             fileobject.write("\n")
