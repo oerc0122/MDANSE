@@ -115,9 +115,11 @@ class WeightsConfigurator(SingleChoiceConfigurator):
 
         weights = {}
         for name, elements in itertools.islice(
-            zip(atom_selection_configurator["names"],
-                atom_selection_configurator["elements"]),
-            atom_selection_configurator["selection_length"]
+            zip(
+                atom_selection_configurator["names"],
+                atom_selection_configurator["elements"],
+            ),
+            atom_selection_configurator["selection_length"],
         ):
             for element in elements:
                 property = self._trajectory.get_atom_property(element, self["property"])

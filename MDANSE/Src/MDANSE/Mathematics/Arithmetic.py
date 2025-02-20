@@ -20,8 +20,8 @@ import numpy as np
 
 
 def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
-    """Calculate the scaling factors to be applied to output datasets. 
-    
+    """Calculate the scaling factors to be applied to output datasets.
+
     Returns a dictionary of scaling factors, where the
     chemical elements identifying each dataset are the keys.
 
