@@ -114,7 +114,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
             self._dependencies["atom_selection"]
         ]
 
-        weights = defaultdict(lambda: 0.0)
+        weights = defaultdict(float)
         for name, elements in itertools.islice(
             zip(
                 atom_selection_configurator["names"],
