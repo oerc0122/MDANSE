@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Optional
 from collections import defaultdict
 import itertools
 
@@ -109,7 +110,23 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         self["property"] = value
         self.error_status = "OK"
 
-    def get_weights(self):
+    def get_weights(self, prop: Optional[str] = None):
+        """Generate a dictionary of weights.
+
+        Parameters
+        ----------
+        prop : str or None, optional
+            The property to generate the weights from, if None then the
+            property set in this configurator will be used.
+
+        Returns
+        -------
+        dict[str, float]
+            The dictionary of the weights.
+        """
+        if not prop:
+            prop = self["property"]
+
         atom_selection_configurator = self._configurable[
             self._dependencies["atom_selection"]
         ]
@@ -123,7 +140,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
             atom_selection_configurator["selection_length"],
         ):
             weights[name] += sum(
-                self._trajectory.get_atom_property(element, self["property"])
+                self._trajectory.get_atom_property(element, prop)
                 for element in elements
             )
 
