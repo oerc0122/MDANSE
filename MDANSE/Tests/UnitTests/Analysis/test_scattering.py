@@ -296,7 +296,7 @@ def test_gdisf(traj_info):
         for key in keys:
             np.testing.assert_array_almost_equal(
                 actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
-                desired[f"/{key}"],
+                desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
             )
 
     os.remove(temp_name + ".mda")
