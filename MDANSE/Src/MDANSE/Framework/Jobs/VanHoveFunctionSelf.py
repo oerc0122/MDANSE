@@ -18,7 +18,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 def van_hove_self(
@@ -292,21 +292,18 @@ class VanHoveFunctionSelf(IJob):
             )
 
         weights = self.configuration["weights"].get_weights()
-        self._outputData["g(r,t)_total"][:] = weight(
-            weights,
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "g(r,t)_%s")
+        assign_weights(self._outputData, weight_dict, "4_pi_r2_g(r,t)_%s")
+        self._outputData["g(r,t)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "g(r,t)_%s",
-            update_partials=True,
         )
-        self._outputData["4_pi_r2_g(r,t)_total"][:] = weight(
-            weights,
+        self._outputData["4_pi_r2_g(r,t)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "4_pi_r2_g(r,t)_%s",
-            update_partials=True,
         )
 
         self._outputData.write(

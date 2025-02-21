@@ -152,7 +152,7 @@ class Single(Plotter):
                 if dataset._n_dim == 1:
                     [temp] = axes.plot(
                         dataset._axes[best_axis] * conversion_factor,
-                        dataset._data,
+                        dataset.data,
                         linestyle=linestyle,
                         label=plotlabel,
                         color=colour,

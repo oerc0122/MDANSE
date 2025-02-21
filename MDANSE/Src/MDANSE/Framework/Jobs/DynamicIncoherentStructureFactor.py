@@ -20,7 +20,7 @@ import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 
 
@@ -253,33 +253,31 @@ class DynamicIncoherentStructureFactor(IJob):
         """
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
+        weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "f(q,t)_%s")
+        assign_weights(self._outputData, weight_dict, "s(q,f)_%s")
         for element, number in list(nAtomsPerElement.items()):
-            self._outputData[f"f(q,t)_{element}"][:] /= number
+            extra_scaling = 1.0 / number
+            self._outputData[f"f(q,t)_{element}"].scaling_factor *= extra_scaling
             self._outputData[f"s(q,f)_{element}"][:] = get_spectrum(
                 self._outputData[f"f(q,t)_{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
+            self._outputData[f"s(q,f)_{element}"].scaling_factor *= extra_scaling
 
-        weights = self.configuration["weights"].get_weights()
-
-        self._outputData["f(q,t)_total"][:] = weight(
-            weights,
+        self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "f(q,t)_%s",
-            update_partials=True,
         )
 
-        self._outputData["s(q,f)_total"][:] = weight(
-            weights,
+        self._outputData["s(q,f)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "s(q,f)_%s",
-            update_partials=True,
         )
 
         self._outputData.write(

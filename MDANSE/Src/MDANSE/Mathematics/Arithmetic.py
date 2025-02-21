@@ -13,29 +13,47 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import List, Dict, Tuple
 import itertools
 
 import numpy as np
 
 
-def get_weights(props, contents, dim):
-    normFactor = None
+def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
+    """Calculate the scaling factors to be applied to output datasets.
+
+    Returns a dictionary of scaling factors, where the
+    chemical elements identifying each dataset are the keys.
+
+    Parameters
+    ----------
+    props : Dict[str, float]
+        Dictionary of values of an atom property for a selected object, averaged over atoms in that object
+    contents : Dict[str, int]
+        Dictionary of numbers of atoms in an object
+    dim : int
+        number of atom types in the label of the output datasets (e.g. 1 for "O", 2 for "CuCu")
+
+    Returns
+    -------
+    Tuple(Dict[Tuple[str], float], float)
+        Dictionary of scaling factors per dataset key, and a sum of all the factors
+    """
+    normFactor = 0.0
 
     weights = {}
 
-    cartesianProduct = set(itertools.product(list(props.keys()), repeat=dim))
+    cartesianProduct = itertools.product(props, repeat=dim)
     for elements in cartesianProduct:
-        n = np.prod([contents[el] for el in elements])
-        p = np.prod(np.array([props[el] for el in elements]), axis=0)
+        atom_number_product = np.prod([contents[el] for el in elements])
+        property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
 
-        fact = n * p
+        factor = atom_number_product * property_product
+        # E.g. for property b_coh, 5 Cu atoms and dim=2
+        # factor = 5*5 * b_coh(Cu)*b_coh(Cu)
 
-        weights[elements] = np.float64(np.copy(fact))
-
-        if normFactor is None:
-            normFactor = fact
-        else:
-            normFactor += fact
+        weights[elements] = np.float64(np.copy(factor))
+        normFactor += factor
 
     normalise = True
     try:
@@ -46,30 +64,77 @@ def get_weights(props, contents, dim):
         for k in list(weights.keys()):
             weights[k] /= np.float64(normFactor)
 
-    return weights, normFactor
+    weights["sum"] = normFactor
+
+    return weights
 
 
-def weight(props, values, contents, dim, key, symmetric=True, update_partials=False):
-    weights = get_weights(props, contents, dim)[0]
-    weightedSum = None
-    matches = {key % k: k for k in weights}
+def assign_weights(
+    values: Dict[str, np.ndarray],
+    weights: Dict[str, float],
+    key: str,
+    symmetric: bool = True,
+):
+    """Updates the scaling factors of partial datasets, without
+    modifying the data.
 
-    for k, val in values.items():
-        if k not in matches:
-            continue
+    Parameters
+    ----------
+    values : Dict[str, np.ndarray]
+        Dictionary of data arrays containing analysis results.
+    weights : Dict[str, float]
+        Dictionary of scaling factors per dataset
+    key : str
+        A string data set name with formatting elements (placeholders for chemical element labels)
+    symmetric : bool, optional
+        do not generate results for the same elements in a different sequence, by default True
+
+    Returns
+    -------
+    np.ndarray
+        total sum of all the component arrays scaled by their weights
+    """
+    matches = {key % k: k for k in weights if k not in ["sum"]}
+    dim = key.count("%s")
+
+    for k in values.keys() & matches:
 
         if symmetric:
             permutations = set(itertools.permutations(matches[k], r=dim))
-            w = sum([weights.pop(p) for p in permutations])
+            w = sum(weights[p] for p in permutations)
         else:
-            w = weights.pop(matches[k])
+            w = weights[matches[k]]
 
-        if weightedSum is None:
-            weightedSum = w * val
-        else:
-            weightedSum += w * val
+        values[k].scaling_factor *= w
 
-        if update_partials:
-            values[k][:] = w * val
+
+def weighted_sum(
+    values: Dict[str, np.ndarray],
+    weights: Dict[str, float],
+    key: str,
+):
+    """Sums up partial datasets multiplied by their scaling factors.
+    The scaling factors have to be set before, typically by calling
+    the assign_weights function.
+
+    Parameters
+    ----------
+    values : Dict[str, np.ndarray]
+        Dictionary of data arrays containing analysis results.
+    weights : Dict[str, float]
+        Dictionary of scaling factors per dataset
+    key : str
+        A string data set name with formatting elements (placeholders for chemical element labels)
+
+    Returns
+    -------
+    np.ndarray
+        total sum of all the component arrays scaled by their weights
+    """
+    weightedSum = 0.0
+    matches = {key % k for k in weights if k not in ["sum"]}
+
+    for val in (val for key, val in values.items() if key in matches):
+        weightedSum += val * val.scaling_factor
 
     return weightedSum

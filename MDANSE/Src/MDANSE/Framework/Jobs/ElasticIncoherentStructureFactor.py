@@ -19,7 +19,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 class ElasticIncoherentStructureFactor(IJob):
@@ -199,13 +199,12 @@ class ElasticIncoherentStructureFactor(IJob):
             self._outputData[f"eisf_{element}"][:] /= number
 
         weights = self.configuration["weights"].get_weights()
-        self._outputData["eisf_total"][:] = weight(
-            weights,
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "eisf_%s")
+        self._outputData["eisf_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "eisf_%s",
-            update_partials=True,
         )
 
         self._outputData.write(
