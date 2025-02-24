@@ -75,7 +75,7 @@ class H5MDTrajectory:
         self._chemical_system = ChemicalSystem(self._h5_filename.stem)
         try:
             self._chemical_system.initialise_atoms(chemical_elements)
-        except Exception:
+        except (KeyError, TypeError):
             LOG.error(
                 "It was not possible to read chemical element information from an H5MD file."
             )
@@ -88,7 +88,7 @@ class H5MDTrajectory:
         coords = self._h5_file["/particles/all/position/value"][0, :, :]
         try:
             pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
-        except Exception:
+        except KeyError:
             conv_factor = 1.0
         else:
             if pos_unit in ("Ang", "Angstrom"):
@@ -284,9 +284,7 @@ class H5MDTrajectory:
                     uc = UnitCell(temp_array)
                     self._unit_cells.append(uc)
             else:
-                temp_array = np.array(
-                    [[cells[0], 0.0, 0.0], [0.0, cells[1], 0.0], [0.0, 0.0, cells[2]]]
-                )
+                temp_array = np.diag(cells)
                 self._unit_cells.append(UnitCell(temp_array))
 
     def time(self):
