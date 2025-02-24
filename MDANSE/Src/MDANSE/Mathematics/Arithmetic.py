@@ -98,7 +98,6 @@ def assign_weights(
     dim = key.count("%s")
 
     for k in values.keys() & matches:
-
         if symmetric:
             permutations = set(itertools.permutations(matches[k], r=dim))
             w = sum(weights[p] for p in permutations)
