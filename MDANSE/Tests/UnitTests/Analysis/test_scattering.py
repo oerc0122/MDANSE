@@ -114,10 +114,18 @@ def test_dcsf(traj_info, qvector_grid):
             if any(key.startswith(j) for j in ["f(q,t)", "s(q,f)"])
         ]
         for key in keys:
-            np.testing.assert_array_almost_equal(
-                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
-                desired[f"/{key}"],
-            )
+            try:
+                scaling_factor = desired[f"/{key}"].attrs["scaling_factor"]
+            except KeyError:
+                np.testing.assert_array_almost_equal(
+                    actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                    desired[f"/{key}"],
+                )
+            else:
+                np.testing.assert_array_almost_equal(
+                    actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                    desired[f"/{key}"] * scaling_factor,
+                )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")
@@ -215,10 +223,18 @@ def test_disf(traj_info, qvector_grid):
             i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])
         ]
         for key in keys:
-            np.testing.assert_array_almost_equal(
-                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
-                desired[f"/{key}"],
-            )
+            try:
+                scaling_factor = desired[f"/{key}"].attrs["scaling_factor"]
+            except KeyError:
+                np.testing.assert_array_almost_equal(
+                    actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                    desired[f"/{key}"],
+                )
+            else:
+                np.testing.assert_array_almost_equal(
+                    actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                    desired[f"/{key}"] * scaling_factor,
+                )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")

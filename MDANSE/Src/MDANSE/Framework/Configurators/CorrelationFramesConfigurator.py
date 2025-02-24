@@ -38,6 +38,7 @@ class CorrelationFramesConfigurator(FramesConfigurator):
 
         first, last, step, c_frames = value
         super().configure((first, last, step))
+        self._original_input = value
 
         if c_frames > self["n_frames"]:
             self.error_status = (
