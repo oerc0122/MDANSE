@@ -42,7 +42,6 @@ before starting the analysis, if you had something else in mind.
 
 
 class InstrumentTab(GeneralTab):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._core.add_button("Create Instrument", self._view.add_instrument)

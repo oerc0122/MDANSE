@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 
 
 class Plotter(metaclass=SubclassFactory):
-
     def __init__(self) -> None:
         self._figure = None
         self._axes = []

@@ -46,7 +46,6 @@ from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
 
 
 class DataWidget(QWidget):
-
     change_slider_labels = Signal(object)
     change_slider_limits = Signal(object)
     reset_slider_values = Signal(bool)
@@ -257,7 +256,7 @@ class DataWidget(QWidget):
                 self._current_path = PurePath(os.path.split(dataset._filename)[0])
                 break
         except Exception as e:
-            LOG.error(f"DataWidget error: {e}" f"traceback {format_exc()}")
+            LOG.error(f"DataWidget error: {e}traceback {format_exc()}")
 
     def make_canvas(self):
         """Creates a matplotlib figure for plotting

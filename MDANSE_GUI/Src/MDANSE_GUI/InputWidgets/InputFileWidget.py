@@ -25,7 +25,6 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class InputFileWidget(WidgetBase):
-
     def __init__(self, *args, file_dialog=QFileDialog.getOpenFileName, **kwargs):
         super().__init__(*args, **kwargs)
         configurator = kwargs.get("configurator", None)

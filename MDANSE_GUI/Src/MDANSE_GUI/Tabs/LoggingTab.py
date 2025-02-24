@@ -36,7 +36,6 @@ You can adjust the logging level using the combo box below.
 
 
 class GuiLogHandler(Handler):
-
     def __init__(self, *args, **kwargs):
         self._visualiser = None
         super().__init__(*args, **kwargs)

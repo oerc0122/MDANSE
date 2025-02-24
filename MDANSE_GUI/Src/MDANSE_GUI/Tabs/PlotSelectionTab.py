@@ -37,7 +37,6 @@ in a new tab of the interface.
 
 
 class PlotSelectionTab(GeneralTab):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._core.add_button("Load .MDA results", self.load_files)

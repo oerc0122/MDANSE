@@ -22,7 +22,6 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class RangeWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, layout_type="QGridLayout", **kwargs)
         self.setup_fields(*args, **kwargs)

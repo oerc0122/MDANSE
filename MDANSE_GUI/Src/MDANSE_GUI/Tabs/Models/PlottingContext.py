@@ -56,7 +56,6 @@ def get_mpl_colours():
 
 
 class SingleDataset:
-
     def __init__(self, name: str, source: "h5py.File"):
         self._name = name
         self._filename = source.filename
@@ -238,7 +237,6 @@ class SingleDataset:
 
 
 class SingleCurve:
-
     def __init__(self, data_name: str, file_name: str, *args, **kwargs):
         self._name = data_name
         self._filename = file_name
@@ -300,7 +298,6 @@ plotting_column_index = {
 
 
 class PlottingContext(QStandardItemModel):
-
     needs_an_update = Signal()
 
     def __init__(self, *args, unit_lookup=None, **kwargs):

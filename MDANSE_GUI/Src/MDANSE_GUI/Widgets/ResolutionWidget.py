@@ -139,7 +139,6 @@ def revert_parameters(values: dict, peak_type: str) -> List[float]:
 
 
 class ResolutionCalculator:
-
     def __init__(self) -> None:
         self._valid = False
         self._fwhm_value = 1.0
@@ -251,7 +250,6 @@ class ResolutionCalculator:
 
 
 class ResolutionWidget(QWidget):
-
     parameters_changed = Signal(dict)
 
     def __init__(self, *args, **kwargs):

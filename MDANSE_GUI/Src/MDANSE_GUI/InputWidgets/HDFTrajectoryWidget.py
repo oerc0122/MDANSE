@@ -22,7 +22,6 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class HDFTrajectoryWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         source_object = kwargs.get("source_object", None)
