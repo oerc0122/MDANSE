@@ -75,17 +75,7 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5 <https://doi.org/10.1021/acs.jcim.6b0057
 
    pages/H_start
    pages/H_conv
-   pages/H_cli
-   pages/H_gui
-   pages/gui
-   pages/H_gloss
-   pages/H_Dynamics
-   pages/H_Scattering
-   pages/H_Structure
-   pages/H_other
-   pages/H_fca
    pages/H_Plotting
-   pages/H_Batch
 
 .. toctree::
    :maxdepth: 5
@@ -93,7 +83,6 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5 <https://doi.org/10.1021/acs.jcim.6b0057
    :caption: 🧪 Tutorials
 
    pages/T_external
-   pages/T_sim
 
 .. toctree::
    :maxdepth: 5
