@@ -31,4 +31,4 @@ class LatticeQVectors(IQVectors):
                 "The universe must be periodic for building lattice-based Q vectors"
             )
 
-        self._unit_cell = self._chemical_system.configuration.unit_cell
+        self._unit_cell = atom_configuration.unit_cell

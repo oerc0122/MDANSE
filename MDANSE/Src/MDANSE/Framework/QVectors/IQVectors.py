@@ -111,16 +111,15 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         output_data : OutputData
             An object managing the writeout to one or many output files
         """
-        q_values = [float(x) for x in self._configuration["q_vectors"].keys()]
+        qvector_info = self._configuration["q_vectors"]
+        q_values = [float(x) for x in qvector_info]
         output_data.add(
             "vector_generator_q",
             "LineOutputVariable",
             q_values,
             units="1/nm",
         )
-        qvector_lengths = [
-            self._configuration["q_vectors"][q]["q_vectors"].shape[1] for q in q_values
-        ]
+        qvector_lengths = [qvector_info[q]["q_vectors"].shape[1] for q in q_values]
         qarray_maxlength = np.max(qvector_lengths)
         output_data.add(
             "vector_generator_qvector_array",
@@ -132,9 +131,9 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         for nq, q in enumerate(q_values):
             output_data["vector_generator_qvector_array"][
                 nq, :, : qvector_lengths[nq]
-            ] = self._configuration["q_vectors"][q]["q_vectors"]
+            ] = qvector_info[q]["q_vectors"]
         try:
-            hkl_arrays = [self._configuration["q_vectors"][q]["hkls"] for q in q_values]
+            hkl_arrays = [qvector_info[q]["hkls"] for q in q_values]
         except KeyError:
             return
         output_data.add(

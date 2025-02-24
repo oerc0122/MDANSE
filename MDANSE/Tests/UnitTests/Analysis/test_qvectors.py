@@ -26,7 +26,7 @@ def trajectory():
 
 def test_qvector_to_hkl_conversion(trajectory):
     for qvector_generator in IQVectors.indirect_subclasses():
-        instance = IQVectors.create(qvector_generator, trajectory.chemical_system)
+        instance = IQVectors.create(qvector_generator, trajectory.trajectory.configuration(0))
         instance.setup({"shells": (5.0, 50.0, 10.0)})
         unit_cell = trajectory.trajectory.unit_cell(0)
         instance.generate()
@@ -42,11 +42,9 @@ def test_qvector_to_hkl_conversion(trajectory):
                 original_qvectors = instance._configuration["q_vectors"][q]["q_vectors"]
             except KeyError:
                 continue
-            print("q_vectors", original_qvectors)
             if len(original_qvectors) == 0:
                 continue
             hkls = instance.qvectors_to_hkl(original_qvectors, unit_cell)
-            print("hkls", hkls)
             recalculated_qvectors = instance.hkl_to_qvectors(hkls, unit_cell)
             assert np.allclose(original_qvectors, recalculated_qvectors)
 
