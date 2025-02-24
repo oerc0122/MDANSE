@@ -26,6 +26,10 @@ discover_xtd = DATA_DIR / "sushi.xtd"
 cp2k_pos = DATA_DIR / "CO2GAS-pos-1.xyz"
 cp2k_vel = DATA_DIR / "CO2GAS-vel-1.xyz"
 cp2k_cell = DATA_DIR / "CO2GAS-1.cell"
+cp2k_srtio3_pos = DATA_DIR / "SrTiO3_MD-pos-1.xyz"
+cp2k_srtio3_vel = DATA_DIR / "SrTiO3_MD-vel-1.xyz"
+cp2k_srtio3_frc = DATA_DIR / "SrTiO3_MD-frc-1.xyz"
+cp2k_srtio3_cell = DATA_DIR / "SrTiO3_MD-cell-1.cell"
 hem_cam_pdb = DATA_DIR / "hem-cam.pdb"
 hem_cam_dcd = DATA_DIR / "hem-cam.dcd"
 ase_traj = DATA_DIR / "Cu_5steps_ASEformat.traj"
@@ -98,6 +102,22 @@ def _converter_test(tmp_path, converter_type, result, compare, parameters, compr
      {"pos_file": cp2k_pos,
       "cell_file": cp2k_cell,
       "vel_file": None}),
+    ("cp2k", "cp2k.mdt",
+     ("/configuration/coordinates", "/time", "/charge"),
+     {"pos_file": cp2k_pos,
+      "cell_file": cp2k_cell,
+      "vel_file": ""}),
+    ("cp2k", "cp2k_srtio3.mdt",
+     ("/configuration/coordinates", "/configuration/velocities", "/configuration/forces", "/time"),
+     {"pos_file": cp2k_srtio3_pos,
+      "cell_file": cp2k_srtio3_cell,
+      "vel_file": cp2k_srtio3_vel,
+      "force_file": cp2k_srtio3_frc}),
+    ("cp2k", "cp2k_srtio3.mdt",
+     ("/configuration/coordinates", "/configuration/forces", "/time"),
+     {"pos_file": cp2k_srtio3_pos,
+      "cell_file": cp2k_srtio3_cell,
+      "force_file": cp2k_srtio3_frc}),
     ("charmm", "hem_cam.mdt",
      ("/configuration/coordinates", "/unit_cell", "/time"),
      {"dcd_file": hem_cam_dcd,
