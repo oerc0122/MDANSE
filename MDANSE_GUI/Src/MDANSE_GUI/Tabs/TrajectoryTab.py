@@ -44,7 +44,6 @@ of the trajectory are what you expected.
 
 
 class TrajectoryTab(GeneralTab):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._core.add_button("Load .MDT Trajectories", self.load_trajectories)

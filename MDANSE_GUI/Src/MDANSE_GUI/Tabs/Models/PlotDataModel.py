@@ -64,7 +64,6 @@ class BasicPlotDataItem(QStandardItem):
 
 
 class DataSetItem(BasicPlotDataItem):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._item_type = "dataset"
@@ -79,7 +78,6 @@ class DataSetItem(BasicPlotDataItem):
 
 
 class DataFileItem(BasicPlotDataItem):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._item_type = "file"
@@ -92,7 +90,6 @@ class DataFileItem(BasicPlotDataItem):
 
 
 class MDADataStructure:
-
     def __init__(self, filename: str):
         self._file = h5py.File(filename)
         self.check_metadata()

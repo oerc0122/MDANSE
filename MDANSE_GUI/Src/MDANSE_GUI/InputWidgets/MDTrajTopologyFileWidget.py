@@ -17,7 +17,6 @@ from .InputFileWidget import InputFileWidget
 
 
 class MDTrajTopologyFileWidget(InputFileWidget):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

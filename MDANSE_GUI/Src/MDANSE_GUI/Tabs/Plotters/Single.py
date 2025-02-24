@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
 
 class Single(Plotter):
-
     def __init__(self) -> None:
         super().__init__()
         self._figure = None
@@ -152,7 +151,7 @@ class Single(Plotter):
                 if dataset._n_dim == 1:
                     [temp] = axes.plot(
                         dataset._axes[best_axis] * conversion_factor,
-                        dataset._data,
+                        dataset.data,
                         linestyle=linestyle,
                         label=plotlabel,
                         color=colour,

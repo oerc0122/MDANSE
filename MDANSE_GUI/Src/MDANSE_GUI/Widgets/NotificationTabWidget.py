@@ -20,7 +20,6 @@ from qtpy.QtGui import QColor, QIcon
 
 
 class NotificationTabWidget(QTabWidget):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._normal_colours = {}

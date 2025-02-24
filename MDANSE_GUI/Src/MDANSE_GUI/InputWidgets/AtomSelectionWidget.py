@@ -190,7 +190,6 @@ class SelectionHelper(QDialog):
         self.combo_boxes = []
 
         for k, v in self.settings.items():
-
             if isinstance(v, bool):
                 check_layout = QHBoxLayout()
                 checkbox = QCheckBox()

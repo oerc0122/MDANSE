@@ -50,11 +50,17 @@ def test_vacf(interp_order, normalise):
 
     result_file = os.path.join(result_dir, fname)
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        np.testing.assert_array_almost_equal(actual["/vacf_H"], desired["/vacf_H"])
-        np.testing.assert_array_almost_equal(actual["/vacf_O"], desired["/vacf_O"])
-        np.testing.assert_array_almost_equal(actual["/vacf_Si"], desired["/vacf_Si"])
-        np.testing.assert_array_almost_equal(actual["/vacf_total"], desired["/vacf_total"])
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        for key in ["vacf_H", "vacf_O", "vacf_Si", "vacf_total"]:
+            if normalise:
+                np.testing.assert_array_almost_equal(
+                    actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                    desired[f"/{key}"],
+                )
+            else:
+                np.testing.assert_array_almost_equal(
+                    actual[f"/{key}"], desired[f"/{key}"],
+                )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + ".log")
