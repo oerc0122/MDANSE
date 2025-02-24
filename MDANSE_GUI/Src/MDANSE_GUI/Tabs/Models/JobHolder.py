@@ -38,7 +38,6 @@ from MDANSE_GUI.Tabs.Views.Delegates import ProgressDelegate
 
 
 class JobThread(QThread):
-
     def __init__(
         self,
         job_comm: "JobCommunicator",
@@ -90,7 +89,6 @@ class JobThread(QThread):
 
 
 class JobLogHandler(Handler):
-
     def __init__(self):
         super().__init__()
         self.records = []

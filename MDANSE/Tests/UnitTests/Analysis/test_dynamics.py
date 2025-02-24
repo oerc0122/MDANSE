@@ -66,11 +66,17 @@ def test_vacf(interp_order, normalise):
 
     result_file = os.path.join(result_dir, fname)
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        np.testing.assert_array_almost_equal(actual["/vacf_Cu"], desired["/vacf_Cu"])
-        np.testing.assert_array_almost_equal(actual["/vacf_S"], desired["/vacf_S"])
-        np.testing.assert_array_almost_equal(actual["/vacf_Sb"], desired["/vacf_Sb"])
-        np.testing.assert_array_almost_equal(actual["/vacf_total"], desired["/vacf_total"])
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        for key in ["vacf_Cu", "vacf_S", "vacf_Sb", "vacf_total"]:
+            if normalise:
+                np.testing.assert_array_almost_equal(
+                    actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                    desired[f"/{key}"],
+                )
+            else:
+                np.testing.assert_array_almost_equal(
+                    actual[f"/{key}"], desired[f"/{key}"],
+                )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + ".log")
@@ -92,15 +98,21 @@ def test_pps():
 
     result_file = os.path.join(result_dir, "pps.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        np.testing.assert_array_almost_equal(actual["/pacf_Cu"], desired["/pacf_Cu"])
-        np.testing.assert_array_almost_equal(actual["/pacf_S"], desired["/pacf_S"])
-        np.testing.assert_array_almost_equal(actual["/pacf_Sb"], desired["/pacf_Sb"])
-        np.testing.assert_array_almost_equal(actual["/pacf_total"], desired["/pacf_total"])
-        np.testing.assert_array_almost_equal(actual["/pps_Cu"], desired["/pps_Cu"])
-        np.testing.assert_array_almost_equal(actual["/pps_S"], desired["/pps_S"])
-        np.testing.assert_array_almost_equal(actual["/pps_Sb"], desired["/pps_Sb"])
-        np.testing.assert_array_almost_equal(actual["/pps_total"], desired["/pps_total"])
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        for key in [
+            "pacf_Cu",
+            "pacf_S",
+            "pacf_Sb",
+            "pacf_total",
+            "pps_Cu",
+            "pps_S",
+            "pps_Sb",
+            "pps_total",
+        ]:
+            np.testing.assert_array_almost_equal(
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"],
+            )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + ".log")
@@ -143,18 +155,22 @@ def parameters():
 
 total_list = []
 
-for tp in [("short_traj", short_traj), ("mdmc_traj", mdmc_traj), ("com_traj", com_traj)]:
+for tp in [
+    ("short_traj", short_traj),
+    ("mdmc_traj", mdmc_traj),
+    ("com_traj", com_traj),
+]:
     for jt in [
         # "AngularCorrelation",
         # "GeneralAutoCorrelationFunction",
-        ("DensityOfStates", ["dos", "vacf"]),
-        ("MeanSquareDisplacement", ["msd"]),
-        ("VelocityAutoCorrelationFunction", ["vacf"]),
-        ("VanHoveFunctionDistinct", ["g(r,t)"]),
-        ("VanHoveFunctionSelf", ["g(r,t)"]),
+        ("DensityOfStates", ["dos", "vacf"], True),
+        ("MeanSquareDisplacement", ["msd"], False),
+        ("VelocityAutoCorrelationFunction", ["vacf"], True),
+        ("VanHoveFunctionDistinct", ["g(r,t)"], False),
+        ("VanHoveFunctionSelf", ["g(r,t)"], True),
         # "OrderParameter",
-        ("PositionAutoCorrelationFunction", ["pacf"]),
-        ("PositionPowerSpectrum", ["pacf", "pps"]),
+        ("PositionAutoCorrelationFunction", ["pacf"], True),
+        ("PositionPowerSpectrum", ["pacf", "pps"], True),
     ]:
         for rm in [("single-core", 1), ("multicore", -4)]:
             for of in ["MDAFormat", "TextFormat"]:
@@ -174,12 +190,23 @@ def test_dynamics_analysis(
     if output_format == "MDAFormat":
         assert path.exists(temp_name + ".mda")
         assert path.isfile(temp_name + ".mda")
-        result_file = os.path.join(result_dir, f"dynamics_analysis_{traj_info[0]}_{job_info[0]}.mda")
-
+        result_file = os.path.join(
+            result_dir, f"dynamics_analysis_{traj_info[0]}_{job_info[0]}.mda"
+        )
+        print(f"{job_info[0]} {traj_info}")
         with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
             keys = [i for i in desired.keys() if any([j in i for j in job_info[1]])]
             for key in keys:
-                np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
+                # reference results may or may not have been scaled/normalized
+                if job_info[2]:
+                    np.testing.assert_array_almost_equal(
+                        actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                        desired[f"/{key}"],
+                    )
+                else:
+                    np.testing.assert_array_almost_equal(
+                        actual[f"/{key}"], desired[f"/{key}"],
+                    )
 
         os.remove(temp_name + ".mda")
     elif output_format == "TextFormat":

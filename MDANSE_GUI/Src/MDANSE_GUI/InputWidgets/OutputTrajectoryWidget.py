@@ -39,7 +39,6 @@ dtype_lookup = {"float16": 16, "float32": 32, "float64": 64}
 
 
 class OutputTrajectoryWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, layout_type="QGridLayout", **kwargs)
         default_value = self._configurator.default

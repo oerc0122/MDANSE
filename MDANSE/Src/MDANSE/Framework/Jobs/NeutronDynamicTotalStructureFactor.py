@@ -15,6 +15,7 @@
 #
 import collections
 import itertools
+from typing import List
 
 import numpy as np
 
@@ -31,7 +32,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
     Computes the dynamic total structure factor for a set of atoms as the sum of the incoherent and coherent structure factors
     """
 
-    enabled = False
+    enabled = True
 
     label = "Neutron Dynamic Total Structure Factor"
 
@@ -46,11 +47,11 @@ class NeutronDynamicTotalStructureFactor(IJob):
     settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
     settings["dcsf_input_file"] = (
         "HDFInputFileConfigurator",
-        {"label": "MDANSE Coherent Structure Factor", "default": "dcsf.h5"},
+        {"label": "MDANSE Coherent Structure Factor", "default": "dcsf.mda"},
     )
     settings["disf_input_file"] = (
         "HDFInputFileConfigurator",
-        {"label": "MDANSE Incoherent Structure Factor", "default": "disf.h5"},
+        {"label": "MDANSE Incoherent Structure Factor", "default": "disf.mda"},
     )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
@@ -213,6 +214,15 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing s(q,f) in dcsf input file"
                 )
+            if (
+                "scaling_factor"
+                not in self.configuration["dcsf_input_file"]["instance"][
+                    "s(q,f)_{}{}".format(*pair)
+                ].attrs.keys()
+            ):
+                raise NeutronDynamicTotalStructureFactorError(
+                    "This DCSF file was created before the new scaling scheme. Please calculate it again."
+                )
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             if (
@@ -229,6 +239,15 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing s(q,f) in disf input file"
                 )
+            if (
+                "scaling_factor"
+                not in self.configuration["disf_input_file"]["instance"][
+                    "s(q,f)_{}".format(element)
+                ].attrs.keys()
+            ):
+                raise NeutronDynamicTotalStructureFactorError(
+                    "This DISF file was created before the new scaling scheme. Please calculate it again."
+                )
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             fqt = self.configuration["disf_input_file"]["instance"][f"f(q,t)_{element}"]
@@ -244,20 +263,6 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 f"s(q,f)_inc_{element}",
                 "SurfaceOutputVariable",
                 sqf,
-                axis="q|omega",
-                units="nm2/ps",
-            )
-            self._outputData.add(
-                f"f(q,t)_inc_weighted_{element}",
-                "SurfaceOutputVariable",
-                fqt.shape,
-                axis="q|time",
-                units="au",
-            )
-            self._outputData.add(
-                f"s(q,f)_inc_weighted_{element}",
-                "SurfaceOutputVariable",
-                sqf.shape,
                 axis="q|omega",
                 units="nm2/ps",
             )
@@ -281,20 +286,6 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 f"s(q,f)_coh_{pair_str}",
                 "SurfaceOutputVariable",
                 sqf,
-                axis="q|omega",
-                units="nm2/ps",
-            )
-            self._outputData.add(
-                f"f(q,t)_coh_weighted_{pair_str}",
-                "SurfaceOutputVariable",
-                fqt.shape,
-                axis="q|time",
-                units="au",
-            )
-            self._outputData.add(
-                f"s(q,f)_coh_weighted_{pair_str}",
-                "SurfaceOutputVariable",
-                sqf.shape,
                 axis="q|omega",
                 units="nm2/ps",
             )
@@ -351,6 +342,20 @@ class NeutronDynamicTotalStructureFactor(IJob):
             units="nm2/ps",
             main_result=True,
         )
+        self._input_disf_weight = (
+            self.configuration["disf_input_file"]["instance"][
+                "metadata/inputs/weights"
+            ][0]
+            .decode()
+            .strip('"')
+        )
+        self._input_dcsf_weight = (
+            self.configuration["dcsf_input_file"]["instance"][
+                "metadata/inputs/weights"
+            ][0]
+            .decode()
+            .strip('"')
+        )
 
     def run_step(self, index):
         """
@@ -385,6 +390,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
         for val in list(nAtomsPerElement.values()):
             nTotalAtoms += val
 
+        norm_natoms = 1.0 / nTotalAtoms
         # Compute coherent functions and structure factor
         for pair in self._elementsPairs:
             pair_str = "".join(map(str, pair))
@@ -394,58 +400,33 @@ class NeutronDynamicTotalStructureFactor(IJob):
             bj = self.configuration["trajectory"]["instance"].get_atom_property(
                 pair[1], "b_coherent"
             )
-            ni = nAtomsPerElement[pair[0]]
-            nj = nAtomsPerElement[pair[1]]
-            ci = ni / nTotalAtoms
-            cj = nj / nTotalAtoms
 
-            self._outputData[f"f(q,t)_coh_weighted_{pair_str}"][:] = (
-                self._outputData[f"f(q,t)_coh_{pair_str}"][:]
-                * np.sqrt(ci * cj)
-                * bi
-                * bj
-            )
-            self._outputData[f"s(q,f)_coh_weighted_{pair_str}"][:] = (
-                self._outputData[f"s(q,f)_coh_{pair_str}"][:]
-                * np.sqrt(ci * cj)
-                * bi
-                * bj
-            )
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
-                self._outputData["f(q,t)_coh_total"][:] += self._outputData[
-                    f"f(q,t)_coh_weighted_{pair_str}"
-                ][:]
-                self._outputData["s(q,f)_coh_total"][:] += self._outputData[
-                    f"s(q,f)_coh_weighted_{pair_str}"
-                ][:]
+                self._outputData[f"f(q,t)_coh_{pair_str}"] *= bi * bj * norm_natoms
+                self._outputData[f"s(q,f)_coh_{pair_str}"] *= bi * bj * norm_natoms
             else:
-                self._outputData["f(q,t)_coh_total"][:] += (
-                    2 * self._outputData[f"f(q,t)_coh_weighted_{pair_str}"][:]
-                )
-                self._outputData["s(q,f)_coh_total"][:] += (
-                    2 * self._outputData[f"s(q,f)_coh_weighted_{pair_str}"][:]
-                )
+                self._outputData[f"f(q,t)_coh_{pair_str}"] *= 2 * bi * bj * norm_natoms
+                self._outputData[f"s(q,f)_coh_{pair_str}"] *= 2 * bi * bj * norm_natoms
+
+            self._outputData["f(q,t)_coh_total"][:] += self._outputData[
+                f"f(q,t)_coh_{pair_str}"
+            ][:]
+            self._outputData["s(q,f)_coh_total"][:] += self._outputData[
+                f"s(q,f)_coh_{pair_str}"
+            ][:]
 
         # Compute incoherent functions and structure factor
-        for element, ni in nAtomsPerElement.items():
+        for element in nAtomsPerElement:
             bi = self.configuration["trajectory"]["instance"].get_atom_property(
                 element, "b_incoherent2"
             )
-            ni = nAtomsPerElement[element]
-            ci = ni / nTotalAtoms
-
-            self._outputData[f"f(q,t)_inc_weighted_{element}"][:] = (
-                self._outputData[f"f(q,t)_inc_{element}"][:] * ci * bi
-            )
-            self._outputData[f"s(q,f)_inc_weighted_{element}"][:] = (
-                self._outputData[f"s(q,f)_inc_{element}"][:] * ci * bi
-            )
-
+            self._outputData[f"f(q,t)_inc_{element}"][:] *= bi * norm_natoms
+            self._outputData[f"s(q,f)_inc_{element}"][:] *= bi * norm_natoms
             self._outputData["f(q,t)_inc_total"][:] += self._outputData[
-                f"f(q,t)_inc_weighted_{element}"
+                f"f(q,t)_inc_{element}"
             ][:]
             self._outputData["s(q,f)_inc_total"][:] += self._outputData[
-                f"s(q,f)_inc_weighted_{element}"
+                f"s(q,f)_inc_{element}"
             ][:]
 
         # Compute total F(Q,t) = inc + coh

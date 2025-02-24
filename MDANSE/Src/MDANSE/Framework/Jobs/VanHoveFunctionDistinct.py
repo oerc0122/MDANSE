@@ -22,7 +22,7 @@ import numpy as np
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 def distance_array_2D(
@@ -487,12 +487,16 @@ class VanHoveFunctionDistinct(IJob):
                 self._outputData[f"g(r,t)_{i}_{''.join(pair)}"][...] = van_h
 
         weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 2)
         for i in ["_intra", "_inter", ""]:
-            pdf = weight(
-                weights,
+            assign_weights(
                 self._outputData,
-                nAtomsPerElement,
-                2,
+                weight_dict,
+                f"g(r,t){i if i else '_total'}_%s%s",
+            )
+            pdf = weighted_sum(
+                self._outputData,
+                weight_dict,
                 f"g(r,t){i if i else '_total'}_%s%s",
             )
             self._outputData[f"g(r,t){i}_total"][...] = pdf

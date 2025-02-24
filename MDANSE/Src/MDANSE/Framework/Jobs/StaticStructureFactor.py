@@ -19,7 +19,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 class StaticStructureFactor(DistanceHistogram):
@@ -209,15 +209,13 @@ class StaticStructureFactor(DistanceHistogram):
         )
 
         weights = self.configuration["weights"].get_weights()
-
-        ssfIntra = weight(
-            weights, self._outputData, nAtomsPerElement, 2, "ssf_intra_%s%s"
-        )
+        weight_dict = get_weights(weights, nAtomsPerElement, 2)
+        assign_weights(self._outputData, weight_dict, "ssf_intra_%s%s")
+        assign_weights(self._outputData, weight_dict, "ssf_inter_%s%s")
+        ssfIntra = weighted_sum(self._outputData, weight_dict, "ssf_intra_%s%s")
         self._outputData["ssf_intra"][:] = ssfIntra
 
-        ssfInter = weight(
-            weights, self._outputData, nAtomsPerElement, 2, "ssf_inter_%s%s"
-        )
+        ssfInter = weighted_sum(self._outputData, weight_dict, "ssf_inter_%s%s")
 
         self._outputData["ssf_inter"][:] = ssfInter
 

@@ -24,7 +24,7 @@ class Singleton(type):
 
     def __call__(self, *args, **kwargs):
         """
-        Creates (or returns if it has already been instanciated) an instance of the class.
+        Creates (or returns if it has already been instantiated) an instance of the class.
         """
 
         if self.__name__ not in self.__instances:

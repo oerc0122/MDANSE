@@ -13,7 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
+from collections import defaultdict
+import itertools
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
@@ -109,20 +110,25 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         self.error_status = "OK"
 
     def get_weights(self):
-        ascfg = self._configurable[self._dependencies["atom_selection"]]
+        atom_selection_configurator = self._configurable[
+            self._dependencies["atom_selection"]
+        ]
 
-        weights = {}
-        for i in range(ascfg["selection_length"]):
-            name = ascfg["names"][i]
-            for el in ascfg["elements"][i]:
-                p = self._trajectory.get_atom_property(el, self["property"])
-                if name in weights:
-                    weights[name] += p
-                else:
-                    weights[name] = p
+        weights = defaultdict(float)
+        for name, elements in itertools.islice(
+            zip(
+                atom_selection_configurator["names"],
+                atom_selection_configurator["elements"],
+            ),
+            atom_selection_configurator["selection_length"],
+        ):
+            weights[name] += sum(
+                self._trajectory.get_atom_property(element, self["property"])
+                for element in elements
+            )
 
-        for k, v in list(ascfg.get_natoms().items()):
-            weights[k] /= v
+        for element, num_atoms in atom_selection_configurator.get_natoms().items():
+            weights[element] /= num_atoms
 
         return weights
 

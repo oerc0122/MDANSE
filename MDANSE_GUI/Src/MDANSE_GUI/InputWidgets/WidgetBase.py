@@ -29,7 +29,6 @@ from MDANSE.MLogging import LOG
 
 
 class WidgetBase(QObject):
-
     valid_changed = Signal()
     value_updated = Signal()
     value_changed = Signal()

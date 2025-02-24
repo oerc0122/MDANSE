@@ -73,7 +73,7 @@ def test_structure_analysis(parameters, job_info):
     assert path.isfile(temp_name + ".mda")
     result_file = os.path.join(result_dir, f"structure_analysis_{job_info[0]}.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         for key in job_info[1]:
             np.testing.assert_array_almost_equal(actual[f"/{key}"], desired[f"/{key}"])
 
