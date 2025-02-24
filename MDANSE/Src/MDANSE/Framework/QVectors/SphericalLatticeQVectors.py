@@ -58,9 +58,7 @@ class SphericalLatticeQVectors(LatticeQVectors):
 
         hkl_vects = hkl_vects.reshape(
             3,
-            int(2 * hklMax[0, 0] + 1)
-            * int(2 * hklMax[1, 1] + 1)
-            * int(2 * hklMax[2, 2] + 1),
+            np.prod(2 * np.diag(hklMax) + 1, dtype=int),
         )
 
         vects = self.hkl_to_qvectors(hkl_vects, self._unit_cell)

@@ -111,7 +111,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         output_data : OutputData
             An object managing the writeout to one or many output files
         """
-        q_values = [float(x) for x in self._configuration["q_vectors"].keys()]
+        q_values = [float(x) for x in self._configuration["q_vectors"]]
         output_data.add(
             "vector_generator_q",
             "LineOutputVariable",

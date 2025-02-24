@@ -89,8 +89,8 @@ class SingleDataset:
         self._axes_units = {}
         if self._axes_tag == "index":
             for dim_number, dim_length in enumerate(self._data.shape):
-                self._axes["index" + str(dim_number)] = np.arange(dim_length)
-                self._axes_units["index" + str(dim_number)] = "N/A"
+                self._axes[f"index{dim_number}"] = np.arange(dim_length)
+                self._axes_units[f"index{dim_number}"] = "N/A"
             return
         for ax_number, axis_name in enumerate(self._axes_tag.split("|")):
             aname = axis_name.strip()
