@@ -24,7 +24,6 @@ from .InputFileWidget import InputFileWidget
 
 
 class MultiInputFileWidget(InputFileWidget):
-
     def __init__(self, *args, file_dialog=QFileDialog.getOpenFileNames, **kwargs):
         super().__init__(
             *args,
@@ -37,7 +36,7 @@ class MultiInputFileWidget(InputFileWidget):
         paths_group = self._settings.group("paths")
         try:
             self.default_path = paths_group.get(self._job_name)
-        except:
+        except Exception:
             LOG.warning(f"session.get_path failed for {self._job_name}")
         new_value = self._file_dialog(
             self.parent(),
@@ -57,7 +56,7 @@ class MultiInputFileWidget(InputFileWidget):
                 paths_group.set(
                     self._job_name, str(PurePath(os.path.split(new_value[0][0])[0]))
                 )
-            except:
+            except Exception:
                 LOG.error(
                     f"session.set_path failed for {self._job_name}, {os.path.split(new_value[0][0])[0]}"
                 )

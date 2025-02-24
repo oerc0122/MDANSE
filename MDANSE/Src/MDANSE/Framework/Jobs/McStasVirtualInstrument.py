@@ -14,11 +14,13 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import collections
-import os
 import shutil
 import subprocess
 import tempfile
 import io
+from pathlib import Path
+from typing import Union
+from functools import partial
 
 import numpy as np
 
@@ -37,6 +39,10 @@ MCSTAS_UNITS_LUT = {
 }
 
 NAVOGADRO = 6.02214129e23
+
+
+def _startswith(key: str, line: str) -> bool:
+    return line.strip().startswith(key)
 
 
 class McStasError(Error):
@@ -116,6 +122,13 @@ class McStasVirtualInstrument(IJob):
         "OutputFilesConfigurator",
         {"formats": ["MDAFormat", "TextFormat"]},
     )
+
+    @property
+    def mcstas_output_dir(self) -> Path:
+        """
+        Output directory as path.
+        """
+        return Path(self.configuration["options"]["mcstas_output_directory"])
 
     def initialize(self):
         """
@@ -223,15 +236,13 @@ class McStasVirtualInstrument(IJob):
 
             fout.write("# Physical parameters:\n")
             for k, v in list(self._mcStasPhysicalParameters.items()):
-                fout.write("# %s %s \n" % (k, v))
+                fout.write(f"# {k} {v} \n")
 
-            fout.write(
-                "# Temperature %s \n" % self.configuration["temperature"]["value"]
-            )
+            fout.write(f"# Temperature {self.configuration['temperature']['value']} \n")
             fout.write("#\n")
 
             for var in self.configuration[typ].variables:
-                fout.write("# %s\n" % var)
+                fout.write(f"# {var}\n")
 
                 data = self.configuration[typ][var][:]
                 LOG.info(f"In {typ} the variable {var} has shape {data.shape}")
@@ -253,7 +264,7 @@ class McStasVirtualInstrument(IJob):
             #     + typ
             #     + ".sqw"
             # )
-            sqwInput += "%s=%s " % (typ, fout.name)
+            sqwInput += f"{typ}={fout.name} "
 
         # sys.exit(0)
 
@@ -282,15 +293,10 @@ class McStasVirtualInstrument(IJob):
 
         for line in out.splitlines():
             if "ERROR" in line.decode(encoding="utf-8"):
-                raise McStasError("An error occured during McStas run: %s" % out)
+                raise McStasError(f"An error occured during McStas run: {out}")
 
-        with open(
-            os.path.join(
-                self.configuration["options"]["mcstas_output_directory"],
-                "mcstas_mdanse.mvi",
-            ),
-            "w",
-        ) as f:
+        out_file = self.mcstas_output_dir / "mcstas_mdanse.mvi"
+        with out_file.open("w") as f:
             f.write(out.decode(encoding="utf-8"))
 
         return index, None
@@ -310,14 +316,8 @@ class McStasVirtualInstrument(IJob):
         """
 
         # Rename and move to the result dir the SQW file input
-        for typ, fname in list(self.outFile.items()):
-            shutil.move(
-                fname,
-                os.path.join(
-                    self.configuration["options"]["mcstas_output_directory"],
-                    typ + ".sqw",
-                ),
-            )
+        for typ, fname in self.outFile.items():
+            shutil.move(fname, self.mcstas_output_dir / f"{typ}.sqw")
 
         # Convert McStas output files into NetCDF format
         self.convert(self.configuration["options"]["mcstas_output_directory"])
@@ -343,27 +343,28 @@ class McStasVirtualInstrument(IJob):
                 if np.allclose(v, value):
                     return k
         while key in d:
-            key = skey + "_%d" % i
+            key = f"{skey}_{i:d}"
             i += 1
         return key
 
-    def convert(self, sim_dir):
+    def convert(self, sim_dir: Union[Path, str]):
         """
         Convert McStas data set to netCDF File Format
         """
 
+        sim_dir = Path(sim_dir)
         typique_sim_fnames = ["mccode.sim", "mcstas.sim"]
-        sim_file = ""
+
         for sim_fname in typique_sim_fnames:
-            sim_file = os.path.join(sim_dir, sim_fname)
-            if os.path.isfile(sim_file):
+            sim_file = sim_dir / sim_fname
+            if sim_file.is_file():
                 break
 
         if not sim_file:
-            raise Exception("Dataset " + sim_file + " does not exist!")
+            raise Exception(f"Dataset {sim_file} does not exist!")
 
-        isBegin = lambda line: line.strip().startswith("begin")
-        isCompFilename = lambda line: line.strip().startswith("filename:")
+        isBegin = partial(_startswith, "begin")
+        isCompFilename = partial(_startswith, "filename:")
         # First, determine if this is single or overview plot...
         SimFile = list(filter(isBegin, open(sim_file).readlines()))
         Datfile = 0
@@ -383,11 +384,11 @@ class McStasVirtualInstrument(IJob):
         if L == 0:
             """Scan view"""
             if Datfile == 0:
-                isFilename = lambda line: line.strip().startswith("filename")
+                isFilename = partial(_startswith, "filename")
 
                 Scanfile = list(filter(isFilename, open(sim_file).readlines()))
                 Scanfile = Scanfile[0].split(": ")
-                Scanfile = os.path.join(sim_dir, Scanfile[1].strip())
+                Scanfile = sim_dir / Scanfile[1].strip()
                 # Proceed to load scan datafile
                 FS = self.read_monitor(Scanfile)
                 L = (len(FS["variables"].split()) - 1) / 2
@@ -402,7 +403,7 @@ class McStasVirtualInstrument(IJob):
             for j in range(0, L):
                 MonFile = MonFiles[j].split(":")
                 MonFile = MonFile[1].strip()
-                MonFile = os.path.join(sim_dir, MonFile)
+                MonFile = sim_dir / MonFile
                 FS = self.read_monitor(MonFile)
                 FSlist[len(FSlist) :] = [FS]
                 FSlist[j] = self.save_single(FS)
@@ -434,16 +435,16 @@ class McStasVirtualInstrument(IJob):
                 "LineOutputVariable", x, xlabel, units="au"
             )
             self._outputData[Title] = IOutputVariable.create(
-                "LineOutputVariable", y, Title, axis="%s" % xlabel, units="au"
+                "LineOutputVariable", y, Title, axis=str(xlabel), units="au"
             )
 
         elif typ == "array_2d":
             # 2D data set
             mysize = FileStruct["data"].shape
 
-            I = FileStruct["data"]
-            mysize = I.shape
-            I = I.T
+            data = FileStruct["data"]
+            mysize = data.shape
+            data = data.T
 
             Xmin = eval(FileStruct["xylimits"].split()[0])
             Xmax = eval(FileStruct["xylimits"].split()[1])
@@ -468,8 +469,8 @@ class McStasVirtualInstrument(IJob):
             self._outputData.add(
                 title,
                 "SurfaceOutputVariable",
-                I,
-                axis="%s|%s" % (xlabel, ylabel),
+                data,
+                axis=f"{xlabel}|{ylabel}",
                 units="au",
                 main_result=True,
                 partial_result=True,
@@ -489,7 +490,7 @@ class McStasVirtualInstrument(IJob):
         """
 
         # Read header
-        isHeader = lambda line: line.startswith("#")
+        isHeader = partial(_startswith, "#")
         f = open(simFile)
         Lines = f.readlines()
         Header = list(filter(isHeader, Lines))
@@ -518,8 +519,8 @@ class McStasVirtualInstrument(IJob):
         f.close()
 
         header = True
-        for l in lines:
-            if l.startswith("#"):
+        for line in lines:
+            if line.startswith("#"):
                 if header:
                     continue
                 else:
@@ -527,7 +528,7 @@ class McStasVirtualInstrument(IJob):
             else:
                 if header:
                     header = False
-                data.append(l)
+                data.append(line)
 
         Filestruct["data"] = np.genfromtxt(io.StringIO(" ".join(data)))
         Filestruct["fullpath"] = simFile

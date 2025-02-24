@@ -104,7 +104,7 @@ class PlotDataView(QTreeView):
                 for attr in mda_data_structure.attrs:
                     text += f"{attr}: {mda_data_structure.attrs[attr]}\n"
                 self.item_details.emit(text)
-            except:
+            except Exception:
                 self.item_details.emit("No additional information included.")
 
     @Slot(QModelIndex)
@@ -148,6 +148,5 @@ class PlotDataView(QTreeView):
             self.item_details.connect(visualiser.update_panel)
         else:
             raise NotImplementedError(
-                f"Unable to connect view {type(self)} to visualiser "
-                f"{type(visualiser)}"
+                f"Unable to connect view {type(self)} to visualiser {type(visualiser)}"
             )

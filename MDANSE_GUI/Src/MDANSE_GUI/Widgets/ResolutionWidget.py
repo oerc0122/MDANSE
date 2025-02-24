@@ -139,7 +139,6 @@ def revert_parameters(values: dict, peak_type: str) -> List[float]:
 
 
 class ResolutionCalculator:
-
     def __init__(self) -> None:
         self._valid = False
         self._fwhm_value = 1.0
@@ -211,7 +210,7 @@ class ResolutionCalculator:
         )
         try:
             self._resolution.set_kernel(self._omega_axis, 1.0)
-        except:
+        except Exception:
             self._valid = False
         else:
             self._valid = True
@@ -251,7 +250,6 @@ class ResolutionCalculator:
 
 
 class ResolutionWidget(QWidget):
-
     parameters_changed = Signal(dict)
 
     def __init__(self, *args, **kwargs):
@@ -363,16 +361,16 @@ class ResolutionWidget(QWidget):
         """
         try:
             fwhm = abs(float(self._fwhm.text()))
-        except:
+        except Exception:
             return
         try:
             centre = float(self._centre.text())
-        except:
+        except Exception:
             return
         if "oigt" in self._resolution_name:
             try:
                 eta = float(self._eta.text())
-            except:
+            except Exception:
                 return
         else:
             eta = None
@@ -411,7 +409,7 @@ class ResolutionWidget(QWidget):
         new_eta = new_params.get("eta", "0.0")
         try:
             fwhm, centre = revert_parameters(new_params, new_function_name)
-        except:
+        except Exception:
             self.blockSignals(False)
             return
         self._peak_selector.setCurrentText(offical_name)
@@ -490,7 +488,7 @@ class ResolutionWidget(QWidget):
             + self._calculator._centre_value
         )
         ys = np.array([0.0, hh, hh, 0.0])
-        if not "deal" in self._resolution_name:
+        if "deal" not in self._resolution_name:
             axes.plot(xs * self._calculator._factor_value, ys, "r:")
         axes.grid(True)
         scale = self._calculator._factor_value

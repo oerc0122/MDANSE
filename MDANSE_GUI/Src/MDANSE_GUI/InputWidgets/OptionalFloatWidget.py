@@ -22,7 +22,6 @@ from MDANSE.MLogging import LOG
 
 
 class OptionalFloatWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:

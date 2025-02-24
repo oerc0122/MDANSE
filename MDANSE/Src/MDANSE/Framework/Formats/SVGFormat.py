@@ -14,10 +14,11 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-import os
 import re
 import io
 import tarfile
+from pathlib import Path
+from typing import Union
 
 import numpy as np
 
@@ -45,7 +46,7 @@ class SVGFormat(IFormat):
     extensions = [".svg"]
 
     @classmethod
-    def write(cls, filename, data, header=""):
+    def write(cls, filename: Union[Path, str], data, header=""):
         """
         Write a set of output variables into a set of SVG files.
 
@@ -59,8 +60,7 @@ class SVGFormat(IFormat):
         :type header: str
         """
 
-        filename = os.path.splitext(filename)[0]
-        filename = "%s.tar" % filename
+        filename = Path(filename).with_suffix(".tar")
 
         tf = tarfile.open(filename, "w")
 
@@ -70,18 +70,16 @@ class SVGFormat(IFormat):
 
             if var.axis in data:
                 axis = data[var.axis]
-                xtitle = "%s (%s)" % (axis.name, format_unit_string(axis.units))
+                xtitle = f"{axis.name} ({format_unit_string(axis.units)})"
             else:
                 axis = np.arange(len(var))
                 xtitle = "index"
 
-            ytitle = "%s (%s)" % (var.varname, format_unit_string(var.units))
+            ytitle = f"{var.varname} ({format_unit_string(var.units)})"
 
             pl = Poly(list(zip(axis, var)), stroke="blue")
 
-            svgfilename = os.path.join(
-                os.path.dirname(filename), "%s%s" % (var.varname, cls.extensions[0])
-            )
+            svgfilename = filename.parent / f"{var.varname}{cls.extensions[0]}"
 
             Frame(
                 min(axis),
@@ -93,9 +91,9 @@ class SVGFormat(IFormat):
                 ytitle=ytitle,
             ).SVG().save(svgfilename)
 
-            tf.add(svgfilename, arcname="%s%s" % (var.varname, cls.extensions[0]))
+            tf.add(svgfilename, arcname=f"{var.varname}{cls.extensions[0]}")
 
-            os.remove(svgfilename)
+            svgfilename.unlink()
 
         if header:
             tempStr = io.StringIO()

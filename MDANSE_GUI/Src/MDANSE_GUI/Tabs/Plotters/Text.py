@@ -186,7 +186,7 @@ class DatasetFormatter:
             conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
                 xaxis_unit
             )
-        except:
+        except Exception:
             return f"Could not convert {best_unit} to {xaxis_unit}."
         else:
             header_lines.append(f"{self._comment} units of x axis here: {xaxis_unit}")
@@ -198,12 +198,12 @@ class DatasetFormatter:
                     [
                         dataset._axes[best_axis][: self._preview_lines]
                         * conversion_factor,
-                        dataset._data[: self._preview_lines],
+                        dataset.data[: self._preview_lines],
                     ]
                 ).T
             else:
                 temp = np.vstack(
-                    [dataset._axes[best_axis] * conversion_factor, dataset._data]
+                    [dataset._axes[best_axis] * conversion_factor, dataset.data]
                 ).T
             return header_lines, temp
 
@@ -262,7 +262,7 @@ class DatasetFormatter:
             temp = np.hstack(
                 [
                     new_axes[axis_numbers[0]][:nlines].reshape((nlines, 1)),
-                    dataset._data[:nlines, :ncols],
+                    dataset.data[:nlines, :ncols],
                 ]
             )
             temp = np.vstack(
@@ -277,7 +277,7 @@ class DatasetFormatter:
             temp = np.hstack(
                 [
                     new_axes[axis_numbers[0]].reshape((dataset._data.shape[0], 1)),
-                    dataset._data,
+                    dataset.data,
                 ]
             )
             temp = np.vstack(
@@ -316,7 +316,7 @@ class DatasetFormatter:
             )
         LOG.debug(f"Data shape: {dataset._data.shape}")
         temp = []
-        ncols = len(new_axes) + 1
+        _ncols = len(new_axes) + 1
         ax_lengths = [len(new_axes[ax_num]) for ax_num in axis_numbers.values()]
         total_lines = reduce(lambda x, y: x * y, ax_lengths)
         if is_preview:
@@ -332,7 +332,7 @@ class DatasetFormatter:
                 new_axes[axis_numbers[axis_number]][index]
                 for axis_number, index in enumerate(array_index)
             ]
-            yval = dataset._data[array_index]
+            yval = dataset.data[array_index]
             temp.append(xvals + [yval])
             counter += 1
         return header_lines, np.vstack(temp)
@@ -472,7 +472,7 @@ class Text(Plotter):
             self._toolbar = toolbar
         self._pc_backup = plotting_context
         self._figure = target
-        xaxis_unit = None
+        _xaxis_unit = None
         self._active_curves = []
         self._backup_curves = []
         self.apply_settings(plotting_context, colours)

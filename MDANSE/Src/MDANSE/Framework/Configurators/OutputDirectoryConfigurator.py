@@ -55,7 +55,7 @@ class OutputDirectoryConfigurator(IConfigurator):
         value = PLATFORM.get_path(value)
 
         if self._new:
-            if os.path.exists(value):
+            if value.exists():
                 self.error_status = "the output directory must not exist"
                 return
 
@@ -72,4 +72,4 @@ class OutputDirectoryConfigurator(IConfigurator):
         if "value" not in self:
             return "Not configured yet\n"
 
-        return "Output directory: %r\n" % self["value"]
+        return f"Output directory: {self['value']!r}\n"

@@ -6,7 +6,6 @@ from .RangeConfigurator import RangeConfigurator
 
 
 class DistHistCutoffConfigurator(RangeConfigurator):
-
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
         self._max_value = kwargs.get("max_value", True)
@@ -44,7 +43,7 @@ class DistHistCutoffConfigurator(RangeConfigurator):
                     for frame in range(len(traj_config))
                 ]
             )
-        except:
+        except Exception:
             return np.linalg.norm(traj_config.min_span)
         else:
             if np.allclose(trajectory_array, 0.0):

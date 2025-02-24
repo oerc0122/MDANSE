@@ -22,7 +22,6 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class UnitCellWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, layout_type="grid", **kwargs)
         self._changing_label = QLabel("Unit cell", parent=self._base)
@@ -81,7 +80,7 @@ class UnitCellWidget(WidgetBase):
             for key, value in self._array_fields.items():
                 try:
                     array[key[0]][key[1]] = float(value.text())
-                except:
+                except Exception:
                     LOG.error(
                         f"Could not set value ({key[0]}, {key[1]}) to {value.text()}"
                     )

@@ -76,7 +76,7 @@ class HDFInputFileConfigurator(InputFileConfigurator):
                 self[v] = self["instance"][v][:]
                 try:
                     self._units[v] = self["instance"][v].attrs["units"]
-                except:
+                except Exception:
                     self._units[v] = "unitless"
             else:
                 self.error_status = (
@@ -117,7 +117,7 @@ class HDFInputFileConfigurator(InputFileConfigurator):
         if "value" not in self:
             return "Not configured yet\n"
 
-        info = ["HDF input file: %r" % self["value"]]
+        info = [f"HDF input file: {self['value']!r}"]
 
         if "instance" in self:
             info.append("Contains the following variables:")
@@ -125,6 +125,6 @@ class HDFInputFileConfigurator(InputFileConfigurator):
             find_numeric_variables(variables, self["instance"])
 
             for v in variables:
-                info.append("\t-{}".format(v))
+                info.append(f"\t-{v}")
 
         return "\n".join(info) + "\n"

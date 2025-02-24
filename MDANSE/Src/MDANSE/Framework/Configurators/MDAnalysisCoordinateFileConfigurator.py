@@ -22,7 +22,6 @@ from .MultiInputFileConfigurator import MultiInputFileConfigurator
 
 
 class MDAnalysisCoordinateFileConfigurator(MultiInputFileConfigurator):
-
     _default = ("", "AUTO")
 
     def __init__(self, name, wildcard="All files (*)", **kwargs):
@@ -47,7 +46,7 @@ class MDAnalysisCoordinateFileConfigurator(MultiInputFileConfigurator):
             if format in mda._READERS.keys():
                 self["format"] = format
             else:
-                self.error_status = f"MDAnalysis coordinate file format not recognised."
+                self.error_status = "MDAnalysis coordinate file format not recognised."
                 return
 
         topology_configurator = self._configurable[self._dependencies["input_file"]]

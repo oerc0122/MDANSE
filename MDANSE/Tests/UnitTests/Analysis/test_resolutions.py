@@ -97,18 +97,23 @@ def test_dos(trajectory, resolution_generator):
     disf.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
-    result_file = os.path.join(
-        result_dir, f"dos_{resolution_generator}.mda")
+    result_file = os.path.join(result_dir, f"dos_{resolution_generator}.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        np.testing.assert_array_almost_equal(actual["/dos_Cu"], desired["/dos_Cu"])
-        np.testing.assert_array_almost_equal(actual["/dos_S"], desired["/dos_S"])
-        np.testing.assert_array_almost_equal(actual["/dos_Sb"], desired["/dos_Sb"])
-        np.testing.assert_array_almost_equal(actual["/dos_total"], desired["/dos_total"])
-        np.testing.assert_array_almost_equal(actual["/vacf_Cu"], desired["/vacf_Cu"])
-        np.testing.assert_array_almost_equal(actual["/vacf_S"], desired["/vacf_S"])
-        np.testing.assert_array_almost_equal(actual["/vacf_Sb"], desired["/vacf_Sb"])
-        np.testing.assert_array_almost_equal(actual["/vacf_total"], desired["/vacf_total"])
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        for key in [
+            "dos_Cu",
+            "dos_S",
+            "dos_Sb",
+            "dos_total",
+            "vacf_Cu",
+            "vacf_S",
+            "vacf_Sb",
+            "vacf_total",
+        ]:
+            np.testing.assert_array_almost_equal(
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"],
+            )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")

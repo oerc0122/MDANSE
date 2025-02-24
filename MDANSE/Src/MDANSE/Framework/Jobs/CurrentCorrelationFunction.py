@@ -21,7 +21,7 @@ import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import (
     differentiate,
     get_spectrum,
@@ -171,22 +171,23 @@ class CurrentCorrelationFunction(IJob):
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
 
         for pair in self._elementsPairs:
+            pair_str = "".join(map(str, pair))
             self._outputData.add(
-                "j(q,t)_long_%s%s" % pair,
+                f"j(q,t)_long_{pair_str}",
                 "SurfaceOutputVariable",
                 (nQShells, self._nFrames),
                 axis="q|time",
                 units="au",
             )
             self._outputData.add(
-                "j(q,t)_trans_%s%s" % pair,
+                f"j(q,t)_trans_{pair_str}",
                 "SurfaceOutputVariable",
                 (nQShells, self._nFrames),
                 axis="q|time",
                 units="au",
             )
             self._outputData.add(
-                "J(q,f)_long_%s%s" % pair,
+                f"J(q,f)_long_{pair_str}",
                 "SurfaceOutputVariable",
                 (nQShells, self._nOmegas),
                 axis="q|romega",
@@ -195,7 +196,7 @@ class CurrentCorrelationFunction(IJob):
                 partial_result=True,
             )
             self._outputData.add(
-                "J(q,f)_trans_%s%s" % pair,
+                f"J(q,f)_trans_{pair_str}",
                 "SurfaceOutputVariable",
                 (nQShells, self._nOmegas),
                 axis="q|romega",
@@ -344,10 +345,10 @@ class CurrentCorrelationFunction(IJob):
         """
         if x is None:
             for at1, at2 in self._elementsPairs:
-                self._outputData["j(q,t)_long_%s%s" % (at1, at2)][index, :] = np.zeros(
+                self._outputData[f"j(q,t)_long_{at1}{at2}"][index, :] = np.zeros(
                     self._nFrames
                 )
-                self._outputData["j(q,t)_trans_%s%s" % (at1, at2)][index, :] = np.zeros(
+                self._outputData[f"j(q,t)_trans_{at1}{at2}"][index, :] = np.zeros(
                     self._nFrames
                 )
             return
@@ -358,11 +359,11 @@ class CurrentCorrelationFunction(IJob):
             corr_l = correlate(rho_l[at1], rho_l[at2][:n_configs], mode="valid")[
                 :, 0, 0
             ] / (3 * n_configs * rho_l[at1].shape[2])
-            self._outputData["j(q,t)_long_%s%s" % (at1, at2)][index, :] += corr_l.real
+            self._outputData[f"j(q,t)_long_{at1}{at2}"][index, :] += corr_l.real
             corr_t = correlate(rho_t[at1], rho_t[at2][:n_configs], mode="valid")[
                 :, 0, 0
             ] / (3 * n_configs * rho_t[at1].shape[2])
-            self._outputData["j(q,t)_trans_%s%s" % (at1, at2)][index, :] += corr_t.real
+            self._outputData[f"j(q,t)_trans_{at1}{at2}"][index, :] += corr_t.real
 
     def finalize(self):
         """Normalize, Fourier transform and write the results out to
@@ -374,56 +375,55 @@ class CurrentCorrelationFunction(IJob):
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         for pair in self._elementsPairs:
+            pair_str = "".join(map(str, pair))
             at1, at2 = pair
             ni = nAtomsPerElement[at1]
             nj = nAtomsPerElement[at2]
-            self._outputData["j(q,t)_long_%s%s" % pair][:] /= ni * nj
-            self._outputData["j(q,t)_trans_%s%s" % pair][:] /= ni * nj
-            self._outputData["J(q,f)_long_%s%s" % pair][:] = get_spectrum(
-                self._outputData["j(q,t)_long_%s%s" % pair],
+            self._outputData[f"j(q,t)_long_{pair_str}"][:] /= ni * nj
+            self._outputData[f"j(q,t)_trans_{pair_str}"][:] /= ni * nj
+            self._outputData[f"J(q,f)_long_{pair_str}"][:] = get_spectrum(
+                self._outputData[f"j(q,t)_long_{pair_str}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
                 fft="rfft",
             )
-            self._outputData["J(q,f)_trans_%s%s" % pair][:] = get_spectrum(
-                self._outputData["j(q,t)_trans_%s%s" % pair],
+            self._outputData[f"J(q,f)_trans_{pair_str}"][:] = get_spectrum(
+                self._outputData[f"j(q,t)_trans_{pair_str}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
                 fft="rfft",
             )
 
-        jqtLongTotal = weight(
-            self.configuration["weights"].get_weights(),
+        weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 2)
+        assign_weights(self._outputData, weight_dict, "j(q,t)_long_%s%s")
+        assign_weights(self._outputData, weight_dict, "j(q,t)_trans_%s%s")
+        assign_weights(self._outputData, weight_dict, "J(q,f)_long_%s%s")
+        assign_weights(self._outputData, weight_dict, "J(q,f)_trans_%s%s")
+        jqtLongTotal = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            2,
+            weight_dict,
             "j(q,t)_long_%s%s",
         )
         self._outputData["j(q,t)_long_total"][:] = jqtLongTotal
-        jqtTransTotal = weight(
-            self.configuration["weights"].get_weights(),
+        jqtTransTotal = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            2,
+            weight_dict,
             "j(q,t)_trans_%s%s",
         )
         self._outputData["j(q,t)_trans_total"][:] = jqtTransTotal
 
-        sqfLongTotal = weight(
-            self.configuration["weights"].get_weights(),
+        sqfLongTotal = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            2,
+            weight_dict,
             "J(q,f)_long_%s%s",
         )
         self._outputData["J(q,f)_long_total"][:] = sqfLongTotal
-        sqfTransTotal = weight(
-            self.configuration["weights"].get_weights(),
+        sqfTransTotal = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            2,
+            weight_dict,
             "J(q,f)_trans_%s%s",
         )
         self._outputData["J(q,f)_trans_total"][:] = sqfTransTotal

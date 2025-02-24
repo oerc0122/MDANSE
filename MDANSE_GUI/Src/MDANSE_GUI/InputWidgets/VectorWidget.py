@@ -45,6 +45,6 @@ class VectorWidget(WidgetBase):
         """Collect the results from the input widgets and return the value."""
         try:
             vector = [float(x.text()) for x in self._vector_fields]
-        except:
+        except Exception:
             vector = [0, 0, 0]
         return vector

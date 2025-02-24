@@ -60,7 +60,7 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
         partial_result=False,
     ):
         """
-        Instanciate a new MDANSE output variable.
+        Instantiate a new MDANSE output variable.
 
         @param cls: the class to instantiate.
         @type cls: an OutputVariable object
@@ -82,8 +82,7 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
 
         if value.ndim != cls._nDimensions:
             raise OutputVariableError(
-                "Invalid number of dimensions for an output variable of type %r"
-                % cls.name
+                f"Invalid number of dimensions for an output variable of type {cls.name!r}"
             )
 
         # Input array is an already formed ndarray instance
@@ -96,6 +95,8 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
         obj.units = units
 
         obj.axis = axis
+
+        obj.scaling_factor = 1.0
 
         data_tags = []
         if main_result:
@@ -118,13 +119,8 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
         self.units = getattr(obj, "units", "unitless")
 
     def info(self):
-        info = []
-
-        info.append("# variable name: %s" % self.varname)
-        info.append("# \ttype: %s" % self.__class__.__name__)
-        info.append("# \taxis: %s" % str(self.axis))
-        info.append("# \tunits: %s" % self.units)
-
-        info = "\n".join(info)
-
-        return info
+        return f"""\
+# variable name: {self.varname}
+# \ttype: {self.__class__.__name__}
+# \taxis: {self.axis!s}
+# \tunits: {self.units}"""

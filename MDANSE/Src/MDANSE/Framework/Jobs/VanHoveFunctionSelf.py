@@ -18,7 +18,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 def van_hove_self(
@@ -148,7 +148,7 @@ class VanHoveFunctionSelf(IJob):
         )
         try:
             cell_volume = conf.unit_cell.volume
-        except:
+        except Exception:
             self.detailed_unit_cell_error()
         else:
             if cell_volume < 1e-9:
@@ -182,14 +182,14 @@ class VanHoveFunctionSelf(IJob):
         )
         for element in self.selectedElements:
             self._outputData.add(
-                "g(r,t)_%s" % element,
+                f"g(r,t)_{element}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.n_frames),
                 axis="r|time",
                 units="au",
             )
             self._outputData.add(
-                "4_pi_r2_g(r,t)_%s" % element,
+                f"4_pi_r2_g(r,t)_{element}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.n_frames),
                 axis="r|time",
@@ -274,8 +274,8 @@ class VanHoveFunctionSelf(IJob):
             time t0 and t0 + t.
         """
         element = self.configuration["atom_selection"]["names"][atm_index]
-        self._outputData["g(r,t)_{}".format(element)][:] += histogram
-        self._outputData["4_pi_r2_g(r,t)_{}".format(element)][:] += histogram
+        self._outputData[f"g(r,t)_{element}"][:] += histogram
+        self._outputData[f"4_pi_r2_g(r,t)_{element}"][:] += histogram
 
     def finalize(self):
         """Using the distance histograms calculate, normalize and save the
@@ -284,29 +284,26 @@ class VanHoveFunctionSelf(IJob):
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         for element, number in list(nAtomsPerElement.items()):
-            self._outputData["g(r,t)_%s" % element][:] /= (
+            self._outputData[f"g(r,t)_{element}"][:] /= (
                 self.shell_volumes[:, np.newaxis] * number**2 * self.n_configs
             )
-            self._outputData["4_pi_r2_g(r,t)_%s" % element][:] /= (
+            self._outputData[f"4_pi_r2_g(r,t)_{element}"][:] /= (
                 number**2 * self.n_configs * self.configuration["r_values"]["step"]
             )
 
         weights = self.configuration["weights"].get_weights()
-        self._outputData["g(r,t)_total"][:] = weight(
-            weights,
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "g(r,t)_%s")
+        assign_weights(self._outputData, weight_dict, "4_pi_r2_g(r,t)_%s")
+        self._outputData["g(r,t)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "g(r,t)_%s",
-            update_partials=True,
         )
-        self._outputData["4_pi_r2_g(r,t)_total"][:] = weight(
-            weights,
+        self._outputData["4_pi_r2_g(r,t)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "4_pi_r2_g(r,t)_%s",
-            update_partials=True,
         )
 
         self._outputData.write(

@@ -19,7 +19,6 @@ from qtpy.QtWidgets import QPushButton
 
 
 class DelayedButton(QPushButton):
-
     needs_updating = Signal()
 
     def __init__(self, *args, **kwargs):
