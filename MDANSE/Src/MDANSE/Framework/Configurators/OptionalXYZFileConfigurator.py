@@ -17,7 +17,6 @@ from .XYZFileConfigurator import XYZFileConfigurator
 
 
 class OptionalXYZFileConfigurator(XYZFileConfigurator):
-
     def configure(self, filepath: str) -> None:
         """Configure the XYZ file if the filepath is not empty.
 
