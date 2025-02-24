@@ -25,7 +25,6 @@ from MDANSE_GUI.Widgets.ResolutionWidget import ResolutionWidget
 
 
 class ResolutionDialog(QDialog):
-
     parameters_changed = Signal(dict)
 
     def __init__(self, *args, **kwargs):

@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
 
 class Single(Plotter):
-
     def __init__(self) -> None:
         super().__init__()
         self._figure = None

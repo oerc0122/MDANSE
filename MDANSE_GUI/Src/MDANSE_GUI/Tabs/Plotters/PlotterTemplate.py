@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 
 class PlotterTemplate(metaclass=SubclassFactory):
-
     def __init__(self) -> None:
         self._figure = None
         self._axes = {}

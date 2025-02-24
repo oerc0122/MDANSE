@@ -26,7 +26,6 @@ from MDANSE_GUI.Subprocess.JobStatusProcess import JobStatusProcess
 
 
 class Subprocess(Process):
-
     def __init__(self, *args, **kwargs):
         super().__init__()
         job_name = kwargs.get("job_name")

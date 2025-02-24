@@ -28,7 +28,6 @@ from MDANSE.Framework.Units import measure
 
 
 class PlotSettings(QWidget):
-
     plot_settings_changed = Signal()
 
     def __init__(self, *args, settings=None, **kwargs) -> None:

@@ -24,7 +24,6 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class VectorModel(QStandardItemModel):
-
     type_changed = Signal()
     input_is_valid = Signal(bool)
 

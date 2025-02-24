@@ -29,7 +29,6 @@ from MDANSE.MLogging import LOG
 
 
 class UserSettingsModel(QStandardItemModel):
-
     file_loaded = Signal(str)
 
     def __init__(self, *args, settings_filename: str = "", **kwargs):
@@ -187,7 +186,6 @@ class UserSettingsModel(QStandardItemModel):
 
 
 class SettingsGroup:
-
     def __init__(self, group_name: str) -> None:
         self._name = group_name
         self._settings = {}
@@ -261,9 +259,7 @@ class SettingsGroup:
 
 
 class SettingsFile:
-
     def __init__(self, name, settings_path: str = None):
-
         if settings_path is None:
             settings_path = PLATFORM.application_directory()
         self._top_name = name

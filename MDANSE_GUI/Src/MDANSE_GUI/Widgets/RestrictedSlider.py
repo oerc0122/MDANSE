@@ -19,7 +19,6 @@ from qtpy.QtWidgets import QSlider
 
 
 class RestrictedSlider(QSlider):
-
     new_limit = Signal(object)
 
     def __init__(self, *args, **kwargs):
