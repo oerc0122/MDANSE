@@ -313,7 +313,7 @@ class CP2K(Converter):
             self._velFile.close()
 
         if self.configuration["force_file"]["value"]:
-            self._velFile.close()
+            self._forceFile.close()
 
         self._cellFile.close()
 
