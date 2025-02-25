@@ -1,8 +1,8 @@
 
 .. _appendix-fca:
 
-Analysis Theory: Time Series
-============================
+Time Series
+===========
 
 Correlation Functions
 ~~~~~~~~~~~~~~~~~~~~~
