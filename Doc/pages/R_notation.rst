@@ -1,7 +1,7 @@
 
 .. _notation:
 
-Frequently used symbols and notations
+Frequently Used Symbols and Notations
 =====================================
 
 ======================== ===============
