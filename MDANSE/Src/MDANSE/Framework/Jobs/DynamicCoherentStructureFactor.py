@@ -283,11 +283,11 @@ class DynamicCoherentStructureFactor(IJob):
                     )
             if not cell_present:
                 LOG.warning(
-                    "You are running the DCSF calculation on a trajectory without periodic boundary conditons."
+                    "You are running the DCSF calculation on a trajectory without periodic boundary conditions."
                 )
             if not cell_fixed:
                 LOG.warning(
-                    f"The unit cell is variable with the standard deviation of {self._cell_std}. PLEASE CHECK YOUR RESULTS CAREFULLY."
+                    f"The unit cell is VARIABLE with the standard deviation of {self._cell_std}. This analysis should not be used with NPT runs! PLEASE CHECK YOUR RESULTS CAREFULLY."
                 )
 
             return index, rho

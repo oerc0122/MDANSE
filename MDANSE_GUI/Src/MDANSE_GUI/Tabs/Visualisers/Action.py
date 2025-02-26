@@ -335,8 +335,12 @@ class Action(QWidget):
 
     def apply_instrument(self):
         if self._current_instrument is not None:
-            initial_configuration = self._trajectory_configurator["instance"].configuration()
-            q_vector_tuple = self._current_instrument.create_q_vector_params(initial_configuration)
+            initial_configuration = self._trajectory_configurator[
+                "instance"
+            ].configuration()
+            q_vector_tuple = self._current_instrument.create_q_vector_params(
+                initial_configuration
+            )
             resolution_tuple = self._current_instrument.create_resolution_params()
             for widget in self._widgets:
                 has_preview = callable(

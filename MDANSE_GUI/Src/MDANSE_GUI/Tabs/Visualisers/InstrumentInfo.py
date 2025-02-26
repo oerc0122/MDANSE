@@ -114,7 +114,7 @@ class SimpleInstrument:
             results.append(new_entry)
         return results
 
-    def create_q_vector_params(self, sample_configuration = None):
+    def create_q_vector_params(self, sample_configuration=None):
         if not self._configured:
             return
         cov_type = self._qvector_type
