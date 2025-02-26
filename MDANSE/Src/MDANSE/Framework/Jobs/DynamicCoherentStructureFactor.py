@@ -23,6 +23,7 @@ from scipy.signal import correlate
 from MDANSE.MLogging import LOG
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
@@ -102,6 +103,12 @@ class DynamicCoherentStructureFactor(IJob):
         self.numberOfSteps = self.configuration["q_vectors"]["n_shells"]
 
         nQShells = self.configuration["q_vectors"]["n_shells"]
+        if not isinstance(
+            self.configuration["q_vectors"]["generator"], LatticeQVectors
+        ):
+            LOG.warning(
+                f"This task should be used with a lattice-based Q vector generator. You have picked {self.configuration['q_vectors']['generator'].__class__}. The results are likely to be incorrect."
+            )
 
         self._nFrames = self.configuration["frames"]["n_frames"]
 
@@ -260,7 +267,12 @@ class DynamicCoherentStructureFactor(IJob):
                             "q_vectors"
                         ]
                     else:
-                        qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
+                        if hkls is None:
+                            qVectors = self.configuration["q_vectors"]["value"][shell][
+                                "q_vectors"
+                            ]
+                        else:
+                            qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
 
                 coords = traj.configuration(frame)["coordinates"]
 
