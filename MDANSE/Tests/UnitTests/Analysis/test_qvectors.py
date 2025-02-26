@@ -35,8 +35,6 @@ def test_qvector_to_hkl_conversion(trajectory):
         except KeyError:
             print(f"{qvector_generator} has no shells")
             continue
-        else:
-            print(f"Calculating q vectors for {qvector_generator}")
         for q in instance._configuration["shells"]["value"][:2]:
             try:
                 original_qvectors = instance._configuration["q_vectors"][q]["q_vectors"]
@@ -68,8 +66,6 @@ def test_disf(trajectory):
         }
         if len(qvector_defaults) < 1:
             continue
-        print(qvector_generator)
-        print(qvector_defaults)
         parameters["q_vectors"] = (qvector_generator, qvector_defaults)
         disf = IJob.create("DynamicIncoherentStructureFactor")
         disf.run(parameters, status=True)
