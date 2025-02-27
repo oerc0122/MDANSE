@@ -32,7 +32,6 @@ from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
 
 
 class InstrumentDetails(QWidget):
-
     instrument_details_changed = Signal(int)
 
     def __init__(self, *args, **kwargs):

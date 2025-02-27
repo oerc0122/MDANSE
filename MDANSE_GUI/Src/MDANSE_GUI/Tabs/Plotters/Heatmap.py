@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 
 class Heatmap(Plotter):
-
     def __init__(self) -> None:
         super().__init__()
         self._figure = None

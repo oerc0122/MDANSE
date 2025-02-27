@@ -19,7 +19,7 @@ import collections
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MolecularDynamics.Analysis import mean_square_displacement
 
@@ -166,6 +166,15 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 main_result=True,
                 partial_result=True,
             )
+            self._outputData.add(
+                f"msd_{element}",
+                "LineOutputVariable",
+                (self._nFrames,),
+                axis="time",
+                units="nm2",
+                main_result=True,
+                partial_result=True,
+            )
 
         self._outputData.add(
             "f(q,t)_total",
@@ -182,20 +191,32 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             units="nm2/ps",
             main_result=True,
         )
+        self._outputData.add(
+            "msd_total",
+            "LineOutputVariable",
+            (self._nFrames,),
+            axis="time",
+            units="nm2",
+            main_result=True,
+        )
 
         self._atoms = self.configuration["trajectory"][
             "instance"
         ].chemical_system.atom_list
 
-    def run_step(self, index):
-        """
-        Runs a single step of the job.\n
+    def run_step(self, index: int):
+        """Calculates the GDISF and MSD of an atom.
 
-        :Parameters:
-            #. index (int): The index of the step.
-        :Returns:
-            #. index (int): The index of the step.
-            #. atomicSF (np.array): The atomic structure factor
+        Parameters
+        ----------
+        index : int
+            The index of the atom that the calculation will be run over.
+
+        Returns
+        -------
+        tuple[int, tuple[np.ndarray, np.ndarray]]
+            A tuple which contains the job index and a tuple of the
+            GDISF and MSD of an atom.
         """
 
         # get atom index
@@ -218,29 +239,29 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         for i, q2 in enumerate(self._kSquare):
             gaussian = np.exp(-msd * q2 / 6.0)
-
             atomicSF[i, :] += gaussian
 
-        return index, atomicSF
+        return index, (atomicSF, msd)
 
-    def combine(self, index, x):
-        """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
-        """
+    def combine(self, index: int, x: tuple[np.ndarray, np.ndarray]):
+        """Add the results to the output files.
 
-        # The symbol of the atom.
+        Parameters
+        ----------
+        index : int
+            The atom index that the calculation was run over.
+        x : tuple[np.ndarray, np.ndarray]
+            A tuple of the GDISF and MSD of an atom.
+        """
         element = self.configuration["atom_selection"]["names"][index]
-
-        self._outputData[f"f(q,t)_{element}"] += x
+        atomicSF, msd = x
+        self._outputData[f"f(q,t)_{element}"] += atomicSF
+        self._outputData[f"msd_{element}"] += msd
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...)
         """
-
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         for element, number in nAtomsPerElement.items():
             self._outputData[f"f(q,t)_{element}"][:] /= number
@@ -250,24 +271,32 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
-        weights = self.configuration["weights"].get_weights()
+            self._outputData[f"msd_{element}"][:] /= number
 
-        self._outputData["f(q,t)_total"][:] = weight(
-            weights,
+        weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "f(q,t)_%s")
+        assign_weights(self._outputData, weight_dict, "s(q,f)_%s")
+        self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "f(q,t)_%s",
-            update_partials=True,
+        )
+        self._outputData["s(q,f)_total"][:] = weighted_sum(
+            self._outputData,
+            weight_dict,
+            "s(q,f)_%s",
         )
 
-        self._outputData["s(q,f)_total"][:] = weight(
-            weights,
+        # since GDISF ~ exp(-msd * q2 / 6.0) the MSD isn't weighted in
+        # the exp lets save the MSD with equal weights
+        weights = self.configuration["weights"].get_weights("equal")
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "msd_%s")
+        self._outputData["msd_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
-            "s(q,f)_%s",
-            update_partials=True,
+            weight_dict,
+            "msd_%s",
         )
 
         self._outputData.write(

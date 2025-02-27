@@ -19,7 +19,7 @@ import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MLogging import LOG
 
@@ -220,21 +220,18 @@ class PositionPowerSpectrum(IJob):
             )
 
         weights = self.configuration["weights"].get_weights()
-        self._outputData["pacf_total"][:] = weight(
-            weights,
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "pacf_%s")
+        assign_weights(self._outputData, weight_dict, "pps_%s")
+        self._outputData["pacf_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "pacf_%s",
-            update_partials=True,
         )
-        self._outputData["pps_total"][:] = weight(
-            weights,
+        self._outputData["pps_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "pps_%s",
-            update_partials=True,
         )
 
         self._outputData.write(

@@ -29,7 +29,6 @@ suffix_dict = {
 
 
 class DerivativeOrderWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, layout_type="QHBoxLayout", **kwargs)
         self._field = QSpinBox(self._base)

@@ -13,23 +13,23 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from .XYZFileConfigurator import XYZFileConfigurator
 
 
-class Singleton(type):
-    """
-    Metaclass that implements the singleton pattern.
-    """
+class OptionalXYZFileConfigurator(XYZFileConfigurator):
+    def configure(self, filepath: str) -> None:
+        """Configure the XYZ file if the filepath is not empty.
 
-    __instances = {}
-
-    def __call__(self, *args, **kwargs):
+        Parameters
+        ----------
+        filepath : str
+            THe filepath of the xyz file.
         """
-        Creates (or returns if it has already been instantiated) an instance of the class.
-        """
+        if not filepath:
+            self._original_input = filepath
+            self["value"] = filepath
+            self["filename"] = filepath
+            self.error_status = "OK"
+            return
 
-        if self.__name__ not in self.__instances:
-            self.__instances[self.__name__] = super(Singleton, self).__call__(
-                *args, **kwargs
-            )
-
-        return self.__instances[self.__name__]
+        super().configure(filepath)

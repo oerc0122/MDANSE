@@ -22,7 +22,6 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class UnitCellWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, layout_type="grid", **kwargs)
         self._changing_label = QLabel("Unit cell", parent=self._base)

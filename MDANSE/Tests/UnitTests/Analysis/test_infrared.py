@@ -49,8 +49,10 @@ def test_dacf_analysis():
     assert path.isfile(temp_name + ".mda")
     result_file = os.path.join(result_dir, "dacf_analysis.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        np.testing.assert_array_almost_equal(actual["/dacf"], desired["/dacf"])
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(
+            actual["/dacf"] * actual["/dacf"].attrs["scaling_factor"], desired["/dacf"]
+        )
 
     os.remove(temp_name + ".mda")
 
@@ -89,9 +91,14 @@ def test_ir_analysis():
     assert path.isfile(temp_name + ".mda")
     result_file = os.path.join(result_dir, "ir_analysis.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
-        np.testing.assert_array_almost_equal(actual["/ddacf"], desired["/ddacf"])
-        np.testing.assert_array_almost_equal(actual["/ir"], desired["/ir"])
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        np.testing.assert_array_almost_equal(
+            actual["/ddacf"] * actual["/ddacf"].attrs["scaling_factor"],
+            desired["/ddacf"],
+        )
+        np.testing.assert_array_almost_equal(
+            actual["/ir"] * actual["/ir"].attrs["scaling_factor"], desired["/ir"]
+        )
 
     os.remove(temp_name + ".mda")
 

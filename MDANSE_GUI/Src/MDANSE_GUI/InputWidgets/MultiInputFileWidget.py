@@ -24,7 +24,6 @@ from .InputFileWidget import InputFileWidget
 
 
 class MultiInputFileWidget(InputFileWidget):
-
     def __init__(self, *args, file_dialog=QFileDialog.getOpenFileNames, **kwargs):
         super().__init__(
             *args,

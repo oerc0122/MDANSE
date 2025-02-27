@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 
 
 class AxesWrapper:
-
     def __init__(self, *args, **kwargs):
         self._axes = kwargs.pop("axes", None)
         self._plot_elements = []

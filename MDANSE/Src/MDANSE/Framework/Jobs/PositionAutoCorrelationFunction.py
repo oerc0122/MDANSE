@@ -19,8 +19,8 @@ import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
-from MDANSE.Mathematics.Signal import normalize
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
+from MDANSE.Mathematics.Signal import normalisation_factor
 
 
 class PositionAutoCorrelationFunction(IJob):
@@ -173,17 +173,10 @@ class PositionAutoCorrelationFunction(IJob):
         for element, number in list(nAtomsPerElement.items()):
             self._outputData[f"pacf_{element}"] /= number
 
-        if self.configuration["normalize"]["value"]:
-            for element in list(nAtomsPerElement.keys()):
-                if self._outputData[f"pacf_{element}"][0] == 0:
-                    raise ValueError("The normalization factor is equal to zero !!!")
-                else:
-                    self._outputData[f"pacf_{element}"] = normalize(
-                        self._outputData[f"pacf_{element}"], axis=0
-                    )
-
         weights = self.configuration["weights"].get_weights()
-        pacfTotal = weight(weights, self._outputData, nAtomsPerElement, 1, "pacf_%s")
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "pacf_%s")
+        pacfTotal = weighted_sum(self._outputData, weight_dict, "pacf_%s")
 
         self._outputData.add(
             "pacf_total",
@@ -193,6 +186,21 @@ class PositionAutoCorrelationFunction(IJob):
             units="nm2",
             main_result=True,
         )
+
+        if self.configuration["normalize"]["value"]:
+            for element in nAtomsPerElement:
+                if self._outputData[f"pacf_{element}"][0] == 0:
+                    raise ValueError("The normalization factor is equal to zero !!!")
+                self._outputData[
+                    f"pacf_{element}"
+                ].scaling_factor *= normalisation_factor(
+                    self._outputData[f"pacf_{element}"], axis=0
+                )
+            if self._outputData["pacf_total"][0] == 0:
+                raise ValueError("The normalization factor is equal to zero !!!")
+            self._outputData["pacf_total"].scaling_factor *= normalisation_factor(
+                self._outputData["pacf_total"], axis=0
+            )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],
