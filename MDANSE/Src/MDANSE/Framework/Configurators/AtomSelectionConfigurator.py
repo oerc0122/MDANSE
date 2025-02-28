@@ -15,6 +15,7 @@
 #
 
 from json import JSONDecodeError
+from collections import Counter
 
 import numpy as np
 
@@ -95,9 +96,7 @@ class AtomSelectionConfigurator(IConfigurator):
         dict
             A dictionary of the number of atom per element.
         """
-        names, counts = np.unique(self["names"], return_counts=True)
-        nAtomsPerElement = {names[n]: counts[n] for n in range(len(names))}
-
+        nAtomsPerElement = Counter(self["names"])
         return nAtomsPerElement
 
     def get_total_natoms(self) -> int:

@@ -40,7 +40,7 @@ def select_molecules(
     """
     selection = set()
     system = trajectory.chemical_system
-    molecule_names = function_parameters.get("molecule_names", None)
+    molecule_names = function_parameters.get("molecule_names", [])
     selection = {
         index
         for molecule in molecule_names

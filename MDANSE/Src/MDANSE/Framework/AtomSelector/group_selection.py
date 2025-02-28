@@ -41,7 +41,9 @@ def select_labels(
     """
     system = trajectory.chemical_system
     atom_labels = function_parameters.get("atom_labels", ())
-    selection = {system._labels[label] for label in atom_labels if label in system._labels}
+    selection = {
+        system._labels[label] for label in atom_labels if label in system._labels
+    }
     return selection
 
 
