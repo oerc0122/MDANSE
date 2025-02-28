@@ -39,12 +39,9 @@ def select_labels(
     Set[int]
         Set of all the atom indices
     """
-    selection = set()
     system = trajectory.chemical_system
-    atom_labels = function_parameters.get("atom_labels", None)
-    for label in atom_labels:
-        if label in system._labels:
-            selection = selection.union(system._labels[label])
+    atom_labels = function_parameters.get("atom_labels", ())
+    selection = {system._labels[label] for label in atom_labels if label in system._labels}
     return selection
 
 

@@ -148,8 +148,8 @@ class SelectionHelper(QDialog):
         self.selection_model = SelectionModel(self.trajectory)
         self._field = field
         self.atm_full_names = self.system.name_list
-        self.molecule_names = [str(x) for x in self.system._clusters.keys()]
-        self.labels = [str(x) for x in self.system._labels.keys()]
+        self.molecule_names = list(map(str, self.system._clusters))
+        self.labels = list(map(str, self.system._labels))
 
         self.selection_textbox = QPlainTextEdit()
         self.selection_textbox.setReadOnly(True)
