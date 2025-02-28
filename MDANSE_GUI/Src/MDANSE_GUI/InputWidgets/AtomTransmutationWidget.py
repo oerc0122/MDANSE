@@ -132,10 +132,12 @@ class TransmutationHelper(SelectionHelper):
         """Update the transmutation textbox with the current transmuter
         setting information.
         """
-        map = self.transmuter.get_setting()
+        substitutions = self.transmuter.get_setting()
 
-        text = [f"Number of atoms transmuted:\n{len(map)}\n\nTransmuted atoms:\n"]
-        for idx, symbol in map.items():
+        text = [
+            f"Number of atoms transmuted:\n{len(substitutions)}\n\nTransmuted atoms:\n"
+        ]
+        for idx, symbol in substitutions.items():
             text.append(f"{idx}  {self.atm_full_names[idx]} -> {symbol}\n")
 
         self.transmutation_textbox.setText("".join(text))
