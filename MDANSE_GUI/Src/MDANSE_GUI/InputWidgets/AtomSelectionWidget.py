@@ -16,7 +16,7 @@
 
 from typing import Set
 import json
-from enum import Enum
+from enum import StrEnum
 
 from qtpy.QtCore import Slot, Signal
 from qtpy.QtGui import QStandardItemModel, QStandardItem
@@ -51,7 +51,7 @@ from MDANSE_GUI.Widgets.SelectionWidgets import (
 )
 
 
-class SelectionValidity(Enum):
+class SelectionValidity(StrEnum):
     VALID_SELECTION = "Valid selection"
     USELESS_SELECTION = "Selection did not change. This operation is not needed."
     MALFORMED_SELECTION = "This is not a valid JSON string."

@@ -16,6 +16,7 @@
 
 from typing import Dict, Any, TYPE_CHECKING, Tuple
 import json
+from enum import StrEnum
 
 import numpy as np
 from qtpy.QtCore import Signal, Slot
@@ -34,6 +35,12 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 if TYPE_CHECKING:
     from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
+
+
+class IndexSelectionMode(StrEnum):
+    LIST = "list"
+    RANGE = "range"
+    SLICE = "slice"
 
 
 class XYZValidator(QValidator):
@@ -108,6 +115,7 @@ class BasicSelectionWidget(QGroupBox):
         self.mode_box.addItems(
             ["Add (union)", "Filter (intersection)", "Remove (difference)"]
         )
+        self._mode_box_values = ["union", "intersection", "difference"]
         self.commit_button = QPushButton("Apply", self)
         layout = self.layout()
         layout.addWidget(self.mode_box)
@@ -115,12 +123,7 @@ class BasicSelectionWidget(QGroupBox):
         self.commit_button.clicked.connect(self.create_selection)
 
     def get_mode(self) -> str:
-        if self.mode_box.currentIndex() == 2:
-            return "difference"
-        elif self.mode_box.currentIndex() == 1:
-            return "intersection"
-        else:
-            return "union"
+        return self._mode_box_values[self.mode_box.currentIndex()]
 
     def create_selection(self):
         funtion_parameters = self.parameter_dictionary()
@@ -203,13 +206,7 @@ class IndexSelection(BasicSelectionWidget):
         layout = self.layout()
         layout.addWidget(QLabel("Select atoms by index"))
         self.selection_type_combo = QComboBox(self)
-        self.selection_type_combo.addItems(
-            [
-                "list",
-                "range",
-                "slice",
-            ]
-        )
+        self.selection_type_combo.addItems(str(mode) for mode in IndexSelectionMode)
         self.selection_type_combo.setEditable(False)
         layout.addWidget(self.selection_type_combo)
         self.selection_field = QLineEdit(self)
@@ -219,15 +216,15 @@ class IndexSelection(BasicSelectionWidget):
     @Slot(str)
     def switch_mode(self, new_mode: str):
         self.selection_field.setText("")
-        if new_mode == "list":
+        if new_mode == IndexSelectionMode.LIST:
             self.selection_field.setPlaceholderText("0,1,2")
             self.selection_keyword = "index_list"
             self.selection_separator = ","
-        if new_mode == "range":
+        elif new_mode == IndexSelectionMode.RANGE:
             self.selection_field.setPlaceholderText("0-20")
             self.selection_keyword = "index_range"
             self.selection_separator = "-"
-        if new_mode == "slice":
+        elif new_mode == IndexSelectionMode.SLICE:
             self.selection_field.setPlaceholderText("first:last:step")
             self.selection_keyword = "index_slice"
             self.selection_separator = ":"
