@@ -266,7 +266,6 @@ class DynamicIncoherentStructureFactor(IJob):
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
-            self._outputData[f"s(q,f)_{element}"] *= extra_scaling
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
