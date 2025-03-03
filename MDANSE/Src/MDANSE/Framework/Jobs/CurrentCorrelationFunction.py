@@ -376,8 +376,8 @@ class CurrentCorrelationFunction(IJob):
             at1, at2 = pair
             ni = nAtomsPerElement[at1]
             nj = nAtomsPerElement[at2]
-            self._outputData[f"j(q,t)_long_{pair_str}"][:] *= n_tot / ni * nj
-            self._outputData[f"j(q,t)_trans_{pair_str}"][:] *= n_tot / ni * nj
+            self._outputData[f"j(q,t)_long_{pair_str}"][:] *= n_tot / (ni * nj)
+            self._outputData[f"j(q,t)_trans_{pair_str}"][:] *= n_tot / (ni * nj)
             self._outputData[f"J(q,f)_long_{pair_str}"][:] = get_spectrum(
                 self._outputData[f"j(q,t)_long_{pair_str}"],
                 self.configuration["instrument_resolution"]["time_window"],

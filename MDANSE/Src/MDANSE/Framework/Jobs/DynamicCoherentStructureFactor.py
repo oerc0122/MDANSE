@@ -261,7 +261,7 @@ class DynamicCoherentStructureFactor(IJob):
             pair_str = "".join(map(str, pair))
             ni = nAtomsPerElement[pair[0]]
             nj = nAtomsPerElement[pair[1]]
-            norm = n_tot / ni * nj
+            norm = n_tot / (ni * nj)
             self._outputData[f"f(q,t)_{pair_str}"] *= norm
             self._outputData[f"s(q,f)_{pair_str}"][:] = get_spectrum(
                 self._outputData[f"f(q,t)_{pair_str}"],

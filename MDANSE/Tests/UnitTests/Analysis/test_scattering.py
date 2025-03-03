@@ -155,9 +155,9 @@ def test_ccf(traj_info, qvector_grid):
             i for i in desired.keys() if any([j in i for j in ["J(q,f)", "j(q,t)"]])
         ]
         for key in keys:
-            # reference results were not rescaled
             np.testing.assert_allclose(
-                actual[f"/{key}"], desired[f"/{key}"],
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
             )
 
     os.remove(temp_name + ".mda")
