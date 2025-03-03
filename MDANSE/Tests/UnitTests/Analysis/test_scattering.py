@@ -114,7 +114,7 @@ def test_dcsf(traj_info, qvector_grid):
             if any(key.startswith(j) for j in ["f(q,t)", "s(q,f)"])
         ]
         for key in keys:
-            np.testing.assert_array_almost_equal(
+            np.testing.assert_allclose(
                 actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
                 desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
             )
@@ -156,7 +156,7 @@ def test_ccf(traj_info, qvector_grid):
         ]
         for key in keys:
             # reference results were not rescaled
-            np.testing.assert_array_almost_equal(
+            np.testing.assert_allclose(
                 actual[f"/{key}"], desired[f"/{key}"],
             )
 
