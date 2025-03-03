@@ -9,19 +9,20 @@ scattering functions are
 .. math::
    :label: ws1
 
-   F_{\text{coh},\alpha\beta}{(\mathbf{q},t) =  \frac{W_{\alpha\beta} N}{N_{\alpha}N_{\beta}}}{\sum\limits_{i}^{N_{\alpha}}{\sum\limits_{j}^{N_{\beta}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{i}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}},
+   F_{\text{coh},\alpha\beta}{(\mathbf{q},t) =  \frac{W_{\alpha\beta}}{N c_{\alpha}c_{\beta}}}{\sum\limits_{i}^{N_{\alpha}}{\sum\limits_{j}^{N_{\beta}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{i}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}},
 
 .. math::
    :label: ws2
 
-   F_{\text{inc},\alpha}{(\mathbf{q},t ) = \frac{W_{\alpha}}{N_{\alpha}}}{\sum\limits_{i}^{N_{\alpha}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{i}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{i}\left( t \right)} \right\rbrack} \right\rangle}
+   F_{\text{inc},\alpha}{(\mathbf{q},t ) = \frac{W_{\alpha}}{Nc_{\alpha}}}{\sum\limits_{i}^{N_{\alpha}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{i}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{i}\left( t \right)} \right\rbrack} \right\rangle}
 
 where :math:`\alpha` and :math:`\beta` are the atom-types.
 :math:`W_{\alpha\beta}` and :math:`W_{\alpha}` are the weights of the
 atom-type pairs :math:`\alpha\beta` and the atom type :math:`\alpha`.
-:math:`N_{\alpha}` and :math:`N_{\beta}` are the number of atoms of
-atom-types :math:`\alpha` and :math:`\beta` and :math:`N` is the total number of atoms.
-The total is now a sum of these atomic terms
+:math:`c_{\alpha} = N_{\alpha} / N` and :math:`c_{\beta} = N_{\beta} / N` are the concentrations of atoms of
+atom-types :math:`\alpha` and :math:`\beta` and :math: N_{\alpha}`,
+:math:`N_{\beta}`, and :math:`N` are the :math:`\alpha`, :math:`\beta`,
+and the total number of atoms. The total is now a sum of these atomic terms
 
 .. math::
    :label: ws3
@@ -48,17 +49,17 @@ terms are symmetrised so that we assumed that
    The total and atomic DOS of water, atomic DOS are **weighted** so that the
    sum of atomic DOS equals to the total.
 
-In the old MDANSE these atom properties were scaled slightly differently
+The atom properties can also be scaled without the weights
 
 .. math::
    :label: ws5
 
-   \mathcal{F}_{\text{coh},\alpha\beta}{(\mathbf{q},t) = \frac{N}{N_{\alpha}N_{\beta}}}{\sum\limits_{i}^{N_{\alpha}}{\sum\limits_{j}^{N_{\beta}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{i}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}},
+   \mathcal{F}_{\text{coh},\alpha\beta}{(\mathbf{q},t) = \frac{1}{N c_{\alpha} c_{\beta}}}{\sum\limits_{i}^{N_{\alpha}}{\sum\limits_{j}^{N_{\beta}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{i}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}},
 
 .. math::
    :label: ws6
 
-   \mathcal{F}_{\text{inc},\alpha}{(\mathbf{q},t ) = \frac{1}{N_{\alpha}}}{\sum\limits_{i}^{N_{\alpha}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{i}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{i}\left( t \right)} \right\rbrack} \right\rangle}
+   \mathcal{F}_{\text{inc},\alpha}{(\mathbf{q},t ) = \frac{1}{N c_{\alpha}}}{\sum\limits_{i}^{N_{\alpha}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{i}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{i}\left( t \right)} \right\rbrack} \right\rangle}
 
 so the total will now be a weighted sum of these atomic terms
 
@@ -98,14 +99,14 @@ MDANSE weights are rescaled so that weights for DISF calculation using the ``b_i
 .. math::
    :label: ws9
 
-   W_{\alpha} = \frac{N_{\alpha} b_{\mathrm{inc},\alpha}^2}{\sum_{\beta} N_{\beta} b_{\mathrm{inc},\beta}^2}
+   W_{\alpha} = \frac{c_{\alpha} b_{\mathrm{inc},\alpha}^2}{\sum_{\beta} c_{\beta} b_{\mathrm{inc},\beta}^2}
 
 while the DCSF calculation using the ``b_coherent`` will be
 
 .. math::
    :label: ws10
 
-   W_{\alpha\beta} = \frac{N_{\alpha}N_{\beta} b_{\mathrm{coh},\alpha}b_{\mathrm{coh},\beta}}{\sum_{\gamma\delta} N_{\gamma}N_{\delta}  b_{\mathrm{coh},\gamma}b_{\mathrm{coh},\delta}}.
+   W_{\alpha\beta} = \frac{c_{\alpha}c_{\beta} b_{\mathrm{coh},\alpha}b_{\mathrm{coh},\beta}}{\sum_{\gamma\delta} c_{\gamma}c_{\delta}  b_{\mathrm{coh},\gamma}b_{\mathrm{coh},\delta}}.
 
 where :math:`b_{\mathrm{inc},\alpha}^2` is the square of the incoherent
 scattering length of the atom type :math:`\alpha`.
