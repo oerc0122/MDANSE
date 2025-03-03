@@ -47,9 +47,9 @@ def select_positions(
     coordinates = trajectory.coordinates(function_parameters.get("frame_number", 0))
     lower_limits = np.array(function_parameters.get("position_minimum", 3 * [-np.inf]))
     upper_limits = np.array(function_parameters.get("position_maximum", 3 * [np.inf]))
-    mask1 = np.all(coordinates > lower_limits.reshape((1, 3)), axis=1)
-    mask2 = np.all(coordinates < upper_limits.reshape((1, 3)), axis=1)
-    return set(np.where(np.logical_and(mask1, mask2))[0])
+    valid = np.where(((coordinates > lower_limts) & 
+                      (coordinates < upper_limits)).all(axis=1))
+    return set(valid)
 
 
 def select_sphere(
