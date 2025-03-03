@@ -28,6 +28,11 @@ from more_itertools import ilen
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
+from MDANSE.Framework.ConfigDescriptors import (
+    BooleanConfigDesc,
+    FloatConfigDesc,
+    IntegerConfigDesc,
+)
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Parsers import ASEParser
 from MDANSE.Framework.Units import INTERNAL_UNITS, UnitError, measure
@@ -75,26 +80,15 @@ class ASE(Converter):
             "dependencies": {"input_file": "trajectory_file"},
         },
     )
-    settings["time_step"] = (
-        "FloatConfigurator",
-        {"label": "Time step", "default": 1.0, "mini": 1.0e-9},
-    )
     settings["time_unit"] = (
         "SingleChoiceConfigurator",
         {"label": "Time step unit", "choices": ["fs", "ps", "ns"], "default": "fs"},
     )
-    settings["n_steps"] = (
-        "IntegerConfigurator",
-        {
-            "label": "Number of time steps (0 for automatic detection)",
-            "default": 0,
-            "mini": 0,
-        },
+    time_step = FloatConfigDesc(default=1.0, mini=1e-9, label="Time step")
+    n_steps = IntegerConfigDesc(
+        default=0, mini=0, label="Number of time steps (0 for automatic detection)"
     )
-    settings["fold"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Fold coordinates into box"},
-    )
+    fold = BooleanConfigDesc(label="Fold coordinates into box")
     settings["output_files"] = (
         "OutputTrajectoryConfigurator",
         {
@@ -126,7 +120,7 @@ class ASE(Converter):
         self._atomicAliases = self.configuration["atom_aliases"]["value"]
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.configuration["n_steps"]["value"]
+        self.numberOfSteps = self.n_steps
 
         self._timestep = float(self.configuration["time_step"]["value"]) * measure(
             1.0, self.configuration["time_unit"]["value"]
@@ -214,9 +208,16 @@ class ASE(Converter):
                 real_conf = PeriodicRealConfiguration(
                     self._trajectory.chemical_system, coords, unitCell, **variables
                 )
-                if self._configuration["fold"]["value"]:
-                    real_conf.fold_coordinates()
-            else:
+            except ValueError:
+                self._keep_running = False
+                LOG.warning(
+                    f"Could not create configuration for frame {index}. Will skip the rest"
+                )
+                return index, None
+            if self.fold:
+                real_conf.fold_coordinates()
+        else:
+            try:
                 real_conf = RealConfiguration(
                     self._trajectory.chemical_system, coords, **variables
                 )
