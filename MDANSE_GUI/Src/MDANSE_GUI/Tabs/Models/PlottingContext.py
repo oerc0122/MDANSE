@@ -56,7 +56,6 @@ def get_mpl_colours():
 
 
 class SingleDataset:
-
     def __init__(self, name: str, source: "h5py.File", linestyle: str = "-"):
         self._name = name
         self._filename = source.filename
