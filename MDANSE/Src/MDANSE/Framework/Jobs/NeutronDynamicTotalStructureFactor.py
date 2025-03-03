@@ -400,13 +400,14 @@ class NeutronDynamicTotalStructureFactor(IJob):
             bj = self.configuration["trajectory"]["instance"].get_atom_property(
                 pair[1], "b_coherent"
             )
+            cij = nAtomsPerElement[pair[0]] * nAtomsPerElement[pair[1]] * norm_natoms**2
 
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
-                self._outputData[f"f(q,t)_coh_{pair_str}"] *= bi * bj * norm_natoms
-                self._outputData[f"s(q,f)_coh_{pair_str}"] *= bi * bj * norm_natoms
+                self._outputData[f"f(q,t)_coh_{pair_str}"] *= bi * bj * cij
+                self._outputData[f"s(q,f)_coh_{pair_str}"] *= bi * bj * cij
             else:
-                self._outputData[f"f(q,t)_coh_{pair_str}"] *= 2 * bi * bj * norm_natoms
-                self._outputData[f"s(q,f)_coh_{pair_str}"] *= 2 * bi * bj * norm_natoms
+                self._outputData[f"f(q,t)_coh_{pair_str}"] *= 2 * bi * bj * cij
+                self._outputData[f"s(q,f)_coh_{pair_str}"] *= 2 * bi * bj * cij
 
             self._outputData["f(q,t)_coh_total"][:] += self._outputData[
                 f"f(q,t)_coh_{pair_str}"
@@ -416,12 +417,12 @@ class NeutronDynamicTotalStructureFactor(IJob):
             ][:]
 
         # Compute incoherent functions and structure factor
-        for element in nAtomsPerElement:
+        for element, number in list(nAtomsPerElement.items()):
             bi = self.configuration["trajectory"]["instance"].get_atom_property(
                 element, "b_incoherent2"
             )
-            self._outputData[f"f(q,t)_inc_{element}"][:] *= bi * norm_natoms
-            self._outputData[f"s(q,f)_inc_{element}"][:] *= bi * norm_natoms
+            self._outputData[f"f(q,t)_inc_{element}"][:] *= bi * number * norm_natoms
+            self._outputData[f"s(q,f)_inc_{element}"][:] *= bi * number * norm_natoms
             self._outputData["f(q,t)_inc_total"][:] += self._outputData[
                 f"f(q,t)_inc_{element}"
             ][:]

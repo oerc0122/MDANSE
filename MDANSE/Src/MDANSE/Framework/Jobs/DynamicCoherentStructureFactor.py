@@ -252,6 +252,7 @@ class DynamicCoherentStructureFactor(IJob):
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
 
+        n_tot = sum(nAtomsPerElement.values())
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
         assign_weights(self._outputData, weight_dict, "f(q,t)_%s%s")
@@ -260,15 +261,15 @@ class DynamicCoherentStructureFactor(IJob):
             pair_str = "".join(map(str, pair))
             ni = nAtomsPerElement[pair[0]]
             nj = nAtomsPerElement[pair[1]]
-            extra_scaling = 1.0 / np.sqrt(ni * nj)
-            self._outputData[f"f(q,t)_{pair_str}"].scaling_factor *= extra_scaling
+            norm = n_tot / ni * nj
+            self._outputData[f"f(q,t)_{pair_str}"] *= norm
             self._outputData[f"s(q,f)_{pair_str}"][:] = get_spectrum(
                 self._outputData[f"f(q,t)_{pair_str}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
-            self._outputData[f"s(q,f)_{pair_str}"].scaling_factor *= extra_scaling
+            self._outputData[f"s(q,f)_{pair_str}"] *= norm
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
