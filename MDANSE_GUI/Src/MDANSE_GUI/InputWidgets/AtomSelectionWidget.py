@@ -148,7 +148,7 @@ class SelectionHelper(QDialog):
         self.selection_model = SelectionModel(self.trajectory)
         self._field = field
         self.atm_full_names = self.system.name_list
-        self.molecule_names = list(map(str, self.system._clusters))
+        self.molecule_names = self.system.unique_molecules()
         self.labels = list(map(str, self.system._labels))
 
         self.selection_textbox = QPlainTextEdit()

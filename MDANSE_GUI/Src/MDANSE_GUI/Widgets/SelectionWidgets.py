@@ -251,7 +251,7 @@ class MoleculeSelection(BasicSelectionWidget):
     ):
         self.molecule_names = []
         if trajectory:
-            self.molecule_names = list(trajectory.chemical_system._clusters.keys())
+            self.molecule_names = trajectory.chemical_system.unique_molecules()
         super().__init__(parent, widget_label)
 
     def add_specific_widgets(self):

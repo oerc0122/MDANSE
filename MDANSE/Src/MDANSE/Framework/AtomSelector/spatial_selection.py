@@ -28,7 +28,7 @@ def select_positions(
     frame_number: int = 0,
     position_minimum: Union[Sequence[float], None] = None,
     position_maximum: Union[Sequence[float], None] = None,
-    **kwargs: str,
+    **_kwargs: str,
 ) -> Set[int]:
     """Selects atoms based on their positions at a specified frame number.
     Lower and upper limits of x, y and z coordinates can be given as input.
@@ -70,7 +70,7 @@ def select_sphere(
     frame_number: int = 0,
     sphere_centre: Sequence[float],
     sphere_radius: float,
-    **kwargs: str,
+    **_kwargs: str,
 ) -> Set[int]:
     """Selects atoms within a distance from a fixed point in space,
     based on coordinates at a specific frame number.

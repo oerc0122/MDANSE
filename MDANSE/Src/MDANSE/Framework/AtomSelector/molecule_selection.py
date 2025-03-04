@@ -20,7 +20,7 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_molecules(
-    trajectory: Trajectory, molecule_names: Sequence[str] = (), **kwargs: str
+    trajectory: Trajectory, molecule_names: Sequence[str] = (), **_kwargs: str
 ) -> Set[int]:
     """Selects all the atoms belonging to the specified molecule types.
 

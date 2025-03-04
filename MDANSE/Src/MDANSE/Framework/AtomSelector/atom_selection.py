@@ -27,7 +27,7 @@ def select_atoms(
     index_slice: Sequence[int] = None,
     atom_types: Sequence[str] = (),
     atom_names: Sequence[str] = (),
-    **kwargs: str,
+    **_kwargs: str,
 ) -> Set[int]:
     """Selects specific atoms in the trajectory. These can be selected based
     on indices, atom type or trajectory-specific atom name.
@@ -60,7 +60,7 @@ def select_atoms(
     system = trajectory.chemical_system
     element_list = system.atom_list
     name_list = system.name_list
-    indices = set(range(len(element_list)))
+    indices = system.all_indices
     if index_list is not None:
         selection |= indices & set(index_list)
     if index_range is not None:

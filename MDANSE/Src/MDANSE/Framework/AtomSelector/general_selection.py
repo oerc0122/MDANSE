@@ -18,7 +18,7 @@ from typing import Set
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_all(trajectory: Trajectory, **kwargs: str) -> Set[int]:
+def select_all(trajectory: Trajectory, **_kwargs: str) -> Set[int]:
     """Selects all the atoms in the trajectory.
 
     Parameters
@@ -31,10 +31,10 @@ def select_all(trajectory: Trajectory, **kwargs: str) -> Set[int]:
     Set[int]
         Set of all the atom indices
     """
-    return set(range(len(trajectory.chemical_system.atom_list)))
+    return trajectory.chemical_system.all_indices
 
 
-def select_none(_trajectory: Trajectory, **kwargs: str) -> Set[int]:
+def select_none(_trajectory: Trajectory, **_kwargs: str) -> Set[int]:
     """Returns an empty selection.
 
     Parameters
@@ -51,7 +51,7 @@ def select_none(_trajectory: Trajectory, **kwargs: str) -> Set[int]:
 
 
 def invert_selection(
-    trajectory: Trajectory, selection: Set[int], **kwargs: str
+    trajectory: Trajectory, selection: Set[int], **_kwargs: str
 ) -> Set[int]:
     """Returns a set of all the indices that are present in the trajectory
     and were not included in the input selection.
@@ -66,7 +66,7 @@ def invert_selection(
     Returns
     -------
     Set[int]
-        set of all the indices in the trajectory which were not in the selection
+        set of all the indices in the trajectory which were not in the input selection
     """
     all_indices = select_all(trajectory)
     inverted = all_indices - selection

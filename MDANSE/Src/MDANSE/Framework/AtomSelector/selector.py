@@ -63,6 +63,7 @@ class ReusableSelection:
         self.reset()
 
     def reset(self):
+        """Initialises the attributes to an empty list of operations."""
         self.system = None
         self.trajectory = None
         self.all_idxs = set()
@@ -71,6 +72,15 @@ class ReusableSelection:
     def set_selection(
         self, number: Union[int, None] = None, function_parameters: Dict[str, Any] = {}
     ):
+        """Appends a new selection operation, or overwrites an existing one.
+
+        Parameters
+        ----------
+        number : Union[int, None], optional
+            the position of the new selection in the sequence of operations, by default None
+        function_parameters : Dict[str, Any], optional
+            the dictionary of keyword arguments defining a selection operation, by default {}
+        """
         if number is None:
             number = len(self.operations)
         else:
@@ -132,8 +142,21 @@ class ReusableSelection:
         return False
 
     def select_in_trajectory(self, trajectory: Trajectory) -> Set[int]:
+        """Applies all the selection operations in sequence to the
+        input trajectory, and returns the resulting set of indices.
+
+        Parameters
+        ----------
+        trajectory : Trajectory
+            trajectory object in which the atoms will be selected
+
+        Returns
+        -------
+        Set[int]
+            set of atom indices that have been selected in the input trajectory
+        """
         selection = set()
-        self.all_idxs = set(range(len(trajectory.chemical_system.atom_list)))
+        self.all_idxs = trajectory.chemical_system.all_indices
         sequence = sorted(map(int, self.operations))
         if not sequence:
             return self.all_idxs
@@ -169,7 +192,8 @@ class ReusableSelection:
         return json.dumps(self.operations)
 
     def load_from_json(self, json_string: str):
-        """_summary_
+        """Loads the atom selection operations from a JSON string.
+        Adds the operations to the selection sequence.
 
         Parameters
         ----------
