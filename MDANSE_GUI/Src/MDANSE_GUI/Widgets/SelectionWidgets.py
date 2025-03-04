@@ -69,16 +69,20 @@ class XYZValidator(QValidator):
 
         Returns
         -------
-        Tuple[int,str]
-            a tuple of (validator state, input string, cursor position)
+        int
+            Validator state.
+        str
+            Original input string.
+        int
+            Cursor position.
         """
         state = QValidator.State.Intermediate
         comma_count = input_string.count(",")
-        if len(input_string) > 0:
+        if input_string:
             try:
                 values = [float(x) for x in input_string.split(",")]
             except (TypeError, ValueError):
-                if input_string[-1] == "," and comma_count < 3:
+                if input_string.endswith(",") and comma_count < 3:
                     state = QValidator.State.Intermediate
                 else:
                     state = QValidator.State.Invalid

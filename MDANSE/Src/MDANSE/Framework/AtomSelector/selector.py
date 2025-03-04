@@ -101,7 +101,7 @@ class ReusableSelection:
             True if the selection adds atoms, False otherwise
         """
         function_parameters = json.loads(json_string)
-        if len(self.operations) == 0:
+        if not self.operations:
             return True
         function_name = function_parameters.get("function_name", "select_all")
         if function_name == "invert_selection":
@@ -134,8 +134,8 @@ class ReusableSelection:
     def select_in_trajectory(self, trajectory: Trajectory) -> Set[int]:
         selection = set()
         self.all_idxs = set(range(len(trajectory.chemical_system.atom_list)))
-        sequence = sorted([int(x) for x in self.operations.keys()])
-        if len(sequence) == 0:
+        sequence = sorted(map(int, self.operations))
+        if not sequence:
             return self.all_idxs
         for number in sequence:
             function_parameters = self.operations[number]
