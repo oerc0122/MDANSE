@@ -1,82 +1,60 @@
-import pytest
-import tempfile
-import os
+from pathlib import Path
 
 import h5py
 import numpy as np
+import pytest
+from MDANSE_GUI.Tabs.Models.PlottingContext import (PlottingContext,
+                                                    SingleDataset)
+from qtpy import QtCore, QtGui, QtWidgets
 
-from qtpy import QtGui, QtCore, QtWidgets
-
-from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext, SingleDataset
-
-file_1d_name = "super_dos.mda"
-file_2d_name = "disf_argon.mda"
+file_1d_name = Path(__file__).parent / "super_dos.mda"
+file_2d_name = Path(__file__).parent / "disf_argon.mda"
 
 
-@pytest.fixture()
+@pytest.fixture
 def file_1d():
-    tempfile = h5py.File(file_1d_name)
-    yield tempfile
-    tempfile.close()
+    data_file = h5py.File(file_1d_name)
+    yield data_file
+    data_file.close()
 
-
-@pytest.fixture()
+@pytest.fixture
 def file_2d():
-    tempfile = h5py.File(file_2d_name)
-    yield tempfile
-    tempfile.close()
+    data_file = h5py.File(file_2d_name)
+    yield data_file
+    data_file.close()
+
+@pytest.fixture
+def data(request, file_1d, file_2d):
+    if request.param == "1d":
+        return SingleDataset("dos_total", file_1d)
+    if request.param == "2d":
+        return SingleDataset("f(q,t)_total", file_2d)
+
+    raise FileNotFoundError(f"Unrecognised file {request.param}")
 
 
-def test_single_dataset_1d(file_1d):
-    temp = SingleDataset("dos_total", file_1d)
-    assert len(temp._data.shape) == 1
+@pytest.mark.parametrize("data, expected", [
+    ("1d", (501,)),
+    ("2d", (10, 501))], indirect=["data"])
+def test_single_dataset(data, expected):
+    assert data._data.shape == expected
 
+@pytest.mark.parametrize("data, axes, units, longest_axis", [
+    ("1d", ["omega"], ["rad/ps"], ("rad/ps", "omega")),
+    ("2d", ["q", "time"], ["1/nm", "ps"], ("ps", "time"))
+], indirect=["data"])
+def test_available_x_axes(data, axes, units, longest_axis):
+    assert data.available_x_axes() == axes
+    assert [data._axes_units[axis] for axis in axes] == units
+    assert data.longest_axis() == longest_axis
 
-def test_single_dataset_2d(file_2d):
-    temp = SingleDataset("f(q,t)_total", file_2d)
-    assert len(temp._data.shape) == 2
-
-
-def test_available_x_axes_1d(file_1d):
-    temp = SingleDataset("dos_total", file_1d)
-    axes = temp.available_x_axes()
-    assert axes == ["omega"]
-    assert temp._axes_units[axes[0]] == "rad/ps"
-    longest = temp.longest_axis()
-    assert longest[0] == "rad/ps"
-
-
-def test_available_x_axes_2d(file_2d):
-    temp = SingleDataset("f(q,t)_total", file_2d)
-    axes = temp.available_x_axes()
-    print(axes)
-    assert [temp._axes_units[axis] for axis in axes] == ["1/nm", "ps"]
-    longest = temp.longest_axis()
-    print(longest)
-    assert longest[0] == "ps"
-
-
-def test_curves_vs_axis_1d(file_1d):
-    temp = SingleDataset("dos_total", file_1d)
-    curves = temp.curves_vs_axis("rad/ps")
-    assert len(curves) == 1
-    print(curves)
-    assert len(curves[tuple()]) == 501
-
-
-def test_curves_vs_axis_2d_long_axis(file_2d):
-    temp = SingleDataset("f(q,t)_total", file_2d)
-    curves = temp.curves_vs_axis("ps")
-    print(len(curves))
-    assert len(curves) == 10
-    print(curves.keys())
-    assert len(curves[(0,)]) == 501
-
-
-def test_curves_vs_axis_2d_short_axis(file_2d):
-    temp = SingleDataset("f(q,t)_total", file_2d)
-    curves = temp.curves_vs_axis("1/nm")
-    print(len(curves))
-    assert len(curves) == 501
-    print(curves.keys())
-    assert len(curves[(0,)]) == 10
+@pytest.mark.parametrize("data, axis, expected", [
+    ("1d", "rad/ps", (1, ((), 501))),
+    ("2d", "ps", (10, ((0,), 501))),
+    ("2d", "1/nm", (501, ((0,), 10))),
+], indirect=["data"], ids=["1d", "2d_long_axis", "2d_short_axis"])
+def test_curves_vs_axis(data, axis, expected):
+    curves = data.curves_vs_axis(axis)
+    first_axis, (ind, second_axis) = expected
+    assert len(curves) == first_axis
+    assert len(curves[ind]) == second_axis

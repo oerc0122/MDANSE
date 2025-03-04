@@ -14,8 +14,6 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import pytest
-import tempfile
-import os
 
 import numpy as np
 
@@ -32,20 +30,19 @@ N_TIMESTEPS = 150
 
 @pytest.fixture(scope="module")
 def chemical_system():
-    temp = ChemicalSystem("Dummy test system")
-    nAtoms = N_ATOMS
-    temp.initialise_atoms(nAtoms * ["H"])
-    return temp
+    chem_sys = ChemicalSystem("Dummy test system")
+    chem_sys.initialise_atoms(N_ATOMS * ["H"])
+    return chem_sys
 
 
 @pytest.fixture(scope="module")
 def sample_configuration(chemical_system):
     unit_cell = 15.0 * np.eye(3)
-    coords = np.empty((N_ATOMS, 3), dtype=float)
-    coords[0] = [1.0, 1.0, 1.0]
-    coords[1] = [1.0, 2.0, 1.0]
-    coords[2] = [10.0, 1.0, 5.11]
-    coords[3] = [10.0, 2.0, 5.09]
+    coords = np.array([[1.0, 1.0, 1.0],
+                       [1.0, 2.0, 1.0],
+                       [10.0, 1.0, 5.11],
+                       [10.0, 2.0, 5.09]], dtype=float)
+
     temp = RealConfiguration(
         chemical_system,
         coords,
@@ -55,12 +52,11 @@ def sample_configuration(chemical_system):
 
 
 @pytest.fixture(scope="module")
-def sample_trajectory(chemical_system, sample_configuration):
+def sample_trajectory(tmp_path, chemical_system, sample_configuration):
     # here we write to a file
-    fdesc, fname = tempfile.mkstemp()
-    os.close(fdesc)
+    fname = tmp_path / "output"
     writer = TrajectoryWriter(fname, chemical_system, n_steps=N_TIMESTEPS)
-    for n, ts in enumerate(np.arange(N_TIMESTEPS)):
+    for ts in range(N_TIMESTEPS):
         writer.dump_configuration(sample_configuration, ts)
     return fname
 

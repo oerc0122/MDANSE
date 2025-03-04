@@ -1,5 +1,4 @@
 import pytest
-import tempfile
 
 from MDANSE_GUI.Tabs.Models.GeneralModel import GeneralModel
 
