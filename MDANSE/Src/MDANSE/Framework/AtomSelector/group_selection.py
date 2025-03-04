@@ -14,15 +14,14 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Union, Dict, Any, Set
+from typing import Set, Sequence
 from functools import reduce
 
-from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_labels(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+    trajectory: Trajectory, atom_labels: Sequence[str] = (), **kwargs: str
 ) -> Set[int]:
     """Selects atoms with a specific label in the trajectory.
     A residue name can be read as a label by MDANSE.
@@ -31,16 +30,15 @@ def select_labels(
     ----------
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
-    function_parameters : Dict[str, Any]
-        should include a list of string labels under key "atom_labels"
+    atom_labels : Sequence[str]
+        a list of string labels (e.g. residue names) by which to select atoms
 
     Returns
     -------
     Set[int]
-        Set of all the atom indices
+        Set of atom indices corresponding to the selected labels
     """
     system = trajectory.chemical_system
-    atom_labels = function_parameters.get("atom_labels", ())
     selection = {
         system._labels[label] for label in atom_labels if label in system._labels
     }
@@ -48,7 +46,7 @@ def select_labels(
 
 
 def select_pattern(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+    trajectory: Trajectory, rdkit_pattern: str = "", **kwargs: str
 ) -> Set[int]:
     """Selects atoms according to the SMARTS string given as input.
     This will only work if molecules and bonds have been detected in the system.
@@ -59,16 +57,16 @@ def select_pattern(
     ----------
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
-    function_parameters : Dict[str, Any]
-        should include a SMARTS string under key "rdkit_pattern"
+    rdkit_pattern : str
+        a SMARTS string to be matched
 
     Returns
     -------
     Set[int]
-        Set of all the atom indices
+        Set of atom indices matched by rdkit
     """
     selection = set()
     system = trajectory.chemical_system
-    if pattern := function_parameters.get("rdkit_pattern"):
-        selection = system.get_substructure_matches(pattern)
+    if rdkit_pattern:
+        selection = system.get_substructure_matches(rdkit_pattern)
     return selection

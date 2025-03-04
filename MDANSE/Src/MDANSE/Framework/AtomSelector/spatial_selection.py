@@ -14,17 +14,21 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Union, Dict, Any, Set
+from typing import Set, Sequence, Union
 
 import numpy as np
 from scipy.spatial import KDTree
 
-from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_positions(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+    trajectory: Trajectory,
+    *,
+    frame_number: int = 0,
+    position_minimum: Union[Sequence[float], None] = None,
+    position_maximum: Union[Sequence[float], None] = None,
+    **kwargs: str,
 ) -> Set[int]:
     """Selects atoms based on their positions at a specified frame number.
     Lower and upper limits of x, y and z coordinates can be given as input.
@@ -32,28 +36,41 @@ def select_positions(
     Parameters
     ----------
     trajectory : Trajectory
-        A trajectory instance to which the selection is applied
-    function_parameters : Dict[str, Any]
-        may include
-        "frame_number" : int
-        "position_minimum" : np.ndarray[float]
-        "position_maximum" : np.ndarray[float]
+        a trajectory instance in which the atoms are being selected
+    frame_number : int, optional
+        trajectory frame at which to check the coordinates, by default 0
+    position_minimum : Sequence[float], optional
+        (x, y, z) lower limits of coordinates to be selected, by default None
+    position_maximum : Sequence[float], optional
+        (x, y, z) upper limits of coordinates to be selected, by default None
 
     Returns
     -------
     Set[int]
-        Set of all the atom indices
+        _description_
     """
-    coordinates = trajectory.coordinates(function_parameters.get("frame_number", 0))
-    lower_limits = np.array(function_parameters.get("position_minimum", 3 * [-np.inf]))
-    upper_limits = np.array(function_parameters.get("position_maximum", 3 * [np.inf]))
-    valid = np.where(((coordinates > lower_limts) & 
-                      (coordinates < upper_limits)).all(axis=1))
-    return set(valid)
+    coordinates = trajectory.coordinates(frame_number)
+    if position_minimum is None:
+        lower_limits = np.array(3 * [-np.inf])
+    else:
+        lower_limits = np.array(position_minimum)
+    if position_maximum is None:
+        upper_limits = np.array(3 * [np.inf])
+    else:
+        upper_limits = np.array(position_maximum)
+    valid = np.where(
+        ((coordinates > lower_limits) & (coordinates < upper_limits)).all(axis=1)
+    )
+    return set(valid[0])
 
 
 def select_sphere(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+    trajectory: Trajectory,
+    *,
+    frame_number: int = 0,
+    sphere_centre: Sequence[float],
+    sphere_radius: float,
+    **kwargs: str,
 ) -> Set[int]:
     """Selects atoms within a distance from a fixed point in space,
     based on coordinates at a specific frame number.
@@ -62,20 +79,19 @@ def select_sphere(
     ----------
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
-    function_parameters : Dict[str, Any]
-        may include
-        "frame_number" : int
-        "sphere_centre" : np.ndarray[float]
-        "sphere_radius" : float
+    frame_number : int, optional
+        trajectory frame at which to check the coordinates, by default 0
+    sphere_centre : Sequence[float]
+        (x, y, z) coordinates of the centre of the selection
+    sphere_radius : float
+        distance from the centre within which to select atoms
 
     Returns
     -------
     Set[int]
-        Set of all the atom indices
+        set of indices of atoms inside the sphere
     """
-    coordinates = trajectory.coordinates(function_parameters.get("frame_number", 0))
-    sphere_centre = np.array(function_parameters.get("sphere_centre", 3 * [0.0]))
-    sphere_radius = function_parameters.get("sphere_radius", 1.0)
+    coordinates = trajectory.coordinates(frame_number)
     kdtree = KDTree(coordinates)
     indices = kdtree.query_ball_point(sphere_centre, sphere_radius)
     return set(indices)

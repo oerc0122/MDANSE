@@ -127,6 +127,7 @@ class H5MDTrajectory:
         :return: the configuration
         :rtype: dict of ndarray
         """
+
         grp = self._h5_file["/particles/all/position/value"]
         try:
             pos_unit = grp.attrs["unit"]

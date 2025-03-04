@@ -14,14 +14,11 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Union, Dict, Any, Set
-from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
+from typing import Set
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-def select_all(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
-) -> Set[int]:
+def select_all(trajectory: Trajectory, **kwargs: str) -> Set[int]:
     """Selects all the atoms in the trajectory.
 
     Parameters
@@ -37,14 +34,12 @@ def select_all(
     return set(range(len(trajectory.chemical_system.atom_list)))
 
 
-def select_none(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
-) -> Set[int]:
+def select_none(_trajectory: Trajectory, **kwargs: str) -> Set[int]:
     """Returns an empty selection.
 
     Parameters
     ----------
-    trajectory : Trajectory
+    _trajectory : Trajectory
         A trajectory instance, ignored in this selection
 
     Returns
@@ -55,7 +50,9 @@ def select_none(
     return set()
 
 
-def invert_selection(trajectory: Trajectory, selection: Set[int]) -> Set[int]:
+def invert_selection(
+    trajectory: Trajectory, selection: Set[int], **kwargs: str
+) -> Set[int]:
     """Returns a set of all the indices that are present in the trajectory
     and were not included in the input selection.
 

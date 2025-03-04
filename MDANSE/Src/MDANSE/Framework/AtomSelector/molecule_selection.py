@@ -14,15 +14,13 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Union, Dict, Any, Set
-from functools import reduce
+from typing import Set, Sequence
 
-from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_molecules(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+    trajectory: Trajectory, molecule_names: Sequence[str] = (), **kwargs: str
 ) -> Set[int]:
     """Selects all the atoms belonging to the specified molecule types.
 
@@ -30,17 +28,16 @@ def select_molecules(
     ----------
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
-    function_parameters : Dict[str, Any]
-        should include a list of str molecule names under key "atom_labels"
+    molecule_names : Sequence[str]
+        a list of molecule names (str) which are keys of ChemicalSystem._clusters
 
     Returns
     -------
     Set[int]
-        Set of all the atom indices
+        Set of indices of atoms belonging to molecules from molecule_names
     """
     selection = set()
     system = trajectory.chemical_system
-    molecule_names = function_parameters.get("molecule_names", [])
     selection = {
         index
         for molecule in molecule_names

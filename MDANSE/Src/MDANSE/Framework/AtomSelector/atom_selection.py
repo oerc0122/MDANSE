@@ -14,14 +14,20 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Union, Dict, Any, Set
+from typing import Set, Sequence
 
-from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_atoms(
-    trajectory: Trajectory, **function_parameters: Dict[str, Any]
+    trajectory: Trajectory,
+    *,
+    index_list: Sequence[int] = None,
+    index_range: Sequence[int] = None,
+    index_slice: Sequence[int] = None,
+    atom_types: Sequence[str] = (),
+    atom_names: Sequence[str] = (),
+    **kwargs: str,
 ) -> Set[int]:
     """Selects specific atoms in the trajectory. These can be selected based
     on indices, atom type or trajectory-specific atom name.
@@ -33,38 +39,37 @@ def select_atoms(
     ----------
     trajectory : Trajectory
         A trajectory instance to which the selection is applied
-    function_parameters : Dict[str, Any]
-        may include any combination of the following
-        "index_list" : List[int]
-        "index_range" : a start, stop pair of indices for range(start, stop)
-        "index_slice" : s start, stop, step sequence of indices for range(start, stop, step)
-        "atom_types" : List[str]
-        "atom_names" : List[str]
+    index_list : Sequence[int]
+        a list of indices to be selected
+    index_range : Sequence[int]
+        a pair of (first, last+1) indices defining a range
+    index_slice : Sequence[int]
+        a sequence of (first, last+1, step) indices defining a slice
+    atom_types : Sequence[str]
+        a list of atom types (i.e. chemical elements) to be selected, given as string
+    atom_names : Sequence[str]
+        a list of atom names (as used by the MD engine, force field, etc.) to be selected
 
     Returns
     -------
     Set[int]
-        Set of all the atom indices
+        A set of indices which have been selected
     """
+
     selection = set()
     system = trajectory.chemical_system
     element_list = system.atom_list
     name_list = system.name_list
     indices = set(range(len(element_list)))
-    index_list = function_parameters.get("index_list")
-    index_range = function_parameters.get("index_range")
-    index_slice = function_parameters.get("index_slice")
     if index_list is not None:
         selection |= indices & set(index_list)
     if index_range is not None:
         selection |= indices & set(range(*index_range))
     if index_slice is not None:
         selection |= indices & set(range(*index_slice))
-    atom_types = function_parameters.get("atom_types", ())
     if atom_types:
         new_indices = {index for index in indices if element_list[index] in atom_types}
         selection |= new_indices
-    atom_names = function_parameters.get("atom_names", ())
     if atom_names:
         new_indices = {index for index in indices if name_list[index] in atom_names}
         selection |= new_indices

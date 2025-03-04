@@ -130,11 +130,16 @@ def test_select_pattern_selects_water(trajectory):
 
 
 @pytest.mark.parametrize("trajectory", [short_traj], indirect=True)
-def test_select_positions(trajectory):
+@pytest.mark.parametrize("lower_limit, upper_limit, expected", (
+    ([0.5, 0.5, 0.5], [0.7, 0.7, 0.7], {59}),
+    (None, [0.2, 0.2, 0.2], {46}),
+    ([1.8, 1.8, 1.8], None, {453}),
+))
+def test_select_positions(trajectory, lower_limit, upper_limit, expected):
     cube_selection = select_positions(trajectory.trajectory,
-                                      position_minimum = 0.5*np.ones(3),
-                                      position_maximum = 0.7*np.ones(3))
-    assert cube_selection == {59}
+                                      position_minimum = lower_limit,
+                                      position_maximum = upper_limit)
+    assert cube_selection == expected
 
 
 @pytest.mark.parametrize("trajectory", [short_traj], indirect=True)
