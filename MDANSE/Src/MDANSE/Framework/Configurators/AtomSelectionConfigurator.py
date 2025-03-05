@@ -17,8 +17,6 @@
 from collections import Counter
 from json import JSONDecodeError
 
-import numpy as np
-
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 

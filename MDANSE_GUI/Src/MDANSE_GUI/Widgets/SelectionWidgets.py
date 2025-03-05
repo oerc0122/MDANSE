@@ -14,30 +14,32 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Dict, Any, TYPE_CHECKING, Tuple
 import json
 from enum import StrEnum
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from qtpy.QtCore import Signal, Slot
-from qtpy.QtGui import QValidator, QDoubleValidator
+from qtpy.QtGui import QDoubleValidator, QValidator
 from qtpy.QtWidgets import (
+    QComboBox,
     QGroupBox,
     QHBoxLayout,
-    QPushButton,
-    QComboBox,
     QLabel,
     QLineEdit,
+    QPushButton,
 )
 
 from MDANSE_GUI.InputWidgets.CheckableComboBox import CheckableComboBox
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 if TYPE_CHECKING:
     from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
 
 
 class IndexSelectionMode(StrEnum):
+    """Valid atom selection modes for select_atoms."""
+
     LIST = "list"
     RANGE = "range"
     SLICE = "slice"
@@ -45,6 +47,7 @@ class IndexSelectionMode(StrEnum):
 
 class XYZValidator(QValidator):
     """A custom validator for a QLineEdit.
+
     It is intended to limit the input to a string
     of 3 comma-separated float numbers.
 
@@ -54,8 +57,12 @@ class XYZValidator(QValidator):
     a preliminary step when typing in 3 numbers.
     """
 
-    def validate(self, input_string: str, position: int) -> Tuple[int, str]:
-        """Implementation of the virtual method of QValidator.
+    PARAMETERS_NEEDED = 3
+
+    def validate(self, input_string: str, position: int) -> tuple[int, str]:
+        """Check the input string from a widget.
+
+        Implementation of the virtual method of QValidator.
         It takes in the string from a QLineEdit and the cursor position,
         and an enum value of the validator state. Widgets will reject
         inputs which change the state to Invalid.
@@ -75,6 +82,7 @@ class XYZValidator(QValidator):
             Original input string.
         int
             Cursor position.
+
         """
         state = QValidator.State.Intermediate
         comma_count = input_string.count(",")
@@ -82,14 +90,14 @@ class XYZValidator(QValidator):
             try:
                 values = [float(x) for x in input_string.split(",")]
             except (TypeError, ValueError):
-                if input_string.endswith(",") and comma_count < 3:
+                if input_string.endswith(",") and comma_count < self.PARAMETERS_NEEDED:
                     state = QValidator.State.Intermediate
                 else:
                     state = QValidator.State.Invalid
             else:
-                if len(values) > 3:
+                if len(values) > self.PARAMETERS_NEEDED:
                     state = QValidator.State.Invalid
-                elif len(values) == 3:
+                elif len(values) == self.PARAMETERS_NEEDED:
                     state = QValidator.State.Acceptable
                 else:
                     state = QValidator.State.Intermediate
@@ -97,9 +105,21 @@ class XYZValidator(QValidator):
 
 
 class BasicSelectionWidget(QGroupBox):
+    """Base class for atom selection widgets."""
+
     new_selection = Signal(str)
 
     def __init__(self, parent=None, widget_label="Atom selection widget"):
+        """Create subwidgets common to atom selection.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent in the Qt hierarchy, by default None
+        widget_label : str, optional
+            Text shown above the widget, by default "Atom selection widget"
+
+        """
         super().__init__(parent)
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -107,17 +127,24 @@ class BasicSelectionWidget(QGroupBox):
         self.add_specific_widgets()
         self.add_standard_widgets()
 
-    def parameter_dictionary(self) -> Dict[str, Any]:
+    def parameter_dictionary(self) -> dict[str, Any]:
+        """Collect and return selection function parameters."""
         return {}
 
     def add_specific_widgets(self):
-        return None
+        """Add additional widgets to layout, depending on the selection function."""
+        return
 
     def add_standard_widgets(self):
+        """Create widgets needed by all atom selection types.
+
+        This creates a combo box for the set operation type,
+        and a button for making the selection.
+        """
         self.mode_box = QComboBox(self)
         self.mode_box.setEditable(False)
         self.mode_box.addItems(
-            ["Add (union)", "Filter (intersection)", "Remove (difference)"]
+            ["Add (union)", "Filter (intersection)", "Remove (difference)"],
         )
         self._mode_box_values = ["union", "intersection", "difference"]
         self.commit_button = QPushButton("Apply", self)
@@ -127,19 +154,34 @@ class BasicSelectionWidget(QGroupBox):
         self.commit_button.clicked.connect(self.create_selection)
 
     def get_mode(self) -> str:
+        """Get the current set operation type from the combo box."""
         return self._mode_box_values[self.mode_box.currentIndex()]
 
     def create_selection(self):
+        """Collect the input values and emit them in a signal."""
         funtion_parameters = self.parameter_dictionary()
         funtion_parameters["operation_type"] = self.get_mode()
         self.new_selection.emit(json.dumps(funtion_parameters))
 
 
 class AllAtomSelection(BasicSelectionWidget):
+    """Widget for global atom selection, e.g. all atoms, no atoms."""
+
     def __init__(self, parent=None, widget_label="ALL ATOMS"):
+        """Pass inputs to the parent class init.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent in the Qt hierarchy, by default None
+        widget_label : str, optional
+            Text over the widget, by default "ALL ATOMS"
+
+        """
         super().__init__(parent, widget_label)
 
     def add_specific_widgets(self):
+        """Add the INVERT button."""
         layout = self.layout()
         inversion_button = QPushButton("INVERT selection", self)
         inversion_button.clicked.connect(self.invert_selection)
@@ -147,16 +189,35 @@ class AllAtomSelection(BasicSelectionWidget):
         layout.addWidget(QLabel("Add/remove ALL atoms"))
 
     def invert_selection(self):
+        """Emit the string for inverting the selection."""
         self.new_selection.emit(json.dumps({"function_name": "invert_selection"}))
 
     def parameter_dictionary(self):
+        """Collect and return selection function parameters."""
         return {"function_name": "select_all"}
 
 
 class AtomSelection(BasicSelectionWidget):
+    """GUI frontend for select_atoms."""
+
     def __init__(
-        self, parent=None, trajectory: Trajectory = None, widget_label="Select atoms"
+        self,
+        parent=None,
+        trajectory: Trajectory = None,
+        widget_label="Select atoms",
     ):
+        """Create the widgets for select_atoms.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent from the Qt object hierarchy, by default None
+        trajectory : Trajectory, optional
+            The current trajectory object, by default None
+        widget_label : str, optional
+            Text shown over the widget, by default "Select atoms"
+
+        """
         self.atom_types = []
         self.atom_names = []
         if trajectory:
@@ -172,6 +233,7 @@ class AtomSelection(BasicSelectionWidget):
         super().__init__(parent, widget_label)
 
     def add_specific_widgets(self):
+        """Create selection combo boxes."""
         layout = self.layout()
         layout.addWidget(QLabel("Select atoms by atom"))
         self.selection_type_combo = QComboBox(self)
@@ -186,6 +248,7 @@ class AtomSelection(BasicSelectionWidget):
 
     @Slot(str)
     def switch_mode(self, new_mode: str):
+        """Change the contents of the second combo box."""
         self.selection_field.clear()
         if new_mode == "type":
             self.selection_field.addItems(self.atom_types)
@@ -195,6 +258,7 @@ class AtomSelection(BasicSelectionWidget):
             self.selection_keyword = "atom_names"
 
     def parameter_dictionary(self):
+        """Collect and return selection function parameters."""
         function_parameters = {"function_name": "select_atoms"}
         selection = self.selection_field.checked_values()
         function_parameters[self.selection_keyword] = selection
@@ -202,11 +266,24 @@ class AtomSelection(BasicSelectionWidget):
 
 
 class IndexSelection(BasicSelectionWidget):
+    """GUI frontend for select_atoms."""
+
     def __init__(self, parent=None, widget_label="Index selection"):
+        """Create all the widgets.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent in the Qt object hierarchy, by default None
+        widget_label : str, optional
+            Text shown above the widget, by default "Index selection"
+
+        """
         super().__init__(parent, widget_label)
         self.selection_keyword = "index_list"
 
     def add_specific_widgets(self):
+        """Create the combo box and text input field."""
         layout = self.layout()
         layout.addWidget(QLabel("Select atoms by index"))
         self.selection_type_combo = QComboBox(self)
@@ -219,6 +296,7 @@ class IndexSelection(BasicSelectionWidget):
 
     @Slot(str)
     def switch_mode(self, new_mode: str):
+        """Change the meaning of the text input field."""
         self.selection_field.setText("")
         if new_mode == IndexSelectionMode.LIST:
             self.selection_field.setPlaceholderText("0,1,2")
@@ -234,6 +312,7 @@ class IndexSelection(BasicSelectionWidget):
             self.selection_separator = ":"
 
     def parameter_dictionary(self):
+        """Collect and return selection function parameters."""
         function_parameters = {"function_name": "select_atoms"}
         selection = self.selection_field.text()
         function_parameters[self.selection_keyword] = [
@@ -243,18 +322,33 @@ class IndexSelection(BasicSelectionWidget):
 
 
 class MoleculeSelection(BasicSelectionWidget):
+    """GUI frontend for select_molecule."""
+
     def __init__(
         self,
         parent=None,
         trajectory: Trajectory = None,
         widget_label="Select molecules",
     ):
+        """Create the widgets for select_atoms.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent from the Qt object hierarchy, by default None
+        trajectory : Trajectory, optional
+            The current trajectory object, by default None
+        widget_label : str, optional
+            Text shown over the widget, by default "Select atoms"
+
+        """
         self.molecule_names = []
         if trajectory:
             self.molecule_names = trajectory.chemical_system.unique_molecules()
         super().__init__(parent, widget_label)
 
     def add_specific_widgets(self):
+        """Create the combo box for molecule names."""
         layout = self.layout()
         layout.addWidget(QLabel("Select molecules named: "))
         self.selection_field = CheckableComboBox(self)
@@ -262,6 +356,7 @@ class MoleculeSelection(BasicSelectionWidget):
         self.selection_field.addItems(self.molecule_names)
 
     def parameter_dictionary(self):
+        """Collect and return selection function parameters."""
         function_parameters = {"function_name": "select_molecules"}
         selection = self.selection_field.checked_values()
         function_parameters["molecule_names"] = selection
@@ -269,18 +364,33 @@ class MoleculeSelection(BasicSelectionWidget):
 
 
 class LabelSelection(BasicSelectionWidget):
+    """GUI frontend for select_label."""
+
     def __init__(
         self,
         parent=None,
         trajectory: Trajectory = None,
         widget_label="Select by label",
     ):
+        """Create the widgets for select_atoms.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent from the Qt object hierarchy, by default None
+        trajectory : Trajectory, optional
+            The current trajectory object, by default None
+        widget_label : str, optional
+            Text shown over the widget, by default "Select atoms"
+
+        """
         self.labels = []
         if trajectory:
             self.labels = list(trajectory.chemical_system._labels.keys())
         super().__init__(parent, widget_label)
 
     def add_specific_widgets(self):
+        """Create the combo box for atom labels."""
         layout = self.layout()
         layout.addWidget(QLabel("Select atoms with label: "))
         self.selection_field = CheckableComboBox(self)
@@ -288,6 +398,7 @@ class LabelSelection(BasicSelectionWidget):
         self.selection_field.addItems(self.labels)
 
     def parameter_dictionary(self):
+        """Collect and return selection function parameters."""
         function_parameters = {"function_name": "select_labels"}
         selection = self.selection_field.checked_values()
         function_parameters["atom_labels"] = selection
@@ -295,11 +406,23 @@ class LabelSelection(BasicSelectionWidget):
 
 
 class PatternSelection(BasicSelectionWidget):
+    """GUI frontend for select_pattern."""
+
     def __init__(
         self,
         parent=None,
         widget_label="SMARTS pattern matching",
     ):
+        """Create the widgets for select_atoms.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent from the Qt object hierarchy, by default None
+        widget_label : str, optional
+            Text shown over the widget, by default "Select atoms"
+
+        """
         self.pattern_dictionary = {
             "primary amine": "[#7X3;H2;!$([#7][#6X3][!#6]);!$([#7][#6X2][!#6])](~[H])~[H]",
             "hydroxy": "[#8;H1,H2]~[H]",
@@ -311,6 +434,7 @@ class PatternSelection(BasicSelectionWidget):
         super().__init__(parent, widget_label)
 
     def add_specific_widgets(self):
+        """Create the pattern text field."""
         layout = self.layout()
         layout.addWidget(QLabel("Pick a group"))
         self.selection_field = QComboBox(self)
@@ -324,10 +448,12 @@ class PatternSelection(BasicSelectionWidget):
 
     @Slot(str)
     def update_string(self, key_string: str):
+        """Fill the input field with pre-defined text."""
         if key_string in self.pattern_dictionary:
             self.input_field.setText(self.pattern_dictionary[key_string])
 
     def parameter_dictionary(self):
+        """Collect and return selection function parameters."""
         function_parameters = {"function_name": "select_pattern"}
         selection = self.input_field.text()
         function_parameters["rdkit_pattern"] = selection
@@ -335,6 +461,8 @@ class PatternSelection(BasicSelectionWidget):
 
 
 class PositionSelection(BasicSelectionWidget):
+    """GUI frontend for select_positions."""
+
     def __init__(
         self,
         parent=None,
@@ -342,6 +470,20 @@ class PositionSelection(BasicSelectionWidget):
         molecular_viewer: "MolecularViewer" = None,
         widget_label="Select by position",
     ):
+        """Create the widgets for select_atoms.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent from the Qt object hierarchy, by default None
+        trajectory : Trajectory, optional
+            The current trajectory object, by default None
+        molecular_viewer : MolecularViewer, optional
+            instance of the 3D viewer showing the current simulation frame
+        widget_label : str, optional
+            Text shown over the widget, by default "Select atoms"
+
+        """
         self._viewer = molecular_viewer
         self._lower_limit = np.zeros(3)
         self._upper_limit = np.linalg.norm(trajectory.unit_cell(0)._unit_cell, axis=1)
@@ -350,15 +492,16 @@ class PositionSelection(BasicSelectionWidget):
         super().__init__(parent, widget_label)
 
     def add_specific_widgets(self):
+        """Create text input fields with validators."""
         layout = self.layout()
         layout.addWidget(QLabel("Lower limits"))
         self._lower_limit_input = QLineEdit(
-            ",".join([str(round(x, 3)) for x in self._lower_limit])
+            ",".join([str(round(x, 3)) for x in self._lower_limit]),
         )
         layout.addWidget(self._lower_limit_input)
         layout.addWidget(QLabel("Upper limits"))
         self._upper_limit_input = QLineEdit(
-            ",".join([str(round(x, 3)) for x in self._upper_limit])
+            ",".join([str(round(x, 3)) for x in self._upper_limit]),
         )
         layout.addWidget(self._upper_limit_input)
         for field in [self._lower_limit_input, self._upper_limit_input]:
@@ -367,6 +510,7 @@ class PositionSelection(BasicSelectionWidget):
 
     @Slot()
     def check_inputs(self):
+        """Disable selection of invalid or incomplete input."""
         enable = True
         try:
             self._current_lower_limit = [
@@ -386,6 +530,7 @@ class PositionSelection(BasicSelectionWidget):
         self.commit_button.setEnabled(enable)
 
     def parameter_dictionary(self):
+        """Collect and return selection function parameters."""
         return {
             "function_name": "select_positions",
             "frame_number": self._viewer._current_frame,
@@ -395,6 +540,8 @@ class PositionSelection(BasicSelectionWidget):
 
 
 class SphereSelection(BasicSelectionWidget):
+    """GUI frontend for select_sphere."""
+
     def __init__(
         self,
         parent=None,
@@ -402,16 +549,32 @@ class SphereSelection(BasicSelectionWidget):
         molecular_viewer: "MolecularViewer" = None,
         widget_label="Select in a sphere",
     ):
+        """Create the widgets for select_atoms.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent from the Qt object hierarchy, by default None
+        trajectory : Trajectory, optional
+            The current trajectory object, by default None
+        molecular_viewer : MolecularViewer, optional
+            instance of the 3D viewer showing the current simulation frame
+        widget_label : str, optional
+            Text shown over the widget, by default "Select atoms"
+
+        """
         self._viewer = molecular_viewer
         self._current_sphere_centre = np.diag(trajectory.unit_cell(0)._unit_cell) * 0.5
         self._current_sphere_radius = np.min(self._current_sphere_centre)
         super().__init__(parent, widget_label)
 
     def add_specific_widgets(self):
+        """Create the text input fields for sphere radius and centre."""
         layout = self.layout()
         layout.addWidget(QLabel("Sphere centre"))
         self._sphere_centre_input = QLineEdit(
-            ",".join([str(round(x, 3)) for x in self._current_sphere_centre]), self
+            ",".join([str(round(x, 3)) for x in self._current_sphere_centre]),
+            self,
         )
         layout.addWidget(self._sphere_centre_input)
         layout.addWidget(QLabel("Sphere radius (nm)"))
@@ -424,6 +587,7 @@ class SphereSelection(BasicSelectionWidget):
 
     @Slot()
     def check_inputs(self):
+        """Disable selection on invalid or incomplete input."""
         enable = True
         try:
             self._current_sphere_centre = [
@@ -438,6 +602,7 @@ class SphereSelection(BasicSelectionWidget):
         self.commit_button.setEnabled(enable)
 
     def parameter_dictionary(self):
+        """Collect and return selection function parameters."""
         return {
             "function_name": "select_sphere",
             "frame_number": self._viewer._current_frame,

@@ -15,7 +15,7 @@
 #
 
 import json
-from typing import Any, Union
+from typing import Any, Optional
 
 from MDANSE.Framework.AtomSelector.atom_selection import select_atoms
 from MDANSE.Framework.AtomSelector.general_selection import (
@@ -77,7 +77,7 @@ class ReusableSelection:
     def set_selection(
         self,
         *,
-        number: Union[int, None] = None,
+        number: Optional[int] = None,
         function_parameters: dict[str, Any],
     ):
         """Append a new selection operation, or overwrite an existing one.
@@ -144,10 +144,14 @@ class ReusableSelection:
         else:
             selection = temp_selection
         return bool(
-            (len(selection.difference(current_selection)) > 0
-            and operation_type == "union")
-            or (len(current_selection.difference(selection)) > 0
-            and operation_type != "union")
+            (
+                len(selection.difference(current_selection)) > 0
+                and operation_type == "union"
+            )
+            or (
+                len(current_selection.difference(selection)) > 0
+                and operation_type != "union"
+            )
         )
 
     def select_in_trajectory(self, trajectory: Trajectory) -> set[int]:

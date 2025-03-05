@@ -14,59 +14,77 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Set
 import json
 from enum import StrEnum
 
-from qtpy.QtCore import Slot, Signal
-from qtpy.QtGui import QStandardItemModel, QStandardItem
-from qtpy.QtWidgets import (
-    QLineEdit,
-    QPushButton,
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGroupBox,
-    QLabel,
-    QPlainTextEdit,
-    QWidget,
-    QListView,
-    QAbstractItemView,
-    QScrollArea,
-)
-from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
-from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
-from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewerWithPicking
-from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
+from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
+from qtpy.QtCore import Signal, Slot
+from qtpy.QtGui import QStandardItem, QStandardItemModel
+from qtpy.QtWidgets import (
+    QAbstractItemView,
+    QDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListView,
+    QPlainTextEdit,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
+
+from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
+from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewerWithPicking
+from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
 from MDANSE_GUI.Widgets.SelectionWidgets import (
     AllAtomSelection,
     AtomSelection,
     IndexSelection,
+    LabelSelection,
     MoleculeSelection,
     PatternSelection,
-    LabelSelection,
     PositionSelection,
     SphereSelection,
 )
 
 
 class SelectionValidity(StrEnum):
+    """Strings for selection check results."""
+
     VALID_SELECTION = "Valid selection"
     USELESS_SELECTION = "Selection did not change. This operation is not needed."
     MALFORMED_SELECTION = "This is not a valid JSON string."
 
 
 class SelectionModel(QStandardItemModel):
+    """Stores the selection operations in the GUI view."""
+
     selection_changed = Signal()
 
     def __init__(self, trajectory):
+        """Assign the current trajectory to the model."""
         super().__init__(None)
         self._trajectory = trajectory
         self._selection = ReusableSelection()
         self._current_selection = set()
 
-    def rebuild_selection(self, last_operation: str):
+    def rebuild_selection(self, last_operation: str) -> SelectionValidity:
+        """Update the current selection based on the text in the GUI.
+
+        Parameters
+        ----------
+        last_operation : str
+            Additional selection operation input by the user.
+
+        Returns
+        -------
+        SelectionValidity
+            result of the check on last_operation
+
+        """
         self._selection = ReusableSelection()
         self._current_selection = set()
         total_dict = {}
@@ -80,21 +98,44 @@ class SelectionModel(QStandardItemModel):
         if last_operation:
             try:
                 valid = self._selection.validate_selection_string(
-                    last_operation, self._trajectory, self._current_selection
+                    last_operation,
+                    self._trajectory,
+                    self._current_selection,
                 )
             except json.JSONDecodeError:
                 return SelectionValidity.MALFORMED_SELECTION
             if valid:
                 self._selection.load_from_json(json_string)
                 return SelectionValidity.VALID_SELECTION
-            else:
-                return SelectionValidity.USELESS_SELECTION
+            return SelectionValidity.USELESS_SELECTION
+        return None
 
-    def current_selection(self, last_operation: str = "") -> Set[int]:
+    def current_selection(self, last_operation: str = "") -> set[int]:
+        """Return the selected atom indices.
+
+        Parameters
+        ----------
+        last_operation : str, optional
+            Extra selection operation typed by the user, by default ""
+
+        Returns
+        -------
+        set[int]
+            indices of all the selected atoms
+
+        """
         self.rebuild_selection(last_operation)
         return self._selection.select_in_trajectory(self._trajectory)
 
     def current_steps(self) -> str:
+        """Return selection operations as a JSON string.
+
+        Returns
+        -------
+        str
+            one string with all the selection operations in sequence
+
+        """
         result = {}
         for row in range(self.rowCount()):
             index = self.index(row, 0)
@@ -106,6 +147,7 @@ class SelectionModel(QStandardItemModel):
 
     @Slot(str)
     def accept_from_widget(self, json_string: str):
+        """Add a selection operation sent from a selection widget."""
         new_item = QStandardItem(json_string)
         new_item.setEditable(False)
         self.appendRow(new_item)
@@ -119,6 +161,7 @@ class SelectionHelper(QDialog):
     ----------
     _helper_title : str
         The title of the helper dialog window.
+
     """
 
     _helper_title = "Atom selection helper"
@@ -131,7 +174,8 @@ class SelectionHelper(QDialog):
         *args,
         **kwargs,
     ):
-        """
+        """Create the selection dialog.
+
         Parameters
         ----------
         traj_data : tuple[str, HDFTrajectoryInputData]
@@ -139,6 +183,7 @@ class SelectionHelper(QDialog):
         field : QLineEdit
             The QLineEdit field that will need to be updated when
             applying the setting.
+
         """
         super().__init__(parent, *args, **kwargs)
         self.setWindowTitle(self._helper_title)
@@ -176,23 +221,27 @@ class SelectionHelper(QDialog):
         self.setLayout(helper_layout)
 
         self.all_selection = True
-        self.selected = set([])
+        self.selected = set()
         self.reset()
 
     def closeEvent(self, a0):
-        """Hide the window instead of closing. Some issues occur in the
+        """Hide the window instead of closing.
+
+        Some issues occur in the
         3D viewer when it is closed and then reopened.
         """
         a0.ignore()
         self.hide()
 
     def create_buttons(self) -> list[QPushButton]:
-        """
+        """Add buttons to the dialog layout.
+
         Returns
         -------
         list[QPushButton]
             List of push buttons to add to the last layout from
             create_layouts.
+
         """
         apply = QPushButton("Use Setting")
         reset = QPushButton("Reset")
@@ -203,11 +252,13 @@ class SelectionHelper(QDialog):
         return [apply, reset, close]
 
     def create_layouts(self) -> list[QVBoxLayout]:
-        """
+        """Call functions creating other widgets.
+
         Returns
         -------
         list[QVBoxLayout]
             List of QVBoxLayout to add to the helper layout.
+
         """
         layout_3d = QVBoxLayout()
         layout_3d.addWidget(self.view_3d)
@@ -223,24 +274,27 @@ class SelectionHelper(QDialog):
         return [layout_3d, left, right]
 
     def right_widgets(self) -> list[QWidget]:
-        """
+        """Create widgets visualising the selection results.
+
         Returns
         -------
         list[QWidget]
             List of QWidgets to add to the right layout from
             create_layouts.
+
         """
         return [self.selection_operations_view, self.selection_textbox]
 
     def left_widgets(self) -> list[QWidget]:
-        """
+        """Create widgets for defining the selection.
+
         Returns
         -------
         list[QWidget]
             List of QWidgets to add to the left layout from
             create_layouts.
-        """
 
+        """
         select = QGroupBox("selection")
         select_layout = QVBoxLayout()
         scroll_area = QScrollArea()
@@ -278,7 +332,7 @@ class SelectionHelper(QDialog):
         self.selection_operations_view.setDragEnabled(True)
         self.selection_operations_view.setAcceptDrops(True)
         self.selection_operations_view.setDragDropMode(
-            QAbstractItemView.DragDropMode.InternalMove
+            QAbstractItemView.DragDropMode.InternalMove,
         )
         self.selection_operations_view.setModel(self.selection_model)
         self.selection_model.selection_changed.connect(self.recalculate_selection)
@@ -286,39 +340,36 @@ class SelectionHelper(QDialog):
 
     @Slot()
     def recalculate_selection(self):
+        """Update atom indices after selection change."""
         self.selected = self.selection_model.current_selection()
         self.view_3d._viewer.change_picked(self.selected)
         self.update_selection_textbox()
 
-    def update_from_3d_view(self, selection: set[int]) -> None:
-        """A selection/deselection was made in the 3d view, update the
+    def update_from_3d_view(self, _selection: set[int]) -> None:
+        """Update atom indices after an atom has been clicked.
+
+        A selection/deselection was made in the 3d view, update the
         check_boxes, combo_boxes and textbox.
 
         Parameters
         ----------
         selection : set[int]
             Selection indexes from the 3d view.
-        """
-        self.update_selection_textbox()
 
-    @Slot(str)
-    def update_operation(self, new_json_string: str):
-        self.selection_line.setText(new_json_string)
-        self.view_3d._viewer.change_picked(self.selected)
+        """
         self.update_selection_textbox()
 
     @Slot()
     def append_selection(self):
+        """Add a selection operation from the text input field."""
         self.selection_line.setStyleSheet("")
         self.selection_line.setToolTip("")
         selection_text = self.selection_line.text()
         validation = self.selection_model.rebuild_selection(selection_text)
-        if validation == SelectionValidity.MALFORMED_SELECTION:
-            self.selection_line.setStyleSheet(
-                "QWidget#InputWidget { background-color:rgb(180,20,180); font-weight: bold }"
-            )
-            self.selection_line.setToolTip(validation)
-        elif validation == SelectionValidity.USELESS_SELECTION:
+        if validation in (
+            SelectionValidity.MALFORMED_SELECTION,
+            SelectionValidity.USELESS_SELECTION,
+        ):
             self.selection_line.setStyleSheet(
                 "QWidget#InputWidget { background-color:rgb(180,20,180); font-weight: bold }"
             )
@@ -337,13 +388,11 @@ class SelectionHelper(QDialog):
         self.selection_textbox.setPlainText("".join(text))
 
     def apply(self) -> None:
-        """Set the field of the AtomSelectionWidget to the currently
-        chosen setting in this widget.
-        """
+        """Send the selection from the dialog to the main widget."""
         self._field.setText(self.selection_model.current_steps())
 
     def reset(self) -> None:
-        """Resets the helper to the default state."""
+        """Reset the helper to the default state."""
         self.selection_model.clear()
         self.recalculate_selection()
 
@@ -356,6 +405,7 @@ class AtomSelectionWidget(WidgetBase):
     _tooltip_text = "Specify which atoms will be used in the analysis. The input is a JSON string, and can be created using the helper dialog."
 
     def __init__(self, *args, **kwargs):
+        """Create the main widget for atom selection."""
         super().__init__(*args, **kwargs)
         self._value = self._default_value
         self._field = QLineEdit(self._default_value, self._base)
@@ -377,9 +427,14 @@ class AtomSelectionWidget(WidgetBase):
         self._field.setToolTip(self._tooltip_text)
 
     def create_helper(
-        self, traj_data: tuple[str, HDFTrajectoryInputData]
+        self,
+        traj_data: tuple[str, HDFTrajectoryInputData],
     ) -> SelectionHelper:
-        """
+        """Create the selection dialog.
+
+        It will be populated with selection widget which can be used
+        to create the complete atom selection string.
+
         Parameters
         ----------
         traj_data : tuple[str, HDFTrajectoryInputData]
@@ -389,28 +444,30 @@ class AtomSelectionWidget(WidgetBase):
         -------
         SelectionHelper
             Create and return the selection helper QDialog.
+
         """
         return SelectionHelper(traj_data, self._field, self._base)
 
     @Slot()
     def helper_dialog(self) -> None:
-        """Opens the helper dialog."""
+        """Open the helper dialog."""
         if self.helper.isVisible():
             self.helper.close()
         else:
             self.helper.show()
 
     def get_widget_value(self) -> str:
-        """
+        """Return the current text in the input field.
+
         Returns
         -------
         str
             The JSON selector setting.
+
         """
         selection_string = self._field.text()
         if len(selection_string) < 1:
             self._empty = True
             return self._default_value
-        else:
-            self._empty = False
+        self._empty = False
         return selection_string

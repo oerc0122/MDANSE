@@ -15,7 +15,7 @@
 #
 
 from collections.abc import Sequence
-from typing import Union
+from typing import Optional
 
 import numpy as np
 from scipy.spatial import KDTree
@@ -27,8 +27,8 @@ def select_positions(
     trajectory: Trajectory,
     *,
     frame_number: int = 0,
-    position_minimum: Union[Sequence[float], None] = None,
-    position_maximum: Union[Sequence[float], None] = None,
+    position_minimum: Optional[Sequence[float]] = None,
+    position_maximum: Optional[Sequence[float]] = None,
     **_kwargs: str,
 ) -> set[int]:
     """Select atoms based on their positions at a specified frame number.
