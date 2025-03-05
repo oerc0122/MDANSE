@@ -14,7 +14,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Set, Sequence, Union
+from collections.abc import Sequence
+from typing import Union
 
 import numpy as np
 from scipy.spatial import KDTree
@@ -29,8 +30,9 @@ def select_positions(
     position_minimum: Union[Sequence[float], None] = None,
     position_maximum: Union[Sequence[float], None] = None,
     **_kwargs: str,
-) -> Set[int]:
-    """Selects atoms based on their positions at a specified frame number.
+) -> set[int]:
+    """Select atoms based on their positions at a specified frame number.
+
     Lower and upper limits of x, y and z coordinates can be given as input.
 
     Parameters
@@ -46,8 +48,9 @@ def select_positions(
 
     Returns
     -------
-    Set[int]
-        _description_
+    set[int]
+        indicies of atoms with coordinates within limits
+
     """
     coordinates = trajectory.coordinates(frame_number)
     if position_minimum is None:
@@ -71,8 +74,10 @@ def select_sphere(
     sphere_centre: Sequence[float],
     sphere_radius: float,
     **_kwargs: str,
-) -> Set[int]:
-    """Selects atoms within a distance from a fixed point in space,
+) -> set[int]:
+    """Select atoms within a sphere.
+
+    Selects atoms at a given distance from a fixed point in space,
     based on coordinates at a specific frame number.
 
     Parameters
@@ -88,8 +93,9 @@ def select_sphere(
 
     Returns
     -------
-    Set[int]
+    set[int]
         set of indices of atoms inside the sphere
+
     """
     coordinates = trajectory.coordinates(frame_number)
     kdtree = KDTree(coordinates)

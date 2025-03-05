@@ -14,7 +14,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Set, Sequence
+from collections.abc import Sequence
+from typing import Optional
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
@@ -22,14 +23,16 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 def select_atoms(
     trajectory: Trajectory,
     *,
-    index_list: Sequence[int] = None,
-    index_range: Sequence[int] = None,
-    index_slice: Sequence[int] = None,
+    index_list: Optional[Sequence[int]] = None,
+    index_range: Optional[Sequence[int]] = None,
+    index_slice: Optional[Sequence[int]] = None,
     atom_types: Sequence[str] = (),
     atom_names: Sequence[str] = (),
     **_kwargs: str,
-) -> Set[int]:
-    """Selects specific atoms in the trajectory. These can be selected based
+) -> set[int]:
+    """Select specific atoms in the trajectory.
+
+    Atoms can be selected based
     on indices, atom type or trajectory-specific atom name.
     The atom type is normally the chemical element, while
     the atom name can be more specific and depend on the
@@ -52,10 +55,10 @@ def select_atoms(
 
     Returns
     -------
-    Set[int]
+    set[int]
         A set of indices which have been selected
-    """
 
+    """
     selection = set()
     system = trajectory.chemical_system
     element_list = system.atom_list

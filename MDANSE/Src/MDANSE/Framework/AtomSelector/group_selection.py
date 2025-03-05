@@ -14,17 +14,19 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import Set, Sequence
-from functools import reduce
+from collections.abc import Sequence
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def select_labels(
-    trajectory: Trajectory, atom_labels: Sequence[str] = (), **_kwargs: str
-) -> Set[int]:
-    """Selects atoms with a specific label in the trajectory.
-    A residue name can be read as a label by MDANSE.
+    trajectory: Trajectory,
+    atom_labels: Sequence[str] = (),
+    **_kwargs: str,
+) -> set[int]:
+    """Select atoms with a specific label in the trajectory.
+
+    A residue name can be used as a label by MDANSE.
 
     Parameters
     ----------
@@ -37,18 +39,19 @@ def select_labels(
     -------
     Set[int]
         Set of atom indices corresponding to the selected labels
+
     """
     system = trajectory.chemical_system
-    selection = {
-        system._labels[label] for label in atom_labels if label in system._labels
-    }
-    return selection
+    return {system._labels[label] for label in atom_labels if label in system._labels}
 
 
 def select_pattern(
-    trajectory: Trajectory, rdkit_pattern: str = "", **_kwargs: str
-) -> Set[int]:
-    """Selects atoms according to the SMARTS string given as input.
+    trajectory: Trajectory,
+    rdkit_pattern: str = "",
+    **_kwargs: str,
+) -> set[int]:
+    """Select atoms according to the SMARTS string given as input.
+
     This will only work if molecules and bonds have been detected in the system.
     If the bond information was not read from the input trajectory on conversion,
     it can still be determined in a TrajectoryEditor run.
@@ -64,6 +67,7 @@ def select_pattern(
     -------
     Set[int]
         Set of atom indices matched by rdkit
+
     """
     selection = set()
     system = trajectory.chemical_system

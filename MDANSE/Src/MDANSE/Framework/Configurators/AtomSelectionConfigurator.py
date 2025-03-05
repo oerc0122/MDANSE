@@ -14,17 +14,19 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from json import JSONDecodeError
 from collections import Counter
+from json import JSONDecodeError
 
 import numpy as np
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
+from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 
 
 class AtomSelectionConfigurator(IConfigurator):
-    """This configurator allows the selection of a specific set of
+    """Selects atoms in trajectory based on the input string.
+
+    This configurator allows the selection of a specific set of
     atoms on which the analysis will be performed. The defaults setting
     selects all atoms.
 
@@ -32,6 +34,7 @@ class AtomSelectionConfigurator(IConfigurator):
     ----------
     _default : str
         The defaults selection setting.
+
     """
 
     _default = "{}"
@@ -43,6 +46,7 @@ class AtomSelectionConfigurator(IConfigurator):
         ----------
         value : str
             The selection setting in a json readable format.
+
         """
         self._original_input = value
 
@@ -67,7 +71,7 @@ class AtomSelectionConfigurator(IConfigurator):
         self.selector.load_from_json(value)
         indices = self.selector.select_in_trajectory(trajConfig["instance"])
 
-        self["flatten_indices"] = sorted(list(indices))
+        self["flatten_indices"] = sorted(indices)
 
         atoms = trajConfig["instance"].chemical_system.atom_list
         self["total_number_of_atoms"] = len(atoms)
@@ -77,7 +81,7 @@ class AtomSelectionConfigurator(IConfigurator):
         self["indices"] = [[idx] for idx in self["flatten_indices"]]
 
         self["elements"] = [[at] for at in selectedAtoms]
-        self["names"] = [at for at in selectedAtoms]
+        self["names"] = list(selectedAtoms)
         self["unique_names"] = sorted(set(self["names"]))
         self["masses"] = [
             [trajConfig["instance"].get_atom_property(n, "atomic_weight")]
@@ -86,29 +90,39 @@ class AtomSelectionConfigurator(IConfigurator):
         if self["selection_length"] == 0:
             self.error_status = "The atom selection is empty."
             return
-        else:
-            self.error_status = "OK"
+        self.error_status = "OK"
 
     def get_natoms(self) -> dict[str, int]:
-        """
+        """Count the selected atoms, per element.
+
         Returns
         -------
         dict
             A dictionary of the number of atom per element.
+
         """
-        nAtomsPerElement = Counter(self["names"])
-        return nAtomsPerElement
+        return Counter(self["names"])
 
     def get_total_natoms(self) -> int:
-        """
+        """Count all the selected atoms.
+
         Returns
         -------
         int
             The total number of atoms selected.
+
         """
         return len(self["names"])
 
-    def get_indices(self):
+    def get_indices(self) -> dict[str, list[int]]:
+        """Group atom indices per chemical element.
+
+        Returns
+        -------
+        dict[str, list[int]]
+            For each atom type, a list of indices of selected atoms
+
+        """
         indicesPerElement = {}
         for i, v in enumerate(self["names"]):
             if v in indicesPerElement:
@@ -119,11 +133,13 @@ class AtomSelectionConfigurator(IConfigurator):
         return indicesPerElement
 
     def get_information(self) -> str:
-        """
+        """Create a text summary of the selection.
+
         Returns
         -------
         str
-            Some information on the atom selection.
+            Human-readable information on the atom selection.
+
         """
         if "selection_length" not in self:
             return "Not configured yet\n"
@@ -133,12 +149,3 @@ class AtomSelectionConfigurator(IConfigurator):
         info.append(f"Selected elements:{self['unique_names']}")
 
         return "\n".join(info) + "\n"
-
-    def get_selector(self) -> "ReusableSelection":
-        """
-        Returns
-        -------
-        ReusableSelection
-            the instance of the class which selects atoms in a trajectory
-        """
-        return self.selector

@@ -15,21 +15,21 @@
 #
 
 import json
-from typing import Union, Dict, Any, Set
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
+from typing import Any, Union
+
+from MDANSE.Framework.AtomSelector.atom_selection import select_atoms
 from MDANSE.Framework.AtomSelector.general_selection import (
+    invert_selection,
     select_all,
     select_none,
-    invert_selection,
 )
-from MDANSE.Framework.AtomSelector.atom_selection import select_atoms
-from MDANSE.Framework.AtomSelector.molecule_selection import select_molecules
 from MDANSE.Framework.AtomSelector.group_selection import select_labels, select_pattern
+from MDANSE.Framework.AtomSelector.molecule_selection import select_molecules
 from MDANSE.Framework.AtomSelector.spatial_selection import (
     select_positions,
     select_sphere,
 )
-
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 function_lookup = {
     function.__name__: function
@@ -48,38 +48,47 @@ function_lookup = {
 
 
 class ReusableSelection:
-    """A reusable sequence of operations which, when applied
+    """Stores an applies atom selection operations.
+
+    A reusable sequence of operations which, when applied
     to a trajectory, returns a set of atom indices based
     on the specified criteria.
+
     """
 
     def __init__(self) -> None:
-        """
+        """Create an empty selection.
+
         Parameters
         ----------
         trajectory: Trajectory
             The chemical system to apply the selection to.
+
         """
         self.reset()
 
     def reset(self):
-        """Initialises the attributes to an empty list of operations."""
+        """Initialise the attributes to an empty list of operations."""
         self.system = None
         self.trajectory = None
         self.all_idxs = set()
         self.operations = {}
 
     def set_selection(
-        self, number: Union[int, None] = None, function_parameters: Dict[str, Any] = {}
+        self,
+        *,
+        number: Union[int, None] = None,
+        function_parameters: dict[str, Any],
     ):
-        """Appends a new selection operation, or overwrites an existing one.
+        """Append a new selection operation, or overwrite an existing one.
 
         Parameters
         ----------
         number : Union[int, None], optional
-            the position of the new selection in the sequence of operations, by default None
+            the position of the new selection in the sequence of operations
         function_parameters : Dict[str, Any], optional
-            the dictionary of keyword arguments defining a selection operation, by default {}
+            the dictionary of keyword arguments defining a selection operation
+
         """
         if number is None:
             number = len(self.operations)
@@ -91,9 +100,14 @@ class ReusableSelection:
         self.operations[number] = function_parameters
 
     def validate_selection_string(
-        self, json_string: str, trajectory: Trajectory, current_selection: Set[int]
+        self,
+        json_string: str,
+        trajectory: Trajectory,
+        current_selection: set[int],
     ) -> bool:
-        """Checks if the selection operation encoded in the input JSON string
+        """Check if the new selection string changes the current selection.
+
+        Checks if the selection operation encoded in the input JSON string
         will add any new atoms to the current selection on the given trajectory.
 
         Parameters
@@ -109,6 +123,7 @@ class ReusableSelection:
         -------
         bool
             True if the selection adds atoms, False otherwise
+
         """
         function_parameters = json.loads(json_string)
         if not self.operations:
@@ -117,32 +132,28 @@ class ReusableSelection:
         if function_name == "invert_selection":
             selection = invert_selection(trajectory, current_selection)
             return True
+        operation_type = function_parameters.get("operation_type", "union")
+        function = function_lookup[function_name]
+        temp_selection = function(trajectory, **function_parameters)
+        if operation_type == "union":
+            selection = selection.union(temp_selection)
+        elif operation_type == "intersection":
+            selection = selection.intersection(temp_selection)
+        elif operation_type == "difference":
+            selection = selection.difference(temp_selection)
         else:
-            operation_type = function_parameters.get("operation_type", "union")
-            function = function_lookup[function_name]
-            temp_selection = function(trajectory, **function_parameters)
-            if operation_type == "union":
-                selection = selection.union(temp_selection)
-            elif operation_type == "intersection":
-                selection = selection.intersection(temp_selection)
-            elif operation_type == "difference":
-                selection = selection.difference(temp_selection)
-            else:
-                selection = temp_selection
-        if (
-            len(selection.difference(current_selection)) > 0
-            and operation_type == "union"
-        ):
-            return True
-        elif (
-            len(current_selection.difference(selection)) > 0
-            and operation_type != "union"
-        ):
-            return True
-        return False
+            selection = temp_selection
+        return bool(
+            (len(selection.difference(current_selection)) > 0
+            and operation_type == "union")
+            or (len(current_selection.difference(selection)) > 0
+            and operation_type != "union")
+        )
 
-    def select_in_trajectory(self, trajectory: Trajectory) -> Set[int]:
-        """Applies all the selection operations in sequence to the
+    def select_in_trajectory(self, trajectory: Trajectory) -> set[int]:
+        """Select atoms in the input trajectory.
+
+        Applies all the selection operations in sequence to the
         input trajectory, and returns the resulting set of indices.
 
         Parameters
@@ -152,8 +163,9 @@ class ReusableSelection:
 
         Returns
         -------
-        Set[int]
+        set[int]
             set of atom indices that have been selected in the input trajectory
+
         """
         selection = set()
         self.all_idxs = trajectory.chemical_system.all_indices
@@ -180,7 +192,9 @@ class ReusableSelection:
         return selection
 
     def convert_to_json(self) -> str:
-        """For the purpose of storing the selection independent of the
+        """Output all the operations as a JSON string.
+
+        For the purpose of storing the selection independent of the
         trajectory it is acting on, this method encodes the sequence
         of selection operations as a string.
 
@@ -188,17 +202,21 @@ class ReusableSelection:
         -------
         str
             All the operations of this selection, encoded as string
+
         """
         return json.dumps(self.operations)
 
     def load_from_json(self, json_string: str):
-        """Loads the atom selection operations from a JSON string.
+        """Populate the operations sequence from the input string.
+
+        Loads the atom selection operations from a JSON string.
         Adds the operations to the selection sequence.
 
         Parameters
         ----------
         json_string : str
             A sequence of selection operations, encoded as a JSON string
+
         """
         json_setting = json.loads(json_string)
         for k0, v0 in json_setting.items():
