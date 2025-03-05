@@ -28,9 +28,17 @@ jobs:
         run: python -m pip install pytest pytest-timeout
 
       - name: install MDANSE
-        run: (cd MDANSE && python -m pip install .)
+        working-directory: MDANSE
+        run: python -m pip install .
 
-      - name: run unit tests
-        run: |
-          cd MDANSE/Tests/UnitTests
-          python -m pytest
+      - name: Run unit tests
+        working-directory: MDANSE/Tests/UnitTests
+        run: python -m pytest
+
+      - name: Install MDANSE_GUI
+        working-directory: MDANSE_GUI
+        run: python -m pip install .
+
+      - name: Run GUI unit tests
+        working-directory: MDANSE_GUI/Tests/UnitTests
+        run: python -m pytest
