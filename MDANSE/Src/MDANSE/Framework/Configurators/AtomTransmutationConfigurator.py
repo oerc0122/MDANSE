@@ -86,6 +86,7 @@ class AtomTransmuter:
     def reset_setting(self) -> None:
         """Resets the transmutation setting."""
         self._new_map = {}
+        self.selector.reset()
 
 
 class AtomTransmutationConfigurator(IConfigurator):
