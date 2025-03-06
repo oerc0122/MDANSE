@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from math import sqrt
 from typing import Optional
 import collections
 import itertools
@@ -370,14 +371,13 @@ class CurrentCorrelationFunction(IJob):
         the MDA files.
         """
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
-        n_tot = sum(nAtomsPerElement.values())
         for pair in self._elementsPairs:
             pair_str = "".join(map(str, pair))
             at1, at2 = pair
             ni = nAtomsPerElement[at1]
             nj = nAtomsPerElement[at2]
-            self._outputData[f"j(q,t)_long_{pair_str}"][:] *= n_tot / (ni * nj)
-            self._outputData[f"j(q,t)_trans_{pair_str}"][:] *= n_tot / (ni * nj)
+            self._outputData[f"j(q,t)_long_{pair_str}"][:] /= sqrt(ni * nj)
+            self._outputData[f"j(q,t)_trans_{pair_str}"][:] /= sqrt(ni * nj)
             self._outputData[f"J(q,f)_long_{pair_str}"][:] = get_spectrum(
                 self._outputData[f"j(q,t)_long_{pair_str}"],
                 self.configuration["instrument_resolution"]["time_window"],
@@ -394,7 +394,7 @@ class CurrentCorrelationFunction(IJob):
             )
 
         weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 2)
+        weight_dict = get_weights(weights, nAtomsPerElement, 2, c_exp=0.5)
         assign_weights(self._outputData, weight_dict, "j(q,t)_long_%s%s")
         assign_weights(self._outputData, weight_dict, "j(q,t)_trans_%s%s")
         assign_weights(self._outputData, weight_dict, "J(q,f)_long_%s%s")

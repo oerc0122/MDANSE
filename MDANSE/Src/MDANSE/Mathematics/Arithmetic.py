@@ -19,7 +19,7 @@ import itertools
 import numpy as np
 
 
-def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
+def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int, c_exp: float = 1.0):
     """Calculate the scaling factors to be applied to output datasets.
 
     Returns a dictionary of scaling factors, where the
@@ -43,17 +43,18 @@ def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int):
 
     weights = {}
 
+    n_atms = sum(contents[el] for el in props)
     cartesianProduct = itertools.product(props, repeat=dim)
     for elements in cartesianProduct:
-        atom_number_product = np.prod([contents[el] for el in elements])
+        atom_conc_product = np.prod([contents[el] / n_atms for el in elements])
         property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
 
-        factor = atom_number_product * property_product
-        # E.g. for property b_coh, 5 Cu atoms and dim=2
-        # factor = 5*5 * b_coh(Cu)*b_coh(Cu)
+        factor = atom_conc_product**c_exp * property_product
+        # E.g. for property b_coh, 5 Cu atoms, 100 total atoms, and dim=2
+        # factor = (5*5/(100*100))**c_exp * b_coh(Cu)*b_coh(Cu)
 
         weights[elements] = np.float64(np.copy(factor))
-        normFactor += factor
+        normFactor += atom_conc_product * property_product
 
     normalise = True
     try:
