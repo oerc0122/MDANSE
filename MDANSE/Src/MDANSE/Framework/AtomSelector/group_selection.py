@@ -47,7 +47,8 @@ def select_labels(
 
 def select_pattern(
     trajectory: Trajectory,
-    rdkit_pattern: str = "",
+    *,
+    rdkit_pattern: str,
     **_kwargs: str,
 ) -> set[int]:
     """Select atoms according to the SMARTS string given as input.
@@ -71,6 +72,5 @@ def select_pattern(
     """
     selection = set()
     system = trajectory.chemical_system
-    if rdkit_pattern:
-        selection = system.get_substructure_matches(rdkit_pattern)
+    selection = system.get_substructure_matches(rdkit_pattern)
     return selection

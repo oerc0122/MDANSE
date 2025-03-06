@@ -93,11 +93,50 @@ class ReusableSelection:
         if number is None:
             number = len(self.operations)
         else:
-            try:
-                number = int(number)
-            except TypeError:
-                number = len(self.operations)
+            number = int(number)
         self.operations[number] = function_parameters
+
+    def apply_single_selection(
+        self,
+        function_parameters: dict[str, Any],
+        trajectory: Trajectory,
+        selection: set[int],
+    ) -> set[int]:
+        """Modify the input selection based on input parameters.
+
+        This method applied a single selection operation to
+        an already exising selection for a specific trajectory.
+
+        Parameters
+        ----------
+        function_parameters : dict[str, Any]
+            All the inputs needed to call an atom selection function
+        trajectory : Trajectory
+            Instance of the trajectory in which we are selecting atoms
+        selection : set[int]
+            indices of atoms that resulted from previous steps
+
+        Returns
+        -------
+        set[int]
+            indices of selected atoms from all operations so far
+        """
+        function_name = function_parameters.get("function_name", "select_all")
+        if function_name == "invert_selection":
+            new_selection = self.all_idxs.difference(selection)
+        else:
+            operation_type = function_parameters.get("operation_type", "union")
+            function = function_lookup[function_name]
+            temp_selection = function(trajectory, **function_parameters)
+            if operation_type == "union":
+                new_selection = selection | temp_selection
+            elif operation_type == "intersection":
+                new_selection = selection & temp_selection
+            elif operation_type == "difference":
+                new_selection = selection - temp_selection
+            else:
+                new_selection = temp_selection
+        return new_selection
 
     def validate_selection_string(
         self,
@@ -122,27 +161,16 @@ class ReusableSelection:
         Returns
         -------
         bool
-            True if the selection adds atoms, False otherwise
+            True if the operation changes selection, False otherwise
 
         """
         function_parameters = json.loads(json_string)
         if not self.operations:
             return True
-        function_name = function_parameters.get("function_name", "select_all")
-        if function_name == "invert_selection":
-            selection = invert_selection(trajectory, current_selection)
-            return True
         operation_type = function_parameters.get("operation_type", "union")
-        function = function_lookup[function_name]
-        temp_selection = function(trajectory, **function_parameters)
-        if operation_type == "union":
-            selection = selection.union(temp_selection)
-        elif operation_type == "intersection":
-            selection = selection.intersection(temp_selection)
-        elif operation_type == "difference":
-            selection = selection.difference(temp_selection)
-        else:
-            selection = temp_selection
+        selection = self.apply_single_selection(
+            function_parameters, trajectory, current_selection
+        )
         return bool(
             (
                 len(selection.difference(current_selection)) > 0
@@ -178,21 +206,9 @@ class ReusableSelection:
             return self.all_idxs
         for number in sequence:
             function_parameters = self.operations[number]
-            function_name = function_parameters.get("function_name", "select_all")
-            if function_name == "invert_selection":
-                selection = self.all_idxs.difference(selection)
-            else:
-                operation_type = function_parameters.get("operation_type", "union")
-                function = function_lookup[function_name]
-                temp_selection = function(trajectory, **function_parameters)
-                if operation_type == "union":
-                    selection = selection.union(temp_selection)
-                elif operation_type == "intersection":
-                    selection = selection.intersection(temp_selection)
-                elif operation_type == "difference":
-                    selection = selection.difference(temp_selection)
-                else:
-                    selection = temp_selection
+            selection = self.apply_single_selection(
+                function_parameters, trajectory, selection
+            )
         return selection
 
     def convert_to_json(self) -> str:
@@ -226,3 +242,5 @@ class ReusableSelection:
         for k0, v0 in json_setting.items():
             if isinstance(v0, dict):
                 self.set_selection(number=k0, function_parameters=v0)
+            else:
+                raise TypeError(f"Selection {v0} is not a dictionary.")

@@ -56,7 +56,7 @@ class SelectionValidity(StrEnum):
 
     VALID_SELECTION = "Valid selection"
     USELESS_SELECTION = "Selection did not change. This operation is not needed."
-    MALFORMED_SELECTION = "This is not a valid JSON string."
+    MALFORMED_SELECTION = "This is not a valid selection string."
 
 
 class SelectionModel(QStandardItemModel):
