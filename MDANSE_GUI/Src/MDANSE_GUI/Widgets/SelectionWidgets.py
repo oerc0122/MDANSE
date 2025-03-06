@@ -30,6 +30,7 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QPushButton,
 )
+from rdkit.Chem import MolFromSmarts
 
 from MDANSE_GUI.InputWidgets.CheckableComboBox import CheckableComboBox
 
@@ -445,6 +446,17 @@ class PatternSelection(BasicSelectionWidget):
         self.input_field.setPlaceholderText("can be edited")
         layout.addWidget(self.input_field)
         self.selection_field.currentTextChanged.connect(self.update_string)
+        self.input_field.textChanged.connect(self.check_inputs)
+
+    @Slot()
+    def check_inputs(self):
+        """Disable selection of invalid or incomplete input."""
+        enable = True
+        smarts_string = self.input_field.text()
+        temp_molecule = MolFromSmarts(smarts_string)
+        if temp_molecule is None:
+            enable = False
+        self.commit_button.setEnabled(enable)
 
     @Slot(str)
     def update_string(self, key_string: str):

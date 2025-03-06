@@ -401,7 +401,7 @@ class AtomSelectionWidget(WidgetBase):
     """The atoms selection widget."""
 
     _push_button_text = "Atom selection helper"
-    _default_value = '{"all": true}'
+    _default_value = "{}"
     _tooltip_text = "Specify which atoms will be used in the analysis. The input is a JSON string, and can be created using the helper dialog."
 
     def __init__(self, *args, **kwargs):
