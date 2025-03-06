@@ -403,21 +403,13 @@ class NeutronDynamicTotalStructureFactor(IJob):
             sqrt_cij = sqrt(
                 nAtomsPerElement[pair[0]] * nAtomsPerElement[pair[1]] * norm_natoms**2
             )
-
-            if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
-                self._outputData[f"f(q,t)_coh_{pair_str}"].scaling_factor *= (
-                    bi * bj * sqrt_cij
-                )
-                self._outputData[f"s(q,f)_coh_{pair_str}"].scaling_factor *= (
-                    bi * bj * sqrt_cij
-                )
-            else:
-                self._outputData[f"f(q,t)_coh_{pair_str}"].scaling_factor *= (
-                    2 * bi * bj * sqrt_cij
-                )
-                self._outputData[f"s(q,f)_coh_{pair_str}"].scaling_factor *= (
-                    2 * bi * bj * sqrt_cij
-                )
+            pre_fac = 2 if pair[0] == pair[1] else 1
+            self._outputData[f"f(q,t)_coh_{pair_str}"].scaling_factor *= (
+                pre_fac * bi * bj * sqrt_cij
+            )
+            self._outputData[f"s(q,f)_coh_{pair_str}"].scaling_factor *= (
+                pre_fac * bi * bj * sqrt_cij
+            )
 
             self._outputData["f(q,t)_coh_total"][:] += (
                 self._outputData[f"f(q,t)_coh_{pair_str}"][:]

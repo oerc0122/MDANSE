@@ -251,7 +251,7 @@ class DynamicCoherentStructureFactor(IJob):
         """
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 2, c_exp=0.5)
+        weight_dict = get_weights(weights, nAtomsPerElement, 2, conc_exp=0.5)
         assign_weights(self._outputData, weight_dict, "f(q,t)_%s%s")
         assign_weights(self._outputData, weight_dict, "s(q,f)_%s%s")
         for pair in self._elementsPairs:

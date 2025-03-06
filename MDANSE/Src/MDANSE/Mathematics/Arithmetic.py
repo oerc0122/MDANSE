@@ -20,7 +20,7 @@ import numpy as np
 
 
 def get_weights(
-    props: Dict[str, float], contents: Dict[str, int], dim: int, c_exp: float = 1.0
+    props: Dict[str, float], contents: Dict[str, int], dim: int, conc_exp: float = 1.0
 ):
     """Calculate the scaling factors to be applied to output datasets.
 
@@ -35,7 +35,7 @@ def get_weights(
         Dictionary of numbers of atoms in an object
     dim : int
         number of atom types in the label of the output datasets (e.g. 1 for "O", 2 for "CuCu")
-    c_exp : float
+    conc_exp : float
         The exponent the at the product of the concentrations are taken
         to (e.g. (c_i * c_j)**0.5 which is used for DCSF jobs).
 
@@ -54,7 +54,7 @@ def get_weights(
         atom_conc_product = np.prod([contents[el] / n_atms for el in elements])
         property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
 
-        factor = atom_conc_product**c_exp * property_product
+        factor = atom_conc_product**conc_exp * property_product
         # E.g. for property b_coh, 5 Cu atoms, 100 total atoms, and dim=2
         # factor = (5*5/(100*100))**c_exp * b_coh(Cu)*b_coh(Cu)
 
