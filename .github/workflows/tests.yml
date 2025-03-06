@@ -25,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install pytest
-        run: python -m pip install pytest
+        run: python -m pip install pytest pytest-timeout
 
       - name: install MDANSE
         run: (cd MDANSE && python -m pip install .)
