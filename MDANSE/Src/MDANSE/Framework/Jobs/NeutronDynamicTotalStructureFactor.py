@@ -13,9 +13,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from math import sqrt
 import collections
 import itertools
-from typing import List
 
 import numpy as np
 
@@ -400,14 +400,16 @@ class NeutronDynamicTotalStructureFactor(IJob):
             bj = self.configuration["trajectory"]["instance"].get_atom_property(
                 pair[1], "b_coherent"
             )
-            cij = nAtomsPerElement[pair[0]] * nAtomsPerElement[pair[1]] * norm_natoms**2
+            sqrt_cij = sqrt(
+                nAtomsPerElement[pair[0]] * nAtomsPerElement[pair[1]] * norm_natoms**2
+            )
 
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
-                self._outputData[f"f(q,t)_coh_{pair_str}"] *= bi * bj * cij
-                self._outputData[f"s(q,f)_coh_{pair_str}"] *= bi * bj * cij
+                self._outputData[f"f(q,t)_coh_{pair_str}"] *= bi * bj * sqrt_cij
+                self._outputData[f"s(q,f)_coh_{pair_str}"] *= bi * bj * sqrt_cij
             else:
-                self._outputData[f"f(q,t)_coh_{pair_str}"] *= 2 * bi * bj * cij
-                self._outputData[f"s(q,f)_coh_{pair_str}"] *= 2 * bi * bj * cij
+                self._outputData[f"f(q,t)_coh_{pair_str}"] *= 2 * bi * bj * sqrt_cij
+                self._outputData[f"s(q,f)_coh_{pair_str}"] *= 2 * bi * bj * sqrt_cij
 
             self._outputData["f(q,t)_coh_total"][:] += self._outputData[
                 f"f(q,t)_coh_{pair_str}"
