@@ -56,7 +56,7 @@ def get_weights(
 
         factor = atom_conc_product**conc_exp * property_product
         # E.g. for property b_coh, 5 Cu atoms, 100 total atoms, and dim=2
-        # factor = (5*5/(100*100))**c_exp * b_coh(Cu)*b_coh(Cu)
+        # factor = (5*5/(100*100))**conc_exp * b_coh(Cu)*b_coh(Cu)
 
         weights[elements] = np.float64(np.copy(factor))
         normFactor += atom_conc_product * property_product
