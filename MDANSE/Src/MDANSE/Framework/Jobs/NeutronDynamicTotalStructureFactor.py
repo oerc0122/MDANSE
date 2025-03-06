@@ -405,32 +405,48 @@ class NeutronDynamicTotalStructureFactor(IJob):
             )
 
             if pair[0] == pair[1]:  # Add a factor 2 if the two elements are different
-                self._outputData[f"f(q,t)_coh_{pair_str}"] *= bi * bj * sqrt_cij
-                self._outputData[f"s(q,f)_coh_{pair_str}"] *= bi * bj * sqrt_cij
+                self._outputData[f"f(q,t)_coh_{pair_str}"].scaling_factor *= (
+                    bi * bj * sqrt_cij
+                )
+                self._outputData[f"s(q,f)_coh_{pair_str}"].scaling_factor *= (
+                    bi * bj * sqrt_cij
+                )
             else:
-                self._outputData[f"f(q,t)_coh_{pair_str}"] *= 2 * bi * bj * sqrt_cij
-                self._outputData[f"s(q,f)_coh_{pair_str}"] *= 2 * bi * bj * sqrt_cij
+                self._outputData[f"f(q,t)_coh_{pair_str}"].scaling_factor *= (
+                    2 * bi * bj * sqrt_cij
+                )
+                self._outputData[f"s(q,f)_coh_{pair_str}"].scaling_factor *= (
+                    2 * bi * bj * sqrt_cij
+                )
 
-            self._outputData["f(q,t)_coh_total"][:] += self._outputData[
-                f"f(q,t)_coh_{pair_str}"
-            ][:]
-            self._outputData["s(q,f)_coh_total"][:] += self._outputData[
-                f"s(q,f)_coh_{pair_str}"
-            ][:]
+            self._outputData["f(q,t)_coh_total"][:] += (
+                self._outputData[f"f(q,t)_coh_{pair_str}"][:]
+                * self._outputData[f"f(q,t)_coh_{pair_str}"].scaling_factor
+            )
+            self._outputData["s(q,f)_coh_total"][:] += (
+                self._outputData[f"s(q,f)_coh_{pair_str}"][:]
+                * self._outputData[f"s(q,f)_coh_{pair_str}"].scaling_factor
+            )
 
         # Compute incoherent functions and structure factor
         for element, number in nAtomsPerElement.items():
             bi = self.configuration["trajectory"]["instance"].get_atom_property(
                 element, "b_incoherent2"
             )
-            self._outputData[f"f(q,t)_inc_{element}"][:] *= bi * number * norm_natoms
-            self._outputData[f"s(q,f)_inc_{element}"][:] *= bi * number * norm_natoms
-            self._outputData["f(q,t)_inc_total"][:] += self._outputData[
-                f"f(q,t)_inc_{element}"
-            ][:]
-            self._outputData["s(q,f)_inc_total"][:] += self._outputData[
-                f"s(q,f)_inc_{element}"
-            ][:]
+            self._outputData[f"f(q,t)_inc_{element}"].scaling_factor *= (
+                bi * number * norm_natoms
+            )
+            self._outputData[f"s(q,f)_inc_{element}"].scaling_factor *= (
+                bi * number * norm_natoms
+            )
+            self._outputData["f(q,t)_inc_total"][:] += (
+                self._outputData[f"f(q,t)_inc_{element}"][:]
+                * self._outputData[f"f(q,t)_inc_{element}"].scaling_factor
+            )
+            self._outputData["s(q,f)_inc_total"][:] += (
+                self._outputData[f"s(q,f)_inc_{element}"][:]
+                * self._outputData[f"s(q,f)_inc_{element}"].scaling_factor
+            )
 
         # Compute total F(Q,t) = inc + coh
         self._outputData["f(q,t)_total"][:] = (

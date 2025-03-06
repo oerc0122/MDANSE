@@ -330,7 +330,8 @@ def test_ndtsf(disf, dcsf, qvector_grid):
         ]
         for key in keys:
             np.testing.assert_array_almost_equal(
-                actual[f"/{key}"], desired[f"/{key}"],
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
             )
 
     os.remove(temp_name + ".mda")
