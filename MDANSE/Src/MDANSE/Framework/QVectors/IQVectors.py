@@ -19,20 +19,18 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.Configurable import Configurable
 from MDANSE.Core.SubclassFactory import SubclassFactory
+from MDANSE.Framework.Configurable import Configurable
 from MDANSE.MLogging import LOG
 
 if TYPE_CHECKING:
-    from MDANSE.MolecularDynamics.UnitCell import UnitCell
     from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
-
-
-class QVectorsError(Error):
-    pass
+    from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
 class IQVectors(Configurable, metaclass=SubclassFactory):
+    """Parent class of all Q vector generators."""
+
     is_lattice = False
 
     def __init__(self, atom_configuration, status=None):
@@ -47,26 +45,27 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         pass
 
     def generate(self) -> bool:
+        """Generate vectors by calling the internal method _generate."""
         if self._configured:
             self._generate()
 
             if self._status is not None:
                 self._status.finish()
             return True
-        else:
-            LOG.error(
-                "Cannot generate vectors: q vector generator is not configured correctly."
-            )
-            return False
-
-    def setStatus(self, status):
-        self._status = status
+        LOG.error(
+            "Cannot generate vectors: q vector generator is not configured correctly.",
+        )
+        return False
 
     @classmethod
     def qvectors_to_hkl(
-        self, vector_array: np.array, unit_cell: "UnitCell"
+        self,
+        vector_array: np.array,
+        unit_cell: "UnitCell",
     ) -> np.ndarray:
-        """Using a unit cell definition, recalculates an array
+        """Recalculate Q vectors to HKL Miller indices.
+
+        Using a unit cell definition, recalculates an array
         of q vectors to an equivalent array of HKL Miller indices.
 
         Parameters
@@ -80,13 +79,15 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         -------
         np.ndarray
             A (3,N) array of HKL values (Miller indices)
+
         """
         return np.dot(unit_cell.direct, vector_array) / (2 * np.pi)
 
     @classmethod
     def hkl_to_qvectors(self, hkls: np.array, unit_cell: "UnitCell") -> np.ndarray:
-        """Converts an array of HKL values to scattering vectors
-        based on the definition of a unit cell.
+        """Convert an array of HKL values to scattering vectors.
+
+        Uses a unit cell object to get the lattice vectors for conversion.
 
         Parameters
         ----------
@@ -99,17 +100,21 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         -------
         np.ndarray
             a (3, N) array of Q vectors (scattering vectors)
+
         """
         return 2 * np.pi * np.dot(unit_cell.inverse, hkls)
 
     def write_vectors_to_file(self, output_data: "OutputData"):
-        """Writes a summary of the generated vectors to the output
+        """Write the vectors to output file as an array.
+
+        Writes a summary of the generated vectors to the output
         file using an OutputData class instance.
 
         Parameters
         ----------
         output_data : OutputData
             An object managing the writeout to one or many output files
+
         """
         qvector_info = self._configuration["q_vectors"]
         q_values = [float(x) for x in qvector_info]
@@ -143,7 +148,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
             units="au",
         )
         output_data["vector_generator_hkl_array"][:] = 0.0
-        for nq, q in enumerate(q_values):
+        for nq, _ in enumerate(q_values):
             output_data["vector_generator_hkl_array"][nq, :, : qvector_lengths[nq]] = (
                 hkl_arrays[nq]
             )

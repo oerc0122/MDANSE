@@ -22,7 +22,13 @@ from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 
 class MillerIndicesQVectors(LatticeQVectors):
-    """ """
+    """Generates vectors on a grid.
+
+    Vectors are generated from HKL values based on
+    the definition of the unit cell.
+    They are then grouped into shells based on
+    their length.
+    """
 
     settings = collections.OrderedDict()
     settings["shells"] = (
@@ -103,5 +109,4 @@ class MillerIndicesQVectors(LatticeQVectors):
             if self._status is not None:
                 if self._status.is_stopped():
                     return
-                else:
-                    self._status.update()
+                self._status.update()

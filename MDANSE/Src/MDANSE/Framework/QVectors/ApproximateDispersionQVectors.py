@@ -24,7 +24,7 @@ from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 
 class ApproximateDispersionQVectors(LatticeQVectors):
-    """ """
+    """Generates Q vectors along a direction."""
 
     settings = collections.OrderedDict()
     settings["q_start"] = (
@@ -94,5 +94,4 @@ class ApproximateDispersionQVectors(LatticeQVectors):
             if self._status is not None:
                 if self._status.is_stopped():
                     return
-                else:
-                    self._status.update()
+                self._status.update()

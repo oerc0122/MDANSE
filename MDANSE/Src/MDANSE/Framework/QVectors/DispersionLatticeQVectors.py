@@ -22,7 +22,7 @@ from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 
 class DispersionLatticeQVectors(LatticeQVectors):
-    """ """
+    """Generates Q vectors along a direction."""
 
     settings = collections.OrderedDict()
     settings["start"] = (
@@ -69,5 +69,4 @@ class DispersionLatticeQVectors(LatticeQVectors):
             if self._status is not None:
                 if self._status.is_stopped():
                     return
-                else:
-                    self._status.update()
+                self._status.update()

@@ -14,20 +14,22 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from MDANSE.Framework.QVectors.IQVectors import IQVectors, QVectorsError
+from MDANSE.Framework.QVectors.IQVectors import IQVectors
 
 
 class LatticeQVectors(IQVectors):
+    """Parent class for vector generators which need unit cell information."""
+
     is_lattice = True
 
     def __init__(self, atom_configuration, status=None):
-        super(LatticeQVectors, self).__init__(atom_configuration, status)
+        super().__init__(atom_configuration, status)
 
         if atom_configuration is None:
-            raise QVectorsError("No configuration set for the chemical system")
+            raise ValueError("No configuration set for the chemical system")
 
         if not atom_configuration.is_periodic:
-            raise QVectorsError(
+            raise ValueError(
                 "The universe must be periodic for building lattice-based Q vectors"
             )
 

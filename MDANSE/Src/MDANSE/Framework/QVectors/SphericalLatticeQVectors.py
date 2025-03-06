@@ -23,7 +23,19 @@ from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 
 class SphericalLatticeQVectors(LatticeQVectors):
-    """ """
+    """Generates vectors randomly on a sphere.
+
+    Only vectors commensurate with the reciprocal
+    space lattice vectors will be generated.
+    |Q| values for which no valid vectors can
+    be found are omitted in the output.
+
+    Vectors within one shell are generated within
+    a tolerance limit around a central |Q| value.
+    Most calculations will produce one data point
+    for |Q| by averaging the results over all
+    vectors in the shell.
+    """
 
     settings = collections.OrderedDict()
     settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
@@ -100,6 +112,5 @@ class SphericalLatticeQVectors(LatticeQVectors):
 
             if self._status is not None:
                 if self._status.is_stopped():
-                    return None
-                else:
-                    self._status.update()
+                    return
+                self._status.update()

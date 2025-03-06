@@ -19,13 +19,21 @@ import random
 
 import numpy as np
 
-from MDANSE.Mathematics.LinearAlgebra import Vector
-
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
+from MDANSE.Mathematics.LinearAlgebra import Vector
 
 
 class CircularLatticeQVectors(LatticeQVectors):
-    """ """
+    """Generates Q vectors on a plane.
+
+    Vectors are grouped into annuli (called 'shells')
+    based on their length.
+
+    Only vectors commensurate with the reciprocal
+    space lattice vectors will be generated.
+    |Q| values for which no valid vectors can
+    be found are omitted in the output.
+    """
 
     settings = collections.OrderedDict()
     settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
@@ -116,5 +124,4 @@ class CircularLatticeQVectors(LatticeQVectors):
             if self._status is not None:
                 if self._status.is_stopped():
                     return
-                else:
-                    self._status.update()
+                self._status.update()

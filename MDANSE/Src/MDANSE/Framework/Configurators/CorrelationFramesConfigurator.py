@@ -19,15 +19,21 @@ from .FramesConfigurator import FramesConfigurator
 
 
 class CorrelationFramesConfigurator(FramesConfigurator):
+    """Parses the input of trajectory frames.
+
+    Configures the time frame range to be used in the calculations
+    together with a movable window used for correlations.
+    """
+
     def configure(self, value: tuple[int, int, int, int]):
-        """Configure the correlation and set the number of correlation
-        frames to use.
+        """Set the number of correlation frames to use.
 
         Parameters
         ----------
         value : tuple[int, int, int, int]
             The frames setting plus the number of frames used for the
             correlations.
+
         """
         trajConfig = self._configurable[self._dependencies["trajectory"]]
         n_steps = trajConfig["length"]

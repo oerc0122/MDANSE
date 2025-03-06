@@ -14,28 +14,28 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+from typing import Any
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
 
 
 class QVectorsConfigurator(IConfigurator):
-    """
-    This Configurator allows to set reciprocal vectors.
+    """Creates and configures a q-vector generator.
 
-    Reciprocal vectors are used in MDANSE for the analysis related to scattering experiments such as dynamic coherent structure
-    or elastic incoherent structure factor analysis. In MDANSE, properties that depends on Q vectors are always scalar regarding
-    Q vectors in the sense that the values of these properties will be computed for a given norm of Q vectors and not for a given Q vectors.
-    Hence, the Q vectors generator supported by MDANSE always generates Q vectors on Q-shells, each shell containing a set of Q vectors whose
+    Reciprocal vectors are used in MDANSE for analysis related to
+    scattering experiments, such as dynamic coherent structure
+    or elastic incoherent structure factor analysis. In MDANSE, properties
+    that depend on Q vectors are always scalar regarding Q vectors
+    in the sense that the values of these properties will be computed
+    for a given norm of Q vectors and not for a given Q vector.
+    Hence, the Q vectors generator supported by MDANSE always generates
+    Q vectors on Q-shells, each shell containing a set of Q vectors whose
     norm match the Q shell value within a given tolerance.
 
-    Depending on the generator selected, Q vectors can be generated isotropically or anistropically, on a lattice or randomly.
+    Depending on the generator selected, Q vectors can be generated
+    isotropically or anistropically, on a lattice or randomly.
 
-    Q vectors can be saved to a user definition and, as such, can be further reused in another MDANSE session.
-
-    To define a new Q vectors generator, you must inherit from MDANSE.Framework.QVectors.QVectors.QVector interface.
-
-    :note: this configurator depends on 'trajectory' configurator to be configured.
     """
 
     _default = (
@@ -43,15 +43,14 @@ class QVectorsConfigurator(IConfigurator):
         {"shells": (0.1, 5, 0.1), "width": 0.1, "n_vectors": 50, "seed": 0},
     )
 
-    def configure(self, value):
-        """
-        Configure a Q vectors generator.
+    def configure(self, value: tuple[str, dict[str, Any]]):
+        """Create a vector generator with given parameters.
 
-        :param configuration: the current configuration.
-        :type configuration: a MDANSE.Framework.Configurable.Configurable object
-        :param value: the Q vectors generator definition. It can be a 2-tuple, whose 1st element is the name of the Q vector generator \
-        and 2nd element the parameters for this configurator or a string that matches a Q vectors user definition.
-        :type value: 2-tuple or str
+        Parameters
+        ----------
+        value : tuple[str, dict[str, Any]]
+            Class name and dictionary of input parameters
+
         """
         self._original_input = value
 
@@ -84,7 +83,7 @@ class QVectorsConfigurator(IConfigurator):
             if "q_vectors" not in generator.configuration:
                 self.error_status = "Wrong inputs for q-vector generation. At the moment there are no valid Q points."
                 return
-            elif not generator.configuration["q_vectors"]:
+            if not generator.configuration["q_vectors"]:
                 self.error_status = "no Q vectors could be generated"
                 return
 
@@ -103,20 +102,29 @@ class QVectorsConfigurator(IConfigurator):
         self.error_status = "OK"
 
     def preview_output_axis(self):
+        """Output the values of |Q| from current parameters.
+
+        Returns
+        -------
+        list[float], str
+            Values of |Q| together with their physical unit
+
+        """
         if not self.is_configured():
             return None, None
         if not self._valid:
             return None, None
         return self["shells"], "1/nm"
 
-    def get_information(self):
-        """
-        Returns string information about this configurator.
+    def get_information(self) -> str:
+        """Return human-readable information about the generated vectors.
 
-        :return: the information about this configurator.
-        :rtype: str
-        """
+        Returns
+        -------
+        str
+            Summary of generated vectors.
 
+        """
         try:
             info = [f"{self['n_shells']} Q shells generated\n"]
         except KeyError:
