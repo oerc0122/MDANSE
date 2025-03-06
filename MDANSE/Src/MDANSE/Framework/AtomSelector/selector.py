@@ -225,4 +225,4 @@ class ReusableSelection:
         json_setting = json.loads(json_string)
         for k0, v0 in json_setting.items():
             if isinstance(v0, dict):
-                self.set_selection(k0, v0)
+                self.set_selection(number=k0, function_parameters=v0)

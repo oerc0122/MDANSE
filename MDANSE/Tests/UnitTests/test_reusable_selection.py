@@ -37,7 +37,7 @@ def trajectory(request):
 def test_select_all(trajectory):
     n_atoms = len(trajectory.chemical_system.atom_list)
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_all'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_all'})
     selection = reusable_selection.select_in_trajectory(trajectory.trajectory)
     assert len(selection) == n_atoms
 
@@ -54,7 +54,7 @@ def test_empty_json_string_selects_all(trajectory):
 @pytest.mark.parametrize("trajectory", [short_traj, mdmc_traj, com_traj], indirect=True)
 def test_select_none(trajectory):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_none'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_none'})
     selection = reusable_selection.select_in_trajectory(trajectory.trajectory)
     assert len(selection) == 0
 
@@ -62,16 +62,16 @@ def test_select_none(trajectory):
 @pytest.mark.parametrize("trajectory", [short_traj, mdmc_traj, com_traj], indirect=True)
 def test_inverted_all_is_none(trajectory):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_all'})
-    reusable_selection.set_selection(None, {'function_name': 'invert_selection'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_all'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'invert_selection'})
     selection = reusable_selection.select_in_trajectory(trajectory.trajectory)
     assert len(selection) == 0
 
 
 def test_json_saving_is_reversible():
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_all'})
-    reusable_selection.set_selection(None, {'function_name': 'invert_selection'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_all'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'invert_selection'})
     json_string = reusable_selection.convert_to_json()
     another_selection = ReusableSelection()
     another_selection.load_from_json(json_string)
@@ -82,8 +82,8 @@ def test_json_saving_is_reversible():
 @pytest.mark.parametrize("trajectory", [short_traj, mdmc_traj, com_traj], indirect=True)
 def test_selection_from_json_is_the_same_as_from_runtime(trajectory):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_all'})
-    reusable_selection.set_selection(None, {'function_name': 'invert_selection'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_all'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'invert_selection'})
     selection = reusable_selection.select_in_trajectory(trajectory.trajectory)
     json_string = reusable_selection.convert_to_json()
     another_selection = ReusableSelection()
@@ -103,7 +103,7 @@ def test_selection_from_json_is_the_same_as_from_runtime(trajectory):
 ))
 def test_select_atoms_selects_by_element(trajectory, element, expected):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {"function_name": "select_atoms",
+    reusable_selection.set_selection(number=None, function_parameters={"function_name": "select_atoms",
                                            "atom_types": element})
     selection = reusable_selection.select_in_trajectory(trajectory)
     assert len(selection) == expected
@@ -121,7 +121,7 @@ def test_select_atoms_selects_by_element(trajectory, element, expected):
 ))
 def test_select_atoms_selects_by_range(trajectory, index_range, expected):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_atoms', 'index_range': index_range})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_atoms', 'index_range': index_range})
     range_selection = reusable_selection.select_in_trajectory(trajectory.trajectory)
     assert len(range_selection) == expected
 
@@ -133,7 +133,7 @@ def test_select_atoms_selects_by_range(trajectory, index_range, expected):
 ))
 def test_select_atoms_selects_by_slice(trajectory, index_slice, expected):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_atoms', 'index_slice': index_slice})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_atoms', 'index_slice': index_slice})
     range_selection = reusable_selection.select_in_trajectory(trajectory.trajectory)
     assert len(range_selection) == expected
     json_string = reusable_selection.convert_to_json()
@@ -150,7 +150,7 @@ def test_select_atoms_selects_by_slice(trajectory, index_slice, expected):
 ))
 def test_select_molecules_selects_water(trajectory, molecule_names, expected):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_molecules', 'molecule_names': molecule_names})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_molecules', 'molecule_names': molecule_names})
     first_selection = reusable_selection.select_in_trajectory(trajectory.trajectory)
     assert len(first_selection) == expected
     json_string = reusable_selection.convert_to_json()
@@ -163,8 +163,8 @@ def test_select_molecules_selects_water(trajectory, molecule_names, expected):
 @pytest.mark.parametrize("trajectory", [traj_2vb1], indirect=True)
 def test_select_molecules_inverted_selects_ions(trajectory):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_molecules', 'molecule_names': ['C613 H959 N193 O185 S10', 'H2 O1']})
-    reusable_selection.set_selection(None, {'function_name': 'invert_selection'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_molecules', 'molecule_names': ['C613 H959 N193 O185 S10', 'H2 O1']})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'invert_selection'})
     json_string = reusable_selection.convert_to_json()
     another_selection = ReusableSelection()
     another_selection.load_from_json(json_string)
@@ -175,7 +175,7 @@ def test_select_molecules_inverted_selects_ions(trajectory):
 @pytest.mark.parametrize("trajectory", [traj_2vb1], indirect=True)
 def test_select_pattern_selects_water(trajectory):
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_pattern', 'rdkit_pattern': "[#8X2;H2](~[H])~[H]"})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_pattern', 'rdkit_pattern': "[#8X2;H2](~[H])~[H]"})
     json_string = reusable_selection.convert_to_json()
     another_selection = ReusableSelection()
     another_selection.load_from_json(json_string)
@@ -192,8 +192,8 @@ def test_selection_with_multiple_steps(trajectory):
     The selection is then saved to a JSON string, loaded from the string and applied to the trajectory.
     """
     reusable_selection = ReusableSelection()
-    reusable_selection.set_selection(None, {'function_name': 'select_pattern', 'rdkit_pattern': "[#8X2;H2](~[H])~[H]"})
-    reusable_selection.set_selection(None, {'function_name': 'select_atoms', 'atom_types': ['O'], 'operation_type': 'intersection'})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_pattern', 'rdkit_pattern': "[#8X2;H2](~[H])~[H]"})
+    reusable_selection.set_selection(number=None, function_parameters={'function_name': 'select_atoms', 'atom_types': ['O'], 'operation_type': 'intersection'})
     json_string = reusable_selection.convert_to_json()
     another_selection = ReusableSelection()
     another_selection.load_from_json(json_string)
