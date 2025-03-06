@@ -419,7 +419,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
             ][:]
 
         # Compute incoherent functions and structure factor
-        for element, number in list(nAtomsPerElement.items()):
+        for element, number in nAtomsPerElement.items():
             bi = self.configuration["trajectory"]["instance"].get_atom_property(
                 element, "b_incoherent2"
             )
