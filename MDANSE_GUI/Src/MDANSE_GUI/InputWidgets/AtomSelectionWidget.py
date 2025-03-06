@@ -329,11 +329,6 @@ class SelectionHelper(QDialog):
         select.setLayout(select_layout)
 
         self.selection_operations_view = QListView(self)
-        self.selection_operations_view.setDragEnabled(True)
-        self.selection_operations_view.setAcceptDrops(True)
-        self.selection_operations_view.setDragDropMode(
-            QAbstractItemView.DragDropMode.InternalMove,
-        )
         self.selection_operations_view.setModel(self.selection_model)
         self.selection_model.selection_changed.connect(self.recalculate_selection)
         return [scroll_area]
@@ -394,6 +389,9 @@ class SelectionHelper(QDialog):
     def reset(self) -> None:
         """Reset the helper to the default state."""
         self.selection_model.clear()
+        self.selection_model.accept_from_widget(
+            '{"function_name": "select_all", "operation_type": "union"}'
+        )
         self.recalculate_selection()
 
 
