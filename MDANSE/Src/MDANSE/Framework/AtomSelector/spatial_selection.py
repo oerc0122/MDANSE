@@ -53,14 +53,16 @@ def select_positions(
 
     """
     coordinates = trajectory.coordinates(frame_number)
-    if position_minimum is None:
-        lower_limits = np.array(3 * [-np.inf])
-    else:
-        lower_limits = np.array(position_minimum)
-    if position_maximum is None:
-        upper_limits = np.array(3 * [np.inf])
-    else:
-        upper_limits = np.array(position_maximum)
+    lower_limits = (
+        np.array(position_minimum)
+        if position_minimum is not None
+        else np.array([-np.inf] * 3)
+    )
+    upper_limits = (
+        np.array(position_maximum)
+        if position_maximum is not None
+        else np.array([np.inf] * 3)
+    )
     valid = np.where(
         ((coordinates > lower_limits) & (coordinates < upper_limits)).all(axis=1)
     )

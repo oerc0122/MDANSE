@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from collections import Counter
+from collections import Counter, defaultdict
 from json import JSONDecodeError
 
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
@@ -121,12 +121,9 @@ class AtomSelectionConfigurator(IConfigurator):
             For each atom type, a list of indices of selected atoms
 
         """
-        indicesPerElement = {}
+        indicesPerElement = defaultdict(list)
         for i, v in enumerate(self["names"]):
-            if v in indicesPerElement:
-                indicesPerElement[v].extend(self["indices"][i])
-            else:
-                indicesPerElement[v] = self["indices"][i][:]
+            indicesPerElement[v].extend(self["indices"][i])
 
         return indicesPerElement
 

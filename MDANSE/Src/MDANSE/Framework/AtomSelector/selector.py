@@ -90,10 +90,7 @@ class ReusableSelection:
             the dictionary of keyword arguments defining a selection operation
 
         """
-        if number is None:
-            number = len(self.operations)
-        else:
-            number = int(number)
+        number = int(number) if number is not None else len(self.operations)
         self.operations[number] = function_parameters
 
     def apply_single_selection(
@@ -171,15 +168,8 @@ class ReusableSelection:
         selection = self.apply_single_selection(
             function_parameters, trajectory, current_selection
         )
-        return bool(
-            (
-                len(selection.difference(current_selection)) > 0
-                and operation_type == "union"
-            )
-            or (
-                len(current_selection.difference(selection)) > 0
-                and operation_type != "union"
-            )
+        return ((selection - current_selection) and operation_type == "union") or (
+            (current_selection - selection) and operation_type != "union"
         )
 
     def select_in_trajectory(self, trajectory: Trajectory) -> set[int]:
@@ -240,7 +230,6 @@ class ReusableSelection:
         """
         json_setting = json.loads(json_string)
         for k0, v0 in json_setting.items():
-            if isinstance(v0, dict):
-                self.set_selection(number=k0, function_parameters=v0)
-            else:
+            if not isinstance(v0, dict):
                 raise TypeError(f"Selection {v0} is not a dictionary.")
+            self.set_selection(number=k0, function_parameters=v0)
