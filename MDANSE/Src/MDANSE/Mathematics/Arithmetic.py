@@ -19,7 +19,9 @@ import itertools
 import numpy as np
 
 
-def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int, c_exp: float = 1.0):
+def get_weights(
+    props: Dict[str, float], contents: Dict[str, int], dim: int, c_exp: float = 1.0
+):
     """Calculate the scaling factors to be applied to output datasets.
 
     Returns a dictionary of scaling factors, where the
@@ -33,6 +35,9 @@ def get_weights(props: Dict[str, float], contents: Dict[str, int], dim: int, c_e
         Dictionary of numbers of atoms in an object
     dim : int
         number of atom types in the label of the output datasets (e.g. 1 for "O", 2 for "CuCu")
+    c_exp : float
+        The exponent the at the product of the concentrations are taken
+        to (e.g. (c_i * c_j)**0.5 which is used for DCSF jobs).
 
     Returns
     -------
