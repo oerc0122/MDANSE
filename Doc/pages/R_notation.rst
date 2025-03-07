@@ -7,11 +7,13 @@ Frequently Used Symbols and Notations
 ============================================ ===============
 **Symbol**                                   **Description**
 :math:`\alpha, \beta, \gamma, \ldots`        atom types
-:math:`i, j, k, \ldots`                      atom indices
+:math:`j, k, l, \ldots`                      atom indices
+:math:`c_{\alpha}`                           concentration of atom-type :math:`\alpha` where :math:`c_{\alpha} = N_{\alpha} / N`
 :math:`D`                                    diffusion constant
 :math:`F(\mathbf{q}, t)`                     intermediate scattering function
 :math:`F_{\mathrm{coh}}(\mathbf{q}, t)`      coherent intermediate scattering function
 :math:`F_{\mathrm{inc}}(\mathbf{q}, t)`      incoherent intermediate scattering function
+:math:`g(\mathbf{r})`                        pair distribution function
 :math:`G(\mathbf{r}, t)`                     the van Hove function
 :math:`G_{\mathrm{d}}(\mathbf{r}, t)`        distinct part of the van Hove function
 :math:`G_{\mathrm{s}}(\mathbf{r}, t)`        self part of the van Hove function
@@ -19,6 +21,7 @@ Frequently Used Symbols and Notations
 :math:`t_{\mathrm{cor}}`                     the total time of the correlation function
 :math:`t_{\mathrm{tot}}`                     the total time of the MD simulation
 :math:`\Delta t`                             the MD time step
+:math:`S(\mathbf{q})`                        static structure factor
 :math:`S(\mathbf{q}, \omega)`                dynamic structure factor
 :math:`S_{\mathrm{coh}}(\mathbf{q}, \omega)` dynamic coherent structure factor
 :math:`S_{\mathrm{inc}}(\mathbf{q}, \omega)` dynamic incoherent structure factor
@@ -34,7 +37,8 @@ Frequently Used Symbols and Notations
 :math:`\mathbf{q}`                           wavevector
 :math:`\mathbf{r}(t)`                        the position of an atom at time :math:`t`
 :math:`\mathbf{v}(t)`                        the velocity of an atom at time :math:`t`
-:math:`W_\alpha`                             weighting factor for atom type :math:`\alpha`
+:math:`W_\alpha`                             weighting factor for atom-type :math:`\alpha`
+:math:`W_\alpha\beta`                        weighting factor for atom-type pair :math:`\alpha\beta`
 :math:`\omega`                               angular frequency
 :math:`\Delta \omega`                        the frequency step
 ============================================ ===============
