@@ -25,15 +25,15 @@ are used to perform these analyses.
 
 .. _scattering_theory:
 
-Background
-''''''''''
-**Dynamic structure factor S(q, ω)**: This is a central
+Scattering Background
+'''''''''''''''''''''
+**Dynamic Structure Factor** :math:`S(\mathbf{q}, \omega)`: This is a central
 concept in neutron scattering experiments. This factor characterizes how
-scattering intensity changes with alterations in momentum (:math:`q`) and energy (:math:`\omega`)
+scattering intensity changes with alterations in momentum :math:`\mathbf{q}` and energy :math:`\hbar\omega`
 during scattering events. It is instrumental in unraveling the atomic and
 molecular structures of materials.
 
-**Double differential cross-section**: The dynamic structure factor is closely related to the
+**Double Differential Cross-Section**: The dynamic structure factor is closely related to the
 double differential cross-section, which is a vital measurement in neutron
 scattering. The double differential cross-section, :math:`{\mathrm{d}^{2}{\sigma/\mathit{\mathrm{d}\Omega
 \mathrm{d}E}}}`, is defined as the number of
@@ -45,99 +45,80 @@ between the double differential cross-section and the dynamic structure factor
 is given by:
 
 .. math::
-   :label: pfx55
+   :label: scattering1
 
-   {{\frac{\mathrm{d}^{2}\sigma}{\mathrm{d}\Omega\mathrm{d}E} = N}\frac{k}{k_{0}}S\left( {q,\omega} \right).}
+   {{\frac{\mathrm{d}^{2}\sigma}{\mathrm{d}\Omega\mathrm{d}E} = N}\frac{k_{\mathrm{f}}}{k_{\mathrm{i}}}S\left( {\mathbf{q},\omega} \right).}
 
 This equation relates the double differential cross-section, which represents
 the number of neutrons scattered per unit time into specific solid angle and
-energy intervals, to the dynamic structure factor, :math:`S(q, \omega)`. It includes terms
-related to the number of atoms (:math:`N`) and wave numbers of scattered (:math:`k`) and
-incident (:math:`k_0`) neutrons.
-
-They are related to the corresponding neutron energies by
+energy intervals, to the dynamic structure factor, :math:`S(\mathbf{q}, \omega)`. It includes terms
+related to the number of atoms :math:`N` and wavenumbers of scattered :math:`k_{\mathrm{f}}` and
+incident :math:`k_{\mathrm{i}}` neutrons. They are related to the corresponding neutron energies by
 
 .. math::
-   :label: pfx56
+   :label: scattering2
    
-   {E = \hbar^{2}}k^{2}\text{/}2m
+   E_{\mathrm{f}} = \hbar^{2} k_{\mathrm{f}}^{2} / 2m_{\mathrm{n}} \qquad \text{and} \qquad E_{\mathrm{i}} = \hbar^{2}k_{\mathrm{i}}^{2} / 2m_{\mathrm{n}}.
 
-\ and
-
-.. math::
-   :label: pfx57
-   
-   {E_{0} = \hbar^{2}}k_{0}^{2}\text{/}2m
-
-
-These equations relate the neutron energies (:math:`E` and :math:`E_0`) to their respective wave
-numbers (:math:`k` and :math:`k_0`) using the mass of the neutron (:math:`m`). They are fundamental for
+These equations relate the neutron energies, :math:`E_{\mathrm{f}}` and :math:`E_{\mathrm{i}}`,
+to their respective wavenumbers, :math:`k_{\mathrm{f}}` and :math:`k_{\mathrm{i}}`,
+using the mass of the neutron :math:`m_{\mathrm{n}}`. They are fundamental for
 connecting energy and momentum in neutron scattering.
 
-**Momentum and energy transfer**: These equations below define the
-momentum (:math:`q`) and energy (:math:`\omega`) transfer in
-units of the reduced Planck constant (:math:`\hbar`) based on the incident and scattered
-wave numbers and energies:
+**Momentum and Energy Transfer**: These equations below define the
+momentum :math:`\mathbf{q}` and energy transfer :math:`\hbar\omega`
+based on the incident and scattered wavevectors and energies:
 
 .. math::
-   :label: pfx58
+   :label: scattering3
 
-   {{q = \frac{k_{0} - k}{\hbar}},}
+   \mathbf{q} = \mathbf{k}_{\mathrm{i}} - \mathbf{k}_{\mathrm{f}} \qquad \text{and} \qquad \hbar\omega = E_{\mathrm{i}} - E_{\mathrm{f}}.
 
-.. math::
-   :label: pfx59
-
-   {{\omega = \frac{E_{0} - E}{\hbar}}.}
-
-The modulus of the momentum transfer can be expressed in terms of a scattering
-angle, energy transfer, and incident neutron energy.
+The square modulus of the momentum transfer can be expressed in terms of a scattering
+angle and the energies of the incident and scattered neutrons
 
 .. math::
-   :label: pfx60
+   :label: scattering4
 
-   {{\vert q \vert = \vert k_{0} \vert \sqrt{{2 - \frac{\mathit{\hbar\omega}}{E_{0}} - 2}\cos{\theta\sqrt{1 - \frac{\mathit{\hbar\omega}}{E_{0}}}}}}.}
+   q^2 = \frac{2 m_{\mathrm{n}}}{\hbar^2} \left\{ E_{\mathrm{i}} + E_{\mathrm{f}} - 2\left(E_{\mathrm{i}}E_{\mathrm{f}} \right)^{1/2} \cos(\phi) \right\}.
 
 
-**Intermediate scattering function F(q, t)**:
-This equation defines the dynamic structure factor :math:`S(q, \omega)` as a Fourier
-transform of the intermediate scattering function :math:`F(q, t)` with respect to
+**Intermediate Scattering Function** :math:`F(\mathbf{q}, t)`:
+This equation defines the dynamic structure factor :math:`S(\mathbf{q}, \omega)` as a Fourier
+transform of the intermediate scattering function :math:`F(\mathbf{q}, t)` with respect to
 time :math:`t`. It captures information about the structure and dynamics of the
-scattering system [Ref16]_. It can be written as:
+scattering system [Ref16]_ and can be written as:
 
 .. math::
-   :label: pfx61
+   :label: scattering5
 
-   {S{\left( {q,\omega} \right) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d}t \, }\exp\left\lbrack {{- i}\omega t} \right\rbrack F\left( {q,t} \right).}
+   {S{\left( {\mathbf{q},\omega} \right) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d}t \, } F\left( {\mathbf{q},t} \right) e^{-i \omega t}}
 
 and
 
 .. math::
-   :label: pfx62
+   :label: scattering6
 
-   {\text{F}{\left( {q,t} \right) = {\sum\limits_{\alpha,\beta}{\Gamma_{\mathit{\alpha\beta}}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}(0)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\beta}(t)} \right\rbrack} \right\rangle}}},}
+   {\text{F}{\left( {\mathbf{q},t} \right) = \frac{1}{N} {\sum\limits_{jk}{\Gamma_{jk}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{k}\left( t \right)} \right\rbrack} \right\rangle}}},}
 
 .. math::
-   :label: pfx63
+   :label: scattering7
 
-   {{\Gamma_{\mathit{\alpha\beta}} = \frac{1}{N}}\left\lbrack {\overline{b_{\alpha}}{\overline{b_{\beta}} + \delta_{\mathit{\alpha\beta}}}\left( {\overline{b_{\alpha}^{2}} - {\overline{b_{\alpha}}}^{2}} \right)} \right\rbrack.}
+   {{\Gamma_{jk} = }{\overline{b_{j}^{\dagger}}{\overline{b_{k}} + \delta_{jk}}( {\overline{\vert b_{j}\vert^{2}} - {\vert\overline{b_{j}}}\vert^{2}} )}}
 
-The operators :math:`\hat{R}_{\alpha}(t)`
-in Eq. :math:numref:`pfx62` are the position
-operators of the nuclei in the sample. The brackets
-:math:`\langle\ldots\rangle`
-denote a quantum thermal average and the time dependence of the position
-operators is defined by the Heisenberg picture. The quantities
-:math:`b_{\alpha}` are the scattering lengths of the nuclei
+where :math:`\hat{\mathbf{r}}_{j}(t)` are the position
+operators of the nuclei in the Heisenberg picture. The quantities
+:math:`b_{j}` are the scattering lengths of the nuclei
 which depend on the isotope and
 the relative orientation of the spin of the neutron and the spin of the
 scattering nucleus. If the spins of the nuclei and the neutron are not
 prepared in a special orientation one can assume a random relative
 orientation and that spin and position of the nuclei are uncorrelated.
-The overline :math:`\overline{...}` appearing in :math:`{\Gamma_{\mathit{\alpha\beta}}}`
-denotes an average over isotopes and relative spin orientations of
-neutron and nucleus.
+The overlines in Eq. :math:numref:`scattering7`
+denotes that an average over isotopes and relative spin orientations of
+neutron and nucleus is made.
 
-**Coherent and incoherent scattering**:
+**Coherent and Incoherent Scattering**:
 Usually, one splits the intermediate scattering function and the dynamic
 structure factor into their *coherent* and *incoherent* parts which
 describe collective and single particle motions, respectively. By defining
@@ -195,7 +176,7 @@ and :math:`\omega_{J,(\mathrm{coh}/\mathrm{inc})}` are defined in Section :ref:`
 the Fourier transformation defined in Eq. :math:numref:`pfx61`.
 
 
-**Classical framework and corrections**:
+**Classical Framework and Corrections**:
 In the classical framework the intermediate scattering functions are
 interpreted as classical time correlation functions. The position
 operators are replaced by time-dependent vector functions and quantum
@@ -227,7 +208,7 @@ liquid, containing only one sort of atoms, it reads
 
 where :math:`M` is the mass of the atoms.
 
-**Recoil moment**: Formula :math:numref:`pfx76` shows that the
+**Recoil Moment**: Formula :math:numref:`pfx76` shows that the
 first moment is given by the average kinetic energy (in units of
 :math:`\hbar`) of a particle which receives a momentum transfer
 :math:`\hbar q`. Therefore, :math:`\langle\omega\rangle`
@@ -250,7 +231,7 @@ methods which have suggested
 so far. For more details we refer to [Ref18]_.
 
 
-**Static structure factor S(q)**: An important quantity describing structural properties of liquids is the
+**Static Structure Factor**: An important quantity describing structural properties of liquids is the
 static structure factor. :math:`S(q)` is an integral involving the
 dynamic structure factor or the coherent intermediate scattering function
 at zero time delay :math:`t = 0`.
@@ -273,7 +254,7 @@ the total :math:`g(r)`. In the case of the analysis 'X-ray Static structure
 factor', the :math:`Q`-dependence of the atomic form factors is taken into
 account in this weighted sum.
 
-**X-ray observable normalization**: Soper has provided experimental data (table 4 in *ISRN Physical
+**X-Ray Observable Normalization**: Soper has provided experimental data (table 4 in *ISRN Physical
 Chemistry*, 279463 (2013), given in file soper13_fx.dat). Here a source
 of confusion is that the data can be normalized in different ways (see
 Soper's paper). Using the normalization II in that reference we have
@@ -293,52 +274,56 @@ recalculate the x-ray observable using the atomic factors.
 Current Correlation Function
 ''''''''''''''''''''''''''''
 
-The current correlation functions :math:`C_{\alpha\beta}(q, t)` and :math:`C_{\alpha\beta}(q, \omega)`
-are closely related to the intermediate scattering function :math:`F(q, t)`
-and the dynamics structure factor :math:`S(q, \omega)`. The intermediate
-scattering function :math:`F(q, t)` is a correlation function of the Fourier components of
-particle density whereas the current correlation function :math:`C_{\alpha\beta}(q, t)`
-are a correlation function of the Fourier components of the particle current:
+The current correlation functions :math:`J_{\mu\nu}(\mathbf{q}, t)` and its Fourier transform :math:`J_{\mu\nu}(\mathbf{q}, \omega)`
+are closely related to the intermediate scattering function :math:`F(\mathbf{q}, t)`
+and the dynamics structure factor :math:`S(\mathbf{q}, \omega)` respectively. The intermediate
+scattering function :math:`F(\mathbf{q}, t)` is a correlation function of the Fourier components of
+particle density whereas the current correlation function :math:`J_{\mu\nu}(\mathbf{q}, t)`
+is the correlation function of the Fourier components of the particle current:
 
 .. math::
 
-    C_{\alpha\beta}(q, t) = \frac{1}{N} \langle j_{\alpha}(q, t) j_{\beta}(-q, 0) \rangle \qquad\qquad j_{\alpha}(q, t) = \sum_{l} v_{l\alpha}(t) \exp(iq\cdot r_l(t))
+    J_{\mu\nu}(\mathbf{q}, t) = \frac{1}{N} \langle j_{\mu}(\mathbf{q}, t) j_{\nu}(-\mathbf{q}, 0) \rangle \qquad j_{\mu}(\mathbf{q}, t) = \sum_{k} v_{k\mu}(t) \exp(i\mathbf{q} \cdot \mathbf{r}_{k}(t))
 
-where :math:`\alpha, \beta = x, y` or :math:`z`. The particle currents
-can be projected onto longitudinal and transverse components of the
-:math:`q`-vector. The longitudinal and transverse particle current are:
+where :math:`\mu` and  :math:`\nu`  are the cartesian directions
+:math:`x`, :math:`y` or :math:`z`. The particle currents can be projected onto
+longitudinal and transverse components of the :math:`\mathbf{q}`-vector. The
+longitudinal and transverse particle current are:
 
 .. math::
 
-    j_{\mathrm{L}}(q, t) &= \sum_{l} (v_{l\alpha}(t) \cdot \hat{q})\hat{q} \, \exp(iq\cdot r_l(t)) \\
-    j_{\mathrm{T}}(q, t) &= \sum_{l} [v_{l\alpha}(t) - (v_{l\alpha}(t) \cdot \hat{q})\hat{q}] \, \exp(iq\cdot r_l(t))
+    \mathbf{j}_{\mathrm{L}}(\mathbf{q}, t) = \sum_{k} \hat{\mathbf{q}} \left[\mathbf{v}_{k}(t) \cdot \hat{\mathbf{q}}\right]\exp(i \mathbf{q}\cdot \mathbf{r}_k(t))
 
-where :math:`\hat{q}` are unit vectors of :math:`q`. For isotropic systems,
+.. math::
+
+    \mathbf{j}_{\mathrm{T}}(\mathbf{q}, t) = \sum_{k} \left\{\mathbf{v}_{k}(t) - \hat{\mathbf{q}}\left[\mathbf{v}_{k}(t) \cdot \hat{\mathbf{q}}\right] \right\}\exp(i \mathbf{q}\cdot \mathbf{r}_k(t))
+
+where :math:`\hat{\mathbf{q}}` are unit vectors of :math:`\mathbf{q}`. For isotropic systems,
 the longitudinal and transverse particle current are uncorrelated and the
-current correlation function tensor :math:`C_{\alpha\beta}(q, t)`
-will depend only on two independent components so that we can write:
+current correlation function tensor :math:`J_{\mu\nu}(q, t)`
+will depend only on two independent components so that we can write
 
 .. math::
 
-    C_{\alpha\beta}(q, t) = \hat{q}_{\alpha}\hat{q}_{\beta} C_{\mathrm{L}}(q, t) + (\delta_{\alpha\beta} - \hat{q}_{\alpha}\hat{q}_{\beta}) C_{\mathrm{T}}(q, t)
+    J_{\mu\nu}(\mathbf{q}, t) = \hat{q}_{\mu}\hat{q}_{\nu} J_{\mathrm{L}}(\mathbf{q}, t) + (\delta_{\mu\nu} - \hat{q}_{\mu}\hat{q}_{\nu}) J_{\mathrm{T}}(\mathbf{q}, t)
 
-where the longitudinal and transverse current correlation functions are.
-
-.. math::
-
-    C_{\mathrm{L}}(q, t) = \frac{1}{N} \langle j_{\mathrm{L}}(q, t) \cdot j_{\mathrm{L}}(-q, 0) \rangle
+where the longitudinal and transverse current correlation functions are
 
 .. math::
 
-    C_{\mathrm{T}}(q, t) = \frac{1}{N} \langle j_{\mathrm{T}}(q, t) \cdot j_{\mathrm{T}}(-q, 0) \rangle
+    J_{\mathrm{L}}(\mathbf{q}, t) = \frac{1}{N} \langle \mathbf{j}_{\mathrm{L}}(\mathbf{q}, t) \cdot \mathbf{j}_{\mathrm{L}}(-\mathbf{q}, 0) \rangle,
+
+.. math::
+
+    J_{\mathrm{T}}(\mathbf{q}, t) = \frac{1}{N} \langle \mathbf{j}_{\mathrm{T}}(\mathbf{q}, t) \cdot \mathbf{j}_{\mathrm{T}}(-\mathbf{q}, 0) \rangle.
 
 
 From the continuity equation we can obtain a relation between the
-longitudinal current correlation and the dynamic structure factor.
+longitudinal current correlation and the (unweighted) dynamic structure factor
 
 .. math::
 
-    C_{\mathrm{L}}(q, \omega) = \frac{\omega^2}{Q^2} S(q, \omega)
+    J_{\mathrm{L}}(\mathbf{q}, \omega) = \frac{\omega^2}{q^2} S(\mathbf{q}, \omega).
 
 .. _dynamic-coherent-structure-factor:
 

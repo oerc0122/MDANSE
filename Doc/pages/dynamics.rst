@@ -77,7 +77,7 @@ the mass-weighted VACF defines the phonon discrete DOS as:
 .. math::
    :label: pfx2
 
-   C_{\mathbf{vv}\alpha\alpha}(\omega) = \frac{1}{Nc_{\alpha}} \sum_{j}^{N_{\alpha}} \frac{1}{6\pi} \int\limits_{\infty}^{-\infty}\mathrm{d}t \, \left\langle \mathbf{v}_{j}\left( 0 \right)\cdot \mathbf{v}_{j}\left( t \right) \right\rangle e^{-i\omega t}
+   C_{\mathbf{vv}\alpha\alpha}(\omega) = \frac{1}{Nc_{\alpha}} \sum_{j}^{N_{\alpha}} \frac{1}{6\pi} \int\limits_{-\infty}^{\infty}\mathrm{d}t \, \left\langle \mathbf{v}_{j}\left( 0 \right)\cdot \mathbf{v}_{j}\left( t \right) \right\rangle e^{-i\omega t}
 
 where :math:`C_{\mathbf{vv}\alpha\alpha}\left( \omega \right)`
 is the Fourier transform of the velocity autocorrelation function average over atoms of type :math:`\alpha`,
@@ -148,7 +148,7 @@ One can introduce an MSD with respect to a given axis :math:`\mathbf{n}`:
 .. math::
    :label: pfx4
 
-   \Delta_{j}^{2}( t, \hat{\mathbf{n}} ) = \left\langle {d_{j}^{2}( {t, \hat{\mathbf{n}}} )} \right\rangle \qquad d_{j}(t, \hat{\mathbf{n}}) = \hat{\mathbf{n}} \cdot \mathbf{d}_{j}( t )
+   \Delta_{j}^{2}(\hat{\mathbf{n}}, t) = \left\langle {d_{j}^{2}(\hat{\mathbf{n}}, t)} \right\rangle \qquad d_{j}(\hat{\mathbf{n}}, t) = \hat{\mathbf{n}} \cdot \mathbf{d}_{j}(t)
 
 where :math:`\hat{\mathbf{n}}` is a unit vector along :math:`\mathbf{n}`.
 
@@ -409,7 +409,7 @@ VACF along a given axis,
 .. math::
    :label: pfx19
 
-   {C_{\mathbf{vv}jj}(t, \hat{\mathbf{n}}) = \frac{1}{3}\left\langle {v_{j}( 0, \hat{\mathbf{n}}) v_{j}( t, \hat{\mathbf{n}})} \right\rangle \qquad v_{j}(t, \hat{\mathbf{n}}) =   \hat{\mathbf{n}} \cdot \mathbf{v}_{j}(t)}
+   {C_{\mathbf{vv}jj}(\hat{\mathbf{n}}, t) = \frac{1}{3}\left\langle {v_{j}(\hat{\mathbf{n}}, 0) v_{j}(\hat{\mathbf{n}}, t)} \right\rangle \qquad v_{j}(\hat{\mathbf{n}}, t) =   \hat{\mathbf{n}} \cdot \mathbf{v}_{j}(t)}
 
 where the vector :math:`\hat{\mathbf{n}}` is a unit vector defining a space-fixed
 axis. The VACF of the particles in a many-body system can be related to the
@@ -418,19 +418,20 @@ incoherent dynamic structure factor by the relation
 .. math::
    :label: pfx20
 
-   {\lim\limits_{q\rightarrow 0}\frac{1}{3}\frac{\omega^{2}}{q^{2}}S_{\mathrm{inc}}{\left( {q,\omega} \right) = \mathrm{DOS}}(\omega, \hat{\mathbf{q}}).}
+   {\lim\limits_{q\rightarrow 0}\frac{1}{3}\frac{\omega^{2}}{q^{2}}S_{\mathrm{inc}}{(\mathbf{q},\omega) = \mathrm{DOS}}(\omega, \hat{\mathbf{q}}).}
 
 
 where :math:`\hat{\mathbf{q}}` is the unit vector in the direction of :math:`\mathbf{q}`.
-Here the density of states is as weight sum of the Fourier transform of
-the projected VACF
+Here the density of states is a weighted sum of the Fourier transform of
+the projected VACF. If :math:`S_{\mathrm{inc}}( {\mathbf{q},\omega} )` was weighted with using
+the squared incoherent scattering lengths then
 
 .. math::
    :label: pfx21
 
-   {\mathrm{DOS}{(\omega, \hat{\mathbf{q}}) = {\frac{1}{N}\sum\limits_{j}{b_{\mathrm{inc},j}^{2}{{C}}_{\mathbf{vv}jj}(\omega, \hat{\mathbf{q}})}}},}
+   {\mathrm{DOS}{(\hat{\mathbf{q}}, \omega) = {\frac{1}{N}\sum\limits_{j}{b_{\mathrm{inc},j}^{2}{{C}}_{\mathbf{vv}jj}(\hat{\mathbf{q}}, \omega)}}},}
 
 .. math::
    :label: pfx22
 
-   {C_{\mathbf{vv}jj}{(\omega, \hat{\mathbf{q}}) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d} t \,} C_{\mathbf{vv}jj}(t, \hat{\mathbf{q}}) e^{-i \omega t}}.
+   {C_{\mathbf{vv}jj}{(\hat{\mathbf{q}}, \omega) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d} t \,} C_{\mathbf{vv}jj}(\hat{\mathbf{q}}, t) e^{-i \omega t}}.
