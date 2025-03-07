@@ -1,9 +1,12 @@
 Weighting Scheme
 ================
 
+Partial properties
+^^^^^^^^^^^^^^^^^^
+
 In MDANSE, most properties are split by atom-type
 and the total results is a sum of these partial
-properties. For example, the coherent and incoherent intermediate
+properties. For example, the partial coherent and incoherent intermediate
 scattering functions are
 
 .. math::
@@ -94,8 +97,8 @@ while the unweighted terms might be more useful of the pair distribution functio
 Rescaled Weights
 ^^^^^^^^^^^^^^^^
 
-Single Atom-Type Properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Single Atom-Type Weights
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 MDANSE weights are rescaled so that weights for DISF calculation using the ``b_incoherent2`` will be
 
@@ -104,7 +107,7 @@ MDANSE weights are rescaled so that weights for DISF calculation using the ``b_i
 
    W_{\alpha} = \frac{c_{\alpha} b_{\mathrm{inc},\alpha}^2}{\sum_{\gamma} c_{\gamma} b_{\mathrm{inc},\gamma}^2}
 
-where :math:`b_{\mathrm{inc},\alpha}^2` is the square of the incoherent
+where :math:`b_{\mathrm{inc},\alpha}^2` is the squared incoherent
 scattering length of the atom type :math:`\alpha`. By using these rescaled
 weights the total incoherent intermediate scattering functions becomes
 
@@ -120,8 +123,8 @@ Notice that by using this weight scheme the total DISF has the property that
 
    F_{\text{inc}}(\mathbf{q},t=0) = 1.
 
-Double Atom-Type Properties (DCSF and CCF)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Double Atom-Type Weights (DCSF and CCF)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the DCSF calculation using ``b_coherent``, the weights are
 
@@ -149,8 +152,8 @@ sum by some scaling factor) to the to the sum of intermediate scattering functio
 from the DISF and DCSF calculations using the scaled weight scheme since they
 are not scaled in the same way.
 
-Double Atom-Type Properties (Other)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Double Atom-Type Weights (Other)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For calculation other than the DCSF and current correlation function (CCF)
 a slightly different weight scheme must be used as their partials are
