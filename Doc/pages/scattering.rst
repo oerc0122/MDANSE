@@ -776,12 +776,18 @@ Naturally, similar expressions apply to the dynamic structure factors,
 
 Structure Factor From Scattering Function
 '''''''''''''''''''''''''''''''''''''''''
-The structure factor from scattering function is a concept used in
-scientific research, particularly in the field of neutron scattering
-experiments. It relates to how particles or atoms within a material
-contribute to its overall structural properties based on their scattering
-behavior. This concept provides valuable insights into the material's
-internal structure, dynamics, and interactions. Researchers use the Structure
-Factor From Scattering Function to better understand the atomic-level details
-of materials, which has applications in diverse areas, including materials
-science and condensed matter physics
+.. note::
+
+    **This job is under development and may change in future versions
+    of MDANSE. The documentation here is out-dated and only left here
+    for referencing purposes.**
+
+    The structure factor from scattering function is a concept used in
+    scientific research, particularly in the field of neutron scattering
+    experiments. It relates to how particles or atoms within a material
+    contribute to its overall structural properties based on their scattering
+    behavior. This concept provides valuable insights into the material's
+    internal structure, dynamics, and interactions. Researchers use the Structure
+    Factor From Scattering Function to better understand the atomic-level details
+    of materials, which has applications in diverse areas, including materials
+    science and condensed matter physics

@@ -154,13 +154,13 @@ Double Atom-Type Properties (Other)
 
 For calculation other than the DCSF and current correlation function (CCF)
 a slightly different weight scheme must be used as their partials are
-normalized slightly differently. In MDANSE the (weighted) partial static structure
+normalized slightly differently. In MDANSE the partial static structure
 factor (SSF) is
 
 .. math::
     :label: ws14
 
-    S_{\alpha\beta}(q) = W_{\alpha\beta} \left[ 1 + \frac{4 \pi \rho}{q} \int\limits_{0}^{\infty} \mathrm{d}r  \, \left[ g_{\alpha\beta}(r) - 1\right] r\sin(qr)\right]
+    S_{\alpha\beta}(q) = 1 + \frac{4 \pi \rho}{q} \int\limits_{0}^{\infty} \mathrm{d}r  \, \left[ g_{\alpha\beta}(r) - 1\right] r\sin(qr)
 
 where
 

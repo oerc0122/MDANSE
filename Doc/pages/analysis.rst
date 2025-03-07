@@ -121,19 +121,13 @@ Box Translated Trajectory
 
 Center Of Masses Trajectory
 '''''''''''''''''''''''''''
-.. note::
-
-    **This job is under development MDANSE and is currently not available.
-    The documentation here is out-dated and only left here for referencing
-    purposes.**
-
-    The center of mass trajectory (COMT) analysis consists in deriving the
-    trajectory of the respective centres of mass of a set of groups of
-    atoms. In order to produce a visualizable trajectory, MDANSE assigns
-    the centres of mass to pseudo-hydrogen atoms whose mass is equal to the
-    mass of their associated group. Thus, the produced trajectory can be
-    reused for other analysis. In that sense, COMT analysis is a practical
-    way to reduce noticeably the dimensionality of a system.
+The center of mass trajectory (COMT) analysis consists in deriving the
+trajectory of the respective centres of mass of a set of groups of
+atoms. In order to produce a visualizable trajectory, MDANSE assigns
+the centres of mass to pseudo-hydrogen atoms whose mass is equal to the
+mass of their associated group. Thus, the produced trajectory can be
+reused for other analysis. In that sense, COMT analysis is a practical
+way to reduce noticeably the dimensionality of a system.
 
 .. _cropped-trajectory:
 
