@@ -20,38 +20,42 @@ This section contains background theory for following plugins:
 
 Angular Correlation
 '''''''''''''''''''
-The angular correlation analysis computes the autocorrelation of a set
-of vectors describing the extent of a molecule in three orthogonal
-directions. This kind of analysis can be useful when trying to highlight
-the fact that a molecule is constrained in a given direction.
+.. note::
 
-For a given triplet of non-colinear atoms :math:`g=(a_1,a_2,a_3)`, one can
-derive an orthonormal set of three vectors :math:`v_1`, :math:`v_2`, :math:`v_3` using the
-following scheme:
+    **This job is under development and may change in future versions
+    of MDANSE. The documentation here is out-dated and only left here
+    for referencing purposes.**
 
--  :math:`v_{1} = (n_{1} + n_{2}) / \left| {n_{1} + n_{2}} \right|`
-   where :math:`n_1` and :math:`n_2` are respectively the
-   normalized vectors along (:math:`a_1`, :math:`a_2`) and (:math:`a_1`, :math:`a_3`) directions.
--  :math:`v_2` is defined as the clockwise normal vector orthogonal to :math:`v_1` that
-   belongs to the plane defined by :math:`a_1`, :math:`a_2` and :math:`a_3` atoms
--  :math:`v_{3} = v_{1}\times v_{2}`
+    The angular correlation analysis computes the autocorrelation of a set
+    of vectors describing the extent of a molecule in three orthogonal
+    directions. This kind of analysis can be useful when trying to highlight
+    the fact that a molecule is constrained in a given direction.
 
-Thus, one can define the following autocorrelation functions for the
-vectors :math:`v_1`, :math:`v_2` and :math:`v_3` defined on triplet :math:`i`:
+    For a given triplet of non-colinear atoms :math:`g=(a_1,a_2,a_3)`, one can
+    derive an orthonormal set of three vectors :math:`v_1`, :math:`v_2`, :math:`v_3` using the
+    following scheme:
 
-.. math::
-   :label: pfx3
+    -  :math:`v_{1} = (n_{1} + n_{2}) / \left| {n_{1} + n_{2}} \right|`
+       where :math:`n_1` and :math:`n_2` are respectively the
+       normalized vectors along (:math:`a_1`, :math:`a_2`) and (:math:`a_1`, :math:`a_3`) directions.
+    -  :math:`v_2` is defined as the clockwise normal vector orthogonal to :math:`v_1` that
+       belongs to the plane defined by :math:`a_1`, :math:`a_2` and :math:`a_3` atoms
+    -  :math:`v_{3} = v_{1}\times v_{2}`
 
-   {\mathrm{AC}_{g,i}{(t) = \left\langle {v_{g,i}(0)\cdot v_{g,i}(t)} \right\rangle} \qquad {i = 1,2,3}}
+    Thus, one can define the following autocorrelation functions for the
+    vectors :math:`v_1`, :math:`v_2` and :math:`v_3` defined on triplet :math:`i`:
 
-and the angular correlation averaged over all triplets is:
+    .. math::
 
-.. math::
-   :label: pfx4
+       {\mathrm{AC}_{g,i}{(t) = \left\langle {v_{g,i}(0)\cdot v_{g,i}(t)} \right\rangle} \qquad {i = 1,2,3}}
 
-   {\mathrm{AC}_{i}{(t) = {\sum\limits_{g = 1}^{N_{\mathrm{triplets}}}{\mathrm{AC}_{g,i}(t)}}} \qquad {i = 1,2,3}}
+    and the angular correlation averaged over all triplets is:
 
-where :math:`N_{\mathrm{triplets}}` is the number of selected triplets.
+    .. math::
+
+       {\mathrm{AC}_{i}{(t) = {\sum\limits_{g = 1}^{N_{\mathrm{triplets}}}{\mathrm{AC}_{g,i}(t)}}} \qquad {i = 1,2,3}}
+
+    where :math:`N_{\mathrm{triplets}}` is the number of selected triplets.
 
 
 .. _analysis-dos:
@@ -63,26 +67,29 @@ Density Of States
 
 MDANSE calculates the power spectrum of the VACF (see the
 section on :ref:`analysis-vacf`), which in case of
-the mass-weighted VACF defines the phonon discrete DOS , defined as:
+the mass-weighted VACF defines the phonon discrete DOS as:
 
 .. math::
-   :label: pfx5
+   :label: pfx1
 
-   {\mathrm{DOS}( {\omega} ) = {\sum\limits_{\alpha}^{M} W_{\alpha}} {\widetilde{C}}_{\mathbf{vv};\alpha\alpha}\left(\omega \right)}
+   \mathrm{DOS}(\omega) = \sum\limits_{\alpha} W_{\alpha} C_{\mathbf{vv}\alpha\alpha}\left( \omega \right)
 
+.. math::
+   :label: pfx2
 
-where :math:`{\widetilde{C}}_{\mathbf{vv};\alpha\alpha}\left( \omega \right)`
+   C_{\mathbf{vv}\alpha\alpha}(\omega) = \frac{1}{Nc_{\alpha}} \sum_{j}^{N_{\alpha}} \frac{1}{6\pi} \int\limits_{\infty}^{-\infty}\mathrm{d}t \, \left\langle \mathbf{v}_{j}\left( 0 \right)\cdot \mathbf{v}_{j}\left( t \right) \right\rangle e^{-i\omega t}
+
+where :math:`C_{\mathbf{vv}\alpha\alpha}\left( \omega \right)`
 is the Fourier transform of the velocity autocorrelation function average over atoms of type :math:`\alpha`,
-:math:`W_{\alpha}` is the weighting factor of atom type :math:`\alpha`
-and :math:`M` is the total number of atoms types in the system.
-
+:math:`W_{\alpha}` is the weighting factor of atom type :math:`\alpha`.
 The DOS can be computed either for the isotropic case or with respect to a
-user-defined axis. Since the DOS
-is computed from the unnormalized VACF, :math:`\mathrm{DOS}(0)` gives an
+user-defined axis.
+
+Since the DOS is computed from the unnormalized VACF, the DOS at :math:`\omega=0` gives an
 approximate value for the diffusion constant (see Eqs. :math:numref:`pfx20`)
 when an equal weighting scheme is used. The DOS can be
 smoothed by, for example, a Gaussian window applied in the time domain
-[Ref10]_ (see the section :ref:`appendix-fca`). We remark that the diffusion
+[Ref10]_ (see the section :ref:`appendix-fca`); the diffusion
 constant obtained from this DOS is biased due to the spectral smoothing
 procedure since the VACF is weighted by this window Gaussian function.
 
@@ -125,62 +132,62 @@ performed on a water box of 768 water molecules. To get the diffusion
 coefficient out of this plot, the slope of the linear part of the plot
 should be calculated.
 
-By defining :math:`\mathbf{d}_{i}(t) = \mathbf{r}_{i}( t ) - \mathbf{r}_{i}( 0 )`
-the MSD of particle :math:`i` can be written as:
+By defining :math:`\mathbf{d}_{j}(t) = \mathbf{r}_{j}( t ) - \mathbf{r}_{j}( 0 )`
+the MSD of particle :math:`j` can be written as:
 
 .. math::
-   :label: pfx14
+   :label: pfx3
 
-   \Delta_{i}^{2}{(t) = \left\langle {d_{i}^{2}( {t} )} \right\rangle}
+   \Delta_{j}^{2}{(t) = \left\langle {d_{j}^{2}( {t} )} \right\rangle}
 
-where :math:`\mathbf{r}_{i}(0)` and :math:`\mathbf{r}_{i}(t)` are
-the position of particle :math:`i` at times :math:`0` and :math:`t`
-and :math:`d_{i}( t ) = \vert \mathbf{d}_{i}(t) \vert`.
+where :math:`\mathbf{r}_{j}(0)` and :math:`\mathbf{r}_{j}(t)` are
+the position of particle :math:`j` at times :math:`0` and :math:`t`
+and :math:`d_{j}( t ) = \vert \mathbf{d}_{j}(t) \vert`.
 One can introduce an MSD with respect to a given axis :math:`\mathbf{n}`:
 
 .. math::
-   :label: pfx15
+   :label: pfx4
 
-   \Delta_{i}^{2}( t;\hat{\mathbf{n}} ) = \left\langle {d_{i}^{2}( {t;\hat{\mathbf{n}}} )} \right\rangle \qquad d_{i}(t;\hat{\mathbf{n}}) = \hat{\mathbf{n}} \cdot \mathbf{d}_{i}( t )
+   \Delta_{j}^{2}( t, \hat{\mathbf{n}} ) = \left\langle {d_{j}^{2}( {t, \hat{\mathbf{n}}} )} \right\rangle \qquad d_{j}(t, \hat{\mathbf{n}}) = \hat{\mathbf{n}} \cdot \mathbf{d}_{j}( t )
 
 where :math:`\hat{\mathbf{n}}` is a unit vector along :math:`\mathbf{n}`.
-The calculation of MSD is the standard way to obtain diffusion
-coefficients from Molecular Dynamics (MD) simulations.
 
+The calculation of MSD is the standard way to obtain diffusion
+coefficients from MD simulations.
 Assuming Einstein-diffusion in the long time limit one has for isotropic systems
 
 .. math::
-   :label: pfx17
+   :label: pfx5
 
-   {D_{i} = {\lim\limits_{t\rightarrow\infty}{\frac{1}{6t}\mathrm{\Delta}_{i}^{2}(t)}}}.
+   {D_{j} = {\lim\limits_{t\rightarrow\infty}{\frac{1}{6t}\mathrm{\Delta}_{j}^{2}(t)}}}.
 
 There exists also a well-known relation between the MSD and the
 velocity autocorrelation function. One can show (see e.g. [Ref11]_) that
 
 .. math::
-   :label: pfx18
+   :label: pfx6
    
-   \mathbf{d}_{i}{(t) = {\int\limits_{0}^{t}{\mathrm{d}t_1 \, \mathbf{v}_{i}(t_1)}}} \qquad \text{and} \qquad \mathrm{\Delta}_{i}^{2}{(t) = 6}{\int\limits_{0}^{t}{\mathrm{d}t_1 \, ( t - t_1 )C_{\mathbf{vv};ii}(t_1)}}
+   \mathbf{d}_{j}{(t) = {\int\limits_{0}^{t}{\mathrm{d}t' \, \mathbf{v}_{j}(t')}}} \qquad \text{and} \qquad \mathrm{\Delta}_{j}^{2}{(t) = 6}{\int\limits_{0}^{t}{\mathrm{d}t' \, ( t - t' )C_{\mathbf{vv}jj}(t')}}
 
-where :math:`C_{\mathbf{vv};ii}(t)` is the velocity autocorrelation function of the particle :math:`i`.
-Using now the definition Eq. :math:numref:`pfx17` of the diffusion
+where :math:`C_{\mathbf{vv}jj}(t)` is the velocity autocorrelation function of the particle :math:`j`.
+Using now the definition Eq. :math:numref:`pfx5` of the diffusion
 coefficient one obtains the relations
 
 .. math::
-   :label: pfx20
+   :label: pfx7
 
-   {{D_{i} = {\int\limits_{0}^{\infty}{\mathrm{d}t \, C_{\mathbf{vv};ii}(t)}}} = \pi \widetilde{C}_{\mathbf{vv};ii}(0).}
+   {{D_{j} = {\int\limits_{0}^{\infty}{\mathrm{d}t \, C_{\mathbf{vv}jj}(t)}}} = \pi C_{\mathbf{vv}jj}(\omega=0).}
 
 
 Computationally, the MSD is calculated by calculating the position autocorrelation since
-from Eq. :math:numref:`pfx14`
+from Eq. :math:numref:`pfx3`
 
 .. math::
-   :label: pfx22
+   :label: pfx8
 
-   \Delta_{i}^{2}(t) = \left\langle [\mathbf{r}_{i}( t ) - \mathbf{r}_{i}(0)]^2 \right\rangle = \left\langle \mathbf{r}_{i}^{2}(t) \right\rangle + \left\langle \mathbf{r}_{i}^{2}( 0 ) \right\rangle - 2\left\langle \mathbf{r}_{i}(t )\mathbf{r}_{i}(0) \right\rangle
+   \Delta_{j}^{2}(t) = \left\langle [\mathbf{r}_{j}( t ) - \mathbf{r}_{j}(0)]^2 \right\rangle = \left\langle \mathbf{r}_{j}^{2}(t) \right\rangle + \left\langle \mathbf{r}_{j}^{2}( 0 ) \right\rangle - 2\left\langle \mathbf{r}_{j}(t )\mathbf{r}_{j}(0) \right\rangle
 
-where the last part on the right side Eq. :math:numref:`pfx22` is the position autocorrelation of the particle :math:`i`.
+where the last part on the right side Eq. :math:numref:`pfx8` is the position autocorrelation of the particle :math:`j`.
 
 .. _analysis-op:
 
@@ -189,90 +196,90 @@ Order Parameter
 
 .. _theory-and-implementation-3:
                          
+.. note::
 
-Adequate and accurate cross comparison of the NMR and MD simulation
-data is of crucial importance in versatile studies conformational
-dynamics of proteins. NMR relaxation spectroscopy has proven to be a
-unique approach for a site-specific investigation of both global
-tumbling and internal motions of proteins. The molecular motions
-modulate the magnetic interactions between the nuclear spins and lead
-for each nuclear spin to a relaxation behaviour which reflects its
-environment. Since its first applications to the study of protein
-dynamics, a wide variety of experiments has been proposed to investigate
-backbone as well as side chain dynamics. Among them, the heteronuclear
-relaxation measurement of amide backbone :sup:`15`\ N nuclei is one of
-the most widespread techniques. The relationship between microscopic
-motions and measured spin relaxation rates is given by Redfield's theory
-[Ref13]_. Under the hypothesis that
-:sup:`15`\ N relaxation occurs through dipole-dipole interactions with
-the directly bonded :sup:`1`\ H atom and chemical shift anisotropy
-(CSA), and assuming that the tensor describing the CSA is axially
-symmetric with its axis parallel to the N-H bond, the relaxation rates
-of the :sup:`15`\ N nuclei are determined by a time correlation
-function,
+    **This job is under development MDANSE and is currently not available.
+    The documentation here is out-dated and only left here for referencing
+    purposes.**
 
-.. math::
-   :label: pfx34
+    Adequate and accurate cross comparison of the NMR and MD simulation
+    data is of crucial importance in versatile studies conformational
+    dynamics of proteins. NMR relaxation spectroscopy has proven to be a
+    unique approach for a site-specific investigation of both global
+    tumbling and internal motions of proteins. The molecular motions
+    modulate the magnetic interactions between the nuclear spins and lead
+    for each nuclear spin to a relaxation behaviour which reflects its
+    environment. Since its first applications to the study of protein
+    dynamics, a wide variety of experiments has been proposed to investigate
+    backbone as well as side chain dynamics. Among them, the heteronuclear
+    relaxation measurement of amide backbone :sup:`15`\ N nuclei is one of
+    the most widespread techniques. The relationship between microscopic
+    motions and measured spin relaxation rates is given by Redfield's theory
+    [Ref13]_. Under the hypothesis that
+    :sup:`15`\ N relaxation occurs through dipole-dipole interactions with
+    the directly bonded :sup:`1`\ H atom and chemical shift anisotropy
+    (CSA), and assuming that the tensor describing the CSA is axially
+    symmetric with its axis parallel to the N-H bond, the relaxation rates
+    of the :sup:`15`\ N nuclei are determined by a time correlation
+    function,
 
-   {C_{\mathit{ii}}{(t) = \left\langle {P_{2}\left( {\mu_{i}(0)\cdot\mu_{i}(t)} \right)} \right\rangle}}
+    .. math::
 
-which describes the dynamics of a unit vector :math:`\mu_{i}(t)` pointing
-along the :sup:`15`\ N-:sup:`1`\ H bond of the residue :math:`i` in the
-laboratory frame. Here :math:`P_{2}(x)` is the second order Legendre
-polynomial. The Redfield theory shows that relaxation measurements probe
-the relaxation dynamics of a selected nuclear spin only at a few
-frequencies. Moreover, only a limited number of independent observables
-are accessible. Hence, to relate relaxation data to protein dynamics one
-has to postulate either a dynamical model for molecular motions or a
-functional form for :math:`C_{ii}(t)`, yet depending on a limited number
-of adjustable parameters. Usually, the tumbling motion of proteins in
-solution is assumed isotropic and uncorrelated with the internal
-motions, such that:
+       {C_{\mathit{ii}}{(t) = \left\langle {P_{2}\left( {\mu_{i}(0)\cdot\mu_{i}(t)} \right)} \right\rangle}}
 
-.. math::
-   :label: pfx35
+    which describes the dynamics of a unit vector :math:`\mu_{i}(t)` pointing
+    along the :sup:`15`\ N-:sup:`1`\ H bond of the residue :math:`i` in the
+    laboratory frame. Here :math:`P_{2}(x)` is the second order Legendre
+    polynomial. The Redfield theory shows that relaxation measurements probe
+    the relaxation dynamics of a selected nuclear spin only at a few
+    frequencies. Moreover, only a limited number of independent observables
+    are accessible. Hence, to relate relaxation data to protein dynamics one
+    has to postulate either a dynamical model for molecular motions or a
+    functional form for :math:`C_{ii}(t)`, yet depending on a limited number
+    of adjustable parameters. Usually, the tumbling motion of proteins in
+    solution is assumed isotropic and uncorrelated with the internal
+    motions, such that:
 
-   {C_{\mathit{ii}}{(t) = C^{\mathrm{G}}}(t) C_{\mathit{ii}}^{\mathrm{I}}(t)}
+    .. math::
 
-where :math:`C^{\mathrm{G}}(t)` and :math:`C_{\mathit{ii}}^{\mathrm{I}}(t)` denote the
-global and the internal time correlation function,
-respectively. Within the so-called model free approach
-[Ref14]_, [Ref15]_
-the internal correlation function is modelled by an exponential,
+       {C_{\mathit{ii}}{(t) = C^{\mathrm{G}}}(t) C_{\mathit{ii}}^{\mathrm{I}}(t)}
 
-.. math::
-   :label: pfx37
+    where :math:`C^{\mathrm{G}}(t)` and :math:`C_{\mathit{ii}}^{\mathrm{I}}(t)` denote the
+    global and the internal time correlation function,
+    respectively. Within the so-called model free approach
+    [Ref14]_, [Ref15]_
+    the internal correlation function is modelled by an exponential,
 
-   {C_{\mathit{ii}}^{\mathrm{I}}{(t) = {S_{i}^{2} + \left( {1 - S_{i}^{2}} \right)}}\exp\left( \frac{- t}{\tau_{\mathrm{eff},i}} \right)}
+    .. math::
 
-Here the asymptotic value
+       {C_{\mathit{ii}}^{\mathrm{I}}{(t) = {S_{i}^{2} + \left( {1 - S_{i}^{2}} \right)}}\exp\left( \frac{- t}{\tau_{\mathrm{eff},i}} \right)}
 
-.. math::
-   :label: pfx38
-   
-   {S_{i}^{2} = C_{\mathit{ii}}}\left( {+ \infty} \right)
+    Here the asymptotic value
 
-\ is the so-called generalized order parameter, which indicates the
-degree of spatial restriction of the internal motions of a bond vector,
-while the characteristic time :math:`\tau_{\mathrm{eff},i}` is an
-effective correlation time, setting the time scale of the
-internal relaxation processes. :math:`S_{i}^{2}` can adopt values
-ranging from :math:`0` (completely disordered) to :math:`1` (fully ordered). So,
-:math:`S_{i}^{2}` is the appropriate indicator of protein backbone motions in
-computationally feasible timescales as it describes the spatial aspects
-of the reorientational motion of N-H peptidic bonds vector.
+    .. math::
 
-When performing order parameter analysis, MDANSE computes for each
-residue :math:`i` both :math:`C_{\mathit{ii}}(t)` and :math:`S_{i}^{2}`.
-It also computes a correlation function averaged over all the selected
-bonds defined as:
+       {S_{i}^{2} = C_{\mathit{ii}}}\left( {+ \infty} \right)
 
-.. math::
-   :label: pfx44
+    \ is the so-called generalized order parameter, which indicates the
+    degree of spatial restriction of the internal motions of a bond vector,
+    while the characteristic time :math:`\tau_{\mathrm{eff},i}` is an
+    effective correlation time, setting the time scale of the
+    internal relaxation processes. :math:`S_{i}^{2}` can adopt values
+    ranging from :math:`0` (completely disordered) to :math:`1` (fully ordered). So,
+    :math:`S_{i}^{2}` is the appropriate indicator of protein backbone motions in
+    computationally feasible timescales as it describes the spatial aspects
+    of the reorientational motion of N-H peptidic bonds vector.
 
-   {C^{\mathrm{I}}{(t) = {\sum\limits_{i = 1}^{N_{\mathrm{bonds}}}{C_{\mathit{ii}}^{\mathrm{I}}(t)}}}}
+    When performing order parameter analysis, MDANSE computes for each
+    residue :math:`i` both :math:`C_{\mathit{ii}}(t)` and :math:`S_{i}^{2}`.
+    It also computes a correlation function averaged over all the selected
+    bonds defined as:
 
-where :math:`N_{\mathrm{bonds}}` is the number of selected bonds for the analysis.
+    .. math::
+
+       {C^{\mathrm{I}}{(t) = {\sum\limits_{i = 1}^{N_{\mathrm{bonds}}}{C_{\mathit{ii}}^{\mathrm{I}}(t)}}}}
+
+    where :math:`N_{\mathrm{bonds}}` is the number of selected bonds for the analysis.
 
 
 .. _analysis-pacf:
@@ -281,21 +288,21 @@ Position AutoCorrelation Function
 '''''''''''''''''''''''''''''''''
 
 The position autocorrelation function (PACF) is similar to the
-velocity autocorrelation function described below. In MDANSE the PACF
+velocity autocorrelation function in :ref:`analysis-vacf`. In MDANSE the PACF
 is calculated relative to the atoms average position over the entire
 trajectory. The PACF of atom type :math:`\alpha` is
 
 .. math::
-   :label: pfx44a
+   :label: pfx9
 
-   \mathrm{PACF}_{\alpha}(t) = \frac{1}{3}\frac{W_\alpha}{N_{\alpha}} \sum_{i}^{N_{\alpha}}  \left\langle {\Delta \mathbf{r}_{i}(0)\cdot \Delta  \mathbf{r}_{i}(t)} \right\rangle
+   \mathrm{PACF}_{\alpha}(t) = \frac{1}{3}\frac{1}{Nc_{\alpha}} \sum_{j}^{N_{\alpha}}  \left\langle {\Delta \mathbf{r}_{j}(0)\cdot \Delta  \mathbf{r}_{j}(t)} \right\rangle
 
 where
 
 .. math::
-   :label: pfx44b
+   :label: pfx10
 
-   \Delta \mathbf{r}_{i}\left( t \right) = \mathbf{r}_{i}(t) - \langle \mathbf{r}_{i}(t_0) \rangle_{t_0}
+   \Delta \mathbf{r}_{j}\left( t \right) = \mathbf{r}_{j}(t) - \langle \mathbf{r}_{j}(t') \rangle_{t'}
 
 so that the origin dependence of the PACF function is removed.
 
@@ -304,37 +311,57 @@ so that the origin dependence of the PACF function is removed.
 Van Hove Function
 '''''''''''''''''
 The van Hove function describes the probability of finding a particle
-:math:`j` at time :math:`t` with a displacement of :math:`\mathbf{r}` from a
-particle :math:`i` at a time :math:`0`
+:math:`k` at time :math:`t` with a displacement of :math:`\mathbf{r}` from a
+particle :math:`j` at a time :math:`0`
 
 .. math::
-    G(\mathbf{r}, t) = \frac{1}{N}   \sum_{i}^{N}\sum_{j}^{N} \left\langle \delta [\mathbf{r} - \mathbf{r}_{j}(t) + \mathbf{r}_{i}(0)] \right\rangle.
+   :label: pfx11
+
+    G(\mathbf{r}, t) = \frac{1}{N}   \sum_{jk} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle.
 
 The van Hove function is related to the intermediate scattering
 function via a Fourier transform and the dynamic structure factor
 via a double Fourier transform
 
 .. math::
-    F(\mathbf{q}, t) &= \int \mathrm{d}\mathbf{r} \, G(\mathbf{r},t) \exp(i \mathbf{q} \cdot \mathbf{r}) \\
-    S(\mathbf{q}, \omega) &= \int \mathrm{d}t \int \mathrm{d}\mathbf{r}  \, G(\mathbf{r},t) \exp(i \mathbf{q} \cdot \mathbf{r} - i \omega t)
+   :label: pfx12
+
+    F(\mathbf{q}, t) = \int \mathrm{d}\mathbf{r} \, G(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r}}
+
+.. math::
+   :label: pfx13
+
+    S(\mathbf{q}, \omega) = \int \mathrm{d}t \int \mathrm{d}\mathbf{r}  \, G(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r} - i \omega t}
 
 and can be split into distinct and self parts where
 
 .. math::
-    G_{\mathrm{d}}(\mathbf{r}, t) &= \frac{1}{N}   \sum_{i}^{N}\sum_{j \neq i}^{N} \left\langle \delta [\mathbf{r} - \mathbf{r}_{j}(t) + \mathbf{r}_{i}(0)] \right\rangle \\
-    G_{\mathrm{s}}(\mathbf{r}, t) &= \frac{1}{N}   \sum_{i} \left\langle \delta [\mathbf{r} - \mathbf{r}_{i}(t) + \mathbf{r}_{i}(0)] \right\rangle
+   :label: pfx14
 
-In MDANSE the distinct and self parts of the van Hove function are
-spherically averaged and normalised so that
-:math:`\mathcal{G}_{\mathrm{d}}(r, t) = G_{\mathrm{d}}(r, t) / \rho` and
-:math:`\mathcal{G}_{\mathrm{s}}(r, t) = G_{\mathrm{s}}(r, t) / \rho`.
-For liquid or gaseous systems
+    G_{\mathrm{d}}(\mathbf{r}, t) = \frac{1}{N}   \sum_{j}\sum_{k \neq j} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle
 
 .. math::
-    &\lim_{r \rightarrow \infty } \mathcal{G}_{\mathrm{d}}(r, t) = \lim_{t \rightarrow \infty } \mathcal{G}_{\mathrm{d}}(r, t) = 1 \\
-    &\lim_{t \rightarrow \infty } \mathcal{G}_{\mathrm{s}}(r, t) = N^{-1}
+   :label: pfx15
 
-where in the thermodynamic limit :math:`N \rightarrow \infty`.
+    G_{\mathrm{s}}(\mathbf{r}, t) = \frac{1}{N}   \sum_{j} \left\langle \delta [\mathbf{r} - \mathbf{r}_{j}(t) + \mathbf{r}_{j}(0)] \right\rangle
+
+In MDANSE the distinct and self parts of the van Hove function are
+spherically averaged and normalised so that for liquid or gaseous systems
+
+.. math::
+   :label: pfx16
+
+    \lim_{r \rightarrow \infty } \mathcal{G}_{\mathrm{d}}(r, t) = \lim_{t \rightarrow \infty } \mathcal{G}_{\mathrm{d}}(r, t) = 1 \\
+
+.. math::
+   :label: pfx17
+
+    \lim_{t \rightarrow \infty } \mathcal{G}_{\mathrm{s}}(r, t) = N^{-1}
+
+where
+:math:`\mathcal{G}_{\mathrm{d}}(r, t) = G_{\mathrm{d}}(r, t) / \rho` and
+:math:`\mathcal{G}_{\mathrm{s}}(r, t) = G_{\mathrm{s}}(r, t) / \rho`;
+in the thermodynamic limit :math:`N \rightarrow \infty`.
 
 .. _analysis-vacf:
 
@@ -368,53 +395,42 @@ oscillation before decaying to zero. This decaying time can be
 considered as the average time for a collision between two atoms to
 occur before they diffuse away.
 
-Mathematically, the VACF of atom :math:`\alpha` in an atomic or molecular system is
+Mathematically, the VACF of atom :math:`j` in an atomic or molecular system is
 usually defined as
 
 .. math::
-   :label: pfx45
+   :label: pfx18
 
-   {C_{\mathit{vv};\mathit{\alpha\alpha}}(t)\doteq\frac{1}{3}\left\langle {v_{\alpha}\left( 0 \right)\cdot v_{\alpha}\left( t \right)} \right\rangle.}
+   {C_{\mathbf{vv}jj}(t) = \frac{1}{3}\left\langle {\mathbf{v}_{j}( 0 )\cdot \mathbf{v}_{j}( t )} \right\rangle.}
 
 In some cases, e.g. for non-isotropic systems, it is useful to define
 VACF along a given axis,
 
 .. math::
-   :label: pfx46
+   :label: pfx19
 
-   {C_{\mathit{vv};\mathit{\alpha\alpha}}\left( {t;n} \right)\doteq\left\langle {v_{\alpha}\left( {0;n} \right)v_{\alpha}\left( {t;n} \right)} \right\rangle,}
+   {C_{\mathbf{vv}jj}(t, \hat{\mathbf{n}}) = \frac{1}{3}\left\langle {v_{j}( 0, \hat{\mathbf{n}}) v_{j}( t, \hat{\mathbf{n}})} \right\rangle \qquad v_{j}(t, \hat{\mathbf{n}}) =   \hat{\mathbf{n}} \cdot \mathbf{v}_{j}(t)}
 
-where :math:`v_{\alpha}(t; n)` is given by
-
-.. math::
-   :label: pfx47
-
-   {v_{\alpha}\left( {t;n} \right)\doteq n\cdot v_{\alpha}(t).}
-
-The vector :math:`n` is a unit vector defining a space-fixed axis.
-
-The VACF of the particles in a many body system can be related to the
-incoherent dynamic structure factor by the relation:
+where the vector :math:`\hat{\mathbf{n}}` is a unit vector defining a space-fixed
+axis. The VACF of the particles in a many-body system can be related to the
+incoherent dynamic structure factor by the relation
 
 .. math::
-   :label: pfx48
+   :label: pfx20
 
-   {\lim\limits_{q\rightarrow 0}\frac{\omega^{2}}{q^{2}}S{\left( {q,\omega} \right) = G}(\omega),}
+   {\lim\limits_{q\rightarrow 0}\frac{1}{3}\frac{\omega^{2}}{q^{2}}S_{\mathrm{inc}}{\left( {q,\omega} \right) = \mathrm{DOS}}(\omega, \hat{\mathbf{q}}).}
 
-where :math:`G(\omega)` is the density of states. For an isotropic system it
-reads
 
-.. math::
-   :label: pfx49
-
-   {G{(\omega) = {\sum\limits_{\alpha}{b_{\alpha,\mathit{inc}}^{2}{\overset{\sim}{C}}_{\mathit{vv};\mathit{\alpha\alpha}}(\omega)}}},}
+where :math:`\hat{\mathbf{q}}` is the unit vector in the direction of :math:`\mathbf{q}`.
+Here the density of states is as weight sum of the Fourier transform of
+the projected VACF
 
 .. math::
-   :label: pfx50
+   :label: pfx21
 
-   {{\overset{\sim}{C}}_{\mathit{vv};\mathit{\alpha\alpha}}{(\omega) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d} t \,}\exp\left\lbrack {{- i}\omega t} \right\rbrack C_{\mathit{vv};\mathit{\alpha\alpha}}(t).}
+   {\mathrm{DOS}{(\omega, \hat{\mathbf{q}}) = {\frac{1}{N}\sum\limits_{j}{b_{\mathrm{inc},j}^{2}{{C}}_{\mathbf{vv}jj}(\omega, \hat{\mathbf{q}})}}},}
 
-For non-isotropic systems, relation :math:numref:`pfx48` holds if the DOS
-is computed from the atomic velocity autocorrelation
-functions :math:`C_{\mathit{vv};\mathit{\alpha\alpha}}\left( {t;n_{q}} \right)`
-where :math:`n_q` is the unit vector in the direction of :math:`q`.
+.. math::
+   :label: pfx22
+
+   {C_{\mathbf{vv}jj}{(\omega, \hat{\mathbf{q}}) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d} t \,} C_{\mathbf{vv}jj}(t, \hat{\mathbf{q}}) e^{-i \omega t}}.
