@@ -262,14 +262,13 @@ class DynamicIncoherentStructureFactor(IJob):
         assign_weights(self._outputData, weight_dict, "s(q,f)_%s")
         for element, number in list(nAtomsPerElement.items()):
             extra_scaling = 1.0 / number
-            self._outputData[f"f(q,t)_{element}"].scaling_factor *= extra_scaling
+            self._outputData[f"f(q,t)_{element}"] *= extra_scaling
             self._outputData[f"s(q,f)_{element}"][:] = get_spectrum(
                 self._outputData[f"f(q,t)_{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
-            self._outputData[f"s(q,f)_{element}"].scaling_factor *= extra_scaling
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,

@@ -13,35 +13,35 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import Union
+
+from typing import Set, Sequence
+
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
-__all__ = [
-    "select_water",
-]
-
-
-def select_water(
-    trajectory: Trajectory, check_exists: bool = False
-) -> Union[set[int], bool]:
-    """Selects the O and H atoms of all water molecules.
+def select_molecules(
+    trajectory: Trajectory, molecule_names: Sequence[str] = (), **_kwargs: str
+) -> Set[int]:
+    """Selects all the atoms belonging to the specified molecule types.
 
     Parameters
     ----------
-    system : ChemicalSystem
-        The MDANSE chemical system.
-    check_exists : bool, optional
-        Check if a match exists.
+    trajectory : Trajectory
+        A trajectory instance to which the selection is applied
+    molecule_names : Sequence[str]
+        a list of molecule names (str) which are keys of ChemicalSystem._clusters
 
     Returns
     -------
-    Union[set[int], bool]
-        The atom indices of the matched atoms or a bool if checking match.
+    Set[int]
+        Set of indices of atoms belonging to molecules from molecule_names
     """
+    selection = set()
     system = trajectory.chemical_system
-    pattern = "[#8X2;H2](~[H])~[H]"
-    if check_exists:
-        return system.has_substructure_match(pattern)
-    else:
-        return system.get_substructure_matches(pattern)
+    selection = {
+        index
+        for molecule in molecule_names
+        for cluster in system._clusters.get(molecule, ())
+        for index in cluster
+    }
+    return selection
