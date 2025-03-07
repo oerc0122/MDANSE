@@ -29,7 +29,7 @@ def test_atom_transmutation_return_dict_with_transmutations_with_incorrect_eleme
     atm_transmuter = AtomTransmuter(protein_trajectory)
     with pytest.raises(ValueError):
         atm_transmuter.apply_transmutation(
-            {"all": False, "element": {"S": True}}, "CCC"
+            '{"0": {"function_name": "select_atoms", "atom_types": ["S"]}}', "CCC"
         )
 
 
@@ -37,7 +37,7 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
     protein_trajectory,
 ):
     atm_transmuter = AtomTransmuter(protein_trajectory)
-    atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "atom_types": ["S"]}}', "C")
     mapping = atm_transmuter.get_setting()
     assert mapping == {
         98: "C",
@@ -57,8 +57,8 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
     protein_trajectory,
 ):
     atm_transmuter = AtomTransmuter(protein_trajectory)
-    atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
-    atm_transmuter.apply_transmutation({"all": False, "index": {98: True}}, "N")
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "atom_types": ["S"]}}', "C")
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "index_list": [98]}}', "N")
     mapping = atm_transmuter.get_setting()
     assert mapping == {
         98: "N",
@@ -78,8 +78,8 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
     protein_trajectory,
 ):
     atm_transmuter = AtomTransmuter(protein_trajectory)
-    atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
-    atm_transmuter.apply_transmutation({"all": False, "index": {98: True}}, "S")
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "atom_types": ["S"]}}', "C")
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "index_list": [98]}}', "S")
     mapping = atm_transmuter.get_setting()
     assert mapping == {
         175: "C",
@@ -98,10 +98,8 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
     protein_trajectory,
 ):
     atm_transmuter = AtomTransmuter(protein_trajectory)
-    atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
-    atm_transmuter.apply_transmutation(
-        {"all": False, "index": {98: True, 99: True}}, "S"
-    )
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "atom_types": ["S"]}}', "C")
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "index_list": [98, 99]}}', "S")
     mapping = atm_transmuter.get_setting()
     assert mapping == {
         99: "S",
@@ -119,10 +117,8 @@ def test_atom_transmutation_return_dict_with_transmutations_with_s_element_trans
 
 def test_atom_transmutation_return_empty_dict_after_reset(protein_trajectory):
     atm_transmuter = AtomTransmuter(protein_trajectory)
-    atm_transmuter.apply_transmutation({"all": False, "element": {"S": True}}, "C")
-    atm_transmuter.apply_transmutation(
-        {"all": False, "index": {98: True, 99: True}}, "S"
-    )
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "atom_types": ["S"]}}', "C")
+    atm_transmuter.apply_transmutation('{"0": {"function_name": "select_atoms", "index_list": [98, 99]}}', "S")
     atm_transmuter.reset_setting()
     mapping = atm_transmuter.get_setting()
     assert mapping == {}
