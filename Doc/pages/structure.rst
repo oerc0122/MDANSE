@@ -362,6 +362,28 @@ It provides the flexibility to control both distance and :math:`q`-value ranges,
 facilitating a  exploration of the material's structural
 properties.
 
+**Static Structure Factor**: An important quantity describing structural properties of liquids is the
+static structure factor. :math:`S(q)` is an integral involving the
+dynamic structure factor or the coherent intermediate scattering function
+at zero time delay :math:`t = 0`.
+
+.. math::
+   :label: pfx73
+
+   {S(q)\doteq{\int{\mathrm{d}\omega}}\,S_{\mathrm{coh}}\left( {q,\omega} \right) = \text{F}_{\mathrm{coh}}\left( {q,0} \right).}
+
+**Total Structure Factors**: MDANSE computes the partial :math:`S(Q)` as the Fourier transform of the
+partial pair distribution function :math:`g(r)`, corresponding to the Faber-Ziman definition:
+
+.. math::
+   :label: pfx78
+
+   {S_{\alpha\beta}(Q) = 1 + \frac{4\pi\rho_0}{Q}\int\limits_{0}^{\infty}{\mathrm{d}r \, r \sin(Qr) \left\lbrack {g_{\alpha\beta}}(r)-1 \right\rbrack}}
+
+The total :math:`S(Q)` is computed as a weighted sum similar to the one used for
+the total :math:`g(r)`. In the case of the analysis 'X-ray Static structure
+factor', the :math:`Q`-dependence of the atomic form factors is taken into
+account in this weighted sum.
 
 .. _voronoi:
 
@@ -394,3 +416,18 @@ provides fine-grained control over ":math:`r`-values" and ":math:`q`-values," en
 customization for probing specific material structural characteristics.
 This tool is invaluable for advancing scientific and industrial research,
 especially in neutron scattering experiments.
+
+**X-Ray Observable Normalization**: Soper has provided experimental data (table 4 in *ISRN Physical
+Chemistry*, 279463 (2013), given in file soper13_fx.dat). Here a source
+of confusion is that the data can be normalized in different ways (see
+Soper's paper). Using the normalization II in that reference we have
+that:
+
+.. math::
+   :label: pfx79
+
+    D_{x}{(Q) = \frac{\sum\limits_{\mathit{\alpha\beta}\geq\alpha}{\left( {2 - \delta_{\mathit{\alpha\beta}}} \right) c_{\alpha}c_{\beta}f_{\alpha}{(Q)}f_{\beta}{(Q)}\left\lbrack {S_{\mathit{\alpha\beta}}{(Q) - 1}} \right\rbrack}}{\sum\limits_{\alpha}{c_{\alpha}f_{\alpha}^{2}{(Q)}}} = \left\lbrack {S{(Q) - 1}} \right\rbrack}\frac{\sum\limits_{\mathit{\alpha\beta}}{c_{\alpha}c_{\beta}f_{\alpha}{(Q)}f_{\beta}{(Q)}}}{\sum\limits_{\alpha}{c_{\alpha}f_{\alpha}^{2}{(Q)}}}
+
+Where :math:`S(Q)` would be the static structure factor (going to :math:`1` at large :math:`Q`)
+computed by MDANSE. Therefore, even after using MDANSE we should
+recalculate the x-ray observable using the atomic factors.

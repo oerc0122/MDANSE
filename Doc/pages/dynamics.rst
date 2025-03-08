@@ -60,14 +60,14 @@ Angular Correlation
 
 .. _analysis-dos:
 
-Density Of States
+Density of States
 '''''''''''''''''
 
 .. _theory-and-implementation-1:
 
 MDANSE calculates the power spectrum of the VACF (see the
 section on :ref:`analysis-vacf`), which in case of
-the mass-weighted VACF defines the phonon discrete DOS as:
+the mass-weighted VACF defines the phonon discrete DOS as
 
 .. math::
    :label: pfx1
@@ -77,7 +77,7 @@ the mass-weighted VACF defines the phonon discrete DOS as:
 .. math::
    :label: pfx2
 
-   C_{\mathbf{vv}\alpha\alpha}(\omega) = \frac{1}{Nc_{\alpha}} \sum_{j}^{N_{\alpha}} \frac{1}{6\pi} \int\mathrm{d}t \, \left\langle \mathbf{v}_{j}\left( 0 \right)\cdot \mathbf{v}_{j}\left( t \right) \right\rangle e^{-i\omega t}
+   C_{\mathbf{vv}\alpha\alpha}(\omega) = \frac{1}{Nc_{\alpha}} \sum_{j \in \alpha} \frac{1}{6\pi} \int\mathrm{d}t \, \left\langle \mathbf{v}_{j}\left( 0 \right)\cdot \mathbf{v}_{j}\left( t \right) \right\rangle e^{-i\omega t}
 
 where :math:`C_{\mathbf{vv}\alpha\alpha}\left( \omega \right)`
 is the Fourier transform of the velocity autocorrelation function average over atoms of type :math:`\alpha`,
@@ -132,8 +132,8 @@ performed on a water box of 768 water molecules. To get the diffusion
 coefficient out of this plot, the slope of the linear part of the plot
 should be calculated.
 
-By defining :math:`\mathbf{d}_{j}(t) = \mathbf{r}_{j}( t ) - \mathbf{r}_{j}( 0 )`
-the MSD of particle :math:`j` can be written as:
+By defining :math:`\mathbf{d}_{j}(t) = \mathbf{r}_{j}(t) - \mathbf{r}_{j}(0)`
+the MSD of particle :math:`j` can be written as
 
 .. math::
    :label: pfx3
@@ -143,7 +143,7 @@ the MSD of particle :math:`j` can be written as:
 where :math:`\mathbf{r}_{j}(0)` and :math:`\mathbf{r}_{j}(t)` are
 the position of particle :math:`j` at times :math:`0` and :math:`t`
 and :math:`d_{j}( t ) = \vert \mathbf{d}_{j}(t) \vert`.
-One can introduce an MSD with respect to a given axis :math:`\mathbf{n}`:
+One can introduce an MSD with respect to a given axis :math:`\mathbf{n}`
 
 .. math::
    :label: pfx4
@@ -295,14 +295,14 @@ trajectory. The PACF of atom type :math:`\alpha` is
 .. math::
    :label: pfx9
 
-   \mathrm{PACF}_{\alpha}(t) = \frac{1}{3}\frac{1}{Nc_{\alpha}} \sum_{j}^{N_{\alpha}}  \left\langle {\Delta \mathbf{r}_{j}(0)\cdot \Delta  \mathbf{r}_{j}(t)} \right\rangle
+   \mathrm{PACF}_{\alpha}(t) = \frac{1}{3}\frac{1}{Nc_{\alpha}} \sum_{j \in \alpha}  \left\langle {\Delta \mathbf{r}_{j}(0)\cdot \Delta  \mathbf{r}_{j}(t)} \right\rangle
 
 where
 
 .. math::
    :label: pfx10
 
-   \Delta \mathbf{r}_{j}\left( t \right) = \mathbf{r}_{j}(t) - \langle \mathbf{r}_{j}(t') \rangle_{t'}
+   \Delta \mathbf{r}_{j}\left( t \right) = \mathbf{r}_{j}(t) - \langle \mathbf{r}_{j} \rangle
 
 so that the origin dependence of the PACF function is removed.
 
@@ -312,12 +312,20 @@ Van Hove Function
 '''''''''''''''''
 The van Hove function describes the probability of finding a particle
 :math:`k` at time :math:`t` with a displacement of :math:`\mathbf{r}` from a
-particle :math:`j` at a time :math:`0`
+particle :math:`j` at a time :math:`0`. In MDANSE the van Hove function is
+written as a weighted sum of partial terms which are divided by the density
 
 .. math::
-   :label: pfx11
+   :label: pfx11a
 
-    G(\mathbf{r}, t) = \frac{1}{N}   \sum_{jk} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle.
+    G(\mathbf{r}, t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta}G_{\alpha\beta}(\mathbf{r}, t)
+
+where
+
+.. math::
+   :label: pfx11b
+
+    G_{\alpha\beta}(\mathbf{r}, t) = \frac{1}{Nc_{\alpha}c_{\beta}}  \frac{1}{\rho} \sum_{j \in \alpha} \sum_{k \in \beta} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle.
 
 The van Hove function is related to the intermediate scattering
 function via a Fourier transform and the dynamic structure factor
@@ -326,46 +334,42 @@ via a double Fourier transform
 .. math::
    :label: pfx12
 
-    F(\mathbf{q}, t) = \int \mathrm{d}\mathbf{r} \, G(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r}}
+    F_{\alpha\beta}(\mathbf{q}, t) = \rho \int \mathrm{d}\mathbf{r} \, G_{\alpha\beta}(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r}}
 
 .. math::
    :label: pfx13
 
-    S(\mathbf{q}, \omega) = \int \mathrm{d}t \int \mathrm{d}\mathbf{r}  \, G(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r} - i \omega t}
+    S_{\alpha\beta}(\mathbf{q}, \omega) = \rho \int \mathrm{d}t \int \mathrm{d}\mathbf{r}  \, G_{\alpha\beta}(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r} - i \omega t}
 
 and can be split into distinct and self parts where
 
 .. math::
    :label: pfx14
 
-    G_{\mathrm{d}}(\mathbf{r}, t) = \frac{1}{N}   \sum_{j}\sum_{k \neq j} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle
+    G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = \frac{1}{Nc_{\alpha}c_{\beta}}  \frac{1}{\rho} \sum_{j \in \alpha} \sum_{\substack{k \in \beta \\ k \neq j}} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle
 
 .. math::
    :label: pfx15
 
-    G_{\mathrm{s}}(\mathbf{r}, t) = \frac{1}{N}   \sum_{j} \left\langle \delta [\mathbf{r} - \mathbf{r}_{j}(t) + \mathbf{r}_{j}(0)] \right\rangle
+    G^{\mathrm{s}}_{\alpha}(\mathbf{r}, t) = \frac{1}{Nc_{\alpha}}  \frac{1}{\rho} \sum_{j \in \alpha} \left\langle \delta [\mathbf{r} - \mathbf{r}_{j}(t) + \mathbf{r}_{j}(0)] \right\rangle.
 
-In MDANSE the distinct and self parts of the van Hove function are
-spherically averaged and normalised so that for liquid or gaseous systems
+For isotropic liquid or gaseous systems,
 
 .. math::
    :label: pfx16
 
-    \lim_{r \rightarrow \infty } G_{\mathrm{d}}'(r, t) = \lim_{t \rightarrow \infty } \mathcal{G}_{\mathrm{d}}'(r, t) = 1 \\
+    \lim_{\mathbf{r} \rightarrow \infty } G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = \lim_{t \rightarrow \infty } G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = 1 \\
 
 .. math::
    :label: pfx17
 
-    \lim_{t \rightarrow \infty } G_{\mathrm{s}}'(r, t) = N^{-1}
+    \lim_{t \rightarrow \infty } G^{\mathrm{s}}_{\alpha}(\mathbf{r}, t) = N^{-1}
 
-where
-:math:`G_{\mathrm{d}}'(r, t) = G_{\mathrm{d}}(r, t) / \rho` and
-:math:`G_{\mathrm{s}}'(r, t) = G_{\mathrm{s}}(r, t) / \rho`;
-in the thermodynamic limit :math:`N \rightarrow \infty`.
+where in the thermodynamic limit :math:`N \rightarrow \infty`.
 
 .. _analysis-vacf:
 
-Velocity AutoCorrelation Function
+Velocity Autocorrelation Function
 '''''''''''''''''''''''''''''''''
 
 .. _theory-and-implementation-4:
@@ -418,20 +422,18 @@ incoherent dynamic structure factor by the relation
 .. math::
    :label: pfx20
 
-   {\lim\limits_{q\rightarrow 0}\frac{1}{3}\frac{\omega^{2}}{q^{2}}S_{\mathrm{inc}}{(\mathbf{q},\omega) = \mathrm{DOS}}(\omega, \hat{\mathbf{q}}).}
-
+   {\lim\limits_{q\rightarrow 0}\frac{1}{3}\frac{\omega^{2}}{q^{2}}S_{\mathrm{inc}}{(\mathbf{q},\omega) = \mathrm{DOS}}(\hat{\mathbf{q}}, \omega)}
 
 where :math:`\hat{\mathbf{q}}` is the unit vector in the direction of :math:`\mathbf{q}`.
-Here the density of states is a weighted sum of the Fourier transform of
-the projected VACF. If :math:`S_{\mathrm{inc}}( {\mathbf{q},\omega} )` was weighted with using
-the squared incoherent scattering lengths then
+Here the total density of states is a weighted sum of the Fourier transform of
+the projected VACF
 
 .. math::
    :label: pfx21
 
-   {\mathrm{DOS}{(\hat{\mathbf{q}}, \omega) = {\frac{1}{N}\sum\limits_{j}{b_{\mathrm{inc},j}^{2}{{C}}_{\mathbf{vv}jj}(\hat{\mathbf{q}}, \omega)}}},}
+   \mathrm{DOS}(\hat{\mathbf{q}}, \omega) = \sum\limits_{\alpha} W_{\alpha} C_{\mathbf{vv}\alpha\alpha}(\hat{\mathbf{q}}, \omega)
 
 .. math::
    :label: pfx22
 
-   {C_{\mathbf{vv}jj}{(\hat{\mathbf{q}}, \omega) = \frac{1}{2\pi}}{\int\mathrm{d} t \,} C_{\mathbf{vv}jj}(\hat{\mathbf{q}}, t) e^{-i \omega t}}.
+   {C_{\mathbf{vv}\alpha\alpha}{(\hat{\mathbf{q}}, \omega) = \frac{1}{2\pi}} \frac{1}{Nc_{\alpha}}\sum_{j \in \alpha} {\int\mathrm{d} t \,} C_{\mathbf{vv}jj}(\hat{\mathbf{q}}, t) e^{-i \omega t}}.

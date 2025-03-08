@@ -14,24 +14,25 @@ Symbols and Notation
 :math:`C_{\mathbf{vv}jj}(t)`                            the velocity autocorrelation function of particle :math:`j`
 :math:`C_{\mathbf{vv}jj}(\omega)`                       the Fourier transform of :math:`C_{\mathbf{vv}jj}(t)`
 :math:`D`                                               diffusion constant
+:math:`\Delta_{j}^2(t)`                                 mean squared displacement of particle :math:`j`
 :math:`E`                                               energy
 :math:`\mathrm{DOS}(\omega)`                            density of states
 :math:`F(\mathbf{q}, t)`                                intermediate scattering function
 :math:`F_{\mathrm{coh}}(\mathbf{q}, t)`                 coherent intermediate scattering function
 :math:`F_{\mathrm{inc}}(\mathbf{q}, t)`                 incoherent intermediate scattering function
 :math:`F_{\mathrm{inc}}^{\text{G}}(\mathbf{q}, t)`      Gaussian approximation of the incoherent intermediate scattering function
-:math:`J_{\mu\nu}(\mathbf{q}, t)`                       the current correlation function for current in the cartesian directions :math:`\mu` and :math:`\nu`
+:math:`J_{\mu\nu}(\mathbf{q}, t)`                       the current correlation function between the currents in the cartesian directions :math:`\mu` and :math:`\nu`
 :math:`J_{\mu\nu}(\mathbf{q}, \omega)`                  the Fourier transform of :math:`J_{\mu\nu}(\mathbf{q}, t)`
-:math:`J_{\mathrm{L}}(\mathbf{q}, t)`                   the longitudinal current correlation function
-:math:`J_{\mathrm{L}}(\mathbf{q}, \omega)`              the Fourier transform of :math:`J_{\mathrm{L}}(\mathbf{q}, t)`
-:math:`J_{\mathrm{T}}(\mathbf{q}, t)`                   the transverse current correlation function
-:math:`J_{\mathrm{T}}(\mathbf{q}, \omega)`              the Fourier transform of :math:`J_{\mathrm{T}}(\mathbf{q}, t)`
+:math:`J^{\mathrm{L}}(\mathbf{q}, t)`                   the longitudinal current correlation function
+:math:`J^{\mathrm{L}}(\mathbf{q}, \omega)`              the Fourier transform of :math:`J^{\mathrm{L}}(\mathbf{q}, t)`
+:math:`J^{\mathrm{T}}(\mathbf{q}, t)`                   the transverse current correlation function
+:math:`J^{\mathrm{T}}(\mathbf{q}, \omega)`              the Fourier transform of :math:`J^{\mathrm{T}}(\mathbf{q}, t)`
 :math:`k_{\mathrm{i}}`                                  the wavenumber of the incident neutron
 :math:`k_{\mathrm{f}}`                                  the wavenumber of the scattered neutron
 :math:`g(\mathbf{r})`                                   pair distribution function
 :math:`G(\mathbf{r}, t)`                                the van Hove function
-:math:`G_{\mathrm{d}}(\mathbf{r}, t)`                   distinct part of the van Hove function
-:math:`G_{\mathrm{s}}(\mathbf{r}, t)`                   self part of the van Hove function
+:math:`G^{\mathrm{d}}(\mathbf{r}, t)`                   distinct part of the van Hove function
+:math:`G^{\mathrm{s}}(\mathbf{r}, t)`                   self part of the van Hove function
 :math:`t`                                               time
 :math:`t_{\mathrm{cor}}`                                the total time of the correlation function
 :math:`t_{\mathrm{tot}}`                                the total time of the MD simulation
