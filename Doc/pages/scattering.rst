@@ -3,8 +3,8 @@ This section is dealing with specific types of analysis performed by
 MDANSE. If you are not sure where these fit into the general workflow
 of data analysis, please read :ref:`workflow-of-analysis`.
 
-Analysis Theory: Scattering
-===========================
+Analysis: Scattering
+====================
 
 This section contains background theory for following plugins:
 
@@ -92,7 +92,7 @@ scattering system [Ref16]_ and can be written as:
 .. math::
    :label: scattering5
 
-   {S{\left( {\mathbf{q},\omega} \right) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d}t \, } F\left( {\mathbf{q},t} \right) e^{-i \omega t}}
+   {S{\left( {\mathbf{q},\omega} \right) = \frac{1}{2\pi}}{\int\mathrm{d}t \, } F\left( {\mathbf{q},t} \right) e^{-i \omega t}}
 
 and
 
@@ -124,57 +124,46 @@ structure factor into their *coherent* and *incoherent* parts which
 describe collective and single particle motions, respectively. By defining
 
 .. math::
-   :label: pfx65
+   :label: scattering8
 
-   {b_{\alpha,\mathrm{coh}}\doteq\overline{b_{\alpha}},}
+   b_{\mathrm{coh},j} = \overline{b_{j}},
 
 .. math::
-   :label: pfx66
+   :label: scattering9
 
-   {b_{\alpha,\mathrm{inc}}\doteq\sqrt{\overline{b_{\alpha}^{2}} - {\overline{b_{\alpha}}}^{2}},}
+   b_{\mathrm{inc},j} = \sqrt{\overline{\vert b_{j}\vert^{2}} - {\vert\overline{b_{j}}}\vert^{2}},
 
 the coherent and incoherent intermediate scattering functions can be
 written. They are expressed as sums over pairs of nuclei, with different
-treatments for coherent and incoherent scattering lengths.
+treatments for coherent and incoherent scattering lengths
 
 .. math::
-   :label: pfx67
+   :label: scattering10
 
-   {\text{F}_{\text{coh}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{\alpha,\beta}b_{\alpha,\mathrm{coh}}}b_{\beta,\mathrm{coh}}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}(0)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\beta}(t)} \right\rbrack} \right\rangle,}
-
-.. math::
-   :label: pfx68
-
-   {\text{F}_{\text{inc}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{\alpha}{b_{\alpha,\mathrm{inc}}^{2}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}(0)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\alpha}(t)} \right\rbrack} \right\rangle}}.}
-
-MDANSE introduces the partial terms, this considers the contributions from different species :math:`(I, J)` to the scattering process.
+   {\text{F}_{\text{coh}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{jk}b_{\mathrm{coh},j}}b_{\mathrm{coh},k}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{k}\left( t \right)} \right\rbrack} \right\rangle,}
 
 .. math::
-   :label: pfx69
+   :label: scattering11
 
-   {\text{F}_{\text{coh}}{\left( {q,t} \right) = \sum\limits_{I,J\geq I}^{N_{\mathrm{species}}}}\sqrt{n_{I}n_{J}\omega_{I,\text{coh}}\omega_{J,\text{coh}}}F_{\mathit{IJ},\text{coh}}\left( {q,t} \right),}
+   {\text{F}_{\text{inc}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{j}{b_{\mathrm{inc},j}^{2}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( t \right)} \right\rbrack} \right\rangle}}.}
 
-.. math::
-   :label: pfx70
-
-   {\text{F}_{\text{inc}}{\left( {q,t} \right) = {\sum\limits_{I = 1}^{N_{\mathrm{species}}}{n_{I}\omega_{I,\text{inc}}F_{I,\text{inc}}\left( {q,t} \right)}}}}
-
-where:
+MDANSE introduces the partial terms, this considers the contributions from
+different species to the scattering process
 
 .. math::
-   :label: pfx71
+   :label: scattering12
 
-   {\text{F}_{\mathit{IJ},\text{coh}}{\left( {q,t} \right) = \frac{1}{\sqrt{n_{I}n_{J}}}}{\sum\limits_{\alpha}^{n_{I}}{\sum\limits_{\beta}^{n_{J}}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}\left( 0 \right)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\beta}\left( t \right)} \right\rbrack} \right\rangle}},}
+   F_{\text{coh},\alpha\beta}{(\mathbf{q},t) = \frac{1}{N c_{\alpha} c_{\beta}}}{\sum\limits_{j}^{N_{\alpha}}{\sum\limits_{k}^{N_{\beta}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{k}\left( t \right)} \right\rbrack} \right\rangle}},
 
 .. math::
-   :label: pfx72
+   :label: scattering13
 
-   {\text{F}_{I,\text{inc}}{\left( {q,t} \right) = \frac{1}{n_{I}}}{\sum\limits_{\alpha = 1}^{n_{I}}\left\langle {\exp\left\lbrack {{- i}q\cdot\hat{R}_{\alpha}\left( 0 \right)} \right\rbrack\exp\left\lbrack {iq\cdot\hat{R}_{\alpha}\left( t \right)} \right\rbrack} \right\rangle}.}
+   F_{\text{inc},\alpha}{(\mathbf{q},t ) = \frac{1}{N c_{\alpha}}}{\sum\limits_{j}^{N_{\alpha}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( t \right)} \right\rbrack} \right\rangle}
 
-where :math:`n_I`, :math:`n_J`, :math:`n_{\mathrm{species}}`, :math:`\omega_{I,(\mathrm{coh}/\mathrm{inc})}`
-and :math:`\omega_{J,(\mathrm{coh}/\mathrm{inc})}` are defined in Section :ref:`target_CN`. The corresponding dynamic structure factors are obtained by performing
-the Fourier transformation defined in Eq. :math:numref:`pfx61`.
-
+where :math:`N_{\alpha}`, :math:`N_{\beta}` are the number of atoms of
+type :math:`\alpha` and :math:`\beta`. The total coherent and
+incoherent intermediate scattering functions will now be a weighted sum of
+the partial terms, for further details see Section :ref:`weighting-scheme`.
 
 **Classical Framework and Corrections**:
 In the classical framework the intermediate scattering functions are
@@ -185,51 +174,49 @@ well known that this procedure leads to a loss of the universal detailed
 balance relation,
 
 .. math::
-   :label: pfx74
+   :label: scattering14
 
-   {\text{S}{\left( {q,\omega} \right) = \exp}\left\lbrack {\beta\hbar\omega} \right\rbrack\text{S}\left( {{- q}{, - \omega}} \right),}
+   S(\mathbf{q},\omega) = \exp(\beta\hbar\omega) S( - \mathbf{q} , - \omega),
 
 and also to a loss of all odd moments
 
 .. math::
-   :label: pfx75
+   :label: scattering15
 
-   {\left\langle \omega^{2{n + 1}} \right\rangle\doteq{\int\limits_{- \infty}^{+ \infty}{\mathrm{d}\omega}}\, \omega^{2{n + 1}}S\left( {q,\omega} \right) \qquad {n = 1,2},\ldots.}
+   {\left\langle \omega^{2{n + 1}} \right\rangle = {\int{\mathrm{d}\omega}}\, \omega^{2{n + 1}}S\left( {\mathbf{q},\omega} \right).}
 
 The odd moments vanish since the classical dynamic structure factor is
 even in :math:`\omega`, assuming invariance of the scattering process with respect to
 reflections in space. The first moment is also universal. For an atomic
-liquid, containing only one sort of atoms, it reads
+liquid, containing only one type of atom
 
 .. math::
-   :label: pfx76
+   :label: scattering16
 
-   {{\left\langle \omega \right\rangle = \frac{\hbar q^{2}}{2M}},}
+   {{\left\langle \omega \right\rangle = \frac{\hbar q^{2}}{2M}}}
 
-where :math:`M` is the mass of the atoms.
+where :math:`M` is the mass of the atom.
 
-**Recoil Moment**: Formula :math:numref:`pfx76` shows that the
+**Recoil Moment**: Eq. :math:numref:`scattering16` shows that the
 first moment is given by the average kinetic energy (in units of
 :math:`\hbar`) of a particle which receives a momentum transfer
 :math:`\hbar q`. Therefore, :math:`\langle\omega\rangle`
-is called the *recoil moment*. A number of 'recipes' has been suggested
+is called the *recoil moment*. A number of "recipes" has been suggested
 to correct classical dynamic structure factors for detailed balance and
 to describe recoil effects in an approximate way. The most popular one
 has been suggested by Schofield [Ref17]_
 
 .. math::
-   :label: pfx77
+   :label: scattering17
 
-   {{\text{S}\left( {q,\omega} \right)\approx\exp\left\lbrack \frac{\beta\hbar\omega}{2} \right\rbrack}_{}\text{S}_{\mathrm{cl}}\left( {q,\omega} \right)}
+   {{S\left( {\mathbf{q},\omega} \right)\approx\exp(\beta\hbar\omega / 2)} S_{\mathrm{cl}}\left( {\mathbf{q},\omega} \right)}.
 
 One can easily verify that the resulting dynamic structure factor
-fulfils the relation of detailed balance. Formally, the correction :math:numref:`pfx77`
-is correct to first order in :math:`\hbar`. Therefore, it cannot be used
-for large :math:`q`-values which correspond to large momentum transfers
+fulfils the relation of detailed balance. Formally, the correction :math:numref:`scattering17`
+is correct to first order in :math:`\hbar` and cannot be used
+for large :math:`\mathbf{q}`-values which correspond to large momentum transfers
 :math:`\hbar q`. This is actually true for all correction
-methods which have suggested
-so far. For more details we refer to [Ref18]_.
-
+methods which have suggested so far. For more details we refer to [Ref18]_.
 
 **Static Structure Factor**: An important quantity describing structural properties of liquids is the
 static structure factor. :math:`S(q)` is an integral involving the
@@ -239,9 +226,9 @@ at zero time delay :math:`t = 0`.
 .. math::
    :label: pfx73
 
-   {\text{S}(q)\doteq{\int\limits_{- \infty}^{+ \infty}{\mathrm{d}\omega}}\,\text{S}_{\mathrm{coh}}\left( {q,\omega} \right) = \text{F}_{\mathrm{coh}}\left( {q,0} \right).}
+   {S(q)\doteq{\int{\mathrm{d}\omega}}\,S_{\mathrm{coh}}\left( {q,\omega} \right) = \text{F}_{\mathrm{coh}}\left( {q,0} \right).}
 
-**Total structure factors**: MDANSE computes the partial :math:`S(Q)` as the Fourier transform of the
+**Total Structure Factors**: MDANSE computes the partial :math:`S(Q)` as the Fourier transform of the
 partial pair distribution function :math:`g(r)`, corresponding to the Faber-Ziman definition:
 
 .. math::
@@ -362,52 +349,6 @@ modulus so that
    F_{\text{coh}}\left( {Q_{m}, t} \right) = \overline{F_{\text{coh}}\left( {q_m, t} \right)}^{q_m}
 
 where :math:`Q_{m} \approx \vert q_{m} \vert`.
-
-**Reciprocal lattice q-vectors**: Let
-:math:`b_1`, :math:`b_2`, :math:`b_3` be the basis vectors
-which span the MD cell. Any position vector in the MD cell can be
-written as
-
-.. math::
-   :label: pfx86
-
-   {{R = x^{'}}{b_{1} + y^{'}}{b_{2} + z^{'}}b_{3},}
-
-so that it defines the position vector in the MD cell.
-With :math:`x'`, :math:`y'`, :math:`z'` having
-values between :math:`0` and :math:`1` if :math:`R` is in the unit cell.
-The primes indicate that the coordinates are fractional coordinates. A jump due
-to periodic boundary conditions can cause :math:`x'`, :math:`y'`,
-:math:`z'` to jump by :math:`\pm1`. The set of dual basis
-vectors :math:`b^1`, :math:`b^2`, :math:`b^3` is defined by
-the relation
-
-.. math::
-   :label: pfx87
-
-   {b_{i}{b^{j} = \delta_{i}^{j}}.}
-
-and defines the dual basis vectors and their relation to the basis
-vectors. If the :math:`q`-vectors are now chosen as
-
-.. math::
-   :label: pfx88
-
-   {{q = 2}\pi\left( {k{b^{1} + l}{b^{2} + m}b^{3}} \right),}
-
-so that this selection of :math:`q`-vectors produces phase changes for
-handling jumps in particle trajectories. Here :math:`k`, :math:`l`, :math:`m`
-are integer numbers, jumps in the particle trajectories
-produce phase changes of multiples of :math:`2\pi` in the Fourier transformed
-particle density, i.e. leave it unchanged.
-
-In MDANSE, One can define a grid of
-:math:`q`-shells or a grid of :math:`q`-vectors along a given direction or on a
-given plane, giving in addition a *tolerance* for :math:`q`. MDANSE looks
-then for :math:`q`-vectors of the form given in Eq. :math:numref:`pfx88` whose moduli
-deviate within the prescribed tolerance from the equidistant :math:`q`-grid.
-From these :math:`q`-vectors only a maximum number per grid-point (called
-generically :math:`q`-shell also in the anisotropic case) is kept.
 
 **Negative coherent scattering lengths**: The :math:`q`-vectors can be generated isotropically, anisotropically or along
 user-defined directions. The :math:`\sqrt{\omega_{I}}` may be negative

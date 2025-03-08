@@ -3,8 +3,8 @@ This section is dealing with specific types of analysis performed by
 MDANSE. If you are not sure where these fit into the general workflow
 of data analysis, please read :ref:`workflow-of-analysis`.
 
-Analysis Theory: Dynamics
-=========================
+Analysis: Dynamics
+==================
 
 This section contains background theory for following plugins:
 
@@ -77,7 +77,7 @@ the mass-weighted VACF defines the phonon discrete DOS as:
 .. math::
    :label: pfx2
 
-   C_{\mathbf{vv}\alpha\alpha}(\omega) = \frac{1}{Nc_{\alpha}} \sum_{j}^{N_{\alpha}} \frac{1}{6\pi} \int\limits_{-\infty}^{\infty}\mathrm{d}t \, \left\langle \mathbf{v}_{j}\left( 0 \right)\cdot \mathbf{v}_{j}\left( t \right) \right\rangle e^{-i\omega t}
+   C_{\mathbf{vv}\alpha\alpha}(\omega) = \frac{1}{Nc_{\alpha}} \sum_{j}^{N_{\alpha}} \frac{1}{6\pi} \int\mathrm{d}t \, \left\langle \mathbf{v}_{j}\left( 0 \right)\cdot \mathbf{v}_{j}\left( t \right) \right\rangle e^{-i\omega t}
 
 where :math:`C_{\mathbf{vv}\alpha\alpha}\left( \omega \right)`
 is the Fourier transform of the velocity autocorrelation function average over atoms of type :math:`\alpha`,
@@ -351,16 +351,16 @@ spherically averaged and normalised so that for liquid or gaseous systems
 .. math::
    :label: pfx16
 
-    \lim_{r \rightarrow \infty } \mathcal{G}_{\mathrm{d}}(r, t) = \lim_{t \rightarrow \infty } \mathcal{G}_{\mathrm{d}}(r, t) = 1 \\
+    \lim_{r \rightarrow \infty } G_{\mathrm{d}}'(r, t) = \lim_{t \rightarrow \infty } \mathcal{G}_{\mathrm{d}}'(r, t) = 1 \\
 
 .. math::
    :label: pfx17
 
-    \lim_{t \rightarrow \infty } \mathcal{G}_{\mathrm{s}}(r, t) = N^{-1}
+    \lim_{t \rightarrow \infty } G_{\mathrm{s}}'(r, t) = N^{-1}
 
 where
-:math:`\mathcal{G}_{\mathrm{d}}(r, t) = G_{\mathrm{d}}(r, t) / \rho` and
-:math:`\mathcal{G}_{\mathrm{s}}(r, t) = G_{\mathrm{s}}(r, t) / \rho`;
+:math:`G_{\mathrm{d}}'(r, t) = G_{\mathrm{d}}(r, t) / \rho` and
+:math:`G_{\mathrm{s}}'(r, t) = G_{\mathrm{s}}(r, t) / \rho`;
 in the thermodynamic limit :math:`N \rightarrow \infty`.
 
 .. _analysis-vacf:
@@ -434,4 +434,4 @@ the squared incoherent scattering lengths then
 .. math::
    :label: pfx22
 
-   {C_{\mathbf{vv}jj}{(\hat{\mathbf{q}}, \omega) = \frac{1}{2\pi}}{\int\limits_{- \infty}^{+ \infty}\mathrm{d} t \,} C_{\mathbf{vv}jj}(\hat{\mathbf{q}}, t) e^{-i \omega t}}.
+   {C_{\mathbf{vv}jj}{(\hat{\mathbf{q}}, \omega) = \frac{1}{2\pi}}{\int\mathrm{d} t \,} C_{\mathbf{vv}jj}(\hat{\mathbf{q}}, t) e^{-i \omega t}}.

@@ -1,8 +1,8 @@
 
 .. _notation:
 
-Frequently Used Symbols and Notations
-=====================================
+Symbols and Notation
+====================
 
 ======================================================= ===============
 **Symbol**                                              **Description**

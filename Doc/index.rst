@@ -11,7 +11,7 @@
 Welcome to MDANSE's documentation!
 ==================================
 
-**Useful links**: `MDANSE Project Website <https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx>`_ | `MDANSE GitHub Page <https://github.com/ISISNeutronMuon/MDANSE>`_
+**Useful links**: `MDANSE Project Website <https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx>`_ | `MDANSE GitHub <https://github.com/ISISNeutronMuon/MDANSE>`_ | `MDANSE-Examples GitHub <https://github.com/ISISNeutronMuon/MDANSE-Examples>`_
 
 **MDANSE (Molecular Dynamics Analysis for Neutron Scattering Experiments)**
 is a Python application designed for computing neutron observables
@@ -64,10 +64,12 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5 <https://doi.org/10.1021/acs.jcim.6b0057
    pages/trajectory
    pages/correlation
    pages/weights
+   pages/qvectors
    pages/dynamics
    pages/scattering
    pages/structure
    pages/analysis
+   pages/notation
 
 .. toctree::
    :maxdepth: 5
@@ -94,6 +96,5 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5 <https://doi.org/10.1021/acs.jcim.6b0057
    pages/parameters
    pages/R_traj
    pages/R_units
-   pages/R_notation
    pages/R_further
    pages/references

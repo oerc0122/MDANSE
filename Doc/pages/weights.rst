@@ -1,3 +1,6 @@
+
+.. _weighting-scheme:
+
 Weighting Scheme
 ================
 
@@ -7,7 +10,7 @@ Partial properties
 In MDANSE, most properties are split by atom-type
 and the total results is a sum of these partial
 properties. For example, the partial coherent and incoherent intermediate
-scattering functions are
+scattering functions scaled with weight factors are
 
 .. math::
    :label: ws1
