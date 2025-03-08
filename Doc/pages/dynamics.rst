@@ -284,7 +284,7 @@ Order Parameter
 
 .. _analysis-pacf:
 
-Position AutoCorrelation Function
+Position Autocorrelation Function
 '''''''''''''''''''''''''''''''''
 
 The position autocorrelation function (PACF) is similar to the
