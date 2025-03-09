@@ -93,8 +93,8 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5 <https://doi.org/10.1021/acs.jcim.6b0057
    :caption: 📚 Technical References
 
    pages/R_contact
-   pages/parameters
    pages/R_traj
+   pages/parameters
    pages/R_units
    pages/R_further
    pages/references

@@ -43,7 +43,7 @@ neutrons scattered per unit time into the solid angle interval
 energy in the interval :math:`{\left\lbrack {E, {E + \mathrm{d}}E} \right\rbrack}`. To make meaningful comparisons, the double differential cross-section
 is normalized by :math:`\mathrm{d}\Omega`, :math:`\mathrm{d}E`, and the flux of the incoming neutrons. The relationship
 between the double differential cross-section and the dynamic structure factor
-is given by:
+is given by
 
 .. math::
    :label: scattering1
@@ -68,7 +68,7 @@ connecting energy and momentum in neutron scattering.
 
 **Momentum and Energy Transfer**: These equations below define the
 momentum :math:`\mathbf{q}` and energy transfer :math:`\hbar\omega`
-based on the incident and scattered wavevectors and energies:
+based on the incident and scattered wavevectors and energies
 
 .. math::
    :label: scattering3
@@ -88,7 +88,7 @@ angle and the energies of the incident and scattered neutrons
 This equation defines the dynamic structure factor :math:`S(\mathbf{q}, \omega)` as a Fourier
 transform of the intermediate scattering function :math:`F(\mathbf{q}, t)` with respect to
 time :math:`t`. It captures information about the structure and dynamics of the
-scattering system [Ref16]_ and can be written as:
+scattering system [Ref16]_ and can be written as
 
 .. math::
    :label: scattering5
@@ -127,24 +127,19 @@ describe collective and single particle motions, respectively. By defining
 .. math::
    :label: scattering8
 
-   b_{\mathrm{coh},j} = \overline{b_{j}},
-
-.. math::
-   :label: scattering9
-
-   b_{\mathrm{inc},j} = \sqrt{\overline{\vert b_{j}\vert^{2}} - {\vert\overline{b_{j}}}\vert^{2}},
+   b_{\mathrm{coh},j} = \overline{b_{j}} \qquad \text{and} \qquad b_{\mathrm{inc},j} = \sqrt{\overline{\vert b_{j}\vert^{2}} - {\vert\overline{b_{j}}}\vert^{2}}
 
 the coherent and incoherent intermediate scattering functions can be
 written. They are expressed as sums over pairs of nuclei, with different
 treatments for coherent and incoherent scattering lengths
 
 .. math::
-   :label: scattering10
+   :label: scattering9
 
    {\text{F}_{\text{coh}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{jk}b_{\mathrm{coh},j}}b_{\mathrm{coh},k}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{k}\left( t \right)} \right\rbrack} \right\rangle,}
 
 .. math::
-   :label: scattering11
+   :label: scattering10
 
    {\text{F}_{\text{inc}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{j}{b_{\mathrm{inc},j}^{2}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( t \right)} \right\rbrack} \right\rangle}}.}
 
@@ -155,17 +150,17 @@ interpreted as classical time correlation functions. The position
 operators are replaced by time-dependent vector functions and quantum
 thermal averages are replaced by classical *ensemble averages*. It is
 well known that this procedure leads to a loss of the universal detailed
-balance relation,
+balance relation
 
 .. math::
-   :label: scattering12
+   :label: scattering11
 
-   S(\mathbf{q},\omega) = \exp(\beta\hbar\omega) S( - \mathbf{q} , - \omega),
+   S(\mathbf{q},\omega) = \exp(\beta\hbar\omega) S( - \mathbf{q} , - \omega)
 
 and also to a loss of all odd moments
 
 .. math::
-   :label: scattering13
+   :label: scattering12
 
    {\left\langle \omega^{2{n + 1}} \right\rangle = {\int{\mathrm{d}\omega}}\, \omega^{2{n + 1}}S\left( {\mathbf{q},\omega} \right).}
 
@@ -175,13 +170,13 @@ reflections in space. The first moment is also universal. For an atomic
 liquid, containing only one type of atom
 
 .. math::
-   :label: scattering14
+   :label: scattering13
 
    {{\left\langle \omega \right\rangle = \frac{\hbar q^{2}}{2M}}}
 
 where :math:`M` is the mass of the atom.
 
-**Recoil Moment**: Eq. :math:numref:`scattering16` shows that the
+**Recoil Moment**: Eq. :math:numref:`scattering13` shows that the
 first moment is given by the average kinetic energy (in units of
 :math:`\hbar`) of a particle which receives a momentum transfer
 :math:`\hbar q`. Therefore, :math:`\langle\omega\rangle`
@@ -191,12 +186,12 @@ to describe recoil effects in an approximate way. The most popular one
 has been suggested by Schofield [Ref17]_
 
 .. math::
-   :label: scattering15
+   :label: scattering14
 
    {{S\left( {\mathbf{q},\omega} \right)\approx\exp(\beta\hbar\omega / 2)} S_{\mathrm{cl}}\left( {\mathbf{q},\omega} \right)}.
 
 One can easily verify that the resulting dynamic structure factor
-fulfils the relation of detailed balance. Formally, the correction :math:numref:`scattering17`
+fulfils the relation of detailed balance. Formally, the correction :math:numref:`scattering14`
 is correct to first order in :math:`\hbar` and cannot be used
 for large :math:`\mathbf{q}`-values which correspond to large momentum transfers
 :math:`\hbar q`. This is actually true for all correction
@@ -216,12 +211,12 @@ particle density whereas the current correlation function :math:`J_{\mu\nu}(\mat
 is the correlation function of the Fourier components of the particle current
 
 .. math::
-   :label: scattering16
+   :label: ccf1
 
-    J_{\mu\nu}(\mathbf{q}, t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} J_{\alpha\beta\mu\nu}(\mathbf{q}, t)
+    J_{\mu\nu}(\mathbf{q}, t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} J_{\alpha\beta\mu\nu}(\mathbf{q}, t),
 
 .. math::
-   :label: scattering17
+   :label: ccf2
 
     J_{\alpha\beta\mu\nu}(\mathbf{q}, t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}} \langle j_{\alpha\mu}(-\mathbf{q}, 0) j_{\beta\nu}(\mathbf{q}, t) \rangle
 
@@ -229,7 +224,7 @@ where :math:`\mu` and  :math:`\nu` are the cartesian directions
 :math:`x`, :math:`y` or :math:`z` and
 
 .. math::
-   :label: scattering18
+   :label: ccf3
 
    j_{\alpha\mu}(\mathbf{q}, t) = \sum_{k \in \alpha} v_{k\mu}(t) \exp(i\mathbf{q} \cdot \mathbf{r}_{k}(t)).
 
@@ -238,12 +233,12 @@ longitudinal and transverse components of the :math:`\mathbf{q}`-vector. The
 longitudinal and transverse particle current are
 
 .. math::
-   :label: scattering19
+   :label: ccf4
 
-    \mathbf{j}^{\mathrm{L}}_{\alpha}(\mathbf{q}, t) = \sum_{k \in \alpha} \hat{\mathbf{q}} \left[\mathbf{v}_{k}(t) \cdot \hat{\mathbf{q}}\right]\exp(i \mathbf{q}\cdot \mathbf{r}_k(t))
+    \mathbf{j}^{\mathrm{L}}_{\alpha}(\mathbf{q}, t) = \sum_{k \in \alpha} \hat{\mathbf{q}} \left[\mathbf{v}_{k}(t) \cdot \hat{\mathbf{q}}\right]\exp(i \mathbf{q}\cdot \mathbf{r}_k(t)),
 
 .. math::
-   :label: scattering20
+   :label: ccf5
 
     \mathbf{j}^{\mathrm{T}}_{\alpha}(\mathbf{q}, t) = \sum_{k \in \alpha} \left\{\mathbf{v}_{k}(t) - \hat{\mathbf{q}}\left[\mathbf{v}_{k}(t) \cdot \hat{\mathbf{q}}\right] \right\}\exp(i \mathbf{q}\cdot \mathbf{r}_k(t))
 
@@ -251,12 +246,12 @@ where :math:`\hat{\mathbf{q}}` are unit vectors of :math:`\mathbf{q}`. The
 partial longitudinal and transverse current correlation functions are
 
 .. math::
-   :label: scattering21
+   :label: ccf6
 
     J^{\mathrm{L}}_{\alpha\beta}(\mathbf{q}, t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}} \langle \mathbf{j}^{\mathrm{L}}_{\alpha}(-\mathbf{q}, 0) \cdot \mathbf{j}^{\mathrm{L}}_{\beta}(\mathbf{q}, t) \rangle,
 
 .. math::
-   :label: scattering22
+   :label: ccf7
 
     J^{\mathrm{T}}_{\alpha\beta}(\mathbf{q}, t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}} \langle \mathbf{j}^{\mathrm{T}}_{\alpha}(-\mathbf{q}, 0) \cdot \mathbf{j}^{\mathrm{T}}_{\beta}(\mathbf{q}, t) \rangle.
 
@@ -265,7 +260,7 @@ From the continuity equation we can obtain a relation between the
 longitudinal current correlation and the dynamic structure factor
 
 .. math::
-   :label: scattering23
+   :label: ccf8
 
     J^{\mathrm{L}}_{\alpha\beta}(\mathbf{q}, \omega) = \frac{\omega^2}{q^2} S_{\alpha\beta}(\mathbf{q}, \omega).
 
@@ -277,26 +272,26 @@ In MDANSE the dynamic coherent structure factor (DCSF) and coherent
 intermediate scattering function is a weighted sum of the partial term
 
 .. math::
-   :label: scattering24
+   :label: dcsf1
 
     S_{\text{coh}}(\mathbf{q},\omega) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} S_{\text{coh},\alpha\beta}(\mathbf{q},\omega),
 
 .. math::
-   :label: scattering25
+   :label: dcsf2
 
-    F_{\text{coh}}(\mathbf{q},t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} F_{\text{coh},\alpha\beta}(\mathbf{q},t),
+    F_{\text{coh}}(\mathbf{q},t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} F_{\text{coh},\alpha\beta}(\mathbf{q},t)
 
 where
 
 .. math::
-   :label: scattering26
+   :label: dcsf3
 
-   F_{\text{coh},\alpha\beta}{(\mathbf{q},t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}}}{\sum\limits_{j \in \alpha}{\sum\limits_{k \in \beta}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}},
+   F_{\text{coh},\alpha\beta}{(\mathbf{q},t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}}}{\sum\limits_{j \in \alpha}{\sum\limits_{k \in \beta}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}}
 
 and
 
 .. math::
-   :label: scattering27
+   :label: dcsf4
 
     S_{\text{coh},\alpha\beta}(\mathbf{q},\omega) = \int\mathrm{d}t  \,  F_{\text{coh},\alpha\beta}(\mathbf{q},t) e^{-i\omega t}.
 
@@ -313,26 +308,26 @@ In MDANSE the dynamic incoherent structure factor (DISF) and incoherent
 intermediate scattering function is a weighted sum of the partial term
 
 .. math::
-   :label: scattering28
+   :label: disf1
 
     S_{\text{inc}}(\mathbf{q},\omega) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} S_{\text{coh},\alpha\beta}(\mathbf{q},\omega),
 
 .. math::
-   :label: scattering29
+   :label: disf2
 
-    F_{\text{inc}}(\mathbf{q},t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} F_{\text{coh},\alpha\beta}(\mathbf{q},t),
+    F_{\text{inc}}(\mathbf{q},t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} F_{\text{coh},\alpha\beta}(\mathbf{q},t)
 
 where
 
 .. math::
-   :label: scattering30
+   :label: disf3
 
-   F_{\text{inc},\alpha\beta}{(\mathbf{q},t) = \frac{1}{N c_{\alpha} }}{\sum\limits_{j \in \alpha}{\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}},
+   F_{\text{inc},\alpha\beta}{(\mathbf{q},t) = \frac{1}{N c_{\alpha} }}{\sum\limits_{j \in \alpha}{\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}}
 
 and
 
 .. math::
-   :label: scattering31
+   :label: disf4
 
     S_{\text{inc},\alpha\beta}(\mathbf{q},\omega) = \int\mathrm{d}t  \,  F_{\text{inc},\alpha\beta}(\mathbf{q},t) e^{-i\omega t}.
 
@@ -359,39 +354,39 @@ hydrogen dominates by far all other contributions.
 incoherent intermediate scattering function for infinite time
 
 .. math::
-   :label: scattering32
+   :label: eisf1
 
    {\mathrm{EISF}(\mathbf{q}) = \lim\limits_{t\rightarrow\infty} F_{\mathrm{inc}}( {\mathbf{q},t} ).}
 
 Using the above definition of the EISF one can decompose the incoherent
-intermediate scattering function as follows:
+intermediate scattering function as follows
 
 .. math::
-   :label: scattering33
+   :label: eisf2
 
-   {F_{\text{inc}}{( {\mathbf{q},t} ) = \mathrm{EISF}}{(\mathbf{q}) + F_{\text{inc}}'}( {\mathbf{q},t} ),}
+   {F_{\text{inc}}{( {\mathbf{q},t} ) = \mathrm{EISF}}{(\mathbf{q}) + F_{\text{inc}}'}( {\mathbf{q},t} )}
 
 where :math:`F_{\mathrm{inc}}'(\mathbf{q}, t)` decays to zero for infinite time. Taking
 now the Fourier transform it follows immediately that
 
 .. math::
-   :label: scattering34
+   :label: eisf3
 
    {S_{\text{inc}}{( {\mathbf{q},\omega} ) = \mathrm{EISF}}(\mathbf{q})\delta{(\omega) + S_{\text{inc}}'}( {\mathbf{q},\omega} ).}
 
-Using the definition of the self-part of the van Hove function,
+Using the definition of the self-part of the van Hove function
 
 .. math::
-   :label: scattering35
+   :label: eisf4
 
-   \rho G_{\mathrm{s}} (\mathbf{r},t) = \frac{1}{2\pi^{3}} \int \mathrm{d} \mathbf{q} \, F_{\mathrm{inc}}(\mathbf{q},t) e^{-i\mathbf{q}\cdot\mathbf{r}},
+   \rho G_{\mathrm{s}} (\mathbf{r},t) = \frac{1}{2\pi^{3}} \int \mathrm{d} \mathbf{q} \, F_{\mathrm{inc}}(\mathbf{q},t) e^{-i\mathbf{q}\cdot\mathbf{r}}
 
 which can be interpreted as the conditional probability to find a tagged
 particle at the position :math:`\mathbf{r}` at time :math:`t`, given it
 started at the origin, one can write
 
 .. math::
-   :label: scattering36
+   :label: eisf5
 
    {\mathrm{EISF}(\mathbf{q}) = {\int \mathrm{d}}\mathbf{r} \,  G_{\mathrm{s}}( {\mathbf{r},{t = \infty}} )e^{-i\mathbf{q}\cdot\mathbf{r}}.}
 
@@ -406,24 +401,18 @@ this is the case for molecules in liquids and gases.
 representation of the EISF
 
 .. math::
-   :label: scattering37
+   :label: eisf6
 
-   \mathrm{EISF}(\mathbf{q}) = \sum\limits_{\alpha} W_{\alpha} \mathrm{EISF}_{\alpha}(\mathbf{q})
+   \mathrm{EISF}(\mathbf{q}) = \sum\limits_{\alpha} W_{\alpha} \mathrm{EISF}_{\alpha}(\mathbf{q}), \qquad \mathrm{EISF}_{\alpha}(\mathbf{q}) = \frac{1}{Nc_{\alpha}} \sum\limits_{j \in \alpha}  \left\vert \left\langle \exp[i \mathbf{q} \cdot \mathbf{r}_{j}] \right\rangle \right\vert^{2}
 
-and for each atom type the following expression for the EISF is
-
-.. math::
-   :label: scattering38
-
-   \mathrm{EISF}_{\alpha}(\mathbf{q}) = \frac{1}{Nc_{\alpha}} \sum\limits_{j \in \alpha}  \left\vert \left\langle \exp[i \mathbf{q} \cdot \mathbf{r}_{j}] \right\rangle \right\vert^{2} .
-
-This expression is derived from definition Eq. :math:numref:`scattering32`
-of the EISF and expression Eq. :math:numref:`scattering29` for the
+where :math:`\mathrm{EISF}_{\alpha}(\mathbf{q})` is the EISF of atom-types :math:`\alpha`. This
+expression is derived from definition Eq. :math:numref:`eisf1`
+of the EISF and expression Eq. :math:numref:`disf3` for the
 intermediate scattering function, using that for infinite time the
 relation
 
 .. math::
-   :label: scattering39
+   :label: eisf7
    
    \lim\limits_{t\rightarrow\infty}{\left\langle {\exp\left\lbrack {{- i\mathbf{q}}\cdot \mathbf{r}_{j}(0)} \right\rbrack\exp\left\lbrack { i\mathbf{q}\cdot \mathbf{r}_{j}(t)} \right\rbrack} \right\rangle = \left\langle \exp[-i \mathbf{q} \cdot \mathbf{r}_{j}(0)] \right\rangle \left\langle \exp[i \mathbf{q} \cdot \mathbf{r}_{j}(t)] \right\rangle}
 
@@ -442,33 +431,33 @@ Gaussian Dynamic Incoherent Structure Factor
 function via the cumulant expansion [Ref11]_, [Ref22]_
 
 .. math::
-   :label: scattering40
+   :label: gdisf1
 
-   F_{\text{inc}}(\mathbf{q},t ) = \sum\limits_{\alpha} W_{\alpha} F_{\text{inc},\alpha}( \mathbf{q},t)
+   F_{\text{inc}}(\mathbf{q},t ) = \sum\limits_{\alpha} W_{\alpha} F_{\text{inc},\alpha}( \mathbf{q},t),
 
 .. math::
-   :label: scattering41
+   :label: gdisf2
 
    F_{\text{inc},\alpha}(\mathbf{q},t) = \frac{1}{N c_{\alpha} } \sum\limits_{j \in \alpha} \exp\left[ -q^2 p_{1,\alpha}(t) + q^4 p_{2,\alpha}(t) + \cdots \right].
 
 The cumulants :math:`p_{n,\alpha}(t)` are identified as
 
 .. math::
-   :label: scattering43
+   :label: gdisf3
 
-   p_{1,\alpha}(\hat{\mathbf{q}},t){ = \frac{1}{2!}\left\langle d_{\alpha}^{2}(\hat{\mathbf{q}}, t) \right\rangle}
+   p_{1,\alpha}(\hat{\mathbf{q}},t){ = \frac{1}{2!}\left\langle d_{\alpha}^{2}(\hat{\mathbf{q}}, t) \right\rangle},
 
 .. math::
-   :label: scattering44
+   :label: gdisf4
 
    p_{2,\alpha}(\hat{\mathbf{q}},t){ = \frac{1}{4!}}\left\lbrack {{\left\langle {d_{\alpha}^{4}(\hat{\mathbf{q}}, t)} \right\rangle - 3}\left\langle {d_{\alpha}^{2}(\hat{\mathbf{q}}, t)} \right\rangle^{2}} \right\rbrack
 
 where
 
 .. math::
-   :label: scattering45
+   :label: gdisf5
 
-    \Delta_{\alpha}^{2}(\hat{\mathbf{q}},t) = \langle d_{\alpha}^{2}(\hat{\mathbf{q}}, t) \rangle = \frac{1}{Nc_{\alpha}}\sum_{j \in \alpha} \left\vert \hat{\mathbf{q}} \cdot [\mathbf{r}_{j}(t) - \mathbf{r}_{j}(0)] \right\vert^2.
+    \Delta_{\alpha}^{2}(\hat{\mathbf{q}},t) = \langle d_{\alpha}^{2}(\hat{\mathbf{q}}, t) \rangle = \frac{1}{Nc_{\alpha}}\sum_{j \in \alpha} \left\vert \hat{\mathbf{q}} \cdot [\mathbf{r}_{j}(t) - \mathbf{r}_{j}(0)] \right\vert^2
 
 is the average means squared displacement  along the
 axis :math:`\hat{\mathbf{q}}` of atoms of type :math:`\alpha`.
@@ -479,7 +468,7 @@ approximation the above expansion is truncated after the
 :math:`q^2`-term
 
 .. math::
-   :label: scattering46
+   :label: gdisf6
 
    F_{\text{inc},\alpha}(\mathbf{q},t) \approx F_{\text{inc},\alpha}^{\text{G}}(\mathbf{q},t) = \frac{1}{N c_{\alpha} } \sum\limits_{j \in \alpha} \exp\left[ -q^2 p_{1,\alpha}(\hat{\mathbf{q}}, t) \right]
 
@@ -494,27 +483,26 @@ Neutron Dynamic Total Structure Factor
 ''''''''''''''''''''''''''''''''''''''
 This is a combines the coherent and incoherent intermediate scattering
 functions and corresponding dynamic structure factors. It is a fully
-neutron-specific analysis, where so that coherent neutron scattering
+neutron-specific analysis, so that coherent neutron scattering
 lengths ``b_coherent`` and the square of the atomic
 incoherent neutron scattering lengths ``b_incoherent2`` are used to
-weight the corresponding coherent and incoherent signals. Therefore, in
-this analysis the weights option is not available.
+weight the corresponding coherent and incoherent signals.
 
 In this analysis the total incoherent, total coherent and total
 (coherent + incoherent) signals are calculated as
 
 .. math::
-   :label: scattering46
+   :label: ndtsf1
    
-   F_{\mathrm{inc}}(\mathbf{q},t) = \sum_{\alpha} c_{\alpha}b_{\text{inc},\alpha}^{2} F_{\mathrm{inc},\alpha}(\mathbf{q},t)
+   F_{\mathrm{inc}}(\mathbf{q},t) = \sum_{\alpha} c_{\alpha}b_{\text{inc},\alpha}^{2} F_{\mathrm{inc},\alpha}(\mathbf{q},t),
 
 .. math::
-   :label: scattering47
+   :label: ndtsf2
    
-   F_{\mathrm{coh}}(\mathbf{q},t) = \sum_{\alpha\beta} \sqrt{c_{\alpha}c_{\beta}} b_{\text{coh},\alpha}b_{\text{coh},\beta} F_{\mathrm{coh},\alpha\beta}(\mathbf{q},t)
+   F_{\mathrm{coh}}(\mathbf{q},t) = \sum_{\alpha\beta} \sqrt{c_{\alpha}c_{\beta}} b_{\text{coh},\alpha}b_{\text{coh},\beta} F_{\mathrm{coh},\alpha\beta}(\mathbf{q},t),
 
 .. math::
-   :label: scattering48
+   :label: ndtsf3
    
    F(q,t) = F_{\mathrm{inc}}(\mathbf{q},t) + F_{\mathrm{coh}}(\mathbf{q},t).
 

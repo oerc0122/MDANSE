@@ -13,23 +13,23 @@ window to ensure that the time averaging for each time step
 is done in a consistent way. Consider two time series
 
 .. math::
-   :label: eqn-fca1
+   :label: correlation1
 
-   A(n \Delta t) \quad \text{and} \quad B(n \Delta t) \qquad n = 0, \ldots, n_{\mathrm{t}}-1,
+   A(n \Delta t) \quad \text{and} \quad B(n \Delta t)
 
-of length :math:`t_{\mathrm{tot}} = (n_{\mathrm{t}} -1) \Delta t` which are
-to be correlated. In MDANSE,
+of length :math:`t_{\mathrm{tot}} = (n_{\mathrm{t}} -1) \Delta t` (:math:`n = 0, \ldots, n_{\mathrm{t}}-1`)
+which are to be correlated. In MDANSE,
 correlation function are calculated by first choosing a specific
 number of correlation time steps :math:`n_{\mathrm{c}}` which will define
 the length of our correlation function :math:`t_{\mathrm{cor}} = (n_{\mathrm{c}} -1) \Delta t`. The correlation function of
 :math:`A(n \Delta t)` and :math:`B(n \Delta t)` will be
 
 .. math::
-   :label: eqn-fca2
+   :label: correlation2
 
-   C_{AB}(n' \Delta t) = \frac{1}{n_{\mathrm{t}} - n_{\mathrm{c}} + 1} \sum\limits_{n=0}^{n_{\mathrm{t}} - n_{\mathrm{c}} + 1} A^{*}(n\Delta t)B([n + n']\Delta t) \qquad n' = 0, \ldots, n_{c} - 1.
+   C_{AB}(n' \Delta t) = \frac{1}{n_{\mathrm{t}} - n_{\mathrm{c}} + 1} \sum\limits_{n=0}^{n_{\mathrm{t}} - n_{\mathrm{c}} + 1} A^{*}(n\Delta t)B([n + n']\Delta t)
 
-In case that :math:`A(n \Delta t)` and
+where :math:`n' = 0, \ldots, n_{c} - 1`. In case that :math:`A(n \Delta t)` and
 :math:`B(n \Delta t)` are identical, the corresponding correlation function
 :math:`C_{AA}(n' \Delta t)` is called an *autocorrelation* function. Notice that
 the prefactor is the same for all :math:`n' \Delta t` time steps, this was
@@ -48,7 +48,7 @@ MDANSE the spectra can be smoothed by applying an instrument resolution
 function
 
 .. math::
-   :label: eqn-fca3
+   :label: fourier1
 
    P_{AB}\left(m \Delta \omega \right) = \frac{\Delta t}{2 \pi}\sum_{n=-(n_{\mathrm{c}}-1)}^{n_{\mathrm{c}}-1}
    \exp\left[- 2 \pi i \frac{n \Delta t }{2n_{\mathrm{c}} - 1} m \Delta \omega \right] \frac{W(n \Delta t)}{W(0)} C_{AB}( \vert n \Delta t \vert )
@@ -60,10 +60,10 @@ approximately be the case for all the correlation functions calculated
 in MDANSE assuming good (equilibrated, of a sufficient length/size and
 etc) MD trajectories are used. In MDANSE, the resolution function are
 specified in the frequency domain and are related to the resolution
-function in the time domain via a Fourier transform.
+function in the time domain via a Fourier transform
 
 .. math::
-   :label: eqn-fca4
+   :label: fourier2
 
    W(n \Delta t) = \frac{1}{2n_{\mathrm{c}} - 1} \frac{1}{ \Delta t} \sum_{m=-(n_{\mathrm{c}}-1)}^{n_{\mathrm{c}}-1} \exp\left[ 2 \pi i \frac{m \Delta \omega}{2n_{\mathrm{c}} - 1} n \Delta t \right] W(m \Delta \omega)
 
@@ -81,7 +81,7 @@ are and whether longer MD trajectories where required.
 **Gaussian**: A Gaussian window instrument resolution function is
 
 .. math::
-   :label: eqn-fca5
+   :label: resolution1
 
    W(m \Delta \omega) = \frac{\sqrt{2 \pi}}{ \sigma} \exp\left[-\frac{1}{2}\left(\frac{ m \Delta \omega  - \mu }{\sigma}\right)^2\right]
 
@@ -91,7 +91,7 @@ and :math:`\mu` is a parameter which shifts the resolution function.
 **Lorentzian**: A Lorentzian window instrument resolution function is
 
 .. math::
-   :label: eqn-fca6
+   :label: resolution2
 
    W(m \Delta \omega) = \frac{2 \sigma}{(m\Delta \omega - \mu)^2 + \sigma^2}
 
@@ -101,7 +101,7 @@ and :math:`\mu` is a parameter which shifts the resolution function..
 **Triangular**: A triangular window instrument resolution function is
 
 .. math::
-   :label: eqn-fca7
+   :label: resolution3
 
     W(m \Delta \omega) = \begin{cases}
         2 \pi (1 - \vert m \Delta \omega - \mu \vert / \sigma), & \vert m \Delta \omega - \mu \vert \leq \sigma;\\
@@ -114,7 +114,7 @@ and :math:`\mu` is a parameter which shifts the resolution function.
 **Square**: A square window instrument resolution function is
 
 .. math::
-   :label: eqn-fca8
+   :label: resolution4
 
     W(m \Delta \omega) = \begin{cases}
         \pi / \sigma, & \vert m \Delta \omega - \mu \vert \leq \sigma;\\
@@ -129,7 +129,7 @@ linear combination of the Gaussian and Lorentzian window functions
 
 
 .. math::
-   :label: eqn-fca9
+   :label: resolution5
 
     W(m \Delta \omega) = \eta \frac{2 \sigma_{\text{L}}}{(m\Delta \omega - \mu_{\text{L}})^2 + \sigma_{\text{L}}^2} + (1 - \eta) \frac{\sqrt{2 \pi}}{ \sigma_{\text{G}}} \exp\left[-\frac{1}{2}\left(\frac{ m \Delta \omega  - \mu_{\text{G}} }{\sigma_{\text{G}}}\right)^2\right]
 

@@ -70,12 +70,12 @@ section on :ref:`analysis-vacf`), which in case of
 the mass-weighted VACF defines the phonon discrete DOS as
 
 .. math::
-   :label: pfx1
+   :label: dos1
 
-   \mathrm{DOS}(\omega) = \sum\limits_{\alpha} W_{\alpha} C_{\mathbf{vv}\alpha\alpha}\left( \omega \right)
+   \mathrm{DOS}(\omega) = \sum\limits_{\alpha} W_{\alpha} C_{\mathbf{vv}\alpha\alpha}\left( \omega \right),
 
 .. math::
-   :label: pfx2
+   :label: dos2
 
    C_{\mathbf{vv}\alpha\alpha}(\omega) = \frac{1}{Nc_{\alpha}} \sum_{j \in \alpha} \frac{1}{6\pi} \int\mathrm{d}t \, \left\langle \mathbf{v}_{j}\left( 0 \right)\cdot \mathbf{v}_{j}\left( t \right) \right\rangle e^{-i\omega t}
 
@@ -86,7 +86,7 @@ The DOS can be computed either for the isotropic case or with respect to a
 user-defined axis.
 
 Since the DOS is computed from the unnormalized VACF, the DOS at :math:`\omega=0` gives an
-approximate value for the diffusion constant (see Eqs. :math:numref:`pfx20`)
+approximate value for the diffusion constant (see Eq. :math:numref:`pfx7`)
 when an equal weighting scheme is used. The DOS can be
 smoothed by, for example, a Gaussian window applied in the time domain
 [Ref10]_ (see the section :ref:`appendix-fca`); the diffusion
@@ -136,7 +136,7 @@ By defining :math:`\mathbf{d}_{j}(t) = \mathbf{r}_{j}(t) - \mathbf{r}_{j}(0)`
 the MSD of particle :math:`j` can be written as
 
 .. math::
-   :label: pfx3
+   :label: msd1
 
    \Delta_{j}^{2}{(t) = \left\langle {d_{j}^{2}( {t} )} \right\rangle}
 
@@ -146,9 +146,9 @@ and :math:`d_{j}( t ) = \vert \mathbf{d}_{j}(t) \vert`.
 One can introduce an MSD with respect to a given axis :math:`\mathbf{n}`
 
 .. math::
-   :label: pfx4
+   :label: msd2
 
-   \Delta_{j}^{2}(\hat{\mathbf{n}}, t) = \left\langle {d_{j}^{2}(\hat{\mathbf{n}}, t)} \right\rangle \qquad d_{j}(\hat{\mathbf{n}}, t) = \hat{\mathbf{n}} \cdot \mathbf{d}_{j}(t)
+   \Delta_{j}^{2}(\hat{\mathbf{n}}, t) = \left\langle {d_{j}^{2}(\hat{\mathbf{n}}, t)} \right\rangle, \qquad d_{j}(\hat{\mathbf{n}}, t) = \hat{\mathbf{n}} \cdot \mathbf{d}_{j}(t)
 
 where :math:`\hat{\mathbf{n}}` is a unit vector along :math:`\mathbf{n}`.
 
@@ -157,7 +157,7 @@ coefficients from MD simulations.
 Assuming Einstein-diffusion in the long time limit one has for isotropic systems
 
 .. math::
-   :label: pfx5
+   :label: msd3
 
    {D_{j} = {\lim\limits_{t\rightarrow\infty}{\frac{1}{6t}\mathrm{\Delta}_{j}^{2}(t)}}}.
 
@@ -165,29 +165,29 @@ There exists also a well-known relation between the MSD and the
 velocity autocorrelation function. One can show (see e.g. [Ref11]_) that
 
 .. math::
-   :label: pfx6
+   :label: msd4
    
    \mathbf{d}_{j}{(t) = {\int\limits_{0}^{t}{\mathrm{d}t' \, \mathbf{v}_{j}(t')}}} \qquad \text{and} \qquad \mathrm{\Delta}_{j}^{2}{(t) = 6}{\int\limits_{0}^{t}{\mathrm{d}t' \, ( t - t' )C_{\mathbf{vv}jj}(t')}}
 
 where :math:`C_{\mathbf{vv}jj}(t)` is the velocity autocorrelation function of the particle :math:`j`.
-Using now the definition Eq. :math:numref:`pfx5` of the diffusion
-coefficient one obtains the relations
+Using now the definition of the diffusion
+coefficient Eq. :math:numref:`msd3` one obtains the relations
 
 .. math::
-   :label: pfx7
+   :label: msd5
 
    {{D_{j} = {\int\limits_{0}^{\infty}{\mathrm{d}t \, C_{\mathbf{vv}jj}(t)}}} = \pi C_{\mathbf{vv}jj}(\omega=0).}
 
 
 Computationally, the MSD is calculated by calculating the position autocorrelation since
-from Eq. :math:numref:`pfx3`
+from Eq. :math:numref:`msd1`
 
 .. math::
-   :label: pfx8
+   :label: msd6
 
    \Delta_{j}^{2}(t) = \left\langle [\mathbf{r}_{j}( t ) - \mathbf{r}_{j}(0)]^2 \right\rangle = \left\langle \mathbf{r}_{j}^{2}(t) \right\rangle + \left\langle \mathbf{r}_{j}^{2}( 0 ) \right\rangle - 2\left\langle \mathbf{r}_{j}(t )\mathbf{r}_{j}(0) \right\rangle
 
-where the last part on the right side Eq. :math:numref:`pfx8` is the position autocorrelation of the particle :math:`j`.
+where the last part on the right side Eq. :math:numref:`msd6` is the position autocorrelation of the particle :math:`j`.
 
 .. _analysis-op:
 
@@ -198,7 +198,7 @@ Order Parameter
                          
 .. note::
 
-    **This job is under development MDANSE and is currently not available.
+    **This job is currently not available.
     The documentation here is out-dated and only left here for referencing
     purposes.**
 
@@ -293,14 +293,14 @@ is calculated relative to the atoms average position over the entire
 trajectory. The PACF of atom type :math:`\alpha` is
 
 .. math::
-   :label: pfx9
+   :label: pacf1
 
    \mathrm{PACF}_{\alpha}(t) = \frac{1}{3}\frac{1}{Nc_{\alpha}} \sum_{j \in \alpha}  \left\langle {\Delta \mathbf{r}_{j}(0)\cdot \Delta  \mathbf{r}_{j}(t)} \right\rangle
 
 where
 
 .. math::
-   :label: pfx10
+   :label: pacf2
 
    \Delta \mathbf{r}_{j}\left( t \right) = \mathbf{r}_{j}(t) - \langle \mathbf{r}_{j} \rangle
 
@@ -316,14 +316,12 @@ particle :math:`j` at a time :math:`0`. In MDANSE the van Hove function is
 written as a weighted sum of partial terms which are divided by the density
 
 .. math::
-   :label: pfx11a
+   :label: vanhove1
 
-    G(\mathbf{r}, t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta}G_{\alpha\beta}(\mathbf{r}, t)
-
-where
+    G(\mathbf{r}, t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta}G_{\alpha\beta}(\mathbf{r}, t),
 
 .. math::
-   :label: pfx11b
+   :label: vanhove2
 
     G_{\alpha\beta}(\mathbf{r}, t) = \frac{1}{Nc_{\alpha}c_{\beta}}  \frac{1}{\rho} \sum_{j \in \alpha} \sum_{k \in \beta} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle.
 
@@ -332,36 +330,46 @@ function via a Fourier transform and the dynamic structure factor
 via a double Fourier transform
 
 .. math::
-   :label: pfx12
+   :label: vanhove3
 
-    F_{\alpha\beta}(\mathbf{q}, t) = \rho \int \mathrm{d}\mathbf{r} \, G_{\alpha\beta}(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r}}
+    F_{\alpha\beta}(\mathbf{q}, t) = \rho \int \mathrm{d}\mathbf{r} \, G_{\alpha\beta}(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r}},
 
 .. math::
-   :label: pfx13
+   :label: vanhove4
 
     S_{\alpha\beta}(\mathbf{q}, \omega) = \rho \int \mathrm{d}t \int \mathrm{d}\mathbf{r}  \, G_{\alpha\beta}(\mathbf{r},t) e^{i \mathbf{q} \cdot \mathbf{r} - i \omega t}
 
 and can be split into distinct and self parts where
 
 .. math::
-   :label: pfx14
+   :label: vanhove5
 
-    G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = \frac{1}{Nc_{\alpha}c_{\beta}}  \frac{1}{\rho} \sum_{j \in \alpha} \sum_{\substack{k \in \beta \\ k \neq j}} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle
+    G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = \frac{1}{Nc_{\alpha}c_{\beta}}  \frac{1}{\rho} \sum_{j \in \alpha} \sum_{\substack{k \in \beta \\ k \neq j}} \left\langle \delta [\mathbf{r} - \mathbf{r}_{k}(t) + \mathbf{r}_{j}(0)] \right\rangle,
 
 .. math::
-   :label: pfx15
+   :label: vanhove6
 
     G^{\mathrm{s}}_{\alpha}(\mathbf{r}, t) = \frac{1}{Nc_{\alpha}}  \frac{1}{\rho} \sum_{j \in \alpha} \left\langle \delta [\mathbf{r} - \mathbf{r}_{j}(t) + \mathbf{r}_{j}(0)] \right\rangle.
 
-For isotropic liquid or gaseous systems,
+At :math:`t = 0` distinct-part of the van Hove function reduces to the
+pair distribution function while the self-part of the van Hove function
+becomes a delta function
 
 .. math::
-   :label: pfx16
+   :label: vanhove7
 
-    \lim_{\mathbf{r} \rightarrow \infty } G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = \lim_{t \rightarrow \infty } G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = 1 \\
+    G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, 0) = g_{\alpha\beta}(\mathbf{r}), \qquad\qquad G^{\mathrm{s}}_{\alpha}(\mathbf{r}, 0) =   \frac{1}{\rho} \delta(\mathbf{r})
+
+where :math:`g_{\alpha\beta}(\mathbf{r})` is the partial pair distribution function.
+For liquid or gaseous systems,
 
 .. math::
-   :label: pfx17
+   :label: vanhove8
+
+    \lim_{t \rightarrow \infty } G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = \lim_{\mathbf{r} \rightarrow \infty } G_{\alpha\beta}^{\mathrm{d}}(\mathbf{r}, t) = 1,
+
+.. math::
+   :label: vanhove9
 
     \lim_{t \rightarrow \infty } G^{\mathrm{s}}_{\alpha}(\mathbf{r}, t) = N^{-1}
 
@@ -403,7 +411,7 @@ Mathematically, the VACF of atom :math:`j` in an atomic or molecular system is
 usually defined as
 
 .. math::
-   :label: pfx18
+   :label: vacf1
 
    {C_{\mathbf{vv}jj}(t) = \frac{1}{3}\left\langle {\mathbf{v}_{j}( 0 )\cdot \mathbf{v}_{j}( t )} \right\rangle.}
 
@@ -411,16 +419,16 @@ In some cases, e.g. for non-isotropic systems, it is useful to define
 VACF along a given axis,
 
 .. math::
-   :label: pfx19
+   :label: vacf2
 
-   {C_{\mathbf{vv}jj}(\hat{\mathbf{n}}, t) = \frac{1}{3}\left\langle {v_{j}(\hat{\mathbf{n}}, 0) v_{j}(\hat{\mathbf{n}}, t)} \right\rangle \qquad v_{j}(\hat{\mathbf{n}}, t) =   \hat{\mathbf{n}} \cdot \mathbf{v}_{j}(t)}
+   {C_{\mathbf{vv}jj}(\hat{\mathbf{n}}, t) = \frac{1}{3}\left\langle {v_{j}(\hat{\mathbf{n}}, 0) v_{j}(\hat{\mathbf{n}}, t)} \right\rangle, \qquad v_{j}(\hat{\mathbf{n}}, t) =   \hat{\mathbf{n}} \cdot \mathbf{v}_{j}(t)}
 
 where the vector :math:`\hat{\mathbf{n}}` is a unit vector defining a space-fixed
 axis. The VACF of the particles in a many-body system can be related to the
 incoherent dynamic structure factor by the relation
 
 .. math::
-   :label: pfx20
+   :label: vacf3
 
    {\lim\limits_{q\rightarrow 0}\frac{1}{3}\frac{\omega^{2}}{q^{2}}S_{\mathrm{inc}}{(\mathbf{q},\omega) = \mathrm{DOS}}(\hat{\mathbf{q}}, \omega)}
 
@@ -429,11 +437,11 @@ Here the total density of states is a weighted sum of the Fourier transform of
 the projected VACF
 
 .. math::
-   :label: pfx21
+   :label: vacf4
 
-   \mathrm{DOS}(\hat{\mathbf{q}}, \omega) = \sum\limits_{\alpha} W_{\alpha} C_{\mathbf{vv}\alpha\alpha}(\hat{\mathbf{q}}, \omega)
+   \mathrm{DOS}(\hat{\mathbf{q}}, \omega) = \sum\limits_{\alpha} W_{\alpha} C_{\mathbf{vv}\alpha\alpha}(\hat{\mathbf{q}}, \omega),
 
 .. math::
-   :label: pfx22
+   :label: vacf5
 
    {C_{\mathbf{vv}\alpha\alpha}{(\hat{\mathbf{q}}, \omega) = \frac{1}{2\pi}} \frac{1}{Nc_{\alpha}}\sum_{j \in \alpha} {\int\mathrm{d} t \,} C_{\mathbf{vv}jj}(\hat{\mathbf{q}}, t) e^{-i \omega t}}.

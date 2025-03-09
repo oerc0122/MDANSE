@@ -36,24 +36,27 @@ transform of the autocorrelation of the time-derivative of the
 molecular dipole:
 
 .. math::
-   :label: pfx115
+   :label: ir1
 
-   I(\omega) \propto \frac{1}{2\pi} \int\limits_{-\infty}^{\infty} \mathrm{d}t \, e^{i\omega t}\frac{1}{3 N_{\alpha}}\sum_{\alpha} \langle \dot{\mu}_{\alpha}(0) \cdot \dot{\mu}_{\alpha}(t) \rangle
+   I(\omega) \propto  \frac{1}{N_{m}}\sum_{m} \frac{1}{6\pi} \int \mathrm{d}t \,  \left\langle \dot{\vec{\mu}}_{m}(0) \cdot \dot{\vec{\mu}}_{m}(t) \right\rangle e^{-i\omega t}
 
-where :math:`N_{\alpha}` is the number of molecules :math:`\alpha` and :math:`\dot{\mu}(t)` is
-the time-derivative of the molecular dipole moment.
+where :math:`N_{m}` is the number of molecules and :math:`\dot{\vec{\mu}}_{m}(t)` is
+the time-derivative of the molecular dipole moment of molecule :math:`m`.
 
 .. _dipole-autocorrelation-function:
 
-Dipole AutoCorrelation Function
+Dipole Autocorrelation Function
 '''''''''''''''''''''''''''''''
-Dipole autocorrelation function is valuable for studying
-molecular vibrations and infrared spectra using dipole auto-correlation.
-Researchers can gain insights into the vibrational modes and spectral
-characteristics of molecules, aiding in the identification and analysis
-of chemical compounds. Infrared spectroscopy is a fundamental technique
-in chemistry and material science, making this analysis essential for
-understanding molecular behavior and composition in simulations.
+Calculates the molecular dipole autocorrelation function which is closely
+related to the molecular infrared spectrum
+
+.. math::
+   :label: ir2
+
+   \mathrm{DACF}(t) = \frac{1}{3 N_{m}}\sum_{m} \left\langle \vec{\mu}_{m}(0) \cdot \vec{\mu}_{m}(t) \right\rangle
+
+where :math:`N_{m}` is the number of molecules :math:`m` and :math:`\vec{\mu}(t)` is
+the molecular dipole moment of molecule :math:`m`.
 
 
 Thermodynamics
@@ -104,7 +107,7 @@ Box Translated Trajectory
 '''''''''''''''''''''''''
 .. note::
 
-    **This job is under development MDANSE and is currently not available.
+    **This job is currently not available.
     The documentation here is out-dated and only left here for referencing
     purposes.**
 
@@ -135,7 +138,7 @@ Cropped Trajectory
 ''''''''''''''''''
 .. note::
 
-    **This job is under development MDANSE and is currently not available.
+    **This job is currently not available.
     The documentation here is out-dated and only left here for referencing
     purposes.**
 
@@ -153,7 +156,7 @@ Global Motion Filtered Trajectory
 '''''''''''''''''''''''''''''''''
 .. note::
 
-    **This job is under development MDANSE and is currently not available.
+    **This job is currently not available.
     The documentation here is out-dated and only left here for referencing
     purposes.**
 
@@ -187,7 +190,7 @@ Rigid Body Trajectory
 '''''''''''''''''''''
 .. note::
 
-    **This job is under development MDANSE and is currently not available.
+    **This job is currently not available.
     The documentation here is out-dated and only left here for referencing
     purposes.**
 
@@ -229,7 +232,6 @@ Rigid Body Trajectory
     define the deviation
 
     .. math::
-       :label: pfx147
 
        {\Delta_{\alpha}\doteq D(q){\left\lbrack {x_{\alpha}^{(0)} - X^{(0)}} \right\rbrack - \left\lbrack {x_{\alpha} - X} \right\rbrack}.}
 
@@ -240,7 +242,6 @@ Rigid Body Trajectory
     The target function to be minimized is now defined as
 
     .. math::
-       :label: pfx149
 
        {m{\left( {q;X,X^{(0)}} \right) = {\sum\limits_{\alpha}{\omega_{\alpha}|\Delta|_{\alpha}^{2}}}}.}
 
@@ -249,7 +250,6 @@ Rigid Body Trajectory
     respect to the quaternion parameters and yields
 
     .. math::
-       :label: pfx150
 
        {{X = {\sum\limits_{\alpha}\omega_{\alpha}}}x_{\alpha} \qquad\qquad  {X^{(0)} = {\sum\limits_{\alpha}\omega_{\alpha}}}x_{\alpha}^{(0)}}
 
@@ -257,14 +257,12 @@ Rigid Body Trajectory
     which can be written as
 
     .. math::
-       :label: pfx152
 
        m{(q) = {\sum\limits_{\alpha}{\omega_{\alpha}\left\lbrack {{D(q)r}_{\alpha}^{(0)} - r_{\alpha}} \right\rbrack^{2}}}\overset{!}{=}\mathrm{Min}}.
 
     The relative position vectors
 
     .. math::
-       :label: pfx153
 
        {{r_{\alpha} = {x_{\alpha} - X}} \qquad\qquad r_{\alpha}^{(0)} = {x_{\alpha}^{(0)} - X^{(0)}}}
 
@@ -272,7 +270,6 @@ Rigid Body Trajectory
     [Ref25]_
 
     .. math::
-       :label: pfx155
 
        D(q) = \begin{pmatrix}
        {q_{0}^{2} + q_{1}^{2} - q_{2}^{2} - q_{3}^{2}} & {2\left( {{- q_{0}}{q_{3} + q_{1}}q_{2}} \right)} & {2\left( {q_{0}{q_{2} + q_{1}}q_{3}} \right)} \\
@@ -289,14 +286,12 @@ Rigid Body Trajectory
     representation of an arbitrary quaternion,
 
     .. math::
-       :label: pfx156
 
        {{A = a_{0}}{1 + a_{1}}{I + a_{2}}{J + a_{3}} K,}
 
     reads
 
     .. math::
-       :label: pfx157
 
        A = \begin{pmatrix}
        a_{0} & {- a_{1}} & {- a_{2}} & {- a_{3}} \\
@@ -312,21 +307,18 @@ Rigid Body Trajectory
     :math:`R`, which is given by
 
     .. math::
-       :label: pfx158
 
        {{R = x}{I + y}{J + z} K,}
 
     and perform the operation
 
     .. math::
-       :label: pfx159
 
        {{R^{'} = \mathit{QRQ}^{T}},}
 
     where :math:`Q` is a normalised quaternion
 
     .. math::
-       :label: pfx160
 
        {\text{|}Q\text{|}^{2}\doteq{{q_{0}^{2} + q_{1}^{2} + q_{2}^{2} + q_{3}^{2}} = \frac{1}{4}\mathrm{Tr}\, Q^{T}Q = 1}}.
 
@@ -334,7 +326,6 @@ Rigid Body Trajectory
     written as
 
     .. math::
-       :label: pfx161
 
        {{R^{'} = x^{'}}{I + y^{'}}{J + z^{'}} K,}
 
@@ -344,7 +335,6 @@ Rigid Body Trajectory
     rotational minimization problem may now be phrased as follows:
 
     .. math::
-       :label: pfx163
 
        {m{(q) = {{\sum\limits_{\alpha}{{\omega_{\alpha}\text{|}\mathit{QR}}_{\alpha}^{(0)}Q}^{T}} - R_{\alpha}}}{\text{|}^{2}\overset{!}{=}\mathrm{Min}}.}
 
@@ -352,7 +342,6 @@ Rigid Body Trajectory
     this may also be written as
 
     .. math::
-       :label: pfx164
 
        {{{m{(q) = {\sum\limits_{\alpha}\omega_{\alpha}}}\text{|}\mathit{QR}_{\alpha}^{(0)}} - R_{\alpha}}Q\text{|}^{2}{\overset{!}{=}\mathrm{Min}}.}
 
@@ -362,7 +351,6 @@ Rigid Body Trajectory
     form in the quaternion parameters [Ref24]_,
 
     .. math::
-       :label: pfx166
 
        {m{(q) = q}\cdot\mathit{Mq} \qquad\qquad {M = {\sum\limits_{\alpha}{\omega_{\alpha}M_{\alpha}}}}}
 
@@ -375,21 +363,18 @@ Rigid Body Trajectory
     to account for the normalization constraint we have
 
     .. math::
-       :label: pfx169
 
        {m^{'}{\left( {q,\lambda} \right) = q}\cdot{\mathit{Mq} - \lambda}{\left( {q\cdot{q - 1}} \right)\overset{!}{=}\mathrm{Min}}.}
 
     This leads immediately to the eigenvalue problem
 
     .. math::
-       :label: pfx170
 
        {{\mathit{Mq} = \lambda}q \qquad\qquad q\cdot{q = 1.}}
 
     Now any normalized eigenvector :math:`q` fulfils the relation
 
     .. math::
-       :label: pfx172
 
        {{\lambda = q}\cdot\mathit{Mq}\equiv m(q)}
 
@@ -404,7 +389,7 @@ Unfolded Trajectory
 '''''''''''''''''''
 .. note::
 
-    **This job is under development MDANSE and is currently not available.
+    **This job is currently not available.
     The documentation here is out-dated and only left here for referencing
     purposes.**
 
@@ -431,7 +416,7 @@ McStas Virtual Instrument
 '''''''''''''''''''''''''
 .. note::
 
-    **This job is under development MDANSE and is currently not available.
+    **This job is currently not available.
     The documentation here is out-dated and only left here for referencing
     purposes.**
 

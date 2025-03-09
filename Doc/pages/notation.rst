@@ -14,9 +14,10 @@ Symbols and Notation
 :math:`C_{\mathbf{vv}jj}(t)`                            the velocity autocorrelation function of particle :math:`j`
 :math:`C_{\mathbf{vv}jj}(\omega)`                       the Fourier transform of :math:`C_{\mathbf{vv}jj}(t)`
 :math:`D`                                               diffusion constant
+:math:`\mathrm{DOS}(\omega)`                            density of states
 :math:`\Delta_{j}^2(t)`                                 mean squared displacement of particle :math:`j`
 :math:`E`                                               energy
-:math:`\mathrm{DOS}(\omega)`                            density of states
+:math:`\mathrm{EISF}(\mathbf{q})`                       elastic incoherent structure factor
 :math:`F(\mathbf{q}, t)`                                intermediate scattering function
 :math:`F_{\mathrm{coh}}(\mathbf{q}, t)`                 coherent intermediate scattering function
 :math:`F_{\mathrm{inc}}(\mathbf{q}, t)`                 incoherent intermediate scattering function
