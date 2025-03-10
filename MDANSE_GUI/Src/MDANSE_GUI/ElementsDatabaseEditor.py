@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+
 from qtpy.QtWidgets import (
     QDialog,
     QPushButton,
@@ -21,9 +22,15 @@ from qtpy.QtWidgets import (
     QMenu,
     QLineEdit,
     QTableView,
+    QItemDelegate,
 )
 from qtpy.QtCore import Signal, Slot, Qt, QSortFilterProxyModel
-from qtpy.QtGui import QStandardItem, QStandardItemModel
+from qtpy.QtGui import (
+    QStandardItem,
+    QStandardItemModel,
+    QDoubleValidator,
+    QIntValidator,
+)
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MLogging import LOG
@@ -31,10 +38,60 @@ from MDANSE.MLogging import LOG
 from MDANSE_GUI.Widgets.GeneralWidgets import InputVariable, InputDialog
 
 
+class FloatInputField(QItemDelegate):
+    def setEditorData(self, editor, index):
+        editor.setText(str(index.data()))
+
+    def setModelData(self, editor, model, index):
+        new_text = editor.text()
+        try:
+            float(new_text)
+        except (ValueError, TypeError):
+            return
+        model.setData(index, new_text)
+
+    def createEditor(self, parent, option, index):
+        sbox = QLineEdit(parent)
+        validator = QDoubleValidator()
+        sbox.setValidator(validator)
+        sbox.textChanged.connect(self.valueChanged)
+        return sbox
+
+    @Slot()
+    def valueChanged(self):
+        self.commitData.emit(self.sender())
+
+
+class IntInputField(QItemDelegate):
+    def setEditorData(self, editor, index):
+        editor.setText(str(index.data()))
+
+    def setModelData(self, editor, model, index):
+        new_text = editor.text()
+        try:
+            int(new_text)
+        except (ValueError, TypeError):
+            return
+        model.setData(index, new_text)
+
+    def createEditor(self, parent, option, index):
+        sbox = QLineEdit(parent)
+        validator = QIntValidator()
+        sbox.setValidator(validator)
+        sbox.textChanged.connect(self.valueChanged)
+        return sbox
+
+    @Slot()
+    def valueChanged(self):
+        self.commitData.emit(self.sender())
+
+
 class ElementView(QTableView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.int_delegate = IntInputField(self)
+        self.float_delegate = FloatInputField(self)
         self.setSortingEnabled(True)
 
     def contextMenuEvent(self, event):
@@ -229,6 +286,17 @@ class ElementsDatabaseEditor(QDialog):
 
         self.proxy_model.setSourceModel(self.data_model)
         self.viewer.setModel(self.proxy_model)
+        for column_number in range(self.data_model.columnCount()):
+            column_name = self.data_model.all_column_names[column_number]
+            column_type = ATOMS_DATABASE._properties.get(column_name, "str")
+            if column_type == "float":
+                self.viewer.setItemDelegateForColumn(
+                    column_number, self.viewer.float_delegate
+                )
+            elif column_type == "int":
+                self.viewer.setItemDelegateForColumn(
+                    column_number, self.viewer.int_delegate
+                )
 
 
 if __name__ == "__main__":
