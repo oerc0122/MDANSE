@@ -14,31 +14,32 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from qtpy.QtWidgets import (
-    QDialog,
-    QPushButton,
-    QVBoxLayout,
-    QApplication,
-    QMenu,
-    QLineEdit,
-    QTableView,
-    QItemDelegate,
-)
-from qtpy.QtCore import Signal, Slot, Qt, QSortFilterProxyModel
-from qtpy.QtGui import (
-    QStandardItem,
-    QStandardItemModel,
-    QDoubleValidator,
-    QIntValidator,
-)
-
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MLogging import LOG
+from qtpy.QtCore import QSortFilterProxyModel, Qt, Signal, Slot
+from qtpy.QtGui import (
+    QDoubleValidator,
+    QIntValidator,
+    QStandardItem,
+    QStandardItemModel,
+)
+from qtpy.QtWidgets import (
+    QApplication,
+    QDialog,
+    QItemDelegate,
+    QLineEdit,
+    QMenu,
+    QPushButton,
+    QTableView,
+    QVBoxLayout,
+)
 
-from MDANSE_GUI.Widgets.GeneralWidgets import InputVariable, InputDialog
+from MDANSE_GUI.Widgets.GeneralWidgets import InputDialog, InputVariable
 
 
 class FloatInputField(QItemDelegate):
+    """QLineEdit with a QDoubleValidator."""
+
     def setEditorData(self, editor, index):
         editor.setText(str(index.data()))
 
@@ -50,7 +51,7 @@ class FloatInputField(QItemDelegate):
             return
         model.setData(index, new_text)
 
-    def createEditor(self, parent, option, index):
+    def createEditor(self, parent, _option, _index):
         sbox = QLineEdit(parent)
         validator = QDoubleValidator()
         sbox.setValidator(validator)
@@ -63,6 +64,8 @@ class FloatInputField(QItemDelegate):
 
 
 class IntInputField(QItemDelegate):
+    """QLineEdit with a QIntValidator."""
+
     def setEditorData(self, editor, index):
         editor.setText(str(index.data()))
 
@@ -74,7 +77,7 @@ class IntInputField(QItemDelegate):
             return
         model.setData(index, new_text)
 
-    def createEditor(self, parent, option, index):
+    def createEditor(self, parent, _option, _index):
         sbox = QLineEdit(parent)
         validator = QIntValidator()
         sbox.setValidator(validator)
@@ -87,6 +90,8 @@ class IntInputField(QItemDelegate):
 
 
 class ElementView(QTableView):
+    """A table with a context menu for adding new rows and columns."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -107,6 +112,8 @@ class ElementView(QTableView):
 
 
 class NewElementDialog(QDialog):
+    """Helper dialog for creating new rows in ElementView."""
+
     got_name = Signal(str)
 
     def __init__(self, *args, **kwargs):
@@ -128,6 +135,8 @@ class NewElementDialog(QDialog):
 
 
 class ElementModel(QStandardItemModel):
+    """A Qt model interfacing with MDANSE AtomDatabase."""
+
     def __init__(self, *args, element_database=None, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -246,11 +255,11 @@ class ElementModel(QStandardItemModel):
         try:
             new_label = input_variables["property_name"]
         except KeyError:
-            return None
+            return
         try:
             new_type = input_variables["property_type"]
         except KeyError:
-            return None
+            return
         if new_label not in self.database.atoms:
             self.database.add_property(new_label, new_type)
             column = []
@@ -268,6 +277,11 @@ class ElementModel(QStandardItemModel):
 
 
 class ElementsDatabaseEditor(QDialog):
+    """Dialog containing an ElementView table.
+
+    Can be run standalone, or from MDANSE_GUI.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
