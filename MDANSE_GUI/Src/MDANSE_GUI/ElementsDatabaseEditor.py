@@ -88,21 +88,6 @@ class ElementModel(QStandardItemModel):
             atom_info = self.database[entry]
             for key in all_column_names:
                 item = QStandardItem(str(atom_info[key]))
-                try:
-                    intnum = int(str(atom_info[key]))
-                except ValueError:
-                    try:
-                        floatnum = float(atom_info[key])
-                    except ValueError:
-                        pass
-                    except TypeError:
-                        pass
-                    else:
-                        item.setData(floatnum, role=Qt.ItemDataRole.DisplayRole)
-                except TypeError:
-                    pass
-                else:
-                    item.setData(intnum, role=Qt.ItemDataRole.DisplayRole)
                 row.append(item)
             self.appendRow(row)
         self.setHorizontalHeaderLabels(all_column_names)
