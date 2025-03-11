@@ -162,7 +162,7 @@ class SingleDataset:
             return self._data * self._scaling_factor
         return self._data
 
-    def curves_vs_axis(self, axis_unit: str) -> List[np.ndarray]:
+    def curves_vs_axis(self, indices: set[int], axis_unit: str) -> List[np.ndarray]:
         self._curves = {}
         self._curve_labels = {}
         found = -1
@@ -185,16 +185,20 @@ class SingleDataset:
             else:
                 slicer.append(np.arange(data_shape[dim]))
                 indexer.append(np.arange(data_shape[dim]))
-        indices = list(itertools.product(*indexer))
+        nd_indices = list(itertools.product(*indexer))
         slicers = list(itertools.product(*slicer))
-        for n in range(len(indices)):
+        for n in indices:
+            try:
+                nd_indices[n]
+            except IndexError:
+                continue
             if self._data_limits is not None:
                 if n in self._data_limits:
-                    self._curves[tuple(indices[n])] = self.data[slicers[n]].squeeze()
-                    self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
+                    self._curves[tuple(nd_indices[n])] = self.data[slicers[n]].squeeze()
+                    self._curve_labels[tuple(nd_indices[n])] = str(tuple(nd_indices[n]))
             else:
-                self._curves[tuple(indices[n])] = self.data[slicers[n]].squeeze()
-                self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
+                self._curves[tuple(nd_indices[n])] = self.data[slicers[n]].squeeze()
+                self._curve_labels[tuple(nd_indices[n])] = str(tuple(nd_indices[n]))
         return self._curves
 
     def planes_vs_axis(self, axis_number: int) -> List[np.ndarray]:
@@ -460,23 +464,6 @@ class PlottingContext(QStandardItemModel):
         self.itemChanged.connect(self.needs_an_update)
         temp = items[plotting_column_index["Colour"]]
         temp.setData(QColor(temp.text()), role=Qt.ItemDataRole.BackgroundRole)
-        # test for possible nested items
-        best_axis = new_dataset.longest_axis()
-        curves = new_dataset.curves_vs_axis(best_axis[0])
-        if len(curves) > 1:
-            counter = 1
-            for indices, curve in curves.items():
-                temp = SingleCurve(new_dataset._name, new_dataset._filename)
-                temp.set_data(curve, new_dataset._data_unit)
-                temp.set_x_axis(new_dataset._axes[best_axis[1]], best_axis[0])
-                # optionally, we should set y and z as well
-                subitems = temp.standard_items(newkey + f":{counter}")
-                items[0].appendRow(subitems)
-                counter += 1
-        elif len(curves) == 1:
-            LOG.debug("A single curve output from PlottingContext.")
-        else:
-            LOG.debug("No curves!")
         self.appendRow(items)
 
     def set_axes(self):
