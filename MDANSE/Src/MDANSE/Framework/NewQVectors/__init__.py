@@ -7,11 +7,7 @@ from .LinearQVectors import (
     PathSegmentQVectors,
 )
 from .QVector import QVectorData, QVectorGenerator
-from .RadialQVectors import (
-    CircularQVectors,
-    LatticeSphericalQVectors,
-    SphericalQVectors,
-)
+from .RadialQVectors import LatticeSphericalQVectors, SphericalQVectors
 
 __all__ = [
     "GeneratorQVectors",
@@ -23,7 +19,6 @@ __all__ = [
     "PathSegmentQVectors",
     "QVectorData",
     "QVectorGenerator",
-    "CircularQVectors",
     "LatticeSphericalQVectors",
     "SphericalQVectors",
 ]

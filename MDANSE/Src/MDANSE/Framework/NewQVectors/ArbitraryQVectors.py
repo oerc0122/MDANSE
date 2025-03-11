@@ -10,6 +10,7 @@ from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike
 
 
+@QVectorGenerator.register("ListQVectors")
 class ListQVectors(QVectorGenerator):
     """Return Q vectors from a provided list of vectors.
 
@@ -65,6 +66,7 @@ class ListQVectors(QVectorGenerator):
         super().reset(value)
 
 
+@QVectorGenerator.register("GeneratorQVectors")
 class GeneratorQVectors(QVectorGenerator):
     """Return Q Vectors as generated from a generator function.
 

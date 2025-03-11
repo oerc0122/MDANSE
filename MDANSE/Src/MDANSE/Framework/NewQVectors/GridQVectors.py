@@ -13,6 +13,7 @@ OneOrThree = Union[T, Tuple[T, T, T]]
 Limits = Tuple[float, float]
 
 
+@QVectorGenerator.register("GridQVectors")
 class GridQVectors(QVectorGenerator):
     """Generate a cuboidal grid of Q Vectors.
 
@@ -264,7 +265,7 @@ class GridQVectors(QVectorGenerator):
     def from_spacing(
         cls,
         spacing: OneOrThree[float],
-        extent: OneOrThree[Union[slice, range, Limits]],
+        extent: OneOrThree[slice | range | Limits],
         **kwargs,
     ):
         """Generate grid from spacing and extents.

@@ -7,6 +7,7 @@ from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike
 
 
+@QVectorGenerator.register("LinearQVectors")
 class LinearQVectors(QVectorGenerator):
     """Generate **Q**-Vectors in a linear path from an initial point.
 
@@ -93,6 +94,9 @@ class LinearQVectors(QVectorGenerator):
         return np.inf
 
 
+@QVectorGenerator.register(
+    ["PathSegmentQVectors", "DispersionQVectors", "ApproximateDispersionQVectors"]
+)
 class PathSegmentQVectors(LinearQVectors):
     """Linear vector between two points.
 
@@ -192,6 +196,7 @@ class PathSegmentQVectors(LinearQVectors):
         return itertools.islice(super()._generate(lattice=lattice), self.steps)
 
 
+@QVectorGenerator.register("LatticeLinearQVectors")
 class LatticeLinearQVectors(LinearQVectors):
     """Generate Q vectors with spacing defined in :math:`hkl`.
 
@@ -236,6 +241,7 @@ class LatticeLinearQVectors(LinearQVectors):
         )
 
 
+@QVectorGenerator.register(["PathQVectors", "PathLinearQVectors"])
 class PathLinearQVectors(QVectorGenerator):
     """Generate **q**-vectors along a path through **k**-space.
 
