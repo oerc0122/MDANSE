@@ -119,7 +119,7 @@ def test_editor_atoms():
     parameters["output_files"] = (temp_name, 64, 128, "gzip", "INFO")
     parameters["trajectory"] = short_traj
     parameters["frames"] = (0, 501, 1)
-    parameters["atom_selection"] = '{"all": false, "element": ["H"]}'
+    parameters["atom_selection"] = '{"0": {"function_name": "select_atoms", "atom_types": ["H"]}}'
     temp = IJob.create("TrajectoryEditor")
     temp.run(parameters, status=True)
     assert path.exists(temp_name + ".mdt")

@@ -58,6 +58,9 @@ MDANSE = ["Chemistry/*.json",
 [project.scripts]
 mdanse = "MDANSE.Scripts.mdanse:main"
 
+[tool.pytest.ini_options]
+timeout = 240
+
 [tool.ruff]
 line-length = 88
 indent-width = 4

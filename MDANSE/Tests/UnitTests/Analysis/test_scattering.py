@@ -52,8 +52,8 @@ def dcsf():
     parameters["instrument_resolution"] = ("Ideal", {})
     parameters["output_files"] = (temp_name, ("MDAFormat",), "INFO")
     parameters["q_vectors"] = (
-        "SphericalLatticeQVectors",
-        {"seed": 0, "shells": (5.0, 36, 10.0), "n_vectors": 10, "width": 9.0},
+        "GridQVectors",
+        {"hrange": [0, 3, 1], "krange": [0, 3, 1], "lrange": [0, 3, 1], "qstep": 1},
     )
     parameters["running_mode"] = ("single-core",)
     parameters["trajectory"] = short_traj
@@ -74,8 +74,8 @@ def disf():
     parameters["instrument_resolution"] = ("Ideal", {})
     parameters["output_files"] = (temp_name, ("MDAFormat",), "INFO")
     parameters["q_vectors"] = (
-        "SphericalLatticeQVectors",
-        {"seed": 0, "shells": (5.0, 36, 10.0), "n_vectors": 10, "width": 9.0},
+        "GridQVectors",
+        {"hrange": [0, 3, 1], "krange": [0, 3, 1], "lrange": [0, 3, 1], "qstep": 1},
     )
     parameters["running_mode"] = ("single-core",)
     parameters["trajectory"] = short_traj
@@ -110,13 +110,13 @@ def test_dcsf(traj_info, qvector_grid):
     result_file = os.path.join(result_dir, f"dcsf_{traj_info[0]}.mda")
     with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         keys = [
-            key for key in desired.keys() 
+            key for key in desired.keys()
             if any(key.startswith(j) for j in ["f(q,t)", "s(q,f)"])
         ]
         for key in keys:
             np.testing.assert_array_almost_equal(
                 actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
-                desired[f"/{key}"],
+                desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
             )
 
     os.remove(temp_name + ".mda")
@@ -144,8 +144,8 @@ def test_ccf(traj_info, qvector_grid):
     parameters["running_mode"] = ("single-core",)
     parameters["trajectory"] = traj_info[1]
     parameters["weights"] = "equal"
-    dcsf = IJob.create("CurrentCorrelationFunction")
-    dcsf.run(parameters, status=True)
+    ccf = IJob.create("CurrentCorrelationFunction")
+    ccf.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
 
@@ -155,9 +155,9 @@ def test_ccf(traj_info, qvector_grid):
             i for i in desired.keys() if any([j in i for j in ["J(q,f)", "j(q,t)"]])
         ]
         for key in keys:
-            # reference results were not rescaled
             np.testing.assert_array_almost_equal(
-                actual[f"/{key}"], desired[f"/{key}"],
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
             )
 
     os.remove(temp_name + ".mda")
@@ -217,7 +217,7 @@ def test_disf(traj_info, qvector_grid):
         for key in keys:
             np.testing.assert_array_almost_equal(
                 actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
-                desired[f"/{key}"],
+                desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
             )
 
     os.remove(temp_name + ".mda")
@@ -291,12 +291,12 @@ def test_gdisf(traj_info):
     result_file = os.path.join(result_dir, f"gdisf_{traj_info[0]}.mda")
     with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         keys = [
-            i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])
+            i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)", "msd"]])
         ]
         for key in keys:
             np.testing.assert_array_almost_equal(
                 actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
-                desired[f"/{key}"],
+                desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
             )
 
     os.remove(temp_name + ".mda")
@@ -322,6 +322,18 @@ def test_ndtsf(disf, dcsf, qvector_grid):
     ndtsf.run(parameters, status=True)
     assert path.exists(temp_name + ".mda")
     assert path.isfile(temp_name + ".mda")
+
+    result_file = os.path.join(result_dir, "ndtsf.mda")
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
+        keys = [
+            i for i in desired.keys() if any([j in i for j in ["f(q,t)", "s(q,f)"]])
+        ]
+        for key in keys:
+            np.testing.assert_array_almost_equal(
+                actual[f"/{key}"] * actual[f"/{key}"].attrs["scaling_factor"],
+                desired[f"/{key}"] * desired[f"/{key}"].attrs["scaling_factor"],
+            )
+
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + "_text.tar")
     assert path.isfile(temp_name + "_text.tar")

@@ -290,7 +290,7 @@ plotting_column_labels = [
     "Colour",
     "Line style",
     "Marker",
-    "Scaling",
+    "Apply weights?",
 ]
 plotting_column_index = {
     label: number for number, label in enumerate(plotting_column_labels)
@@ -396,7 +396,7 @@ class PlottingContext(QStandardItemModel):
             )
             set_scaling = (
                 self.itemFromIndex(
-                    self.index(row, plotting_column_index["Scaling"])
+                    self.index(row, plotting_column_index["Apply weights?"])
                 ).checkState()
                 == Qt.CheckState.Checked
             )
@@ -453,7 +453,7 @@ class PlottingContext(QStandardItemModel):
         temp = items[plotting_column_index["Use it?"]]
         temp.setCheckable(True)
         temp.setCheckState(Qt.CheckState.Checked)
-        temp = items[plotting_column_index["Scaling"]]
+        temp = items[plotting_column_index["Apply weights?"]]
         temp.setEditable(False)
         temp.setCheckable(True)
         temp.setCheckState(Qt.CheckState.Checked)

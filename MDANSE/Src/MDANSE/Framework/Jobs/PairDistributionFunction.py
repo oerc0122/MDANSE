@@ -123,7 +123,7 @@ class PairDistributionFunction(DistanceHistogram):
             idj = self.selectedElements.index(pair[1])
 
             if idi == idj:
-                nij = ni * (ni - 1) / 2.0
+                nij = ni**2 / 2.0
             else:
                 nij = ni * nj
                 self.hIntra[idi, idj] += self.hIntra[idj, idi]
