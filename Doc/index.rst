@@ -38,7 +38,7 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5 <https://doi.org/10.1021/acs.jcim.6b0057
        <div class="grid-item">
            <h3>⚛️ How-To Guides</h3>
            <p>Practical step-by-step guides to help you utilize MDANSE effectively.</p>
-           <a href="pages/H_gui.html">Learn More</a>
+           <a href="pages/H_start.html">Learn More</a>
        </div>
        <div class="grid-item">
            <h3>🧪 Tutorials</h3>
