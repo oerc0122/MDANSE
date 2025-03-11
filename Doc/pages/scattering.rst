@@ -438,29 +438,29 @@ function via the cumulant expansion [Ref11]_, [Ref22]_
 .. math::
    :label: gdisf2
 
-   F_{\text{inc},\alpha}(\mathbf{q},t) = \frac{1}{N c_{\alpha} } \sum\limits_{j \in \alpha} \exp\left[ -q^2 p_{1,\alpha}(t) + q^4 p_{2,\alpha}(t) + \cdots \right].
+   F_{\text{inc},\alpha}(\mathbf{q},t) = \frac{1}{N c_{\alpha} } \sum\limits_{j \in \alpha} \exp\left[ -q^2 p_{1,j}(t) + q^4 p_{2,j}(t) + \cdots \right].
 
-The cumulants :math:`p_{n,\alpha}(t)` are identified as
+The cumulants :math:`p_{n,j}(t)` are identified as
 
 .. math::
    :label: gdisf3
 
-   p_{1,\alpha}(\hat{\mathbf{q}},t){ = \frac{1}{2!}\left\langle d_{\alpha}^{2}(\hat{\mathbf{q}}, t) \right\rangle},
+   p_{1,j}(\hat{\mathbf{q}},t){ = \frac{1}{2!}\left\langle d_{j}^{2}(\hat{\mathbf{q}}, t) \right\rangle},
 
 .. math::
    :label: gdisf4
 
-   p_{2,\alpha}(\hat{\mathbf{q}},t){ = \frac{1}{4!}}\left\lbrack {{\left\langle {d_{\alpha}^{4}(\hat{\mathbf{q}}, t)} \right\rangle - 3}\left\langle {d_{\alpha}^{2}(\hat{\mathbf{q}}, t)} \right\rangle^{2}} \right\rbrack
+   p_{2,j}(\hat{\mathbf{q}},t){ = \frac{1}{4!}}\left\lbrack {{\left\langle {d_{j}^{4}(\hat{\mathbf{q}}, t)} \right\rangle - 3}\left\langle {d_{j}^{2}(\hat{\mathbf{q}}, t)} \right\rangle^{2}} \right\rbrack
 
 where
 
 .. math::
    :label: gdisf5
 
-    \Delta_{\alpha}^{2}(\hat{\mathbf{q}},t) = \langle d_{\alpha}^{2}(\hat{\mathbf{q}}, t) \rangle = \frac{1}{Nc_{\alpha}}\sum_{j \in \alpha} \left\vert \hat{\mathbf{q}} \cdot [\mathbf{r}_{j}(t) - \mathbf{r}_{j}(0)] \right\vert^2
+    \Delta_{j}^{2}(\hat{\mathbf{q}},t) = \langle d_{j}^{2}(\hat{\mathbf{q}}, t) \rangle = \langle \left\vert \hat{\mathbf{q}} \cdot [\mathbf{r}_{j}(t) - \mathbf{r}_{j}(0)] \right\vert^2 \rangle
 
-is the average means squared displacement  along the
-axis :math:`\hat{\mathbf{q}}` of atoms of type :math:`\alpha`.
+is the means squared displacement of atoms :math:`j` along the
+axis :math:`\hat{\mathbf{q}}`.
 
 **Gaussian Approximation**: The vector :math:`\hat{\mathbf{q}}` is the unit vector
 in the direction of :math:`\mathbf{q}`. In the Gaussian
@@ -470,7 +470,7 @@ approximation the above expansion is truncated after the
 .. math::
    :label: gdisf6
 
-   F_{\text{inc},\alpha}(\mathbf{q},t) \approx F_{\text{inc},\alpha}^{\text{G}}(\mathbf{q},t) = \frac{1}{N c_{\alpha} } \sum\limits_{j \in \alpha} \exp\left[ -q^2 p_{1,\alpha}(\hat{\mathbf{q}}, t) \right]
+   F_{\text{inc},\alpha}(\mathbf{q},t) \approx F_{\text{inc},\alpha}^{\text{G}}(\mathbf{q},t) = \frac{1}{N c_{\alpha} } \sum\limits_{j \in \alpha} \exp\left[ -q^2 p_{1,j}(\hat{\mathbf{q}}, t) \right]
 
 For certain model systems like the ideal gas, the
 harmonic oscillator, and a particle undergoing Einstein diffusion, this
