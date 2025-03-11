@@ -186,6 +186,11 @@ class TraceWidget(QWidget):
             layout.addWidget(temp_box)
         layout.addWidget(self.remove_trace_button)
 
+    @Slot(int)
+    def accept_atom_index(self, new_index: int):
+        """Set atom index from external source (typically 3D view)"""
+        self._atom_spinbox.setValue(new_index)
+
     @Slot()
     def update_limits(self):
         """Changes the limits of the spinboxes when the current trajectory

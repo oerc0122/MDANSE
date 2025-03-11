@@ -134,6 +134,9 @@ class MolecularViewer(QtWidgets.QWidget):
         self.axes_widget.SetEnabled(True)
         self.axes_widget.InteractiveOff()
 
+        self.atom_actor = None
+        self._last_coords = None
+
         layout = QtWidgets.QStackedLayout(self)
         layout.addWidget(self._iren)
         self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
@@ -364,6 +367,9 @@ class MolecularViewer(QtWidgets.QWidget):
             actors.append(line_actor)
         if self._atoms_visible:
             actors.append(ball_actor)
+            self.atom_actor = ball_actor
+        else:
+            self.atom_actor = None
         return actors
 
     def create_uc_actor(self):
@@ -472,6 +478,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self._actors.VisibilityOff()
         self._actors.ReleaseGraphicsResources(self.get_render_window())
         self._renderer.RemoveActor(self._actors)
+        self.atom_actor = None
 
         del self._actors
 
@@ -508,6 +515,7 @@ class MolecularViewer(QtWidgets.QWidget):
         latest parameters from the input widgets.
         """
         coords = self._reader.read_frame(self._current_frame)
+        self._last_coords = coords
 
         if self._atoms_visible or self._bonds_visible:
             atoms = vtk.vtkPoints()
@@ -878,6 +886,49 @@ class MolecularViewer(QtWidgets.QWidget):
             self.reset_camera = False
 
         self._iren.Render()
+
+
+class MolecularViewerExtended(MolecularViewer):
+    """MolecularViewer which emits atom index when clicked."""
+
+    clicked_atom_index = Signal(int)
+
+    def __init__(self):
+        super().__init__()
+        self._iren.AddObserver("LeftButtonPressEvent", self.handle_click_event)
+
+    def handle_click_event(self, obj, event=None):
+        """Event handler when an atom is mouse-picked with the left mouse button"""
+
+        if not self._reader:
+            return
+
+        if self.atom_actor is None:
+            return
+
+        if self._last_coords is None:
+            return
+
+        picker = vtk.vtkPropPicker()
+
+        picker.AddPickList(self.atom_actor)
+        picker.PickFromListOn()
+
+        pos = obj.GetEventPosition()
+        picker.Pick(pos[0], pos[1], 0, self._renderer)
+
+        picked_actor = picker.GetActor()
+        if picked_actor is None:
+            return
+
+        picked_pos = np.array(picker.GetPickPosition())
+        _, picked_index = KDTree(self._last_coords).query(picked_pos)
+
+        if picked_index < 0 or picked_index >= self._n_atoms:
+            return
+
+        self.clicked_atom_index.emit(picked_index)
+        LOG.debug(f"Click event picked up atom index {picked_index}")
 
 
 class MolecularViewerWithPicking(MolecularViewer):
