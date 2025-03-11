@@ -459,7 +459,7 @@ where
 
     \Delta_{j}^{2}(\hat{\mathbf{q}},t) = \langle d_{j}^{2}(\hat{\mathbf{q}}, t) \rangle = \langle \left\vert \hat{\mathbf{q}} \cdot [\mathbf{r}_{j}(t) - \mathbf{r}_{j}(0)] \right\vert^2 \rangle
 
-is the means squared displacement of atoms :math:`j` along the
+is the means squared displacement of atom :math:`j` along the
 axis :math:`\hat{\mathbf{q}}`.
 
 **Gaussian Approximation**: The vector :math:`\hat{\mathbf{q}}` is the unit vector
