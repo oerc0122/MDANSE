@@ -13,11 +13,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from __future__ import annotations
 
 import difflib
-from typing import TypeVar
+from abc import ABC
+from collections.abc import Callable, Sequence
+from typing import Generic, TypeVar, Union
 
 Self = TypeVar("Self", bound="SubclassFactory")
+T = TypeVar("T")
+
 # The Self TypeVar is a typing hint indicating that
 # a method of a class A will be returning an object
 # of type A as well. Since we don't know for which class
@@ -200,3 +205,78 @@ class SubclassFactory(type):
             dict(str:type) -- a dictionary of the subclasses of this class
         """
         return recursive_dict(cls)
+
+
+class RegisterFactory(ABC, Generic[T]):
+    """Alternative factory which uses explicit registration."""
+
+    _registered_subclasses: dict[str, type[T]] = {}
+
+    @classmethod
+    def get(cls, name: str) -> type[T]:
+        """Get the class from the registry.
+
+        Parameters
+        ----------
+        name : str
+            Name of class to retrieve.
+
+        Returns
+        -------
+        type[T]
+            Class ready to instantiate.
+
+        Raises
+        ------
+        KeyError
+            Name not found in registry.
+        """
+        if name not in cls._registered_subclasses:
+            raise KeyError(
+                f"Cannot instantiate class {name}, "
+                f"not in registered subclasses ({','.join(cls._registered_subclasses)})"
+            )
+        return cls._registered_subclasses[name]
+
+    @classmethod
+    def create(cls, name: str, *args, **kwargs) -> T:
+        """Instantiate child class from registry.
+
+        Parameters
+        ----------
+        name : str
+            Name to instantiate.
+        """
+        return cls.get(name)(*args, **kwargs)
+
+    @classmethod
+    @property
+    def subclasses(cls):
+        return list(cls._registered_subclasses.keys())
+
+    @classmethod
+    def register(cls, names: Union[str, Sequence[str]]):
+        """Register class as factory member.
+
+        Parameters
+        ----------
+        names : str | Sequence[str]
+            Internal name(s) to use.
+
+        Examples
+        --------
+        .. code-block:: python
+            @ClassFactory.register("elem")
+            class MyClass(): ...
+
+        """
+
+        def class_wrapper(wrapped_class: type) -> Callable[..., T]:
+            if isinstance(names, str):
+                cls._registered_subclasses[names] = wrapped_class
+            else:
+                for name in names:
+                    cls._registered_subclasses[name] = wrapped_class
+            return wrapped_class
+
+        return class_wrapper
