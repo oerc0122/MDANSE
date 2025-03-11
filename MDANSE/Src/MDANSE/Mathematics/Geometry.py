@@ -152,11 +152,38 @@ def generate_sphere_points(n: int) -> np.ndarray:
     return points
 
 
-def random_points_on_sphere(radius=1.0, nPoints=100, *, rng=np.random.default_rng()):
-    points = np.zeros((3, nPoints), dtype=np.float64)
+def random_points_on_sphere(
+    radius: float = 1.0,
+    nPoints: int = 100,
+    *,
+    rng: np.random.Generator = np.random.default_rng(),
+):
+    """Generate random points on the surface of a sphere.
 
-    theta = 2.0 * np.pi * rng.uniform(nPoints)
-    u = np.random.uniform(-1.0, 1.0, nPoints)
+    Parameters
+    ----------
+    radius : float
+        Radius of sphere.
+    nPoints : int
+        Number of points to generate.
+    rng : np.random.Generator
+        Number generator to use.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> pts = random_points_on_sphere(1., 5, rng=np.random.default_rng(7))
+    >>> pts
+    array([[-0.46973463,  0.11559171,  0.12313894,  0.12479567, -0.30937235],
+           [-0.47029849, -0.08711419, -0.75636368,  0.79462259,  0.9487761 ],
+           [ 0.74710689, -0.98946939,  0.64245684,  0.59413886, -0.06413009]])
+    >>> np.linalg.norm(pts, axis=0)
+    array([1., 1., 1., 1., 1.])
+    """
+    points = np.empty((3, nPoints), dtype=np.float64)
+
+    theta = 2.0 * np.pi * rng.uniform(size=nPoints)
+    u = rng.uniform(-1.0, 1.0, nPoints)
     points[0, :] = radius * np.sqrt(1 - u**2) * np.cos(theta)
     points[1, :] = radius * np.sqrt(1 - u**2) * np.sin(theta)
     points[2, :] = radius * u

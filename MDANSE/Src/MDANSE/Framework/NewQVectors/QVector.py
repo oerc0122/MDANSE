@@ -1,16 +1,17 @@
 import itertools
 from abc import ABC, abstractmethod
-from collections.abc import Generator, Iterator
+from collections.abc import Callable, Generator, Iterator
 from dataclasses import dataclass
-from typing import Optional
 from functools import singledispatchmethod
+from typing import Optional, Tuple, TypeVar
 
 import numpy as np
+from MDANSE.Core.SubclassFactory import RegisterFactory
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 
 
-@dataclass(slots=True)
+@dataclass
 class QVectorData:
     """Data relating to a single Q-Vector
 
@@ -18,11 +19,11 @@ class QVectorData:
 
     q: NDArray[float]
     mod_q: float
-    hkl: NDArray[int]
-    hkl_exact: NDArray[float]
+    hkl: Optional[NDArray[int]]
+    hkl_exact: Optional[NDArray[float]]
 
-    def __init__(self, q, lattice: Optional[UnitCell] = None):
-        self.q = np.array(q)
+    def __init__(self, q: ArrayLike, lattice: Optional[UnitCell] = None):
+        self.q = np.array(q, dtype=float)
         self.mod_q = np.linalg.norm(q)
 
         if lattice is not None:
@@ -35,12 +36,37 @@ class QVectorData:
     def __eq__(self, other):
         return np.allclose(self.q, other.q)
 
-class QVectorGenerator(ABC):
+    @classmethod
+    def from_hkl(cls, hkl: ArrayLike, lattice: UnitCell):
+        q = np.dot(lattice.inverse, hkl)
+        return cls(q, lattice)
+
+    @classmethod
+    def from_q(cls, q: ArrayLike, lattice: Optional[UnitCell] = None):
+        return cls(q, lattice)
+
+
+QVecGen = Generator[QVectorData, int, None]
+QVecGeneratorProtocol = Callable[[Optional[UnitCell]], QVecGen]
+Self = TypeVar("Self", bound="QVectorGenerator")
+
+
+class QVectorGenerator(RegisterFactory[Self], ABC):
     """Abstract type for generation of Q-Vectors."""
 
-    def __init__(self, lattice: Optional[UnitCell] = None, **kwargs):
+    def __init__(
+        self, *, hkl: bool = False, lattice: Optional[UnitCell] = None, **kwargs
+    ):
+        if hkl and lattice is None:
+            raise ValueError("`hkl` requires defined `lattice`")
+
         self.lattice = lattice
+        self.hkl = hkl
         self._ind = 0
+
+    @property
+    def qvec_gen(self):
+        return QVectorData.from_hkl if self.hkl else QVectorData.from_q
 
     def __iter__(self):
         return self.generate()
@@ -81,19 +107,72 @@ class QVectorGenerator(ABC):
         ----------
         n : int
             Number of Q-Vectors to generate.
-
-        Examples
-        --------
-        FIXME: Add docs.
         """
         return itertools.islice(self.generate(), n)
 
+    def generate(
+        self,
+        *,
+        radius: Optional[Tuple[float, float]] = None,
+        lattice: Optional[UnitCell] = None,
+    ) -> QVecGen:
+        """Generate Q Vectors filtered to lie within shell.
+
+        Parameters
+        ----------
+        radius : Optional[Tuple[float, float]]
+            Min-max of radius to be included in output set.
+        lattice : Optional[UnitCell]
+            Lattice to generate data on.
+
+        Yields
+        ------
+        QVectorData
+            Q-Points in regime.
+
+        Notes
+        -----
+        In case of specific optimisation for generating within a radius
+        overload this function.
+        """
+        lattice = lattice if lattice is not None else self.lattice
+
+        vectors = self._generate(lattice=lattice)
+        if radius is not None:
+            vectors = filter(lambda qvec: radius[0] < qvec.q < radius[1], vectors)
+
+        yield from vectors
+
     @abstractmethod
-    def generate(self, n=None, lattice: UnitCell = None) -> Generator[QVectorData, int, None]:
+    def _generate(self, lattice: Optional[UnitCell] = None) -> QVecGen:
+        """Underlying specific Q-Vector generator.
+
+        Parameters
+        ----------
+        lattice : Optional[UnitCell]
+            Lattice to generate data in.
+
+        Yields
+        ------
+        QVectorData
+            Q-Points in regime.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def reset(self, value: int = 0):
+        """Reset generator to a given state.
+
+        Parameters
+        ----------
+        value : int
+            State to initialise to.
+
+        Notes
+        -----
+        Some generators may not support non-0 resets
+        others may not support reset at all.
+        """
         self._ind = value
 
     @property

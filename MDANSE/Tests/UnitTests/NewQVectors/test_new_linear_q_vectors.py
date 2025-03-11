@@ -7,32 +7,7 @@ from MDANSE.Framework.NewQVectors import (LatticeLinearQVectors,
                                           LinearQVectors, PathSegmentQVectors,
                                           QVectorData)
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
-
-
-@pytest.fixture
-def cubic():
-    return UnitCell(np.diag([5., 5., 5.]))
-
-@pytest.fixture
-def orthorhombic():
-    return UnitCell(np.diag([4., 5., 6.]))
-
-@pytest.fixture
-def hexagonal():
-    return UnitCell([[0., 2.71535, 2.71535],
-                     [2.71535, 0., 2.71535],
-                     [2.71535, 2.71535, 0.]])
-
-@pytest.fixture
-def cell(request, cubic, orthorhombic, hexagonal):
-    if request.param == "cubic":
-        return cubic
-    if request.param == "orthorhombic":
-        return orthorhombic
-    if request.param == "hexagonal":
-        return hexagonal
-
-    raise KeyError(f"Unknown cell {request.param!r}")
+from test_helpers.common_fixtures import cell, cubic, orthorhombic, hexagonal
 
 @pytest.mark.parametrize("params, expected", [
     (([1, 0, 0],), success([[0., 0., 0.],

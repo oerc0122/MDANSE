@@ -1,12 +1,13 @@
 import itertools
-from typing import Optional, Sequence, Union, overload
+from typing import Optional, Sequence, Tuple, Union, overload
 
 import numpy as np
-from MDANSE.Framework.NewQVectors.QVector import QVectorData, QVectorGenerator
+from MDANSE.Framework.NewQVectors.QVector import QVecGen, QVectorData, QVectorGenerator
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike
 
 
+@QVectorGenerator.register("LinearQVectors")
 class LinearQVectors(QVectorGenerator):
     """Generate **Q**-Vectors in a linear path from an initial point.
 
@@ -39,28 +40,26 @@ class LinearQVectors(QVectorGenerator):
     Generates an infinite set of Q-Vectors starting from the initial point.
     """
 
-    def __init__(self,
-                 direction: ArrayLike,
-                 q_step: Optional[float] = None,
-                 q_start: ArrayLike = np.array([0., 0., 0.]),
-                 *,
-                 hkl: bool = False,
-                 lattice: Optional[UnitCell] = None,
-                 **kwargs,
-                 ):
+    def __init__(
+        self,
+        direction: ArrayLike,
+        q_step: Optional[float] = None,
+        q_start: ArrayLike = np.array([0.0, 0.0, 0.0]),
+        *,
+        lattice: Optional[UnitCell] = None,
+        **kwargs,
+    ):
         super().__init__(lattice=lattice, **kwargs)
 
         self.direction = np.array(direction, dtype=float)
 
-        if hkl and self.lattice is None:
-            raise ValueError("Coordinates in HKL require a lattice")
-
         self.q_start = np.array(q_start, dtype=float)
 
         if not (self.q_start.shape == self.direction.shape == (3,)):
-            raise ValueError(f"`q_start` ({self.q_start.shape}) "
-                             f"and `direction`  ({self.direction.shape}) must be 3-vectors.")
-
+            raise ValueError(
+                f"`q_start` ({self.q_start.shape}) "
+                f"and `direction`  ({self.direction.shape}) must be 3-vectors."
+            )
 
         dist = np.linalg.norm(self.direction)
 
@@ -68,22 +67,21 @@ class LinearQVectors(QVectorGenerator):
 
         self.direction /= dist
 
-        if hkl:
+        if self.hkl:
             self.direction = np.dot(lattice.inverse, self.direction)
             dir_scale = np.linalg.norm(self.direction)
 
             self.q_step *= dir_scale
             self.direction /= dir_scale
 
-        self.index = 0
-
-    def generate(self, lattice: Optional[UnitCell] = None):
-
+    def _generate(self, *, lattice: Optional[UnitCell] = None) -> QVecGen:
         lattice = lattice if lattice is not None else self.lattice
 
         while True:
-            qvec = self.q_start + (self.direction * self.q_step * self._ind)
-            ind = yield QVectorData(qvec, lattice)
+            qvec = QVectorData(
+                self.q_start + (self.direction * self.q_step * self._ind), lattice
+            )
+            ind = yield qvec
 
             self._ind += 1
             if ind is not None:
@@ -95,6 +93,10 @@ class LinearQVectors(QVectorGenerator):
     def __len__(self) -> int:
         return np.inf
 
+
+@QVectorGenerator.register(
+    ["PathSegmentQVectors", "DispersionQVectors", "ApproximateDispersionQVectors"]
+)
 class PathSegmentQVectors(LinearQVectors):
     """Linear vector between two points.
 
@@ -136,24 +138,39 @@ class PathSegmentQVectors(LinearQVectors):
     """
 
     @overload
-    def __init__(self, q_start: ArrayLike, q_end: ArrayLike, *,
-                 q_step: float, include_end: bool, **kwargs): ...
+    def __init__(
+        self,
+        q_start: ArrayLike,
+        q_end: ArrayLike,
+        *,
+        q_step: float,
+        include_end: bool,
+        **kwargs,
+    ): ...
     @overload
-    def __init__(self, q_start: ArrayLike, q_end: ArrayLike, *,
-                 steps: int, include_end: bool, **kwargs): ...
+    def __init__(
+        self,
+        q_start: ArrayLike,
+        q_end: ArrayLike,
+        *,
+        steps: int,
+        include_end: bool,
+        **kwargs,
+    ): ...
 
     def __init__(
-            self,
-            q_start: ArrayLike = [0, 0, 0],
-            q_end: ArrayLike = [1, 0, 0],
-            *,
-            q_step: Optional[float] = None,
-            steps: Optional[int] = None,
-            include_end: bool = False,
-            **kwargs,
+        self,
+        q_start: ArrayLike = [0, 0, 0],
+        q_end: ArrayLike = [1, 0, 0],
+        *,
+        q_step: Optional[float] = None,
+        steps: Optional[int] = None,
+        include_end: bool = False,
+        **kwargs,
     ):
-        if ((steps is None and q_step is None) or
-            (steps is not None and q_step is not None)):
+        if (steps is None and q_step is None) or (
+            steps is not None and q_step is not None
+        ):
             raise ValueError("One of steps and q_step must be defined")
 
         q_end = np.array(q_end, dtype=float)
@@ -168,19 +185,18 @@ class PathSegmentQVectors(LinearQVectors):
         super().__init__(direction, q_step, q_start, **kwargs)
 
         self.dist = dist
-        self.steps = (steps
-                      if steps is not None else
-                      int(dist // self.q_step) + include_end)
+        self.steps = (
+            steps if steps is not None else int(dist // self.q_step) + include_end
+        )
 
     def __len__(self) -> int:
         return self.steps
 
-    def generate(self, lattice: Optional[UnitCell] = None):
-        return itertools.islice(super().generate(lattice), self.steps)
+    def _generate(self, *, lattice: Optional[UnitCell] = None) -> QVecGen:
+        return itertools.islice(super()._generate(lattice=lattice), self.steps)
 
-# Aliases
-DispersionQVectors = ApproximateDispersionQVectors = PathSegmentQVectors
 
+@QVectorGenerator.register("LatticeLinearQVectors")
 class LatticeLinearQVectors(LinearQVectors):
     """Generate Q vectors with spacing defined in :math:`hkl`.
 
@@ -212,15 +228,20 @@ class LatticeLinearQVectors(LinearQVectors):
     QVectorData(q=array([0.4, 0. , 0. ]), mod_q=0.4, hkl=array([2., 0., 0.]), hkl_exact=array([2., 0., 0.]))
     """
 
-    def __init__(self,
-                 lattice: UnitCell,
-                 direction: ArrayLike,
-                 q_step: float = None,
-                 q_start: ArrayLike = np.array([0., 0., 0.]),
-                 **kwargs,
-                 ):
-        super().__init__(direction, q_step, q_start, lattice=lattice, hkl=True, **kwargs)
+    def __init__(
+        self,
+        lattice: UnitCell,
+        direction: ArrayLike,
+        q_step: float = None,
+        q_start: ArrayLike = np.array([0.0, 0.0, 0.0]),
+        **kwargs,
+    ):
+        super().__init__(
+            direction, q_step, q_start, lattice=lattice, hkl=True, **kwargs
+        )
 
+
+@QVectorGenerator.register(["PathQVectors", "PathLinearQVectors"])
 class PathLinearQVectors(QVectorGenerator):
     """Generate **q**-vectors along a path through **k**-space.
 
@@ -263,24 +284,30 @@ class PathLinearQVectors(QVectorGenerator):
     --------
     PathSegmentQVectors : Implementation of generator.
     """
-    @overload
-    def __init__(self, k_pts: ArrayLike, q_step: float, include_end: bool, **kwargs): ...
 
     @overload
-    def __init__(self, k_pts: ArrayLike, q_step: float, include_end: bool, **kwargs): ...
+    def __init__(
+        self, k_pts: ArrayLike, q_step: float, include_end: bool, **kwargs
+    ): ...
 
-    def __init__(self,
-                 k_pts: ArrayLike,
-                 *,
-                 q_step: Optional[float] = None,
-                 steps: Union[None, int, Sequence[int]] = None,
-                 include_end: bool = True,
-                 **kwargs,
-                 ):
+    @overload
+    def __init__(
+        self, k_pts: ArrayLike, q_step: float, include_end: bool, **kwargs
+    ): ...
+
+    def __init__(
+        self,
+        k_pts: ArrayLike,
+        *,
+        q_step: Optional[float] = None,
+        steps: Union[None, int, Sequence[int]] = None,
+        include_end: bool = True,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.k_pts = np.array(k_pts)
         self.n_segments = len(self.k_pts)
-        n_paths = self.n_segments-1
+        n_paths = self.n_segments - 1
 
         if isinstance(steps, int):
             steps = [steps] * n_paths
@@ -293,17 +320,23 @@ class PathLinearQVectors(QVectorGenerator):
         is_end[-1] = include_end
 
         if len(steps) != n_paths:
-            raise ValueError(f"Number of specified steps ({len(steps)}) "
-                             f"must match number of paths ({n_paths}).")
+            raise ValueError(
+                f"Number of specified steps ({len(steps)}) "
+                f"must match number of paths ({n_paths})."
+            )
 
-        self.generators = tuple(PathSegmentQVectors(q_start, q_stop, q_step=q_step,
-                                                    steps=n_step, include_end=end, **kwargs)
-                                for end, (q_start, q_stop), n_step in
-                                zip(is_end, itertools.pairwise(self.k_pts), steps))
+        self.generators = tuple(
+            PathSegmentQVectors(
+                q_start, q_stop, q_step=q_step, steps=n_step, include_end=end, **kwargs
+            )
+            for end, (q_start, q_stop), n_step in zip(
+                is_end, itertools.pairwise(self.k_pts), steps
+            )
+        )
 
-    def generate(self, lattice: Optional[UnitCell] = None):
+    def _generate(self, *, lattice: Optional[UnitCell] = None) -> QVecGen:
         for generator in self.generators:
-            yield from generator.generate(lattice)
+            yield from generator._generate(lattice=lattice)
 
     def reset(self, value: int = 0):
         if value != 0:
