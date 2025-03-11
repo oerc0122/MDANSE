@@ -469,7 +469,7 @@ approximation the above expansion is truncated after the
 .. math::
    :label: gdisf6
 
-   F_{\text{inc},\alpha}(\mathbf{q},t) \approx F_{\text{inc},\alpha}^{\text{G}}(\mathbf{q},t) = \frac{1}{N c_{\alpha} } \sum\limits_{j \in \alpha} \exp\left[ -q^2 p_{1,j}(\hat{\mathbf{q}}, t) \right]
+   F_{\text{inc},\alpha}(\mathbf{q},t) \approx F_{\text{inc},\alpha}^{\text{G}}(\mathbf{q},t) = \frac{1}{N c_{\alpha} } \sum\limits_{j \in \alpha} \exp\left[ -q^2 p_{1,j}(\hat{\mathbf{q}}, t) \right].
 
 For certain model systems like the ideal gas, the
 harmonic oscillator, and a particle undergoing Einstein diffusion, this
