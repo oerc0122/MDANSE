@@ -16,6 +16,7 @@
 from typing import TYPE_CHECKING, Dict, List
 import os
 import itertools
+import math
 
 if TYPE_CHECKING:
     import h5py
@@ -162,7 +163,7 @@ class SingleDataset:
             return self._data * self._scaling_factor
         return self._data
 
-    def curves_vs_axis(self, indices: set[int], axis_unit: str) -> List[np.ndarray]:
+    def curves_vs_axis(self, axis_unit: str, max_limit: int = 1) -> List[np.ndarray]:
         self._curves = {}
         self._curve_labels = {}
         found = -1
@@ -187,21 +188,33 @@ class SingleDataset:
                 indexer.append(np.arange(data_shape[dim]))
         nd_indices = list(itertools.product(*indexer))
         slicers = list(itertools.product(*slicer))
-        for n in indices:
-            try:
-                nd_indices[n]
-            except IndexError:
-                continue
-            if self._data_limits is not None:
-                if n in self._data_limits:
-                    self._curves[tuple(nd_indices[n])] = self.data[slicers[n]].squeeze()
-                    self._curve_labels[tuple(nd_indices[n])] = str(tuple(nd_indices[n]))
-            else:
-                self._curves[tuple(nd_indices[n])] = self.data[slicers[n]].squeeze()
-                self._curve_labels[tuple(nd_indices[n])] = str(tuple(nd_indices[n]))
+        if self._data_limits is not None:
+            for counter, index in enumerate(self._data_limits):
+                if counter >= max_limit:
+                    break
+                try:
+                    self._curves[tuple(nd_indices[index])] = self.data[
+                        slicers[index]
+                    ].squeeze()
+                    self._curve_labels[tuple(nd_indices[index])] = str(
+                        tuple(nd_indices[index])
+                    )
+                except IndexError:
+                    continue
+        else:
+            for index in range(max_limit):
+                try:
+                    self._curves[tuple(nd_indices[index])] = self.data[
+                        slicers[index]
+                    ].squeeze()
+                    self._curve_labels[tuple(nd_indices[index])] = str(
+                        tuple(nd_indices[index])
+                    )
+                except IndexError:
+                    continue
         return self._curves
 
-    def planes_vs_axis(self, axis_number: int) -> List[np.ndarray]:
+    def planes_vs_axis(self, axis_number: int, max_limit: int = 1) -> List[np.ndarray]:
         self._planes = {}
         self._plane_labels = {}
         _found = -1
@@ -222,16 +235,20 @@ class SingleDataset:
                 perpendicular_axis_name = axis_name
             else:
                 slice_def.append(slice(None))
-        for plane_number in range(number_of_planes):
-            if self._data_limits is not None:
-                if plane_number in self._data_limits:
-                    fixed_argument = perpendicular_axis[plane_number]
-                    slice_def[axis_number] = plane_number
-                    self._planes[plane_number] = self.data[tuple(slice_def)]
-                    self._plane_labels[plane_number] = (
-                        f"{perpendicular_axis_name}={fixed_argument}"
-                    )
-            else:
+        if self._data_limits is not None:
+            for counter, plane_number in enumerate(self._data_limits):
+                if counter >= max_limit or plane_number >= number_of_planes:
+                    break
+                fixed_argument = perpendicular_axis[plane_number]
+                slice_def[axis_number] = plane_number
+                self._planes[plane_number] = self.data[tuple(slice_def)]
+                self._plane_labels[plane_number] = (
+                    f"{perpendicular_axis_name}={fixed_argument}"
+                )
+        else:
+            for plane_number in range(max_limit):
+                if plane_number >= number_of_planes:
+                    break
                 fixed_argument = perpendicular_axis[plane_number]
                 slice_def[axis_number] = plane_number
                 self._planes[plane_number] = self.data[tuple(slice_def)]

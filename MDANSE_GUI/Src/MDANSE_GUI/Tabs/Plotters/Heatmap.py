@@ -149,9 +149,11 @@ class Heatmap(Plotter):
                     if axis_name == axis_label:
                         replacement_axis_number = number
                 if replacement_axis_number is None:
-                    ds.planes_vs_axis(self._slice_axis)
+                    ds.planes_vs_axis(self._slice_axis, max_limit=self._plot_limit)
                 else:
-                    ds.planes_vs_axis(replacement_axis_number)
+                    ds.planes_vs_axis(
+                        replacement_axis_number, max_limit=self._plot_limit
+                    )
                 nplots += len(ds._planes)
             else:
                 nplots += 1

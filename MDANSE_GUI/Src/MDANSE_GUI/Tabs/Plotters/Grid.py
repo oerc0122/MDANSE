@@ -64,7 +64,7 @@ class Grid(Plotter):
                 best_unit, best_axis = ds._axes_units[axis_label], axis_label
             except KeyError:
                 best_unit, best_axis = ds.longest_axis()
-            curves = ds.curves_vs_axis(best_unit)
+            curves = ds.curves_vs_axis(best_unit, max_limit=self._plot_limit)
             nplots += len(curves)
         if nplots > self._plot_limit:
             nplots = self._plot_limit
