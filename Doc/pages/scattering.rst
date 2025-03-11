@@ -462,8 +462,7 @@ where
 is the means squared displacement of atom :math:`j` along the
 axis :math:`\hat{\mathbf{q}}`.
 
-**Gaussian Approximation**: The vector :math:`\hat{\mathbf{q}}` is the unit vector
-in the direction of :math:`\mathbf{q}`. In the Gaussian
+**Gaussian Approximation**: In the Gaussian
 approximation the above expansion is truncated after the
 :math:`q^2`-term
 
