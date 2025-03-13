@@ -9,10 +9,8 @@ from MDANSE.Framework.Configurators.HDFTrajectoryConfigurator import \
     HDFTrajectoryConfigurator
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Jobs.IJob import JobError
-
-TEST_DIR = Path(__file__).parent
-CONV_DIR = TEST_DIR / "Converted"
-DATA_DIR = TEST_DIR / "Data"
+from test_helpers.compare_hdf5 import compare_hdf5
+from test_helpers.paths import CONV_DIR, DATA_DIR
 
 lammps_config = DATA_DIR / "lammps_test.config"
 lammps_lammps = DATA_DIR / "lammps_test.lammps"
@@ -66,9 +64,7 @@ def _converter_test(tmp_path, converter_type, result, compare, parameters, compr
     traj_conf.get_information()
     traj_conf["hdf_trajectory"].close()
 
-    with h5py.File(out_name) as actual, h5py.File(result_name) as desired:
-        for prop in compare:
-            np.testing.assert_array_almost_equal(actual[prop], desired[prop])
+    compare_hdf5(out_name, result_name, compare, atol=1e-6)
 
     assert out_name.is_file()
     assert log_name.is_file()
