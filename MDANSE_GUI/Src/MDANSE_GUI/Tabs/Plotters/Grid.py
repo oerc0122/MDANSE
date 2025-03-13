@@ -87,11 +87,9 @@ class Grid(Plotter):
                 axes = target.add_subplot(gridsize, gridsize, startnum)
                 self._axes.append(axes)
                 plotlabel = dataset._labels["medium"]
-                conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
-                    xaxis_unit
-                )
+                x_axis_label = dataset.x_axis_label(best_axis)
                 [temp_curve] = axes.plot(
-                    dataset._axes[best_axis] * conversion_factor,
+                    dataset.x_axis(best_axis),
                     curve,
                     linestyle=linestyle,
                     color=colour,
@@ -139,7 +137,7 @@ class Grid(Plotter):
                             f"Matplotlib could not set y limits to {new_limits[2]}, {new_limits[3]}"
                         )
                 axes.grid(True)
-                axes.set_xlabel(xaxis_unit)
+                axes.set_xlabel(x_axis_label)
                 axes.legend(loc=0)
                 startnum += 1
         self.apply_settings(plotting_context)

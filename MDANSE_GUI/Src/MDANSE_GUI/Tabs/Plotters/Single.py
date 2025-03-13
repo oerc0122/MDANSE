@@ -15,6 +15,8 @@
 #
 from typing import TYPE_CHECKING, List
 
+import numpy as np
+
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
 
@@ -120,12 +122,12 @@ class Single(Plotter):
         if toolbar is not None:
             self._toolbar = toolbar
         self._figure = target
-        xaxis_unit = None
         self._active_curves = []
         self._backup_curves = []
         axes = target.add_subplot(111)
         self._axes = [axes]
         self.apply_settings(plotting_context)
+        x_axis_labels = []
         self.height_max, self.length_max = 0.0, 0.0
         if plotting_context.set_axes() is None:
             LOG.debug("Axis check failed.")
@@ -140,65 +142,50 @@ class Single(Plotter):
             except KeyError:
                 best_unit, best_axis = dataset.longest_axis()
             plotlabel = dataset._labels["medium"]
-            xaxis_unit = plotting_context.get_conversion_factor(best_unit)
-            try:
-                conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
-                    xaxis_unit
+            x_axis_labels.append(dataset.x_axis_label(best_axis))
+            if dataset._n_dim == 1:
+                [temp] = axes.plot(
+                    dataset.x_axis(best_axis),
+                    dataset.data,
+                    linestyle=linestyle,
+                    label=plotlabel,
+                    color=colour,
                 )
-            except Exception:
-                continue
-            else:
-                if dataset._n_dim == 1:
-                    [temp] = axes.plot(
-                        dataset._axes[best_axis] * conversion_factor,
-                        dataset.data,
-                        linestyle=linestyle,
-                        label=plotlabel,
-                        color=colour,
-                    )
+                try:
+                    temp.set_marker(marker)
+                except ValueError:
                     try:
-                        temp.set_marker(marker)
+                        temp.set_marker(int(marker))
+                    except Exception:
+                        pass
+                self._active_curves.append(temp)
+                self._backup_curves.append([temp.get_xdata(), temp.get_ydata()])
+                self.height_max = max(self.height_max, temp.get_ydata().max())
+                self.length_max = max(self.length_max, temp.get_xdata().max())
+            else:
+                multi_curves = dataset.curves_vs_axis(
+                    (best_unit, best_axis), max_limit=self._curve_limit_per_dataset
+                )
+                counter = 0
+                for key, value in multi_curves.items():
+                    counter += 1
+                    if counter >= self._curve_limit_per_dataset:
+                        break
+                    try:
+                        [temp] = axes.plot(
+                            dataset.x_axis(best_axis),
+                            value,
+                            label=plotlabel + ":" + dataset._curve_labels[key],
+                        )
+                        self._active_curves.append(temp)
+                        self._backup_curves.append([temp.get_xdata(), temp.get_ydata()])
+                        self.height_max = max(self.height_max, temp.get_ydata().max())
+                        self.length_max = max(self.length_max, temp.get_xdata().max())
                     except ValueError:
-                        try:
-                            temp.set_marker(int(marker))
-                        except Exception:
-                            pass
-                    self._active_curves.append(temp)
-                    self._backup_curves.append([temp.get_xdata(), temp.get_ydata()])
-                    self.height_max = max(self.height_max, temp.get_ydata().max())
-                    self.length_max = max(self.length_max, temp.get_xdata().max())
-                else:
-                    multi_curves = dataset.curves_vs_axis(
-                        (best_unit, best_axis), max_limit=self._curve_limit_per_dataset
-                    )
-                    counter = 0
-                    for key, value in multi_curves.items():
-                        counter += 1
-                        if counter >= self._curve_limit_per_dataset:
-                            break
-                        try:
-                            [temp] = axes.plot(
-                                dataset._axes[best_axis] * conversion_factor,
-                                value,
-                                label=plotlabel + ":" + dataset._curve_labels[key],
-                            )
-                            self._active_curves.append(temp)
-                            self._backup_curves.append(
-                                [temp.get_xdata(), temp.get_ydata()]
-                            )
-                            self.height_max = max(
-                                self.height_max, temp.get_ydata().max()
-                            )
-                            self.length_max = max(
-                                self.length_max, temp.get_xdata().max()
-                            )
-                        except ValueError:
-                            LOG.error(
-                                f"Plotting failed for {plotlabel} using {best_axis}"
-                            )
-                            LOG.error(f"x_axis={dataset._axes[best_axis]}")
-                            LOG.error(f"values={value}")
-                            return
+                        LOG.error(f"Plotting failed for {plotlabel} using {best_axis}")
+                        LOG.error(f"x_axis={dataset._axes[best_axis]}")
+                        LOG.error(f"values={value}")
+                        return
         if len(self._backup_curves) > 1:
             self.enable_slider(True)
         if update_only:
@@ -217,8 +204,7 @@ class Single(Plotter):
         else:
             xlimits, ylimits = axes.get_xlim(), axes.get_ylim()
             self._backup_limits = [xlimits[0], xlimits[1], ylimits[0], ylimits[1]]
-        if xaxis_unit is not None:
-            axes.set_xlabel(xaxis_unit)
+        axes.set_xlabel(", ".join(np.unique(x_axis_labels)))
         axes.grid(True)
         axes.legend(loc=0)
         self.offset_curves()

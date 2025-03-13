@@ -93,6 +93,8 @@ class SingleDataset:
             pass
         self._axes = {}
         self._axes_units = {}
+        self._current_units = {}
+        self._axes_scaling = {}
         self._axes_order = []
         for ax_number, axis_name in enumerate(self._axes_tag.split("|")):
             aname = axis_name.strip()
@@ -105,6 +107,22 @@ class SingleDataset:
                 self._axes[axis_key] = source[axis_key][:]
                 self._axes_units[axis_key] = source[axis_key].attrs["units"]
             self._axes_order.append(axis_key)
+            self._axes_scaling[axis_key] = 1.0
+            self._current_units[axis_key] = self._axes_units[axis_key]
+
+    def x_axis(self, axis_key):
+        return self._axes[axis_key] * self._axes_scaling[axis_key]
+
+    def x_axis_label(self, axis_key):
+        return f"{axis_key} ({self._current_units[axis_key]})"
+
+    def set_current_units(self, unit_lookup):
+        if unit_lookup is None:
+            return
+        for axis_name, axis_unit in self._axes_units.items():
+            factor, new_unit = unit_lookup.conversion_factor(axis_unit)
+            self._axes_scaling[axis_name] = factor
+            self._current_units[axis_name] = new_unit
 
     def set_data_limits(self, limit_string: str):
         complete_subset_list = []
@@ -173,11 +191,12 @@ class SingleDataset:
         label = "at "
         for axis_index, axis_name in enumerate(axis_lookup):
             axis_values = self._axes[axis_name]
-            axis_unit = self._axes_units[axis_name]
-            picked_value = axis_values[index_tuple[axis_index]]
-            significant_digit = np.log10(
-                abs(np.mean(axis_values[1:] - axis_values[:-1]))
-            )
+            axis_unit = self._current_units[axis_name]
+            conversion_factor = self._axes_scaling[axis_name]
+            picked_value = axis_values[index_tuple[axis_index]] * conversion_factor
+            significant_digit = np.floor(
+                np.log10(abs(np.mean(axis_values[1:] - axis_values[:-1])))
+            ).astype(int)
             if significant_digit < 0:
                 picked_value = round(picked_value, abs(significant_digit) + 1)
             else:
@@ -450,6 +469,7 @@ class PlottingContext(QStandardItemModel):
             ).text()
             if useit:
                 self._datasets[key].set_data_limits(data_number_string)
+                self._datasets[key].set_current_units(self._unit_lookup)
                 result[key] = (self._datasets[key], colour, style, marker, ds_num, axis)
             else:
                 self._datasets[key]._data_limits = None
