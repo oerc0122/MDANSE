@@ -13,50 +13,50 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import TYPE_CHECKING, Dict, List
-import os
 import itertools
-import math
+import os
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import h5py
 
+import matplotlib.pyplot as mpl
 import numpy as np
-from matplotlib.markers import MarkerStyle
-from matplotlib.lines import lineStyles
 from matplotlib import rcParams
 from matplotlib.colors import to_hex as mpl_to_hex
-import matplotlib.pyplot as mpl
-from qtpy.QtCore import Slot, Signal, QModelIndex, Qt
-from qtpy.QtGui import QStandardItemModel, QStandardItem, QColor
-
+from matplotlib.lines import lineStyles
+from matplotlib.markers import MarkerStyle
 from MDANSE.MLogging import LOG
+from qtpy.QtCore import QModelIndex, Qt, Signal, Slot
+from qtpy.QtGui import QColor, QStandardItem, QStandardItemModel
+import contextlib
 
 
 def get_mpl_markers():
+    """Return valid point markers provided by matplotlib."""
     unique_keys = list(set(MarkerStyle.markers.keys()))
-    filtered_markers = {
+    return {
         key: MarkerStyle.markers[key]
         for key in unique_keys
         if key not in ["", " ", "none"] + [str(x) for x in range(10)]
     }
-    return filtered_markers
 
 
 def get_mpl_lines():
-    filtered_line_styles = {
-        key: value for key, value in lineStyles.items() if key not in ["", " "]
-    }
-    return filtered_line_styles
+    """Return valid plot line styles used by matplotlib."""
+    return {key: value for key, value in lineStyles.items() if key not in ["", " "]}
 
 
 def get_mpl_colours():
+    """Get matplotlib line colours from the current style, as hex string."""
     cycler = rcParams["axes.prop_cycle"]
     colours = cycler.by_key()["color"]
     return [mpl_to_hex(col) for col in colours]
 
 
 class SingleDataset:
+    """Manages a plottable data set from an .mda file."""
+
     def __init__(self, name: str, source: "h5py.File"):
         self._name = name
         self._filename = source.filename
@@ -87,10 +87,8 @@ class SingleDataset:
         self._n_dim = len(self._data.shape)
         self._axes_tag = source[name].attrs["axis"]
         self._scaling_factor = 1.0
-        try:
+        with contextlib.suppress(KeyError):
             self._scaling_factor = float(source[name].attrs["scaling_factor"])
-        except KeyError:
-            pass
         self._axes = {}
         self._axes_units = {}
         self._current_units = {}
@@ -110,13 +108,40 @@ class SingleDataset:
             self._axes_scaling[axis_key] = 1.0
             self._current_units[axis_key] = self._axes_units[axis_key]
 
-    def x_axis(self, axis_key):
+    def x_axis(self, axis_key: str) -> np.ndarray:
+        """Get the plotting axis in the current physical units.
+
+        Parameters
+        ----------
+        axis_key : str
+            name of the axis associated with the data set.
+
+        Returns
+        -------
+        np.ndarray
+            An axis for plotting the dataset, after unit conversion
+
+        """
         return self._axes[axis_key] * self._axes_scaling[axis_key]
 
-    def x_axis_label(self, axis_key):
+    def x_axis_label(self, axis_key: str) -> str:
+        """Get the axis label to be used as matplotlib label.
+
+        Parameters
+        ----------
+        axis_key : str
+            name of the axis dataset.
+
+        Returns
+        -------
+        str
+            Name of the dataset and the corresponding physical unit.
+
+        """
         return f"{axis_key} ({self._current_units[axis_key]})"
 
     def set_current_units(self, unit_lookup):
+        """Update the unit based on the unit lookup of the PlottingContext."""
         if unit_lookup is None:
             return
         for axis_name, axis_unit in self._axes_units.items():
@@ -125,6 +150,14 @@ class SingleDataset:
             self._current_units[axis_name] = new_unit
 
     def set_data_limits(self, limit_string: str):
+        """Parse the string used for selecting a subset of data.
+
+        Parameters
+        ----------
+        limit_string : str
+            Data row indices, given as a list, range or slice.
+
+        """
         complete_subset_list = []
         for token in limit_string.split(";"):
             if ":" in token:
@@ -157,10 +190,26 @@ class SingleDataset:
         else:
             self._data_limits = np.unique(complete_subset_list).astype(int)
 
-    def available_x_axes(self) -> List[str]:
+    def available_x_axes(self) -> list[str]:
+        """Get a list of axis names used by this data set.
+
+        Returns
+        -------
+        list[str]
+            Names of the axes used by this data set.
+
+        """
         return list(self._axes_units.keys())
 
     def longest_axis(self) -> str:
+        """Determine which axis is the longest, to be used as x axis.
+
+        Returns
+        -------
+        str
+            Name of the longest axis.
+
+        """
         length = -1
         best_unit = "none"
         best_axis = "none"
@@ -175,19 +224,40 @@ class SingleDataset:
 
     @property
     def data(self):
-        """
+        """Data array, scaled if requested in the GUI table.
+
         Returns
         -------
         np.ndarray
             The plot data, scaled if set.
+
         """
         if self._use_scaling:
             return self._data * self._scaling_factor
         return self._data
 
     def generate_curve_label(
-        self, index_tuple: tuple[int], axis_lookup: tuple[str]
+        self,
+        index_tuple: tuple[int],
+        axis_lookup: tuple[str],
     ) -> str:
+        """Get a meaningful label for a subset of data.
+
+        Used when plotting 1D arrays out of a multidimensional array.
+
+        Parameters
+        ----------
+        index_tuple : tuple[int]
+            indices of the 1D data array position in the ND array
+        axis_lookup : tuple[str]
+            Names of the axes to use
+
+        Returns
+        -------
+        str
+            A string label for the plot legend.
+
+        """
         label = "at "
         for axis_index, axis_name in enumerate(axis_lookup):
             axis_values = self.x_axis(axis_name)
@@ -204,8 +274,25 @@ class SingleDataset:
         return label.rstrip(", ")
 
     def curves_vs_axis(
-        self, x_axis_details: tuple[str], max_limit: int = 1
-    ) -> List[np.ndarray]:
+        self,
+        x_axis_details: tuple[str],
+        max_limit: int = 1,
+    ) -> list[np.ndarray]:
+        """Prepare a set of curves for plotting.
+
+        Parameters
+        ----------
+        x_axis_details : tuple[str]
+            Name and original unit of the primary plotting axis
+        max_limit : int, optional
+            Maximum number of curves allowed by plotter, by default 1
+
+        Returns
+        -------
+        list[np.ndarray]
+            List of data arrays ready for plotting
+
+        """
         self._curves = {}
         self._curve_labels = {}
         current_dim = 0
@@ -217,14 +304,16 @@ class SingleDataset:
         axis_lengths = [len(self._axes[name]) for name in self._axes_order]
         if not np.allclose(data_shape, axis_lengths):
             raise ValueError("Array shape does not match the order of the axes")
-        for axis_index, axis_name in enumerate(self._axes_order):
+        for axis_name in self._axes_order:
             axis_unit = self._axes_units[axis_name]
             if axis_unit == x_axis_unit and axis_name == x_axis_name:
                 slicer.append([slice(None)])
             else:
-                slicer.append(np.arange(data_shape[current_dim]))
-                indexer.append(np.arange(data_shape[current_dim]))
+                indices = np.arange(data_shape[current_dim])
+                slicer.append(indices)
+                indexer.append(indices)
                 label_lookup.append(axis_name)
+            current_dim += 1
         nd_indices = list(itertools.product(*indexer))
         slicers = list(itertools.product(*slicer))
         if self._data_limits is not None:
@@ -238,20 +327,36 @@ class SingleDataset:
                 index_tuple = tuple(nd_indices[index])
                 self._curves[index_tuple] = self.data[slicers[index]].squeeze()
                 self._curve_labels[index_tuple] = self.generate_curve_label(
-                    index_tuple, label_lookup
+                    index_tuple,
+                    label_lookup,
                 )
             except IndexError:
                 continue
         return self._curves
 
-    def planes_vs_axis(self, axis_number: int, max_limit: int = 1) -> List[np.ndarray]:
+    def planes_vs_axis(self, axis_number: int, max_limit: int = 1) -> list[np.ndarray]:
+        """Prepare for plotting 2D subsets of an ND array.
+
+        Parameters
+        ----------
+        axis_number : int
+            index of the axis perpendicular to the plotted array
+        max_limit : int, optional
+            maximum number of planes allowed by plotter, by default 1
+
+        Returns
+        -------
+        list[np.ndarray]
+            List of 2D arrays for heatmap plots
+
+        """
         self._planes = {}
         self._plane_labels = {}
         _found = -1
         total_ndim = len(self._data.shape)
         if total_ndim == 1:
-            return
-        elif total_ndim == 2:
+            return None
+        if total_ndim == 2:
             return self.data
         data_shape = self._data.shape
         number_of_planes = data_shape[axis_number]
@@ -285,50 +390,7 @@ class SingleDataset:
                 self._plane_labels[plane_number] = (
                     f"{perpendicular_axis_name}={fixed_argument}"
                 )
-
-
-class SingleCurve:
-    def __init__(self, data_name: str, file_name: str, *args, **kwargs):
-        self._name = data_name
-        self._filename = file_name
-        self._curve = []
-        self._x_axis = []
-        self._y_axis = None
-        self._z_axis = None
-        bare_name = os.path.split(self._filename)[-1]
-        self._labels = {
-            "minimal": data_name,
-            "medium": f"{bare_name}:{data_name}",
-            "full": f"{file_name}:{data_name}",
-        }
-        self._label = self._labels["medium"]
-        self._units = {"data": "arbitrary", "x": None, "y": None, "z": None}
-        self._colour = "#000000"
-        self._line = "-"
-
-    def set_data(self, array: np.ndarray, unit: str):
-        self._curve = array
-        self._units["data"] = unit
-
-    def set_x_axis(self, array: np.ndarray, unit: str):
-        self._x_axis = array
-        self._units["x"] = unit
-
-    def set_y_axis(self, value: float, unit: str):
-        self._y_axis = value
-        self._units["y"] = unit
-
-    def set_z_axis(self, value: float, unit: str):
-        self._z_axis = value
-        self._units["z"] = unit
-
-    def standard_items(self, key: int) -> List["QStandardItem"]:
-        result = []
-        for val in []:
-            item = QStandardItem(str(val))
-            item.setData(key, role=Qt.ItemDataRole.UserRole)
-            result.append(item)
-        return result
+        return None
 
 
 plotting_column_labels = [
@@ -349,6 +411,8 @@ plotting_column_index = {
 
 
 class PlottingContext(QStandardItemModel):
+    """Data model storing data and user input used for plotting."""
+
     needs_an_update = Signal()
 
     def __init__(self, *args, unit_lookup=None, **kwargs):
@@ -367,16 +431,31 @@ class PlottingContext(QStandardItemModel):
         self._unit_lookup = unit_lookup
         self.setHorizontalHeaderLabels(plotting_column_labels)
 
-    def generate_colour(self, number: int):
+    def generate_colour(self, number: int) -> str:
+        """Get the matplotlib colour string for the nth curve.
+
+        Parameters
+        ----------
+        number : int
+            number of the curve in the plot
+
+        Returns
+        -------
+        str
+            colour string from the current matplotlib style
+
+        """
         return self._colour_list[number % len(self._colour_list)]
 
-    def next_colour(self):
+    def next_colour(self) -> str:
+        """Get the next matplotlib colour and increment the counter."""
         colour = self.generate_colour(self._last_colour)
         self._last_colour += 1
         return colour
 
     @property
     def colormap(self):
+        """Matplotlib colormap out of the list of valid names."""
         backup_cmap = "viridis"
         try:
             cmap = self._unit_lookup._settings.group("colours").get("colormap")
@@ -385,11 +464,11 @@ class PlottingContext(QStandardItemModel):
         else:
             if cmap in mpl.colormaps():
                 return cmap
-            else:
-                return self._unit_lookup._settings.default_value("colours", "colormap")
+            return self._unit_lookup._settings.default_value("colours", "colormap")
 
     @Slot()
     def regenerate_colours(self):
+        """Populate the list of curve colours based on user input."""
         self._colour_list = get_mpl_colours()
         self._last_colour = 0
         for row in range(self.rowCount()):
@@ -405,35 +484,58 @@ class PlottingContext(QStandardItemModel):
             else:
                 next_colour = self.next_colour()
                 self.item(row, plotting_column_index["Colour"]).setText(
-                    str(next_colour)
+                    str(next_colour),
                 )
                 self.item(row, plotting_column_index["Colour"]).setData(
-                    QColor(str(next_colour)), role=Qt.ItemDataRole.BackgroundRole
+                    QColor(str(next_colour)),
+                    role=Qt.ItemDataRole.BackgroundRole,
                 )
         self._last_colour_list = list(self._colour_list)
 
     @Slot(object)
     def accept_external_data(self, other: "PlottingContext"):
-        """Crucial slot for transferring data
+        """Copy the datasets from the input PlottingContext.
+
+        Crucial slot for transferring data
         between tabs. DataPlotter will send the datasets
-        into this slot."""
+        into this slot.
+
+        """
         for dataset in other._datasets.values():
             self.add_dataset(dataset)
         self.set_axes()
 
     @Slot(dict)
-    def accept_units(self, units: Dict):
-        """Crucial slot for transferring data
-        between tabs. DataPlotter will send the datasets
-        into this slot."""
+    def accept_units(self, units: dict):
+        """Get user-preferred physical units from the input."""
         self._unit_preference = units
         self.set_axes()
 
-    def get_conversion_factor(self, unit):
-        factor, new_unit = self._unit_lookup.conversion_factor(unit)
+    def get_conversion_factor(self, unit: str) -> str:
+        """Find the output physical unit for the input unit.
+
+        This lets us know what conversion will be performed.
+
+        Parameters
+        ----------
+        unit : str
+            physical unit of the original data set.
+
+        Returns
+        -------
+        str
+            physical unit after the conversion
+
+        """
+        _, new_unit = self._unit_lookup.conversion_factor(unit)
         return new_unit
 
-    def datasets(self) -> Dict:
+    def datasets(self) -> dict:
+        """Collect GUI inputs and return data sets for plotting.
+
+        This method only returns data sets with "Use it" box checked.
+
+        """
         result = {}
         for ds_num, row in enumerate(range(self.rowCount())):
             key = self.index(row, plotting_column_index["Dataset"]).data(
@@ -477,6 +579,14 @@ class PlottingContext(QStandardItemModel):
         return result
 
     def add_dataset(self, new_dataset: SingleDataset):
+        """Add a SingleDataset instance to the model and GUI.
+
+        Parameters
+        ----------
+        new_dataset : SingleDataset
+            a SingleDataset instance
+
+        """
         if not new_dataset._valid:
             return
         newkey = f"{new_dataset._filename}:{new_dataset._name}"
@@ -515,8 +625,9 @@ class PlottingContext(QStandardItemModel):
         self.appendRow(items)
 
     def set_axes(self):
+        """Check that axis information can be found for datasets."""
         if len(self._datasets) == 0:
-            return
+            return None
         all_axes = []
         all_dimensions = []
         longest_axes = []
@@ -543,6 +654,7 @@ class PlottingContext(QStandardItemModel):
 
     @Slot()
     def clear(self) -> None:
+        """Remove all data from the model."""
         result = super().clear()
         self._datasets = {}
         self.setHorizontalHeaderLabels(plotting_column_labels)
@@ -550,6 +662,7 @@ class PlottingContext(QStandardItemModel):
 
     @Slot(QModelIndex)
     def delete_dataset(self, index: QModelIndex):
+        """Delete a single row from the model."""
         dkey = index.data(role=Qt.ItemDataRole.UserRole)
         self.removeRow(index.row())
         self._datasets.pop(dkey, None)

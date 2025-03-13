@@ -13,8 +13,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import TYPE_CHECKING, List
+import contextlib
 import math
+from typing import TYPE_CHECKING
 
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
@@ -23,20 +24,25 @@ from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
+
     from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext
 
 
 class Grid(Plotter):
+    """Plots each curve in its own subplot."""
+
     def __init__(self) -> None:
         super().__init__()
         self._figure = None
         self._backup_limits = []
         self._plot_limit = 8
 
-    def slider_labels(self) -> List[str]:
+    def slider_labels(self) -> list[str]:
+        """Return labels to show that sliders are not used."""
         return ["Inactive", "Inactive"]
 
-    def slider_limits(self) -> List[str]:
+    def slider_limits(self) -> list[str]:
+        """Return generic slider limit values."""
         return self._number_of_sliders * [[-1.0, 1.0, 0.01]]
 
     def plot(
@@ -46,7 +52,21 @@ class Grid(Plotter):
         update_only=False,
         toolbar=None,
     ):
-        self.enable_slider(False)
+        """Plot datasets in separate subplots.
+
+        Parameters
+        ----------
+        plotting_context : PlottingContext
+            Data model storing the data to be plotted
+        figure : Figure, optional
+            Matplotlib figure instance for plotting, by default None
+        update_only : bool, optional
+            If true, try to re-use zoom settings, by default False
+        toolbar : _type_, optional
+            GUI instance of the matplotlib toolbar, by default None
+
+        """
+        self.enable_slider(allow_slider=False)
         target = self.get_figure(figure)
         if target is None:
             return
@@ -66,12 +86,11 @@ class Grid(Plotter):
                 axis_info = ds.longest_axis()
             curves = ds.curves_vs_axis(axis_info, max_limit=self._plot_limit)
             nplots += len(curves)
-        if nplots > self._plot_limit:
-            nplots = self._plot_limit
+        nplots = min(nplots, self._plot_limit)
         gridsize = int(math.ceil(nplots**0.5))
         startnum = 1
         counter = 0
-        for name, databundle in plotting_context.datasets().items():
+        for databundle in plotting_context.datasets().values():
             if counter > self._plot_limit:
                 break
             dataset, colour, linestyle, marker, ds_num, axis_label = databundle
@@ -97,10 +116,8 @@ class Grid(Plotter):
                 try:
                     temp_curve.set_marker(marker)
                 except ValueError:
-                    try:
+                    with contextlib.suppress(Exception):
                         temp_curve.set_marker(int(marker))
-                    except Exception:
-                        pass
                 xlimits, ylimits = axes.get_xlim(), axes.get_ylim()
                 try:
                     new_limits = self._backup_limits[ds_num]
@@ -135,7 +152,7 @@ class Grid(Plotter):
                         LOG.error(
                             f"Matplotlib could not set y limits to {new_limits[2]}, {new_limits[3]}"
                         )
-                axes.grid(True)
+                axes.grid(visible=True)
                 axes.set_xlabel(x_axis_label)
                 axes.legend(loc=0)
                 startnum += 1

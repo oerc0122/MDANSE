@@ -13,24 +13,26 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import TYPE_CHECKING, List
 import math
+from typing import TYPE_CHECKING
 
 import numpy as np
-from scipy.interpolate import interp1d
 from matplotlib.pyplot import colorbar as mpl_colorbar
-
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
+from scipy.interpolate import interp1d
 
 from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
+
     from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext
 
 
 class Heatmap(Plotter):
+    """Creates a 2D heatmap plot."""
+
     def __init__(self) -> None:
         super().__init__()
         self._figure = None
@@ -46,43 +48,42 @@ class Heatmap(Plotter):
         self._plot_limit = 1
 
     def clear(self, figure: "Figure" = None):
-        if figure is None:
-            target = self._figure
-        else:
-            target = figure
+        """Clear the figure."""
+        target = self._figure if figure is None else figure
         if target is None:
             return
         target.clear()
 
-    def slider_labels(self) -> List[str]:
+    def slider_labels(self) -> list[str]:
+        """Return labels for the sliders in heatmap mode."""
         return ["Minimum (percentile)", "Maximum (percentile)"]
 
-    def slider_limits(self) -> List[str]:
-        return self._number_of_sliders * [[0.0, 100.0, 0.1]]
+    def slider_limits(self) -> list[str]:
+        """Return slider limits for the colormap, in percent."""
+        return self._number_of_sliders * [[0.0, 100.0, 0.01]]
 
     def sliders_coupled(self) -> bool:
+        """Confirm that sliders are coupled in heatmap mode."""
         return True
 
     def get_figure(self, figure: "Figure" = None):
-        if figure is None:
-            target = self._figure
-        else:
-            target = figure
+        """Return current figure which will be used for plotting."""
+        target = self._figure if figure is None else figure
         if target is None:
             LOG.error(f"PlottingContext can't plot to {target}")
-            return
+            return None
         target.clear()
         return target
 
-    def handle_slider(self, new_value: List[float]):
+    def handle_slider(self, new_value: list[float]):
+        """Adjust colormap values based on slider values."""
         super().handle_slider(new_value)
         target = self._figure
         if target is None:
             return
         if new_value[1] <= new_value[0]:
             return
-        else:
-            self._slider_values = [new_value[0], new_value[1]]
+        self._slider_values = [new_value[0], new_value[1]]
         for ds_num, image in self._backup_images.items():
             try:
                 last_minmax = self._backup_minmax[ds_num]
@@ -118,7 +119,21 @@ class Heatmap(Plotter):
         update_only=False,
         toolbar=None,
     ):
-        self.enable_slider(True)
+        """Plot the first dataset as a heatmap.
+
+        Parameters
+        ----------
+        plotting_context : PlottingContext
+            Data model storing the data to be plotted
+        figure : Figure, optional
+            Matplotlib figure instance for plotting, by default None
+        update_only : bool, optional
+            If true, try to re-use zoom settings, by default False
+        toolbar : _type_, optional
+            GUI instance of the matplotlib toolbar, by default None
+
+        """
+        self.enable_slider(allow_slider=True)
         target = self.get_figure(figure)
         if target is None:
             return
@@ -158,13 +173,13 @@ class Heatmap(Plotter):
                 percentiles = np.linspace(0, 100.0, 21)
                 results = [np.percentile(ds._data, perc) for perc in percentiles]
                 self._backup_scale_interpolators[ds_num] = interp1d(
-                    percentiles, results
+                    percentiles,
+                    results,
                 )
-        if nplots > self._plot_limit:
-            nplots = self._plot_limit
+        nplots = min(nplots, self._plot_limit)
         gridsize = int(math.ceil(nplots**0.5))
         startnum = 1
-        for num, databundle in enumerate(plotting_context.datasets().values()):
+        for databundle in plotting_context.datasets().values():
             dataset, _, _, _, ds_num, _ = databundle
             transposed = False
             if dataset._n_dim == 1:
