@@ -190,17 +190,16 @@ class SingleDataset:
     ) -> str:
         label = "at "
         for axis_index, axis_name in enumerate(axis_lookup):
-            axis_values = self._axes[axis_name]
+            axis_values = self.x_axis(axis_name)
             axis_unit = self._current_units[axis_name]
-            conversion_factor = self._axes_scaling[axis_name]
-            picked_value = axis_values[index_tuple[axis_index]] * conversion_factor
+            picked_value = axis_values[index_tuple[axis_index]]
             significant_digit = np.floor(
                 np.log10(abs(np.mean(axis_values[1:] - axis_values[:-1])))
             ).astype(int)
             if significant_digit < 0:
-                picked_value = round(picked_value, abs(significant_digit) + 1)
+                picked_value = round(picked_value, abs(significant_digit) + 2)
             else:
-                picked_value = round(picked_value)
+                picked_value = round(picked_value, 1)
             label += f"{axis_name}={picked_value} {axis_unit}, "
         return label.rstrip(", ")
 

@@ -79,7 +79,6 @@ class Grid(Plotter):
                 best_unit, best_axis = dataset._axes_units[axis_label], axis_label
             except KeyError:
                 best_unit, best_axis = dataset.longest_axis()
-            xaxis_unit = plotting_context.get_conversion_factor(best_unit)
             for key, curve in dataset._curves.items():
                 if counter > self._plot_limit:
                     break
