@@ -93,14 +93,18 @@ class SingleDataset:
             pass
         self._axes = {}
         self._axes_units = {}
+        self._axes_order = []
         for ax_number, axis_name in enumerate(self._axes_tag.split("|")):
             aname = axis_name.strip()
             if aname == "index":
-                self._axes[aname + str(ax_number)] = np.arange(len(self._data))
-                self._axes_units[aname + str(ax_number)] = "N/A"
+                axis_key = aname + str(ax_number)
+                self._axes[axis_key] = np.arange(len(self._data))
+                self._axes_units[axis_key] = "N/A"
             else:
-                self._axes[aname] = source[aname][:]
-                self._axes_units[aname] = source[aname].attrs["units"]
+                axis_key = aname
+                self._axes[axis_key] = source[axis_key][:]
+                self._axes_units[axis_key] = source[axis_key].attrs["units"]
+            self._axes_order.append(axis_key)
 
     def set_data_limits(self, limit_string: str):
         complete_subset_list = []
@@ -163,55 +167,50 @@ class SingleDataset:
             return self._data * self._scaling_factor
         return self._data
 
-    def curves_vs_axis(self, axis_unit: str, max_limit: int = 1) -> List[np.ndarray]:
+    def generate_curve_label(
+        self, index_tuple: tuple[int], axis_lookup: tuple[str]
+    ) -> str:
+        return "label"
+
+    def curves_vs_axis(
+        self, x_axis_details: tuple[str], max_limit: int = 1
+    ) -> List[np.ndarray]:
         self._curves = {}
         self._curve_labels = {}
-        found = -1
-        total_ndim = len(self._data.shape)
+        current_dim = 0
         data_shape = self._data.shape
-        for aname, aunit in self._axes_units.items():
-            if aunit == axis_unit:
-                xaxis = self._axes[aname]
-                xlen = len(xaxis)
-                for dim in range(total_ndim):
-                    if xlen == self._data.shape[dim]:
-                        found = dim
-                        break
+        x_axis_unit, x_axis_name = x_axis_details
         slicer = []
         indexer = []
-        for dim in range(total_ndim):
-            if dim == found:
+        label_lookup = []
+        axis_lengths = [len(self._axes[name]) for name in self._axes_order]
+        if not np.allclose(data_shape, axis_lengths):
+            raise ValueError("Array shape does not match the order of the axes")
+        for axis_index, axis_name in enumerate(self._axes_order):
+            axis_unit = self._axes_units[axis_name]
+            if axis_unit == x_axis_unit and axis_name == x_axis_name:
                 slicer.append([slice(None)])
-                # indexer.append([None])
             else:
-                slicer.append(np.arange(data_shape[dim]))
-                indexer.append(np.arange(data_shape[dim]))
+                slicer.append(np.arange(data_shape[current_dim]))
+                indexer.append(np.arange(data_shape[current_dim]))
+                label_lookup.append(axis_name)
         nd_indices = list(itertools.product(*indexer))
         slicers = list(itertools.product(*slicer))
         if self._data_limits is not None:
-            for counter, index in enumerate(self._data_limits):
-                if counter >= max_limit:
-                    break
-                try:
-                    self._curves[tuple(nd_indices[index])] = self.data[
-                        slicers[index]
-                    ].squeeze()
-                    self._curve_labels[tuple(nd_indices[index])] = str(
-                        tuple(nd_indices[index])
-                    )
-                except IndexError:
-                    continue
+            curve_indices = self._data_limits
         else:
-            for index in range(max_limit):
-                try:
-                    self._curves[tuple(nd_indices[index])] = self.data[
-                        slicers[index]
-                    ].squeeze()
-                    self._curve_labels[tuple(nd_indices[index])] = str(
-                        tuple(nd_indices[index])
-                    )
-                except IndexError:
-                    continue
+            curve_indices = range(max_limit)
+        for counter, index in enumerate(curve_indices):
+            if counter >= max_limit:
+                break
+            try:
+                index_tuple = tuple(nd_indices[index])
+                self._curves[index_tuple] = self.data[slicers[index]].squeeze()
+                self._curve_labels[index_tuple] = self.generate_curve_label(
+                    index_tuple, label_lookup
+                )
+            except IndexError:
+                continue
         return self._curves
 
     def planes_vs_axis(self, axis_number: int, max_limit: int = 1) -> List[np.ndarray]:
