@@ -170,7 +170,20 @@ class SingleDataset:
     def generate_curve_label(
         self, index_tuple: tuple[int], axis_lookup: tuple[str]
     ) -> str:
-        return "label"
+        label = "at "
+        for axis_index, axis_name in enumerate(axis_lookup):
+            axis_values = self._axes[axis_name]
+            axis_unit = self._axes_units[axis_name]
+            picked_value = axis_values[index_tuple[axis_index]]
+            significant_digit = np.log10(
+                abs(np.mean(axis_values[1:] - axis_values[:-1]))
+            )
+            if significant_digit < 0:
+                picked_value = round(picked_value, abs(significant_digit) + 1)
+            else:
+                picked_value = round(picked_value)
+            label += f"{axis_name}={picked_value} {axis_unit}, "
+        return label.rstrip(", ")
 
     def curves_vs_axis(
         self, x_axis_details: tuple[str], max_limit: int = 1
