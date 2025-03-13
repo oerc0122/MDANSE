@@ -59,7 +59,7 @@ def test_available_x_axes_2d(file_2d):
 def test_curves_vs_axis_1d(file_1d):
     temp = SingleDataset("dos_total", file_1d)
     temp.set_data_limits("0,1,2")
-    curves = temp.curves_vs_axis("rad/ps", max_limit=12)
+    curves = temp.curves_vs_axis(("rad/ps", "omega"), max_limit=12)
     assert len(curves) == 1
     print(curves)
     assert len(curves[tuple()]) == 501
@@ -68,7 +68,7 @@ def test_curves_vs_axis_1d(file_1d):
 def test_curves_vs_axis_2d_long_axis(file_2d):
     temp = SingleDataset("f(q,t)_total", file_2d)
     temp.set_data_limits("0,1,2,3")
-    curves = temp.curves_vs_axis("ps", max_limit=12)
+    curves = temp.curves_vs_axis(("ps", "time"), max_limit=12)
     print(len(curves))
     assert len(curves) == 4
     print(curves.keys())
@@ -78,7 +78,7 @@ def test_curves_vs_axis_2d_long_axis(file_2d):
 def test_curves_vs_axis_2d_short_axis(file_2d):
     temp = SingleDataset("f(q,t)_total", file_2d)
     temp.set_data_limits("2,3,4,5")
-    curves = temp.curves_vs_axis("1/nm", max_limit=12)
+    curves = temp.curves_vs_axis(("1/nm", "q"), max_limit=12)
     print(len(curves))
     assert len(curves) == 4
     print(curves.keys())

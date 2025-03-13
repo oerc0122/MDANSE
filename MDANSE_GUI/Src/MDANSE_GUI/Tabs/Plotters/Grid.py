@@ -61,10 +61,10 @@ class Grid(Plotter):
         for databundle in plotting_context.datasets().values():
             ds, colour, linestyle, marker, _, axis_label = databundle
             try:
-                best_unit, best_axis = ds._axes_units[axis_label], axis_label
+                axis_info = ds._axes_units[axis_label], axis_label
             except KeyError:
-                best_unit, best_axis = ds.longest_axis()
-            curves = ds.curves_vs_axis(best_unit, max_limit=self._plot_limit)
+                axis_info = ds.longest_axis()
+            curves = ds.curves_vs_axis(axis_info, max_limit=self._plot_limit)
             nplots += len(curves)
         if nplots > self._plot_limit:
             nplots = self._plot_limit

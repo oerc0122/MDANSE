@@ -169,7 +169,7 @@ class Single(Plotter):
                     self.length_max = max(self.length_max, temp.get_xdata().max())
                 else:
                     multi_curves = dataset.curves_vs_axis(
-                        best_unit, max_limit=self._curve_limit_per_dataset
+                        (best_unit, best_axis), max_limit=self._curve_limit_per_dataset
                     )
                     counter = 0
                     for key, value in multi_curves.items():
