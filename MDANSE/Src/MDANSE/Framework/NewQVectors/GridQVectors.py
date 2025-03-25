@@ -265,7 +265,7 @@ class GridQVectors(QVectorGenerator):
     def from_spacing(
         cls,
         spacing: OneOrThree[float],
-        extent: OneOrThree[slice | range | Limits],
+        extent: OneOrThree[Union[slice, range, Limits]],
         **kwargs,
     ):
         """Generate grid from spacing and extents.

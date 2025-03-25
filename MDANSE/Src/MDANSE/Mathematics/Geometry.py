@@ -15,6 +15,7 @@
 #
 
 import numpy as np
+import numpy.typing as npt
 from numpy.linalg import det
 
 from MDANSE.Core.Error import Error
@@ -191,11 +192,46 @@ def random_points_on_sphere(
     return points
 
 
-def random_points_on_disk(axis, radius=1.0, nPoints=100):
-    axis = Vector(axis).normal().array
+def random_points_on_disk(
+    axis: npt.ArrayLike,
+    radius: float = 1.0,
+    nPoints: int = 100,
+    *,
+    rng: np.random.Generator = np.random.default_rng(),
+):
+    """Generate a random points normal to an axis within a radius.
 
-    points = np.random.uniform(-radius, radius, 3 * nPoints)
-    points = points.reshape((3, nPoints))
+    Parameters
+    ----------
+    axis : ArrayLike
+        Principal axis of disc.
+    radius : float
+        Radius of disk.
+    nPoints : int
+        Number of points to generate.
+    rng : np.random.Generator
+        Number generator to use.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> pts = random_points_on_disk([1, 0, 0], 3., 5, rng=np.random.default_rng(3))
+    >>> np.linalg.norm(pts, axis=0)
+    array([0.76610656, 0.16089421, 2.08356493, 1.50072501, 2.7220177 ])
+    >>> (np.linalg.norm(pts, axis=0) < 3.).all()
+    True
+
+    See Also
+    --------
+    random_points_on_circle : Generate points at a fixed radius.
+
+    Notes
+    -----
+    **NOT WORKING AS INTENDED** -- Generates on plane aligned with `axis` not a disc.
+    """
+    axis = np.array(axis) / np.linalg.norm(axis)
+
+    points = rng.uniform(-radius, radius, (3, nPoints))
 
     proj = np.dot(axis, points)
     proj = np.dot(axis[:, np.newaxis], proj[np.newaxis, :])
@@ -205,18 +241,46 @@ def random_points_on_disk(axis, radius=1.0, nPoints=100):
     return points
 
 
-def random_points_on_circle(axis, radius=1.0, nPoints=100):
-    axis = Vector(axis).normal().array
+random_points_on_disc = random_points_on_disk
 
-    points = np.random.uniform(-radius, radius, 3 * nPoints)
-    points = points.reshape((3, nPoints))
 
-    proj = np.dot(axis, points)
-    proj = np.dot(axis[:, np.newaxis], proj[np.newaxis, :])
+def random_points_on_circle(
+    axis: npt.ArrayLike,
+    radius: float = 1.0,
+    nPoints: int = 100,
+    *,
+    rng: np.random.Generator = np.random.default_rng(),
+):
+    """Generate a random points normal to an axis within a radius.
 
-    points -= proj
+    Parameters
+    ----------
+    axis : ArrayLike
+        Principal axis of disc.
+    radius : float
+        Radius of disk.
+    nPoints : int
+        Number of points to generate.
+    rng : np.random.Generator
+        Number generator to use.
 
-    points *= radius / np.sqrt(np.sum(points**2, axis=0))
+    Examples
+    --------
+    >>> import numpy as np
+    >>> pts = random_points_on_circle([1, 0, 0], 3., 5, rng=np.random.default_rng(3))
+    >>> pts
+    array([[ 0.        ,  0.        ,  0.        ,  0.        ,  0.        ],
+           [-1.57121104, -2.3436309 , -2.93952901,  2.81356591, -2.55468715],
+           [-2.55564001,  1.87280384, -0.59930728,  1.04107966,  1.57275986]])
+    >>> np.allclose(np.linalg.norm(pts, axis=0), 3.)
+    True
+
+    See Also
+    --------
+    random_points_on_disc : Generate points within a radius.
+    """
+    points = random_points_on_disc(axis, 1.0, nPoints, rng=rng)
+    points *= radius / np.linalg.norm(points, axis=0)
 
     return points
 
