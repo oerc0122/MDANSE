@@ -124,6 +124,19 @@ class Configurable(object):
 
         return self._configuration
 
+    def check_status(self):
+        errors = {}
+        for name, conf in list(self._configuration.items()):
+            if not conf.valid:
+                errors[name] = conf.error_status
+        if len(errors):
+            raise RuntimeError(
+                "\n".join(
+                    ["Bad configuration entries:"]
+                    + [f"{entry}: {error}" for entry, error in errors.items()]
+                )
+            )
+
     def setup(self, parameters: dict, rebuild: bool = True):
         """Builds and sets the configuration according to a set of
         input parameters.

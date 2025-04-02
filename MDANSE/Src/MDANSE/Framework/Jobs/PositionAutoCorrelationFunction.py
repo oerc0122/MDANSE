@@ -82,7 +82,7 @@ class PositionAutoCorrelationFunction(IJob):
     )
     settings["output_files"] = (
         "OutputFilesConfigurator",
-        {"formats": ["MDAFormat", "TextFormat"]},
+        {"formats": ["MDAFormat", "TextFormat", "FileInMemory"]},
     )
     settings["running_mode"] = ("RunningModeConfigurator", {})
 

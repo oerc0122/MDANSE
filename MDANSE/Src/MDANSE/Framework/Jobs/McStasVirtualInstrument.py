@@ -120,7 +120,7 @@ class McStasVirtualInstrument(IJob):
     )
     settings["output_files"] = (
         "OutputFilesConfigurator",
-        {"formats": ["MDAFormat", "TextFormat"]},
+        {"formats": ["MDAFormat", "TextFormat", "FileInMemory"]},
     )
 
     @property

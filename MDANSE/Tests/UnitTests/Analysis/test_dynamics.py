@@ -115,7 +115,7 @@ def parameters():
     ("PositionPowerSpectrum", ["pacf", "pps"], True),
 ], ids=lambda x: x[0])
 @pytest.mark.parametrize("running_mode", [("single-core", 1), ("multicore", -4)], ids=lambda x: x[0])
-@pytest.mark.parametrize("output_format", ["MDAFormat", "TextFormat"])
+@pytest.mark.parametrize("output_format", ["MDAFormat", "TextFormat", "FileInMemory"])
 def test_dynamics_analysis(
         tmp_path, parameters, traj_info, job_info, running_mode, output_format
 ):

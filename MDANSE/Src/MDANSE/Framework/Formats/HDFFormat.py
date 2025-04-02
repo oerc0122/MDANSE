@@ -51,6 +51,7 @@ class HDFFormat(IFormat):
         header: str = "",
         run_instance: "IJob" = None,
         extension: str = extensions[0],
+        in_memory: bool = False,
     ) -> None:
         """Write a set of output variables into an HDF file.
 
@@ -67,11 +68,15 @@ class HDFFormat(IFormat):
         """
         string_dt = h5py.special_dtype(vlen=str)
 
-        filename = Path(filename).with_suffix(extension)
+        if in_memory:
+            outputFile = h5py.File.in_memory()
 
-        # The HDF output file is opened for writing.
-        PLATFORM.create_directory(filename.parent)
-        outputFile = h5py.File(filename, "w")
+        else:
+            filename = Path(filename).with_suffix(extension)
+
+            # The HDF output file is opened for writing.
+            PLATFORM.create_directory(filename.parent)
+            outputFile = h5py.File(filename, "w")
 
         if header:
             # This is to avoid any segmentation fault when writing the HDF header field
@@ -114,4 +119,7 @@ class HDFFormat(IFormat):
                 dset.attrs[k] = v
 
         # The HDF file is closed.
-        outputFile.close()
+        if in_memory:
+            return outputFile
+        else:
+            outputFile.close()
