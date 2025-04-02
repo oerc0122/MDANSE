@@ -143,14 +143,14 @@ class Configurable(object):
                     warnings[name] = conf.error_status
                 else:
                     errors[name] = conf.error_status
-        if len(warnings):
+        if warnings:
             LOG.warning(
                 "\n".join(
                     ["Optional configuration entries were not valid:"]
                     + [f"{entry}: {error}" for entry, error in warnings.items()]
                 )
             )
-        if len(errors):
+        if errors:
             raise RuntimeError(
                 "\n".join(
                     ["Bad configuration entries:"]

@@ -51,7 +51,7 @@ class FileInMemory(IFormat):
     ) -> h5py.File:
         """Write the MDA data structure to an in-memory HDF object.
 
-        Attributes
+        Parameters
         ----------
         filename : str
             The path to the output HDF file.
