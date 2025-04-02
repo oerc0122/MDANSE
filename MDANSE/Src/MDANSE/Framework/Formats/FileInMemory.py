@@ -18,14 +18,13 @@ from MDANSE.Framework.Formats.IFormat import IFormat
 from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
-    from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
     from MDANSE.Framework.Jobs.IJob import IJob
+    from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
 from .HDFFormat import HDFFormat
 
 
 class FileInMemory(IFormat):
-    """
-    This class handles the writing of output variables in MDA file format.
+    """Handles the writing of output to an in-memory HDF5 structure.
 
     Attributes
     ----------
@@ -33,6 +32,7 @@ class FileInMemory(IFormat):
         Extension used when writing.
     extensions : list[str]
         Other possible extension of this file format.
+
     """
 
     extension = ".mda"
@@ -42,13 +42,12 @@ class FileInMemory(IFormat):
     def write(
         cls,
         filename: str,
-        data: Dict[str, "IOutputVariable"],
+        data: dict[str, "IOutputVariable"],
         header: str = "",
         run_instance: "IJob" = None,
         extension: str = extensions[0],
     ) -> None:
-        """Write a set of output variables into an HDF file with the
-        MDANSE analysis file extension.
+        """Write the MDA data structure to an in-memory HDF object.
 
         Attributes
         ----------
@@ -60,5 +59,6 @@ class FileInMemory(IFormat):
             The header to add to the output file.
         extension : str
             The extension of the file.
+
         """
         HDFFormat.write(filename, data, header, run_instance, extension, in_memory=True)

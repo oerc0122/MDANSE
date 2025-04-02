@@ -13,8 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import Dict
 import collections
+from typing import Dict
 
 from MDANSE.Core.Error import Error
 from MDANSE.MLogging import LOG
@@ -29,8 +29,7 @@ class ConfigurationError(Error):
 
 
 class Configurable(object):
-    """
-    This class allows any object that derives from it to be configurable within the MDANSE framework.
+    """Allows any object that derives from it to be configurable within the MDANSE framework.
 
     Within that framework, to be configurable, a class must:
         #. derive from this class

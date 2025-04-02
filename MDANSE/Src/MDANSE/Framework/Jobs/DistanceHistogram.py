@@ -19,16 +19,19 @@ import itertools
 
 import numpy as np
 
-from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
-    van_hove_distinct,
-    find_index_groups,
-)
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
+from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
+    find_index_groups,
+    van_hove_distinct,
+)
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
+
+CELL_SIZE_LIMIT = 1e-9
 
 
 class DistanceHistogram(IJob):
-    """
+    """Calculates a histogram of interatomic distances.
+
     Compute the Histogram of Distance, used by e.g. PDF, coordination number analysis
     """
 
@@ -86,9 +89,7 @@ class DistanceHistogram(IJob):
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):
-        """
-        Initialize the input parameters and analysis self variables
-        """
+        """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
         self.numberOfSteps = self.configuration["frames"]["number"]
@@ -111,7 +112,7 @@ class DistanceHistogram(IJob):
         )
 
         lut = atom_index_to_molecule_index(
-            self.configuration["trajectory"]["instance"].chemical_system
+            self.configuration["trajectory"]["instance"].chemical_system,
         )
 
         self.indexToMolecule = np.array([lut[i] for i in self._indices], dtype=np.int32)
@@ -148,6 +149,7 @@ class DistanceHistogram(IJob):
         self.indices_intra = find_index_groups(self.indexToMolecule, self.indexToSymbol)
 
     def detailed_unit_cell_error(self):
+        """Raise an error if a valid unit cell is not present in the trajectory."""
         raise ValueError(
             "This analysis job requires a unit cell (simulation box) to be defined. "
             "The box will be used for calculating density in the analysis. "
@@ -156,18 +158,19 @@ class DistanceHistogram(IJob):
         )
 
     def run_step(self, index):
-        """
-        Runs a single step of the job.\n
+        """Run a single step of the analysis.
 
-        :Parameters:
-            #. index (int): The index of the step.
-        :Returns:
-            #. index (int): The index of the step.
-            #. cellVolume (float): the volume of the current frame simulation box
-            #. hIntraTemp (np.array): The calculated distance intra-molecular histogram
-            #. hInterTemp (np.array): The calculated distance inter-molecular histogram
-        """
+        Parameters
+        ----------
+        index : int
+            number of the simulation frame for which to calculate the distances.
 
+        Returns
+        -------
+        int, tuple[float, np.ndarray, np.ndarray]
+            repeated input index and the analysis results
+
+        """
         # get the Frame index
         frame_index = self.configuration["frames"]["value"][index]
 
@@ -181,7 +184,7 @@ class DistanceHistogram(IJob):
         except Exception:
             self.detailed_unit_cell_error()
         else:
-            if cell_volume < 1e-9:
+            if cell_volume < CELL_SIZE_LIMIT:
                 self.detailed_unit_cell_error()
 
         coords = conf["coordinates"][self._indices]
@@ -207,14 +210,17 @@ class DistanceHistogram(IJob):
 
         return index, (cell_volume, hIntraTemp, hTotalTemp)
 
-    def combine(self, index, x):
-        """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
-        """
+    def combine(self, _index, x):
+        """Add the results of run_step to the output arrays.
 
+        Parameters
+        ----------
+        index : _type_
+            step number, not used
+        x : tuple[float, np.ndarray, np.ndarray]
+            output of the run_step method
+
+        """
         nAtoms = self.configuration["trajectory"][
             "instance"
         ].chemical_system.number_of_atoms
