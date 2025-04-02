@@ -66,7 +66,7 @@ class OutputFilesConfigurator(IConfigurator):
         IConfigurator.__init__(self, name, **kwargs)
 
         self._formats = (
-            formats if formats is not None else OutputFilesConfigurator._default[-1]
+            formats if formats is not None else OutputFilesConfigurator._default[1]
         )
         self._forbidden_files = []
 

@@ -98,7 +98,7 @@ class OrderParameter(IJob):
         "BooleanConfigurator",
         {"label": "output contribution per axis", "default": False},
     )
-    settings["output_files"] = ("OutputFilesConfigurator",)
+    settings["output_files"] = ("OutputFilesConfigurator", {})
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):

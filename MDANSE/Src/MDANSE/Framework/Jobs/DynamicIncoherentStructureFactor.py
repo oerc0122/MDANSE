@@ -91,7 +91,7 @@ class DynamicIncoherentStructureFactor(IJob):
             },
         },
     )
-    settings["output_files"] = ("OutputFilesConfigurator",)
+    settings["output_files"] = ("OutputFilesConfigurator", {})
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):

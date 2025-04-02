@@ -46,7 +46,7 @@ class StructureFactorFromScatteringFunction(IJob):
         "InstrumentResolutionConfigurator",
         {"dependencies": {"frames": "sample_inc"}},
     )
-    settings["output_files"] = ("OutputFilesConfigurator",)
+    settings["output_files"] = ("OutputFilesConfigurator", {})
 
     def initialize(self):
         """
