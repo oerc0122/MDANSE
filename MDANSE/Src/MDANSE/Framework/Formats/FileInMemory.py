@@ -13,9 +13,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+import h5py
+
 from MDANSE.Framework.Formats.IFormat import IFormat
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from MDANSE.Framework.Jobs.IJob import IJob
@@ -46,7 +48,7 @@ class FileInMemory(IFormat):
         header: str = "",
         run_instance: "IJob" = None,
         extension: str = extensions[0],
-    ) -> None:
+    ) -> h5py.File:
         """Write the MDA data structure to an in-memory HDF object.
 
         Attributes
@@ -61,4 +63,6 @@ class FileInMemory(IFormat):
             The extension of the file.
 
         """
-        HDFFormat.write(filename, data, header, run_instance, extension, in_memory=True)
+        return HDFFormat.write(
+            filename, data, header, run_instance, extension, in_memory=True
+        )

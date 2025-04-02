@@ -41,7 +41,7 @@ class OutputData(collections.OrderedDict):
     def write(self, basename, formats, header=None, inputs=None):
         for fmt in formats:
             temp_format = IFormat.create(fmt)
-            temp_format.write(basename, self, header, inputs)
+            self.data_object = temp_format.write(basename, self, header, inputs)
 
 
 class IOutputVariable(np.ndarray, metaclass=SubclassFactory):

@@ -157,7 +157,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
     def finalize(self):
         if self._log_filename is not None:
             self.remove_log_file_handler()
-        self._in_memory_result = self._outputData
+        if hasattr(self._outputData, "data_object"):
+            self._in_memory_result = self._outputData.data_object
 
     def get_results(self):
         return self._in_memory_result
