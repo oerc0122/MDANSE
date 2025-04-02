@@ -331,9 +331,7 @@ class MdanseTrajectory:
             comp = 0
             for i in range(first, last, step):
                 direct_cell = self._unit_cells[i].direct
-                real_coordinates[comp, :] = np.matmul(
-                    direct_cell, box_coordinates[comp, :]
-                )
+                real_coordinates[comp, :] = direct_cell @ box_coordinates[comp, :]
                 comp += 1
             return real_coordinates
         else:

@@ -167,8 +167,10 @@ class DistanceHistogram(IJob):
 
         Returns
         -------
-        int, tuple[float, np.ndarray, np.ndarray]
-            repeated input index and the analysis results
+        int
+            Repeated input index.
+        tuple[float, ~numpy.ndarray, ~numpy.ndarray]
+            The analysis results.
 
         """
         # get the Frame index
