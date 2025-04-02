@@ -159,7 +159,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
             self.remove_log_file_handler()
         self._in_memory_result = getattr(self._outputData, "data_object", None)
 
-    def get_results(self):
+    @property
+    def results(self):
         return self._in_memory_result
 
     def initialize(self):

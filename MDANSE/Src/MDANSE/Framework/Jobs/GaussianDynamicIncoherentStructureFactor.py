@@ -89,10 +89,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             },
         },
     )
-    settings["output_files"] = (
-        "OutputFilesConfigurator",
-        {"formats": ["MDAFormat", "TextFormat", "FileInMemory"]},
-    )
+    settings["output_files"] = ("OutputFilesConfigurator",)
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):

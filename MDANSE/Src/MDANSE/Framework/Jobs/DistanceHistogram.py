@@ -23,6 +23,7 @@ from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
     find_index_groups,
     van_hove_distinct,
+    DETAILED_CELL_MESSAGE,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 
@@ -82,10 +83,7 @@ class DistanceHistogram(IJob):
             }
         },
     )
-    settings["output_files"] = (
-        "OutputFilesConfigurator",
-        {"formats": ["MDAFormat", "TextFormat", "FileInMemory"]},
-    )
+    settings["output_files"] = ("OutputFilesConfigurator",)
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):
@@ -148,15 +146,6 @@ class DistanceHistogram(IJob):
         )
         self.indices_intra = find_index_groups(self.indexToMolecule, self.indexToSymbol)
 
-    def detailed_unit_cell_error(self):
-        """Raise an error if a valid unit cell is not present in the trajectory."""
-        raise ValueError(
-            "This analysis job requires a unit cell (simulation box) to be defined. "
-            "The box will be used for calculating density in the analysis. "
-            "You can add a simulation box to the trajectory using the TrajectoryEditor job. "
-            "Be careful adding the simulation box, as the wrong dimensions can render the results meaningless."
-        )
-
     def run_step(self, index):
         """Run a single step of the analysis.
 
@@ -177,17 +166,14 @@ class DistanceHistogram(IJob):
         frame_index = self.configuration["frames"]["value"][index]
 
         conf = self.configuration["trajectory"]["instance"].configuration(frame_index)
+        if not hasattr(conf, "unit_cell"):
+            raise ValueError(DETAILED_CELL_MESSAGE)
+        if conf.unit_cell.volume < 1e-9:
+            raise ValueError(DETAILED_CELL_MESSAGE)
 
-        try:
-            direct_cell = conf.unit_cell.direct
-            inverse_cell = conf.unit_cell.inverse
-
-            cell_volume = conf.unit_cell.volume
-        except Exception:
-            self.detailed_unit_cell_error()
-        else:
-            if cell_volume < CELL_SIZE_LIMIT:
-                self.detailed_unit_cell_error()
+        direct_cell = conf.unit_cell.direct
+        inverse_cell = conf.unit_cell.inverse
+        cell_volume = conf.unit_cell.volume
 
         coords = conf["coordinates"][self._indices]
         scaleconfig = coords @ inverse_cell
@@ -217,7 +203,7 @@ class DistanceHistogram(IJob):
 
         Parameters
         ----------
-        index : _type_
+        index : int
             step number, not used
         x : tuple[float, np.ndarray, np.ndarray]
             output of the run_step method

@@ -33,13 +33,21 @@ class OutputFilesConfigurator(IConfigurator):
     built by joining the given output directory, the
     basename and the extensions corresponding to the input file formats.
 
-    For analysis, MDANSE currently supports only the HDF and Text formats.
+    For analysis, MDANSE currently supports:
+    1. MDAFormat - an HDF5 file written to the disk,
+    2. TextFormat - a tar file containing a text file for each array,
+    3. FileInMemory - an HDF5 data object NOT written to the disk.
+    FileInMemory is not available when running from the GUI.
     To define a new output file format for an analysis, you must inherit
     from MDANSE.Framework.Formats.IFormat.IFormat interface.
     """
 
     log_options = ("no logs", "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL")
-    _default = ("OUTPUT_FILENAME", ["HDFFormat"], "no logs")
+    _default = (
+        "OUTPUT_FILENAME",
+        ["MDAFormat", "TextFormat", "FileInMemory"],
+        "no logs",
+    )
     _label = "Output filename and formats (filename, [format, ...])"
 
     def __init__(self, name: str, formats: Optional[list[str]] = None, **kwargs):

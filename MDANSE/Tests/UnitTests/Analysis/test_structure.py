@@ -109,7 +109,7 @@ def test_pdf_is_zero_at_low_distances(
     print(parameters)
     job = IJob.create(job_type)
     job.run(parameters, status=True)
-    results = job.get_results()
+    results = job.results
     
     print(results.keys())
 
