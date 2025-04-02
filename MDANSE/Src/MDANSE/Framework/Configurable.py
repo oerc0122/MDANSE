@@ -125,10 +125,32 @@ class Configurable(object):
         return self._configuration
 
     def check_status(self):
+        """Raise an exception if some of the job inputs are invalid.
+
+        Loops over all the configuration items, and collects the error status
+        of the invalid ones. For optional inputs, only a warning is logged.
+
+        Raises
+        ------
+        RuntimeError
+            Trying to run a job that is not configured correctly.
+
+        """
         errors = {}
+        warnings = {}
         for name, conf in list(self._configuration.items()):
             if not conf.valid:
-                errors[name] = conf.error_status
+                if conf.optional:
+                    warnings[name] = conf.error_status
+                else:
+                    errors[name] = conf.error_status
+        if len(warnings):
+            LOG.warning(
+                "\n".join(
+                    ["Optional configuration entries were not valid:"]
+                    + [f"{entry}: {error}" for entry, error in warnings.items()]
+                )
+            )
         if len(errors):
             raise RuntimeError(
                 "\n".join(

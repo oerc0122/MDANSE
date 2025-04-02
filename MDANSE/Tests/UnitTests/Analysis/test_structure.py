@@ -114,5 +114,9 @@ def test_pdf_is_zero_at_low_distances(
     print(results.keys())
 
     assert "pdf_total" in results
+    x_axis = results['r'][:]
+    y_axis = results['pdf_total'][:]
+    banned_range = y_axis[np.where(x_axis<0.05)]
+    assert np.allclose(banned_range, 0.0)
 
     

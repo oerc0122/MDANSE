@@ -174,8 +174,8 @@ class DistanceHistogram(IJob):
         conf = self.configuration["trajectory"]["instance"].configuration(frame_index)
 
         try:
-            direct_cell = conf.unit_cell.transposed_direct
-            inverse_cell = conf.unit_cell.transposed_inverse
+            direct_cell = conf.unit_cell.direct
+            inverse_cell = conf.unit_cell.inverse
 
             cell_volume = conf.unit_cell.volume
         except Exception:

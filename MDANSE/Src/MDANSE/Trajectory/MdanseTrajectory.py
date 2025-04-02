@@ -330,7 +330,7 @@ class MdanseTrajectory:
             real_coordinates = np.empty(box_coordinates.shape, dtype=np.float64)
             comp = 0
             for i in range(first, last, step):
-                direct_cell = self._unit_cells[i].transposed_direct
+                direct_cell = self._unit_cells[i].direct
                 real_coordinates[comp, :] = np.matmul(
                     direct_cell, box_coordinates[comp, :]
                 )
@@ -367,16 +367,10 @@ class MdanseTrajectory:
 
         if self._unit_cells is not None:
             direct_cells = np.array(
-                [
-                    self._unit_cells[nf].transposed_direct
-                    for nf in range(first, last, step)
-                ]
+                [self._unit_cells[nf].direct for nf in range(first, last, step)]
             )
             inverse_cells = np.array(
-                [
-                    self._unit_cells[nf].transposed_inverse
-                    for nf in range(first, last, step)
-                ]
+                [self._unit_cells[nf].inverse for nf in range(first, last, step)]
             )
             atomic_traj = atomic_trajectory(
                 coords, direct_cells, inverse_cells, box_coordinates

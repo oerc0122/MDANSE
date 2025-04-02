@@ -452,7 +452,7 @@ class H5MDTrajectory:
             real_coordinates = np.empty(box_coordinates.shape, dtype=np.float64)
             comp = 0
             for i in range(first, last, step):
-                direct_cell = self.unit_cell(i).transposed_direct
+                direct_cell = self.unit_cell(i).direct
                 real_coordinates[comp, :] = np.matmul(
                     direct_cell, box_coordinates[comp, :]
                 )
@@ -497,16 +497,10 @@ class H5MDTrajectory:
 
         if self._unit_cells is not None:
             direct_cells = np.array(
-                [
-                    self.unit_cell(nf).transposed_direct
-                    for nf in range(first, last, step)
-                ]
+                [self.unit_cell(nf).direct for nf in range(first, last, step)]
             )
             inverse_cells = np.array(
-                [
-                    self.unit_cell(nf).transposed_inverse
-                    for nf in range(first, last, step)
-                ]
+                [self.unit_cell(nf).inverse for nf in range(first, last, step)]
             )
             atomic_traj = atomic_trajectory(
                 coords, direct_cells, inverse_cells, box_coordinates

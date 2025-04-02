@@ -411,8 +411,8 @@ class VanHoveFunctionDistinct(IJob):
                 frame_index_t1
             )
             coords_t1 = conf_t1["coordinates"][self._indices]
-            direct_cell = conf_t1.unit_cell.transposed_direct
-            inverse_cell = conf_t1.unit_cell.transposed_inverse
+            direct_cell = conf_t1.unit_cell.direct
+            inverse_cell = conf_t1.unit_cell.inverse
 
             scaleconfig_t0 = coords_t0 @ inverse_cell
             scaleconfig_t1 = coords_t1 @ inverse_cell
