@@ -21,7 +21,7 @@ import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
-    find_index_groups,
+    intramolecular_lookup_dict,
     van_hove_distinct,
     DETAILED_CELL_MESSAGE,
 )
@@ -144,7 +144,7 @@ class DistanceHistogram(IJob):
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(self.selectedElements, 2)
         )
-        self.indices_intra = find_index_groups(self.indexToMolecule, self.indexToSymbol)
+        self.indices_intra = intramolecular_lookup_dict(self.configuration["trajectory"]["instance"].chemical_system)
 
     def run_step(self, index):
         """Run a single step of the analysis.

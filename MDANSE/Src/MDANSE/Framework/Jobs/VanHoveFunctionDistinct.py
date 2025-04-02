@@ -18,7 +18,9 @@ import itertools as it
 from typing import List, Dict, Tuple
 
 import numpy as np
+from scipy.spatial import KDTree
 
+from MDANSE.Chemistry import ChemicalSystem
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
@@ -65,7 +67,7 @@ def distance_array_2D(
 
 def van_hove_distinct(
     cell: np.ndarray,
-    indices_intra: Dict[int, Tuple[List[int]]],
+    indices_intra: dict[int, set[int]],
     symbolindex: List[int],
     intra: np.ndarray,
     total: np.ndarray,
@@ -193,6 +195,27 @@ def find_index_groups(
                 intra[dkey][0].append(i)
                 intra[dkey][1].append(j)
     return intra
+
+
+def intramolecular_lookup_dict(chemical_system: ChemicalSystem) -> dict[int, set[int]]:
+    """Build a lookup dictionary of atom indices in the same molecule.
+
+    Parameters
+    ----------
+    chemical_system : ChemicalSystem
+        Chemical system of a trajectory
+
+    Returns
+    -------
+    dict[int, set[int]]
+        for each atom index, set of other indices in the same molecule
+    """
+    result = {}
+    for molecule in chemical_system._clusters:
+        index_set = set(molecule)
+        for index in index_set:
+            result[index] = index_set
+    return result
 
 
 class VanHoveFunctionDistinct(IJob):
@@ -370,7 +393,7 @@ class VanHoveFunctionDistinct(IJob):
             (self.nElements, self.nElements, self.n_mid_points, self.numberOfSteps)
         )
 
-        self.indices_intra = find_index_groups(self.indexToMolecule, self.indexToSymbol)
+        self.indices_intra = intramolecular_lookup_dict(self.configuration["trajectory"]["instance"].chemical_system)
 
     def run_step(self, time: int) -> tuple[int, tuple[np.ndarray, np.ndarray]]:
         """Calculates the distance histogram between the configurations
