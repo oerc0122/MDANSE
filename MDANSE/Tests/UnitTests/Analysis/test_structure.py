@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import van_hove_distinct
 from MDANSE.Framework.Jobs.IJob import IJob
 from test_helpers.compare_hdf5 import compare_hdf5
 from test_helpers.paths import CONV_DIR, RESULTS_DIR
@@ -118,4 +119,31 @@ def test_pdf_is_zero_at_low_distances(
     banned_range = y_axis[np.where(x_axis<0.05)]
     assert np.allclose(banned_range, 0.0)
 
+
+def test_vhd():
+    coords1 = np.array([[0.1, 0.1, 0.1],
+                        [0.0,0.0,0.0],
+                        [0.2,0.0,0.0],
+                        [0.1,0.2,0.0],
+                        [0.2,0.2,0.2],
+                        [0.0,0.0,0.2]])
+    coords2 = coords1 + np.array([0.0, 0.5, 0.0])
+    intra, inter = van_hove_distinct(2*np.eye(3),
+                      {1:{1,2,4}, 2:{1,2,4}, 4:{1,2,4}},
+                      [0,0,0,0,0,0],
+                      np.zeros((1,1,30)),
+                      np.zeros((1,1,30)),
+                      coords1,
+                      coords2,
+                      0.0,
+                      0.05,
+                      1.0)
+    expected_intra = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,0.0,2.0,
+                               0.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.])
+    expected_inter = np.array([0.0,0.0,0.0,0.0,0.0,0.0,2.0,2.0,5.0,0.0,4.0,
+                               2.0,5.0,0.0,4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
+                               0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.])
+    assert np.allclose(intra, expected_intra)
+    assert np.allclose(inter, expected_inter)
     
