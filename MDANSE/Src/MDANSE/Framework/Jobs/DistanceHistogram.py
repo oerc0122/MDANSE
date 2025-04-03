@@ -129,6 +129,8 @@ class DistanceHistogram(IJob):
             dtype=np.float64,
         )
 
+        self.r_cutoff = self.configuration["r_values"]["last"]
+
         self.scaleconfig = np.zeros(
             (self.configuration["atom_selection"]["selection_length"], 3),
             dtype=np.float64,
@@ -144,7 +146,9 @@ class DistanceHistogram(IJob):
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(self.selectedElements, 2)
         )
-        self.indices_intra = intramolecular_lookup_dict(self.configuration["trajectory"]["instance"].chemical_system)
+        self.indices_intra = intramolecular_lookup_dict(
+            self.configuration["trajectory"]["instance"].chemical_system
+        )
 
     def run_step(self, index):
         """Run a single step of the analysis.
@@ -175,8 +179,8 @@ class DistanceHistogram(IJob):
         inverse_cell = conf.unit_cell.inverse
         cell_volume = conf.unit_cell.volume
 
+        conf.fold_coordinates()
         coords = conf["coordinates"][self._indices]
-        scaleconfig = coords @ inverse_cell
 
         hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
         hTotalTemp = np.zeros(self.hInter.shape, dtype=np.float64)
@@ -187,10 +191,11 @@ class DistanceHistogram(IJob):
             self.indexToSymbol,
             hIntraTemp,
             hTotalTemp,
-            scaleconfig,
-            scaleconfig,
+            coords,
+            coords,
             self.configuration["r_values"]["first"],
             self.configuration["r_values"]["step"],
+            self.r_cutoff,
         )
 
         np.multiply(hIntraTemp, cell_volume, hIntraTemp)
