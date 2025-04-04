@@ -45,6 +45,7 @@ def van_hove_distinct(
     rmin: float,
     dr: float,
     rmax: float,
+    size_limit: int = 1024,
 ):
     """Calculates the distance histogram between the configurations at
     times t0 and t1. Distances are calculated using the minimum image
@@ -75,6 +76,8 @@ def van_hove_distinct(
         lowest distance allowed in the binning of the results
     dr : float
         size of the binning step
+    size_limit : int
+        array size over which the calculation will be split into segments
 
     Returns
     -------
@@ -95,15 +98,28 @@ def van_hove_distinct(
             inter_bins[(type1, type2)] = collections.Counter()
             intra_bins[(type1, type2)] = collections.Counter()
 
-    reference = KDTree(coords_t0)
-    for x_offset in [-1, 0, 1]:
-        for y_offset in [-1, 0, 1]:
-            for z_offset in [-1, 0, 1]:
+    limits_t0 = range(0, len(coords_t0), size_limit)
+    limits_t1 = range(0, len(coords_t1), size_limit)
+    for nlim_t0, lim_t0 in enumerate(limits_t0):
+        try:
+            endlimit = limits_t0[nlim_t0 + 1]
+        except IndexError:
+            reference = KDTree(coords_t0[lim_t0:])
+        else:
+            reference = KDTree(coords_t0[lim_t0:endlimit])
+        for nlim_t1, lim_t1 in enumerate(limits_t1):
+            try:
+                endlimit_t1 = limits_t1[nlim_t1 + 1]
+            except IndexError:
+                subset_coords = coords_t1[lim_t1:]
+            else:
+                subset_coords = coords_t1[lim_t1:endlimit_t1]
+            for xyz_offsets in it.product([-1, 0, 1], repeat=3):
                 moved = KDTree(
-                    coords_t1
-                    + cell[0] * x_offset
-                    + cell[1] * y_offset
-                    + cell[2] * z_offset
+                    subset_coords
+                    + cell[0] * xyz_offsets[0]
+                    + cell[1] * xyz_offsets[1]
+                    + cell[2] * xyz_offsets[2]
                 )
                 distance_dict = reference.sparse_distance_matrix(moved, rmax)
                 bin_values = (
