@@ -23,12 +23,13 @@ from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_
 class PairDistributionFunction(DistanceHistogram):
     """Calculates a histogram of interatomic distances.
 
-    The Pair-Distribution Function (PDF) is an example of a pair correlation function, which
-    describes how, on average, the atoms in a system are radially packed around each other.
-    This is a particularly effective way of describing the average structure of disordered
-    molecular systems such as liquids. Also in systems like liquids, where there is continual movement
-    of the atoms and a single snapshot of the system shows only the instantaneous disorder, it is
-    essential to determine the average structure.
+    The Pair-Distribution Function (PDF) is an example of a pair correlation function,
+    which describes how, on average, the atoms in a system are radially packed around
+    each other. This is a particularly effective way of describing the average
+    structure of disordered molecular systems such as liquids. Also in systems like
+    liquids, where there is continual movement of the atoms and a single snapshot of
+    the system shows only the instantaneous disorder, it is essential to determine
+    the average structure.
 
     The PDF can be compared with experimental data from x-ray or neutron diffraction.
         It can be used in conjunction with the inter-atomic pair potential
@@ -48,11 +49,7 @@ class PairDistributionFunction(DistanceHistogram):
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
     def finalize(self):
-        """Perform the last steps of the analysis and write out results.
-
-        Finalizes the calculations (e.g. averaging the total term, output files creations ...).
-
-        """
+        """Perform the last steps of the analysis and write out results."""
         npoints = len(self.configuration["r_values"]["mid_points"])
 
         self._outputData.add(
@@ -145,7 +142,8 @@ class PairDistributionFunction(DistanceHistogram):
             pdf_total = pdf_intra + pdf_inter
 
             for i, pdf in zip(
-                ["intra", "inter", "total"], [pdf_intra, pdf_inter, pdf_total]
+                ["intra", "inter", "total"],
+                [pdf_intra, pdf_inter, pdf_total],
             ):
                 self._outputData[f"pdf_{i}_{pair[0]}{pair[1]}"][:] = pdf
                 self._outputData[f"rdf_{i}_{pair[0]}{pair[1]}"][:] = (
@@ -161,7 +159,9 @@ class PairDistributionFunction(DistanceHistogram):
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
         for i in ["_intra", "_inter", ""]:
             assign_weights(
-                self._outputData, weight_dict, "pdf{}_%s%s".format(i if i else "_total")
+                self._outputData,
+                weight_dict,
+                "pdf{}_%s%s".format(i if i else "_total"),
             )
             pdf = weighted_sum(
                 self._outputData,

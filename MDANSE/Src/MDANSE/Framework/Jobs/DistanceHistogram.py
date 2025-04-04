@@ -21,13 +21,12 @@ import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
+    CELL_SIZE_LIMIT,
+    DETAILED_CELL_MESSAGE,
     intramolecular_lookup_dict,
     van_hove_distinct,
-    DETAILED_CELL_MESSAGE,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
-
-CELL_SIZE_LIMIT = 1e-9
 
 
 class DistanceHistogram(IJob):
@@ -71,7 +70,7 @@ class DistanceHistogram(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-            }
+            },
         },
     )
     settings["weights"] = (
@@ -80,7 +79,7 @@ class DistanceHistogram(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-            }
+            },
         },
     )
     settings["output_files"] = ("OutputFilesConfigurator", {})
@@ -144,10 +143,10 @@ class DistanceHistogram(IJob):
             self._concentrations[k] = 0.0
 
         self._elementsPairs = sorted(
-            itertools.combinations_with_replacement(self.selectedElements, 2)
+            itertools.combinations_with_replacement(self.selectedElements, 2),
         )
         self.indices_intra = intramolecular_lookup_dict(
-            self.configuration["trajectory"]["instance"].chemical_system
+            self.configuration["trajectory"]["instance"].chemical_system,
         )
 
     def run_step(self, index):
@@ -172,11 +171,10 @@ class DistanceHistogram(IJob):
         conf = self.configuration["trajectory"]["instance"].configuration(frame_index)
         if not hasattr(conf, "unit_cell"):
             raise ValueError(DETAILED_CELL_MESSAGE)
-        if conf.unit_cell.volume < 1e-9:
+        if conf.unit_cell.volume < CELL_SIZE_LIMIT:
             raise ValueError(DETAILED_CELL_MESSAGE)
 
         direct_cell = conf.unit_cell.direct
-        inverse_cell = conf.unit_cell.inverse
         cell_volume = conf.unit_cell.volume
 
         conf.fold_coordinates()
@@ -220,8 +218,10 @@ class DistanceHistogram(IJob):
 
         self.averageDensity += nAtoms / x[0]
 
-        # The temporary distance histograms are normalized by the volume. This is done for each step because the
-        # volume can variate during the MD (e.g. NPT conditions). This volume is the one that intervene in the density
+        # The temporary distance histograms are normalized by the volume.
+        # This is done for each step because the
+        # volume can vary during the MD (e.g. NPT conditions).
+        # This volume is the one that intervene in the density
         # calculation.
         self.hIntra += x[1]
         self.hInter += x[2] - x[1]
