@@ -244,6 +244,7 @@ class ElementsDatabaseEditor(QDialog):
 
         self.proxy_model.setSourceModel(self.data_model)
         self.viewer.setModel(self.proxy_model)
+        self.resize(800, 600)
 
 
 if __name__ == "__main__":

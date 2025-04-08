@@ -449,8 +449,12 @@ class AtomSelectionWidget(WidgetBase):
     def helper_dialog(self) -> None:
         """Open the helper dialog."""
         if self.helper.isVisible():
+            geometry = self.helper.saveGeometry()
+            self.helper.previous_geometry = geometry
             self.helper.close()
         else:
+            if hasattr(self.helper, "previous_geometry"):
+                self.helper.restoreGeometry(self.helper.previous_geometry)
             self.helper.show()
 
     def get_widget_value(self) -> str:

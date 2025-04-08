@@ -388,10 +388,10 @@ additive_atom_properties = [
 ]
 averaged_atom_properties = [
     "electronegativity",
-    "electroaffinity",
+    "electron_affinity",
     "atomic_number",
     "group",
-    "serie",
+    "series",
 ]
 constant_atom_properties = {
     "equal": 1.0,
