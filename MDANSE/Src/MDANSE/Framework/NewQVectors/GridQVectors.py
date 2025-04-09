@@ -13,7 +13,6 @@ OneOrThree = Union[T, Tuple[T, T, T]]
 Limits = Tuple[float, float]
 
 
-@QVectorGenerator.register("GridQVectors")
 class GridQVectors(QVectorGenerator):
     """Generate a cuboidal grid of Q Vectors.
 
