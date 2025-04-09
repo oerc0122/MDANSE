@@ -10,7 +10,6 @@ from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike
 
 
-@QVectorGenerator.register("SphericalQVectors")
 class SphericalQVectors(QVectorGenerator):
     """Generate **Q**-Vectors on the surface of a sphere.
 
@@ -123,7 +122,6 @@ class SphericalQVectors(QVectorGenerator):
             self.rng = np.random.default_rng(value)
 
 
-@QVectorGenerator.register("LatticeSphericalQVectors")
 class LatticeSphericalQVectors(QVectorGenerator):
     """Generate q-vectors commensurate with lattice within sphere.
 
@@ -210,7 +208,6 @@ class LatticeSphericalQVectors(QVectorGenerator):
         raise ValueError("Cannot reset generator")
 
 
-@QVectorGenerator.register("CircularQVectors")
 class CircularQVectors(QVectorGenerator):
     """Generate **Q**-vectors on a circle or annulus aligned with an axis.
 
