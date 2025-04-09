@@ -42,10 +42,12 @@ class ElementView(QTableView):
         self.clickedPos = event.pos()
         Action1 = menu.addAction("New Atom")
         Action2 = menu.addAction("New Property")
+        Action3 = menu.addAction("Copy Atom")
         temp_model = self.model().sourceModel()
         if temp_model is not None:
             Action1.triggered.connect(temp_model.new_line_dialog)
             Action2.triggered.connect(temp_model.new_column_dialog)
+            Action3.triggered.connect(temp_model.copy_row)
         menu.exec_(event.globalPos())
 
 
@@ -169,7 +171,7 @@ class ElementModel(QStandardItemModel):
                     "format": str,
                     "label": "Type of the new property",
                     "tooltip": "One of the following: int, float, str, list",
-                    "values": ["float"],
+                    "values": ["int", "float", "str", "list"],
                 }
             ),
         ]
@@ -178,32 +180,62 @@ class ElementModel(QStandardItemModel):
         ne_dialog.show()
         _result = ne_dialog.exec()
 
+    def copy_from_database(self, new_label: str, db_key: str):
+        """Copy result from one database entry to another and updates
+        the Qt table. Does not save database changes.
+
+        Parameters
+        ----------
+        new_label : str
+            The new label the results are copied to.
+        db_key : str
+            The key of the data the new_labels data will be copied from.
+        """
+        row = []
+        for key in self.all_column_names:
+            new_value = self.database.get_value(db_key, key)
+            self.database.set_value(new_label, key, new_value)
+            item = QStandardItem(str(new_value))
+            row.append(item)
+        self.all_row_names.append(new_label)
+        self.appendRow(row)
+        self.setVerticalHeaderItem(
+            self.rowCount() - 1, QStandardItem(str(new_label))
+        )
+        LOG.info(f"self.all_row_names has length: {len(self.all_row_names)}")
+
+    @Slot()
+    def copy_row(self):
+        """Updates the database with a copied atom and copies data from
+        another atom from the table. The Qt table is updated with the
+        new atom. Saves changes to the database.
+        """
+        view = self.parent().viewer
+        row = view.indexAt(view.clickedPos).row()
+        atm_sym = self.verticalHeaderItem(row).text()
+        self.database.add_atom(atm_sym + " (copy)")
+        self.copy_from_database(atm_sym + " (copy)", atm_sym)
+        self.save_changes()
+
     @Slot(dict)
     def add_new_line(self, input_variables: dict):
-        new_label = "Xx"
+        """Add a new line to the table from the database.
+
+        Parameters
+        ----------
+        input_variables : dict
+            Variables used to create the new entry.
+        """
         try:
             new_label = input_variables["atom_name"]
         except KeyError:
             return None
         if new_label not in self.database.atoms:
             self.database.add_atom(new_label)
-            row = []
-            for key in self.all_column_names:
-                new_value = self.database.get_value(new_label, key)
-                self.database.set_value(new_label, key, new_value)
-                item = QStandardItem(str(new_value))
-                row.append(item)
-            self.all_row_names.append(new_label)
-            self.appendRow(row)
-            self.setVerticalHeaderItem(
-                self.rowCount() - 1, QStandardItem(str(new_label))
-            )
-            LOG.info(f"self.all_row_names has length: {len(self.all_row_names)}")
+            self.copy_from_database(new_label, new_label)
 
     @Slot(dict)
     def add_new_column(self, input_variables: dict):
-        new_label = "Xx"
-        new_type = "float"
         try:
             new_label = input_variables["property_name"]
         except KeyError:

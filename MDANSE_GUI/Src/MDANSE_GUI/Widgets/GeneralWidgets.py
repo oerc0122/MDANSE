@@ -531,23 +531,31 @@ class InputVariable(QObject):
         self.keyval = "var1"
         self.format = float
         self.values = [0.0]
-        self.widget = QLineEdit
-        self.number_of_inputs = 1
         self.helper_dialog = None
         self.tooltip = ""
         self.placeholder = ""
         for key, item in input_dict.items():
             self.__setattr__(str(key), item)
 
+        self.number_of_values = len(self.values)
+        if self.number_of_values == 1:
+            self.widget = QLineEdit
+        else:
+            self.widget = QComboBox
+
         self.input_widgets = []
 
     def returnValues(self):
         result = []
         for widget in self.input_widgets:
+            if self.number_of_values == 1:
+                text = widget.text()
+            else:
+                text = widget.currentText()
             try:
-                temp = self.format(widget.text())
+                temp = self.format(text)
             except ValueError:
-                temp = widget.text()
+                temp = text
             result.append(temp)
         return result
 
@@ -583,7 +591,7 @@ class InputDialog(QDialog):
             _helper_dialog = var.helper_dialog
             tooltip = var.tooltip
             placeholder = var.placeholder
-            number_of_inputs = var.number_of_inputs
+            number_of_values = var.number_of_values
             # set up widgets
             temp_base = QWidget(var_base)
             temp_layout = QHBoxLayout(temp_base)
@@ -594,15 +602,18 @@ class InputDialog(QDialog):
                 validator = QDoubleValidator(temp_base)
             else:
                 validator = None
-            for ni in range(number_of_inputs):
+            if number_of_values == 1:
                 widget_instance = widget(var_base)
-                widget_instance.setText(str(values[ni]))
-                widget_instance.setToolTip(tooltip)
+                widget_instance.setText(str(values[0]))
                 widget_instance.setPlaceholderText(str(placeholder))
                 if validator is not None:
                     widget_instance.setValidator(validator)
-                temp_layout.addWidget(widget_instance)
-                var.input_widgets.append(widget_instance)
+            else:
+                widget_instance = widget(var_base)
+                widget_instance.addItems(values)
+            widget_instance.setToolTip(tooltip)
+            temp_layout.addWidget(widget_instance)
+            var.input_widgets.append(widget_instance)
             var_layout.addRow(label, temp_base)
         # optinally we can add other buttons here...
         #
@@ -617,9 +628,6 @@ class InputDialog(QDialog):
         result = {}
         for var in self.fields:
             temp = var.returnValues()
-            if var.number_of_inputs == 1:
-                value = temp[0]
-            else:
-                value = temp
+            value = temp[0]
             result[var.keyval] = value
         self.got_values.emit(result)
