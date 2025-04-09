@@ -82,12 +82,15 @@ class ElementModel(QStandardItemModel):
     def parseDatabase(self):
         all_column_names = self.database.properties
         all_row_names = self.database.atoms
+        def_columns = self.database.default_atoms_properties
+        def_rows = self.database.default_atoms_types
 
         for entry in all_row_names:
             row = []
             atom_info = self.database[entry]
             for key in all_column_names:
                 item = QStandardItem(str(atom_info[key]))
+                item.setEditable(not (entry in def_rows and key in def_columns))
                 try:
                     intnum = int(str(atom_info[key]))
                 except ValueError:

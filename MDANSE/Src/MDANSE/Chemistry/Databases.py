@@ -39,6 +39,7 @@ class _Database(metaclass=Singleton):
         """
 
         self._data = {}
+        self._default_data = {}
 
         self._reset()
 
@@ -95,6 +96,9 @@ class _Database(metaclass=Singleton):
 
         with open(database_path, "r") as f:
             self._data = json.load(f)
+
+        with open(default_database, "r") as f:
+            self._default_data = json.load(f)
 
     def items(self) -> ItemsView[str, dict]:
         """
@@ -180,6 +184,9 @@ class AtomsDatabase(_Database):
         self._atoms_by_atomic_number = {num: [] for num in range(140)}
 
         super().__init__()
+
+        self.default_atoms_types = list(self._default_data["atoms"].keys())
+        self.default_atoms_properties = list(self._default_data["properties"].keys())
 
     def __contains__(self, element: str) -> bool:
         """
