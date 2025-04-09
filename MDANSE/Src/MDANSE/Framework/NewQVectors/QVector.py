@@ -6,7 +6,7 @@ from functools import singledispatchmethod
 from typing import Optional, Tuple, TypeVar
 
 import numpy as np
-from MDANSE.Core.SubclassFactory import RegisterFactory
+from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike, NDArray
 
@@ -48,10 +48,9 @@ class QVectorData:
 
 QVecGen = Generator[QVectorData, int, None]
 QVecGeneratorProtocol = Callable[[Optional[UnitCell]], QVecGen]
-Self = TypeVar("Self", bound="QVectorGenerator")
 
 
-class QVectorGenerator(RegisterFactory[Self], ABC):
+class QVectorGenerator(metaclass=SubclassFactory):
     """Abstract type for generation of Q-Vectors."""
 
     def __init__(
