@@ -644,6 +644,16 @@ class AtomsDatabase(_Database):
             for property_name in self.properties
         }
 
+    def remove_atom(self, symbol: str):
+        """Remove an atom from the database.
+
+        Parameters
+        ----------
+        symbol : str
+            The atoms sybole to remove from the database.
+        """
+        del self._data[symbol]
+
 
 if __name__ == "__main__":
     from MDANSE.Chemistry import ATOMS_DATABASE

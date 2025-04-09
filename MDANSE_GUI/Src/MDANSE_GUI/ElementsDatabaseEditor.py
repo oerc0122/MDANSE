@@ -43,11 +43,13 @@ class ElementView(QTableView):
         Action1 = menu.addAction("New Atom")
         Action2 = menu.addAction("New Property")
         Action3 = menu.addAction("Copy Atom")
+        Action4 = menu.addAction("Delete Atom")
         temp_model = self.model().sourceModel()
         if temp_model is not None:
             Action1.triggered.connect(temp_model.new_line_dialog)
             Action2.triggered.connect(temp_model.new_column_dialog)
             Action3.triggered.connect(temp_model.copy_row)
+            Action4.triggered.connect(temp_model.delete_row)
         menu.exec_(event.globalPos())
 
 
@@ -149,7 +151,7 @@ class ElementModel(QStandardItemModel):
             )
         ]
         ne_dialog = InputDialog(fields=dialog_variables)
-        ne_dialog.got_values.connect(self.add_new_line)
+        ne_dialog.got_values.connect(self.add_row)
         ne_dialog.show()
         _result = ne_dialog.exec()
 
@@ -180,9 +182,9 @@ class ElementModel(QStandardItemModel):
         ne_dialog.show()
         _result = ne_dialog.exec()
 
-    def copy_from_database(self, new_label: str, db_key: str):
-        """Copy result from one database entry to another and updates
-        the Qt table. Does not save database changes.
+    def copy_row_from_database(self, new_label: str, db_key: str):
+        """Copy row data from one database entry to another and update
+        the table. Saves changes to the database.
 
         Parameters
         ----------
@@ -199,26 +201,21 @@ class ElementModel(QStandardItemModel):
             row.append(item)
         self.all_row_names.append(new_label)
         self.appendRow(row)
-        self.setVerticalHeaderItem(
-            self.rowCount() - 1, QStandardItem(str(new_label))
-        )
+        self.setVerticalHeaderItem(self.rowCount() - 1, QStandardItem(str(new_label)))
         LOG.info(f"self.all_row_names has length: {len(self.all_row_names)}")
+        self.save_changes()
 
     @Slot()
     def copy_row(self):
-        """Updates the database with a copied atom and copies data from
-        another atom from the table. The Qt table is updated with the
-        new atom. Saves changes to the database.
-        """
+        """Update the database and table with a copied atom."""
         view = self.parent().viewer
         row = view.indexAt(view.clickedPos).row()
         atm_sym = self.verticalHeaderItem(row).text()
         self.database.add_atom(atm_sym + " (copy)")
-        self.copy_from_database(atm_sym + " (copy)", atm_sym)
-        self.save_changes()
+        self.copy_row_from_database(atm_sym + " (copy)", atm_sym)
 
     @Slot(dict)
-    def add_new_line(self, input_variables: dict):
+    def add_row(self, input_variables: dict):
         """Add a new line to the table from the database.
 
         Parameters
@@ -232,7 +229,17 @@ class ElementModel(QStandardItemModel):
             return None
         if new_label not in self.database.atoms:
             self.database.add_atom(new_label)
-            self.copy_from_database(new_label, new_label)
+            self.copy_row_from_database(new_label, new_label)
+
+    @Slot()
+    def delete_row(self):
+        """Delete a row from the table and update the database."""
+        view = self.parent().viewer
+        row = view.indexAt(view.clickedPos).row()
+        atm_sym = self.verticalHeaderItem(row).text()
+        view.model().removeRow(row)
+        self.database.remove_atom(atm_sym)
+        self.save_changes()
 
     @Slot(dict)
     def add_new_column(self, input_variables: dict):
