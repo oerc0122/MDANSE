@@ -96,14 +96,6 @@ class _Database(metaclass=Singleton):
         with open(database_path, "r") as f:
             self._data = json.load(f)
 
-    def _build_residue_map(self) -> None:
-        """Creates a dict mapping alternative names to the official name."""
-        self._residue_map = {}
-        for k, v in self._data.items():
-            self._residue_map[k] = k
-            for alt in v["alternatives"]:
-                self._residue_map[alt] = k
-
     def items(self) -> ItemsView[str, dict]:
         """
         Returns the iterator over the items of the data dict, allowing for iteration over particle names and their data

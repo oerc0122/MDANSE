@@ -54,9 +54,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         to_discard = [x for x in full_choices if "energy" in x]
         to_discard += [
             "abundance",
-            "alternatives",
             "block",
-            "charge",
             "color",
             "configuration",
             "element",
