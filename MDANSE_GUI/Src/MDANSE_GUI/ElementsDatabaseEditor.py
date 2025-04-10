@@ -32,7 +32,6 @@ from MDANSE_GUI.Widgets.GeneralWidgets import InputVariable, InputDialog
 
 
 class ElementView(QTableView):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -46,25 +45,43 @@ class ElementView(QTableView):
         Action3 = menu.addAction("Delete Custom Atoms")
         Action4 = menu.addAction("New Property")
         Action5 = menu.addAction("Copy Properties")
+        Action6 = menu.addAction("Delete Custom Properties")
 
         data_model = self.parent().data_model
+
         row_idxs = set([idx.row() for idx in self.selectionModel().selectedIndexes()])
         atm_syms = [
             data_model.verticalHeaderItem(row_idx).text() for row_idx in row_idxs
         ]
         def_atms = ATOMS_DATABASE.default_atoms_types
-        enable_delete = any([atm_sym not in def_atms for atm_sym in atm_syms])
+        enable_delete_atms = any([atm_sym not in def_atms for atm_sym in atm_syms])
+
+        col_idxs = set(
+            [idx.column() for idx in self.selectionModel().selectedIndexes()]
+        )
+        prop_labels = [
+            data_model.horizontalHeaderItem(col_idx).text() for col_idx in col_idxs
+        ]
+        def_props = ATOMS_DATABASE.default_atoms_properties
+        enable_delete_props = any(
+            [prop_label not in def_props for prop_label in prop_labels]
+        )
 
         temp_model = self.model().sourceModel()
         if temp_model is not None:
             Action1.triggered.connect(temp_model.new_line_dialog)
             Action2.triggered.connect(temp_model.copy_rows)
-            if enable_delete:
+            if enable_delete_atms:
                 Action3.triggered.connect(temp_model.delete_rows)
             else:
                 Action3.setEnabled(False)
             Action4.triggered.connect(temp_model.new_column_dialog)
             Action5.triggered.connect(temp_model.copy_columns)
+            if enable_delete_props:
+                Action6.triggered.connect(temp_model.delete_columns)
+            else:
+                Action6.setEnabled(False)
+
         menu.exec_(event.globalPos())
 
 
@@ -90,7 +107,6 @@ class NewElementDialog(QDialog):
 
 
 class ElementModel(QStandardItemModel):
-
     def __init__(self, *args, element_database=None, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -227,8 +243,9 @@ class ElementModel(QStandardItemModel):
     def copy_rows(self):
         """Update the database and table with a copied atoms."""
         view = self.parent().viewer
-        row_idx = set([idx.row() for idx in view.selectionModel().selectedIndexes()])
-        for idx in row_idx:
+        row_idxs = list(set([idx.row() for idx in view.selectionModel().selectedIndexes()]))
+        row_idxs.sort()
+        for idx in row_idxs:
             atm_sym = self.verticalHeaderItem(idx).text()
             atm_sym_copy = atm_sym + " (copy)"
             while True:
@@ -260,7 +277,7 @@ class ElementModel(QStandardItemModel):
 
     @Slot()
     def delete_rows(self):
-        """Delete a rows from the table and update the database."""
+        """Delete custom rows from the table and update the database."""
         view = self.parent().viewer
         row_idx = list(
             set([idx.row() for idx in view.selectionModel().selectedIndexes()])
@@ -274,7 +291,9 @@ class ElementModel(QStandardItemModel):
                 self.database.remove_atom(atm_sym)
         self.save_changes()
 
-    def copy_column_in_database(self, new_prop_name: str, old_prop_name: str, prop_type: str):
+    def copy_column_in_database(
+        self, new_prop_name: str, old_prop_name: str, prop_type: str
+    ):
         """Copy column data from one database entry to another and
         update the table.
 
@@ -299,9 +318,7 @@ class ElementModel(QStandardItemModel):
         self.setHorizontalHeaderItem(
             self.columnCount() - 1, QStandardItem(str(new_prop_name))
         )
-        LOG.info(
-            f"self.all_column_names has length: {len(self.all_column_names)}")
-
+        LOG.info(f"self.all_column_names has length: {len(self.all_column_names)}")
 
     @Slot(dict)
     def add_new_column(self, input_variables: dict):
@@ -332,6 +349,7 @@ class ElementModel(QStandardItemModel):
         col_idx = list(
             set([idx.column() for idx in view.selectionModel().selectedIndexes()])
         )
+        col_idx.sort()
         for idx in col_idx:
             prop_label = self.horizontalHeaderItem(idx).text()
             prop_label_copy = prop_label + " (copy)"
@@ -344,9 +362,24 @@ class ElementModel(QStandardItemModel):
                     prop_label_copy += " (copy)"
         self.save_changes()
 
+    @Slot()
+    def delete_columns(self):
+        """Delete custom columns from the table and update the database."""
+        view = self.parent().viewer
+        col_idx = list(
+            set([idx.column() for idx in view.selectionModel().selectedIndexes()])
+        )
+        col_idx.sort(reverse=True)
+        def_props = ATOMS_DATABASE.default_atoms_properties
+        for idx in col_idx:
+            prop_label = self.horizontalHeaderItem(idx).text()
+            if prop_label not in def_props:
+                view.model().removeColumn(idx)
+                self.database.remove_property(prop_label)
+        self.save_changes()
+
 
 class ElementsDatabaseEditor(QDialog):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

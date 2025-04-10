@@ -650,9 +650,21 @@ class AtomsDatabase(_Database):
         Parameters
         ----------
         symbol : str
-            The atoms sybole to remove from the database.
+            The atoms symbol to remove from the database.
         """
         del self._data[symbol]
+
+    def remove_property(self, label: str):
+        """Remove an atom property from the database.
+
+        Parameters
+        ----------
+        label : str
+            The property to remove from the database.
+        """
+        del self._properties[label]
+        for atm in self.atoms:
+            del self._data[atm][label]
 
 
 if __name__ == "__main__":
