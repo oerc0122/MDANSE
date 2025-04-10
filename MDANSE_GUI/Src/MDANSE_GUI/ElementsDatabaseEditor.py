@@ -260,9 +260,9 @@ class ElementModel(QStandardItemModel):
         row_idx = list(
             set([idx.row() for idx in view.selectionModel().selectedIndexes()])
         )
-        row_idx.sort()
+        row_idx.sort(reverse=True)
         def_atms = ATOMS_DATABASE.default_atoms_types
-        for idx in reversed(row_idx):
+        for idx in row_idx:
             atm_sym = self.verticalHeaderItem(idx).text()
             if atm_sym not in def_atms:
                 view.model().removeRow(idx)
