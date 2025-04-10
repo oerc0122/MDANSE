@@ -32,6 +32,7 @@ from MDANSE_GUI.Widgets.GeneralWidgets import InputVariable, InputDialog
 
 
 class ElementView(QTableView):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -42,8 +43,9 @@ class ElementView(QTableView):
 
         Action1 = menu.addAction("New Atom")
         Action2 = menu.addAction("Copy Atoms")
-        Action3 = menu.addAction("Delete Atoms")
+        Action3 = menu.addAction("Delete Custom Atoms")
         Action4 = menu.addAction("New Property")
+        Action5 = menu.addAction("Copy Properties")
 
         data_model = self.parent().data_model
         row_idxs = set([idx.row() for idx in self.selectionModel().selectedIndexes()])
@@ -62,6 +64,7 @@ class ElementView(QTableView):
             else:
                 Action3.setEnabled(False)
             Action4.triggered.connect(temp_model.new_column_dialog)
+            Action5.triggered.connect(temp_model.copy_columns)
         menu.exec_(event.globalPos())
 
 
@@ -87,6 +90,7 @@ class NewElementDialog(QDialog):
 
 
 class ElementModel(QStandardItemModel):
+
     def __init__(self, *args, element_database=None, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -197,9 +201,9 @@ class ElementModel(QStandardItemModel):
         ne_dialog.show()
         _result = ne_dialog.exec()
 
-    def copy_row_from_database(self, new_label: str, db_key: str):
+    def copy_row_in_database(self, new_label: str, db_key: str):
         """Copy row data from one database entry to another and update
-        the table. Saves changes to the database.
+        the table.
 
         Parameters
         ----------
@@ -209,7 +213,8 @@ class ElementModel(QStandardItemModel):
             The key of the data the new_labels data will be copied from.
         """
         row = []
-        for key in self.all_column_names:
+        for i in range(self.columnCount()):
+            key = self.horizontalHeaderItem(i).text()
             new_value = self.database.get_value(db_key, key)
             self.database.set_value(new_label, key, new_value)
             item = QStandardItem(str(new_value))
@@ -229,7 +234,7 @@ class ElementModel(QStandardItemModel):
             while True:
                 if atm_sym_copy not in self.database.atoms:
                     self.database.add_atom(atm_sym_copy)
-                    self.copy_row_from_database(atm_sym_copy, atm_sym)
+                    self.copy_row_in_database(atm_sym_copy, atm_sym)
                     break
                 else:
                     atm_sym_copy += " (copy)"
@@ -250,7 +255,7 @@ class ElementModel(QStandardItemModel):
             return None
         if new_label not in self.database.atoms:
             self.database.add_atom(new_label)
-            self.copy_row_from_database(new_label, new_label)
+            self.copy_row_in_database(new_label, new_label)
         self.save_changes()
 
     @Slot()
@@ -269,8 +274,45 @@ class ElementModel(QStandardItemModel):
                 self.database.remove_atom(atm_sym)
         self.save_changes()
 
+    def copy_column_in_database(self, new_prop_name: str, old_prop_name: str, prop_type: str):
+        """Copy column data from one database entry to another and
+        update the table.
+
+        Parameters
+        ----------
+        new_prop_name : str
+            The label of the new property to add.
+        old_prop_name : str
+            The label of the property to copy from.
+        prop_type : str
+            The property type.
+        """
+        self.database.add_property(new_prop_name, prop_type)
+        column = []
+        for i in range(self.rowCount()):
+            key = self.verticalHeaderItem(i).text()
+            new_value = self.database.get_value(key, old_prop_name)
+            self.database.set_value(key, new_prop_name, new_value)
+            item = QStandardItem(str(new_value))
+            column.append(item)
+        self.appendColumn(column)
+        self.setHorizontalHeaderItem(
+            self.columnCount() - 1, QStandardItem(str(new_prop_name))
+        )
+        LOG.info(
+            f"self.all_column_names has length: {len(self.all_column_names)}")
+
+
     @Slot(dict)
     def add_new_column(self, input_variables: dict):
+        """Adds a custom properties to the atom database.
+
+        Parameters
+        ----------
+        input_variables: dict
+            A dictionary containing the property name and property type
+            to add.
+        """
         try:
             new_label = input_variables["property_name"]
         except KeyError:
@@ -280,22 +322,31 @@ class ElementModel(QStandardItemModel):
         except KeyError:
             return None
         if new_label not in self.database.atoms:
-            self.database.add_property(new_label, new_type)
-            column = []
-            for key in self.all_row_names:
-                new_value = self.database.get_value(key, new_label)
-                self.database.set_value(key, new_label, new_value)
-                item = QStandardItem(str(new_value))
-                column.append(item)
-            self.all_column_names.append(new_label)
-            self.appendColumn(column)
-            self.setHorizontalHeaderItem(
-                self.columnCount() - 1, QStandardItem(str(new_label))
-            )
-            LOG.info(f"self.all_column_names has length: {len(self.all_column_names)}")
+            self.copy_column_in_database(new_label, new_label, new_type)
+        self.save_changes()
+
+    @Slot()
+    def copy_columns(self):
+        """Update the database and table with a copied properties."""
+        view = self.parent().viewer
+        col_idx = list(
+            set([idx.column() for idx in view.selectionModel().selectedIndexes()])
+        )
+        for idx in col_idx:
+            prop_label = self.horizontalHeaderItem(idx).text()
+            prop_label_copy = prop_label + " (copy)"
+            prop_type = self.database._properties[prop_label]
+            while True:
+                if prop_label_copy not in self.database.properties:
+                    self.copy_column_in_database(prop_label_copy, prop_label, prop_type)
+                    break
+                else:
+                    prop_label_copy += " (copy)"
+        self.save_changes()
 
 
 class ElementsDatabaseEditor(QDialog):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -314,7 +365,7 @@ class ElementsDatabaseEditor(QDialog):
 
         self.proxy_model.setSourceModel(self.data_model)
         self.viewer.setModel(self.proxy_model)
-        self.resize(800, 600)
+        self.resize(1280, 720)
 
 
 if __name__ == "__main__":
