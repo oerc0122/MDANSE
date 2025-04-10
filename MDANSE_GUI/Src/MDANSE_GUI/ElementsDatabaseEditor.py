@@ -39,17 +39,29 @@ class ElementView(QTableView):
 
     def contextMenuEvent(self, event):
         menu = QMenu(self)
-        self.clickedPos = event.pos()
+
         Action1 = menu.addAction("New Atom")
-        Action2 = menu.addAction("New Property")
-        Action3 = menu.addAction("Copy Atom")
-        Action4 = menu.addAction("Delete Atom")
+        Action2 = menu.addAction("Copy Atoms")
+        Action3 = menu.addAction("Delete Atoms")
+        Action4 = menu.addAction("New Property")
+
+        data_model = self.parent().data_model
+        row_idxs = set([idx.row() for idx in self.selectionModel().selectedIndexes()])
+        atm_syms = [
+            data_model.verticalHeaderItem(row_idx).text() for row_idx in row_idxs
+        ]
+        def_atms = ATOMS_DATABASE.default_atoms_types
+        enable_delete = any([atm_sym not in def_atms for atm_sym in atm_syms])
+
         temp_model = self.model().sourceModel()
         if temp_model is not None:
             Action1.triggered.connect(temp_model.new_line_dialog)
-            Action2.triggered.connect(temp_model.new_column_dialog)
-            Action3.triggered.connect(temp_model.copy_row)
-            Action4.triggered.connect(temp_model.delete_row)
+            Action2.triggered.connect(temp_model.copy_rows)
+            if enable_delete:
+                Action3.triggered.connect(temp_model.delete_rows)
+            else:
+                Action3.setEnabled(False)
+            Action4.triggered.connect(temp_model.new_column_dialog)
         menu.exec_(event.globalPos())
 
 
@@ -83,16 +95,22 @@ class ElementModel(QStandardItemModel):
 
         self.itemChanged.connect(self.write_to_database)
 
+    @property
+    def all_row_names(self):
+        return self.database.atoms
+
+    @property
+    def all_column_names(self):
+        return self.database.properties
+
     def parseDatabase(self):
-        all_column_names = self.database.properties
-        all_row_names = self.database.atoms
         def_columns = self.database.default_atoms_properties
         def_rows = self.database.default_atoms_types
 
-        for entry in all_row_names:
+        for entry in self.all_row_names:
             row = []
             atom_info = self.database[entry]
-            for key in all_column_names:
+            for key in self.all_column_names:
                 item = QStandardItem(str(atom_info[key]))
                 item.setEditable(not (entry in def_rows and key in def_columns))
                 try:
@@ -112,11 +130,8 @@ class ElementModel(QStandardItemModel):
                     item.setData(intnum, role=Qt.ItemDataRole.DisplayRole)
                 row.append(item)
             self.appendRow(row)
-        self.setHorizontalHeaderLabels(all_column_names)
-        self.setVerticalHeaderLabels(all_row_names)
-
-        self.all_column_names = all_column_names
-        self.all_row_names = all_row_names
+        self.setHorizontalHeaderLabels(self.all_column_names)
+        self.setVerticalHeaderLabels(self.all_row_names)
 
     @Slot("QStandardItem*")
     def write_to_database(self, item: "QStandardItem"):
@@ -124,7 +139,7 @@ class ElementModel(QStandardItemModel):
         text = item.text()
         row = item.row()
         column = item.column()
-        LOG.info(f"data:{data}, text:{text},row:{row},column:{column}")
+        LOG.info(f"data:{data}, text:{text}, row:{row}, column:{column}")
         LOG.info(
             f"column name={self.all_column_names[column]}, row name={self.all_row_names[row]}"
         )
@@ -199,20 +214,26 @@ class ElementModel(QStandardItemModel):
             self.database.set_value(new_label, key, new_value)
             item = QStandardItem(str(new_value))
             row.append(item)
-        self.all_row_names.append(new_label)
         self.appendRow(row)
         self.setVerticalHeaderItem(self.rowCount() - 1, QStandardItem(str(new_label)))
         LOG.info(f"self.all_row_names has length: {len(self.all_row_names)}")
-        self.save_changes()
 
     @Slot()
-    def copy_row(self):
-        """Update the database and table with a copied atom."""
+    def copy_rows(self):
+        """Update the database and table with a copied atoms."""
         view = self.parent().viewer
-        row = view.indexAt(view.clickedPos).row()
-        atm_sym = self.verticalHeaderItem(row).text()
-        self.database.add_atom(atm_sym + " (copy)")
-        self.copy_row_from_database(atm_sym + " (copy)", atm_sym)
+        row_idx = set([idx.row() for idx in view.selectionModel().selectedIndexes()])
+        for idx in row_idx:
+            atm_sym = self.verticalHeaderItem(idx).text()
+            atm_sym_copy = atm_sym + " (copy)"
+            while True:
+                if atm_sym_copy not in self.database.atoms:
+                    self.database.add_atom(atm_sym_copy)
+                    self.copy_row_from_database(atm_sym_copy, atm_sym)
+                    break
+                else:
+                    atm_sym_copy += " (copy)"
+        self.save_changes()
 
     @Slot(dict)
     def add_row(self, input_variables: dict):
@@ -230,15 +251,22 @@ class ElementModel(QStandardItemModel):
         if new_label not in self.database.atoms:
             self.database.add_atom(new_label)
             self.copy_row_from_database(new_label, new_label)
+        self.save_changes()
 
     @Slot()
-    def delete_row(self):
-        """Delete a row from the table and update the database."""
+    def delete_rows(self):
+        """Delete a rows from the table and update the database."""
         view = self.parent().viewer
-        row = view.indexAt(view.clickedPos).row()
-        atm_sym = self.verticalHeaderItem(row).text()
-        view.model().removeRow(row)
-        self.database.remove_atom(atm_sym)
+        row_idx = list(
+            set([idx.row() for idx in view.selectionModel().selectedIndexes()])
+        )
+        row_idx.sort()
+        def_atms = ATOMS_DATABASE.default_atoms_types
+        for idx in reversed(row_idx):
+            atm_sym = self.verticalHeaderItem(idx).text()
+            if atm_sym not in def_atms:
+                view.model().removeRow(idx)
+                self.database.remove_atom(atm_sym)
         self.save_changes()
 
     @Slot(dict)
