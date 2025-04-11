@@ -243,7 +243,9 @@ class ElementModel(QStandardItemModel):
     def copy_rows(self):
         """Update the database and table with a copied atoms."""
         view = self.parent().viewer
-        row_idxs = list(set([idx.row() for idx in view.selectionModel().selectedIndexes()]))
+        row_idxs = list(
+            set([idx.row() for idx in view.selectionModel().selectedIndexes()])
+        )
         row_idxs.sort()
         for idx in row_idxs:
             atm_sym = self.verticalHeaderItem(idx).text()
