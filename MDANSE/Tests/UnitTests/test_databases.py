@@ -299,7 +299,7 @@ class TestAtomsDatabase(unittest.TestCase):
         self.assertEqual(4, ATOMS_DATABASE.n_atoms)
 
     def test_n_properties(self):
-        self.assertEqual(5, ATOMS_DATABASE.n_properties)
+        self.assertEqual(4, ATOMS_DATABASE.n_properties)
 
     def test_numeric_properties(self):
         self.assertEqual(

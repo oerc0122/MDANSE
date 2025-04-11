@@ -94,11 +94,11 @@ class _Database(metaclass=Singleton):
         else:
             database_path = default_database
 
-        with open(database_path, "r") as f:
-            self._data = json.load(f)
-
         with open(default_database, "r") as f:
             self._default_data = json.load(f)
+
+        with open(database_path, "r") as f:
+            self._data = json.load(f)
 
     def items(self) -> ItemsView[str, dict]:
         """
