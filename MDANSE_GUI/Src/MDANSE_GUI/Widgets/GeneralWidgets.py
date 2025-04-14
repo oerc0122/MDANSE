@@ -628,7 +628,6 @@ class InputDialog(QDialog):
             value = var.value
             widget = var.widget
             _helper_dialog = var.helper_dialog
-            tooltip = var.tooltip
             placeholder = var.placeholder
             # set up widgets
             temp_base = QWidget(var_base)
