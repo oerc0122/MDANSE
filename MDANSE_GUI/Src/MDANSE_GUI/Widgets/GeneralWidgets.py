@@ -30,10 +30,11 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QCheckBox,
 )
-from qtpy.QtCore import Signal, Slot, QObject
+from qtpy.QtCore import Signal, Slot, QObject, Qt
 from qtpy.QtGui import (
     QIntValidator,
     QDoubleValidator,
+    QPalette,
 )
 
 from MDANSE.MLogging import LOG
@@ -530,34 +531,67 @@ class InputVariable(QObject):
         self.label = "Variable"
         self.keyval = "var1"
         self.format = float
-        self.values = [0.0]
+        self.value = 0.0
         self.helper_dialog = None
         self.tooltip = ""
+        self.invalid_tooltip = ""
         self.placeholder = ""
         for key, item in input_dict.items():
             self.__setattr__(str(key), item)
 
-        self.number_of_values = len(self.values)
-        if self.number_of_values == 1:
-            self.widget = QLineEdit
-        else:
+        if isinstance(self.value, list):
             self.widget = QComboBox
+        else:
+            self.widget = QLineEdit
 
-        self.input_widgets = []
+        self.input_widget = None
 
-    def returnValues(self):
-        result = []
-        for widget in self.input_widgets:
-            if self.number_of_values == 1:
-                text = widget.text()
-            else:
-                text = widget.currentText()
-            try:
-                temp = self.format(text)
-            except ValueError:
-                temp = text
-            result.append(temp)
+    def returnValue(self) -> Union[float, int, str]:
+        """
+        Returns
+        -------
+        Union[float, int, str]
+            The results from the input widget.
+        """
+        if isinstance(self.input_widget, QComboBox):
+            text = self.input_widget.currentText()
+        else:
+            text = self.input_widget.text()
+        try:
+            result = self.format(text)
+        except ValueError:
+            result = text
         return result
+
+    def inputValid(self) -> bool:
+        """Should be overridden to allow for more complex input
+        validation checks.
+
+        Returns
+        -------
+        bool
+            True if the input is valid.
+        """
+        return True
+
+    def setValidState(self):
+        """The input widget is return to its valid state."""
+        if not self.input_widget or isinstance(self.input_widget, QComboBox):
+            return
+
+        self.input_widget.setToolTip(self.tooltip)
+        self.input_widget.setPalette(QPalette())
+
+    def setInvalidState(self):
+        """Puts the input widget into an invalid state. The widget
+        background is changed."""
+        if not self.input_widget or isinstance(self.input_widget, QComboBox):
+            return
+
+        self.input_widget.setToolTip(self.invalid_tooltip)
+        pallette = QPalette()
+        pallette.setColor(QPalette.Base, Qt.GlobalColor.red)
+        self.input_widget.setPalette(pallette)
 
 
 class InputDialog(QDialog):
@@ -567,8 +601,13 @@ class InputDialog(QDialog):
 
     got_values = Signal(dict)
 
-    def __init__(self, *args, fields: Iterable["InputVariable"] = None, **kwargs):
+    def __init__(
+        self, *args, fields: Iterable["InputVariable"] = None, title: str = "", **kwargs
+    ):
         super().__init__(*args, **kwargs)
+
+        self.setModal(True)
+        self.setWindowTitle(title)
 
         self.fields = fields  #  we need to store it for later
         layout = QVBoxLayout(self)
@@ -586,48 +625,59 @@ class InputDialog(QDialog):
         for var in fields:
             label = var.label
             format = var.format
-            values = var.values
+            value = var.value
             widget = var.widget
             _helper_dialog = var.helper_dialog
             tooltip = var.tooltip
             placeholder = var.placeholder
-            number_of_values = var.number_of_values
             # set up widgets
             temp_base = QWidget(var_base)
             temp_layout = QHBoxLayout(temp_base)
             temp_base.setLayout(temp_layout)
-            if format is int:
-                validator = QIntValidator(temp_base)
-            elif format is float:
-                validator = QDoubleValidator(temp_base)
+            widget_instance = widget(var_base)
+            if isinstance(value, list):
+                widget_instance.addItems(value)
             else:
-                validator = None
-            if number_of_values == 1:
-                widget_instance = widget(var_base)
-                widget_instance.setText(str(values[0]))
+                if format is int:
+                    validator = QIntValidator(temp_base)
+                elif format is float:
+                    validator = QDoubleValidator(temp_base)
+                else:
+                    validator = None
+                widget_instance.setText(str(value))
                 widget_instance.setPlaceholderText(str(placeholder))
                 if validator is not None:
                     widget_instance.setValidator(validator)
-            else:
-                widget_instance = widget(var_base)
-                widget_instance.addItems(values)
-            widget_instance.setToolTip(tooltip)
+                widget_instance.textChanged.connect(self.check_values)
             temp_layout.addWidget(widget_instance)
-            var.input_widgets.append(widget_instance)
+            var.input_widget = widget_instance
             var_layout.addRow(label, temp_base)
         # optinally we can add other buttons here...
         #
         # final button, always there
         self.button = QPushButton("Accept!", self)
         self.button.clicked.connect(self.accept)
-        self.accepted.connect(self.return_value)
+        self.accepted.connect(self.return_values)
         button_layout.addWidget(self.button)
+        self.check_values()
 
     @Slot()
-    def return_value(self):
+    def return_values(self):
+        """Emits the results from the input widgets."""
         result = {}
         for var in self.fields:
-            temp = var.returnValues()
-            value = temp[0]
-            result[var.keyval] = value
+            result[var.keyval] = var.returnValue()
         self.got_values.emit(result)
+
+    def check_values(self):
+        """Checks if the values in the input widget are valid. If not
+        the Accept! button is deactivated and the widget may change
+        color to alert the user.
+        """
+        for var in self.fields:
+            if not var.inputValid():
+                self.button.setEnabled(False)
+                var.setInvalidState()
+                return
+            var.setValidState()
+        self.button.setEnabled(True)

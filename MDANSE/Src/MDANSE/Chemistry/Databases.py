@@ -666,6 +666,26 @@ class AtomsDatabase(_Database):
         for atm in self.atoms:
             del self._data[atm][label]
 
+    def rename_atom_type(self, old_key: str, new_key: str):
+        """Renames the atom key in the atom database.
+
+        Parameters
+        ----------
+        old_key : str
+            The key of the atom to change.
+        new_key : str
+            The new key of the atom.
+        """
+        if old_key not in self._data:
+            raise AtomsDatabaseError(
+                f"Atom {old_key} does not exist."
+            )
+        if new_key in self._data:
+            raise AtomsDatabaseError(
+                f"Cannot rename atom {old_key} to {new_key} as {new_key} is already exists."
+            )
+        self._data[new_key] = self._data.pop(old_key)
+
 
 if __name__ == "__main__":
     from MDANSE.Chemistry import ATOMS_DATABASE

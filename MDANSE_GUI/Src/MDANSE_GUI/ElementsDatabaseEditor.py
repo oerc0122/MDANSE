@@ -27,8 +27,27 @@ from qtpy.QtGui import QStandardItem, QStandardItemModel
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MLogging import LOG
+from MDANSE.Chemistry.Databases import AtomsDatabaseError
 
 from MDANSE_GUI.Widgets.GeneralWidgets import InputVariable, InputDialog
+
+
+class NewAtomTypeNameVariable(InputVariable):
+    def inputValid(self) -> bool:
+        """
+        Returns
+        -------
+        bool
+            True if the new atom type name is valid.
+        """
+        result = self.returnValue()
+        if not result:
+            self.invalid_tooltip = "New atom name should not be an empty string."
+            return False
+        if result in ATOMS_DATABASE.atoms:
+            self.invalid_tooltip = "New atom name already exists."
+            return False
+        return True
 
 
 class ElementView(QTableView):
@@ -40,14 +59,19 @@ class ElementView(QTableView):
     def contextMenuEvent(self, event):
         menu = QMenu(self)
 
-        Action1 = menu.addAction("New Atom")
+        Action1 = menu.addAction("New Custom Atom")
         Action2 = menu.addAction("Copy Atoms")
-        Action3 = menu.addAction("Delete Custom Atoms")
-        Action4 = menu.addAction("New Property")
-        Action5 = menu.addAction("Copy Properties")
-        Action6 = menu.addAction("Delete Custom Properties")
+        Action3 = menu.addAction("Rename Custom Atom")
+        Action4 = menu.addAction("Delete Custom Atoms")
+        Action5 = menu.addAction("New Custom Property")
+        Action6 = menu.addAction("Copy Properties")
+        Action7 = menu.addAction("Delete Custom Properties")
 
         data_model = self.parent().data_model
+
+        enable_rename_atoms = len(
+            set(ATOMS_DATABASE.atoms) - set(ATOMS_DATABASE.default_atoms_types)
+        )
 
         vert_header_idxs = set(
             [
@@ -77,16 +101,20 @@ class ElementView(QTableView):
         if temp_model is not None:
             Action1.triggered.connect(temp_model.new_line_dialog)
             Action2.triggered.connect(temp_model.copy_rows)
-            if enable_delete_atms:
-                Action3.triggered.connect(temp_model.delete_rows)
+            if enable_rename_atoms:
+                Action3.triggered.connect(temp_model.rename_atom_dialog)
             else:
                 Action3.setEnabled(False)
-            Action4.triggered.connect(temp_model.new_column_dialog)
-            Action5.triggered.connect(temp_model.copy_columns)
-            if enable_delete_props:
-                Action6.triggered.connect(temp_model.delete_columns)
+            if enable_delete_atms:
+                Action4.triggered.connect(temp_model.delete_rows)
             else:
-                Action6.setEnabled(False)
+                Action4.setEnabled(False)
+            Action5.triggered.connect(temp_model.new_column_dialog)
+            Action6.triggered.connect(temp_model.copy_columns)
+            if enable_delete_props:
+                Action7.triggered.connect(temp_model.delete_columns)
+            else:
+                Action7.setEnabled(False)
 
         menu.exec_(event.globalPos())
 
@@ -180,24 +208,32 @@ class ElementModel(QStandardItemModel):
 
     @Slot()
     def new_line_dialog(self):
+        """Opens a dialog window which allows for custom atom types to
+        be created.
+        """
         dialog_variables = [
-            InputVariable(
+            NewAtomTypeNameVariable(
                 input_dict={
                     "keyval": "atom_name",
                     "format": str,
                     "label": "New element name",
                     "tooltip": "Type the name of the new chemical element here.",
-                    "values": [""],
+                    "value": "",
                 }
             )
         ]
-        ne_dialog = InputDialog(fields=dialog_variables)
+        ne_dialog = InputDialog(
+            parent=self.parent(), fields=dialog_variables, title="Create Custom Atom"
+        )
         ne_dialog.got_values.connect(self.add_row)
         ne_dialog.show()
         _result = ne_dialog.exec()
 
     @Slot()
     def new_column_dialog(self):
+        """Opens a dialog window which allows for custom properties to
+        be created.
+        """
         dialog_variables = [
             InputVariable(
                 input_dict={
@@ -205,7 +241,7 @@ class ElementModel(QStandardItemModel):
                     "format": str,
                     "label": "New property name",
                     "tooltip": "Type the name of the new property here; it will be added to the table.",
-                    "values": [""],
+                    "value": "",
                 }
             ),
             InputVariable(
@@ -214,14 +250,76 @@ class ElementModel(QStandardItemModel):
                     "format": str,
                     "label": "Type of the new property",
                     "tooltip": "One of the following: int, float, str, list",
-                    "values": ["int", "float", "str", "list"],
+                    "value": ["int", "float", "str", "list"],
                 }
             ),
         ]
-        ne_dialog = InputDialog(fields=dialog_variables)
+        ne_dialog = InputDialog(
+            parent=self.parent(),
+            fields=dialog_variables,
+            title="Create Custom Property",
+        )
         ne_dialog.got_values.connect(self.add_new_column)
         ne_dialog.show()
         _result = ne_dialog.exec()
+
+    @Slot()
+    def rename_atom_dialog(self):
+        """Opens a dialog window which allows for custom atom type keys
+        to be renamed.
+        """
+        custom_atoms = list(
+            set(self.all_row_names) - set(self.database.default_atoms_types)
+        )
+        custom_atoms.sort()
+        dialog_variables = [
+            InputVariable(
+                input_dict={
+                    "keyval": "old_atom_name",
+                    "format": str,
+                    "label": "Custom atom name",
+                    "tooltip": "The name of the chemical element here.",
+                    "value": custom_atoms,
+                }
+            ),
+            NewAtomTypeNameVariable(
+                input_dict={
+                    "keyval": "new_atom_name",
+                    "format": str,
+                    "label": "New custom atom name",
+                    "tooltip": "Type the name of the new chemical element here.",
+                    "value": "",
+                }
+            ),
+        ]
+        ne_dialog = InputDialog(
+            parent=self.parent(), fields=dialog_variables, title="Rename Custom Atom"
+        )
+        ne_dialog.got_values.connect(self.rename_row)
+        ne_dialog.show()
+        _result = ne_dialog.exec()
+
+    @Slot(dict)
+    def rename_row(self, input_variables: dict):
+        """Renames an atom from one label to another.
+
+        Parameters
+        ----------
+        input_variables : dict
+            Dictionary containing old and new atom names.
+        """
+        old_label = input_variables["old_atom_name"]
+        new_label = input_variables["new_atom_name"]
+        try:
+            self.database.rename_atom_type(old_label, new_label)
+        except AtomsDatabaseError as e:
+            LOG.error(f"Failed to update databsae with error: {e}")
+        header_row_text = [
+            self.verticalHeaderItem(i).text() for i in range(self.rowCount())
+        ]
+        row_idx = header_row_text.index(old_label)
+        self.setVerticalHeaderItem(row_idx, QStandardItem(new_label))
+        self.save_changes()
 
     def copy_row_in_database(self, new_label: str, db_key: str):
         """Copy row data from one database entry to another and update
