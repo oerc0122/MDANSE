@@ -49,9 +49,15 @@ class ElementView(QTableView):
 
         data_model = self.parent().data_model
 
-        row_idxs = set([idx.row() for idx in self.selectionModel().selectedIndexes()])
+        vert_header_idxs = set(
+            [
+                self.model().mapToSource(idx).row()
+                for idx in self.selectionModel().selectedIndexes()
+            ]
+        )
         atm_syms = [
-            data_model.verticalHeaderItem(row_idx).text() for row_idx in row_idxs
+            data_model.verticalHeaderItem(row_idx).text()
+            for row_idx in vert_header_idxs
         ]
         def_atms = ATOMS_DATABASE.default_atoms_types
         enable_delete_atms = any([atm_sym not in def_atms for atm_sym in atm_syms])
@@ -243,11 +249,14 @@ class ElementModel(QStandardItemModel):
     def copy_rows(self):
         """Update the database and table with a copied atoms."""
         view = self.parent().viewer
-        row_idxs = list(
-            set([idx.row() for idx in view.selectionModel().selectedIndexes()])
+
+        idxs = view.selectionModel().selectedIndexes()
+        row_idxs = set(
+            [(idx.row(), view.model().mapToSource(idx).row()) for idx in idxs]
         )
-        row_idxs.sort()
-        for idx in row_idxs:
+        row_idxs = sorted(row_idxs, key=lambda x: x[0])
+
+        for _, idx in row_idxs:
             atm_sym = self.verticalHeaderItem(idx).text()
             atm_sym_copy = atm_sym + " (copy)"
             while True:
@@ -281,15 +290,20 @@ class ElementModel(QStandardItemModel):
     def delete_rows(self):
         """Delete custom rows from the table and update the database."""
         view = self.parent().viewer
-        row_idx = list(
-            set([idx.row() for idx in view.selectionModel().selectedIndexes()])
+
+        idxs = view.selectionModel().selectedIndexes()
+        row_idxs = set(
+            [(idx.row(), view.model().mapToSource(idx).row()) for idx in idxs]
         )
-        row_idx.sort(reverse=True)
+        row_idxs = sorted(row_idxs, key=lambda x: x[0], reverse=True)
+        row_idxs_atm_syms = [
+            (i, self.verticalHeaderItem(j).text()) for i, j in row_idxs
+        ]
+
         def_atms = ATOMS_DATABASE.default_atoms_types
-        for idx in row_idx:
-            atm_sym = self.verticalHeaderItem(idx).text()
+        for row_idx, atm_sym in row_idxs_atm_syms:
             if atm_sym not in def_atms:
-                view.model().removeRow(idx)
+                view.model().removeRow(row_idx)
                 self.database.remove_atom(atm_sym)
         self.save_changes()
 
