@@ -677,9 +677,7 @@ class AtomsDatabase(_Database):
             The new key of the atom.
         """
         if old_key not in self._data:
-            raise AtomsDatabaseError(
-                f"Atom {old_key} does not exist."
-            )
+            raise AtomsDatabaseError(f"Atom {old_key} does not exist.")
         if new_key in self._data:
             raise AtomsDatabaseError(
                 f"Cannot rename atom {old_key} to {new_key} as {new_key} is already exists."
