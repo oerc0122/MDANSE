@@ -23,7 +23,7 @@ from qtpy.QtWidgets import (
     QTableView,
 )
 from qtpy.QtCore import Signal, Slot, Qt, QSortFilterProxyModel
-from qtpy.QtGui import QStandardItem, QStandardItemModel
+from qtpy.QtGui import QStandardItem, QStandardItemModel, QBrush, QColor
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MLogging import LOG
@@ -173,6 +173,7 @@ class ElementModel(QStandardItemModel):
     def __init__(self, *args, element_database=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.custom_header_brush = QBrush(QColor(255, 165, 0))
         self.database = element_database
         self.parseDatabase()
 
@@ -213,8 +214,18 @@ class ElementModel(QStandardItemModel):
                     item.setData(intnum, role=Qt.ItemDataRole.DisplayRole)
                 row.append(item)
             self.appendRow(row)
-        self.setHorizontalHeaderLabels(self.all_column_names)
-        self.setVerticalHeaderLabels(self.all_row_names)
+
+        for i, entry in enumerate(self.all_row_names):
+            item = QStandardItem(entry)
+            if entry not in self.database.default_atoms_types:
+                item.setForeground(self.custom_header_brush)
+            self.setVerticalHeaderItem(i, item)
+
+        for i, entry in enumerate(self.all_column_names):
+            item = QStandardItem(entry)
+            if entry not in self.database.default_atoms_properties:
+                item.setForeground(self.custom_header_brush)
+            self.setHorizontalHeaderItem(i, item)
 
     @Slot("QStandardItem*")
     def write_to_database(self, item: "QStandardItem"):
@@ -347,7 +358,9 @@ class ElementModel(QStandardItemModel):
             self.verticalHeaderItem(i).text() for i in range(self.rowCount())
         ]
         row_idx = header_row_text.index(old_label)
-        self.setVerticalHeaderItem(row_idx, QStandardItem(new_label))
+        item = QStandardItem(new_label)
+        item.setForeground(self.custom_header_brush)
+        self.setVerticalHeaderItem(row_idx, item)
         self.save_changes()
 
     @Slot()
@@ -407,7 +420,9 @@ class ElementModel(QStandardItemModel):
             self.horizontalHeaderItem(i).text() for i in range(self.columnCount())
         ]
         column_idx = header_column_text.index(old_label)
-        self.setHorizontalHeaderItem(column_idx, QStandardItem(new_label))
+        item = QStandardItem(new_label)
+        item.setForeground(self.custom_header_brush)
+        self.setHorizontalHeaderItem(column_idx, item)
         self.save_changes()
 
     def copy_row_in_database(self, new_label: str, db_key: str):
@@ -429,7 +444,10 @@ class ElementModel(QStandardItemModel):
             item = QStandardItem(str(new_value))
             row.append(item)
         self.appendRow(row)
-        self.setVerticalHeaderItem(self.rowCount() - 1, QStandardItem(str(new_label)))
+        item = QStandardItem(new_label)
+        if new_label not in self.database.default_atoms_types:
+            item.setForeground(self.custom_header_brush)
+        self.setVerticalHeaderItem(self.rowCount() - 1, item)
         LOG.info(f"self.all_row_names has length: {len(self.all_row_names)}")
 
     @Slot()
@@ -518,9 +536,10 @@ class ElementModel(QStandardItemModel):
             item = QStandardItem(str(new_value))
             column.append(item)
         self.appendColumn(column)
-        self.setHorizontalHeaderItem(
-            self.columnCount() - 1, QStandardItem(str(new_prop_name))
-        )
+        item = QStandardItem(new_prop_name)
+        if new_prop_name not in self.database.default_atoms_properties:
+            item.setForeground(self.custom_header_brush)
+        self.setHorizontalHeaderItem(self.columnCount() - 1, item)
         LOG.info(f"self.all_column_names has length: {len(self.all_column_names)}")
 
     @Slot(dict)
