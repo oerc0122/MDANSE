@@ -15,7 +15,7 @@
 #
 
 import copy
-from typing import Union, ItemsView, Dict, Any
+from typing import Union, ItemsView, Dict, Any, Optional
 from pathlib import Path
 
 import json
@@ -23,6 +23,36 @@ import json
 from MDANSE.Core.Platform import PLATFORM
 from MDANSE.Core.Error import Error
 from MDANSE.Core.Singleton import Singleton
+
+
+def color(color_string: Optional[str] = None):
+    """A color function used to create a color string for the atom
+    database.
+
+    Parameters
+    ----------
+    color_string: Optional[str]
+        The color string, if None then it returns a color string
+        for white.
+
+    Returns
+    -------
+    str
+        The color string following the
+    """
+    if not color_string:
+        # default color is white
+        return "255;255;255"
+
+    if (
+        not isinstance(color_string, str)
+        or len(color_string.split(";")) != 3
+        or any([not i.isdigit() for i in color_string.split(";")])
+        or any([0 > int(i) > 255 for i in color_string.split(";")])
+    ):
+        raise ValueError(f"{color_string} is not a valid color string.")
+
+    return color_string
 
 
 class _Database(metaclass=Singleton):
@@ -174,7 +204,7 @@ class AtomsDatabase(_Database):
     _USER_DATABASE = PLATFORM.application_directory() / "atoms.json"
 
     # The python types supported by the database
-    _TYPES = {"str": str, "int": int, "float": float, "list": list}
+    _TYPES = {"str": str, "int": int, "float": float, "list": list, "color": color}
 
     def __init__(self):
         """
