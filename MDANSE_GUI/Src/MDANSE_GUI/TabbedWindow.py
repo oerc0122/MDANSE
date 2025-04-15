@@ -224,12 +224,12 @@ class TabbedWindow(QMainWindow):
 
     def launch_dialog(self, dialog) -> None:
         if dialog.isVisible():
-            if dialog.isMaximized():
-                dialog.showMaximized()
-            else:
-                dialog.showNormal()
-            dialog.activateWindow()
+            geometry = dialog.saveGeometry()
+            dialog.previous_geometry = geometry
+            dialog.close()
         else:
+            if hasattr(dialog, "previous_geometry"):
+                dialog.restoreGeometry(dialog.previous_geometry)
             dialog.show()
 
     @Slot(bool)

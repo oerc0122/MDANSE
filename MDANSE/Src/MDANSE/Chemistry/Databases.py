@@ -39,6 +39,7 @@ class _Database(metaclass=Singleton):
         """
 
         self._data = {}
+        self._default_data = {}
 
         self._reset()
 
@@ -93,16 +94,11 @@ class _Database(metaclass=Singleton):
         else:
             database_path = default_database
 
+        with open(default_database, "r") as f:
+            self._default_data = json.load(f)
+
         with open(database_path, "r") as f:
             self._data = json.load(f)
-
-    def _build_residue_map(self) -> None:
-        """Creates a dict mapping alternative names to the official name."""
-        self._residue_map = {}
-        for k, v in self._data.items():
-            self._residue_map[k] = k
-            for alt in v["alternatives"]:
-                self._residue_map[alt] = k
 
     def items(self) -> ItemsView[str, dict]:
         """
@@ -188,6 +184,9 @@ class AtomsDatabase(_Database):
         self._atoms_by_atomic_number = {num: [] for num in range(140)}
 
         super().__init__()
+
+        self.default_atoms_types = list(self._default_data["atoms"].keys())
+        self.default_atoms_properties = list(self._default_data["properties"].keys())
 
     def __contains__(self, element: str) -> bool:
         """
@@ -644,6 +643,66 @@ class AtomsDatabase(_Database):
             property_name: self.get_value(symbol, property_name)
             for property_name in self.properties
         }
+
+    def remove_atom(self, symbol: str):
+        """Remove an atom from the database.
+
+        Parameters
+        ----------
+        symbol : str
+            The atoms symbol to remove from the database.
+        """
+        del self._data[symbol]
+
+    def remove_property(self, label: str):
+        """Remove an atom property from the database.
+
+        Parameters
+        ----------
+        label : str
+            The property to remove from the database.
+        """
+        del self._properties[label]
+        for atm in self.atoms:
+            del self._data[atm][label]
+
+    def rename_atom_type(self, old_key: str, new_key: str):
+        """Renames the atom key in the atom database.
+
+        Parameters
+        ----------
+        old_key : str
+            The key of the atom to change.
+        new_key : str
+            The new key of the atom.
+        """
+        if old_key not in self._data:
+            raise AtomsDatabaseError(f"Atom {old_key} does not exist.")
+        if new_key in self._data:
+            raise AtomsDatabaseError(
+                f"Cannot rename atom from {old_key} to {new_key} as {new_key} is already exists."
+            )
+        self._data[new_key] = self._data.pop(old_key)
+
+    def rename_atom_property(self, old_key: str, new_key: str):
+        """Renames the atom property in the atom database.
+
+        Parameters
+        ----------
+        old_key : str
+            The key of the atom property to change.
+        new_key : str
+            The new key of the atom property.
+        """
+        if old_key not in self._properties:
+            raise AtomsDatabaseError(f"Atom property {old_key} does not exist.")
+        if new_key in self._properties:
+            raise AtomsDatabaseError(
+                f"Cannot rename atom property from {old_key} to {new_key} as {new_key} is already exists."
+            )
+        self._properties[new_key] = self._properties.pop(old_key)
+        for element in self._data.values():
+            element[new_key] = element.pop(old_key)
 
 
 if __name__ == "__main__":
