@@ -680,9 +680,29 @@ class AtomsDatabase(_Database):
             raise AtomsDatabaseError(f"Atom {old_key} does not exist.")
         if new_key in self._data:
             raise AtomsDatabaseError(
-                f"Cannot rename atom {old_key} to {new_key} as {new_key} is already exists."
+                f"Cannot rename atom from {old_key} to {new_key} as {new_key} is already exists."
             )
         self._data[new_key] = self._data.pop(old_key)
+
+    def rename_atom_property(self, old_key: str, new_key: str):
+        """Renames the atom property in the atom database.
+
+        Parameters
+        ----------
+        old_key : str
+            The key of the atom property to change.
+        new_key : str
+            The new key of the atom property.
+        """
+        if old_key not in self._properties:
+            raise AtomsDatabaseError(f"Atom property {old_key} does not exist.")
+        if new_key in self._properties:
+            raise AtomsDatabaseError(
+                f"Cannot rename atom property from {old_key} to {new_key} as {new_key} is already exists."
+            )
+        self._properties[new_key] = self._properties.pop(old_key)
+        for element in self._data.values():
+            element[new_key] = element.pop(old_key)
 
 
 if __name__ == "__main__":
