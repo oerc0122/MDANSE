@@ -290,7 +290,7 @@ class ElementModel(QStandardItemModel):
             for key in self.all_column_names:
                 item = QStandardItem(str(atom_info[key]))
                 item.setEditable(not (entry in def_rows and key in def_columns))
-                if key == "color":
+                if ATOMS_DATABASE._properties[key] == "color":
                     r, g, b = atom_info[key].split(";")
                     item.setBackground(QBrush(QColor(int(r), int(g), int(b))))
                 row.append(item)
@@ -524,7 +524,7 @@ class ElementModel(QStandardItemModel):
             new_value = self.database.get_value(db_key, key)
             self.database.set_value(new_label, key, new_value)
             item = QStandardItem(str(new_value))
-            if key == "color":
+            if ATOMS_DATABASE._properties[key] == "color":
                 r, g, b = new_value.split(";")
                 item.setBackground(QBrush(QColor(int(r), int(g), int(b))))
             row.append(item)
@@ -619,12 +619,16 @@ class ElementModel(QStandardItemModel):
             new_value = self.database.get_value(key, old_prop_name)
             self.database.set_value(key, new_prop_name, new_value)
             item = QStandardItem(str(new_value))
+            if ATOMS_DATABASE._properties[old_prop_name] == "color":
+                r, g, b = new_value.split(";")
+                item.setBackground(QBrush(QColor(int(r), int(g), int(b))))
             column.append(item)
         self.appendColumn(column)
         item = QStandardItem(new_prop_name)
         if new_prop_name not in self.database.default_atoms_properties:
             item.setForeground(self.custom_header_brush)
         self.setHorizontalHeaderItem(self.columnCount() - 1, item)
+        self.parent().set_column_delegate(self.columnCount() - 1)
         LOG.info(f"self.all_column_names has length: {len(self.all_column_names)}")
 
     @Slot(dict)
@@ -711,23 +715,32 @@ class ElementsDatabaseEditor(QDialog):
         self.proxy_model.setSourceModel(self.data_model)
         self.viewer.setModel(self.proxy_model)
         for column_number in range(self.data_model.columnCount()):
-            column_name = self.data_model.horizontalHeaderItem(column_number).text()
-            column_type = ATOMS_DATABASE._properties.get(column_name, "str")
-            if column_name == "color":
-                self.viewer.setItemDelegateForColumn(
-                    column_number, self.viewer.color_delegrate
-                )
-                continue
-            if column_type == "float":
-                self.viewer.setItemDelegateForColumn(
-                    column_number, self.viewer.float_delegate
-                )
-            elif column_type == "int":
-                self.viewer.setItemDelegateForColumn(
-                    column_number, self.viewer.int_delegate
-                )
+            self.set_column_delegate(column_number)
 
         self.resize(1280, 720)
+
+    def set_column_delegate(self, column_number: int):
+        """Set the delegate for the column in the table.
+
+        Parameters
+        ----------
+        column_number : int
+            The column number that needs have the delegate to be set.
+        """
+        column_name = self.data_model.horizontalHeaderItem(column_number).text()
+        column_type = ATOMS_DATABASE._properties.get(column_name, "str")
+        if column_type == "color":
+            self.viewer.setItemDelegateForColumn(
+                column_number, self.viewer.color_delegrate
+            )
+        elif column_type == "float":
+            self.viewer.setItemDelegateForColumn(
+                column_number, self.viewer.float_delegate
+            )
+        elif column_type == "int":
+            self.viewer.setItemDelegateForColumn(
+                column_number, self.viewer.int_delegate
+            )
 
 
 if __name__ == "__main__":
