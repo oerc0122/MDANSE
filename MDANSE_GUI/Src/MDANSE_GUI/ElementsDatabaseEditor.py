@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from qtpy.QtCore import QSortFilterProxyModel, Signal, Slot
+from qtpy.QtCore import QSortFilterProxyModel, Signal, Slot, Qt
 from qtpy.QtGui import (
     QDoubleValidator,
     QIntValidator,
@@ -31,6 +31,7 @@ from qtpy.QtWidgets import (
     QPushButton,
     QTableView,
     QVBoxLayout,
+    QColorDialog,
 )
 
 from MDANSE.Chemistry import ATOMS_DATABASE
@@ -38,6 +39,7 @@ from MDANSE.MLogging import LOG
 from MDANSE.Chemistry.Databases import AtomsDatabaseError
 
 from MDANSE_GUI.Widgets.GeneralWidgets import InputDialog, InputVariable
+from MDANSE_GUI.Tabs.Views.Delegates import ColourPicker
 
 
 class FloatInputField(QItemDelegate):
@@ -92,6 +94,23 @@ class IntInputField(QItemDelegate):
         self.commitData.emit(self.sender())
 
 
+class ColorInputField(ColourPicker):
+    def setEditorData(self, editor, index):
+        r, g, b = index.data().split(";")
+        color = QColor(int(r), int(g), int(b))
+        editor.setCurrentColor(color)
+
+    def setModelData(self, editor, model, index):
+        if editor.result() == QColorDialog.DialogCode.Accepted:
+            color = editor.currentColor()
+            model.setData(index, f"{color.red()};{color.green()};{color.blue()}")
+            model.setData(index, color, role=Qt.ItemDataRole.BackgroundRole)
+            self.valueChanged()
+
+    def valueChanged(self):
+        self.commitData.emit(self.sender())
+
+
 class NewAtomTypeNameVariable(InputVariable):
     def inputValid(self) -> bool:
         """
@@ -138,18 +157,19 @@ class ElementView(QTableView):
 
         self.int_delegate = IntInputField(self)
         self.float_delegate = FloatInputField(self)
+        self.color_delegrate = ColorInputField(self)
         self.setSortingEnabled(True)
 
     def contextMenuEvent(self, event):
         menu = QMenu(self)
 
         Action1 = menu.addAction("New Custom Atom")
-        Action2 = menu.addAction("Rename Custom Atom")
-        Action3 = menu.addAction("Copy Atoms")
+        Action2 = menu.addAction("Copy Atoms")
+        Action3 = menu.addAction("Rename Custom Atom")
         Action4 = menu.addAction("Delete Custom Atoms")
         Action5 = menu.addAction("New Custom Property")
-        Action6 = menu.addAction("Rename Custom Property")
-        Action7 = menu.addAction("Copy Properties")
+        Action6 = menu.addAction("Copy Properties")
+        Action7 = menu.addAction("Rename Custom Property")
         Action8 = menu.addAction("Delete Custom Properties")
 
         data_model = self.parent().data_model
@@ -189,21 +209,21 @@ class ElementView(QTableView):
         temp_model = self.model().sourceModel()
         if temp_model is not None:
             Action1.triggered.connect(temp_model.new_line_dialog)
+            Action2.triggered.connect(temp_model.copy_rows)
             if enable_rename_atoms:
-                Action2.triggered.connect(temp_model.rename_row_dialog)
+                Action3.triggered.connect(temp_model.rename_row_dialog)
             else:
-                Action2.setEnabled(False)
-            Action3.triggered.connect(temp_model.copy_rows)
+                Action3.setEnabled(False)
             if enable_delete_atms:
                 Action4.triggered.connect(temp_model.delete_rows)
             else:
                 Action4.setEnabled(False)
             Action5.triggered.connect(temp_model.new_column_dialog)
+            Action6.triggered.connect(temp_model.copy_columns)
             if enable_rename_property:
-                Action6.triggered.connect(temp_model.rename_column_dialog)
+                Action7.triggered.connect(temp_model.rename_column_dialog)
             else:
-                Action6.setEnabled(False)
-            Action7.triggered.connect(temp_model.copy_columns)
+                Action7.setEnabled(False)
             if enable_delete_props:
                 Action8.triggered.connect(temp_model.delete_columns)
             else:
@@ -236,7 +256,12 @@ class NewElementDialog(QDialog):
 
 
 class ElementModel(QStandardItemModel):
-    """A Qt model interfacing with MDANSE AtomDatabase."""
+    """A Qt model interfacing with MDANSE AtomDatabase. Note that the
+    order of atom and properties in the atom database may not be the
+    same as the order of the atom and properties in the table. Their
+    orderings might diverge as the database gets edited and/or the
+    table gets sorted.
+    """
 
     def __init__(self, *args, element_database=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -265,6 +290,9 @@ class ElementModel(QStandardItemModel):
             for key in self.all_column_names:
                 item = QStandardItem(str(atom_info[key]))
                 item.setEditable(not (entry in def_rows and key in def_columns))
+                if key == "color":
+                    r, g, b = atom_info[key].split(";")
+                    item.setBackground(QBrush(QColor(int(r), int(g), int(b))))
                 row.append(item)
             self.appendRow(row)
 
@@ -284,15 +312,16 @@ class ElementModel(QStandardItemModel):
     def write_to_database(self, item: "QStandardItem"):
         data = item.data()
         text = item.text()
-        row = item.row()
-        column = item.column()
+        viewer = self.parent().viewer
+        selected_idx = viewer.selectionModel().selectedIndexes()[0]
+        idx = viewer.model().mapToSource(selected_idx)
+        row = idx.row()
+        column = idx.column()
+        row_name = self.verticalHeaderItem(row).text()
+        column_name = self.horizontalHeaderItem(column).text()
         LOG.info(f"data:{data}, text:{text}, row:{row}, column:{column}")
-        LOG.info(
-            f"column name={self.all_column_names[column]}, row name={self.all_row_names[row]}"
-        )
-        self.database.set_value(
-            self.all_row_names[row], self.all_column_names[column], text
-        )
+        LOG.info(f"column name={column_name}, row name={row_name}")
+        self.database.set_value(row_name, column_name, text)
         self.save_changes()
 
     @Slot()
@@ -495,6 +524,9 @@ class ElementModel(QStandardItemModel):
             new_value = self.database.get_value(db_key, key)
             self.database.set_value(new_label, key, new_value)
             item = QStandardItem(str(new_value))
+            if key == "color":
+                r, g, b = new_value.split(";")
+                item.setBackground(QBrush(QColor(int(r), int(g), int(b))))
             row.append(item)
         self.appendRow(row)
         item = QStandardItem(new_label)
@@ -679,8 +711,13 @@ class ElementsDatabaseEditor(QDialog):
         self.proxy_model.setSourceModel(self.data_model)
         self.viewer.setModel(self.proxy_model)
         for column_number in range(self.data_model.columnCount()):
-            column_name = self.data_model.all_column_names[column_number]
+            column_name = self.data_model.horizontalHeaderItem(column_number).text()
             column_type = ATOMS_DATABASE._properties.get(column_name, "str")
+            if column_name == "color":
+                self.viewer.setItemDelegateForColumn(
+                    column_number, self.viewer.color_delegrate
+                )
+                continue
             if column_type == "float":
                 self.viewer.setItemDelegateForColumn(
                     column_number, self.viewer.float_delegate
@@ -689,6 +726,7 @@ class ElementsDatabaseEditor(QDialog):
                 self.viewer.setItemDelegateForColumn(
                     column_number, self.viewer.int_delegate
                 )
+
         self.resize(1280, 720)
 
 

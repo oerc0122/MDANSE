@@ -2,7 +2,7 @@
     "properties": {
         "family": "str",
         "nucleon": "int",
-        "color": "str",
+        "color": "color",
         "b_incoherent2": "float",
         "xray_asf_b4": "float",
         "period": "int",
