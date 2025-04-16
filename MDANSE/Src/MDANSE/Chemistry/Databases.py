@@ -272,20 +272,29 @@ class AtomsDatabase(_Database):
                 self._atoms_by_atomic_number[protons].append(atom)
 
     def add_atom(self, atom: str) -> None:
-        """
-        Add a new element to the atoms database. The data for this atom will be empty and will not be saved until the
-        :meth: `save()` method is called. If the atom already exists, an exception is raised.
+        """Add a new element to the atom database. The data for this
+        atom will be filled with default values and will not be saved
+        until the :meth: `save()` method is called.
 
-        :param atom: the name of the element to add
-        :type atom: str
-        """
+        Parameters
+        ----------
+        atom : str
+            The atom name.
 
+        Raises
+        ------
+        AtomsDatabaseError
+            When the atom already exist in the database.
+        """
         if atom in self._data:
             raise AtomsDatabaseError(
                 f"The atom {atom} is already stored in the database"
             )
 
-        self._data[atom] = {}
+        properties = {}
+        for pname, ptype in self._properties.items():
+            properties[pname] = AtomsDatabase._TYPES[ptype]()
+        self._data[atom] = properties
 
     def add_property(self, pname: str, ptype: str) -> None:
         """

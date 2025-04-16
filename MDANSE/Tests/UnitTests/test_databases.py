@@ -144,7 +144,12 @@ class TestAtomsDatabase(unittest.TestCase):
             patch("MDANSE.Chemistry.Databases.AtomsDatabase.save") as n,
         ):
             ATOMS_DATABASE.add_atom("new_atom")
-            self.assertDictEqual({}, ATOMS_DATABASE["new_atom"])
+            self.assertDictEqual({
+                "family": "",
+                "nucleon": 0,
+                "electronegativity": 0.0,
+                "symbol": ""
+            }, ATOMS_DATABASE["new_atom"])
             assert not m.called
             assert not n.called
 
