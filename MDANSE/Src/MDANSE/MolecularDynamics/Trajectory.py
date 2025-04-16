@@ -400,7 +400,6 @@ constant_atom_properties = {
 atom_radii = [
     "covalent_radius",
     "vdw_radius",
-    "atomic_radius",
 ]
 
 

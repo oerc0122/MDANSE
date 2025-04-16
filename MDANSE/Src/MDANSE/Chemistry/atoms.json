@@ -39,7 +39,6 @@
         "element": "str",
         "vdw_radius": "float",
         "xs_coherent": "float",
-        "atomic_radius": "float",
         "block": "str"
     },
     "atoms": {
@@ -83,7 +82,6 @@
             "element": "antimony",
             "vdw_radius": 0.2,
             "xs_coherent": 3.64e-10,
-            "atomic_radius": 0.153,
             "block": "p"
         },
         "Sb121": {
@@ -126,7 +124,6 @@
             "element": "antimony",
             "vdw_radius": 0.2,
             "xs_coherent": 4.1e-10,
-            "atomic_radius": 0.153,
             "block": "p"
         },
         "Cd106": {
@@ -169,7 +166,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 3.1e-10,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "Ru": {
@@ -212,7 +208,6 @@
             "element": "ruthenium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.21e-10,
-            "atomic_radius": 0.189,
             "block": "d"
         },
         "Cd108": {
@@ -255,7 +250,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 3.7e-10,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "Na23": {
@@ -298,7 +292,6 @@
             "element": "sodium",
             "vdw_radius": 0.227,
             "xs_coherent": 1.66e-10,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Se78": {
@@ -341,7 +334,6 @@
             "element": "selenium",
             "vdw_radius": 0.19,
             "xs_coherent": 8.5e-10,
-            "atomic_radius": 0.122,
             "block": "p"
         },
         "Pt196": {
@@ -384,7 +376,6 @@
             "element": "platinum",
             "vdw_radius": 0.172,
             "xs_coherent": 1.23e-09,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "W180": {
@@ -427,7 +418,6 @@
             "element": "tungsten",
             "vdw_radius": 0.2,
             "xs_coherent": 3e-10,
-            "atomic_radius": 0.202,
             "block": "d"
         },
         "Se74": {
@@ -470,7 +460,6 @@
             "element": "selenium",
             "vdw_radius": 0.19,
             "xs_coherent": 1e-11,
-            "atomic_radius": 0.122,
             "block": "p"
         },
         "Se77": {
@@ -513,7 +502,6 @@
             "element": "selenium",
             "vdw_radius": 0.19,
             "xs_coherent": 8.6e-10,
-            "atomic_radius": 0.122,
             "block": "p"
         },
         "Se76": {
@@ -556,7 +544,6 @@
             "element": "selenium",
             "vdw_radius": 0.19,
             "xs_coherent": 1.87e-09,
-            "atomic_radius": 0.122,
             "block": "p"
         },
         "W184": {
@@ -599,7 +586,6 @@
             "element": "tungsten",
             "vdw_radius": 0.2,
             "xs_coherent": 7.03e-10,
-            "atomic_radius": 0.202,
             "block": "d"
         },
         "W186": {
@@ -642,7 +628,6 @@
             "element": "tungsten",
             "vdw_radius": 0.2,
             "xs_coherent": 6.5e-12,
-            "atomic_radius": 0.202,
             "block": "d"
         },
         "Am243": {
@@ -685,7 +670,6 @@
             "element": "americium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.7e-10,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Np237": {
@@ -728,7 +712,6 @@
             "element": "neptunium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.4e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Sn112": {
@@ -771,7 +754,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.5e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Er170": {
@@ -814,7 +796,6 @@
             "element": "erbium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.16e-09,
-            "atomic_radius": 0.245,
             "block": "f"
         },
         "Sn116": {
@@ -857,7 +838,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.42e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Sn117": {
@@ -900,7 +880,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 5.28e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Sn114": {
@@ -943,7 +922,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.8e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Ce136": {
@@ -986,7 +964,6 @@
             "element": "cerium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.23e-10,
-            "atomic_radius": 0.27,
             "block": "f"
         },
         "Cr50": {
@@ -1029,7 +1006,6 @@
             "element": "chromium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.54e-10,
-            "atomic_radius": 0.185,
             "block": "d"
         },
         "Ce138": {
@@ -1072,7 +1048,6 @@
             "element": "cerium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.64e-10,
-            "atomic_radius": 0.27,
             "block": "f"
         },
         "Cr52": {
@@ -1115,7 +1090,6 @@
             "element": "chromium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.04e-10,
-            "atomic_radius": 0.185,
             "block": "d"
         },
         "Cr53": {
@@ -1158,7 +1132,6 @@
             "element": "chromium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.22e-10,
-            "atomic_radius": 0.185,
             "block": "d"
         },
         "Cr54": {
@@ -1201,7 +1174,6 @@
             "element": "chromium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.6e-10,
-            "atomic_radius": 0.185,
             "block": "d"
         },
         "H": {
@@ -1244,7 +1216,6 @@
             "element": "hydrogen",
             "vdw_radius": 0.109,
             "xs_coherent": 1.76e-10,
-            "atomic_radius": 0.079,
             "block": "s"
         },
         "K40": {
@@ -1287,7 +1258,6 @@
             "element": "potassium",
             "vdw_radius": 0.275,
             "xs_coherent": 1.1e-10,
-            "atomic_radius": 0.277,
             "block": "s"
         },
         "K41": {
@@ -1330,7 +1300,6 @@
             "element": "potassium",
             "vdw_radius": 0.275,
             "xs_coherent": 9.1e-11,
-            "atomic_radius": 0.277,
             "block": "s"
         },
         "P": {
@@ -1373,7 +1342,6 @@
             "element": "phosphorus",
             "vdw_radius": 0.18,
             "xs_coherent": 3.31e-10,
-            "atomic_radius": 0.123,
             "block": "p"
         },
         "Xe129": {
@@ -1416,7 +1384,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "Co59": {
@@ -1459,7 +1426,6 @@
             "element": "cobalt",
             "vdw_radius": 0.2,
             "xs_coherent": 7.79e-11,
-            "atomic_radius": 0.167,
             "block": "d"
         },
         "Hf": {
@@ -1502,7 +1468,6 @@
             "element": "hafnium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.6e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Ti47": {
@@ -1545,7 +1510,6 @@
             "element": "titanium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.66e-10,
-            "atomic_radius": 0.2,
             "block": "d"
         },
         "Ge": {
@@ -1588,7 +1552,6 @@
             "element": "germanium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.42e-10,
-            "atomic_radius": 0.152,
             "block": "p"
         },
         "Gd": {
@@ -1631,7 +1594,6 @@
             "element": "gadolinium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.93e-09,
-            "atomic_radius": 0.254,
             "block": "f"
         },
         "Ga": {
@@ -1674,7 +1636,6 @@
             "element": "gallium",
             "vdw_radius": 0.187,
             "xs_coherent": 6.68e-10,
-            "atomic_radius": 0.181,
             "block": "p"
         },
         "Cm248": {
@@ -1717,7 +1678,6 @@
             "element": "curium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.5e-10,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Xe128": {
@@ -1760,7 +1720,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "Cm246": {
@@ -1803,7 +1762,6 @@
             "element": "curium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.09e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Cm244": {
@@ -1846,7 +1804,6 @@
             "element": "curium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.13e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Pr": {
@@ -1889,7 +1846,6 @@
             "element": "praseodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.64e-10,
-            "atomic_radius": 0.267,
             "block": "f"
         },
         "Gd158": {
@@ -1932,7 +1888,6 @@
             "element": "gadolinium",
             "vdw_radius": 0.2,
             "xs_coherent": 1e-09,
-            "atomic_radius": 0.254,
             "block": "f"
         },
         "Pb204": {
@@ -1975,7 +1930,6 @@
             "element": "lead",
             "vdw_radius": 0.202,
             "xs_coherent": 1.23e-09,
-            "atomic_radius": 0.181,
             "block": "p"
         },
         "Pb207": {
@@ -2018,7 +1972,6 @@
             "element": "lead",
             "vdw_radius": 0.202,
             "xs_coherent": 1.08e-09,
-            "atomic_radius": 0.181,
             "block": "p"
         },
         "Pb206": {
@@ -2061,7 +2014,6 @@
             "element": "lead",
             "vdw_radius": 0.202,
             "xs_coherent": 1.07e-09,
-            "atomic_radius": 0.181,
             "block": "p"
         },
         "Gd154": {
@@ -2104,7 +2056,6 @@
             "element": "gadolinium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.3e-09,
-            "atomic_radius": 0.254,
             "block": "f"
         },
         "Pb208": {
@@ -2147,7 +2098,6 @@
             "element": "lead",
             "vdw_radius": 0.202,
             "xs_coherent": 1.13e-09,
-            "atomic_radius": 0.181,
             "block": "p"
         },
         "Gd156": {
@@ -2190,7 +2140,6 @@
             "element": "gadolinium",
             "vdw_radius": 0.2,
             "xs_coherent": 5e-10,
-            "atomic_radius": 0.254,
             "block": "f"
         },
         "Gd157": {
@@ -2233,7 +2182,6 @@
             "element": "gadolinium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.5e-08,
-            "atomic_radius": 0.254,
             "block": "f"
         },
         "Xe126": {
@@ -2276,7 +2224,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "C": {
@@ -2319,7 +2266,6 @@
             "element": "carbon",
             "vdw_radius": 0.17,
             "xs_coherent": 5.55e-10,
-            "atomic_radius": 0.091,
             "block": "p"
         },
         "Gd152": {
@@ -2362,7 +2308,6 @@
             "element": "gadolinium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.3e-09,
-            "atomic_radius": 0.254,
             "block": "f"
         },
         "Pb": {
@@ -2405,7 +2350,6 @@
             "element": "lead",
             "vdw_radius": 0.202,
             "xs_coherent": 1.11e-09,
-            "atomic_radius": 0.181,
             "block": "p"
         },
         "Pa": {
@@ -2448,7 +2392,6 @@
             "element": "protactinium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.04e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Mo100": {
@@ -2491,7 +2434,6 @@
             "element": "molybdenum",
             "vdw_radius": 0.2,
             "xs_coherent": 5.69e-10,
-            "atomic_radius": 0.201,
             "block": "d"
         },
         "Pd": {
@@ -2534,7 +2476,6 @@
             "element": "palladium",
             "vdw_radius": 0.163,
             "xs_coherent": 4.39e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Cd": {
@@ -2577,7 +2518,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 3.04e-10,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "W182": {
@@ -2620,7 +2560,6 @@
             "element": "tungsten",
             "vdw_radius": 0.2,
             "xs_coherent": 6.1e-10,
-            "atomic_radius": 0.202,
             "block": "d"
         },
         "Pm": {
@@ -2663,7 +2602,6 @@
             "element": "promethium",
             "vdw_radius": 0.2,
             "xs_coherent": 2e-09,
-            "atomic_radius": 0.262,
             "block": "f"
         },
         "W183": {
@@ -2706,7 +2644,6 @@
             "element": "tungsten",
             "vdw_radius": 0.2,
             "xs_coherent": 5.36e-10,
-            "atomic_radius": 0.202,
             "block": "d"
         },
         "Ti49": {
@@ -2749,7 +2686,6 @@
             "element": "titanium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.4e-11,
-            "atomic_radius": 0.2,
             "block": "d"
         },
         "Se80": {
@@ -2792,7 +2728,6 @@
             "element": "selenium",
             "vdw_radius": 0.19,
             "xs_coherent": 7.03e-10,
-            "atomic_radius": 0.122,
             "block": "p"
         },
         "Se82": {
@@ -2835,7 +2770,6 @@
             "element": "selenium",
             "vdw_radius": 0.19,
             "xs_coherent": 5.05e-10,
-            "atomic_radius": 0.122,
             "block": "p"
         },
         "Ru104": {
@@ -2878,7 +2812,6 @@
             "element": "ruthenium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.189,
             "block": "d"
         },
         "Ru101": {
@@ -2921,7 +2854,6 @@
             "element": "ruthenium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.189,
             "block": "d"
         },
         "Ru100": {
@@ -2964,7 +2896,6 @@
             "element": "ruthenium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.189,
             "block": "d"
         },
         "Ru102": {
@@ -3007,7 +2938,6 @@
             "element": "ruthenium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.189,
             "block": "d"
         },
         "Md": {
@@ -3050,7 +2980,6 @@
             "element": "mendelevium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Mg": {
@@ -3093,7 +3022,6 @@
             "element": "magnesium",
             "vdw_radius": 0.173,
             "xs_coherent": 3.63e-10,
-            "atomic_radius": 0.172,
             "block": "s"
         },
         "K": {
@@ -3136,7 +3064,6 @@
             "element": "potassium",
             "vdw_radius": 0.275,
             "xs_coherent": 1.69e-10,
-            "atomic_radius": 0.277,
             "block": "s"
         },
         "Mn": {
@@ -3179,7 +3106,6 @@
             "element": "manganese",
             "vdw_radius": 0.2,
             "xs_coherent": 1.75e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Mt": {
@@ -3222,7 +3148,6 @@
             "element": "meitnerium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Mw": {
@@ -3265,7 +3190,6 @@
             "element": "dummy",
             "vdw_radius": 0.0,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "####"
         },
         "O": {
@@ -3308,7 +3232,6 @@
             "element": "oxygen",
             "vdw_radius": 0.152,
             "xs_coherent": 4.23e-10,
-            "atomic_radius": 0.065,
             "block": "p"
         },
         "V50": {
@@ -3351,7 +3274,6 @@
             "element": "vanadium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.3e-10,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "I127": {
@@ -3394,7 +3316,6 @@
             "element": "iodine",
             "vdw_radius": 0.198,
             "xs_coherent": 3.5e-10,
-            "atomic_radius": 0.132,
             "block": "p"
         },
         "Nd150": {
@@ -3437,7 +3358,6 @@
             "element": "neodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.5e-10,
-            "atomic_radius": 0.264,
             "block": "f"
         },
         "Os190": {
@@ -3480,7 +3400,6 @@
             "element": "osmium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.52e-09,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Os192": {
@@ -3523,7 +3442,6 @@
             "element": "osmium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.66e-09,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Zn": {
@@ -3566,7 +3484,6 @@
             "element": "zinc",
             "vdw_radius": 0.139,
             "xs_coherent": 4.05e-10,
-            "atomic_radius": 0.153,
             "block": "d"
         },
         "Tm169": {
@@ -3609,7 +3526,6 @@
             "element": "thulium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.28e-10,
-            "atomic_radius": 0.242,
             "block": "f"
         },
         "S": {
@@ -3652,7 +3568,6 @@
             "element": "sulfur",
             "vdw_radius": 0.18,
             "xs_coherent": 1.02e-10,
-            "atomic_radius": 0.109,
             "block": "p"
         },
         "Cu": {
@@ -3695,7 +3610,6 @@
             "element": "copper",
             "vdw_radius": 0.14,
             "xs_coherent": 7.49e-10,
-            "atomic_radius": 0.157,
             "block": "d"
         },
         "Os187": {
@@ -3738,7 +3652,6 @@
             "element": "osmium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.3e-09,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Zr": {
@@ -3781,7 +3694,6 @@
             "element": "zirconium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.44e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Ag107": {
@@ -3824,7 +3736,6 @@
             "element": "silver",
             "vdw_radius": 0.172,
             "xs_coherent": 7.17e-10,
-            "atomic_radius": 0.175,
             "block": "d"
         },
         "Yb176": {
@@ -3867,7 +3778,6 @@
             "element": "ytterbium",
             "vdw_radius": 0.2,
             "xs_coherent": 9.6e-10,
-            "atomic_radius": 0.24,
             "block": "f"
         },
         "Ag109": {
@@ -3910,7 +3820,6 @@
             "element": "silver",
             "vdw_radius": 0.172,
             "xs_coherent": 2.18e-10,
-            "atomic_radius": 0.175,
             "block": "d"
         },
         "Yb174": {
@@ -3953,7 +3862,6 @@
             "element": "ytterbium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.68e-09,
-            "atomic_radius": 0.24,
             "block": "f"
         },
         "V51": {
@@ -3996,7 +3904,6 @@
             "element": "vanadium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.03e-12,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Yb172": {
@@ -4039,7 +3946,6 @@
             "element": "ytterbium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.12e-09,
-            "atomic_radius": 0.24,
             "block": "f"
         },
         "Yb173": {
@@ -4082,7 +3988,6 @@
             "element": "ytterbium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.15e-09,
-            "atomic_radius": 0.24,
             "block": "f"
         },
         "Yb170": {
@@ -4125,7 +4030,6 @@
             "element": "ytterbium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.8e-10,
-            "atomic_radius": 0.24,
             "block": "f"
         },
         "Yb171": {
@@ -4168,7 +4072,6 @@
             "element": "ytterbium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.17e-09,
-            "atomic_radius": 0.24,
             "block": "f"
         },
         "Ca40": {
@@ -4211,7 +4114,6 @@
             "element": "calcium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.9e-10,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Ca42": {
@@ -4254,7 +4156,6 @@
             "element": "calcium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.42e-10,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Be9": {
@@ -4297,7 +4198,6 @@
             "element": "beryllium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.63e-10,
-            "atomic_radius": 0.14,
             "block": "s"
         },
         "Ca44": {
@@ -4340,7 +4240,6 @@
             "element": "calcium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.5e-11,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Rn222": {
@@ -4383,7 +4282,6 @@
             "element": "radon",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.134,
             "block": "p"
         },
         "Ca46": {
@@ -4426,7 +4324,6 @@
             "element": "calcium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.6e-10,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Ca48": {
@@ -4469,7 +4366,6 @@
             "element": "calcium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.9e-12,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Lu176": {
@@ -4512,7 +4408,6 @@
             "element": "lutetium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.7e-10,
-            "atomic_radius": 0.225,
             "block": "d"
         },
         "Fr": {
@@ -4555,7 +4450,6 @@
             "element": "francium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "s"
         },
         "Lu175": {
@@ -4598,7 +4492,6 @@
             "element": "lutetium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.59e-10,
-            "atomic_radius": 0.225,
             "block": "d"
         },
         "Pa231": {
@@ -4641,7 +4534,6 @@
             "element": "protactinium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.04e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Cl35": {
@@ -4687,7 +4579,6 @@
             "element": "chlorine",
             "vdw_radius": 0.175,
             "xs_coherent": 1.71e-09,
-            "atomic_radius": 0.097,
             "block": "p"
         },
         "Cl37": {
@@ -4733,7 +4624,6 @@
             "element": "chlorine",
             "vdw_radius": 0.175,
             "xs_coherent": 1.19e-10,
-            "atomic_radius": 0.097,
             "block": "p"
         },
         "Pu239": {
@@ -4776,7 +4666,6 @@
             "element": "plutonium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.5e-10,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Pu238": {
@@ -4819,7 +4708,6 @@
             "element": "plutonium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.5e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Ge74": {
@@ -4862,7 +4750,6 @@
             "element": "germanium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.2e-10,
-            "atomic_radius": 0.152,
             "block": "p"
         },
         "Fe": {
@@ -4905,7 +4792,6 @@
             "element": "iron",
             "vdw_radius": 0.2,
             "xs_coherent": 1.12e-09,
-            "atomic_radius": 0.172,
             "block": "d"
         },
         "Ga71": {
@@ -4948,7 +4834,6 @@
             "element": "gallium",
             "vdw_radius": 0.187,
             "xs_coherent": 5.15e-10,
-            "atomic_radius": 0.181,
             "block": "p"
         },
         "P31": {
@@ -4991,7 +4876,6 @@
             "element": "phosphorus",
             "vdw_radius": 0.18,
             "xs_coherent": 3.31e-10,
-            "atomic_radius": 0.123,
             "block": "p"
         },
         "Fl": {
@@ -5034,7 +4918,6 @@
             "element": "flerovium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "p"
         },
         "Fm": {
@@ -5077,7 +4960,6 @@
             "element": "fermium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "He4": {
@@ -5120,7 +5002,6 @@
             "element": "helium",
             "vdw_radius": 0.14,
             "xs_coherent": 1.34e-10,
-            "atomic_radius": 0.049,
             "block": "s"
         },
         "Sm148": {
@@ -5163,7 +5044,6 @@
             "element": "samarium",
             "vdw_radius": 0.2,
             "xs_coherent": 1e-10,
-            "atomic_radius": 0.259,
             "block": "f"
         },
         "Sm149": {
@@ -5206,7 +5086,6 @@
             "element": "samarium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.35e-09,
-            "atomic_radius": 0.259,
             "block": "f"
         },
         "F": {
@@ -5249,7 +5128,6 @@
             "element": "fluorine",
             "vdw_radius": 0.147,
             "xs_coherent": 4.02e-10,
-            "atomic_radius": 0.057,
             "block": "p"
         },
         "Sm144": {
@@ -5292,7 +5170,6 @@
             "element": "samarium",
             "vdw_radius": 0.2,
             "xs_coherent": 1e-10,
-            "atomic_radius": 0.259,
             "block": "f"
         },
         "K39": {
@@ -5335,7 +5212,6 @@
             "element": "potassium",
             "vdw_radius": 0.275,
             "xs_coherent": 1.76e-10,
-            "atomic_radius": 0.277,
             "block": "s"
         },
         "Sm147": {
@@ -5378,7 +5254,6 @@
             "element": "samarium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.5e-09,
-            "atomic_radius": 0.259,
             "block": "f"
         },
         "Np": {
@@ -5421,7 +5296,6 @@
             "element": "neptunium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.4e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "N": {
@@ -5464,7 +5338,6 @@
             "element": "nitrogen",
             "vdw_radius": 0.155,
             "xs_coherent": 1.1e-09,
-            "atomic_radius": 0.075,
             "block": "p"
         },
         "Si": {
@@ -5507,7 +5380,6 @@
             "element": "silicon",
             "vdw_radius": 0.21,
             "xs_coherent": 2.16e-10,
-            "atomic_radius": 0.146,
             "block": "p"
         },
         "Sn": {
@@ -5550,7 +5422,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.87e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Sm": {
@@ -5593,7 +5464,6 @@
             "element": "samarium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.22e-11,
-            "atomic_radius": 0.259,
             "block": "f"
         },
         "V": {
@@ -5636,7 +5506,6 @@
             "element": "vanadium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.84e-12,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Sc": {
@@ -5679,7 +5548,6 @@
             "element": "scandium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.9e-09,
-            "atomic_radius": 0.209,
             "block": "d"
         },
         "Sb": {
@@ -5722,7 +5590,6 @@
             "element": "antimony",
             "vdw_radius": 0.2,
             "xs_coherent": 3.9e-10,
-            "atomic_radius": 0.153,
             "block": "p"
         },
         "Sg": {
@@ -5765,7 +5632,6 @@
             "element": "seaborgium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Sn118": {
@@ -5808,7 +5674,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.63e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Se": {
@@ -5851,7 +5716,6 @@
             "element": "selenium",
             "vdw_radius": 0.19,
             "xs_coherent": 7.98e-10,
-            "atomic_radius": 0.122,
             "block": "p"
         },
         "O17": {
@@ -5894,7 +5758,6 @@
             "element": "oxygen",
             "vdw_radius": 0.152,
             "xs_coherent": 4.2e-10,
-            "atomic_radius": 0.065,
             "block": "p"
         },
         "O16": {
@@ -5937,7 +5800,6 @@
             "element": "oxygen",
             "vdw_radius": 0.152,
             "xs_coherent": 4.23e-10,
-            "atomic_radius": 0.065,
             "block": "p"
         },
         "Sn119": {
@@ -5980,7 +5842,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.71e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Co": {
@@ -6023,7 +5884,6 @@
             "element": "cobalt",
             "vdw_radius": 0.2,
             "xs_coherent": 7.79e-11,
-            "atomic_radius": 0.167,
             "block": "d"
         },
         "Cn": {
@@ -6066,7 +5926,6 @@
             "element": "copernicium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Cm": {
@@ -6109,7 +5968,6 @@
             "element": "curium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Cl": {
@@ -6155,7 +6013,6 @@
             "element": "chlorine",
             "vdw_radius": 0.175,
             "xs_coherent": 1.15e-09,
-            "atomic_radius": 0.097,
             "block": "p"
         },
         "Ca": {
@@ -6198,7 +6055,6 @@
             "element": "calcium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.78e-10,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Cf": {
@@ -6241,7 +6097,6 @@
             "element": "californium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Ce": {
@@ -6284,7 +6139,6 @@
             "element": "cerium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.94e-10,
-            "atomic_radius": 0.27,
             "block": "f"
         },
         "O18": {
@@ -6327,7 +6181,6 @@
             "element": "oxygen",
             "vdw_radius": 0.152,
             "xs_coherent": 4.29e-10,
-            "atomic_radius": 0.065,
             "block": "p"
         },
         "Zn66": {
@@ -6370,7 +6223,6 @@
             "element": "zinc",
             "vdw_radius": 0.139,
             "xs_coherent": 4.48e-10,
-            "atomic_radius": 0.153,
             "block": "d"
         },
         "Zn67": {
@@ -6413,7 +6265,6 @@
             "element": "zinc",
             "vdw_radius": 0.139,
             "xs_coherent": 7.18e-10,
-            "atomic_radius": 0.153,
             "block": "d"
         },
         "Zn64": {
@@ -6456,7 +6307,6 @@
             "element": "zinc",
             "vdw_radius": 0.139,
             "xs_coherent": 3.42e-10,
-            "atomic_radius": 0.153,
             "block": "d"
         },
         "Tm": {
@@ -6499,7 +6349,6 @@
             "element": "thulium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.28e-10,
-            "atomic_radius": 0.242,
             "block": "f"
         },
         "Cs": {
@@ -6542,7 +6391,6 @@
             "element": "caesium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.69e-10,
-            "atomic_radius": 0.334,
             "block": "s"
         },
         "Cr": {
@@ -6585,7 +6433,6 @@
             "element": "chromium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.66e-10,
-            "atomic_radius": 0.185,
             "block": "d"
         },
         "Zn68": {
@@ -6628,7 +6475,6 @@
             "element": "zinc",
             "vdw_radius": 0.139,
             "xs_coherent": 4.57e-10,
-            "atomic_radius": 0.153,
             "block": "d"
         },
         "Xe124": {
@@ -6671,7 +6517,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "Ga69": {
@@ -6714,7 +6559,6 @@
             "element": "gallium",
             "vdw_radius": 0.187,
             "xs_coherent": 7.8e-10,
-            "atomic_radius": 0.181,
             "block": "p"
         },
         "La": {
@@ -6757,7 +6601,6 @@
             "element": "lanthanum",
             "vdw_radius": 0.2,
             "xs_coherent": 8.53e-10,
-            "atomic_radius": 0.274,
             "block": "f"
         },
         "Ni61": {
@@ -6800,7 +6643,6 @@
             "element": "nickel",
             "vdw_radius": 0.163,
             "xs_coherent": 7.26e-10,
-            "atomic_radius": 0.162,
             "block": "d"
         },
         "Ni60": {
@@ -6843,7 +6685,6 @@
             "element": "nickel",
             "vdw_radius": 0.163,
             "xs_coherent": 9.9e-11,
-            "atomic_radius": 0.162,
             "block": "d"
         },
         "Ni62": {
@@ -6886,7 +6727,6 @@
             "element": "nickel",
             "vdw_radius": 0.163,
             "xs_coherent": 9.5e-10,
-            "atomic_radius": 0.162,
             "block": "d"
         },
         "Eu151": {
@@ -6929,7 +6769,6 @@
             "element": "europium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.5e-10,
-            "atomic_radius": 0.256,
             "block": "f"
         },
         "Ni64": {
@@ -6972,7 +6811,6 @@
             "element": "nickel",
             "vdw_radius": 0.163,
             "xs_coherent": 1.7e-12,
-            "atomic_radius": 0.162,
             "block": "d"
         },
         "Eu153": {
@@ -7015,7 +6853,6 @@
             "element": "europium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.5e-10,
-            "atomic_radius": 0.256,
             "block": "f"
         },
         "Li": {
@@ -7058,7 +6895,6 @@
             "element": "lithium",
             "vdw_radius": 0.182,
             "xs_coherent": 4.54e-11,
-            "atomic_radius": 0.205,
             "block": "s"
         },
         "Lv": {
@@ -7101,7 +6937,6 @@
             "element": "livermorium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "p"
         },
         "Lu": {
@@ -7144,7 +6979,6 @@
             "element": "lutetium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.53e-10,
-            "atomic_radius": 0.225,
             "block": "d"
         },
         "Lr": {
@@ -7187,7 +7021,6 @@
             "element": "lawrencium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "C13": {
@@ -7230,7 +7063,6 @@
             "element": "carbon",
             "vdw_radius": 0.17,
             "xs_coherent": 4.81e-10,
-            "atomic_radius": 0.091,
             "block": "p"
         },
         "C12": {
@@ -7273,7 +7105,6 @@
             "element": "carbon",
             "vdw_radius": 0.17,
             "xs_coherent": 5.56e-10,
-            "atomic_radius": 0.091,
             "block": "p"
         },
         "Si30": {
@@ -7316,7 +7147,6 @@
             "element": "silicon",
             "vdw_radius": 0.21,
             "xs_coherent": 2.64e-10,
-            "atomic_radius": 0.146,
             "block": "p"
         },
         "C14": {
@@ -7359,7 +7189,6 @@
             "element": "carbon",
             "vdw_radius": 0.17,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.091,
             "block": "p"
         },
         "Tb159": {
@@ -7402,7 +7231,6 @@
             "element": "terbium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.84e-10,
-            "atomic_radius": 0.251,
             "block": "f"
         },
         "Te130": {
@@ -7445,7 +7273,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 4.55e-10,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "S34": {
@@ -7488,7 +7315,6 @@
             "element": "sulfur",
             "vdw_radius": 0.18,
             "xs_coherent": 1.52e-10,
-            "atomic_radius": 0.109,
             "block": "p"
         },
         "S36": {
@@ -7531,7 +7357,6 @@
             "element": "sulfur",
             "vdw_radius": 0.18,
             "xs_coherent": 1.1e-10,
-            "atomic_radius": 0.109,
             "block": "p"
         },
         "S33": {
@@ -7574,7 +7399,6 @@
             "element": "sulfur",
             "vdw_radius": 0.18,
             "xs_coherent": 2.8e-10,
-            "atomic_radius": 0.109,
             "block": "p"
         },
         "S32": {
@@ -7617,7 +7441,6 @@
             "element": "sulfur",
             "vdw_radius": 0.18,
             "xs_coherent": 9.88e-11,
-            "atomic_radius": 0.109,
             "block": "p"
         },
         "Kr84": {
@@ -7660,7 +7483,6 @@
             "element": "krypton",
             "vdw_radius": 0.202,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.103,
             "block": "p"
         },
         "Fe54": {
@@ -7703,7 +7525,6 @@
             "element": "iron",
             "vdw_radius": 0.2,
             "xs_coherent": 2.2e-10,
-            "atomic_radius": 0.172,
             "block": "d"
         },
         "Po210": {
@@ -7746,7 +7567,6 @@
             "element": "polonium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.153,
             "block": "p"
         },
         "Fe56": {
@@ -7789,7 +7609,6 @@
             "element": "iron",
             "vdw_radius": 0.2,
             "xs_coherent": 1.24e-09,
-            "atomic_radius": 0.172,
             "block": "d"
         },
         "Fe57": {
@@ -7832,7 +7651,6 @@
             "element": "iron",
             "vdw_radius": 0.2,
             "xs_coherent": 6.6e-11,
-            "atomic_radius": 0.172,
             "block": "d"
         },
         "Gd160": {
@@ -7875,7 +7693,6 @@
             "element": "gadolinium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.05e-09,
-            "atomic_radius": 0.254,
             "block": "f"
         },
         "I": {
@@ -7918,7 +7735,6 @@
             "element": "iodine",
             "vdw_radius": 0.198,
             "xs_coherent": 3.5e-10,
-            "atomic_radius": 0.132,
             "block": "p"
         },
         "Fe58": {
@@ -7961,7 +7777,6 @@
             "element": "iron",
             "vdw_radius": 0.2,
             "xs_coherent": 2.8e-09,
-            "atomic_radius": 0.172,
             "block": "d"
         },
         "Li6": {
@@ -8004,7 +7819,6 @@
             "element": "lithium",
             "vdw_radius": 0.182,
             "xs_coherent": 5.1e-11,
-            "atomic_radius": 0.205,
             "block": "s"
         },
         "Li7": {
@@ -8047,7 +7861,6 @@
             "element": "lithium",
             "vdw_radius": 0.182,
             "xs_coherent": 6.19e-11,
-            "atomic_radius": 0.205,
             "block": "s"
         },
         "Y": {
@@ -8090,7 +7903,6 @@
             "element": "yttrium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.55e-10,
-            "atomic_radius": 0.227,
             "block": "d"
         },
         "Pm147": {
@@ -8133,7 +7945,6 @@
             "element": "promethium",
             "vdw_radius": 0.2,
             "xs_coherent": 2e-09,
-            "atomic_radius": 0.262,
             "block": "f"
         },
         "Cs133": {
@@ -8176,7 +7987,6 @@
             "element": "caesium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.69e-10,
-            "atomic_radius": 0.334,
             "block": "s"
         },
         "Ir": {
@@ -8219,7 +8029,6 @@
             "element": "iridium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.41e-09,
-            "atomic_radius": 0.187,
             "block": "d"
         },
         "Ce140": {
@@ -8262,7 +8071,6 @@
             "element": "cerium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.94e-10,
-            "atomic_radius": 0.27,
             "block": "f"
         },
         "Es": {
@@ -8305,7 +8113,6 @@
             "element": "einsteinium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Ce142": {
@@ -8348,7 +8155,6 @@
             "element": "cerium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.84e-10,
-            "atomic_radius": 0.27,
             "block": "f"
         },
         "In": {
@@ -8391,7 +8197,6 @@
             "element": "indium",
             "vdw_radius": 0.193,
             "xs_coherent": 2.08e-10,
-            "atomic_radius": 0.2,
             "block": "p"
         },
         "Ar40": {
@@ -8434,7 +8239,6 @@
             "element": "argon",
             "vdw_radius": 0.188,
             "xs_coherent": 4.21e-11,
-            "atomic_radius": 0.088,
             "block": "p"
         },
         "Yb": {
@@ -8477,7 +8281,6 @@
             "element": "ytterbium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.94e-09,
-            "atomic_radius": 0.24,
             "block": "f"
         },
         "Ni": {
@@ -8520,7 +8323,6 @@
             "element": "nickel",
             "vdw_radius": 0.163,
             "xs_coherent": 1.33e-09,
-            "atomic_radius": 0.162,
             "block": "d"
         },
         "Re": {
@@ -8563,7 +8365,6 @@
             "element": "rhenium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.06e-09,
-            "atomic_radius": 0.197,
             "block": "d"
         },
         "Rf": {
@@ -8606,7 +8407,6 @@
             "element": "rutherfordium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Rg": {
@@ -8649,7 +8449,6 @@
             "element": "roentgenium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Tl203": {
@@ -8692,7 +8491,6 @@
             "element": "thallium",
             "vdw_radius": 0.196,
             "xs_coherent": 6.14e-10,
-            "atomic_radius": 0.208,
             "block": "p"
         },
         "Ra": {
@@ -8735,7 +8533,6 @@
             "element": "radium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.3e-09,
-            "atomic_radius": 0.0,
             "block": "s"
         },
         "Rb": {
@@ -8778,7 +8575,6 @@
             "element": "rubidium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.32e-10,
-            "atomic_radius": 0.298,
             "block": "s"
         },
         "Rn": {
@@ -8821,7 +8617,6 @@
             "element": "radon",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.134,
             "block": "p"
         },
         "Rh": {
@@ -8864,7 +8659,6 @@
             "element": "rhodium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.34e-10,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "Ti48": {
@@ -8907,7 +8701,6 @@
             "element": "titanium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.65e-10,
-            "atomic_radius": 0.2,
             "block": "d"
         },
         "Be": {
@@ -8950,7 +8743,6 @@
             "element": "beryllium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.63e-10,
-            "atomic_radius": 0.14,
             "block": "s"
         },
         "Pt190": {
@@ -8993,7 +8785,6 @@
             "element": "platinum",
             "vdw_radius": 0.172,
             "xs_coherent": 1e-09,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "Hf176": {
@@ -9036,7 +8827,6 @@
             "element": "hafnium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.5e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Ba": {
@@ -9079,7 +8869,6 @@
             "element": "barium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.23e-10,
-            "atomic_radius": 0.278,
             "block": "s"
         },
         "La138": {
@@ -9122,7 +8911,6 @@
             "element": "lanthanum",
             "vdw_radius": 0.2,
             "xs_coherent": 8e-10,
-            "atomic_radius": 0.274,
             "block": "f"
         },
         "La139": {
@@ -9165,7 +8953,6 @@
             "element": "lanthanum",
             "vdw_radius": 0.2,
             "xs_coherent": 8.53e-10,
-            "atomic_radius": 0.274,
             "block": "f"
         },
         "Os": {
@@ -9208,7 +8995,6 @@
             "element": "osmium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.44e-09,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Pr141": {
@@ -9251,7 +9037,6 @@
             "element": "praseodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.64e-10,
-            "atomic_radius": 0.267,
             "block": "f"
         },
         "Bh": {
@@ -9294,7 +9079,6 @@
             "element": "bohrium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Bi": {
@@ -9337,7 +9121,6 @@
             "element": "bismuth",
             "vdw_radius": 0.2,
             "xs_coherent": 9.15e-10,
-            "atomic_radius": 0.163,
             "block": "p"
         },
         "Bk": {
@@ -9380,7 +9163,6 @@
             "element": "berkelium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Br": {
@@ -9423,7 +9205,6 @@
             "element": "bromine",
             "vdw_radius": 0.185,
             "xs_coherent": 5.8e-10,
-            "atomic_radius": 0.112,
             "block": "p"
         },
         "Sr88": {
@@ -9466,7 +9247,6 @@
             "element": "strontium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.42e-10,
-            "atomic_radius": 0.245,
             "block": "s"
         },
         "Sr87": {
@@ -9509,7 +9289,6 @@
             "element": "strontium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.88e-10,
-            "atomic_radius": 0.245,
             "block": "s"
         },
         "Sr86": {
@@ -9552,7 +9331,6 @@
             "element": "strontium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.04e-10,
-            "atomic_radius": 0.245,
             "block": "s"
         },
         "Sr84": {
@@ -9595,7 +9373,6 @@
             "element": "strontium",
             "vdw_radius": 0.2,
             "xs_coherent": 6e-10,
-            "atomic_radius": 0.245,
             "block": "s"
         },
         "Rb85": {
@@ -9638,7 +9415,6 @@
             "element": "rubidium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.2e-10,
-            "atomic_radius": 0.298,
             "block": "s"
         },
         "Rb87": {
@@ -9681,7 +9457,6 @@
             "element": "rubidium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.6e-10,
-            "atomic_radius": 0.298,
             "block": "s"
         },
         "In115": {
@@ -9724,7 +9499,6 @@
             "element": "indium",
             "vdw_radius": 0.193,
             "xs_coherent": 2.02e-10,
-            "atomic_radius": 0.2,
             "block": "p"
         },
         "In113": {
@@ -9767,7 +9541,6 @@
             "element": "indium",
             "vdw_radius": 0.193,
             "xs_coherent": 3.65e-10,
-            "atomic_radius": 0.2,
             "block": "p"
         },
         "Cd114": {
@@ -9810,7 +9583,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 7.1e-10,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "Cd116": {
@@ -9853,7 +9625,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 5e-10,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "Cd110": {
@@ -9896,7 +9667,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 4.4e-10,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "Cd111": {
@@ -9939,7 +9709,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 5.3e-10,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "Cd112": {
@@ -9982,7 +9751,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 5.1e-10,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "Cd113": {
@@ -10025,7 +9793,6 @@
             "element": "cadmium",
             "vdw_radius": 0.158,
             "xs_coherent": 1.21e-09,
-            "atomic_radius": 0.171,
             "block": "d"
         },
         "Ar36": {
@@ -10068,7 +9835,6 @@
             "element": "argon",
             "vdw_radius": 0.188,
             "xs_coherent": 7.79e-09,
-            "atomic_radius": 0.088,
             "block": "p"
         },
         "At": {
@@ -10111,7 +9877,6 @@
             "element": "astatine",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.143,
             "block": "p"
         },
         "Bi209": {
@@ -10154,7 +9919,6 @@
             "element": "bismuth",
             "vdw_radius": 0.2,
             "xs_coherent": 9.15e-10,
-            "atomic_radius": 0.163,
             "block": "p"
         },
         "Ar38": {
@@ -10197,7 +9961,6 @@
             "element": "argon",
             "vdw_radius": 0.188,
             "xs_coherent": 1.5e-10,
-            "atomic_radius": 0.088,
             "block": "p"
         },
         "Re185": {
@@ -10240,7 +10003,6 @@
             "element": "rhenium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.02e-09,
-            "atomic_radius": 0.197,
             "block": "d"
         },
         "Du": {
@@ -10283,7 +10045,6 @@
             "element": "dummy",
             "vdw_radius": 0.0,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "####"
         },
         "Hg196": {
@@ -10326,7 +10087,6 @@
             "element": "mercury",
             "vdw_radius": 0.155,
             "xs_coherent": 1.15e-08,
-            "atomic_radius": 0.176,
             "block": "d"
         },
         "Rh103": {
@@ -10369,7 +10129,6 @@
             "element": "rhodium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.34e-10,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "Ne21": {
@@ -10412,7 +10171,6 @@
             "element": "neon",
             "vdw_radius": 0.154,
             "xs_coherent": 5.6e-10,
-            "atomic_radius": 0.051,
             "block": "p"
         },
         "Ne20": {
@@ -10455,7 +10213,6 @@
             "element": "neon",
             "vdw_radius": 0.154,
             "xs_coherent": 2.7e-10,
-            "atomic_radius": 0.051,
             "block": "p"
         },
         "Hg198": {
@@ -10498,7 +10255,6 @@
             "element": "mercury",
             "vdw_radius": 0.155,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.176,
             "block": "d"
         },
         "Hg199": {
@@ -10541,7 +10297,6 @@
             "element": "mercury",
             "vdw_radius": 0.155,
             "xs_coherent": 3.6e-09,
-            "atomic_radius": 0.176,
             "block": "d"
         },
         "Re187": {
@@ -10584,7 +10339,6 @@
             "element": "rhenium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.09e-09,
-            "atomic_radius": 0.197,
             "block": "d"
         },
         "Cu63": {
@@ -10627,7 +10381,6 @@
             "element": "copper",
             "vdw_radius": 0.14,
             "xs_coherent": 5.2e-10,
-            "atomic_radius": 0.157,
             "block": "d"
         },
         "Pd102": {
@@ -10670,7 +10423,6 @@
             "element": "palladium",
             "vdw_radius": 0.163,
             "xs_coherent": 7.5e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Ca43": {
@@ -10713,7 +10465,6 @@
             "element": "calcium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.1e-11,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Pd104": {
@@ -10756,7 +10507,6 @@
             "element": "palladium",
             "vdw_radius": 0.163,
             "xs_coherent": 7.5e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Pd105": {
@@ -10799,7 +10549,6 @@
             "element": "palladium",
             "vdw_radius": 0.163,
             "xs_coherent": 3.8e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Pd106": {
@@ -10842,7 +10591,6 @@
             "element": "palladium",
             "vdw_radius": 0.163,
             "xs_coherent": 5.1e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Cu65": {
@@ -10885,7 +10633,6 @@
             "element": "copper",
             "vdw_radius": 0.14,
             "xs_coherent": 1.41e-09,
-            "atomic_radius": 0.157,
             "block": "d"
         },
         "Pd108": {
@@ -10928,7 +10675,6 @@
             "element": "palladium",
             "vdw_radius": 0.163,
             "xs_coherent": 2.1e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Sn124": {
@@ -10971,7 +10717,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.48e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Sn122": {
@@ -11014,7 +10759,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.14e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Hf180": {
@@ -11057,7 +10801,6 @@
             "element": "hafnium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.19e-09,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Sn120": {
@@ -11100,7 +10843,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 5.29e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Dy158": {
@@ -11143,7 +10885,6 @@
             "element": "dysprosium",
             "vdw_radius": 0.2,
             "xs_coherent": 5e-10,
-            "atomic_radius": 0.249,
             "block": "f"
         },
         "Xe136": {
@@ -11186,7 +10927,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "Ne22": {
@@ -11229,7 +10969,6 @@
             "element": "neon",
             "vdw_radius": 0.154,
             "xs_coherent": 1.88e-10,
-            "atomic_radius": 0.051,
             "block": "p"
         },
         "Kr78": {
@@ -11272,7 +11011,6 @@
             "element": "krypton",
             "vdw_radius": 0.202,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.103,
             "block": "p"
         },
         "Ge70": {
@@ -11315,7 +11053,6 @@
             "element": "germanium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.26e-09,
-            "atomic_radius": 0.152,
             "block": "p"
         },
         "Os189": {
@@ -11358,7 +11095,6 @@
             "element": "osmium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.44e-09,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Xe134": {
@@ -11401,7 +11137,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "Dy156": {
@@ -11444,7 +11179,6 @@
             "element": "dysprosium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.7e-10,
-            "atomic_radius": 0.249,
             "block": "f"
         },
         "Nd142": {
@@ -11487,7 +11221,6 @@
             "element": "neodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.5e-10,
-            "atomic_radius": 0.264,
             "block": "f"
         },
         "Zr91": {
@@ -11530,7 +11263,6 @@
             "element": "zirconium",
             "vdw_radius": 0.2,
             "xs_coherent": 9.5e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Zr90": {
@@ -11573,7 +11305,6 @@
             "element": "zirconium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.1e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Zr96": {
@@ -11616,7 +11347,6 @@
             "element": "zirconium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.8e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Zr94": {
@@ -11659,7 +11389,6 @@
             "element": "zirconium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.4e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Sc45": {
@@ -11702,7 +11431,6 @@
             "element": "scandium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.9e-09,
-            "atomic_radius": 0.209,
             "block": "d"
         },
         "Hg202": {
@@ -11745,7 +11473,6 @@
             "element": "mercury",
             "vdw_radius": 0.155,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.176,
             "block": "d"
         },
         "Hg200": {
@@ -11788,7 +11515,6 @@
             "element": "mercury",
             "vdw_radius": 0.155,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.176,
             "block": "d"
         },
         "Hg201": {
@@ -11831,7 +11557,6 @@
             "element": "mercury",
             "vdw_radius": 0.155,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.176,
             "block": "d"
         },
         "Hg204": {
@@ -11874,7 +11599,6 @@
             "element": "mercury",
             "vdw_radius": 0.155,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.176,
             "block": "d"
         },
         "Nh": {
@@ -11917,7 +11641,6 @@
             "element": "nihonium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "p"
         },
         "Ge76": {
@@ -11960,7 +11683,6 @@
             "element": "germanium",
             "vdw_radius": 0.2,
             "xs_coherent": 8e-10,
-            "atomic_radius": 0.152,
             "block": "p"
         },
         "Mc": {
@@ -12003,7 +11725,6 @@
             "element": "moscovium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "p"
         },
         "Ts": {
@@ -12046,7 +11767,6 @@
             "element": "tennessine",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "p"
         },
         "Og": {
@@ -12089,7 +11809,6 @@
             "element": "oganesson",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "p"
         },
         "Tl205": {
@@ -12132,7 +11851,6 @@
             "element": "thallium",
             "vdw_radius": 0.196,
             "xs_coherent": 1.14e-09,
-            "atomic_radius": 0.208,
             "block": "p"
         },
         "Ho": {
@@ -12175,7 +11893,6 @@
             "element": "holmium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.06e-10,
-            "atomic_radius": 0.247,
             "block": "f"
         },
         "Ag": {
@@ -12218,7 +11935,6 @@
             "element": "silver",
             "vdw_radius": 0.172,
             "xs_coherent": 4.41e-10,
-            "atomic_radius": 0.175,
             "block": "d"
         },
         "Th232": {
@@ -12261,7 +11977,6 @@
             "element": "thorium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.34e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Hg": {
@@ -12304,7 +12019,6 @@
             "element": "mercury",
             "vdw_radius": 0.155,
             "xs_coherent": 2.02e-09,
-            "atomic_radius": 0.176,
             "block": "d"
         },
         "He": {
@@ -12347,7 +12061,6 @@
             "element": "helium",
             "vdw_radius": 0.14,
             "xs_coherent": 1.34e-10,
-            "atomic_radius": 0.049,
             "block": "s"
         },
         "Ge73": {
@@ -12390,7 +12103,6 @@
             "element": "germanium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.17e-10,
-            "atomic_radius": 0.152,
             "block": "p"
         },
         "Yb168": {
@@ -12433,7 +12145,6 @@
             "element": "ytterbium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.13e-10,
-            "atomic_radius": 0.24,
             "block": "f"
         },
         "Ni58": {
@@ -12476,7 +12187,6 @@
             "element": "nickel",
             "vdw_radius": 0.163,
             "xs_coherent": 2.61e-09,
-            "atomic_radius": 0.162,
             "block": "d"
         },
         "Al27": {
@@ -12519,7 +12229,6 @@
             "element": "aluminium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.5e-10,
-            "atomic_radius": 0.182,
             "block": "p"
         },
         "Tc99": {
@@ -12562,7 +12271,6 @@
             "element": "technetium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.8e-10,
-            "atomic_radius": 0.195,
             "block": "d"
         },
         "F19": {
@@ -12605,7 +12313,6 @@
             "element": "fluorine",
             "vdw_radius": 0.147,
             "xs_coherent": 4.02e-10,
-            "atomic_radius": 0.057,
             "block": "p"
         },
         "W": {
@@ -12648,7 +12355,6 @@
             "element": "tungsten",
             "vdw_radius": 0.2,
             "xs_coherent": 2.97e-10,
-            "atomic_radius": 0.202,
             "block": "d"
         },
         "Ge72": {
@@ -12691,7 +12397,6 @@
             "element": "germanium",
             "vdw_radius": 0.2,
             "xs_coherent": 9.1e-10,
-            "atomic_radius": 0.152,
             "block": "p"
         },
         "Ru96": {
@@ -12734,7 +12439,6 @@
             "element": "ruthenium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.189,
             "block": "d"
         },
         "N14": {
@@ -12777,7 +12481,6 @@
             "element": "nitrogen",
             "vdw_radius": 0.155,
             "xs_coherent": 1.1e-09,
-            "atomic_radius": 0.075,
             "block": "p"
         },
         "N15": {
@@ -12820,7 +12523,6 @@
             "element": "nitrogen",
             "vdw_radius": 0.155,
             "xs_coherent": 5.21e-10,
-            "atomic_radius": 0.075,
             "block": "p"
         },
         "H2": {
@@ -12863,7 +12565,6 @@
             "element": "hydrogen",
             "vdw_radius": 0.109,
             "xs_coherent": 5.59e-10,
-            "atomic_radius": 0.079,
             "block": "s"
         },
         "H3": {
@@ -12906,7 +12607,6 @@
             "element": "hydrogen",
             "vdw_radius": 0.109,
             "xs_coherent": 2.89e-10,
-            "atomic_radius": 0.079,
             "block": "s"
         },
         "H1": {
@@ -12949,7 +12649,6 @@
             "element": "hydrogen",
             "vdw_radius": 0.109,
             "xs_coherent": 1.76e-10,
-            "atomic_radius": 0.079,
             "block": "s"
         },
         "Ru98": {
@@ -12992,7 +12691,6 @@
             "element": "ruthenium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.189,
             "block": "d"
         },
         "Ru99": {
@@ -13035,7 +12733,6 @@
             "element": "ruthenium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.189,
             "block": "d"
         },
         "Ra226": {
@@ -13078,7 +12775,6 @@
             "element": "radium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.3e-09,
-            "atomic_radius": 0.0,
             "block": "s"
         },
         "Eu": {
@@ -13121,7 +12817,6 @@
             "element": "europium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.57e-10,
-            "atomic_radius": 0.256,
             "block": "f"
         },
         "Pd110": {
@@ -13164,7 +12859,6 @@
             "element": "palladium",
             "vdw_radius": 0.163,
             "xs_coherent": 7.5e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Pu240": {
@@ -13207,7 +12901,6 @@
             "element": "plutonium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.54e-10,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Pu242": {
@@ -13250,7 +12943,6 @@
             "element": "plutonium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.2e-10,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Er": {
@@ -13293,7 +12985,6 @@
             "element": "erbium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.63e-10,
-            "atomic_radius": 0.245,
             "block": "f"
         },
         "Sm152": {
@@ -13336,7 +13027,6 @@
             "element": "samarium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.1e-10,
-            "atomic_radius": 0.259,
             "block": "f"
         },
         "Sm150": {
@@ -13379,7 +13069,6 @@
             "element": "samarium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.5e-09,
-            "atomic_radius": 0.259,
             "block": "f"
         },
         "Sm154": {
@@ -13422,7 +13111,6 @@
             "element": "samarium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.1e-09,
-            "atomic_radius": 0.259,
             "block": "f"
         },
         "Na": {
@@ -13468,7 +13156,6 @@
             "element": "sodium",
             "vdw_radius": 0.227,
             "xs_coherent": 1.66e-10,
-            "atomic_radius": 0.223,
             "block": "s"
         },
         "Nb": {
@@ -13511,7 +13198,6 @@
             "element": "niobium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.25e-10,
-            "atomic_radius": 0.208,
             "block": "d"
         },
         "Nd": {
@@ -13554,7 +13240,6 @@
             "element": "neodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.43e-10,
-            "atomic_radius": 0.264,
             "block": "f"
         },
         "Ne": {
@@ -13597,7 +13282,6 @@
             "element": "neon",
             "vdw_radius": 0.154,
             "xs_coherent": 2.62e-10,
-            "atomic_radius": 0.051,
             "block": "p"
         },
         "Nd148": {
@@ -13640,7 +13324,6 @@
             "element": "neodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.1e-10,
-            "atomic_radius": 0.264,
             "block": "f"
         },
         "Os188": {
@@ -13683,7 +13366,6 @@
             "element": "osmium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.3e-10,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "B11": {
@@ -13726,7 +13408,6 @@
             "element": "boron",
             "vdw_radius": 0.2,
             "xs_coherent": 5.56e-10,
-            "atomic_radius": 0.117,
             "block": "p"
         },
         "Os186": {
@@ -13769,7 +13450,6 @@
             "element": "osmium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.7e-09,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Nd143": {
@@ -13812,7 +13492,6 @@
             "element": "neodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.5e-09,
-            "atomic_radius": 0.264,
             "block": "f"
         },
         "Os184": {
@@ -13855,7 +13534,6 @@
             "element": "osmium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.3e-09,
-            "atomic_radius": 0.192,
             "block": "d"
         },
         "Nd146": {
@@ -13898,7 +13576,6 @@
             "element": "neodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 9.5e-10,
-            "atomic_radius": 0.264,
             "block": "f"
         },
         "Nd144": {
@@ -13941,7 +13618,6 @@
             "element": "neodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 1e-10,
-            "atomic_radius": 0.264,
             "block": "f"
         },
         "Nd145": {
@@ -13984,7 +13660,6 @@
             "element": "neodymium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.5e-09,
-            "atomic_radius": 0.264,
             "block": "f"
         },
         "Pt": {
@@ -14027,7 +13702,6 @@
             "element": "platinum",
             "vdw_radius": 0.172,
             "xs_coherent": 1.16e-09,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "Cen": {
@@ -14070,7 +13744,6 @@
             "element": "center",
             "vdw_radius": 0.0,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "####"
         },
         "Pu": {
@@ -14113,7 +13786,6 @@
             "element": "plutonium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Gd155": {
@@ -14156,7 +13828,6 @@
             "element": "gadolinium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.08e-09,
-            "atomic_radius": 0.254,
             "block": "f"
         },
         "B10": {
@@ -14199,7 +13870,6 @@
             "element": "boron",
             "vdw_radius": 0.2,
             "xs_coherent": 1.44e-11,
-            "atomic_radius": 0.117,
             "block": "p"
         },
         "Ba138": {
@@ -14242,7 +13912,6 @@
             "element": "barium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.94e-10,
-            "atomic_radius": 0.278,
             "block": "s"
         },
         "Ir191": {
@@ -14285,7 +13954,6 @@
             "element": "iridium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.187,
             "block": "d"
         },
         "B": {
@@ -14328,7 +13996,6 @@
             "element": "boron",
             "vdw_radius": 0.2,
             "xs_coherent": 3.54e-10,
-            "atomic_radius": 0.117,
             "block": "p"
         },
         "As75": {
@@ -14371,7 +14038,6 @@
             "element": "arsenic",
             "vdw_radius": 0.185,
             "xs_coherent": 5.44e-10,
-            "atomic_radius": 0.133,
             "block": "p"
         },
         "Ba130": {
@@ -14414,7 +14080,6 @@
             "element": "barium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.6e-10,
-            "atomic_radius": 0.278,
             "block": "s"
         },
         "Ba132": {
@@ -14457,7 +14122,6 @@
             "element": "barium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.6e-10,
-            "atomic_radius": 0.278,
             "block": "s"
         },
         "U233": {
@@ -14500,7 +14164,6 @@
             "element": "uranium",
             "vdw_radius": 0.186,
             "xs_coherent": 1.28e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Ba134": {
@@ -14543,7 +14206,6 @@
             "element": "barium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.08e-10,
-            "atomic_radius": 0.278,
             "block": "s"
         },
         "Ba135": {
@@ -14586,7 +14248,6 @@
             "element": "barium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.74e-10,
-            "atomic_radius": 0.278,
             "block": "s"
         },
         "Ba136": {
@@ -14629,7 +14290,6 @@
             "element": "barium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.03e-10,
-            "atomic_radius": 0.278,
             "block": "s"
         },
         "Ba137": {
@@ -14672,7 +14332,6 @@
             "element": "barium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.86e-10,
-            "atomic_radius": 0.278,
             "block": "s"
         },
         "No": {
@@ -14715,7 +14374,6 @@
             "element": "nobelium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Kr": {
@@ -14758,7 +14416,6 @@
             "element": "krypton",
             "vdw_radius": 0.202,
             "xs_coherent": 7.67e-10,
-            "atomic_radius": 0.103,
             "block": "p"
         },
         "Mo95": {
@@ -14801,7 +14458,6 @@
             "element": "molybdenum",
             "vdw_radius": 0.2,
             "xs_coherent": 6e-10,
-            "atomic_radius": 0.201,
             "block": "d"
         },
         "Mo94": {
@@ -14844,7 +14500,6 @@
             "element": "molybdenum",
             "vdw_radius": 0.2,
             "xs_coherent": 5.81e-10,
-            "atomic_radius": 0.201,
             "block": "d"
         },
         "Mo92": {
@@ -14887,7 +14542,6 @@
             "element": "molybdenum",
             "vdw_radius": 0.2,
             "xs_coherent": 6e-10,
-            "atomic_radius": 0.201,
             "block": "d"
         },
         "Pt198": {
@@ -14930,7 +14584,6 @@
             "element": "platinum",
             "vdw_radius": 0.172,
             "xs_coherent": 7.6e-10,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "Sn115": {
@@ -14973,7 +14626,6 @@
             "element": "tin",
             "vdw_radius": 0.217,
             "xs_coherent": 4.5e-10,
-            "atomic_radius": 0.172,
             "block": "p"
         },
         "Pt195": {
@@ -15016,7 +14668,6 @@
             "element": "platinum",
             "vdw_radius": 0.172,
             "xs_coherent": 9.8e-10,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "Pt194": {
@@ -15059,7 +14710,6 @@
             "element": "platinum",
             "vdw_radius": 0.172,
             "xs_coherent": 1.4e-09,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "Pt192": {
@@ -15102,7 +14752,6 @@
             "element": "platinum",
             "vdw_radius": 0.172,
             "xs_coherent": 1.23e-09,
-            "atomic_radius": 0.183,
             "block": "d"
         },
         "Mo98": {
@@ -15145,7 +14794,6 @@
             "element": "molybdenum",
             "vdw_radius": 0.2,
             "xs_coherent": 5.44e-10,
-            "atomic_radius": 0.201,
             "block": "d"
         },
         "Te120": {
@@ -15188,7 +14836,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 3.5e-10,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "Te123": {
@@ -15231,7 +14878,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 2e-13,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "Te122": {
@@ -15274,7 +14920,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 1.8e-10,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "Te125": {
@@ -15317,7 +14962,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 3.17e-10,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "Te124": {
@@ -15360,7 +15004,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 8e-10,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "Te126": {
@@ -15403,7 +15046,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 3.88e-10,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "Te128": {
@@ -15446,7 +15088,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 4.36e-10,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "Mg25": {
@@ -15489,7 +15130,6 @@
             "element": "magnesium",
             "vdw_radius": 0.173,
             "xs_coherent": 1.65e-10,
-            "atomic_radius": 0.172,
             "block": "s"
         },
         "Ho165": {
@@ -15532,7 +15172,6 @@
             "element": "holmium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.06e-10,
-            "atomic_radius": 0.247,
             "block": "f"
         },
         "Xe": {
@@ -15575,7 +15214,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 2.96e-10,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "Ta181": {
@@ -15618,7 +15256,6 @@
             "element": "tantalum",
             "vdw_radius": 0.2,
             "xs_coherent": 6e-10,
-            "atomic_radius": 0.209,
             "block": "d"
         },
         "U238": {
@@ -15661,7 +15298,6 @@
             "element": "uranium",
             "vdw_radius": 0.186,
             "xs_coherent": 8.87e-10,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Ti46": {
@@ -15704,7 +15340,6 @@
             "element": "titanium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.05e-10,
-            "atomic_radius": 0.2,
             "block": "d"
         },
         "Tl": {
@@ -15747,7 +15382,6 @@
             "element": "thallium",
             "vdw_radius": 0.196,
             "xs_coherent": 9.68e-10,
-            "atomic_radius": 0.208,
             "block": "p"
         },
         "Ir193": {
@@ -15790,7 +15424,6 @@
             "element": "iridium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.187,
             "block": "d"
         },
         "Nb93": {
@@ -15833,7 +15466,6 @@
             "element": "niobium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.25e-10,
-            "atomic_radius": 0.208,
             "block": "d"
         },
         "Th": {
@@ -15876,7 +15508,6 @@
             "element": "thorium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.34e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Ti": {
@@ -15919,7 +15550,6 @@
             "element": "titanium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.49e-10,
-            "atomic_radius": 0.2,
             "block": "d"
         },
         "Te": {
@@ -15962,7 +15592,6 @@
             "element": "tellurium",
             "vdw_radius": 0.206,
             "xs_coherent": 4.23e-10,
-            "atomic_radius": 0.142,
             "block": "p"
         },
         "Tb": {
@@ -16005,7 +15634,6 @@
             "element": "terbium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.84e-10,
-            "atomic_radius": 0.251,
             "block": "f"
         },
         "Tc": {
@@ -16048,7 +15676,6 @@
             "element": "technetium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.8e-10,
-            "atomic_radius": 0.195,
             "block": "d"
         },
         "Ta": {
@@ -16091,7 +15718,6 @@
             "element": "tantalum",
             "vdw_radius": 0.2,
             "xs_coherent": 6e-10,
-            "atomic_radius": 0.209,
             "block": "d"
         },
         "Sr": {
@@ -16134,7 +15760,6 @@
             "element": "strontium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.19e-10,
-            "atomic_radius": 0.245,
             "block": "s"
         },
         "He3": {
@@ -16177,7 +15802,6 @@
             "element": "helium",
             "vdw_radius": 0.14,
             "xs_coherent": 4.42e-10,
-            "atomic_radius": 0.049,
             "block": "s"
         },
         "Db": {
@@ -16220,7 +15844,6 @@
             "element": "dubnium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Po": {
@@ -16263,7 +15886,6 @@
             "element": "polonium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.153,
             "block": "p"
         },
         "Hf177": {
@@ -16306,7 +15928,6 @@
             "element": "hafnium",
             "vdw_radius": 0.2,
             "xs_coherent": 1e-11,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Zn70": {
@@ -16349,7 +15970,6 @@
             "element": "zinc",
             "vdw_radius": 0.139,
             "xs_coherent": 4.5e-10,
-            "atomic_radius": 0.153,
             "block": "d"
         },
         "Au197": {
@@ -16392,7 +16012,6 @@
             "element": "gold",
             "vdw_radius": 0.166,
             "xs_coherent": 7.32e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Hf174": {
@@ -16435,7 +16054,6 @@
             "element": "hafnium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.5e-09,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Dy": {
@@ -16478,7 +16096,6 @@
             "element": "dysprosium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.59e-09,
-            "atomic_radius": 0.249,
             "block": "f"
         },
         "Kr83": {
@@ -16521,7 +16138,6 @@
             "element": "krypton",
             "vdw_radius": 0.202,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.103,
             "block": "p"
         },
         "Mn55": {
@@ -16564,7 +16180,6 @@
             "element": "manganese",
             "vdw_radius": 0.2,
             "xs_coherent": 1.75e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Ds": {
@@ -16607,7 +16222,6 @@
             "element": "darmstadtium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Hf179": {
@@ -16650,7 +16264,6 @@
             "element": "hafnium",
             "vdw_radius": 0.2,
             "xs_coherent": 7e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Hf178": {
@@ -16693,7 +16306,6 @@
             "element": "hafnium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.4e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Dy161": {
@@ -16736,7 +16348,6 @@
             "element": "dysprosium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.33e-09,
-            "atomic_radius": 0.249,
             "block": "f"
         },
         "Dy160": {
@@ -16779,7 +16390,6 @@
             "element": "dysprosium",
             "vdw_radius": 0.2,
             "xs_coherent": 5.6e-10,
-            "atomic_radius": 0.249,
             "block": "f"
         },
         "Dy163": {
@@ -16822,7 +16432,6 @@
             "element": "dysprosium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.1e-10,
-            "atomic_radius": 0.249,
             "block": "f"
         },
         "Dy162": {
@@ -16865,7 +16474,6 @@
             "element": "dysprosium",
             "vdw_radius": 0.2,
             "xs_coherent": 2.5e-11,
-            "atomic_radius": 0.249,
             "block": "f"
         },
         "Xe132": {
@@ -16908,7 +16516,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "Dy164": {
@@ -16951,7 +16558,6 @@
             "element": "dysprosium",
             "vdw_radius": 0.2,
             "xs_coherent": 3.07e-08,
-            "atomic_radius": 0.249,
             "block": "f"
         },
         "Xe130": {
@@ -16994,7 +16600,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "Xe131": {
@@ -17037,7 +16642,6 @@
             "element": "xenon",
             "vdw_radius": 0.216,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.124,
             "block": "p"
         },
         "U234": {
@@ -17080,7 +16684,6 @@
             "element": "uranium",
             "vdw_radius": 0.186,
             "xs_coherent": 1.93e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Kr80": {
@@ -17123,7 +16726,6 @@
             "element": "krypton",
             "vdw_radius": 0.202,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.103,
             "block": "p"
         },
         "M": {
@@ -17166,7 +16768,6 @@
             "element": "dummy",
             "vdw_radius": 0.0,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "####"
         },
         "U235": {
@@ -17209,7 +16810,6 @@
             "element": "uranium",
             "vdw_radius": 0.186,
             "xs_coherent": 1.38e-09,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Er168": {
@@ -17252,7 +16852,6 @@
             "element": "erbium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.9e-10,
-            "atomic_radius": 0.245,
             "block": "f"
         },
         "Y89": {
@@ -17295,7 +16894,6 @@
             "element": "yttrium",
             "vdw_radius": 0.2,
             "xs_coherent": 7.55e-10,
-            "atomic_radius": 0.227,
             "block": "d"
         },
         "U": {
@@ -17338,7 +16936,6 @@
             "element": "uranium",
             "vdw_radius": 0.186,
             "xs_coherent": 8.9e-10,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Zr92": {
@@ -17381,7 +16978,6 @@
             "element": "zirconium",
             "vdw_radius": 0.2,
             "xs_coherent": 6.9e-10,
-            "atomic_radius": 0.216,
             "block": "d"
         },
         "Br81": {
@@ -17424,7 +17020,6 @@
             "element": "bromine",
             "vdw_radius": 0.185,
             "xs_coherent": 5.79e-10,
-            "atomic_radius": 0.112,
             "block": "p"
         },
         "Er162": {
@@ -17467,7 +17062,6 @@
             "element": "erbium",
             "vdw_radius": 0.2,
             "xs_coherent": 9.7e-10,
-            "atomic_radius": 0.245,
             "block": "f"
         },
         "Er164": {
@@ -17510,7 +17104,6 @@
             "element": "erbium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.4e-10,
-            "atomic_radius": 0.245,
             "block": "f"
         },
         "Er167": {
@@ -17553,7 +17146,6 @@
             "element": "erbium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.1e-10,
-            "atomic_radius": 0.245,
             "block": "f"
         },
         "Er166": {
@@ -17596,7 +17188,6 @@
             "element": "erbium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.41e-09,
-            "atomic_radius": 0.245,
             "block": "f"
         },
         "Mo97": {
@@ -17639,7 +17230,6 @@
             "element": "molybdenum",
             "vdw_radius": 0.2,
             "xs_coherent": 6.59e-10,
-            "atomic_radius": 0.201,
             "block": "d"
         },
         "Ac": {
@@ -17682,7 +17272,6 @@
             "element": "actinium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Mg26": {
@@ -17725,7 +17314,6 @@
             "element": "magnesium",
             "vdw_radius": 0.173,
             "xs_coherent": 3e-10,
-            "atomic_radius": 0.172,
             "block": "s"
         },
         "Mg24": {
@@ -17768,7 +17356,6 @@
             "element": "magnesium",
             "vdw_radius": 0.173,
             "xs_coherent": 4.03e-10,
-            "atomic_radius": 0.172,
             "block": "s"
         },
         "Mo96": {
@@ -17811,7 +17398,6 @@
             "element": "molybdenum",
             "vdw_radius": 0.2,
             "xs_coherent": 4.83e-10,
-            "atomic_radius": 0.201,
             "block": "d"
         },
         "Ti50": {
@@ -17854,7 +17440,6 @@
             "element": "titanium",
             "vdw_radius": 0.2,
             "xs_coherent": 4.8e-10,
-            "atomic_radius": 0.2,
             "block": "d"
         },
         "Ta180": {
@@ -17897,7 +17482,6 @@
             "element": "tantalum",
             "vdw_radius": 0.2,
             "xs_coherent": 6.2e-10,
-            "atomic_radius": 0.209,
             "block": "d"
         },
         "Am": {
@@ -17940,7 +17524,6 @@
             "element": "americium",
             "vdw_radius": 0.2,
             "xs_coherent": 8.7e-10,
-            "atomic_radius": 0.0,
             "block": "f"
         },
         "Al": {
@@ -17983,7 +17566,6 @@
             "element": "aluminium",
             "vdw_radius": 0.2,
             "xs_coherent": 1.5e-10,
-            "atomic_radius": 0.182,
             "block": "p"
         },
         "Kr86": {
@@ -18026,7 +17608,6 @@
             "element": "krypton",
             "vdw_radius": 0.202,
             "xs_coherent": 8.2e-10,
-            "atomic_radius": 0.103,
             "block": "p"
         },
         "As": {
@@ -18069,7 +17650,6 @@
             "element": "arsenic",
             "vdw_radius": 0.185,
             "xs_coherent": 5.44e-10,
-            "atomic_radius": 0.133,
             "block": "p"
         },
         "Ar": {
@@ -18112,7 +17692,6 @@
             "element": "argon",
             "vdw_radius": 0.188,
             "xs_coherent": 4.58e-11,
-            "atomic_radius": 0.088,
             "block": "p"
         },
         "Au": {
@@ -18155,7 +17734,6 @@
             "element": "gold",
             "vdw_radius": 0.166,
             "xs_coherent": 7.32e-10,
-            "atomic_radius": 0.179,
             "block": "d"
         },
         "Kr82": {
@@ -18198,7 +17776,6 @@
             "element": "krypton",
             "vdw_radius": 0.202,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.103,
             "block": "p"
         },
         "Hs": {
@@ -18241,7 +17818,6 @@
             "element": "hassium",
             "vdw_radius": 0.2,
             "xs_coherent": 0.0,
-            "atomic_radius": 0.0,
             "block": "d"
         },
         "Mo": {
@@ -18284,7 +17860,6 @@
             "element": "molybdenum",
             "vdw_radius": 0.2,
             "xs_coherent": 5.67e-10,
-            "atomic_radius": 0.201,
             "block": "d"
         },
         "Si28": {
@@ -18327,7 +17902,6 @@
             "element": "silicon",
             "vdw_radius": 0.21,
             "xs_coherent": 2.12e-10,
-            "atomic_radius": 0.146,
             "block": "p"
         },
         "Si29": {
@@ -18370,7 +17944,6 @@
             "element": "silicon",
             "vdw_radius": 0.21,
             "xs_coherent": 2.78e-10,
-            "atomic_radius": 0.146,
             "block": "p"
         },
         "Br79": {
@@ -18413,7 +17986,6 @@
             "element": "bromine",
             "vdw_radius": 0.185,
             "xs_coherent": 5.81e-10,
-            "atomic_radius": 0.112,
             "block": "p"
         }
     }
