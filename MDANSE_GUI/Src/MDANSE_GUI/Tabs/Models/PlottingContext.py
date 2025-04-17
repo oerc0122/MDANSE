@@ -99,8 +99,9 @@ class SingleDataset:
             return
         for ax_number, axis_name in enumerate(self._axes_tag.split("|")):
             aname = axis_name.strip()
+            data_shape = self._data.shape
             if aname == "index":
-                self._axes[aname + str(ax_number)] = np.arange(len(self._data))
+                self._axes[aname + str(ax_number)] = np.arange(data_shape[ax_number])
                 self._axes_units[aname + str(ax_number)] = "N/A"
             else:
                 self._axes[aname] = source[aname][:]

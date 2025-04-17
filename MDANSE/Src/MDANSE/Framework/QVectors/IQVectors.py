@@ -124,6 +124,12 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
             q_values,
             units="1/nm",
         )
+        output_data.add(
+            "vector_coordinate",
+            "LineOutputVariable",
+            [0, 1, 2],
+            units="au",
+        )
         qvector_lengths = [qvector_info[q]["q_vectors"].shape[1] for q in q_values]
         qarray_maxlength = np.max(qvector_lengths)
         output_data.add(
@@ -131,6 +137,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
             "VolumeOutputVariable",
             (len(q_values), 3, qarray_maxlength),
             units="1/nm",
+            axis="vector_generator_q|vector_coordinate|index",
         )
         output_data["vector_generator_qvector_array"][:] = 0.0
         for nq, q in enumerate(q_values):
@@ -146,6 +153,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
             "VolumeOutputVariable",
             (len(q_values), 3, qarray_maxlength),
             units="au",
+            axis="vector_generator_q|vector_coordinate|index",
         )
         output_data["vector_generator_hkl_array"][:] = 0.0
         for nq, _ in enumerate(q_values):
