@@ -691,7 +691,10 @@ class AtomsDatabase(_Database):
         symbol : str
             The atoms symbol to remove from the database.
         """
-        del self._data[symbol]
+        try:
+            del self._data[symbol]
+        except KeyError:
+            raise AtomsDatabaseError(f"Atom {symbol} does not exist.")
 
     def remove_property(self, label: str):
         """Remove an atom property from the database.
@@ -701,7 +704,11 @@ class AtomsDatabase(_Database):
         label : str
             The property to remove from the database.
         """
-        del self._properties[label]
+        try:
+            del self._properties[label]
+        except KeyError:
+            raise AtomsDatabaseError(f"Atom property {label} does not exist.")
+
         for atm in self.atoms:
             del self._data[atm][label]
 

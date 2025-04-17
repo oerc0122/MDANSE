@@ -326,3 +326,56 @@ class TestAtomsDatabase(unittest.TestCase):
             dump.assert_called_with(
                 {"properties": self.properties, "atoms": self.data}, ANY
             )
+
+    def test_remove_atom(self):
+        ATOMS_DATABASE.remove_atom("Fe")
+        self.assertEqual(["H", "H2", "O"], ATOMS_DATABASE.atoms)
+
+    def test_remove_atom_for_atom_that_does_not_exist_raise_database_error(self):
+        with self.assertRaises(AtomsDatabaseError):
+            ATOMS_DATABASE.remove_atom("Test")
+
+    def test_remove_property(self):
+        ATOMS_DATABASE.remove_property("electronegativity")
+        self.assertDictEqual({
+                "family": "transition metal",
+                "nucleon": 0,
+                "symbol": "Fe",
+            },
+            ATOMS_DATABASE["Fe"]
+        )
+
+    def test_remove_property_for_property_that_does_not_exist_raise_database_error(self):
+        with self.assertRaises(AtomsDatabaseError):
+            ATOMS_DATABASE.remove_property("Test")
+
+    def test_rename_atom_type(self):
+        ATOMS_DATABASE.rename_atom_type("Fe", "FeNew")
+        self.assertEqual(["FeNew", "H", "H2", "O"], ATOMS_DATABASE.atoms)
+
+    def test_rename_atom_type_raise_database_error_when_new_atom_type_already_exists(self):
+        with self.assertRaises(AtomsDatabaseError):
+            ATOMS_DATABASE.rename_atom_type("Fe", "H")
+
+    def test_rename_atom_type_raise_database_error_when_old_atom_type_does_not_exists(self):
+        with self.assertRaises(AtomsDatabaseError):
+            ATOMS_DATABASE.rename_atom_type("Fee", "H")
+
+    def test_rename_atom_property(self):
+        ATOMS_DATABASE.rename_atom_property("electronegativity", "electronegativitynew")
+        self.assertDictEqual({
+                "family": "transition metal",
+                "nucleon": 0,
+                "electronegativitynew": 1.83,
+                "symbol": "Fe",
+            },
+            ATOMS_DATABASE["Fe"]
+        )
+
+    def test_rename_atom_property_raise_database_error_when_new_atom_property_already_exists(self):
+        with self.assertRaises(AtomsDatabaseError):
+            ATOMS_DATABASE.rename_atom_property("symbol", "electronegativity")
+
+    def test_rename_atom_property_raise_database_error_when_old_atom_type_does_not_exists(self):
+        with self.assertRaises(AtomsDatabaseError):
+            ATOMS_DATABASE.rename_atom_property("electronegativitytest", "symbol")
