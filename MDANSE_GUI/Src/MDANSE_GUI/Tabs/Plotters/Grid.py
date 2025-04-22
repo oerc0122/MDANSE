@@ -105,53 +105,21 @@ class Grid(Plotter):
                 axes = target.add_subplot(gridsize, gridsize, startnum)
                 self._axes.append(axes)
                 plotlabel = dataset._labels["medium"]
+                if dataset._curve_labels[key]:
+                    plotlabel += ":" + dataset._curve_labels[key]
                 x_axis_label = dataset.x_axis_label(best_axis)
                 [temp_curve] = axes.plot(
                     dataset.x_axis(best_axis),
                     curve,
                     linestyle=linestyle,
                     color=colour,
-                    label=plotlabel + ":" + dataset._curve_labels[key],
+                    label=plotlabel,
                 )
                 try:
                     temp_curve.set_marker(marker)
                 except ValueError:
                     with contextlib.suppress(Exception):
                         temp_curve.set_marker(int(marker))
-                xlimits, ylimits = axes.get_xlim(), axes.get_ylim()
-                try:
-                    new_limits = self._backup_limits[ds_num]
-                except IndexError:
-                    while len(self._backup_limits) < (ds_num + 1):
-                        self._backup_limits.append(
-                            [
-                                xlimits[0],
-                                xlimits[1],
-                                ylimits[0],
-                                ylimits[1],
-                            ]
-                        )
-                    new_limits = self._backup_limits[ds_num]
-                if not update_only:
-                    self._backup_limits[ds_num] = [
-                        xlimits[0],
-                        xlimits[1],
-                        ylimits[0],
-                        ylimits[1],
-                    ]
-                else:
-                    try:
-                        axes.set_xlim((new_limits[0], new_limits[1]))
-                    except ValueError:
-                        LOG.error(
-                            f"Matplotlib could not set x limits to {new_limits[0]}, {new_limits[1]}"
-                        )
-                    try:
-                        axes.set_ylim((new_limits[2], new_limits[3]))
-                    except ValueError:
-                        LOG.error(
-                            f"Matplotlib could not set y limits to {new_limits[2]}, {new_limits[3]}"
-                        )
                 axes.grid(visible=True)
                 axes.set_xlabel(x_axis_label)
                 axes.legend(loc=0)

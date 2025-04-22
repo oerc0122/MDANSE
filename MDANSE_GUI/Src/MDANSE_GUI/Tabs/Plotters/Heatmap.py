@@ -149,7 +149,9 @@ class Heatmap(Plotter):
             LOG.debug("Axis check failed.")
             return
         nplots = 0
-        for databundle in plotting_context.datasets().values():
+        for ds_index, databundle in enumerate(plotting_context.datasets().values()):
+            if nplots >= self._plot_limit:
+                break
             ds, _, _, _, ds_num, axis_label = databundle
             if ds._n_dim == 1:
                 continue
@@ -179,9 +181,17 @@ class Heatmap(Plotter):
         nplots = min(nplots, self._plot_limit)
         gridsize = int(math.ceil(nplots**0.5))
         startnum = 1
-        for databundle in plotting_context.datasets().values():
-            dataset, _, _, _, ds_num, _ = databundle
+        for ds_index, databundle in enumerate(plotting_context.datasets().values()):
+            if ds_index >= self._plot_limit:
+                break
+            dataset, _, _, _, ds_num, axis_label = databundle
             transposed = False
+            primary_axis_number = 0
+            limits = []
+            x_axis_labels, y_axis_labels = [], []
+            for number, axis_name in enumerate(ds._axes.keys()):
+                if axis_name == axis_label:
+                    primary_axis_number = number
             if dataset._n_dim == 1:
                 continue
             if dataset._n_dim == 3:
@@ -190,11 +200,19 @@ class Heatmap(Plotter):
                     list(dataset._planes.values()),
                 )
                 all_labels = [dataset._plane_labels[number] for number in all_numbers]
+                for counter, name in enumerate(dataset._axes.keys()):
+                    if counter == primary_axis_number:
+                        continue
+                    axis_array = dataset.x_axis(name)
+                    limits += [
+                        axis_array[0],
+                        axis_array[-1],
+                    ]
+                    if not x_axis_labels:
+                        x_axis_labels.append(dataset.x_axis_label(name))
+                    else:
+                        y_axis_labels.append(dataset.x_axis_label(name))
             else:
-                primary_axis_number = 0
-                for number, axis_name in enumerate(ds._axes.keys()):
-                    if axis_name == axis_label:
-                        primary_axis_number = number
                 all_numbers = [0]
                 if primary_axis_number == 0:
                     all_datasets = [dataset._data.T]
@@ -202,18 +220,16 @@ class Heatmap(Plotter):
                     all_datasets = [dataset._data]
                     transposed = True
                 all_labels = [dataset._name]
-            limits = []
-            x_axis_labels, y_axis_labels = [], []
-            for counter, name in enumerate(dataset._axes.keys()):
-                axis_array = dataset.x_axis(name)
-                limits += [
-                    axis_array[0],
-                    axis_array[-1],
-                ]
-                if counter == primary_axis_number:
-                    x_axis_labels.append(dataset.x_axis_label(name))
-                else:
-                    y_axis_labels.append(dataset.x_axis_label(name))
+                for counter, name in enumerate(dataset._axes.keys()):
+                    axis_array = dataset.x_axis(name)
+                    limits += [
+                        axis_array[0],
+                        axis_array[-1],
+                    ]
+                    if counter == primary_axis_number:
+                        x_axis_labels.append(dataset.x_axis_label(name))
+                    else:
+                        y_axis_labels.append(dataset.x_axis_label(name))
             if transposed:
                 limits = limits[2:] + limits[:2]
             for xnum in range(len(all_datasets)):

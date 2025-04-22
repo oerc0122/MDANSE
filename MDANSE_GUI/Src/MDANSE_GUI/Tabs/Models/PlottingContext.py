@@ -258,6 +258,8 @@ class SingleDataset:
             A string label for the plot legend.
 
         """
+        if self._n_dim < 2:
+            return ""
         label = "at "
         for axis_index, axis_name in enumerate(axis_lookup):
             axis_values = self.x_axis(axis_name)
