@@ -76,7 +76,6 @@ class MoleculePreviewWidget(QDialog):
             m_sphereEntity.addComponent(sphereMaterial)
             m_sphereEntity.addComponent(sphereTransform)
 
-        _atom_information = molecule_information["atom_information"]
         for bond in bonds:
             coord1, coord2 = bond[0], bond[1]
             coord1 = (20 * coord1[0] - 10, 20 * coord1[1] - 10, 20 * coord1[2] - 10)

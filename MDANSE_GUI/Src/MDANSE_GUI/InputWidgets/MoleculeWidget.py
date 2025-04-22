@@ -46,7 +46,7 @@ class MoleculeWidget(WidgetBase):
         hdf_traj = traj_config["hdf_trajectory"]
         unique_molecules = hdf_traj.chemical_system.unique_molecules()
         traj_bond_list = hdf_traj.chemical_system._bonds
-        self.atom_database = hdf_traj
+        self.atom_database = hdf_traj.trajectory
         self.mol_dict = {}
         coords_0 = hdf_traj.trajectory.coordinates(0)
         for mol_name in unique_molecules:
