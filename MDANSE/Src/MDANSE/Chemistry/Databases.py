@@ -152,7 +152,7 @@ class _Database(metaclass=Singleton):
         future. If the user database already exists, calling this function will overwrite it.
         """
         with open(self._USER_DATABASE, "w") as f:
-            json.dump(self._data, f)
+            json.dump(self._data, f, indent=4)
 
 
 class AtomsDatabaseError(Error):
@@ -633,7 +633,7 @@ class AtomsDatabase(_Database):
         d = {"properties": self._properties, "atoms": self._data}
 
         with open(AtomsDatabase._USER_DATABASE, "w") as fout:
-            json.dump(d, fout)
+            json.dump(d, fout, indent=4)
 
     def get_atom_property(self, symbol: str, property: str) -> Union[int, float, str]:
         """Faster access to the atom property as it avoids the deepcopy
