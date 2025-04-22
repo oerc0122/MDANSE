@@ -350,7 +350,7 @@ class InputFactory:
             direction -- if 'in', create a FileDialog for an exisitng file,
               if 'out', a FileDialog for creating a new file.
         """
-        kind = kwargs.get("kind", "String")
+        _kind = kwargs.get("kind", "String")
         default_value = kwargs.get("default", "")
         tooltip_text = kwargs.get(
             "tooltip", "Specify the name of the output trajectory."
@@ -580,7 +580,7 @@ class InputDialog(QDialog):
             format = var.format
             values = var.values
             widget = var.widget
-            helper_dialog = var.helper_dialog
+            _helper_dialog = var.helper_dialog
             tooltip = var.tooltip
             placeholder = var.placeholder
             number_of_inputs = var.number_of_inputs

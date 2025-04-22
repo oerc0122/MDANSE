@@ -46,7 +46,7 @@ class MoleculePreviewWidget(QDialog):
         info_text += f"Number of such molecules in trajectory: {molecule_information['no_of_molecules']}\n"
 
         coordinates = molecule_information["atom_coordinates"]
-        indices = molecule_information["atom_indices"]
+        _indices = molecule_information["atom_indices"]
         atom_symbols = molecule_information["atom_symbols"]
         bonds = molecule_information["bond_list"]
         for at_number in range(len(coordinates)):
@@ -76,7 +76,7 @@ class MoleculePreviewWidget(QDialog):
             m_sphereEntity.addComponent(sphereMaterial)
             m_sphereEntity.addComponent(sphereTransform)
 
-        atom_information = molecule_information["atom_information"]
+        _atom_information = molecule_information["atom_information"]
         for bond in bonds:
             coord1, coord2 = bond[0], bond[1]
             coord1 = (20 * coord1[0] - 10, 20 * coord1[1] - 10, 20 * coord1[2] - 10)

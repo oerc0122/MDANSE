@@ -46,7 +46,7 @@ class HDFTrajectoryInputData(InputFileData):
         val = []
         try:
             time_axis = self._data.time()
-        except:
+        except Exception:
             timeline = "No time information!\n"
         else:
             if len(time_axis) < 1:
@@ -57,16 +57,14 @@ class HDFTrajectoryInputData(InputFileData):
                 timeline = f"[{time_axis[0]}, {time_axis[1]}, ..., {time_axis[-1]}]\n"
 
         val.append("Path:")
-        val.append("%s\n" % self._name)
+        val.append(f"{self._name}\n")
         val.append("Number of steps:")
-        val.append("%s\n" % len(self._data))
+        val.append(f"{self._data}\n")
         val.append("Configuration:")
-        val.append("\tIs periodic: {}\n".format("unit_cell" in self._data.file))
+        val.append(f"\tIs periodic: {self._data.unit_cell(0) is not None}\n")
         try:
-            val.append(
-                "First unit cell (nm):\n{}\n".format(self._data.unit_cell(0)._unit_cell)
-            )
-        except:
+            val.append(f"First unit cell (nm):\n{self._data.unit_cell(0)._unit_cell}\n")
+        except Exception:
             val.append("No unit cell information\n")
         val.append("Frame times (1st, 2nd, ..., last) in ps:")
         val.append(timeline)
@@ -74,10 +72,10 @@ class HDFTrajectoryInputData(InputFileData):
         for k in self._data.variables():
             v = self._data.variable(k)
             try:
-                val.append("\t- {}: {}".format(k, v.shape))
+                val.append(f"\t- {k}: {v.shape}")
             except AttributeError:
                 try:
-                    val.append("\t- {}: {}".format(k, v["value"].shape))
+                    val.append(f"\t- {k}: {v['value'].shape}")
                 except KeyError:
                     continue
 
@@ -91,7 +89,7 @@ class HDFTrajectoryInputData(InputFileData):
             val.append(f"Molecule: {molname}; Count: {len(mollist)}")
 
         for k, v in mol_types.items():
-            val.append("\t- {:d} {}".format(v, k))
+            val.append(f"\t- {v:d} {k}")
 
         val = "\n".join(val)
 
@@ -103,7 +101,7 @@ class HDFTrajectoryInputData(InputFileData):
         def put_into_dict(name, obj):
             try:
                 string = obj[:][0].decode()
-            except:
+            except Exception:
                 LOG.debug(f"Decode failed for {name}: {obj}")
             else:
                 try:

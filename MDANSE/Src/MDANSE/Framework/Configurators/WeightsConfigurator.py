@@ -13,7 +13,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
+from typing import Optional
+from collections import defaultdict
+import itertools
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
@@ -108,21 +110,42 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         self["property"] = value
         self.error_status = "OK"
 
-    def get_weights(self):
-        ascfg = self._configurable[self._dependencies["atom_selection"]]
+    def get_weights(self, prop: Optional[str] = None):
+        """Generate a dictionary of weights.
 
-        weights = {}
-        for i in range(ascfg["selection_length"]):
-            name = ascfg["names"][i]
-            for el in ascfg["elements"][i]:
-                p = self._trajectory.get_atom_property(el, self["property"])
-                if name in weights:
-                    weights[name] += p
-                else:
-                    weights[name] = p
+        Parameters
+        ----------
+        prop : str or None, optional
+            The property to generate the weights from, if None then the
+            property set in this configurator will be used.
 
-        for k, v in list(ascfg.get_natoms().items()):
-            weights[k] /= v
+        Returns
+        -------
+        dict[str, float]
+            The dictionary of the weights.
+        """
+        if not prop:
+            prop = self["property"]
+
+        atom_selection_configurator = self._configurable[
+            self._dependencies["atom_selection"]
+        ]
+
+        weights = defaultdict(float)
+        for name, elements in itertools.islice(
+            zip(
+                atom_selection_configurator["names"],
+                atom_selection_configurator["elements"],
+            ),
+            atom_selection_configurator["selection_length"],
+        ):
+            weights[name] += sum(
+                self._trajectory.get_atom_property(element, prop)
+                for element in elements
+            )
+
+        for element, num_atoms in atom_selection_configurator.get_natoms().items():
+            weights[element] /= num_atoms
 
         return weights
 
@@ -134,7 +157,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
         :rtype: str
         """
         try:
-            info = "selected weight: %s\n" % self["property"]
+            info = f"selected weight: {self['property']}\n"
         except KeyError:
             info = "Weights have not been configured"
 

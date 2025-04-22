@@ -21,7 +21,6 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 
 
 class AtomLabel:
-
     def __init__(self, atm_label: str, **kwargs):
         """Creates an atom label object which is used for atom mapping
         and atom type guessing.
@@ -37,7 +36,7 @@ class AtomLabel:
         # methods as of writing e.g. re.sub
         translation = str.maketrans("", "", ";=")
         self.atm_label = atm_label.translate(translation)
-        self.grp_label = f""
+        self.grp_label = ""
         if kwargs:
             for k, v in kwargs.items():
                 self.grp_label += f"{k}={str(v).translate(translation)};"

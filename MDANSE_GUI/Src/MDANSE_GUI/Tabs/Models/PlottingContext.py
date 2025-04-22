@@ -56,10 +56,10 @@ def get_mpl_colours():
 
 
 class SingleDataset:
-
     def __init__(self, name: str, source: "h5py.File", linestyle: str = "-"):
         self._name = name
         self._filename = source.filename
+        self._use_scaling = True
         self._curves = {}
         self._curve_labels = {}
         self._linestyle = linestyle
@@ -86,6 +86,11 @@ class SingleDataset:
         self._data_unit = source[name].attrs["units"]
         self._n_dim = len(self._data.shape)
         self._axes_tag = source[name].attrs["axis"]
+        self._scaling_factor = 1.0
+        try:
+            self._scaling_factor = float(source[name].attrs["scaling_factor"])
+        except KeyError:
+            pass
         self._axes = {}
         self._axes_units = {}
         for ax_number, axis_name in enumerate(self._axes_tag.split("|")):
@@ -103,27 +108,27 @@ class SingleDataset:
             if ":" in token:
                 try:
                     slice_parts = [int(x) for x in token.split(":")]
-                except:
+                except Exception:
                     continue
                 if len(slice_parts) < 4:
                     complete_subset_list += list(range(*slice_parts))
             elif "-" in token:
                 try:
                     slice_parts = [int(x) for x in token.split("-")]
-                except:
+                except Exception:
                     continue
                 if len(slice_parts) == 2:
                     complete_subset_list += list(range(slice_parts[0], slice_parts[1]))
             elif "," in token:
                 try:
                     slice_parts = [int(x) for x in token.split(",")]
-                except:
+                except Exception:
                     continue
                 complete_subset_list += list(slice_parts)
             else:
                 try:
                     complete_subset_list += [int(token)]
-                except:
+                except Exception:
                     continue
         if len(complete_subset_list) == 0:
             self._data_limits = None
@@ -145,6 +150,18 @@ class SingleDataset:
                 best_unit = aunit
                 best_axis = aname
         return best_unit, best_axis
+
+    @property
+    def data(self):
+        """
+        Returns
+        -------
+        np.ndarray
+            The plot data, scaled if set.
+        """
+        if self._use_scaling:
+            return self._data * self._scaling_factor
+        return self._data
 
     def curves_vs_axis(self, axis_unit: str) -> List[np.ndarray]:
         self._curves = {}
@@ -174,28 +191,22 @@ class SingleDataset:
         for n in range(len(indices)):
             if self._data_limits is not None:
                 if n in self._data_limits:
-                    self._curves[tuple(indices[n])] = self._data[slicers[n]].squeeze()
+                    self._curves[tuple(indices[n])] = self.data[slicers[n]].squeeze()
                     self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
             else:
-                self._curves[tuple(indices[n])] = self._data[slicers[n]].squeeze()
+                self._curves[tuple(indices[n])] = self.data[slicers[n]].squeeze()
                 self._curve_labels[tuple(indices[n])] = str(tuple(indices[n]))
         return self._curves
-        # slicer = tuple(slicer)
-        # temp = self._data[slicer].squeeze()
-        # for line in temp:
-        #     if len(line) != xlen:
-        #         print("Wrong data length in the curves_vs_axis method of PlottingContext")
-        # return temp
 
     def planes_vs_axis(self, axis_number: int) -> List[np.ndarray]:
         self._planes = {}
         self._plane_labels = {}
-        found = -1
+        _found = -1
         total_ndim = len(self._data.shape)
         if total_ndim == 1:
             return
         elif total_ndim == 2:
-            return self._data
+            return self.data
         data_shape = self._data.shape
         number_of_planes = data_shape[axis_number]
         perpendicular_axis = None
@@ -213,23 +224,20 @@ class SingleDataset:
                 if plane_number in self._data_limits:
                     fixed_argument = perpendicular_axis[plane_number]
                     slice_def[axis_number] = plane_number
-                    data = self._data[tuple(slice_def)]
-                    self._planes[plane_number] = data
+                    self._planes[plane_number] = self.data[tuple(slice_def)]
                     self._plane_labels[plane_number] = (
                         f"{perpendicular_axis_name}={fixed_argument}"
                     )
             else:
                 fixed_argument = perpendicular_axis[plane_number]
                 slice_def[axis_number] = plane_number
-                data = self._data[tuple(slice_def)]
-                self._planes[plane_number] = data
+                self._planes[plane_number] = self.data[tuple(slice_def)]
                 self._plane_labels[plane_number] = (
                     f"{perpendicular_axis_name}={fixed_argument}"
                 )
 
 
 class SingleCurve:
-
     def __init__(self, data_name: str, file_name: str, *args, **kwargs):
         self._name = data_name
         self._filename = file_name
@@ -283,6 +291,7 @@ plotting_column_labels = [
     "Colour",
     "Line style",
     "Marker",
+    "Scaling",
 ]
 plotting_column_index = {
     label: number for number, label in enumerate(plotting_column_labels)
@@ -290,7 +299,6 @@ plotting_column_index = {
 
 
 class PlottingContext(QStandardItemModel):
-
     needs_an_update = Signal()
 
     def __init__(self, *args, unit_lookup=None, **kwargs):
@@ -322,7 +330,7 @@ class PlottingContext(QStandardItemModel):
         backup_cmap = "viridis"
         try:
             cmap = self._unit_lookup._settings.group("colours").get("colormap")
-        except:
+        except Exception:
             return backup_cmap
         else:
             if cmap in mpl.colormaps():
@@ -387,6 +395,12 @@ class PlottingContext(QStandardItemModel):
                 ).checkState()
                 == Qt.CheckState.Checked
             )
+            set_scaling = (
+                self.itemFromIndex(
+                    self.index(row, plotting_column_index["Scaling"])
+                ).checkState()
+                == Qt.CheckState.Checked
+            )
             data_number_string = self.itemFromIndex(
                 self.index(row, plotting_column_index["Use it?"])
             ).text()
@@ -407,6 +421,8 @@ class PlottingContext(QStandardItemModel):
                 result[key] = (self._datasets[key], colour, style, marker, ds_num, axis)
             else:
                 self._datasets[key]._data_limits = None
+            self._datasets[key]._use_scaling = set_scaling
+
         return result
 
     def add_dataset(self, new_dataset: SingleDataset):
@@ -428,6 +444,7 @@ class PlottingContext(QStandardItemModel):
                 self.next_colour(),
                 new_dataset._linestyle,
                 "",
+                "",
             ]
         ]
         for item in items:
@@ -435,6 +452,10 @@ class PlottingContext(QStandardItemModel):
         for item in items[:4]:
             item.setEditable(False)
         temp = items[plotting_column_index["Use it?"]]
+        temp.setCheckable(True)
+        temp.setCheckState(Qt.CheckState.Checked)
+        temp = items[plotting_column_index["Scaling"]]
+        temp.setEditable(False)
         temp.setCheckable(True)
         temp.setCheckState(Qt.CheckState.Checked)
         self.itemChanged.connect(self.needs_an_update)

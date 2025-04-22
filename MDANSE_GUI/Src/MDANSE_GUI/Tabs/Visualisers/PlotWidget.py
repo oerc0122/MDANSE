@@ -41,7 +41,6 @@ from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
 
 
 class SliderPack(QWidget):
-
     new_values = Signal(object)
 
     def __init__(self, *args, n_sliders=2, **kwargs) -> None:
@@ -152,7 +151,6 @@ class SliderPack(QWidget):
 
 
 class PlotWidget(QWidget):
-
     change_slider_labels = Signal(object)
     change_slider_limits = Signal(object)
     reset_slider_values = Signal(bool)
@@ -175,7 +173,7 @@ class PlotWidget(QWidget):
     def set_plotter(self, plotter_option: str):
         try:
             self._plotter = Plotter.create(plotter_option)
-        except:
+        except Exception:
             self._plotter = Plotter()
         self.change_slider_labels.emit(self._plotter.slider_labels())
         self.change_slider_limits.emit(self._plotter.slider_limits())

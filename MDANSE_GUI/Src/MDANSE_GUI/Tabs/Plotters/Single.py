@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
 
 class Single(Plotter):
-
     def __init__(self) -> None:
         super().__init__()
         self._figure = None
@@ -146,13 +145,13 @@ class Single(Plotter):
                 conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
                     xaxis_unit
                 )
-            except:
+            except Exception:
                 continue
             else:
                 if dataset._n_dim == 1:
                     [temp] = axes.plot(
                         dataset._axes[best_axis] * conversion_factor,
-                        dataset._data,
+                        dataset.data,
                         linestyle=linestyle,
                         label=plotlabel,
                         color=colour,
@@ -162,7 +161,7 @@ class Single(Plotter):
                     except ValueError:
                         try:
                             temp.set_marker(int(marker))
-                        except:
+                        except Exception:
                             pass
                     self._active_curves.append(temp)
                     self._backup_curves.append([temp.get_xdata(), temp.get_ydata()])

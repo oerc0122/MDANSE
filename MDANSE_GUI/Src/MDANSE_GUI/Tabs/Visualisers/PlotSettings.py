@@ -28,7 +28,6 @@ from MDANSE.Framework.Units import measure
 
 
 class PlotSettings(QWidget):
-
     plot_settings_changed = Signal()
 
     def __init__(self, *args, settings=None, **kwargs) -> None:
@@ -52,7 +51,7 @@ class PlotSettings(QWidget):
             )
         try:
             mpl.style.use(style_name)
-        except:
+        except Exception:
             LOG.error(f"Could not set matplotlib style to {style_name}")
             backup_style = self._unit_lookup._settings.default_value(
                 "matplotlib", "style"
@@ -84,12 +83,12 @@ class PlotSettings(QWidget):
         unit_group = self._settings.group("units")
         try:
             energy = self._unit_fields["energy"].currentText()
-        except:
+        except Exception:
             LOG.warning("Could not get the energy unit from GUI")
         else:
             try:
                 measure(1.0, "rad/ps", equivalent=True).toval(energy)
-            except:
+            except Exception:
                 energy = self._settings.default_value("units", "energy")
             else:
                 if not unit_group.set("energy", energy):
@@ -100,12 +99,12 @@ class PlotSettings(QWidget):
                     )
         try:
             time = self._unit_fields["time"].currentText()
-        except:
+        except Exception:
             LOG.warning("Could not get the time unit from GUI")
         else:
             try:
                 measure(1.0, "ps").toval(time)
-            except:
+            except Exception:
                 time = self._settings.default_value("units", "time")
             else:
                 if not unit_group.set("time", time):
@@ -114,12 +113,12 @@ class PlotSettings(QWidget):
                     )
         try:
             distance = self._unit_fields["distance"].currentText()
-        except:
+        except Exception:
             LOG.warning("Could not get the distance unit from GUI")
         else:
             try:
                 measure(1.0, "nm").toval(distance)
-            except:
+            except Exception:
                 distance = self._settings.default_value("units", "distance")
             else:
                 if not unit_group.set("distance", distance):
@@ -130,12 +129,12 @@ class PlotSettings(QWidget):
                     )
         try:
             reciprocal = self._unit_fields["reciprocal"].currentText()
-        except:
+        except Exception:
             LOG.warning("Could not get the reciprocal space unit from GUI")
         else:
             try:
                 measure(1.0, "1/nm").toval(reciprocal)
-            except:
+            except Exception:
                 reciprocal = self._settings.default_value("units", "reciprocal")
             else:
                 if not unit_group.set("reciprocal", reciprocal):
@@ -174,7 +173,7 @@ class PlotSettings(QWidget):
         style_selector.addItems(style_list_filtered)
         try:
             style_string = self._settings.group("matplotlib").get("style")
-        except:
+        except Exception:
             style_string = "default"
         style_selector.setCurrentText(style_string)
         style_selector.currentTextChanged.connect(self.set_style)
@@ -184,7 +183,7 @@ class PlotSettings(QWidget):
             try:
                 current_cmap = colour_group.get("colormap")
             except KeyError:
-                LOG.warning(f"Could not get colormap from colours")
+                LOG.warning("Could not get colormap from colours")
                 colour_group.add(
                     "colormap",
                     "viridis",
@@ -194,8 +193,8 @@ class PlotSettings(QWidget):
             else:
                 if current_cmap not in mpl.colormaps():
                     current_cmap = "viridis"
-        except:
-            LOG.warning(f"Could not get the colours group")
+        except Exception:
+            LOG.warning("Could not get the colours group")
             current_cmap = "viridis"
         cmap_selector = QComboBox(self)
         cmap_selector.addItems(mpl.colormaps())
@@ -229,7 +228,7 @@ class PlotSettings(QWidget):
         self._unit_fields["reciprocal"] = reciprocal_combo
         try:
             unit_group = self._settings.group("units")
-        except:
+        except Exception:
             pass
         else:
             current_energy = unit_group.get("energy")

@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 
 
 class Grid(Plotter):
-
     def __init__(self) -> None:
         super().__init__()
         self._figure = None
@@ -103,7 +102,7 @@ class Grid(Plotter):
                 except ValueError:
                     try:
                         temp_curve.set_marker(int(marker))
-                    except:
+                    except Exception:
                         pass
                 xlimits, ylimits = axes.get_xlim(), axes.get_ylim()
                 try:

@@ -39,7 +39,6 @@ dtype_lookup = {"float16": 16, "float32": 32, "float64": 64}
 
 
 class OutputTrajectoryWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, layout_type="QGridLayout", **kwargs)
         default_value = self._configurator.default
@@ -62,7 +61,7 @@ class OutputTrajectoryWidget(WidgetBase):
             guess_name = str(
                 PurePath(os.path.join(self.default_path, jobname + "_trajectory1"))
             )
-        except:
+        except Exception:
             guess_name = str(PurePath(default_value[0]))
             LOG.error("It was not possible to get the job name from the parent")
         while os.path.exists(guess_name + ".mdt"):

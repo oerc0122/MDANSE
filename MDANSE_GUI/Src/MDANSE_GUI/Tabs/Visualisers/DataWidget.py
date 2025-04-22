@@ -46,7 +46,6 @@ from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
 
 
 class DataWidget(QWidget):
-
     change_slider_labels = Signal(object)
     change_slider_limits = Signal(object)
     reset_slider_values = Signal(bool)
@@ -159,7 +158,7 @@ class DataWidget(QWidget):
             nsets = len(self._plotter._pc_backup.datasets())
         except AttributeError:
             return
-        except:
+        except Exception:
             LOG.warning("DataWidget could not determine the number of datasets.")
         else:
             if nsets == 0:  # do not create a file if there are no data
@@ -167,7 +166,7 @@ class DataWidget(QWidget):
         try:
             PLATFORM.create_directory(os.path.dirname(self._output_widget.text()))
             target = open(target_path, "w", newline="")
-        except:
+        except Exception:
             LOG.error(f"Could not open file for writing: {target_path}")
         else:
             writer = csv.writer(
@@ -181,13 +180,13 @@ class DataWidget(QWidget):
                     writer.writerow(row)
             target.close()
 
-    @Slot(object)
-    def slider_change(self, new_values: object):
-        """Not used for text output."""
+    # @Slot(object)
+    # def slider_change(self, new_values: object):
+    #     """Not used for text output."""
 
-    @Slot(bool)
-    def set_slider_values(self, reset_needed: bool):
-        """Not used for text output."""
+    # @Slot(bool)
+    # def set_slider_values(self, reset_needed: bool):
+    #     """Not used for text output."""
 
     def set_context(self, new_context: "PlottingContext"):
         self._plotting_context = new_context
@@ -257,7 +256,7 @@ class DataWidget(QWidget):
                 self._current_path = PurePath(os.path.split(dataset._filename)[0])
                 break
         except Exception as e:
-            LOG.error(f"DataWidget error: {e}" f"traceback {format_exc()}")
+            LOG.error(f"DataWidget error: {e}traceback {format_exc()}")
 
     def make_canvas(self):
         """Creates a matplotlib figure for plotting

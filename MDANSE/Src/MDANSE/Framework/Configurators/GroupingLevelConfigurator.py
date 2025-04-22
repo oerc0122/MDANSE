@@ -90,7 +90,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 ):
                     indices.append(cluster)
                     elements.append([chemical_system.atom_list[x] for x in cluster])
-                    names.append(f"{mol_name}_mol{mol_number+1}")
+                    names.append(f"{mol_name}_mol{mol_number + 1}")
                     masses.append([mass_lookup[x] for x in cluster])
         elif value == "group":
             for group_name, group_indices in chemical_system._labels.items():
@@ -149,4 +149,4 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         if "value" not in self:
             return "Not configured yet\n"
 
-        return "Grouping level: %r\n" % self["value"]
+        return f"Grouping level: {self['value']!r}\n"

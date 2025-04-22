@@ -32,6 +32,7 @@ class PlotDataView(QTreeView):
     error = Signal(str)
     fast_plotting_data = Signal(object)
     free_name = Signal(str)
+    fast_plotting_data = Signal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -130,7 +131,7 @@ class PlotDataView(QTreeView):
                 for attr in mda_data_structure.attrs:
                     text += f"{attr}: {mda_data_structure.attrs[attr]}\n"
                 self.item_details.emit(text)
-            except:
+            except Exception:
                 self.item_details.emit("No additional information included.")
 
     @Slot(QModelIndex)
@@ -174,6 +175,5 @@ class PlotDataView(QTreeView):
             self.item_details.connect(visualiser.update_panel)
         else:
             raise NotImplementedError(
-                f"Unable to connect view {type(self)} to visualiser "
-                f"{type(visualiser)}"
+                f"Unable to connect view {type(self)} to visualiser {type(visualiser)}"
             )

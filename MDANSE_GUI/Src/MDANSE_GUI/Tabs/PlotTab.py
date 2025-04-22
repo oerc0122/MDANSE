@@ -36,7 +36,6 @@ here.
 
 
 class PlotTab(GeneralTab):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._visualiser._unit_lookup = self

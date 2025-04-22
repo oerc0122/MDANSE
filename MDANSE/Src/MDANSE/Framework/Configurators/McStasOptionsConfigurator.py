@@ -14,10 +14,10 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-import os
 import tempfile
 import time
 from typing import Dict, Any
+from pathlib import Path
 
 from MDANSE import PLATFORM
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
@@ -34,10 +34,10 @@ def parse_dictionary(input: str) -> Dict[str, Any]:
         value = value.strip(" '")
         try:
             value = int(value)
-        except:
+        except Exception:
             try:
                 value = float(value)
-            except:
+            except Exception:
                 pass
         result[key] = value
     return result
@@ -50,10 +50,10 @@ class McStasOptionsConfigurator(IConfigurator):
 
     _default = {
         "ncount": 10000,
-        "dir": os.path.join(
-            tempfile.gettempdir(),
-            "mcstas_output",
-            time.strftime("%d.%m.%Y-%H:%M:%S", time.localtime()),
+        "dir": (
+            Path(tempfile.gettempdir())
+            / "mcstas_output"
+            / time.strftime("%d.%m.%Y-%H:%M:%S", time.localtime())
         ),
     }
 
@@ -81,16 +81,16 @@ class McStasOptionsConfigurator(IConfigurator):
         for k, v in list(options.items()):
             if k == "dir":
                 # If the output directory already exists, defines a 'unique' output directory name because otherwise McStas throws.
-                if os.path.exists(v):
+                if Path(v).exists():
                     v = self._default["dir"]
-                self["mcstas_output_directory"] = v
-            tmp.append("--%s=%s" % (k, v))
+                self["mcstas_output_directory"] = Path(v)
+            tmp.append(f"--{k}={v}")
 
-        dirname = os.path.dirname(self["mcstas_output_directory"])
+        dirname = self["mcstas_output_directory"].parent
 
         try:
             PLATFORM.create_directory(dirname)
-        except:
+        except Exception:
             self.error_status = f"The directory {dirname} is not writable"
             return
 
@@ -107,4 +107,4 @@ class McStasOptionsConfigurator(IConfigurator):
         if "value" not in self:
             return "Not configured yet\n"
 
-        return "McStas command line options: %s\n" % self["value"]
+        return f"McStas command line options: {self['value']}\n"

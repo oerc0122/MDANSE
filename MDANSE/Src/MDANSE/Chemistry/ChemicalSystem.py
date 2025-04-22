@@ -28,7 +28,6 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 
 
 class ChemicalSystem:
-
     def __init__(self, name: str = "", trajectory=None):
         """
 
@@ -36,7 +35,7 @@ class ChemicalSystem:
         :type name: str
         """
 
-        self._name = name
+        self.name = str(name)
         self._database = ATOMS_DATABASE
         if trajectory is not None:
             self._database = trajectory
@@ -55,7 +54,7 @@ class ChemicalSystem:
         self._unique_elements = set()
 
     def __str__(self):
-        return f"ChemicalSystem {self._name} consisting of {len(self._atom_types)} atoms in {len(self._clusters)} molecules"
+        return f"ChemicalSystem {self.name} consisting of {len(self._atom_types)} atoms in {len(self._clusters)} molecules"
 
     def initialise_atoms(self, element_list: List[str], name_list: List[str] = None):
         self._atom_indices = [
@@ -191,7 +190,7 @@ class ChemicalSystem:
         :return: Copy of the ChemicalSystem instance
         :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
         """
-        cs = ChemicalSystem(self._name)
+        cs = ChemicalSystem(self.name)
 
         for attribute_name, attribute_value in self.__dict__.items():
             if attribute_name in ["rdkit_mol", "_configuration"]:
@@ -248,7 +247,7 @@ class ChemicalSystem:
         string_dt = h5py.special_dtype(vlen=str)
 
         grp = h5_file.create_group("/composition")
-        grp.attrs["name"] = self._name
+        grp.attrs["name"] = self.name
 
         try:
             grp.create_dataset("atom_types", data=self._atom_types, dtype=string_dt)
@@ -292,7 +291,7 @@ class ChemicalSystem:
         self.rdkit_mol = Chem.RWMol()
 
         grp = source["/composition"]
-        self._name = grp.attrs["name"]
+        self.name = grp.attrs["name"]
 
         atom_types = [binary.decode("utf-8") for binary in grp["atom_types"][:]]
         atom_names = None
@@ -326,7 +325,7 @@ class ChemicalSystem:
         self.rdkit_mol = Chem.RWMol()
 
         grp = source["/chemical_system"]
-        self._name = grp.attrs["name"]
+        self.name = grp.attrs["name"]
         atoms = grp["atoms"]
         element_list = [line[0].decode("utf-8").strip("'") for line in atoms]
         self.initialise_atoms(element_list)

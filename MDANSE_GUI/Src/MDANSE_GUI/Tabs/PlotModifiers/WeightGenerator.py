@@ -18,6 +18,5 @@ import numpy as np
 
 
 class NullWeights:
-
     def __call__(self, *args, **kwds) -> float:
         return 1.0

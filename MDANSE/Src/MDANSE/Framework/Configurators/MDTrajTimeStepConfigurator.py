@@ -19,7 +19,6 @@ from MDANSE.Framework.Configurators.FloatConfigurator import FloatConfigurator
 
 
 class MDTrajTimeStepConfigurator(FloatConfigurator):
-
     _default = 0.0
 
     def configure(self, value):
@@ -52,7 +51,7 @@ class MDTrajTimeStepConfigurator(FloatConfigurator):
                     )
                     return
             else:
-                self.error_status = f"Unable to determine a time step from MDTraj"
+                self.error_status = "Unable to determine a time step from MDTraj"
                 return
 
         super().configure(value)

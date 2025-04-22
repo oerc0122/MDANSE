@@ -18,8 +18,8 @@ import collections
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
-from MDANSE.Mathematics.Signal import differentiate, normalize
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
+from MDANSE.Mathematics.Signal import differentiate, normalisation_factor
 
 
 class VelocityAutoCorrelationFunction(IJob):
@@ -123,7 +123,7 @@ class VelocityAutoCorrelationFunction(IJob):
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             self._outputData.add(
-                "vacf_%s" % element,
+                f"vacf_{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["n_frames"],),
                 axis="time",
@@ -205,7 +205,7 @@ class VelocityAutoCorrelationFunction(IJob):
         # The symbol of the atom.
         element = self.configuration["atom_selection"]["names"][index]
 
-        self._outputData["vacf_%s" % element] += x
+        self._outputData[f"vacf_{element}"] += x
 
     def finalize(self):
         """
@@ -214,19 +214,22 @@ class VelocityAutoCorrelationFunction(IJob):
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         for element, number in nAtomsPerElement.items():
-            self._outputData["vacf_%s" % element] /= number
+            self._outputData[f"vacf_{element}"] /= number
 
         weights = self.configuration["weights"].get_weights()
-
-        vacfTotal = weight(weights, self._outputData, nAtomsPerElement, 1, "vacf_%s")
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "vacf_%s")
+        vacfTotal = weighted_sum(self._outputData, weight_dict, "vacf_%s")
         self._outputData["vacf_total"][:] = vacfTotal
 
         if self.configuration["normalize"]["value"]:
             for element in nAtomsPerElement.keys():
-                self._outputData["vacf_%s" % element] = normalize(
-                    self._outputData["vacf_%s" % element], axis=0
+                self._outputData[
+                    f"vacf_{element}"
+                ].scaling_factor *= normalisation_factor(
+                    self._outputData[f"vacf_{element}"], axis=0
                 )
-            self._outputData["vacf_total"] = normalize(
+            self._outputData["vacf_total"].scaling_factor *= normalisation_factor(
                 self._outputData["vacf_total"], axis=0
             )
 

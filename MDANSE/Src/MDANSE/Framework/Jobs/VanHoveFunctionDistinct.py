@@ -22,7 +22,7 @@ import numpy as np
 from MDANSE.MLogging import LOG
 from MDANSE.Framework.Jobs.IJob import IJob, JobError
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 def distance_array_2D(
@@ -274,7 +274,7 @@ class VanHoveFunctionDistinct(IJob):
         )
         try:
             cell_volume = conf.unit_cell.volume
-        except:
+        except Exception:
             self.detailed_unit_cell_error()
         else:
             if cell_volume < 1e-9:
@@ -315,21 +315,21 @@ class VanHoveFunctionDistinct(IJob):
         )
         for x, y in self._elementsPairs:
             self._outputData.add(
-                "g(r,t)_intra_%s%s" % (x, y),
+                f"g(r,t)_intra_{x}{y}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.numberOfSteps),
                 axis="r|time",
                 units="au",
             )
             self._outputData.add(
-                "g(r,t)_inter_%s%s" % (x, y),
+                f"g(r,t)_inter_{x}{y}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.numberOfSteps),
                 axis="r|time",
                 units="au",
             )
             self._outputData.add(
-                "g(r,t)_total_%s%s" % (x, y),
+                f"g(r,t)_total_{x}{y}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.numberOfSteps),
                 axis="r|time",
@@ -480,24 +480,26 @@ class VanHoveFunctionDistinct(IJob):
             van_hove_inter = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
             van_hove_total = van_hove_intra + van_hove_inter
 
-            for i, van_hove in zip(
+            for i, van_h in zip(
                 ["intra", "inter", "total"],
                 [van_hove_intra, van_hove_inter, van_hove_total],
             ):
-                self._outputData["g(r,t)_%s_%s%s" % (i, pair[0], pair[1])][
-                    ...
-                ] = van_hove
+                self._outputData[f"g(r,t)_{i}_{''.join(pair)}"][...] = van_h
 
         weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 2)
         for i in ["_intra", "_inter", ""]:
-            pdf = weight(
-                weights,
+            assign_weights(
                 self._outputData,
-                nAtomsPerElement,
-                2,
-                "g(r,t){}_%s%s".format(i if i else "_total"),
+                weight_dict,
+                f"g(r,t){i if i else '_total'}_%s%s",
             )
-            self._outputData["g(r,t)%s_total" % i][...] = pdf
+            pdf = weighted_sum(
+                self._outputData,
+                weight_dict,
+                f"g(r,t){i if i else '_total'}_%s%s",
+            )
+            self._outputData[f"g(r,t){i}_total"][...] = pdf
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

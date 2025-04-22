@@ -18,7 +18,7 @@ import collections
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import differentiate, get_spectrum
 from MDANSE.MLogging import LOG
 
@@ -130,14 +130,14 @@ class DensityOfStates(IJob):
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             self._outputData.add(
-                "vacf_%s" % element,
+                f"vacf_{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["n_frames"],),
                 axis="time",
                 units="nm2/ps2",
             )
             self._outputData.add(
-                "dos_%s" % element,
+                f"dos_{element}",
                 "LineOutputVariable",
                 (instrResolution["n_romegas"],),
                 axis="romega",
@@ -225,7 +225,7 @@ class DensityOfStates(IJob):
         # The symbol of the atom.
         element = self.configuration["atom_selection"]["names"][index]
 
-        self._outputData["vacf_%s" % element] += x
+        self._outputData[f"vacf_{element}"] += x
 
     def finalize(self):
         """
@@ -234,30 +234,27 @@ class DensityOfStates(IJob):
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         for element, number in nAtomsPerElement.items():
-            self._outputData["vacf_%s" % element][:] /= number
-            self._outputData["dos_%s" % element][:] = get_spectrum(
-                self._outputData["vacf_%s" % element],
+            self._outputData[f"vacf_{element}"][:] /= number
+            self._outputData[f"dos_{element}"][:] = get_spectrum(
+                self._outputData[f"vacf_{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 fft="rfft",
             )
 
         weights = self.configuration["weights"].get_weights()
-        self._outputData["vacf_total"][:] = weight(
-            weights,
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "vacf_%s")
+        assign_weights(self._outputData, weight_dict, "dos_%s")
+        self._outputData["vacf_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "vacf_%s",
-            update_partials=True,
         )
-        self._outputData["dos_total"][:] = weight(
-            weights,
+        self._outputData["dos_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "dos_%s",
-            update_partials=True,
         )
 
         self._outputData.write(

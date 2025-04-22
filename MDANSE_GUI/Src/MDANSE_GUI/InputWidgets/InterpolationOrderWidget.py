@@ -33,7 +33,7 @@ suffix_dict = {
 class InterpolationOrderWidget(WidgetBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, layout_type="QHBoxLayout", **kwargs)
-        source_object = kwargs.get("source_object", None)
+        _source_object = kwargs.get("source_object", None)
 
         self._field = QSpinBox(self._base)
         self._field.setMaximum(5)

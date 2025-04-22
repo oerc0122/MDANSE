@@ -44,11 +44,13 @@ def test_basic_meansquare():
     assert path.isfile(temp_name + ".mda")
     result_file = os.path.join(result_dir, "basic_meansquare.mda")
 
-    with h5py.File(temp_name + ".mda") as actual,  h5py.File(result_file) as desired:
+    with h5py.File(temp_name + ".mda") as actual, h5py.File(result_file) as desired:
         np.testing.assert_array_almost_equal(actual["/msd_Cu"], desired["/msd_Cu"])
         np.testing.assert_array_almost_equal(actual["/msd_S"], desired["/msd_S"])
         np.testing.assert_array_almost_equal(actual["/msd_Sb"], desired["/msd_Sb"])
-        np.testing.assert_array_almost_equal(actual["/msd_total"], desired["/msd_total"])
+        np.testing.assert_array_almost_equal(
+            actual["/msd_total"], desired["/msd_total"]
+        )
 
     os.remove(temp_name + ".mda")
     assert path.exists(temp_name + ".log")

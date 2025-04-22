@@ -25,7 +25,6 @@ from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 
 class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
-
     def configure(self, value: Optional[str]):
         """
         Parameters
@@ -62,7 +61,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
 
             self.labels = self.unique_labels()
             if len(self.labels) == 0:
-                self.error_status = f"Unable to generate atom labels"
+                self.error_status = "Unable to generate atom labels"
 
         else:
             extension = "".join(Path(value).suffixes)[1:]

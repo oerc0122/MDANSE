@@ -17,8 +17,8 @@
 import collections
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
-from MDANSE.Mathematics.Signal import correlation, normalize
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
+from MDANSE.Mathematics.Signal import correlation, normalisation_factor
 
 
 class GeneralAutoCorrelationFunction(IJob):
@@ -95,7 +95,7 @@ class GeneralAutoCorrelationFunction(IJob):
         # Will store the mean square displacement evolution.
         for element in self.configuration["atom_selection"]["unique_names"]:
             self._outputData.add(
-                "gacf_{}".format(element),
+                f"gacf_{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["number"],),
                 axis="time",
@@ -150,7 +150,7 @@ class GeneralAutoCorrelationFunction(IJob):
 
         element = self.configuration["atom_selection"]["names"][index]
 
-        self._outputData["gacf_%s" % element] += x
+        self._outputData[f"gacf_{element}"] += x
 
     def finalize(self):
         """
@@ -161,19 +161,22 @@ class GeneralAutoCorrelationFunction(IJob):
         self.configuration["atom_selection"]["n_atoms_per_element"] = nAtomsPerElement
 
         for element, number in nAtomsPerElement.items():
-            self._outputData["gacf_{}".format(element)] /= number
+            self._outputData[f"gacf_{element}"] /= number
 
         if self.configuration["normalize"]["value"]:
             for element in nAtomsPerElement.keys():
-                if self._outputData["gacf_{}}".format(element)][0] == 0:
+                if self._outputData[f"gacf_{element}"][0] == 0:
                     raise ValueError("The normalization factor is equal to zero")
-                else:
-                    self._outputData["gacf_{}".format(element)] = normalize(
-                        self._outputData["gacf_%s" % element], axis=0
-                    )
+                self._outputData[
+                    f"gacf_{element}"
+                ].scaling_factor *= normalisation_factor(
+                    self._outputData[f"gacf_{element}"], axis=0
+                )
 
         weights = self.configuration["weights"].get_weights()
-        gacfTotal = weight(weights, self._outputData, nAtomsPerElement, 1, "gacf_%s")
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "gacf_%s")
+        gacfTotal = weighted_sum(self._outputData, weight_dict, "gacf_%s")
 
         self._outputData["gacf_total"][:] = gacfTotal
 

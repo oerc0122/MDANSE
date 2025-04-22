@@ -19,7 +19,7 @@ import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MLogging import LOG
 
@@ -122,14 +122,14 @@ class PositionPowerSpectrum(IJob):
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             self._outputData.add(
-                "pacf_%s" % element,
+                f"pacf_{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["n_frames"],),
                 axis="time",
                 units="nm2",
             )
             self._outputData.add(
-                "pps_%s" % element,
+                f"pps_{element}",
                 "LineOutputVariable",
                 (instrResolution["n_romegas"],),
                 axis="romega",
@@ -202,7 +202,7 @@ class PositionPowerSpectrum(IJob):
         # The symbol of the atom.
         element = self.configuration["atom_selection"]["names"][index]
 
-        self._outputData["pacf_%s" % element] += x
+        self._outputData[f"pacf_{element}"] += x
 
     def finalize(self):
         """
@@ -211,30 +211,27 @@ class PositionPowerSpectrum(IJob):
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         for element, number in nAtomsPerElement.items():
-            self._outputData["pacf_%s" % element][:] /= number
-            self._outputData["pps_%s" % element][:] = get_spectrum(
-                self._outputData["pacf_%s" % element],
+            self._outputData[f"pacf_{element}"][:] /= number
+            self._outputData[f"pps_{element}"][:] = get_spectrum(
+                self._outputData[f"pacf_{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 fft="rfft",
             )
 
         weights = self.configuration["weights"].get_weights()
-        self._outputData["pacf_total"][:] = weight(
-            weights,
+        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        assign_weights(self._outputData, weight_dict, "pacf_%s")
+        assign_weights(self._outputData, weight_dict, "pps_%s")
+        self._outputData["pacf_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "pacf_%s",
-            update_partials=True,
         )
-        self._outputData["pps_total"][:] = weight(
-            weights,
+        self._outputData["pps_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            1,
+            weight_dict,
             "pps_%s",
-            update_partials=True,
         )
 
         self._outputData.write(

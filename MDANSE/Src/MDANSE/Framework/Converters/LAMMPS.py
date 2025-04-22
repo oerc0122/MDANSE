@@ -40,7 +40,6 @@ class LAMMPSTrajectoryFileError(Error):
 
 
 class LAMMPSReader:
-
     def __init__(self, *args, **kwargs):
         self._units = kwargs.get("lammps_units", "real")
         self._timestep = kwargs.get("timestep", 1.0)
@@ -51,7 +50,7 @@ class LAMMPSReader:
     def close(self):
         try:
             self._file.close()
-        except:
+        except Exception:
             LOG.error(f"Could not close file: {self._file}")
 
     def set_output(self, output_trajectory):
@@ -116,7 +115,6 @@ class LAMMPSReader:
 
 
 class LAMMPScustom(LAMMPSReader):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -135,7 +133,6 @@ class LAMMPScustom(LAMMPSReader):
         self._start = 0
 
     def parse_first_step(self, aliases, config):
-
         self._itemsPosition = collections.OrderedDict()
 
         comp = -1
@@ -222,7 +219,7 @@ class LAMMPScustom(LAMMPSReader):
                             )
                     label = str(config["elements"][ty][0])
                     mass = str(config["elements"][ty][1])
-                    name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
+                    name = f"{label}_{idx:d}"
                     try:
                         temp_index = int(temp[0])
                     except ValueError:
@@ -387,7 +384,6 @@ class LAMMPScustom(LAMMPSReader):
 
 
 class LAMMPSxyz(LAMMPSReader):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._full_cell = None
@@ -406,7 +402,6 @@ class LAMMPSxyz(LAMMPSReader):
         self._file = open(filename, "r")
 
     def read_any_step(self):
-
         line = self._file.readline()
         number_of_atoms = int(line)
         line = self._file.readline()
@@ -416,7 +411,6 @@ class LAMMPSxyz(LAMMPSReader):
         atom_types = np.empty(number_of_atoms, dtype=int)
 
         for at_num in range(number_of_atoms):
-
             line = self._file.readline()
 
             if not line:
@@ -433,7 +427,6 @@ class LAMMPSxyz(LAMMPSReader):
         return timestep, atom_types, positions
 
     def parse_first_step(self, aliases, config):
-
         _, atom_types, positions = self.read_any_step()
 
         self._nAtoms = len(atom_types)
@@ -470,7 +463,7 @@ class LAMMPSxyz(LAMMPSReader):
             ty = atom_types[i] - 1
             label = str(config["elements"][ty][0])
             mass = str(config["elements"][ty][1])
-            name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
+            name = f"{label}_{idx:d}"
             self._rankToName[idx] = name
             element_list.append(get_element_from_mapping(aliases, label, mass=mass))
             name_list.append(str(ty + 1))
@@ -527,7 +520,6 @@ class LAMMPSxyz(LAMMPSReader):
 
 
 class LAMMPSh5md(LAMMPSReader):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._charges_fixed = None
@@ -544,7 +536,6 @@ class LAMMPSh5md(LAMMPSReader):
         self._file = h5py.File(filename, "r")
 
     def parse_first_step(self, aliases, config):
-
         try:
             atom_types = self._file["/particles/all/species/value"][0]
         except KeyError:
@@ -562,7 +553,7 @@ class LAMMPSh5md(LAMMPSReader):
         )
         try:
             self._charges_fixed = self._file["/particles/all/charge"][:]
-        except:
+        except Exception:
             pass
 
         full_cell *= measure(1.0, self._length_unit).toval("nm")
@@ -579,7 +570,7 @@ class LAMMPSh5md(LAMMPSReader):
             ty = atom_types[i] - 1
             label = str(config["elements"][ty][0])
             mass = str(config["elements"][ty][1])
-            name = "{:s}_{:d}".format(str(config["elements"][ty][0]), idx)
+            name = f"{label}_{idx:d}"
             self._rankToName[idx] = name
             element_list.append(get_element_from_mapping(aliases, label, mass=mass))
             name_list.append(str(ty + 1))
@@ -632,7 +623,7 @@ class LAMMPSh5md(LAMMPSReader):
         if self._charges_fixed is None:
             try:
                 charge = self._file["/particles/all/charge/value"][index]
-            except:
+            except Exception:
                 pass
             else:
                 self._trajectory.write_charges(

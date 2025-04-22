@@ -29,7 +29,6 @@ from MDANSE.MLogging import LOG
 
 
 class UserSettingsModel(QStandardItemModel):
-
     file_loaded = Signal(str)
 
     def __init__(self, *args, settings_filename: str = "", **kwargs):
@@ -135,7 +134,7 @@ class UserSettingsModel(QStandardItemModel):
                     group.set(item_key, new_value)
                 elif column_number == 2:
                     group.set_comment(item_key, new_value)
-        except:
+        except Exception:
             LOG.warning(
                 f"Could not store {new_value} in group[{group_key}]->[{item_key}]"
             )
@@ -187,7 +186,6 @@ class UserSettingsModel(QStandardItemModel):
 
 
 class SettingsGroup:
-
     def __init__(self, group_name: str) -> None:
         self._name = group_name
         self._settings = {}
@@ -261,9 +259,7 @@ class SettingsGroup:
 
 
 class SettingsFile:
-
     def __init__(self, name, settings_path: str = None):
-
         if settings_path is None:
             settings_path = PLATFORM.application_directory()
         self._top_name = name

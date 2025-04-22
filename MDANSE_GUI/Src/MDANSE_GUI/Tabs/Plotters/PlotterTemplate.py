@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 
 class PlotterTemplate(metaclass=SubclassFactory):
-
     def __init__(self) -> None:
         self._figure = None
         self._axes = {}
@@ -73,21 +72,21 @@ class PlotterTemplate(metaclass=SubclassFactory):
                 best_unit, best_axis = (dataset._axes_units[axis_label], axis_label)
             except KeyError:
                 best_unit, best_axis = dataset.longest_axis()
-            plotlabel = dataset._labels["medium"]
+            _plotlabel = dataset._labels["medium"]
             xaxis_unit = self._plotting_context.get_conversion_factor(best_unit)
             try:
-                conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
+                _conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
                     xaxis_unit
                 )
-            except:
+            except Exception:
                 LOG.warning(f"Could not convert {best_unit} to {xaxis_unit}")
-                conversion_factor = 1.0
+                _conversion_factor = 1.0
 
     def apply_weights(self):
         for dataset_number, dataset in self._datasets:
             try:
                 scale_factor = self._weight_generator(dataset)
-            except:
+            except Exception:
                 scale_factor = 1.0
             self._scale_factors[dataset_number].append([scale_factor])
 
@@ -95,7 +94,7 @@ class PlotterTemplate(metaclass=SubclassFactory):
         for dataset_number, dataset in self._datasets.items():
             try:
                 scale_factor = self._norm_generator(dataset)
-            except:
+            except Exception:
                 scale_factor = 1.0
             self._scale_factors[dataset_number].append([scale_factor])
 
@@ -191,14 +190,14 @@ class PlotterTemplate(metaclass=SubclassFactory):
             return
         try:
             matplotlib_style = colours["style"]
-        except:
+        except Exception:
             pass
         else:
             if matplotlib_style is not None:
                 mpl_style.use(matplotlib_style)
         try:
             bkg_col = colours["background"]
-        except:
+        except Exception:
             pass
         else:
             if bkg_col is not None:
@@ -206,7 +205,7 @@ class PlotterTemplate(metaclass=SubclassFactory):
                     axes.set_facecolor(bkg_col)
         try:
             col_seq = colours["curves"]
-        except:
+        except Exception:
             pass
         else:
             if col_seq is not None:

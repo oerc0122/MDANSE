@@ -32,7 +32,6 @@ from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
 
 
 class InstrumentDetails(QWidget):
-
     instrument_details_changed = Signal(int)
 
     def __init__(self, *args, **kwargs):
@@ -149,7 +148,7 @@ class InstrumentDetails(QWidget):
                 else:
                     widget.setEnabled(True)
             if "axis_2" in name:
-                if not "Circular" in self._current_instrument._qvector_type:
+                if "Circular" not in self._current_instrument._qvector_type:
                     widget.setEnabled(False)
                 else:
                     widget.setEnabled(True)

@@ -58,9 +58,7 @@ def atom_line_slice(keyword: str) -> slice:
 
 
 class MinimalPDBReader:
-
     def __init__(self, filename: str):
-
         self._unit_cell = None
         cell_params = self.find_unit_cell(filename)
         if len(cell_params) == 0:
@@ -69,7 +67,7 @@ class MinimalPDBReader:
             try:
                 ase_atoms = ase_read(filename, format="pdb", index=0)
                 cell = ase_atoms.get_cell()
-            except:
+            except Exception:
                 self.periodic = False
             else:
                 self.periodic = True

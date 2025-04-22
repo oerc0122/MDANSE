@@ -22,7 +22,7 @@ from scipy.signal import correlate
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Mathematics.Arithmetic import weight
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 
 
@@ -148,15 +148,16 @@ class DynamicCoherentStructureFactor(IJob):
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
 
         for pair in self._elementsPairs:
+            pair_str = "".join(map(str, pair))
             self._outputData.add(
-                "f(q,t)_%s%s" % pair,
+                f"f(q,t)_{pair_str}",
                 "SurfaceOutputVariable",
                 (nQShells, self._nFrames),
                 axis="q|time",
                 units="au",
             )
             self._outputData.add(
-                "s(q,f)_%s%s" % pair,
+                f"s(q,f)_{pair_str}",
                 "SurfaceOutputVariable",
                 (nQShells, self._nOmegas),
                 axis="q|omega",
@@ -194,7 +195,7 @@ class DynamicCoherentStructureFactor(IJob):
 
         shell = self.configuration["q_vectors"]["shells"][index]
 
-        if not shell in self.configuration["q_vectors"]["value"]:
+        if shell not in self.configuration["q_vectors"]["value"]:
             return index, None
 
         else:
@@ -236,12 +237,13 @@ class DynamicCoherentStructureFactor(IJob):
         if x is not None:
             n_configs = self.configuration["frames"]["n_configs"]
             for pair in self._elementsPairs:
+                pair_str = "".join(map(str, pair))
                 # F_ab(Q,t) = F_ba(Q,t) this is valid as long as
                 # n_configs is sufficiently large
                 corr = correlate(x[pair[0]], x[pair[1]][:n_configs], mode="valid").T[
                     0
                 ] / (n_configs * x[pair[0]].shape[1])
-                self._outputData["f(q,t)_%s%s" % pair][index, :] += corr.real
+                self._outputData[f"f(q,t)_{pair_str}"][index, :] += corr.real
 
     def finalize(self):
         """
@@ -249,33 +251,35 @@ class DynamicCoherentStructureFactor(IJob):
         """
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
+
+        weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(weights, nAtomsPerElement, 2)
+        assign_weights(self._outputData, weight_dict, "f(q,t)_%s%s")
+        assign_weights(self._outputData, weight_dict, "s(q,f)_%s%s")
         for pair in self._elementsPairs:
+            pair_str = "".join(map(str, pair))
             ni = nAtomsPerElement[pair[0]]
             nj = nAtomsPerElement[pair[1]]
-            self._outputData["f(q,t)_%s%s" % pair][:] /= np.sqrt(ni * nj)
-            self._outputData["s(q,f)_%s%s" % pair][:] = get_spectrum(
-                self._outputData["f(q,t)_%s%s" % pair],
+            extra_scaling = 1.0 / np.sqrt(ni * nj)
+            self._outputData[f"f(q,t)_{pair_str}"].scaling_factor *= extra_scaling
+            self._outputData[f"s(q,f)_{pair_str}"][:] = get_spectrum(
+                self._outputData[f"f(q,t)_{pair_str}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
+            self._outputData[f"s(q,f)_{pair_str}"].scaling_factor *= extra_scaling
 
-        self._outputData["f(q,t)_total"][:] = weight(
-            self.configuration["weights"].get_weights(),
+        self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            2,
+            weight_dict,
             "f(q,t)_%s%s",
-            update_partials=True,
         )
 
-        self._outputData["s(q,f)_total"][:] = weight(
-            self.configuration["weights"].get_weights(),
+        self._outputData["s(q,f)_total"][:] = weighted_sum(
             self._outputData,
-            nAtomsPerElement,
-            2,
+            weight_dict,
             "s(q,f)_%s%s",
-            update_partials=True,
         )
 
         self._outputData.write(

@@ -22,7 +22,6 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class RangeWidget(WidgetBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, layout_type="QGridLayout", **kwargs)
         self.setup_fields(*args, **kwargs)
@@ -95,7 +94,7 @@ class RangeWidget(WidgetBase):
             strval = field.text()
             try:
                 val = self._num_type(strval)
-            except:
+            except Exception:
                 val = self._num_type(self._default_values[n])
             result.append(val)
         return result
