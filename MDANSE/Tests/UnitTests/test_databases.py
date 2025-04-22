@@ -324,7 +324,7 @@ class TestAtomsDatabase(unittest.TestCase):
             ATOMS_DATABASE.save()
             op.assert_called_with(ATOMS_DATABASE._USER_DATABASE, "w")
             dump.assert_called_with(
-                {"properties": self.properties, "atoms": self.data}, ANY
+                {"properties": self.properties, "atoms": self.data}, ANY, indent=4
             )
 
     def test_remove_atom(self):
