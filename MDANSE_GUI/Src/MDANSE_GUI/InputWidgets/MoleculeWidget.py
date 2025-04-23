@@ -61,7 +61,7 @@ class MoleculeWidget(WidgetBase):
             bonds = [
                 (bond[0], bond[1])
                 for bond in traj_bond_list
-                if bond[0] in atom_indices or bond[1] in atom_indices
+                if bond[0] in atom_indices and bond[1] in atom_indices
             ]
             self.mol_dict[mol_name] = {
                 "no_of_molecules": no_of_molecules,
