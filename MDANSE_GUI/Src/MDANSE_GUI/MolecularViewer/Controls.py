@@ -287,12 +287,12 @@ class ViewerControls(QWidget):
     def set_background_colour(self):
         dialog = self._bkg_dialog
         if dialog.isVisible():
-            if dialog.isMaximized():
-                dialog.showMaximized()
-            else:
-                dialog.showNormal()
-            dialog.activateWindow()
+            geometry = dialog.saveGeometry()
+            dialog.previous_geometry = geometry
+            dialog.close()
         else:
+            if hasattr(dialog, "previous_geometry"):
+                dialog.restoreGeometry(dialog.previous_geometry)
             dialog.show()
         dialog.exec()
         if dialog.result() == QColorDialog.DialogCode.Accepted:
