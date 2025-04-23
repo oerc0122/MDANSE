@@ -48,26 +48,23 @@ class MoleculeWidget(WidgetBase):
         traj_bond_list = hdf_traj.chemical_system._bonds
         self.atom_database = hdf_traj.trajectory
         self.mol_dict = {}
-        coords_0 = hdf_traj.trajectory.coordinates(0)
         for mol_name in unique_molecules:
             no_of_molecules = len(hdf_traj.chemical_system._clusters[mol_name])
             atom_indices = hdf_traj.chemical_system._clusters[mol_name][0]
             atom_symbols = [
                 hdf_traj.chemical_system.atom_list[index] for index in atom_indices
             ]
-            coordinates = coords_0[atom_indices]
             unique_atoms, atom_counts = np.unique(atom_symbols, return_counts=True)
             atom_counts = {
                 unique_atoms[n]: atom_counts[n] for n in range(len(unique_atoms))
             }
             bonds = [
-                (coords_0[bond[0]], coords_0[bond[1]])
+                (bond[0], bond[1])
                 for bond in traj_bond_list
                 if bond[0] in atom_indices or bond[1] in atom_indices
             ]
             self.mol_dict[mol_name] = {
                 "no_of_molecules": no_of_molecules,
-                "atom_coordinates": coordinates,
                 "atom_number": atom_counts,
                 "atom_indices": atom_indices,
                 "atom_symbols": atom_symbols,
