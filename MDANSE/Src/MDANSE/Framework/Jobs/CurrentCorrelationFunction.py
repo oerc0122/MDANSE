@@ -13,22 +13,22 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from math import sqrt
-from typing import Optional
 import collections
 import itertools
+from math import sqrt
+from typing import Optional
 
 import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import (
     differentiate,
     get_spectrum,
 )
 from MDANSE.MLogging import LOG
-from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
@@ -37,8 +37,9 @@ class CurrentCorrelationFunctionError(Exception):
 
 
 class CurrentCorrelationFunction(IJob):
-    """Computes the current correlation function for a set of atoms. The
-    transverse and longitudinal current correlation functions are
+    """Computes the current correlation function for a set of atoms.
+
+    The transverse and longitudinal current correlation functions are
     typically used to study the propagation of excitations in disordered
     systems. The longitudinal current is directly related to density
     fluctuations and the transverse current is linked to propagating
@@ -91,7 +92,7 @@ class CurrentCorrelationFunction(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-            }
+            },
         },
     )
     settings["weights"] = (
@@ -112,9 +113,7 @@ class CurrentCorrelationFunction(IJob):
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):
-        """
-        Initialize the input parameters and analysis self variables
-        """
+        """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
         self.numberOfSteps = self.configuration["q_vectors"]["n_shells"]
@@ -168,7 +167,7 @@ class CurrentCorrelationFunction(IJob):
         self._nFrames = self.configuration["frames"]["n_frames"]
         self._elements = self.configuration["atom_selection"]["unique_names"]
         self._elementsPairs = sorted(
-            itertools.combinations_with_replacement(self._elements, 2)
+            itertools.combinations_with_replacement(self._elements, 2),
         )
 
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
@@ -254,23 +253,23 @@ class CurrentCorrelationFunction(IJob):
                 np.mean(
                     all_cells,
                     axis=0,
-                )
+                ),
             )
             self._cell_std = UnitCell(
                 np.std(
                     all_cells,
                     axis=0,
-                )
+                ),
             )
 
     def run_step(self, index: int):
-        """Calculate the current densities for the input q vector
-        shell index.
+        """Calculate the current densities for the input q vector shell index.
 
         Parameters
         ----------
         index : int
             Index of the shell.
+
         """
         shell = self.configuration["q_vectors"]["shells"][index]
 
@@ -278,12 +277,12 @@ class CurrentCorrelationFunction(IJob):
         cell_present = True
         cell_fixed = True
         # loop over the trajectory time steps
-        for i, frame in enumerate(self.configuration["frames"]["value"]):
+        for frame in self.configuration["frames"]["value"]:
             unit_cell = trajectory.unit_cell(frame)
             if unit_cell is None:
                 cell_present = False
             elif not np.allclose(
-                unit_cell._unit_cell, self._average_unit_cell._unit_cell
+                unit_cell._unit_cell, self._average_unit_cell._unit_cell,
             ):
                 cell_fixed = False
             if not cell_present:
@@ -320,17 +319,17 @@ class CurrentCorrelationFunction(IJob):
                 "All q-vectors for this shell have a magnitude "
                 "of zero, longitudinal and transverse currents "
                 "are not well-defined. The current correlation "
-                "for this shell will be set to zero."
+                "for this shell will be set to zero.",
             )
             # if they are all zero we can skip this shell, the
             # results for the longitudinal and transverse current
             # correlation for this shell will be zero
             return index, None
-        elif any(zero):
+        if any(zero):
             LOG.warning(
                 "q-vectors with a magnitude of zero were used, "
                 "longitudinal and transverse currents are "
-                "not well-defined. Skipping these q-vectors."
+                "not well-defined. Skipping these q-vectors.",
             )
 
         qVectors = qVectors[:, non_zero]
@@ -376,7 +375,7 @@ class CurrentCorrelationFunction(IJob):
                         )
 
                 curr = np.einsum(
-                    "ik,ij->ikj", veloc, np.exp(1j * np.dot(coords, qVectors))
+                    "ik,ij->ikj", veloc, np.exp(1j * np.dot(coords, qVectors)),
                 )
                 long = np.einsum(
                     "lj,kj,ikj->ilj",
@@ -401,14 +400,15 @@ class CurrentCorrelationFunction(IJob):
         x : tuple[np.ndarray, np.ndarray]
             A tuple of numpy arrays of the longitudinal and transverse
             currents.
+
         """
         if x is None:
             for at1, at2 in self._elementsPairs:
                 self._outputData[f"j(q,t)_long_{at1}{at2}"][index, :] = np.zeros(
-                    self._nFrames
+                    self._nFrames,
                 )
                 self._outputData[f"j(q,t)_trans_{at1}{at2}"][index, :] = np.zeros(
-                    self._nFrames
+                    self._nFrames,
                 )
             return
 
@@ -416,20 +416,18 @@ class CurrentCorrelationFunction(IJob):
         n_configs = self.configuration["frames"]["n_configs"]
         for at1, at2 in self._elementsPairs:
             corr_l = correlate(rho_l[at1], rho_l[at2][:n_configs], mode="valid")[
-                :, 0, 0
+                :, 0, 0,
             ] / (3 * n_configs * rho_l[at1].shape[2])
             self._outputData[f"j(q,t)_long_{at1}{at2}"][index, :] += corr_l.real
             corr_t = correlate(rho_t[at1], rho_t[at2][:n_configs], mode="valid")[
-                :, 0, 0
+                :, 0, 0,
             ] / (3 * n_configs * rho_t[at1].shape[2])
             self._outputData[f"j(q,t)_trans_{at1}{at2}"][index, :] += corr_t.real
 
     def finalize(self):
-        """Normalize, Fourier transform and write the results out to
-        the MDA files.
-        """
+        """Normalize, Fourier transform and write the results out."""
         self.configuration["q_vectors"]["generator"].write_vectors_to_file(
-            self._outputData
+            self._outputData,
         )
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()

@@ -13,20 +13,20 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from math import sqrt
 import collections
 import itertools
+from math import sqrt
 
 import numpy as np
 from scipy.signal import correlate
 
-from MDANSE.MLogging import LOG
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
-from MDANSE.Framework.QVectors.IQVectors import IQVectors
+from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
@@ -35,10 +35,10 @@ class DynamicCoherentStructureFactorError(Error):
 
 
 class DynamicCoherentStructureFactor(IJob):
-    """
-    Computes the dynamic coherent structure factor S_coh(Q,w) for a set of atoms.
-        It can be compared to experimental data e.g. the energy-integrated, static structure factor S_coh(Q)
-        or the dispersion and intensity of phonons.
+    """Computes the dynamic coherent structure factor S_coh(Q,w) for a set of atoms.
+
+    It can be compared to experimental data e.g. the energy-integrated, static structure factor S_coh(Q)
+    or the dispersion and intensity of phonons.
     """
 
     label = "Dynamic Coherent Structure Factor"
@@ -74,7 +74,7 @@ class DynamicCoherentStructureFactor(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-            }
+            },
         },
     )
     settings["weights"] = (
@@ -95,16 +95,14 @@ class DynamicCoherentStructureFactor(IJob):
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):
-        """
-        Initialize the input parameters and analysis self variables
-        """
+        """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
         self.numberOfSteps = self.configuration["q_vectors"]["n_shells"]
 
         nQShells = self.configuration["q_vectors"]["n_shells"]
         if not isinstance(
-            self.configuration["q_vectors"]["generator"], LatticeQVectors
+            self.configuration["q_vectors"]["generator"], LatticeQVectors,
         ):
             LOG.warning(
                 f"This task should be used with a lattice-based Q vector generator. You have picked {self.configuration['q_vectors']['generator'].__class__}. The results are likely to be incorrect."
@@ -152,8 +150,8 @@ class DynamicCoherentStructureFactor(IJob):
 
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(
-                self.configuration["atom_selection"]["unique_names"], 2
-            )
+                self.configuration["atom_selection"]["unique_names"], 2,
+            ),
         )
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
 
@@ -205,101 +203,97 @@ class DynamicCoherentStructureFactor(IJob):
                 np.mean(
                     all_cells,
                     axis=0,
-                )
+                ),
             )
             self._cell_std = UnitCell(
                 np.std(
                     all_cells,
                     axis=0,
-                )
+                ),
             )
 
-    def run_step(self, index):
-        """
-        Runs a single step of the job.\n
+    def run_step(self, index: int) -> tuple[int, np.ndarray]:
+        """Run the analysis for a single Q shell.
 
-        :Parameters:
-            #. index (int): The index of the step.
-        :Returns:
-            #. index (int): The index of the step.
-            #. rho (np.array): The exponential part of I(k,t)
-        """
+        Parameters
+        ----------
+        index : int
+            index of the Q vector shell
 
+        Returns
+        -------
+        int, np.ndarray
+            shell index, rho density array
+
+        """
         shell = self.configuration["q_vectors"]["shells"][index]
 
         if shell not in self.configuration["q_vectors"]["value"]:
             return index, None
 
-        else:
-            traj = self.configuration["trajectory"]["instance"]
+        traj = self.configuration["trajectory"]["instance"]
 
-            nQVectors = self.configuration["q_vectors"]["value"][shell][
-                "q_vectors"
-            ].shape[1]
+        nQVectors = self.configuration["q_vectors"]["value"][shell][
+            "q_vectors"
+        ].shape[1]
 
-            rho = {}
-            for element in self.configuration["atom_selection"]["unique_names"]:
-                rho[element] = np.zeros(
-                    (self.configuration["frames"]["number"], nQVectors),
-                    dtype=np.complex64,
-                )
+        rho = {}
+        for element in self.configuration["atom_selection"]["unique_names"]:
+            rho[element] = np.zeros(
+                (self.configuration["frames"]["number"], nQVectors),
+                dtype=np.complex64,
+            )
 
-            cell_present = True
-            cell_fixed = True
-            # loop over the trajectory time steps
-            for i, frame in enumerate(self.configuration["frames"]["value"]):
-                unit_cell = traj.unit_cell(frame)
-                if unit_cell is None:
-                    cell_present = False
-                elif not np.allclose(
-                    unit_cell._unit_cell, self._average_unit_cell._unit_cell
-                ):
-                    cell_fixed = False
-                if not cell_present:
+        cell_present = True
+        cell_fixed = True
+        # loop over the trajectory time steps
+        for i, frame in enumerate(self.configuration["frames"]["value"]):
+            unit_cell = traj.unit_cell(frame)
+            if unit_cell is None:
+                cell_present = False
+            elif not np.allclose(
+                unit_cell._unit_cell, self._average_unit_cell._unit_cell,
+            ):
+                cell_fixed = False
+            if not cell_present:
+                qVectors = self.configuration["q_vectors"]["value"][shell][
+                    "q_vectors"
+                ]
+            else:
+                try:
+                    hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
+                except KeyError:
                     qVectors = self.configuration["q_vectors"]["value"][shell][
                         "q_vectors"
                     ]
                 else:
-                    try:
-                        hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
-                    except KeyError:
+                    if hkls is None:
                         qVectors = self.configuration["q_vectors"]["value"][shell][
                             "q_vectors"
                         ]
                     else:
-                        if hkls is None:
-                            qVectors = self.configuration["q_vectors"]["value"][shell][
-                                "q_vectors"
-                            ]
-                        else:
-                            qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
+                        qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
 
-                coords = traj.configuration(frame)["coordinates"]
+            coords = traj.configuration(frame)["coordinates"]
 
-                for element, idxs in self._indicesPerElement.items():
-                    selectedCoordinates = np.take(coords, idxs, axis=0)
-                    rho[element][i, :] = np.sum(
-                        np.exp(1j * np.dot(selectedCoordinates, qVectors)), axis=0
-                    )
-            if not cell_present:
-                LOG.warning(
-                    "You are running the DCSF calculation on a trajectory without periodic boundary conditions."
+            for element, idxs in self._indicesPerElement.items():
+                selectedCoordinates = np.take(coords, idxs, axis=0)
+                rho[element][i, :] = np.sum(
+                    np.exp(1j * np.dot(selectedCoordinates, qVectors)), axis=0,
                 )
-            if not cell_fixed:
-                LOG.warning(
-                    f"The unit cell is VARIABLE with the standard deviation of {self._cell_std}. This analysis should not be used with NPT runs! PLEASE CHECK YOUR RESULTS CAREFULLY."
-                )
+        if not cell_present:
+            LOG.warning(
+                "You are running the DCSF calculation on a trajectory without periodic boundary conditions."
+            )
+        if not cell_fixed:
+            LOG.warning(
+                f"The unit cell is VARIABLE with the standard deviation of {self._cell_std}. This analysis should not be used with NPT runs! PLEASE CHECK YOUR RESULTS CAREFULLY."
+            )
 
-            return index, rho
+        return index, rho
 
-    def combine(self, index, x):
-        """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
-        """
-
+    def combine(self, index: int, x: np.ndarray):
+        """Add partial results to the final array."""
         if x is not None:
             n_configs = self.configuration["frames"]["n_configs"]
             for pair in self._elementsPairs:
@@ -312,11 +306,9 @@ class DynamicCoherentStructureFactor(IJob):
                 self._outputData[f"f(q,t)_{pair_str}"][index, :] += corr.real
 
     def finalize(self):
-        """
-        Finalizes the calculations (e.g. averaging the total term, output files creations ...)
-        """
+        """Apply weights and write out the results."""
         self.configuration["q_vectors"]["generator"].write_vectors_to_file(
-            self._outputData
+            self._outputData,
         )
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
