@@ -28,6 +28,8 @@ from MDANSE.Mathematics.Signal import (
     get_spectrum,
 )
 from MDANSE.MLogging import LOG
+from MDANSE.Framework.QVectors.IQVectors import IQVectors
+from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
 class CurrentCorrelationFunctionError(Exception):
@@ -239,6 +241,28 @@ class CurrentCorrelationFunction(IJob):
 
         self._order = self.configuration["interpolation_order"]["value"]
 
+        self._cell_std = 0.0
+        try:
+            all_cells = [
+                self.configuration["trajectory"]["instance"].unit_cell(frame)._unit_cell
+                for frame in self.configuration["frames"]["value"]
+            ]
+        except TypeError:
+            self._average_unit_cell = None
+        else:
+            self._average_unit_cell = UnitCell(
+                np.mean(
+                    all_cells,
+                    axis=0,
+                )
+            )
+            self._cell_std = UnitCell(
+                np.std(
+                    all_cells,
+                    axis=0,
+                )
+            )
+
     def run_step(self, index: int):
         """Calculate the current densities for the input q vector
         shell index.
@@ -251,8 +275,42 @@ class CurrentCorrelationFunction(IJob):
         shell = self.configuration["q_vectors"]["shells"][index]
 
         trajectory = self.configuration["trajectory"]["instance"]
+        cell_present = True
+        cell_fixed = True
+        # loop over the trajectory time steps
+        for i, frame in enumerate(self.configuration["frames"]["value"]):
+            unit_cell = trajectory.unit_cell(frame)
+            if unit_cell is None:
+                cell_present = False
+            elif not np.allclose(
+                unit_cell._unit_cell, self._average_unit_cell._unit_cell
+            ):
+                cell_fixed = False
+            if not cell_present:
+                qVectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"]
+            else:
+                try:
+                    hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
+                except KeyError:
+                    qVectors = self.configuration["q_vectors"]["value"][shell][
+                        "q_vectors"
+                    ]
+                else:
+                    if hkls is None:
+                        qVectors = self.configuration["q_vectors"]["value"][shell][
+                            "q_vectors"
+                        ]
+                    else:
+                        qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
 
-        qVectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"]
+        if not cell_present:
+            LOG.warning(
+                "You are running the CCF calculation on a trajectory without periodic boundary conditions."
+            )
+        if not cell_fixed:
+            LOG.warning(
+                f"The unit cell is VARIABLE with the standard deviation of {self._cell_std}. This analysis should not be used with NPT runs! PLEASE CHECK YOUR RESULTS CAREFULLY."
+            )
         qVectors2 = np.sum(qVectors**2, axis=0)
 
         zero = qVectors2 == 0
