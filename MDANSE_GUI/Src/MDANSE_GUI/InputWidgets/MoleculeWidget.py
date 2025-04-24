@@ -91,11 +91,13 @@ class MoleculeWidget(WidgetBase):
             tooltip_text = (
                 "A single option can be picked out of all the options listed."
             )
+        self.view_button = button
         self.field.setToolTip(tooltip_text)
         self._field = self.field
         self._layout.addWidget(self.field)
         self._layout.addWidget(button)
         self._configurator = configurator
+        self.valid_changed.connect(self.toggle_button)
         self.default_labels()
         self.update_labels()
         self.updateValue()
@@ -147,6 +149,10 @@ class MoleculeWidget(WidgetBase):
             self._label_text = "ComboWidget"
         if self._tooltip == "":
             self._tooltip = "You only have one option. Choose wisely."
+
+    def toggle_button(self):
+        """Enable the button only if molecules are present."""
+        self.view_button.setEnabled(self.field.count())
 
     def get_widget_value(self) -> Union[str, None]:
         """Return the currently selected molecule name."""
