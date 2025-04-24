@@ -151,7 +151,9 @@ class AtomTransmutationConfigurator(IConfigurator):
                 self.error_status = "Inputted setting not valid - atom index not found in the current system."
                 return
 
-            if element not in traj_config["instance"].atoms_in_database:
+            if (element not in traj_config["instance"].atoms_in_database) and (
+                element not in ATOMS_DATABASE.atoms
+            ):
                 self.error_status = (
                     f"the element {element} is not registered in the database"
                 )
