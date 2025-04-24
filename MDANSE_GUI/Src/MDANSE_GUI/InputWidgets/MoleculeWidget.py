@@ -14,19 +14,24 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-import numpy as np
+from typing import Union
 
+import numpy as np
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QComboBox, QPushButton
-from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
+
 from MDANSE_GUI.InputWidgets.MoleculePreviewWidget import MoleculePreviewWidget
+from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class MoleculeWidget(WidgetBase):
+    """MDANSE input widget for selecting a molecule type in a trajectory."""
+
     def __init__(self, *args, **kwargs):
+        """Populate the combo box with valid molecule names."""
         super().__init__(*args, **kwargs)
-        configurator = kwargs.get("configurator", None)
-        trajectory_configurator = kwargs.get("trajectory_configurator", None)
+        configurator = kwargs.get("configurator")
+        trajectory_configurator = kwargs.get("trajectory_configurator")
         default_option = ""
         if trajectory_configurator is not None:
             option_list = trajectory_configurator[
@@ -34,12 +39,11 @@ class MoleculeWidget(WidgetBase):
             ].chemical_system.unique_molecules()
             if len(option_list) > 0:
                 default_option = option_list[0]
+        elif configurator is None:
+            option_list = kwargs.get("choices", [])
         else:
-            if configurator is None:
-                option_list = kwargs.get("choices", [])
-            else:
-                option_list = configurator.choices
-                default_option = configurator.default
+            option_list = configurator.choices
+            default_option = configurator.default
         traj_config = self._configurator._configurable[
             self._configurator._dependencies["trajectory"]
         ]
@@ -75,10 +79,7 @@ class MoleculeWidget(WidgetBase):
         self.field.addItems(option_list)
         self.field.setCurrentText(default_option)
         self.selected_name = self.field.currentText()
-        if self.selected_name in self.mol_dict.keys():
-            self.selected_mol = self.mol_dict[self.selected_name]
-        else:
-            self.selected_mol = None
+        self.selected_mol = self.mol_dict.get(self.selected_name, None)
         self.field.currentTextChanged.connect(self.updateValue)
         self.field.currentTextChanged.connect(self.molecule_changed)
         button = QPushButton(self._base)
@@ -101,9 +102,7 @@ class MoleculeWidget(WidgetBase):
 
     @Slot()
     def molecule_changed(self):
-        """
-        Change molecule preview and molecule information
-        """
+        """Change molecule preview and molecule information."""
         self.selected_name = self.field.currentText()
         try:
             self.selected_mol = self.mol_dict[self.selected_name]
@@ -111,18 +110,22 @@ class MoleculeWidget(WidgetBase):
             self.selected_mol = None
         else:
             self.window = MoleculePreviewWidget(
-                self._base, self.selected_mol, self.selected_name, self.atom_database
+                self._base,
+                self.selected_mol,
+                self.selected_name,
+                self.atom_database,
             )
 
     @Slot()
     def button_clicked(self):
-        """
-        Opens a window that shows a preview of selected molecule
-        """
+        """Open a window that shows a preview of selected molecule."""
         if self.selected_mol is None:
             return
         self.window = MoleculePreviewWidget(
-            self._base, self.selected_mol, self.selected_name, self.atom_database
+            self._base,
+            self.selected_mol,
+            self.selected_name,
+            self.atom_database,
         )
         if self.window.isVisible():
             self.window.close()
@@ -130,19 +133,24 @@ class MoleculeWidget(WidgetBase):
             self.window.show()
 
     def configure_using_default(self):
-        """This is too complex to have a default value"""
+        """Do nothing in the case of this widget."""
 
     def default_labels(self):
-        """Each Widget should have a default tooltip and label,
+        """Set labels to default values.
+
+        Each Widget should have a default tooltip and label,
         which will be set in this method, unless specific
         values are provided in the settings of the job that
-        is being configured."""
+        is being configured.
+        """
         if self._label_text == "":
             self._label_text = "ComboWidget"
         if self._tooltip == "":
             self._tooltip = "You only have one option. Choose wisely."
 
-    def get_widget_value(self):
+    def get_widget_value(self) -> Union[str, None]:
+        """Return the currently selected molecule name."""
         mol_key = self._field.currentText()
-        if mol_key in self.mol_dict.keys():
+        if mol_key in self.mol_dict:
             return mol_key
+        return None

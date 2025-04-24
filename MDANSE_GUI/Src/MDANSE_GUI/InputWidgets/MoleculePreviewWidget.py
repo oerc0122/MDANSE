@@ -14,19 +14,49 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from qtpy.QtWidgets import QVBoxLayout, QLabel, QDialog
-from qtpy.QtGui import QPixmap, QImage, QFont
+from typing import Any, Union
+
 import rdkit.Chem as chem
-import rdkit.Chem.Draw as draw
 import rdkit.Chem.AllChem as allchem
+import rdkit.Chem.Draw as draw
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from PIL.ImageQt import ImageQt
+from qtpy.QtCore import QObject
+from qtpy.QtGui import QFont, QImage, QPixmap
+from qtpy.QtWidgets import QDialog, QLabel, QVBoxLayout
 
 
 class MoleculePreviewWidget(QDialog):
-    def __init__(self, parent, molecule_information, molecule_name, atom_database):
+    """Shows the structure of a single molecule."""
+
+    def __init__(
+        self,
+        parent: Union[QObject, None],
+        molecule_information: dict[str, Any],
+        molecule_name: str,
+        atom_database: Trajectory,
+        max_atom_limit: int = 300,
+    ):
+        """Create the dialog and set up the widgets.
+
+        Parameters
+        ----------
+        parent : Union[QObject, None]
+            parent in the Qt object hierarchy, optional
+        molecule_information : dict[str, Any]
+            dictionary of collected molecule properies
+        molecule_name : str
+            molecule name as used in MDANSE
+        atom_database : Trajectory
+            trajectory instance, for looking up atom properties
+        max_atom_limit : int,
+            molecules with more atoms than this will not be drawn
+
+        """
         super().__init__(parent)
         self.setWindowTitle("Molecule Preview")
         self.resize(800, 600)
+        self.max_atom_limit = max_atom_limit
         self.axes = []
         self.bond_mapping = {}
         layout = QVBoxLayout(self)
@@ -45,17 +75,19 @@ class MoleculePreviewWidget(QDialog):
         self.show_formula()
 
     def update_text_label(self):
+        """Show the molecule information as text."""
         info_text = f"Molecule name: {self.mol_name}\n"
         for key, value in self.mol_info["atom_number"].items():
             info_text += f"Number of {key} atoms: {value}\n"
         info_text += f"Number of such molecules in trajectory: {self.mol_info['no_of_molecules']}\n"
         self.text_label.setText(info_text)
 
-    def prepare_rdkit_molecule(self):
-        if len(self.mol_info["atom_indices"]) > 300:
+    def prepare_rdkit_molecule(self) -> Union[chem.RWMol, None]:
+        """Create an rdkit molecule from the selected atoms."""
+        if len(self.mol_info["atom_indices"]) > self.max_atom_limit:
             self.image_label.clear()
             self.image_label.setText("Molecule is too large for preview")
-            return
+            return None
         self.image_label.setText("")
         large_molecule = self.atom_database.chemical_system.rdkit_mol
         submolecule = chem.RWMol()
@@ -72,6 +104,7 @@ class MoleculePreviewWidget(QDialog):
         return submolecule
 
     def show_formula(self):
+        """Draw the molecule."""
         submolecule = self.prepare_rdkit_molecule()
         draw_options = draw.MolDrawOptions()
         draw_options.addAtomIndices = True
@@ -81,6 +114,7 @@ class MoleculePreviewWidget(QDialog):
         self.image_label.setPixmap(pixmap)
 
     def filter_bonds(self, selected_atoms: list[int]) -> list[int]:
+        """Find and return only the bonds that appear in the molecule."""
         return [
             key
             for key, pair in self.bond_mapping.items()
@@ -88,6 +122,7 @@ class MoleculePreviewWidget(QDialog):
         ]
 
     def show_formula_with_selection(self, selected_atoms: list[int]):
+        """Draw the formula and highlight the selected atoms and bonds."""
         submolecule = self.prepare_rdkit_molecule()
         optional_bonds = self.filter_bonds(selected_atoms)
         driver = draw.rdMolDraw2D.MolDraw2DCairo(600, 600)
