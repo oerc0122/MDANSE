@@ -21,8 +21,6 @@ from collections.abc import Callable, Sequence
 from typing import Generic, TypeVar, Union
 
 Self = TypeVar("Self", bound="SubclassFactory")
-T = TypeVar("T")
-
 # The Self TypeVar is a typing hint indicating that
 # a method of a class A will be returning an object
 # of type A as well. Since we don't know for which class
