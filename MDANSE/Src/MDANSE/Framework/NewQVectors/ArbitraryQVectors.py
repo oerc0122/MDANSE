@@ -1,13 +1,13 @@
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
 from MDANSE.Framework.NewQVectors.QVector import (
     QVecGen,
     QVecGeneratorProtocol,
     QVectorGenerator,
+    ThreeVector,
 )
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
-from numpy.typing import ArrayLike
 
 
 class ListQVectors(QVectorGenerator):
@@ -15,7 +15,7 @@ class ListQVectors(QVectorGenerator):
 
     Parameters
     ----------
-    qvectors : ArrayLike
+    qvectors : list[ThreeVector]
         Sequence of vectors to return.
     hkl : bool
         Whether vectors are provided in reciprocal lattice units.
@@ -36,8 +36,14 @@ class ListQVectors(QVectorGenerator):
     [2. 0. 5.]
     """
 
+    gui_defaults = {"qvectors": ("VectorList", {"default": "[[0, 0, 0], [1, 1, 1]]"})}
+
     def __init__(
-        self, qvectors: ArrayLike, *, lattice: Optional[UnitCell] = None, **kwargs
+        self,
+        qvectors: list[ThreeVector],
+        *,
+        lattice: Optional[UnitCell] = None,
+        **kwargs,
     ):
         super().__init__(lattice=lattice, **kwargs)
         self.qvectors = np.array(qvectors)
@@ -70,11 +76,22 @@ class GeneratorQVectors(QVectorGenerator):
 
     Parameters
     ----------
-    qvectors : QVecGen | Generator[ArrayLike, int, None]
+    qvectors : QVecGen | Generator[ThreeVector, int, None]
         Generator which returns QVectorData.
     lattice : Optional[UnitCell]
         Lattice in which to generate Q Vectors.
     """
+
+    gui_defaults = {
+        "qvectors": (
+            "StringConfigurator",
+            {
+                "label": "Generator",
+                "default": "module.submodule:generator",
+                "tooltip": "Path/module path to generator function.",
+            },
+        )
+    }
 
     def __init__(
         self,

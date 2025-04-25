@@ -1,16 +1,17 @@
 from collections.abc import Generator, Sequence
 from functools import partial
 from itertools import product as cart_prod
-from typing import Optional, Tuple, TypeVar, Union
+from typing import Optional, Tuple, TypeVar, Union, NewType
 
 import numpy as np
-from MDANSE.Framework.NewQVectors.QVector import QVecGen, QVectorGenerator
+from MDANSE.Framework.NewQVectors.QVector import QVecGen, QVectorGenerator, ThreeVector
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike, NDArray
 
 T = TypeVar("T")
 OneOrThree = Union[T, Tuple[T, T, T]]
 Limits = Tuple[float, float]
+GridSpec = NewType("GridSpec", OneOrThree[OneOrThree])
 
 
 class GridQVectors(QVectorGenerator):
@@ -29,7 +30,7 @@ class GridQVectors(QVectorGenerator):
         - 3x2-array -- start-stop for each dimension, ``step`` = 1.
         - 3x3-array -- start-stop-step for each dimension.
 
-    origin : ArrayLike
+    origin : ThreeVector
         Origin of grid vectors.
     hkl : bool
         Whether grid is defined in reciprocal lattice units.
@@ -63,10 +64,54 @@ class GridQVectors(QVectorGenerator):
     [1. 1. 1.]
     """
 
+    gui_defaults = {
+        "grid_u": (
+            "RangeConfigurator",
+            {
+                "label": "Grid U",
+                "tooltip": "Set the extent and step of the grid.",
+                "valueType": float,
+            },
+        ),
+        "grid_v": (
+            "RangeConfigurator",
+            {
+                "label": "Grid V",
+                "tooltip": "Set the extent and step of the grid.",
+                "valueType": float,
+            },
+        ),
+        "grid_w": (
+            "RangeConfigurator",
+            {
+                "label": "Grid W",
+                "tooltip": "Set the extent and step of the grid.",
+                "valueType": float,
+            },
+        ),
+        "origin": (
+            "VectorConfigurator",
+            {
+                "label": "Origin",
+                "valueType": float,
+                "notNull": False,
+                "default": [0, 0, 0],
+                "tooltip": "Set the origin of the grid",
+            },
+        ),
+        "hkl": (
+            "BooleanConfigurator",
+            {
+                "label": "In reciprocal lattice",
+                "tooltip": "Whether parameters are defined in the basis of the reciprocal lattice or absolute HKL coordinates.",
+            },
+        ),
+    }
+
     def __init__(
         self,
-        ranges: OneOrThree[OneOrThree],
-        origin: ArrayLike = [0, 0, 0],
+        ranges: GridSpec,
+        origin: ThreeVector = [0, 0, 0],
         *,
         lattice: Optional[UnitCell] = None,
         **kwargs,

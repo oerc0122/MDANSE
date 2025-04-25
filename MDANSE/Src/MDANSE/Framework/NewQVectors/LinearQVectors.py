@@ -1,8 +1,13 @@
 import itertools
-from typing import Optional, Sequence, Tuple, Union, overload
+from typing import Optional, Sequence, Union, overload
 
 import numpy as np
-from MDANSE.Framework.NewQVectors.QVector import QVecGen, QVectorData, QVectorGenerator
+from MDANSE.Framework.NewQVectors.QVector import (
+    QVecGen,
+    QVectorData,
+    QVectorGenerator,
+    ThreeVector,
+)
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike
 
@@ -12,13 +17,13 @@ class LinearQVectors(QVectorGenerator):
 
     Parameters
     ----------
-    direction : ArrayLike
+    direction : ThreeVector
         Direction to advance.
     q_step : Optional[float]
         Length of each step in direction.
 
         If ``None`` will default to the magnitude of `direction`.
-    q_start : ArrayLike
+    q_start : ThreeVector
         Intitial point to start path.
     hkl : bool
         Whether coordinates are expressed in reciprocal lattice units.
@@ -39,11 +44,48 @@ class LinearQVectors(QVectorGenerator):
     Generates an infinite set of Q-Vectors starting from the initial point.
     """
 
+    gui_defaults = {
+        "direction": (
+            "VectorConfigurator",
+            {
+                "label": "Direction",
+                "valueType": float,
+                "notNull": True,
+                "default": [1, 0, 0],
+                "tooltip": "Direction of vector in space.",
+            },
+        ),
+        "q_step": (
+            "OptionalFloatConfigurator",
+            {
+                "label": "Q Step",
+                "mini": 1e-9,
+                "tooltip": "Length of step between each vector.",
+            },
+        ),
+        "q_start": (
+            "VectorConfigurator",
+            {
+                "label": "Origin",
+                "valueType": float,
+                "default": [0, 0, 0],
+                "tooltip": "Origin of line in space.",
+            },
+        ),
+        "hkl": (
+            "BooleanConfigurator",
+            {
+                "label": "In reciprocal lattice",
+                "tooltip": "Whether parameters are defined in the basis of the reciprocal lattice or absolute HKL coordinates.",
+            },
+        ),
+    }
+
     def __init__(
         self,
-        direction: ArrayLike,
+        direction: ThreeVector,
         q_step: Optional[float] = None,
-        q_start: ArrayLike = np.array([0.0, 0.0, 0.0]),
+        q_start: ThreeVector = np.array([0.0, 0.0, 0.0]),
         *,
         lattice: Optional[UnitCell] = None,
         **kwargs,
@@ -98,9 +140,9 @@ class PathSegmentQVectors(LinearQVectors):
 
     Parameters
     ----------
-    q_start : ArrayLike
+    q_start : ThreeVector
         Start point of path.
-    q_end : ArrayLike
+    q_end : ThreeVector
         End point of path.
     q_step : Optional[float]
         Length of step.
@@ -133,11 +175,62 @@ class PathSegmentQVectors(LinearQVectors):
     [1. 0. 0.]
     """
 
+    gui_defaults = {
+        "q_start": (
+            "VectorConfigurator",
+            {
+                "label": "Q Start",
+                "valueType": float,
+                "default": [0, 0, 0],
+                "tooltip": "Origin of line-segment in space.",
+            },
+        ),
+        "q_end": (
+            "VectorConfigurator",
+            {
+                "label": "Q End",
+                "valueType": float,
+                "default": [1, 0, 0],
+                "tooltip": "End-point of line-segment in space.",
+            },
+        ),
+        "q_step": (
+            "OptionalFloatConfigurator",
+            {
+                "label": "Q Step",
+                "mini": 1e-9,
+                "tooltip": "Length of steps between start- and end-points.\n\nMutually exclusive with `steps`.",
+            },
+        ),
+        "steps": (
+            "OptionalFloatConfigurator",
+            {
+                "label": "Steps",
+                "mini": 1,
+                "tooltip": "Number of steps betwene start- and end-points.\n\nMutually exclusive with `Q Step`",
+            },
+        ),
+        "include_end": (
+            "BooleanConfigurator",
+            {
+                "label": "Include end-point.",
+                "tooltip": "Whether range is to be considered in- or exclusive.",
+            },
+        ),
+        "hkl": (
+            "BooleanConfigurator",
+            {
+                "label": "In reciprocal lattice",
+                "tooltip": "Whether parameters are defined in the basis of the reciprocal lattice or absolute HKL coordinates.",
+            },
+        ),
+    }
+
     @overload
     def __init__(
         self,
-        q_start: ArrayLike,
-        q_end: ArrayLike,
+        q_start: ThreeVector,
+        q_end: ThreeVector,
         *,
         q_step: float,
         include_end: bool,
@@ -146,8 +239,8 @@ class PathSegmentQVectors(LinearQVectors):
     @overload
     def __init__(
         self,
-        q_start: ArrayLike,
-        q_end: ArrayLike,
+        q_start: ThreeVector,
+        q_end: ThreeVector,
         *,
         steps: int,
         include_end: bool,
@@ -156,8 +249,8 @@ class PathSegmentQVectors(LinearQVectors):
 
     def __init__(
         self,
-        q_start: ArrayLike = [0, 0, 0],
-        q_end: ArrayLike = [1, 0, 0],
+        q_start: ThreeVector = [0, 0, 0],
+        q_end: ThreeVector = [1, 0, 0],
         *,
         q_step: Optional[float] = None,
         steps: Optional[int] = None,
@@ -202,12 +295,12 @@ class LatticeLinearQVectors(LinearQVectors):
     ----------
     lattice : UnitCell
         Lattice in which to generate Q-Vectors.
-    direction : ArrayLike
+    direction : ThreeVector
         Vector over which to iterate.
     q_step : float
         Length of step in Q, if not specified will
         be derived from the magnitude of ``direction``.
-    q_start : ArrayLike
+    q_start : ThreeVector
         Origin point for line.
 
     Examples
@@ -223,12 +316,49 @@ class LatticeLinearQVectors(LinearQVectors):
     QVectorData(q=array([0.4, 0. , 0. ]), mod_q=0.4, hkl=array([2., 0., 0.]), hkl_exact=array([2., 0., 0.]))
     """
 
+    gui_defaults = {
+        "direction": (
+            "VectorConfigurator",
+            {
+                "label": "Direction",
+                "valueType": float,
+                "notNull": True,
+                "default": [1, 0, 0],
+                "tooltip": "Direction of line in space.",
+            },
+        ),
+        "q_step": (
+            "OptionalFloatConfigurator",
+            {
+                "label": "Q Step",
+                "mini": 1e-9,
+                "tooltip": "Length of each step.\n\nIf unspecified, the magnitude of `direction` will be used.",
+            },
+        ),
+        "q_start": (
+            "VectorConfigurator",
+            {
+                "label": "Q Start",
+                "valueType": float,
+                "default": [0, 0, 0],
+                "tooltip": "Origin of line in space.",
+            },
+        ),
+        "hkl": (
+            "BooleanConfigurator",
+            {
+                "label": "In reciprocal lattice",
+                "tooltip": "Whether parameters are defined in the basis of the reciprocal lattice or absolute HKL coordinates.",
+            },
+        ),
+    }
+
     def __init__(
         self,
         lattice: UnitCell,
-        direction: ArrayLike,
+        direction: ThreeVector,
         q_step: float = None,
-        q_start: ArrayLike = np.array([0.0, 0.0, 0.0]),
+        q_start: ThreeVector = np.array([0.0, 0.0, 0.0]),
         **kwargs,
     ):
         super().__init__(
@@ -278,6 +408,43 @@ class PathLinearQVectors(QVectorGenerator):
     --------
     PathSegmentQVectors : Implementation of generator.
     """
+
+    gui_defaults = {
+        "k_pts": (
+            "VectorList",
+            {
+                "label": "K Points",
+                "tooltip": "Path segment end-points on the path that the q-vectors will follow.",
+                "n_rows": 3,
+            },
+        ),
+        "q_step": (
+            "OptionalFloatConfigurator",
+            {
+                "label": "Q Step",
+                "tooltip": "Fixed step length between points.",
+            },
+        ),
+        "steps": (
+            "StringConfigurator",
+            {
+                "label": "Number of steps.",
+                "tooltip": "Number of steps in each segment.",
+            },
+        ),
+        "include_end": ("BooleanConfigurator", {}),
+        "hkl": (
+            "BooleanConfigurator",
+            {
+                "label": "In reciprocal lattice",
+                "tooltip": (
+                    "Whether parameters are defined in the basis "
+                    "of the reciprocal lattice or "
+                    "absolute HKL coordinates."
+                ),
+            },
+        ),
+    }
 
     @overload
     def __init__(
