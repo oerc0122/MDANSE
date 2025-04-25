@@ -15,7 +15,7 @@
 #
 import os
 import traceback
-from pathlib import PurePath
+from pathlib import Path
 
 import numpy as np
 from MDANSE.Framework.Jobs.IJob import IJob
@@ -172,9 +172,9 @@ class Action(QWidget):
         self._job_instance = IJob()
         self._input_trajectory = trajectory
         if self._input_trajectory is not None:
-            self._default_path = PurePath(os.path.split(self._input_trajectory)[0])
+            self._default_path = Path(self._input_trajectory).parent
         else:
-            self._default_path = PurePath(os.path.abspath("."))
+            self._default_path = Path().absolute()
         if self._job_name is not None:
             self._parent_tab.set_path(self._job_name, str(self._default_path))
 
@@ -206,18 +206,16 @@ class Action(QWidget):
         """
         LOG.debug(
             "Old job type %s, new job type %s",
-            self._job_instance.__class__.__name__,
+            type(self._job_instance).__name__,
             job_name,
         )
-        if self._job_instance.__class__.__name__ != job_name:
+        if type(self._job_instance).__name__ != job_name:
             self.clear_panel()
             self._has_been_initialised = False
 
             self._job_name = job_name
-            if self._default_path is None or PurePath(self._default_path) == PurePath(
-                os.path.abspath(".")
-            ):
-                self._default_path = str(PurePath(self._parent_tab.get_path(job_name)))
+            if self._default_path is None or Path(self._default_path).samefile(Path()):
+                self._default_path = str(Path(self._parent_tab.get_path(job_name)))
             try:
                 job_instance = IJob.create(job_name)
             except ValueError as e:
@@ -423,11 +421,9 @@ class Action(QWidget):
         try:
             _cname = self._job_name
         except Exception:
-            currentpath = PurePath(os.path.abspath("."))
+            currentpath = Path().absolute()
         else:
-            currentpath = PurePath(
-                self._parent_tab.get_path(self._job_name + "_script")
-            )
+            currentpath = Path(self._parent_tab.get_path(self._job_name + "_script"))
         result, ftype = QFileDialog.getSaveFileName(
             self,
             "Save job as a Python script",
@@ -436,7 +432,7 @@ class Action(QWidget):
         )
         if result == "":
             return None
-        path = PurePath(os.path.split(result)[0])
+        path = Path(result).parent
         try:
             _cname = self._job_name
         except Exception:
