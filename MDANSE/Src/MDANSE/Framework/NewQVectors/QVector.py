@@ -1,14 +1,16 @@
 import itertools
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Generator, Iterator
+from abc import abstractmethod
+from collections.abc import Callable, Generator, Iterable, Iterator
 from dataclasses import dataclass
 from functools import singledispatchmethod
-from typing import Optional, Tuple, TypeVar
+from typing import NewType, Optional, Tuple
 
 import numpy as np
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike, NDArray
+
+ThreeVector = NewType("ThreeVector", ArrayLike)
 
 
 @dataclass
@@ -22,7 +24,7 @@ class QVectorData:
     hkl: Optional[NDArray[int]]
     hkl_exact: Optional[NDArray[float]]
 
-    def __init__(self, q: ArrayLike, lattice: Optional[UnitCell] = None):
+    def __init__(self, q: ThreeVector, lattice: Optional[UnitCell] = None):
         self.q = np.array(q, dtype=float)
         self.mod_q = np.linalg.norm(q)
 
@@ -37,12 +39,12 @@ class QVectorData:
         return np.allclose(self.q, other.q)
 
     @classmethod
-    def from_hkl(cls, hkl: ArrayLike, lattice: UnitCell):
+    def from_hkl(cls, hkl: ThreeVector, lattice: UnitCell):
         q = np.dot(lattice.inverse, hkl)
         return cls(q, lattice)
 
     @classmethod
-    def from_q(cls, q: ArrayLike, lattice: Optional[UnitCell] = None):
+    def from_q(cls, q: ThreeVector, lattice: Optional[UnitCell] = None):
         return cls(q, lattice)
 
 
@@ -107,6 +109,8 @@ class QVectorGenerator(metaclass=SubclassFactory):
         n : int
             Number of Q-Vectors to generate.
         """
+        if n is None:
+            raise ValueError("n cannot be None")
         return itertools.islice(self.generate(), n)
 
     def generate(
@@ -141,6 +145,28 @@ class QVectorGenerator(metaclass=SubclassFactory):
             vectors = filter(lambda qvec: radius[0] < qvec.q < radius[1], vectors)
 
         yield from vectors
+
+    @abstractmethod
+    def shells(self, shells: Iterable[tuple[float, float]], n_per: int, lattice: Optional[UnitCell] = None) -> QVecGen:
+        """Underlying specific Q-Vector generator.
+
+        Parameters
+        ----------
+        lattice : Optional[UnitCell]
+            Lattice to generate data in.
+
+        Yields
+        ------
+        QVectorData
+            Q-Points in regime.
+        """
+        for mini, maxi in shells:
+            yield from itertools.islice(
+                filter(
+                    lambda x: mini < x.mod_q < maxi, self._generate(lattice=lattice)
+                ),
+                n_per,
+            )
 
     @abstractmethod
     def _generate(self, lattice: Optional[UnitCell] = None) -> QVecGen:

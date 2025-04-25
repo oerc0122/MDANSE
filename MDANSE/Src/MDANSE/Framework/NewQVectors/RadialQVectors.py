@@ -4,8 +4,13 @@ from math import ceil
 from typing import Optional, Union
 
 import numpy as np
-from MDANSE.Framework.NewQVectors.QVector import QVecGen, QVectorData, QVectorGenerator
-from MDANSE.Mathematics.Geometry import random_points_on_sphere
+from MDANSE.Framework.NewQVectors.QVector import (
+    QVecGen,
+    QVectorData,
+    QVectorGenerator,
+    ThreeVector,
+)
+from MDANSE.Mathematics.Geometry import random_points_on_circle, random_points_on_sphere
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from numpy.typing import ArrayLike
 
@@ -17,7 +22,7 @@ class SphericalQVectors(QVectorGenerator):
     ----------
     radius : float
         Radius of sphere on which to generate **Q**-vectors.
-    centre : ArrayLike
+    centre : ThreeVector
         Origin of sphere.
     seed : Optional[int]
         Random seed for generation of points.
@@ -79,7 +84,7 @@ class SphericalQVectors(QVectorGenerator):
     def __init__(
         self,
         radius: float,
-        centre: ArrayLike = np.array([0.0, 0.0, 0.0]),
+        centre: ThreeVector = np.array([0.0, 0.0, 0.0]),
         *,
         seed: Optional[int] = None,
         lattice: Optional[UnitCell] = None,
@@ -185,7 +190,7 @@ class LatticeSphericalQVectors(QVectorGenerator):
         Lattice in which to generate Q-Vectors.
     q_radius : float
         Radius in which to generate vectors.
-    centre : ArrayLike
+    centre : ThreeVector
         Origin with which to compare data.
     hkl : bool
         Whether ``centre`` is specified in reciprocal lattice units
@@ -245,7 +250,7 @@ class LatticeSphericalQVectors(QVectorGenerator):
         self,
         lattice: UnitCell,
         q_radius: float,
-        _centre: ArrayLike = [0, 0, 0],
+        _centre: ThreeVector = [0, 0, 0],
         **kwargs,
     ):
         self.centre = np.array(_centre, dtype=float)
@@ -331,9 +336,9 @@ class CircularQVectors(QVectorGenerator):
     ----------
     radius : float
         Radius of circle to generate.
-    axis : ArrayLike
+    axis : ThreeVector
         Pricipal axis of circle.
-    centre : ArrayLike
+    centre : ThreeVector
         Centre of circle in Q-space.
     seed : Optional[int]
         Random seed for generation.
@@ -355,11 +360,53 @@ class CircularQVectors(QVectorGenerator):
     QVectorData(q=array([ 0.        , -1.6466193 ,  1.13518495]), mod_q=2.0, hkl=None, hkl_exact=None)
     """
 
+    gui_defaults = {
+        "radius": (
+            "FloatConfigurator",
+            {
+                "label": "Radius",
+                "mini": 0.01,
+                "default": 1.0,
+                "tooltip": "Radius of disc in which vectors are generated.",
+            },
+        ),
+        "axis": (
+            "VectorConfigurator",
+            {
+                "label": "Axis",
+                "valueType": float,
+                "notNull": True,
+                "default": [1, 0, 0],
+                "tooltip": "Principal axis of disc to generate vectors on.",
+            },
+        ),
+        "centre": (
+            "VectorConfigurator",
+            {
+                "label": "Centre",
+                "valueType": float,
+                "default": [0, 0, 0],
+                "tooltip": "Origin of disc.",
+            },
+        ),
+        "seed": (
+            "IntegerConfigurator",
+            {"label": "Random Seed", "tooltip": "Random seed for sampling."},
+        ),
+        "hkl": (
+            "BooleanConfigurator",
+            {
+                "label": "In reciprocal lattice",
+                "tooltip": "Whether parameters are defined in the basis of the reciprocal lattice or absolute HKL coordinates.",
+            },
+        ),
+    }
+
     def __init__(
         self,
         radius: float,
-        axis: ArrayLike,
-        centre: ArrayLike = np.array([0.0, 0.0, 0.0]),
+        axis: ThreeVector,
+        centre: ThreeVector = np.array([0.0, 0.0, 0.0]),
         *,
         seed: Optional[int] = None,
         lattice: Optional[UnitCell] = None,
