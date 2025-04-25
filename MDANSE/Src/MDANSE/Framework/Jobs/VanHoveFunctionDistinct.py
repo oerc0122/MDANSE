@@ -116,7 +116,7 @@ def van_hove_distinct(
     for type1 in unique_types:
         type_indices[type1] = np.where(symbolindex == type1)
 
-    all_distances = distance_array_2D(scaleconfig_t0, scaleconfig_t1, cell.T)
+    all_distances = distance_array_2D(scaleconfig_t0, scaleconfig_t1, cell)
 
     bins = ((all_distances - rmin) / dr).astype(int)
 

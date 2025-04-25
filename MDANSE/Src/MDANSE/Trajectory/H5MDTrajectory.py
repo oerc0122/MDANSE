@@ -453,9 +453,7 @@ class H5MDTrajectory:
             comp = 0
             for i in range(first, last, step):
                 direct_cell = self.unit_cell(i).direct
-                real_coordinates[comp, :] = np.matmul(
-                    direct_cell, box_coordinates[comp, :]
-                )
+                real_coordinates[comp, :] = box_coordinates[comp, :] @ direct_cell
                 comp += 1
             return real_coordinates
         else:
