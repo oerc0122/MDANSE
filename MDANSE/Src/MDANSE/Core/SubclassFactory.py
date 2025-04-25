@@ -13,14 +13,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+
+from typing import TypeVar
 import difflib
-from abc import ABC
-from collections.abc import Callable, Sequence
-from typing import Dict, Generic, TypeVar, Union
+
 
 Self = TypeVar("Self", bound="SubclassFactory")
-T = TypeVar("T")
-
 # The Self TypeVar is a typing hint indicating that
 # a method of a class A will be returning an object
 # of type A as well. Since we don't know for which class
