@@ -138,6 +138,7 @@ class Action(QWidget):
         self._trajectory_configurator = None
         self._settings = None
         self._job_name = None
+        self._job_instance = IJob()
         self._use_preview = use_preview
         self._current_instrument = None
         self._has_been_initialised = False
@@ -165,6 +166,10 @@ class Action(QWidget):
         trajectory : str or None
             The path and filename of the trajectory
         """
+        if trajectory == self._input_trajectory:
+            LOG.debug("Skipping set_trajectory, no change.")
+            return
+        self._job_instance = IJob()
         self._input_trajectory = trajectory
         if self._input_trajectory is not None:
             self._default_path = PurePath(os.path.split(self._input_trajectory)[0])
@@ -199,26 +204,34 @@ class Action(QWidget):
         job_name : str
             The job name.
         """
-        self.clear_panel()
-        self._has_been_initialised = False
+        LOG.debug(
+            "Old job type %s, new job type %s",
+            self._job_instance.__class__.__name__,
+            job_name,
+        )
+        if self._job_instance.__class__.__name__ != job_name:
+            self.clear_panel()
+            self._has_been_initialised = False
 
-        self._job_name = job_name
-        if self._default_path is None or PurePath(self._default_path) == PurePath(
-            os.path.abspath(".")
-        ):
-            self._default_path = str(PurePath(self._parent_tab.get_path(job_name)))
-        try:
-            job_instance = IJob.create(job_name)
-        except ValueError as e:
-            LOG.debug(
-                f"Failed to create IJob {job_name};\n"
-                f"reason {e};\n"
-                f"traceback {traceback.format_exc()}"
-            )
-            return
-        job_instance.build_configuration()
-        settings = job_instance.settings
-        self._job_instance = job_instance
+            self._job_name = job_name
+            if self._default_path is None or PurePath(self._default_path) == PurePath(
+                os.path.abspath(".")
+            ):
+                self._default_path = str(PurePath(self._parent_tab.get_path(job_name)))
+            try:
+                job_instance = IJob.create(job_name)
+            except ValueError as e:
+                LOG.debug(
+                    f"Failed to create IJob {job_name};\n"
+                    f"reason {e};\n"
+                    f"traceback {traceback.format_exc()}"
+                )
+                return
+            job_instance.build_configuration()
+            settings = job_instance.settings
+            self._job_instance = job_instance
+        else:
+            settings = self._job_instance.settings
         LOG.info(f"Configuration {job_instance.configuration}")
         if "trajectory" in settings.keys():
             if self._input_trajectory is None:
