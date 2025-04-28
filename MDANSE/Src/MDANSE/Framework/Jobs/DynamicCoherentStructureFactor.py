@@ -102,7 +102,8 @@ class DynamicCoherentStructureFactor(IJob):
 
         nQShells = self.configuration["q_vectors"]["n_shells"]
         if not isinstance(
-            self.configuration["q_vectors"]["generator"], LatticeQVectors,
+            self.configuration["q_vectors"]["generator"],
+            LatticeQVectors,
         ):
             LOG.warning(
                 f"This task should be used with a lattice-based Q vector generator. You have picked {self.configuration['q_vectors']['generator'].__class__}. The results are likely to be incorrect."
@@ -150,7 +151,8 @@ class DynamicCoherentStructureFactor(IJob):
 
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(
-                self.configuration["atom_selection"]["unique_names"], 2,
+                self.configuration["atom_selection"]["unique_names"],
+                2,
             ),
         )
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
@@ -233,9 +235,9 @@ class DynamicCoherentStructureFactor(IJob):
 
         traj = self.configuration["trajectory"]["instance"]
 
-        nQVectors = self.configuration["q_vectors"]["value"][shell][
-            "q_vectors"
-        ].shape[1]
+        nQVectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"].shape[
+            1
+        ]
 
         rho = {}
         for element in self.configuration["atom_selection"]["unique_names"]:
@@ -252,13 +254,12 @@ class DynamicCoherentStructureFactor(IJob):
             if unit_cell is None:
                 cell_present = False
             elif not np.allclose(
-                unit_cell._unit_cell, self._average_unit_cell._unit_cell,
+                unit_cell._unit_cell,
+                self._average_unit_cell._unit_cell,
             ):
                 cell_fixed = False
             if not cell_present:
-                qVectors = self.configuration["q_vectors"]["value"][shell][
-                    "q_vectors"
-                ]
+                qVectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"]
             else:
                 try:
                     hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
@@ -279,7 +280,8 @@ class DynamicCoherentStructureFactor(IJob):
             for element, idxs in self._indicesPerElement.items():
                 selectedCoordinates = np.take(coords, idxs, axis=0)
                 rho[element][i, :] = np.sum(
-                    np.exp(1j * np.dot(selectedCoordinates, qVectors)), axis=0,
+                    np.exp(1j * np.dot(selectedCoordinates, qVectors)),
+                    axis=0,
                 )
         if not cell_present:
             LOG.warning(

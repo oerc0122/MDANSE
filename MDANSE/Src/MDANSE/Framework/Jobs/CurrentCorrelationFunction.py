@@ -276,31 +276,32 @@ class CurrentCorrelationFunction(IJob):
         trajectory = self.configuration["trajectory"]["instance"]
         cell_present = True
         cell_fixed = True
+        num_frames = len(self.configuration["frames"]["value"])
         # loop over the trajectory time steps
         for frame in self.configuration["frames"]["value"]:
             unit_cell = trajectory.unit_cell(frame)
             if unit_cell is None:
                 cell_present = False
             elif not np.allclose(
-                unit_cell._unit_cell, self._average_unit_cell._unit_cell,
+                unit_cell._unit_cell,
+                self._average_unit_cell._unit_cell,
             ):
                 cell_fixed = False
-            if not cell_present:
+        if not cell_present:
+            qVectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"]
+            cell_fixed = False
+        else:
+            try:
+                hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
+            except KeyError:
                 qVectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"]
             else:
-                try:
-                    hkls = self.configuration["q_vectors"]["value"][shell]["hkls"]
-                except KeyError:
+                if hkls is None:
                     qVectors = self.configuration["q_vectors"]["value"][shell][
                         "q_vectors"
                     ]
                 else:
-                    if hkls is None:
-                        qVectors = self.configuration["q_vectors"]["value"][shell][
-                            "q_vectors"
-                        ]
-                    else:
-                        qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
+                    qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
 
         if not cell_present:
             LOG.warning(
@@ -335,6 +336,13 @@ class CurrentCorrelationFunction(IJob):
         qVectors = qVectors[:, non_zero]
         qVectors2 = qVectors2[non_zero]
         nQVectors = qVectors.shape[1]
+        if not cell_fixed:
+            hkls = self.configuration["q_vectors"]["value"][shell]["hkls"][:, non_zero]
+            qVectors = np.empty((3, nQVectors, num_frames))
+            for nf, frame in enumerate(self.configuration["frames"]["value"]):
+                unit_cell = trajectory.unit_cell(frame)
+                qVectors[:, :, nf] = IQVectors.hkl_to_qvectors(hkls, unit_cell)
+            qVectors2 = np.sum(qVectors**2, axis=0)
 
         rho_l = {}
         rho_t = {}
@@ -374,16 +382,38 @@ class CurrentCorrelationFunction(IJob):
                             dt=self.configuration["frames"]["time_step"],
                         )
 
-                curr = np.einsum(
-                    "ik,ij->ikj", veloc, np.exp(1j * np.dot(coords, qVectors)),
-                )
-                long = np.einsum(
-                    "lj,kj,ikj->ilj",
-                    qVectors,
-                    qVectors / qVectors2,
-                    curr,
-                )
-                trans = curr - long
+                # print(f"coords/velocity shape {coords.shape}")
+                # print(f"qVectors shape {qVectors.shape}")
+                # print(f"dot_product shape {np.dot(coords, qVectors).shape}")
+                # import sys
+                # sys.exit(0)
+                if len(qVectors.shape) > 2:
+                    temp_dotprod = np.einsum("ij,jki->ik", coords, qVectors)
+                    curr = np.einsum(
+                        "ik,ij->ikj",
+                        veloc,
+                        np.exp(1j * temp_dotprod),
+                    )
+                    long = np.einsum(
+                        "lji,kji,ikj->ilj",
+                        qVectors,
+                        qVectors / qVectors2,
+                        curr,
+                    )
+                    trans = curr - long
+                else:
+                    curr = np.einsum(
+                        "ik,ij->ikj",
+                        veloc,
+                        np.exp(1j * np.dot(coords, qVectors)),
+                    )
+                    long = np.einsum(
+                        "lj,kj,ikj->ilj",
+                        qVectors,
+                        qVectors / qVectors2,
+                        curr,
+                    )
+                    trans = curr - long
 
                 rho_l[element] += long
                 rho_t[element] += trans
@@ -416,11 +446,15 @@ class CurrentCorrelationFunction(IJob):
         n_configs = self.configuration["frames"]["n_configs"]
         for at1, at2 in self._elementsPairs:
             corr_l = correlate(rho_l[at1], rho_l[at2][:n_configs], mode="valid")[
-                :, 0, 0,
+                :,
+                0,
+                0,
             ] / (3 * n_configs * rho_l[at1].shape[2])
             self._outputData[f"j(q,t)_long_{at1}{at2}"][index, :] += corr_l.real
             corr_t = correlate(rho_t[at1], rho_t[at2][:n_configs], mode="valid")[
-                :, 0, 0,
+                :,
+                0,
+                0,
             ] / (3 * n_configs * rho_t[at1].shape[2])
             self._outputData[f"j(q,t)_trans_{at1}{at2}"][index, :] += corr_t.real
 
