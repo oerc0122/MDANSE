@@ -382,12 +382,7 @@ class CurrentCorrelationFunction(IJob):
                             dt=self.configuration["frames"]["time_step"],
                         )
 
-                # print(f"coords/velocity shape {coords.shape}")
-                # print(f"qVectors shape {qVectors.shape}")
-                # print(f"dot_product shape {np.dot(coords, qVectors).shape}")
-                # import sys
-                # sys.exit(0)
-                if len(qVectors.shape) > 2:
+                if qVectors.ndim > 2:
                     temp_dotprod = np.einsum("ij,jki->ik", coords, qVectors)
                     curr = np.einsum(
                         "ik,ij->ikj",
