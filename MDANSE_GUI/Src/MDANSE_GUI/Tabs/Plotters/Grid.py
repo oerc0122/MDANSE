@@ -15,7 +15,7 @@
 #
 import contextlib
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
@@ -35,6 +35,8 @@ class Grid(Plotter):
         super().__init__()
         self._figure = None
         self._backup_limits = []
+        self._active_curves = []
+        self._backup_curves = []
         self._plot_limit = 8
 
     def slider_labels(self) -> list[str]:
@@ -44,6 +46,15 @@ class Grid(Plotter):
     def slider_limits(self) -> list[str]:
         """Return generic slider limit values."""
         return self._number_of_sliders * [[-1.0, 1.0, 0.01]]
+
+    def change_normalisation(self, new_value: dict[str, Any]):
+        super().change_normalisation(new_value)
+        for curve_index, curve in enumerate(self._active_curves):
+            xdata = self._backup_curves[curve_index][0]
+            ydata = self._backup_curves[curve_index][0]
+            xdata, ydata = self.normalise_curve(xdata, ydata)
+            curve.set_xdata(xdata)
+            curve.set_ydata(ydata)
 
     def plot(
         self,
@@ -76,6 +87,8 @@ class Grid(Plotter):
             LOG.debug("Axis check failed.")
             return
         self._axes = []
+        self._backup_curves = []
+        self._active_curves = []
         self.apply_settings(plotting_context)
         nplots = 0
         for databundle in plotting_context.datasets().values():
@@ -124,5 +137,9 @@ class Grid(Plotter):
                 axes.set_xlabel(x_axis_label)
                 axes.legend(loc=0)
                 startnum += 1
+                self._active_curves.append(temp_curve)
+                self._backup_curves.append(
+                    [temp_curve.get_xdata(), temp_curve.get_ydata()]
+                )
         self.apply_settings(plotting_context)
         target.canvas.draw()

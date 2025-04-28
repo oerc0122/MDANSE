@@ -37,6 +37,7 @@ from qtpy.QtCore import Slot, Signal, Qt
 from MDANSE.MLogging import LOG
 
 from MDANSE_GUI.Widgets.RestrictedSlider import RestrictedSlider
+from MDANSE_GUI.Widgets.NormalisationWidget import NormalisationWidget
 from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
 
 
@@ -160,6 +161,7 @@ class PlotWidget(QWidget):
         super().__init__(*args, **kwargs)
         self._plotter = None
         self._sliderpack = None
+        self._normaliser = None
         self._plotting_context = None
         self._slider_max = 100
         self.make_canvas()
@@ -187,6 +189,10 @@ class PlotWidget(QWidget):
     def slider_change(self, new_values: object):
         self._plotter.handle_slider(new_values)
 
+    @Slot(dict)
+    def normaliser_change(self, new_values: dict):
+        self._plotter.change_normalisation(new_values)
+
     @Slot(bool)
     def set_slider_values(self, reset_needed: bool):
         if reset_needed and self._sliderpack is not None:
@@ -208,6 +214,7 @@ class PlotWidget(QWidget):
             update_only=update_only,
             toolbar=self._toolbar,
         )
+        self._normaliser.update_spinbox_limits(self._plotter.curve_length_limit)
 
     def make_canvas(self, width=12.0, height=9.0, dpi=100):
         """Creates a matplotlib figure for plotting
@@ -235,14 +242,18 @@ class PlotWidget(QWidget):
         toolbar = NavigationToolbar2QTAgg(figAgg, canvas)
         toolbar.update()
         layout.addWidget(figAgg)
+        normaliser = NormalisationWidget(self)
         slider = SliderPack(self)
         self.change_slider_labels.connect(slider.new_slider_labels)
         self.change_slider_limits.connect(slider.new_limits)
         self.change_slider_coupling.connect(slider.new_coupling)
         self.reset_slider_values.connect(self.set_slider_values)
         slider.new_values.connect(self.slider_change)
+        normaliser.new_values.connect(self.normaliser_change)
         self._sliderpack = slider
+        self._normaliser = normaliser
         layout.addWidget(slider)
+        layout.addWidget(normaliser)
         layout.addWidget(toolbar)
         self._figure = figure
         self._toolbar = toolbar

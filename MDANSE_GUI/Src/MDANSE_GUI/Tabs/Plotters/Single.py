@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import contextlib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from MDANSE.MLogging import LOG
@@ -68,6 +68,10 @@ class Single(Plotter):
         super().handle_slider(new_value)
         self.offset_curves()
 
+    def change_normalisation(self, new_value: dict[str, Any]):
+        super().change_normalisation(new_value)
+        self.offset_curves()
+
     def offset_curves(self):
         """Offset curves against each other based on slider settings."""
         target = self._figure
@@ -80,6 +84,7 @@ class Single(Plotter):
         for num, curve in enumerate(self._active_curves):
             xdata = self._backup_curves[num][0]
             ydata = self._backup_curves[num][1]
+            xdata, ydata = self.normalise_curve(xdata, ydata)
             new_xdata = xdata + num * self.length_max * new_value[1]
             new_ydata = ydata + num * self.height_max * new_value[0]
             curve.set_xdata(new_xdata)
@@ -109,6 +114,12 @@ class Single(Plotter):
                 f"Matplotlib could not set y limits to {saved_ymin}, {saved_ymax}",
             )
         target.canvas.draw()
+
+    def check_curve_lengths(self):
+        self.curve_length_limit = 0
+        for num, _ in enumerate(self._active_curves):
+            xdata = self._backup_curves[num][0]
+            self.curve_length_limit = max(self.curve_length_limit, len(xdata))
 
     def plot(
         self,
@@ -221,4 +232,5 @@ class Single(Plotter):
         axes.set_xlabel(", ".join(np.unique(x_axis_labels)))
         axes.grid(visible=True)
         axes.legend(loc=0)
+        self.check_curve_lengths()
         self.offset_curves()

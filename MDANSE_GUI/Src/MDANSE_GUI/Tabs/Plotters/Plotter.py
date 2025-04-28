@@ -13,15 +13,52 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import TYPE_CHECKING
+import copy
+import enum
+from typing import TYPE_CHECKING, Any
+
+import numpy as np
 
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.MLogging import LOG
+
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext
+
+
+class NormOperations(enum.Enum):
+    AVERAGE = enum.auto()
+    SUM = enum.auto()
+    NOT_IMPLEMENTED = enum.auto()
+
+
+def str_to_enum(operation: str) -> NormOperations:
+    if operation == "average":
+        return NormOperations.AVERAGE
+    elif operation == "sum":
+        return NormOperations.SUM
+    else:
+        return NormOperations.NOT_IMPLEMENTED
+
+
+def enum_to_str(operation: NormOperations) -> str:
+    if operation == NormOperations.AVERAGE:
+        return "average"
+    elif NormOperations.SUM:
+        return "sum"
+    else:
+        return "not implemented"
+
+
+NORMALISATION_DEFAULTS = {
+    "apply": False,
+    "min_index": 0,
+    "max_index": 1,
+    "operation": NormOperations.AVERAGE,
+}
 
 
 class Plotter(metaclass=SubclassFactory):
@@ -36,6 +73,8 @@ class Plotter(metaclass=SubclassFactory):
         self._value_reset_needed = True
         self._toolbar = None
         self._slider_reference = None
+        self.curve_length_limit = 10
+        self._normalisation_values = copy.copy(NORMALISATION_DEFAULTS)
 
     def request_slider_values(self):
         """Manually read values from sliders, if they are present."""
@@ -100,6 +139,28 @@ class Plotter(metaclass=SubclassFactory):
     def handle_slider(self, new_value: list[float]):
         """Respond to new slider values."""
         self._slider_values = new_value
+
+    def normalise_curve(self, xdata, ydata):
+        apply = self._normalisation_values["apply"]
+        operation = self._normalisation_values["operation"]
+        if not apply or operation == NormOperations.NOT_IMPLEMENTED:
+            return xdata, ydata
+        min_index = self._normalisation_values["min_index"]
+        max_index = self._normalisation_values["max_index"]
+        ref_values = ydata[min_index:max_index]
+        if len(ref_values) < 1:
+            return xdata, ydata
+        if operation == NormOperations.AVERAGE:
+            scale_factor = np.mean(ref_values)
+        elif operation == NormOperations.SUM:
+            scale_factor = np.sum(ref_values)
+        if np.isclose(scale_factor, 0.0):
+            return xdata, ydata
+        return xdata, ydata / scale_factor
+
+    def change_normalisation(self, new_value: dict[str, Any]):
+        """Respond to new slider values."""
+        self._normalisation_values = new_value
 
     def plot(
         self,
