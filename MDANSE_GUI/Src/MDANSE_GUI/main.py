@@ -28,6 +28,10 @@ from MDANSE_GUI.TabbedWindow import TabbedWindow
 
 
 os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
 
 # an additonal section which will pass exception information to the logger
