@@ -57,10 +57,10 @@ class NormalisationWidget(QWidget):
         self.combo_sum_average = QComboBox(self)
         self.minspin = QSpinBox(self)
         self.maxspin = QSpinBox(self)
-        self.apply_norm = QCheckBox(self)
+        self.apply_norm = QCheckBox("Normalise data:", self)
         for widget in [
             self.apply_norm,
-            QLabel("Divide curves by"),
+            QLabel("divide curves by"),
             self.combo_sum_average,
             QLabel("of points from"),
             self.minspin,
