@@ -55,12 +55,24 @@ class Grid(Plotter):
 
     def change_normalisation(self, new_value: dict[str, Any]):
         super().change_normalisation(new_value)
+        target = self._figure
+        if target is None:
+            return
+        if len(self._active_curves) == 0:
+            return
         for curve_index, curve in enumerate(self._active_curves):
             xdata = self._backup_curves[curve_index][0]
             ydata = self._backup_curves[curve_index][1]
             xdata, ydata = self.normalise_curve(xdata, ydata)
             curve.set_xdata(xdata)
             curve.set_ydata(ydata)
+        target.canvas.draw()
+        for axes in self._axes:
+            axes.relim()
+            axes.autoscale()
+        if self._toolbar is not None:
+            self._toolbar.update()
+            self._toolbar.push_current()
 
     def plot(
         self,
@@ -92,6 +104,7 @@ class Grid(Plotter):
         if plotting_context.set_axes() is None:
             LOG.debug("Axis check failed.")
             return
+        self._figure = target
         self._axes = []
         self._backup_curves = []
         self._active_curves = []
@@ -150,3 +163,6 @@ class Grid(Plotter):
         self.apply_settings(plotting_context)
         self.check_curve_lengths()
         target.canvas.draw()
+        if self._toolbar is not None:
+            self._toolbar.update()
+            self._toolbar.push_current()
