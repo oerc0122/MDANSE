@@ -104,6 +104,7 @@ class SliderPack(QWidget):
             self._spinboxes[number].setMinimum(minimum)
             self._spinboxes[number].setMaximum(maximum)
             self._spinboxes[number].setSingleStep(stepsize)
+            self._spinboxes[number].setDecimals(abs(int(np.floor(np.log10(stepsize)))))
             temp_value = min(maximum, temp_value)
             temp_value = max(minimum, temp_value)
             click_value = int(round((temp_value - minimum) / stepsize))
