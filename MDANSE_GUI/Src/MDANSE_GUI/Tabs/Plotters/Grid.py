@@ -47,11 +47,17 @@ class Grid(Plotter):
         """Return generic slider limit values."""
         return self._number_of_sliders * [[-1.0, 1.0, 0.01]]
 
+    def check_curve_lengths(self):
+        self.curve_length_limit = 0
+        for num, _ in enumerate(self._active_curves):
+            xdata = self._backup_curves[num][0]
+            self.curve_length_limit = max(self.curve_length_limit, len(xdata))
+
     def change_normalisation(self, new_value: dict[str, Any]):
         super().change_normalisation(new_value)
         for curve_index, curve in enumerate(self._active_curves):
             xdata = self._backup_curves[curve_index][0]
-            ydata = self._backup_curves[curve_index][0]
+            ydata = self._backup_curves[curve_index][1]
             xdata, ydata = self.normalise_curve(xdata, ydata)
             curve.set_xdata(xdata)
             curve.set_ydata(ydata)
@@ -142,4 +148,5 @@ class Grid(Plotter):
                     [temp_curve.get_xdata(), temp_curve.get_ydata()]
                 )
         self.apply_settings(plotting_context)
+        self.check_curve_lengths()
         target.canvas.draw()

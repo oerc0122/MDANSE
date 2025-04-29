@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from matplotlib.pyplot import colorbar as mpl_colorbar
@@ -40,6 +40,7 @@ class Heatmap(Plotter):
         self._backup_arrays = {}
         self._backup_minmax = {}
         self._backup_scale_interpolators = {}
+        self._current_x_axes = []
         self._backup_limits = {}
         self._initial_values = [0.0, 100.0]
         self._slider_values = [0.0, 100.0]
@@ -74,6 +75,20 @@ class Heatmap(Plotter):
             return None
         target.clear()
         return target
+
+    def change_normalisation(self, new_value: dict[str, Any]):
+        super().change_normalisation(new_value)
+        for ds_num, image in self._backup_images.items():
+            data = self._backup_arrays[ds_num]
+            new_data = self.normalise_array(data)
+            image.set_data(new_data)
+            percentiles = np.linspace(0, 100.0, 21)
+            results = [np.percentile(new_data, perc) for perc in percentiles]
+            self._backup_scale_interpolators[ds_num] = interp1d(
+                percentiles,
+                results,
+            )
+        self.request_slider_values()
 
     def handle_slider(self, new_value: list[float]):
         """Adjust colormap values based on slider values."""
@@ -112,6 +127,11 @@ class Heatmap(Plotter):
                     self._backup_minmax[ds_num] = [newmin, newmax]
         target.canvas.draw()
 
+    def check_curve_lengths(self):
+        self.curve_length_limit = 0
+        for xdata in self._current_x_axes:
+            self.curve_length_limit = max(self.curve_length_limit, len(xdata))
+
     def plot(
         self,
         plotting_context: "PlottingContext",
@@ -140,6 +160,7 @@ class Heatmap(Plotter):
         if toolbar is not None:
             self._toolbar = toolbar
         self._figure = target
+        self._current_x_axes = []
         self._backup_images = {}
         self._backup_arrays = {}
         self._backup_scale_interpolators = {}
@@ -210,6 +231,7 @@ class Heatmap(Plotter):
                     ]
                     if not x_axis_labels:
                         x_axis_labels.append(dataset.x_axis_label(name))
+                        self._current_x_axes.append(axis_array)
                     else:
                         y_axis_labels.append(dataset.x_axis_label(name))
             else:
@@ -228,6 +250,7 @@ class Heatmap(Plotter):
                     ]
                     if counter == primary_axis_number:
                         x_axis_labels.append(dataset.x_axis_label(name))
+                        self._current_x_axes.append(axis_array)
                     else:
                         y_axis_labels.append(dataset.x_axis_label(name))
             if transposed:
@@ -249,7 +272,7 @@ class Heatmap(Plotter):
                 colorbar = mpl_colorbar(image, ax=image.axes, format="%.1e", pad=0.02)
                 colorbar.set_label(dataset._data_unit)
                 xlimits, ylimits = axes.get_xlim(), axes.get_ylim()
-            self._backup_arrays[ds_num] = np.nan_to_num(dataset._data)
+            self._backup_arrays[ds_num] = np.nan_to_num(all_datasets[xnum][::-1, :])
             if update_only:
                 interpolator = self._backup_scale_interpolators[ds_num]
                 last_minmax = [
@@ -303,5 +326,6 @@ class Heatmap(Plotter):
             axes.set_ylabel(", ".join(np.unique(y_axis_labels)))
             self._backup_images[ds_num] = image
         # axes.grid(True)
+        self.check_curve_lengths()
         self.request_slider_values()
         target.canvas.draw()

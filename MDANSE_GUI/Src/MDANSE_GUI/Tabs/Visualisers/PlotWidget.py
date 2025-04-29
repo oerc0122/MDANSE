@@ -215,6 +215,8 @@ class PlotWidget(QWidget):
             toolbar=self._toolbar,
         )
         self._normaliser.update_spinbox_limits(self._plotter.curve_length_limit)
+        self._normaliser.collect_values()
+        self._sliderpack.collect_values()
 
     def make_canvas(self, width=12.0, height=9.0, dpi=100):
         """Creates a matplotlib figure for plotting

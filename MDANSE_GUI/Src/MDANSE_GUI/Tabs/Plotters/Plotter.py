@@ -158,8 +158,26 @@ class Plotter(metaclass=SubclassFactory):
             return xdata, ydata
         return xdata, ydata / scale_factor
 
+    def normalise_array(self, data_array):
+        apply = self._normalisation_values["apply"]
+        operation = self._normalisation_values["operation"]
+        if not apply or operation == NormOperations.NOT_IMPLEMENTED:
+            return data_array
+        min_index = self._normalisation_values["min_index"]
+        max_index = self._normalisation_values["max_index"]
+        ref_column = data_array[:, min_index:max_index]
+        if ref_column.shape[1] < 1:
+            return data_array
+        if operation == NormOperations.AVERAGE:
+            scale_column = np.mean(ref_column, axis=1)
+        elif operation == NormOperations.SUM:
+            scale_column = np.sum(ref_column, axis=1)
+        if np.any(np.isclose(scale_column, 0.0)):
+            return data_array
+        return data_array / scale_column.reshape((len(scale_column), 1))
+
     def change_normalisation(self, new_value: dict[str, Any]):
-        """Respond to new slider values."""
+        """Respond to new normalisation values."""
         self._normalisation_values = new_value
 
     def plot(
