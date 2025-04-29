@@ -81,7 +81,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
             A (3,N) array of HKL values (Miller indices)
 
         """
-        return np.dot(unit_cell.direct.T, vector_array) / (2 * np.pi)
+        return np.dot(unit_cell.direct, vector_array) / (2 * np.pi)
 
     @classmethod
     def hkl_to_qvectors(self, hkls: np.array, unit_cell: "UnitCell") -> np.ndarray:
@@ -102,7 +102,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
             a (3, N) array of Q vectors (scattering vectors)
 
         """
-        return 2 * np.pi * np.dot(unit_cell.inverse.T, hkls)
+        return 2 * np.pi * np.dot(unit_cell.inverse, hkls)
 
     def write_vectors_to_file(self, output_data: "OutputData"):
         """Write the vectors to output file as an array.
