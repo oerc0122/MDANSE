@@ -34,6 +34,7 @@ class Heatmap(Plotter):
     """Creates a 2D heatmap plot."""
 
     def __init__(self) -> None:
+        """Initialise all plotting parameters to defaults."""
         super().__init__()
         self._figure = None
         self._backup_images = {}
@@ -77,6 +78,14 @@ class Heatmap(Plotter):
         return target
 
     def change_normalisation(self, new_value: dict[str, Any]):
+        """Normalise the data based on the new parameters.
+
+        Parameters
+        ----------
+        new_value : dict[str, Any]
+            parameters as in NORMALISATION_DEFAULTS
+
+        """
         super().change_normalisation(new_value)
         for ds_num, image in self._backup_images.items():
             data = self._backup_arrays[ds_num]
@@ -128,6 +137,7 @@ class Heatmap(Plotter):
         target.canvas.draw()
 
     def check_curve_lengths(self):
+        """Find the maximum number of elements in the x axes of the plot data."""
         self.curve_length_limit = 0
         for xdata in self._current_x_axes:
             self.curve_length_limit = max(self.curve_length_limit, len(xdata))
@@ -283,7 +293,7 @@ class Heatmap(Plotter):
                     image.set_clim(last_minmax)
                 except ValueError:
                     LOG.error(
-                        f"Matplotlib could not set colorbar limits to {last_minmax}"
+                        f"Matplotlib could not set colorbar limits to {last_minmax}",
                     )
                 self._backup_limits[ds_num] = [
                     xlimits[0],
@@ -313,7 +323,7 @@ class Heatmap(Plotter):
                     image.set_clim(last_minmax)
                 except ValueError:
                     LOG.error(
-                        f"Matplotlib could not set colorbar limits to {last_minmax}"
+                        f"Matplotlib could not set colorbar limits to {last_minmax}",
                     )
                 self._backup_minmax[ds_num] = [dataset._data.min(), dataset._data.max()]
                 self._backup_limits[ds_num] = [

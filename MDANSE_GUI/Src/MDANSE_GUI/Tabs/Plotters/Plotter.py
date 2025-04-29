@@ -18,10 +18,8 @@ import enum
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.MLogging import LOG
-
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -30,27 +28,53 @@ if TYPE_CHECKING:
 
 
 class NormOperations(enum.Enum):
+    """Enum for selecting mathematical operations when calculating norms."""
+
     AVERAGE = enum.auto()
     SUM = enum.auto()
     NOT_IMPLEMENTED = enum.auto()
 
 
 def str_to_enum(operation: str) -> NormOperations:
+    """Get the right enum from the input text string.
+
+    Parameters
+    ----------
+    operation : str
+        name of the mathematical operation as string.
+
+    Returns
+    -------
+    NormOperations
+        enum value of the operation.
+
+    """
     if operation == "average":
         return NormOperations.AVERAGE
-    elif operation == "sum":
+    if operation == "sum":
         return NormOperations.SUM
-    else:
-        return NormOperations.NOT_IMPLEMENTED
+    return NormOperations.NOT_IMPLEMENTED
 
 
 def enum_to_str(operation: NormOperations) -> str:
+    """Convert the enum to a text string for the GUI.
+
+    Parameters
+    ----------
+    operation : NormOperations
+        Enum of the mathematical operation
+
+    Returns
+    -------
+    str
+        name of the operation as string
+
+    """
     if operation == NormOperations.AVERAGE:
         return "average"
-    elif NormOperations.SUM:
+    if NormOperations.SUM:
         return "sum"
-    else:
-        return "not implemented"
+    return "not implemented"
 
 
 NORMALISATION_DEFAULTS = {
@@ -65,6 +89,7 @@ class Plotter(metaclass=SubclassFactory):
     """Parent class to all classes used for displaying data."""
 
     def __init__(self) -> None:
+        """Create defaults common to all plotters."""
         self._figure = None
         self._axes = []
         self._initial_values = [0.0, 0.0]
@@ -140,7 +165,24 @@ class Plotter(metaclass=SubclassFactory):
         """Respond to new slider values."""
         self._slider_values = new_value
 
-    def normalise_curve(self, xdata, ydata):
+    def normalise_curve(
+        self, xdata: np.ndarray, ydata: np.ndarray
+    ) -> tuple[np.ndarray]:
+        """Scale a 1D curve according to the current normalisation parameters.
+
+        Parameters
+        ----------
+        xdata : np.ndarray
+            1D array of x values of the curve
+        ydata : np.ndarray
+            1D array of y values of the curve
+
+        Returns
+        -------
+        tuple[np.ndarray]
+            xdata and ydata with scaling applied
+
+        """
         apply = self._normalisation_values["apply"]
         operation = self._normalisation_values["operation"]
         if not apply or operation == NormOperations.NOT_IMPLEMENTED:
@@ -158,7 +200,20 @@ class Plotter(metaclass=SubclassFactory):
             return xdata, ydata
         return xdata, ydata / scale_factor
 
-    def normalise_array(self, data_array):
+    def normalise_array(self, data_array: np.ndarray) -> np.ndarray:
+        """Normalise a 2D array according to the current normalisation parameters.
+
+        Parameters
+        ----------
+        data_array : np.ndarray
+            2D array of data for plotting
+
+        Returns
+        -------
+        np.ndarray
+            the data_array with new relative intensities between rows
+
+        """
         apply = self._normalisation_values["apply"]
         operation = self._normalisation_values["operation"]
         if not apply or operation == NormOperations.NOT_IMPLEMENTED:

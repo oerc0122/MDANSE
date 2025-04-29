@@ -14,43 +14,32 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from typing import TYPE_CHECKING, List
+from typing import Any
 
-if TYPE_CHECKING:
-    from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext
-
-import numpy as np
-import matplotlib.pyplot as mpl
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.backends.backend_qt5agg import (
-    NavigationToolbar2QT as NavigationToolbar2QTAgg,
-)
+from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QComboBox,
-    QLabel,
     QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
     QSpinBox,
+    QWidget,
 )
-from qtpy.QtCore import Slot, Signal, Qt
 
-from MDANSE.MLogging import LOG
-
-from MDANSE_GUI.Widgets.RestrictedSlider import RestrictedSlider
 from MDANSE_GUI.Tabs.Plotters.Plotter import (
-    Plotter,
     NORMALISATION_DEFAULTS,
-    str_to_enum,
     enum_to_str,
+    str_to_enum,
 )
 
 
 class NormalisationWidget(QWidget):
+    """A set of inputs defining how to normalise data in the plot."""
+
     new_values = Signal(dict)
 
     def __init__(self, *args, **kwargs) -> None:
+        """Create all the input widgets in a horizontal layout."""
         super().__init__(*args, **kwargs)
         layout = QHBoxLayout(self)
         self.setLayout(layout)
@@ -83,6 +72,14 @@ class NormalisationWidget(QWidget):
 
     @Slot(int)
     def update_spinbox_limits(self, curve_length: int):
+        """Update spinbox limits based on the current plot contents.
+
+        Parameters
+        ----------
+        curve_length : int
+            maximum data point index in the current plots
+
+        """
         newmin = -abs(curve_length)
         newmax = abs(curve_length)
         for sb in [self.minspin, self.maxspin]:
@@ -94,7 +91,15 @@ class NormalisationWidget(QWidget):
             sb.setValue(new_value)
 
     @Slot()
-    def collect_values(self):
+    def collect_values(self) -> dict[str, Any]:
+        """Collect an emit values from the input widgets.
+
+        Returns
+        -------
+        dict[str, Any]
+            values as in NORMALISATION_DEFAULTS
+
+        """
         results = {
             "apply": self.apply_norm.isChecked(),
             "min_index": self.minspin.value(),

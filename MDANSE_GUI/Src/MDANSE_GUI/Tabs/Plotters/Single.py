@@ -31,6 +31,7 @@ class Single(Plotter):
     """Plots all the datasets in the same figure."""
 
     def __init__(self) -> None:
+        """Initialise all ploting parameters to default values."""
         super().__init__()
         self._figure = None
         self._active_curves = []
@@ -69,6 +70,14 @@ class Single(Plotter):
         self.offset_curves()
 
     def change_normalisation(self, new_value: dict[str, Any]):
+        """Normalise the data based on the new parameters.
+
+        Parameters
+        ----------
+        new_value : dict[str, Any]
+            parameters as in NORMALISATION_DEFAULTS
+
+        """
         super().change_normalisation(new_value)
         self.offset_curves()
 
@@ -116,6 +125,7 @@ class Single(Plotter):
         target.canvas.draw()
 
     def check_curve_lengths(self):
+        """Find the maximum number of elements in the x axes of the plot data."""
         self.curve_length_limit = 0
         for num, _ in enumerate(self._active_curves):
             xdata = self._backup_curves[num][0]
