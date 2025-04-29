@@ -58,8 +58,11 @@ class DistHistCutoffConfigurator(RangeConfigurator):
                 cross_ca = np.cross(vec_c, vec_a)
                 cross_ab = np.cross(vec_a, vec_b)
 
-                if (np.allclose(cross_bc, 0.0) or np.allclose(cross_ca, 0.0)
-                        or np.allclose(cross_ab, 0.0)):
+                if (
+                    np.allclose(cross_bc, 0.0)
+                    or np.allclose(cross_ca, 0.0)
+                    or np.allclose(cross_ab, 0.0)
+                ):
                     raise ValueError("Trajectory contains invalid unit cell.")
 
                 h_1 = abs(np.dot(vec_a, cross_bc)) / np.linalg.norm(cross_bc)
