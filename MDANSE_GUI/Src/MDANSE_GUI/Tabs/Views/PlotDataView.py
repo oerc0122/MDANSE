@@ -65,7 +65,6 @@ class PlotDataView(QTreeView):
             except KeyError:
                 print(f"No attribute called Tag found in {key}, skipping")
         self.fast_plotting_data.emit(model)
-        return super().mouseDoubleClickEvent(e)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
         self.click_position = e.position()
