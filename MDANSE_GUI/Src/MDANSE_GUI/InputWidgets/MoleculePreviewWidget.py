@@ -109,7 +109,7 @@ class MoleculePreviewWidget(QDialog):
         draw_options = draw.MolDrawOptions()
         draw_options.addAtomIndices = True
         pil_image = draw.MolToImage(submolecule, size=(600, 600), options=draw_options)
-        qt_image = ImageQt(pil_image)
+        qt_image = ImageQt(pil_image).copy()
         pixmap = QPixmap.fromImage(qt_image)
         self.image_label.setPixmap(pixmap)
 
@@ -136,6 +136,6 @@ class MoleculePreviewWidget(QDialog):
             highlightBonds=optional_bonds,
         )
         png_data = driver.GetDrawingText()
-        image = QImage.fromData(png_data)
+        image = QImage.fromData(png_data).copy()
         pixmap = QPixmap.fromImage(image)
         self.image_label.setPixmap(pixmap)
