@@ -89,7 +89,10 @@ class SingleDataset:
         self._axes_tag = source[name].attrs["axis"]
         self._scaling_factor = 1.0
         with contextlib.suppress(KeyError):
-            self._scaling_factor = float(source[name].attrs["scaling_factor"])
+            try:
+                self._scaling_factor = float(source[name].attrs["scaling_factor"])
+            except TypeError:
+                self._scaling_factor = np.array(source[name].attrs["scaling_factor"])
         self._axes = {}
         self._axes_units = {}
         self._current_units = {}
