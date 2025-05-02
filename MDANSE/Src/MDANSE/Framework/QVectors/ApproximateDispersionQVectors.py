@@ -24,7 +24,7 @@ from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 
 class ApproximateDispersionQVectors(LatticeQVectors):
-    """Generates Q vectors along a direction."""
+    """Generates Q vectors along a path between two points."""
 
     settings = collections.OrderedDict()
     settings["q_start"] = (

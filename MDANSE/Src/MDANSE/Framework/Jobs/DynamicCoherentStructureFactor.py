@@ -254,8 +254,8 @@ class DynamicCoherentStructureFactor(IJob):
             if unit_cell is None:
                 cell_present = False
             elif not np.allclose(
-                unit_cell._unit_cell,
-                self._average_unit_cell._unit_cell,
+                unit_cell.direct,
+                self._average_unit_cell.direct,
             ):
                 cell_fixed = False
             if not cell_present:

@@ -106,8 +106,10 @@ class QVectorsConfigurator(IConfigurator):
 
         Returns
         -------
-        list[float], str
-            Values of |Q| together with their physical unit
+        list[float]
+            Values of |Q|.
+        str
+            Physical unit of Q.
 
         """
         if not self.is_configured():

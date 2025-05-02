@@ -81,9 +81,7 @@ class GridQVectors(LatticeQVectors):
         dists = list(zip(range(len(dists)), dists))
         dists.sort(key=operator.itemgetter(1))
         qGroups = itertools.groupby(dists, key=operator.itemgetter(1))
-        qGroups = collections.OrderedDict(
-            [(k, [item[0] for item in v]) for k, v in qGroups],
-        )
+        qGroups = {k: list(map(operator.itemgetter(0), v)) for k, v in qGroups}
 
         if self._status is not None:
             self._status.start(len(qGroups))
