@@ -144,7 +144,7 @@ class StructureFactorFromScatteringFunction(IJob):
                 fqt.attrs["scaling_factor"] * sqrt_cij
             )
 
-            self._outputData[f"ssf_total"][:] += (
+            self._outputData["ssf_total"][:] += (
                 self._outputData[f"ssf_total_{pair_str}"][:]
                 * self._outputData[f"ssf_total_{pair_str}"].scaling_factor
             )
