@@ -161,6 +161,7 @@ class Single(Plotter):
         self._figure = target
         self._active_curves = []
         self._backup_curves = []
+        self._normalisation_errors = []
         axes = target.add_subplot(111)
         self._axes = [axes]
         self.apply_settings(plotting_context)

@@ -244,6 +244,7 @@ class PlotWidget(QWidget):
     def normaliser_change(self, new_values: dict):
         """Pass the new normalisation parameters to the plotter."""
         self._plotter.change_normalisation(new_values)
+        self.mark_normalisation()
 
     @Slot(bool)
     def set_slider_values(self, reset_needed: bool):
@@ -288,6 +289,14 @@ class PlotWidget(QWidget):
         self._normaliser.update_spinbox_limits(self._plotter.curve_length_limit)
         self._normaliser.collect_values()
         self._sliderpack.collect_values()
+        self.mark_normalisation()
+
+    def mark_normalisation(self):
+        """Indicate in the GUI if normalisation failed for some curves."""
+        if self._plotter._normalisation_errors:
+            self._normaliser.mark_error("\n".join(self._plotter._normalisation_errors))
+        else:
+            self._normaliser.clear_error()
 
     def make_canvas(self, width=12.0, height=9.0, dpi=100):
         """Create a matplotlib figure for plotting.

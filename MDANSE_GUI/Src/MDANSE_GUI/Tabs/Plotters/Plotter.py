@@ -100,6 +100,7 @@ class Plotter(metaclass=SubclassFactory):
         self._slider_reference = None
         self.curve_length_limit = 10
         self._normalisation_values = copy.copy(NORMALISATION_DEFAULTS)
+        self._normalisation_errors = []
 
     def request_slider_values(self):
         """Manually read values from sliders, if they are present."""
@@ -191,12 +192,18 @@ class Plotter(metaclass=SubclassFactory):
         max_index = self._normalisation_values["max_index"]
         ref_values = ydata[min_index:max_index]
         if len(ref_values) < 1:
+            self._normalisation_errors.append(
+                "No points within the specified index range"
+            )
             return xdata, ydata
         if operation == NormOperations.AVERAGE:
             scale_factor = np.mean(ref_values)
         elif operation == NormOperations.SUM:
             scale_factor = np.sum(ref_values)
         if np.isclose(scale_factor, 0.0):
+            self._normalisation_errors.append(
+                "Normalisation factor is 0 and will not be applied."
+            )
             return xdata, ydata
         return xdata, ydata / scale_factor
 
@@ -228,11 +235,15 @@ class Plotter(metaclass=SubclassFactory):
         elif operation == NormOperations.SUM:
             scale_column = np.sum(ref_column, axis=1)
         if np.any(np.isclose(scale_column, 0.0)):
+            self._normalisation_errors.append(
+                "Normalisation factor is 0 for some rows of the 2D array."
+            )
             return data_array
         return data_array / scale_column.reshape((len(scale_column), 1))
 
     def change_normalisation(self, new_value: dict[str, Any]):
         """Respond to new normalisation values."""
+        self._normalisation_errors = []
         self._normalisation_values = new_value
 
     def plot(
@@ -256,6 +267,8 @@ class Plotter(metaclass=SubclassFactory):
             GUI instance of the matplotlib toolbar, by default None
 
         """
+        print(f"normalisation errors {self._normalisation_errors}, setting to []")
+        self._normalisation_errors = []
         target = self.get_figure(figure)
         if target is None:
             return

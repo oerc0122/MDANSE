@@ -171,6 +171,7 @@ class Heatmap(Plotter):
             self._toolbar = toolbar
         self._figure = target
         self._current_x_axes = []
+        self._normalisation_errors = []
         self._backup_images = {}
         self._backup_arrays = {}
         self._backup_scale_interpolators = {}

@@ -33,6 +33,10 @@ from MDANSE_GUI.Tabs.Plotters.Plotter import (
 )
 
 
+NORM_ERROR_STYLE = "QWidget { background-color:rgb(220,210,30); font-weight: bold }"
+NORM_CLEAN_STYLE = "QWidget { }"
+
+
 class NormalisationWidget(QWidget):
     """A set of inputs defining how to normalise data in the plot."""
 
@@ -43,6 +47,7 @@ class NormalisationWidget(QWidget):
         super().__init__(*args, **kwargs)
         layout = QHBoxLayout(self)
         self.setLayout(layout)
+        self._current_maxlength = 1
         self.combo_sum_average = QComboBox(self)
         self.minspin = QSpinBox(self)
         self.maxspin = QSpinBox(self)
@@ -67,6 +72,8 @@ class NormalisationWidget(QWidget):
         )
         self.minspin.valueChanged.connect(self.collect_values)
         self.maxspin.valueChanged.connect(self.collect_values)
+        self.minspin.valueChanged.connect(self.update_min_of_right_box)
+        self.maxspin.valueChanged.connect(self.update_max_of_left_box)
         self.apply_norm.checkStateChanged.connect(self.collect_values)
         self.combo_sum_average.currentTextChanged.connect(self.collect_values)
 
@@ -80,15 +87,47 @@ class NormalisationWidget(QWidget):
             maximum data point index in the current plots
 
         """
-        newmin = -abs(curve_length)
+        self._current_maxlength = curve_length
         newmax = abs(curve_length)
-        for sb in [self.minspin, self.maxspin]:
+        for num, sb in enumerate([self.minspin, self.maxspin]):
             current_value = sb.value()
-            sb.setMinimum(newmin)
+            sb.setMinimum(num)
             sb.setMaximum(newmax)
             new_value = min(current_value, newmax)
-            new_value = max(new_value, newmin)
+            new_value = max(new_value, num)
             sb.setValue(new_value)
+            if num == 0:
+                self.update_min_of_right_box(new_value)
+            else:
+                self.update_max_of_left_box(new_value)
+
+    @Slot(int)
+    def update_max_of_left_box(self, new_max: int):
+        """Set the maximum value of the lower spin box.
+
+        This is used to make sure that the lower limit of the range
+        is really always lower that the upper limit.
+
+        Parameters
+        ----------
+        new_max : int
+            current value of the upper range limit
+        """
+        self.minspin.setMaximum(min(new_max - 1, self._current_maxlength))
+
+    @Slot(int)
+    def update_min_of_right_box(self, new_min: int):
+        """Set the minimum value of the higher spin box.
+
+        This is used to make sure that the upper range limit
+        is really higher than the lower limit
+
+        Parameters
+        ----------
+        new_min : int
+            Current value of the lower range limit spin box
+        """
+        self.maxspin.setMinimum(max(new_min + 1, 0))
 
     @Slot()
     def collect_values(self) -> dict[str, Any]:
@@ -108,3 +147,26 @@ class NormalisationWidget(QWidget):
         }
         self.new_values.emit(results)
         return results
+
+    @Slot(str)
+    def mark_error(self, error_text: str):
+        """Change widget background colour and tooltip to indicate a problem.
+
+        If the input parameters result in a scaling factor 0, the norm is not
+        applied. The background colour change should indicate to the user
+        that a problem has occurred with the normalisation, and the tooltip
+        text will contain additional details.
+
+        Parameters
+        ----------
+        error_text : str
+            Collected normalisation error messages as a text string
+        """
+        self.setStyleSheet(NORM_ERROR_STYLE)
+        self.setToolTip(error_text)
+
+    @Slot()
+    def clear_error(self):
+        """Restores the normal appearance to the normalisation widgets."""
+        self.setStyleSheet(NORM_CLEAN_STYLE)
+        self.setToolTip("")

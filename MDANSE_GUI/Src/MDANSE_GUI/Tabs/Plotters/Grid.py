@@ -117,6 +117,7 @@ class Grid(Plotter):
         self._axes = []
         self._backup_curves = []
         self._active_curves = []
+        self._normalisation_errors = []
         self.apply_settings(plotting_context)
         nplots = 0
         for databundle in plotting_context.datasets().values():
