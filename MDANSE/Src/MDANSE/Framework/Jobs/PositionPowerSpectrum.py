@@ -162,13 +162,14 @@ class PositionPowerSpectrum(IJob):
             units="au",
             main_result=True,
         )
-        self._outputData.add(
-            "pps_ideal_total",
-            "LineOutputVariable",
-            (instrResolution["n_romegas"],),
-            axis="romega",
-            units="au",
-        )
+        if self.add_ideal_results:
+            self._outputData.add(
+                "pps_ideal_total",
+                "LineOutputVariable",
+                (instrResolution["n_romegas"],),
+                axis="romega",
+                units="au",
+            )
 
         self._atoms = self.configuration["trajectory"][
             "instance"

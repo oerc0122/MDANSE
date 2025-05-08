@@ -287,7 +287,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             )
             self._outputData[f"msd_{element}"][:] /= number
             if self.add_ideal_results:
-                self._outputData[f"s(q,f)_{element}"][:] = get_spectrum(
+                self._outputData[f"s(q,f)_ideal_{element}"][:] = get_spectrum(
                     self._outputData[f"f(q,t)_{element}"],
                     None,
                     self.configuration["instrument_resolution"]["time_step"],
