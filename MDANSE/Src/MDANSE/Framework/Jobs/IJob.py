@@ -135,6 +135,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
         self._processes = []
 
         self._log_filename = None
+        self._in_memory_result = None
 
         self.inputQueue = Queue()
         self.outputQueue = Queue()
@@ -156,6 +157,11 @@ class IJob(Configurable, metaclass=SubclassFactory):
     def finalize(self):
         if self._log_filename is not None:
             self.remove_log_file_handler()
+        self._in_memory_result = getattr(self._outputData, "data_object", None)
+
+    @property
+    def results(self):
+        return self._in_memory_result
 
     def initialize(self):
         try:
@@ -413,6 +419,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
             self.setup(parameters)
 
             self.initialize()
+
+            self.check_status()
 
             if self._status is not None:
                 self._status.start(self.numberOfSteps)

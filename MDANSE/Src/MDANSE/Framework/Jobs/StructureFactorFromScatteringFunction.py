@@ -54,10 +54,7 @@ class StructureFactorFromScatteringFunction(IJob):
             }
         },
     )
-    settings["output_files"] = (
-        "OutputFilesConfigurator",
-        {"formats": ["MDAFormat", "TextFormat"]},
-    )
+    settings["output_files"] = ("OutputFilesConfigurator", {})
 
     def initialize(self):
         """

@@ -21,7 +21,8 @@ from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_
 
 
 class PairDistributionFunction(DistanceHistogram):
-    """
+    """Calculates a histogram of interatomic distances.
+
     The Pair-Distribution Function (PDF) is an example of a pair correlation function, which
     describes how, on average, the atoms in a system are radially packed around each other.
     This is a particularly effective way of describing the average structure of disordered
@@ -47,10 +48,11 @@ class PairDistributionFunction(DistanceHistogram):
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
     def finalize(self):
-        """
-        Finalizes the calculations (e.g. averaging the total term, output files creations ...).
-        """
+        """Perform the last steps of the analysis and write out results.
 
+        Finalizes the calculations (e.g. averaging the total term, output files creations ...).
+
+        """
         npoints = len(self.configuration["r_values"]["mid_points"])
 
         self._outputData.add(

@@ -68,10 +68,7 @@ class CoordinationNumber(DistanceHistogram):
             }
         },
     )
-    settings["output_files"] = (
-        "OutputFilesConfigurator",
-        {"formats": ["MDAFormat", "TextFormat"]},
-    )
+    settings["output_files"] = ("OutputFilesConfigurator", {})
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def finalize(self):

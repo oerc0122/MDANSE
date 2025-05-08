@@ -48,7 +48,7 @@ def test_temperature(tmp_path, traj_info, interp_order):
     ("com_traj", com_traj),
 ], ids=lambda x: x[0],
 )
-@pytest.mark.parametrize("output_format", ["MDAFormat", "TextFormat"])
+@pytest.mark.parametrize("output_format", ["MDAFormat", "TextFormat", "FileInMemory"])
 def test_density(tmp_path, traj_info, output_format):
     temp_name = tmp_path / "output"
     out_file = temp_name.with_suffix(".mda")
