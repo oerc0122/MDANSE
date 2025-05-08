@@ -110,7 +110,9 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         self._kSquare = self.configuration["q_shells"]["value"] ** 2
 
-        self.add_ideal_results = self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        self.add_ideal_results = (
+            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        )
 
         self._outputData.add(
             "q",

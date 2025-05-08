@@ -153,7 +153,9 @@ class DynamicCoherentStructureFactor(IJob):
             ),
         )
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
-        self.add_ideal_results = self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        self.add_ideal_results = (
+            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        )
 
         for pair in self._elementsPairs:
             pair_str = "".join(map(str, pair))

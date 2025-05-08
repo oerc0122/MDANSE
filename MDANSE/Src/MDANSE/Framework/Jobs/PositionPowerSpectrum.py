@@ -89,7 +89,9 @@ class PositionPowerSpectrum(IJob):
 
         instrResolution = self.configuration["instrument_resolution"]
 
-        self.add_ideal_results = self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        self.add_ideal_results = (
+            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        )
 
         self._outputData.add(
             "time",
