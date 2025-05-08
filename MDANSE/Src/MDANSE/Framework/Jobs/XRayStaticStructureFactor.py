@@ -153,6 +153,8 @@ class XRayStaticStructureFactor(DistanceHistogram):
                 (nq,),
                 axis="q",
                 units="au",
+                main_result=True,
+                partial_result=True,
             )
 
             ni = nAtomsPerElement[pair[0]]
@@ -185,13 +187,26 @@ class XRayStaticStructureFactor(DistanceHistogram):
             )
 
         self._outputData.add(
-            "xssf_intra", "LineOutputVariable", (nq,), axis="q", units="au"
+            "xssf_intra",
+            "LineOutputVariable",
+            (nq,),
+            axis="q",
+            units="au",
         )
         self._outputData.add(
-            "xssf_inter", "LineOutputVariable", (nq,), axis="q", units="au"
+            "xssf_inter",
+            "LineOutputVariable",
+            (nq,),
+            axis="q",
+            units="au",
         )
         self._outputData.add(
-            "xssf_total", "LineOutputVariable", (nq,), axis="q", units="au"
+            "xssf_total",
+            "LineOutputVariable",
+            (nq,),
+            axis="q",
+            units="au",
+            main_result=True,
         )
 
         asf = dict(

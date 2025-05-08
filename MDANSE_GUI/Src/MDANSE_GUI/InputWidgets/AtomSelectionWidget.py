@@ -15,7 +15,7 @@
 #
 
 import json
-from enum import StrEnum
+from enum import Enum
 
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
@@ -51,7 +51,7 @@ from MDANSE_GUI.Widgets.SelectionWidgets import (
 )
 
 
-class SelectionValidity(StrEnum):
+class SelectionValidity(Enum):
     """Strings for selection check results."""
 
     VALID_SELECTION = "Valid selection"
@@ -82,8 +82,7 @@ class SelectionModel(QStandardItemModel):
         Returns
         -------
         SelectionValidity
-            result of the check on last_operation
-
+            Result of the check on last_operation.
         """
         self._selection = ReusableSelection()
         self._current_selection = set()
@@ -450,8 +449,12 @@ class AtomSelectionWidget(WidgetBase):
     def helper_dialog(self) -> None:
         """Open the helper dialog."""
         if self.helper.isVisible():
+            geometry = self.helper.saveGeometry()
+            self.helper.previous_geometry = geometry
             self.helper.close()
         else:
+            if hasattr(self.helper, "previous_geometry"):
+                self.helper.restoreGeometry(self.helper.previous_geometry)
             self.helper.show()
 
     def get_widget_value(self) -> str:
