@@ -153,6 +153,7 @@ class DynamicCoherentStructureFactor(IJob):
             ),
         )
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
+        self.add_ideal_results = self.configuration["instrument_resolution"]["kernel"] != "ideal"
 
         for pair in self._elementsPairs:
             pair_str = "".join(map(str, pair))
@@ -172,6 +173,14 @@ class DynamicCoherentStructureFactor(IJob):
                 main_result=True,
                 partial_result=True,
             )
+            if self.add_ideal_results:
+                self._outputData.add(
+                    f"s(q,f)_ideal_{pair_str}",
+                    "SurfaceOutputVariable",
+                    (nQShells, self._nOmegas),
+                    axis="q|omega",
+                    units="nm2/ps",
+                )
 
         self._outputData.add(
             "f(q,t)_total",
@@ -188,6 +197,14 @@ class DynamicCoherentStructureFactor(IJob):
             units="nm2/ps",
             main_result=True,
         )
+        if self.add_ideal_results:
+            self._outputData.add(
+                "s(q,f)_ideal_total",
+                "SurfaceOutputVariable",
+                (nQShells, self._nOmegas),
+                axis="q|omega",
+                units="nm2/ps",
+            )
 
         self._cell_std = 0.0
         try:
@@ -315,6 +332,8 @@ class DynamicCoherentStructureFactor(IJob):
         weight_dict = get_weights(weights, nAtomsPerElement, 2, conc_exp=0.5)
         assign_weights(self._outputData, weight_dict, "f(q,t)_%s%s")
         assign_weights(self._outputData, weight_dict, "s(q,f)_%s%s")
+        if self.add_ideal_results:
+            assign_weights(self._outputData, weight_dict, "s(q,f)_ideal_%s%s")
         for pair in self._elementsPairs:
             pair_str = "".join(map(str, pair))
             ni = nAtomsPerElement[pair[0]]
@@ -326,6 +345,13 @@ class DynamicCoherentStructureFactor(IJob):
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
+            if self.add_ideal_results:
+                self._outputData[f"s(q,f)_ideal_{pair_str}"][:] = get_spectrum(
+                    self._outputData[f"f(q,t)_{pair_str}"],
+                    None,
+                    self.configuration["instrument_resolution"]["time_step"],
+                    axis=1,
+                )
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
@@ -338,6 +364,13 @@ class DynamicCoherentStructureFactor(IJob):
             weight_dict,
             "s(q,f)_%s%s",
         )
+
+        if self.add_ideal_results:
+            self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
+                self._outputData,
+                weight_dict,
+                "s(q,f)_ideal_%s%s",
+            )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],
