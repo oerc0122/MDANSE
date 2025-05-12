@@ -99,14 +99,14 @@ def parameters():
 @pytest.mark.parametrize("job_info", [
     # "AngularCorrelation",
     # "GeneralAutoCorrelationFunction",
-    ("DensityOfStates", ["dos", "vacf"], True),
+    ("DensityOfStates", ["dos", "vacf"], False),
     ("MeanSquareDisplacement", ["msd"], False),
     ("VelocityAutoCorrelationFunction", ["vacf"], False),
     ("VanHoveFunctionDistinct", ["g(r,t)"], False),
     ("VanHoveFunctionSelf", ["g(r,t)"], True),
     # "OrderParameter",
     ("PositionAutoCorrelationFunction", ["pacf"], False),
-    ("PositionPowerSpectrum", ["pacf", "pps"], True),
+    ("PositionPowerSpectrum", ["pacf", "pps"], False),
 ], ids=lambda x: x[0])
 @pytest.mark.parametrize("running_mode", [("single-core", 1), ("multicore", -4)], ids=lambda x: x[0])
 @pytest.mark.parametrize("output_format", ["MDAFormat", "TextFormat"])

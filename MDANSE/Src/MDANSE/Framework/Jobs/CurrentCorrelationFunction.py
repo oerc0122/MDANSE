@@ -168,6 +168,9 @@ class CurrentCorrelationFunction(IJob):
         )
 
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
+        self.add_ideal_results = (
+            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        )
 
         for pair in self._elementsPairs:
             pair_str = "".join(map(str, pair))
@@ -203,9 +206,31 @@ class CurrentCorrelationFunction(IJob):
                 main_result=True,
                 partial_result=True,
             )
+            if self.add_ideal_results:
+                self._outputData.add(
+                    f"J(q,f)_long_ideal_{pair_str}",
+                    "SurfaceOutputVariable",
+                    (nQShells, self._nOmegas),
+                    axis="q|romega",
+                    units="au",
+                )
+                self._outputData.add(
+                    f"J(q,f)_trans_ideal_{pair_str}",
+                    "SurfaceOutputVariable",
+                    (nQShells, self._nOmegas),
+                    axis="q|romega",
+                    units="au",
+                )
 
         self._outputData.add(
             "j(q,t)_long_total",
+            "SurfaceOutputVariable",
+            (nQShells, self._nFrames),
+            axis="q|time",
+            units="au",
+        )
+        self._outputData.add(
+            "j(q,t)_trans_total",
             "SurfaceOutputVariable",
             (nQShells, self._nFrames),
             axis="q|time",
@@ -220,13 +245,6 @@ class CurrentCorrelationFunction(IJob):
             main_result=True,
         )
         self._outputData.add(
-            "j(q,t)_trans_total",
-            "SurfaceOutputVariable",
-            (nQShells, self._nFrames),
-            axis="q|time",
-            units="au",
-        )
-        self._outputData.add(
             "J(q,f)_trans_total",
             "SurfaceOutputVariable",
             (nQShells, self._nOmegas),
@@ -234,6 +252,21 @@ class CurrentCorrelationFunction(IJob):
             units="au",
             main_result=True,
         )
+        if self.add_ideal_results:
+            self._outputData.add(
+                "J(q,f)_long_ideal_total",
+                "SurfaceOutputVariable",
+                (nQShells, self._nOmegas),
+                axis="q|romega",
+                units="au",
+            )
+            self._outputData.add(
+                "J(q,f)_trans_ideal_total",
+                "SurfaceOutputVariable",
+                (nQShells, self._nOmegas),
+                axis="q|romega",
+                units="au",
+            )
 
         self._order = self.configuration["interpolation_order"]["value"]
 
@@ -478,6 +511,21 @@ class CurrentCorrelationFunction(IJob):
                 axis=1,
                 fft="rfft",
             )
+            if self.add_ideal_results:
+                self._outputData[f"J(q,f)_long_ideal_{pair_str}"][:] = get_spectrum(
+                    self._outputData[f"j(q,t)_long_{pair_str}"],
+                    None,
+                    self.configuration["instrument_resolution"]["time_step"],
+                    axis=1,
+                    fft="rfft",
+                )
+                self._outputData[f"J(q,f)_trans_ideal_{pair_str}"][:] = get_spectrum(
+                    self._outputData[f"j(q,t)_trans_{pair_str}"],
+                    None,
+                    self.configuration["instrument_resolution"]["time_step"],
+                    axis=1,
+                    fft="rfft",
+                )
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2, conc_exp=0.5)
@@ -485,6 +533,9 @@ class CurrentCorrelationFunction(IJob):
         assign_weights(self._outputData, weight_dict, "j(q,t)_trans_%s%s")
         assign_weights(self._outputData, weight_dict, "J(q,f)_long_%s%s")
         assign_weights(self._outputData, weight_dict, "J(q,f)_trans_%s%s")
+        if self.add_ideal_results:
+            assign_weights(self._outputData, weight_dict, "J(q,f)_long_ideal_%s%s")
+            assign_weights(self._outputData, weight_dict, "J(q,f)_trans_ideal_%s%s")
         jqtLongTotal = weighted_sum(
             self._outputData,
             weight_dict,
@@ -510,6 +561,20 @@ class CurrentCorrelationFunction(IJob):
             "J(q,f)_trans_%s%s",
         )
         self._outputData["J(q,f)_trans_total"][:] = sqfTransTotal
+
+        if self.add_ideal_results:
+            sqfLongTotal = weighted_sum(
+                self._outputData,
+                weight_dict,
+                "J(q,f)_long_ideal_%s%s",
+            )
+            self._outputData["J(q,f)_long_ideal_total"][:] = sqfLongTotal
+            sqfTransTotal = weighted_sum(
+                self._outputData,
+                weight_dict,
+                "J(q,f)_trans_ideal_%s%s",
+            )
+            self._outputData["J(q,f)_trans_ideal_total"][:] = sqfTransTotal
 
         self._outputData.write(
             self.configuration["output_files"]["root"],
