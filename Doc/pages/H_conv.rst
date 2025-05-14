@@ -171,12 +171,61 @@ simulation would be required.
 Simulation Time Step
 ~~~~~~~~~~~~~~~~~~~~
 
-Dynamic Coherent Structure Factor
----------------------------------
-The DCSF calculation probes the dynamics of the MD trajectory at
+Dynamic Incoherent Structure Factor
+-----------------------------------
+The DISF (also the DCSF) calculation probes the dynamics of the MD trajectory at
 different distances and time scales. For example, for smaller :math:`q` values
-correspond to larger wavelength and time scales while larger :math:`q`
-values correspond to smaller distances and time scales. To obtain accurate
+correspond to larger wavelength and time scales while larger :math:`q`-values
+correspond to smaller distances and time scales. To obtain accurate
 DCSF results we therefore need much smaller time steps for the larger
-values of :math:`q`. Here we plot the DCSF for liquid argon using a
-time step of 0.12 and 1.2 ps.
+values of :math:`q`.
+
+.. _figure-timestep-inc-fqt:
+
+.. figure:: ./Pictures/time_step_conv_disf_fqt.png
+   :align: center
+   :width: 11.748cm
+   :height: 9.393cm
+
+   The incoherent intermediate scattering function calculated for 120 ps
+   from a the same MD simulation of liquid argon but with positions
+   sampled every 120 fs and 1.2 ps shown in blue and orange respectively.
+
+.. _figure-timestep-inc-sqw:
+
+.. figure:: ./Pictures/time_step_conv_disf_sqw.png
+   :align: center
+   :width: 11.748cm
+   :height: 9.393cm
+
+   The dynamic incoherent structure factor calculated from a Fourier
+   transform of the above incoherent intermediate scattering function
+   calculated for 120 ps from a the same MD simulation of liquid argon
+   but with positions sampled every 120 fs and 1.2 ps shown in blue and
+   orange respectively.
+
+Here we run a calculation with a correlation frames setting of (0, 2000, 1, 1001)
+and another with a correlation frames setting of (0, 20000, 9, 101). The
+MD simulation was sampled every 120 fs so by using a `in step of` setting
+of 10 we are effectively sampling the MD trajectory every 1.2 ps. For
+each frame of the correlation function the first calculation averages
+over 1000 frames while this second averages over 1900 frames. The total
+time of the DISF of both calculations will be the same. In both :math:`q` was
+set to 42 nm-1.
+
+As you can see from the :numref:`figure-timestep-inc-fqt`, for larger values of :math:`q` the
+intermediate scattering function decays quickly, showing that there is little
+correlation between atom positions which are displaced by larger amounts.
+We can see that the second trajectories time steps were too long and
+did not sufficiently sample the intermediate scattering function which
+had decays already decayed to zero by the second time step. Looking at
+:numref:`figure-timestep-inc-sqw` we how poor the
+
+Density of States
+-----------------
+The density of states is calculated by taking a Fourier transform the
+velocity autocorrelation function. In MDANSE velocity information from
+your MD data files can be saved into the MDANSE trajectory file and used
+in any subsequent analysis calculation. In some cases your may not
+have saved the velocity data or you may want to recalculate the velocities
+using from its positions. In the DOS calculation
