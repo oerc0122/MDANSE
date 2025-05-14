@@ -166,3 +166,17 @@ long trajectories. The argon trajectory used contain a total of 2048
 atoms which appears to be sufficient to obtain enough statistics for
 good static structure factor results, so that only a short MD
 simulation would be required.
+
+
+Simulation Time Step
+~~~~~~~~~~~~~~~~~~~~
+
+Dynamic Coherent Structure Factor
+---------------------------------
+The DCSF calculation probes the dynamics of the MD trajectory at
+different distances and time scales. For example, for smaller :math:`q` values
+correspond to larger wavelength and time scales while larger :math:`q`
+values correspond to smaller distances and time scales. To obtain accurate
+DCSF results we therefore need much smaller time steps for the larger
+values of :math:`q`. Here we plot the DCSF for liquid argon using a
+time step of 0.12 and 1.2 ps.
