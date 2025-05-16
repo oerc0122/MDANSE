@@ -1,7 +1,7 @@
 import itertools
 from itertools import product as cart_prod
 from math import ceil
-from typing import Optional, Tuple
+from typing import Optional, Union
 
 import numpy as np
 from MDANSE.Framework.NewQVectors.QVector import QVecGen, QVectorData, QVectorGenerator
@@ -44,6 +44,38 @@ class SphericalQVectors(QVectorGenerator):
     QVectorData(q=array([ 0.82268718,  0.55253758, -0.13374612]), mod_q=0.9999999999999999, hkl=None, hkl_exact=None)
     """
 
+    gui_defaults = {
+        "radius": (
+            "FloatConfigurator",
+            {
+                "label": "Radius",
+                "default": 1.0,
+                "mini": 1e-9,
+                "tooltip": "Radius of sphere.",
+            },
+        ),
+        "centre": (
+            "VectorConfigurator",
+            {
+                "label": "Centre",
+                "valueType": float,
+                "notNull": False,
+                "default": [0, 0, 0],
+            },
+        ),
+        "seed": (
+            "IntegerConfigurator",
+            {"label": "Random Seed", "tooltip": "Random seed for sampling."},
+        ),
+        "hkl": (
+            "BooleanConfigurator",
+            {
+                "label": "In reciprocal lattice",
+                "tooltip": "Whether parameters are defined in the basis of the reciprocal lattice or absolute HKL coordinates.",
+            },
+        ),
+    }
+
     def __init__(
         self,
         radius: float,
@@ -82,19 +114,25 @@ class SphericalQVectors(QVectorGenerator):
             )
         )
 
-    def generate(
+    def generate_shell(
         self,
+        radius: Union[float, tuple[float, float]],
+        width: Optional[float] = 0.0,
         *,
-        radius: Optional[Tuple[float, float]] = None,
         lattice: Optional[UnitCell] = None,
     ) -> QVecGen:
-        if radius is not None:
-            radius = radius[1] - radius[0] / 2
+        if isinstance(radius, tuple) and width:
+            raise ValueError("Specified width as both tuple and arg.")
+
+        if isinstance(radius, tuple):
             width = radius[1] - radius[0]
-            fac = (self.rng.uniform(-width, width) for _ in itertools.count())
-        else:
-            radius = self.radius
-            fac = itertools.repeat(0.0)
+            radius = radius[1] - radius[0] / 2
+
+        fac = (
+            (self.rng.uniform(-width, width) for _ in itertools.count())
+            if width
+            else itertools.repeat(0.0)
+        )
 
         lattice = lattice if lattice is not None else self.lattice
 
@@ -103,6 +141,21 @@ class SphericalQVectors(QVectorGenerator):
                 random_points_on_sphere(radius, 1, rng=self.rng).T[0]
                 + self.centre
                 + next(fac),
+                lattice,
+            )
+
+
+    def generate(
+        self,
+        *,
+        lattice: Optional[UnitCell] = None,
+    ) -> QVecGen:
+        lattice = lattice if lattice is not None else self.lattice
+
+        while True:
+            yield QVectorData(
+                random_points_on_sphere(self.radius, 1, rng=self.rng).T[0]
+                + self.centre,
                 lattice,
             )
 
@@ -160,6 +213,34 @@ class LatticeSphericalQVectors(QVectorGenerator):
     QVectorData(q=array([-1.8, -0.8,  0.2]), mod_q=1.9798989873223332, hkl=array([-9., -4.,  1.]), hkl_exact=array([-9., -4.,  1.]))
     """
 
+    gui_defaults = {
+        "q_radius": (
+            "FloatConfigurator",
+            {
+                "label": "Q Radius",
+                "default": 1.0,
+                "mini": 1e-9,
+                "tooltip": "Radius of sphere in space.",
+            },
+        ),
+        "hkl": (
+            "BooleanConfigurator",
+            {
+                "label": "In reciprocal lattice",
+                "tooltip": "Whether `centre` is defined in the basis of the reciprocal lattice or absolute HKL coordinates.",
+            },
+        ),
+        # "_centre": (
+        #     "VectorConfigurator",
+        #     {
+        #         "label": "Centre",
+        #         "valueType": float,
+        #         "notNull": False,
+        #         "default": [0, 0, 0],
+        #     },
+        # ),
+    }
+
     def __init__(
         self,
         lattice: UnitCell,
@@ -181,10 +262,47 @@ class LatticeSphericalQVectors(QVectorGenerator):
         if self.hkl:
             self.centre = np.dot(lattice.inverse, self.centre)
 
-    def __len_hint__(self):
+    def __len_hint__(self) -> int:
         return (2 * ceil(self.q_radius) + 1) ** 3 - self._ind
 
+    def generate_shell(
+        self,
+        radius: Union[float, tuple[float, float]],
+        width: Optional[float] = 0.0,
+        *,
+        lattice: Optional[UnitCell] = None,
+    ) -> QVecGen:
+        if isinstance(radius, tuple) and width:
+            raise ValueError("Specified width as both tuple and arg.")
+
+        if isinstance(radius, float):
+            radius = (radius - width, radius + width)
+
+        lattice = lattice if lattice is not None else self.lattice
+
+        hkl_radius = (
+            ceil(radius[1] / np.linalg.norm(e)) + 1 for e in lattice.transposed_inverse
+        )
+
+        extent = (range(-hkl, hkl + 1) for hkl in hkl_radius)
+
+        vectors = (
+            np.dot(lattice.inverse, np.array(coords)) for coords in cart_prod(*extent)
+        )
+
+        vectors = filter(
+            lambda vec: self.radius[0]
+            <= np.linalg.norm(vec - self.centre)
+            <= self.radius[1],
+            vectors,
+        )
+
+        for self._ind, vec in enumerate(vectors):
+            yield QVectorData(vec + self.centre, lattice)
+
     def _generate(self, lattice: Optional[UnitCell] = None) -> QVecGen:
+        lattice = lattice if lattice is not None else self.lattice
+
         hkl_radius = (
             ceil(self.radius / np.linalg.norm(e)) + 1
             for e in lattice.transposed_inverse
@@ -196,13 +314,10 @@ class LatticeSphericalQVectors(QVectorGenerator):
         )
 
         vectors = filter(
-            lambda vec: np.linalg.norm(vec - self.centre) < self.radius, vectors
+            lambda vec: np.linalg.norm(vec - self.centre) <= self.radius, vectors
         )
 
-        self._ind = 0
-
-        for vec in vectors:
-            self._ind += 1
+        for self._ind, vec in enumerate(vectors):
             yield QVectorData(vec + self.centre, lattice)
 
     def reset(self, value: int = 0):
@@ -273,19 +388,25 @@ class CircularQVectors(QVectorGenerator):
     def __len__(self) -> int:
         return np.inf
 
-    def generate(
+    def generate_shell(
         self,
+        radius: Union[float, tuple[float, float]],
+        width: Optional[float] = 0.0,
         *,
-        radius: Optional[Tuple[float, float]] = None,
         lattice: Optional[UnitCell] = None,
     ) -> QVecGen:
-        if radius is not None:
-            radius = radius[1] - radius[0] / 2
+        if isinstance(radius, tuple) and width:
+            raise ValueError("Specified width as both tuple and arg.")
+
+        if isinstance(radius, tuple):
             width = radius[1] - radius[0]
-            fac = (self.rng.uniform(-width, width) for _ in itertools.count())
-        else:
-            radius = self.radius
-            fac = itertools.repeat(0.0)
+            radius = radius[1] - radius[0] / 2
+
+        fac = (
+            (self.rng.uniform(-width, width) for _ in itertools.count())
+            if width
+            else itertools.repeat(0.0)
+        )
 
         lattice = lattice if lattice is not None else self.lattice
 
@@ -294,6 +415,20 @@ class CircularQVectors(QVectorGenerator):
                 random_points_on_circle(
                     self.axis, radius + next(fac), 1, rng=self.rng
                 ).T[0]
+                + self.centre,
+                lattice,
+            )
+
+    def generate(
+        self,
+        *,
+        lattice: Optional[UnitCell] = None,
+    ) -> QVecGen:
+        lattice = lattice if lattice is not None else self.lattice
+
+        while True:
+            yield QVectorData(
+                random_points_on_circle(self.axis, self.radius, 1, rng=self.rng).T[0]
                 + self.centre,
                 lattice,
             )
