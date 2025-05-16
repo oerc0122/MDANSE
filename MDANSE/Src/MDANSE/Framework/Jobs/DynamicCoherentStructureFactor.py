@@ -67,8 +67,8 @@ class DynamicCoherentStructureFactor(IJob):
         {"dependencies": {"trajectory": "trajectory", "frames": "frames"}},
     )
     settings["q_vectors"] = (
-        "QVectorsConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+        "NewQVectorsConfigurator",
+        {"use_shells": True, "dependencies": {"trajectory": "trajectory"}},
     )
     settings["grouping_level"] = (
         "GroupingLevelConfigurator",
