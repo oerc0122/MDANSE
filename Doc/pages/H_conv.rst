@@ -189,7 +189,7 @@ values of :math:`q`.
 
    The incoherent intermediate scattering function calculated for 120 ps
    from the same MD simulation of liquid argon but with positions
-   sampled every 120 fs and 1.2 ps shown in blue and orange respectively.
+   sampled every 120 fs and 1200 fs shown in blue and orange respectively.
 
 .. _figure-timestep-inc-sqw:
 
