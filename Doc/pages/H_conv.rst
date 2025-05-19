@@ -225,7 +225,7 @@ and does not follow the same qualitatively behaviour as first calculation
 
 Density of States
 -----------------
-The density of states (DOS) is calculated by taking a Fourier transform the
+The density of states (DOS) is calculated by taking a Fourier transform of the
 velocity autocorrelation function (VACF). In MDANSE velocity information from
 your MD data files can be saved into the MDANSE trajectory file and used
 in any subsequent analysis calculation. In some cases, you may not
