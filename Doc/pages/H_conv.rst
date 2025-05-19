@@ -189,7 +189,7 @@ values of :math:`q`.
 
    The incoherent intermediate scattering function calculated for 120 ps
    from the same MD simulation of liquid argon but with positions
-   sampled every 120 fs and 1200 fs shown in blue and orange respectively.
+   sampled every 0.12 and 1.2 ps shown in blue and orange respectively.
 
 .. _figure-timestep-inc-sqw:
 
@@ -201,7 +201,7 @@ values of :math:`q`.
    The dynamic incoherent structure factor calculated from a Fourier
    transform of the above incoherent intermediate scattering function
    calculated for 120 ps from a the same MD simulation of liquid argon
-   but with positions sampled every 120 fs and 1.2 ps shown in blue and
+   but with positions sampled every 0.12 and 1.2 ps shown in blue and
    orange respectively.
 
 Here we run DISF calculations with a correlation frames setting of (0, 2000, 1, 1001)
@@ -245,7 +245,7 @@ of the trajectory.
 
    Velocity autocorrelation function using velocities determined by
    numerical derivatives of atomic positions from the same MD
-   simulation of liquid argon but with positions sampled every 120 fs and
+   simulation of liquid argon but with positions sampled every 0.12 and
    1.2 ps shown in blue and orange respectively.
 
 .. _figure-timestep-dos:
@@ -258,7 +258,7 @@ of the trajectory.
    The density of states calculated from a Fourier
    transform of the above velocity autocorrelation function calculated
    from the same MD simulation of liquid argon but with positions
-   sampled every 120 fs and 1.2 ps shown in blue and orange respectively.
+   sampled every 0.12 and 1.2 ps shown in blue and orange respectively.
 
 Here we run DOS calculations with a correlation frames setting of (0, 2000, 1, 1001)
 and another with a correlation frames setting of (0, 20000, 10, 101). We use
