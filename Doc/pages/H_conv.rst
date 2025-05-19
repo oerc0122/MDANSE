@@ -269,4 +269,4 @@ shows that the numerical derivative for the calculation which used the
 had caused a severely underestimated VACF value at :math:`t=0`. Additionally, the longer time step means that it misses the
 trough seen in the blue curve of :numref:`figure-timestep-vacf` between 0
 and 2000 fs. The resulting DOS (orange curve in :numref:`figure-timestep-dos`) does not provide the higher frequency
-results, has a peak at an incorrect position, and falls off towards zero far to early.
+results, has a peak at an incorrect position, and falls off towards zero far too early.
