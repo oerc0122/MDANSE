@@ -257,7 +257,7 @@ of the trajectory.
 
    The density of states calculated from a Fourier
    transform of the above velocity autocorrelation function calculated
-   from a the same MD simulation of liquid argon but with positions
+   from the same MD simulation of liquid argon but with positions
    sampled every 120 fs and 1.2 ps shown in blue and orange respectively.
 
 Here we run DOS calculations with a correlation frames setting of (0, 2000, 1, 1001)
