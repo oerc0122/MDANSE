@@ -200,15 +200,15 @@ values of :math:`q`.
 
    The dynamic incoherent structure factor calculated from a Fourier
    transform of the above incoherent intermediate scattering function
-   calculated for 120 ps from a the same MD simulation of liquid argon
+   calculated for 120 ps from the same MD simulation of liquid argon
    but with positions sampled every 0.12 and 1.2 ps shown in blue and
    orange respectively.
 
 Here we run DISF calculations with a correlation frames setting of (0, 2000, 1, 1001)
 and another with a correlation frames setting of (0, 20000, 10, 101) and set :math:`q` to 42 nm\ :sup:`-1`. The
-MD simulation was sampled every 120 fs so by using a ``in step of`` setting
+MD simulation was sampled every 120 fs, so by using a ``in step of`` setting
 of 10 we are effectively sampling the trajectory every 1.2 ps. For
-each frame of the correlation function the first calculation averages
+each frame of the correlation function, the first calculation averages
 over 1000 frames while the second averages over 1900 frames. The total
 time of the DISF of both calculations will be the same.
 
@@ -220,7 +220,7 @@ had already decayed to zero by the second time step. Looking at
 :numref:`figure-timestep-inc-sqw` we can see how poor the sampling of the
 intermediate scattering function was. The resulting DISF (orange curve in :numref:`figure-timestep-inc-sqw`) is
 severely overestimated, does not provide the higher frequency results,
-and does not follow the same qualitatively behaviour as first calculation
+and does not follow the same qualitative behaviour as the first calculation
 (blue curve).
 
 Density of States
@@ -230,8 +230,8 @@ velocity autocorrelation function (VACF). In MDANSE, velocity information from
 your MD data files can be saved into the MDANSE trajectory file and used
 in any subsequent analysis calculation. In some cases, you may not
 have saved the velocity data or you may want to recalculate the velocities
-from its positions. In the DOS job you have the option to calculate
-velocities from the numerical derivatives of the atomic positions. The
+from atom positions. In the DOS job you have the option to calculate
+velocities using numerical derivatives of the atomic positions. The
 accuracy of these velocities will be highly dependent on the time step
 of the trajectory.
 
@@ -245,7 +245,7 @@ of the trajectory.
 
    Velocity autocorrelation function using velocities determined by
    numerical derivatives of atomic positions from the same MD
-   simulation of liquid argon but with positions sampled every 0.12 and
+   simulation of liquid argon, but with positions sampled every 0.12 and
    1.2 ps shown in blue and orange respectively.
 
 .. _figure-timestep-dos:
@@ -257,7 +257,7 @@ of the trajectory.
 
    The density of states calculated from a Fourier
    transform of the above velocity autocorrelation function calculated
-   from the same MD simulation of liquid argon but with positions
+   from the same MD simulation of liquid argon, but with positions
    sampled every 0.12 and 1.2 ps shown in blue and orange respectively.
 
 Here we run DOS calculations with a correlation frames setting of (0, 2000, 1, 1001)
@@ -266,7 +266,7 @@ an interpolation order setting of 3 so that velocities will be determined
 by a numerical derivative of the atomic positions. :numref:`figure-timestep-vacf`
 shows that the numerical derivative for the calculation which used the
 ``in step of`` setting of 10 (orange curves in :numref:`figure-timestep-vacf` and :numref:`figure-timestep-dos`),
-had caused a severely underestimated VACF value at :math:`t=0`. Additionally, the longer time step means that it misses the
+had produced a severely underestimated VACF value at :math:`t=0`. Additionally, the longer time step means that it misses the
 trough seen in the blue curve of :numref:`figure-timestep-vacf` between 0
 and 2000 fs. The resulting DOS (orange curve in :numref:`figure-timestep-dos`) does not provide the higher frequency
 results, has a peak at an incorrect position, and falls off towards zero far too early.
