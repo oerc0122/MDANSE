@@ -244,7 +244,7 @@ of the trajectory.
    :height: 9.393cm
 
    Velocity autocorrelation function using velocities determined by
-   numerical derivatives of atomic positions from a the same MD
+   numerical derivatives of atomic positions from the same MD
    simulation of liquid argon but with positions sampled every 120 fs and
    1.2 ps shown in blue and orange respectively.
 
