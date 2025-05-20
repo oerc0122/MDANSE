@@ -157,6 +157,116 @@ def van_hove_distinct(
     return intra, inter
 
 
+def van_hove_distinct_all_inter(
+    cell: np.ndarray,
+    indices_intra: None,
+    symbolindex: list[int],
+    intra: None,
+    inter: np.ndarray,
+    coords_t0: np.ndarray,
+    coords_t1: np.ndarray,
+    rmin: float,
+    dr: float,
+    rmax: float,
+    size_limit: int = 1024,
+):
+    """Return the histogram of interatomic distances.
+
+    Calculates the distance histogram between the configurations at
+    times t0 and t1. Distances are calculated using the minimum image
+    convention which are all worked out using the fractional coordinates
+    with the unit cell of the configuration at time t1. The function can
+    be used to calculate the distinct part of the van Hove function.
+
+    The original implementation by Miguel Angel Gonzalez (Institut Laue
+    Langevin) has now been replaced by numpy functions.
+
+    Parameters
+    ----------
+    cell : np.ndarray
+        direct matrix of the unit cell of the system
+    indices_intra : None
+        added for compatibility but omitted in the calculations
+    symbolindex : List[int]
+        list of int values of atom types in the system
+    intra : None
+        added for compatibility but omitted in the calculations
+    inter : np.ndarray
+        the array of distance counts between atoms in different molecules
+    coords_t0 : np.ndarray
+        array of atom positions at time t0
+    coords_t1 : np.ndarray
+        array of atom positions at time t1
+    rmin : float
+        lowest distance allowed in the binning of the results
+    dr : float
+        size of the binning step
+    rmax: float
+        maximum interatomic distance to include in the results
+    size_limit : int
+        array size over which the calculation will be split into segments
+
+    Returns
+    -------
+    Tuple[np.ndarray]
+        intra and total input arrays modified by adding new counts
+
+    """
+    nbins = inter.shape[2]
+    unique_types = np.unique(symbolindex)
+    type_indices = {}
+    for type1 in unique_types:
+        type_indices[type1] = np.where(symbolindex == type1)
+
+    inter_bins = {}
+    for type1 in unique_types:
+        for type2 in unique_types:
+            inter_bins[(type1, type2)] = collections.Counter()
+
+    limits_t0 = range(0, len(coords_t0), size_limit)
+    limits_t1 = range(0, len(coords_t1), size_limit)
+    for nlim_t0, lim_t0 in enumerate(limits_t0):
+        try:
+            endlimit = limits_t0[nlim_t0 + 1]
+        except IndexError:
+            reference = KDTree(coords_t0[lim_t0:])
+        else:
+            reference = KDTree(coords_t0[lim_t0:endlimit])
+        for nlim_t1, lim_t1 in enumerate(limits_t1):
+            try:
+                endlimit_t1 = limits_t1[nlim_t1 + 1]
+            except IndexError:
+                subset_coords = coords_t1[lim_t1:]
+            else:
+                subset_coords = coords_t1[lim_t1:endlimit_t1]
+            for xyz_offsets in it.product([-1, 0, 1], repeat=3):
+                moved = KDTree(
+                    subset_coords
+                    + cell[0] * xyz_offsets[0]
+                    + cell[1] * xyz_offsets[1]
+                    + cell[2] * xyz_offsets[2],
+                )
+                distance_dict = reference.sparse_distance_matrix(moved, rmax)
+                bin_values = (
+                    (np.array(list(distance_dict.values())) - rmin) / dr
+                ).astype(int)
+                for value_index, pair in enumerate(distance_dict.keys()):
+                    if pair[0] == pair[1]:
+                        continue
+                    type_tuple = symbolindex[pair[0]], symbolindex[pair[1]]
+                    inter_bins[type_tuple][bin_values[value_index]] += 1
+
+    for type_tuple, counter in inter_bins.items():
+        for bin_index, counts in counter.items():
+            if bin_index < 0:
+                continue
+            if bin_index >= nbins:
+                continue
+            inter[type_tuple[0], type_tuple[1], bin_index] += counts
+
+    return intra, inter
+
+
 def intramolecular_lookup_dict(chemical_system: ChemicalSystem) -> np.ndarray[int]:
     """Build a lookup dictionary of atom indices in the same molecule.
 
@@ -248,6 +358,14 @@ class VanHoveFunctionDistinct(IJob):
 
         self.numberOfSteps = self.configuration["frames"]["n_frames"]
         self.n_configs = self.configuration["frames"]["n_configs"]
+        if self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.unique_molecules():
+            self.indices_intra = intramolecular_lookup_dict(
+                self.configuration["trajectory"]["instance"].chemical_system,
+            )
+        else:
+            self.indices_intra = None
 
         self._nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         self.selectedElements = self.configuration["atom_selection"]["unique_names"]
@@ -279,20 +397,21 @@ class VanHoveFunctionDistinct(IJob):
             self.configuration["frames"]["duration"],
             units="ps",
         )
-        self._outputData.add(
-            "g(r,t)_intra_total",
-            "SurfaceOutputVariable",
-            (self.n_mid_points, self.numberOfSteps),
-            axis="r|time",
-            units="au",
-        )
-        self._outputData.add(
-            "g(r,t)_inter_total",
-            "SurfaceOutputVariable",
-            (self.n_mid_points, self.numberOfSteps),
-            axis="r|time",
-            units="au",
-        )
+        if self.indices_intra:
+            self._outputData.add(
+                "g(r,t)_intra_total",
+                "SurfaceOutputVariable",
+                (self.n_mid_points, self.numberOfSteps),
+                axis="r|time",
+                units="au",
+            )
+            self._outputData.add(
+                "g(r,t)_inter_total",
+                "SurfaceOutputVariable",
+                (self.n_mid_points, self.numberOfSteps),
+                axis="r|time",
+                units="au",
+            )
         self._outputData.add(
             "g(r,t)_total",
             "SurfaceOutputVariable",
@@ -302,22 +421,23 @@ class VanHoveFunctionDistinct(IJob):
             main_result=True,
         )
         for x, y in self._elementsPairs:
+            if self.indices_intra:
+                self._outputData.add(
+                    f"g(r,t)_intra_{x}{y}",
+                    "SurfaceOutputVariable",
+                    (self.n_mid_points, self.numberOfSteps),
+                    axis="r|time",
+                    units="au",
+                )
+                self._outputData.add(
+                    f"g(r,t)_inter_{x}{y}",
+                    "SurfaceOutputVariable",
+                    (self.n_mid_points, self.numberOfSteps),
+                    axis="r|time",
+                    units="au",
+                )
             self._outputData.add(
-                f"g(r,t)_intra_{x}{y}",
-                "SurfaceOutputVariable",
-                (self.n_mid_points, self.numberOfSteps),
-                axis="r|time",
-                units="au",
-            )
-            self._outputData.add(
-                f"g(r,t)_inter_{x}{y}",
-                "SurfaceOutputVariable",
-                (self.n_mid_points, self.numberOfSteps),
-                axis="r|time",
-                units="au",
-            )
-            self._outputData.add(
-                f"g(r,t)_total_{x}{y}",
+                f"g(r,t)_{x}{y}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.numberOfSteps),
                 axis="r|time",
@@ -358,10 +478,6 @@ class VanHoveFunctionDistinct(IJob):
         )
         self.h_inter = np.zeros(
             (self.nElements, self.nElements, self.n_mid_points, self.numberOfSteps),
-        )
-
-        self.indices_intra = intramolecular_lookup_dict(
-            self.configuration["trajectory"]["instance"].chemical_system,
         )
 
     def run_step(self, time: int) -> tuple[int, tuple[np.ndarray, np.ndarray]]:
@@ -407,24 +523,39 @@ class VanHoveFunctionDistinct(IJob):
             intra = np.zeros_like(bins_intra)
             inter = np.zeros_like(bins_inter)
 
-            intra, inter = van_hove_distinct(
-                direct_cell,
-                self.indices_intra,
-                self.indexToSymbol,
-                intra,
-                inter,
-                coords_t0,
-                coords_t1,
-                self.configuration["r_values"]["first"],
-                self.configuration["r_values"]["step"],
-                self.r_cutoff,
-            )
+            if self.indices_intra is None:
+                intra, inter = van_hove_distinct_all_inter(
+                    direct_cell,
+                    self.indices_intra,
+                    self.indexToSymbol,
+                    intra,
+                    inter,
+                    coords_t0,
+                    coords_t1,
+                    self.configuration["r_values"]["first"],
+                    self.configuration["r_values"]["step"],
+                    self.r_cutoff,
+                )
+                bins_inter += conf_t1.unit_cell.volume * inter
+            else:
+                intra, inter = van_hove_distinct(
+                    direct_cell,
+                    self.indices_intra,
+                    self.indexToSymbol,
+                    intra,
+                    inter,
+                    coords_t0,
+                    coords_t1,
+                    self.configuration["r_values"]["first"],
+                    self.configuration["r_values"]["step"],
+                    self.r_cutoff,
+                )
+                bins_intra += conf_t1.unit_cell.volume * intra
+                bins_inter += conf_t1.unit_cell.volume * inter
 
             # The van Hove function will be divided by the density,
             # we multiply my the volume here and divide by the number
             # of atoms in finalize.
-            bins_intra += conf_t1.unit_cell.volume * intra
-            bins_inter += conf_t1.unit_cell.volume * inter
 
         return time, (bins_intra, bins_inter)
 
@@ -440,8 +571,11 @@ class VanHoveFunctionDistinct(IJob):
             configurations at the inputted time difference.
 
         """
-        self.h_intra[..., time] += x[0]
-        self.h_inter[..., time] += x[1]
+        if self.indices_intra:
+            self.h_intra[..., time] += x[0]
+            self.h_inter[..., time] += x[1]
+        else:
+            self.h_inter[..., time] += x[1]
 
     def finalize(self):
         """Apply the scaling to the summed up results.
@@ -462,34 +596,54 @@ class VanHoveFunctionDistinct(IJob):
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj
-                self.h_intra[idi, idj] += self.h_intra[idj, idi]
+                if self.indices_intra:
+                    self.h_intra[idi, idj] += self.h_intra[idj, idi]
                 self.h_inter[idi, idj] += self.h_inter[idj, idi]
 
             fact = 2 * nij * self.n_configs * self.shell_volumes
-            van_hove_intra = self.h_intra[idi, idj, ...] / fact[:, np.newaxis]
-            van_hove_inter = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
-            van_hove_total = van_hove_intra + van_hove_inter
+            if self.indices_intra:
+                van_hove_intra = self.h_intra[idi, idj, ...] / fact[:, np.newaxis]
+                van_hove_inter = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
+                van_hove_total = van_hove_intra + van_hove_inter
+            else:
+                van_hove_total = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
 
-            for i, van_h in zip(
-                ["intra", "inter", "total"],
-                [van_hove_intra, van_hove_inter, van_hove_total],
-            ):
-                self._outputData[f"g(r,t)_{i}_{''.join(pair)}"][...] = van_h
+            if self.indices_intra:
+                for i, van_h in zip(
+                    ["intra", "inter", "total"],
+                    [van_hove_intra, van_hove_inter, van_hove_total],
+                ):
+                    self._outputData[f"g(r,t)_{i}_{''.join(pair)}"][...] = van_h
+            else:
+                self._outputData[f"g(r,t)_{''.join(pair)}"][...] = van_hove_total
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
-        for i in ["_intra", "_inter", ""]:
+        if self.indices_intra:
+            for i in ["_intra", "_inter", ""]:
+                assign_weights(
+                    self._outputData,
+                    weight_dict,
+                    f"g(r,t){i if i else '_total'}_%s%s",
+                )
+                pdf = weighted_sum(
+                    self._outputData,
+                    weight_dict,
+                    f"g(r,t){i if i else '_total'}_%s%s",
+                )
+                self._outputData[f"g(r,t){i}_total"][...] = pdf
+        else:
             assign_weights(
                 self._outputData,
                 weight_dict,
-                f"g(r,t){i if i else '_total'}_%s%s",
+                "g(r,t)_%s%s",
             )
             pdf = weighted_sum(
                 self._outputData,
                 weight_dict,
-                f"g(r,t){i if i else '_total'}_%s%s",
+                "g(r,t)_%s%s",
             )
-            self._outputData[f"g(r,t){i}_total"][...] = pdf
+            self._outputData["g(r,t)_total"][...] = pdf
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

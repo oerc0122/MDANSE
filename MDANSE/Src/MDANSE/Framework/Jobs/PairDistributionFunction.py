@@ -59,47 +59,61 @@ class PairDistributionFunction(DistanceHistogram):
             units="nm",
         )
 
-        for x, y in self._elementsPairs:
-            for i in ["pdf", "rdf", "tcf"]:
-                self._outputData.add(
-                    f"{i}_intra_{x}{y}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                )
-                self._outputData.add(
-                    f"{i}_inter_{x}{y}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                )
-                self._outputData.add(
-                    f"{i}_total_{x}{y}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                    main_result=i == "pdf",
-                    partial_result=i == "pdf",
-                )
+        if self.indices_intra:
+            for x, y in self._elementsPairs:
+                for i in ["pdf", "rdf", "tcf"]:
+                    self._outputData.add(
+                        f"{i}_intra_{x}{y}",
+                        "LineOutputVariable",
+                        (npoints,),
+                        axis="r",
+                        units="au",
+                    )
+                    self._outputData.add(
+                        f"{i}_inter_{x}{y}",
+                        "LineOutputVariable",
+                        (npoints,),
+                        axis="r",
+                        units="au",
+                    )
+                    self._outputData.add(
+                        f"{i}_total_{x}{y}",
+                        "LineOutputVariable",
+                        (npoints,),
+                        axis="r",
+                        units="au",
+                        main_result=i == "pdf",
+                        partial_result=i == "pdf",
+                    )
+        else:
+            for x, y in self._elementsPairs:
+                for i in ["pdf", "rdf", "tcf"]:
+                    self._outputData.add(
+                        f"{i}_{x}{y}",
+                        "LineOutputVariable",
+                        (npoints,),
+                        axis="r",
+                        units="au",
+                        main_result=i == "pdf",
+                        partial_result=i == "pdf",
+                    )
 
         for i in ["pdf", "rdf", "tcf"]:
-            self._outputData.add(
-                f"{i}_intra_total",
-                "LineOutputVariable",
-                (npoints,),
-                axis="r",
-                units="au",
-            )
-            self._outputData.add(
-                f"{i}_inter_total",
-                "LineOutputVariable",
-                (npoints,),
-                axis="r",
-                units="au",
-            )
+            if self.indices_intra:
+                self._outputData.add(
+                    f"{i}_intra_total",
+                    "LineOutputVariable",
+                    (npoints,),
+                    axis="r",
+                    units="au",
+                )
+                self._outputData.add(
+                    f"{i}_inter_total",
+                    "LineOutputVariable",
+                    (npoints,),
+                    axis="r",
+                    units="au",
+                )
             self._outputData.add(
                 f"{i}_total",
                 "LineOutputVariable",
@@ -132,50 +146,79 @@ class PairDistributionFunction(DistanceHistogram):
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj
-                self.hIntra[idi, idj] += self.hIntra[idj, idi]
+                if self.indices_intra:
+                    self.hIntra[idi, idj] += self.hIntra[idj, idi]
                 self.hInter[idi, idj] += self.hInter[idj, idi]
 
             fact = 2 * nij * nFrames * shellVolumes
 
-            pdf_intra = self.hIntra[idi, idj, :] / fact
-            pdf_inter = self.hInter[idi, idj, :] / fact
-            pdf_total = pdf_intra + pdf_inter
+            if self.indices_intra:
+                pdf_intra = self.hIntra[idi, idj, :] / fact
+                pdf_inter = self.hInter[idi, idj, :] / fact
+                pdf_total = pdf_intra + pdf_inter
 
-            for i, pdf in zip(
-                ["intra", "inter", "total"],
-                [pdf_intra, pdf_inter, pdf_total],
-            ):
-                self._outputData[f"pdf_{i}_{pair[0]}{pair[1]}"][:] = pdf
-                self._outputData[f"rdf_{i}_{pair[0]}{pair[1]}"][:] = (
+                for i, pdf in zip(
+                    ["intra", "inter", "total"],
+                    [pdf_intra, pdf_inter, pdf_total],
+                ):
+                    self._outputData[f"pdf_{i}_{pair[0]}{pair[1]}"][:] = pdf
+                    self._outputData[f"rdf_{i}_{pair[0]}{pair[1]}"][:] = (
+                        shellSurfaces * self.averageDensity * pdf
+                    )
+                    self._outputData[f"tcf_{i}_{pair[0]}{pair[1]}"][:] = (
+                        densityFactor
+                        * self.averageDensity
+                        * (pdf if i == "intra" else pdf - 1)
+                    )
+            else:
+                pdf = self.hInter[idi, idj, :] / fact
+
+                self._outputData[f"pdf_{pair[0]}{pair[1]}"][:] = pdf
+                self._outputData[f"rdf_{pair[0]}{pair[1]}"][:] = (
                     shellSurfaces * self.averageDensity * pdf
                 )
-                self._outputData[f"tcf_{i}_{pair[0]}{pair[1]}"][:] = (
-                    densityFactor
-                    * self.averageDensity
-                    * (pdf if i == "intra" else pdf - 1)
+                self._outputData[f"tcf_{pair[0]}{pair[1]}"][:] = (
+                    densityFactor * self.averageDensity * (pdf - 1)
                 )
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
-        for i in ["_intra", "_inter", ""]:
+        if self.indices_intra:
+            for i in ["_intra", "_inter", ""]:
+                assign_weights(
+                    self._outputData,
+                    weight_dict,
+                    "pdf{}_%s%s".format(i if i else "_total"),
+                )
+                pdf = weighted_sum(
+                    self._outputData,
+                    weight_dict,
+                    f"pdf{i if i else '_total'}_%s%s",
+                )
+                self._outputData[f"pdf{i}_total"][:] = pdf
+                self._outputData[f"rdf{i}_total"][:] = (
+                    shellSurfaces * self.averageDensity * pdf
+                )
+                self._outputData[f"tcf{i}_total"][:] = (
+                    densityFactor
+                    * self.averageDensity
+                    * (pdf if i == "_intra" else pdf - 1)
+                )
+        else:
             assign_weights(
                 self._outputData,
                 weight_dict,
-                "pdf{}_%s%s".format(i if i else "_total"),
+                "pdf_%s%s",
             )
             pdf = weighted_sum(
                 self._outputData,
                 weight_dict,
-                f"pdf{i if i else '_total'}_%s%s",
+                "pdf_%s%s",
             )
-            self._outputData[f"pdf{i}_total"][:] = pdf
-            self._outputData[f"rdf{i}_total"][:] = (
-                shellSurfaces * self.averageDensity * pdf
-            )
-            self._outputData[f"tcf{i}_total"][:] = (
-                densityFactor
-                * self.averageDensity
-                * (pdf if i == "_intra" else pdf - 1)
+            self._outputData["pdf_total"][:] = pdf
+            self._outputData["rdf_total"][:] = shellSurfaces * self.averageDensity * pdf
+            self._outputData["tcf_total"][:] = (
+                densityFactor * self.averageDensity * (pdf - 1)
             )
 
         self._outputData.write(

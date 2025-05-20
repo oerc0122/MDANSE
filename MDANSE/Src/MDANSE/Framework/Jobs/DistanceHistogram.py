@@ -25,6 +25,7 @@ from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
     DETAILED_CELL_MESSAGE,
     intramolecular_lookup_dict,
     van_hove_distinct,
+    van_hove_distinct_all_inter,
 )
 from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 
@@ -98,6 +99,9 @@ class DistanceHistogram(IJob):
         ]
         self._indices = np.array(self._indices, dtype=np.int32)
 
+        self.indices_intra = intramolecular_lookup_dict(
+            self.configuration["trajectory"]["instance"].chemical_system,
+        )
         self.selectedElements = self.configuration["atom_selection"]["unique_names"]
 
         self.indexToSymbol = np.array(
@@ -111,10 +115,17 @@ class DistanceHistogram(IJob):
         nElements = len(self.selectedElements)
 
         # The histogram of the intramolecular distances.
-        self.hIntra = np.zeros(
-            (nElements, nElements, len(self.configuration["r_values"]["mid_points"])),
-            dtype=np.float64,
-        )
+        if self.indices_intra:
+            self.hIntra = np.zeros(
+                (
+                    nElements,
+                    nElements,
+                    len(self.configuration["r_values"]["mid_points"]),
+                ),
+                dtype=np.float64,
+            )
+        else:
+            self.hIntra = None
 
         # The histogram of the intermolecular distances.
         self.hInter = np.zeros(
@@ -138,9 +149,6 @@ class DistanceHistogram(IJob):
 
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(self.selectedElements, 2),
-        )
-        self.indices_intra = intramolecular_lookup_dict(
-            self.configuration["trajectory"]["instance"].chemical_system,
         )
 
     def run_step(self, index):
@@ -174,24 +182,41 @@ class DistanceHistogram(IJob):
         conf.fold_coordinates()
         coords = conf["coordinates"][self._indices]
 
-        hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
-        hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
+        if self.indices_intra:
+            hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
+            hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
 
-        van_hove_distinct(
-            direct_cell,
-            self.indices_intra,
-            self.indexToSymbol,
-            hIntraTemp,
-            hInterTemp,
-            coords,
-            coords,
-            self.configuration["r_values"]["first"],
-            self.configuration["r_values"]["step"],
-            self.r_cutoff,
-        )
+            van_hove_distinct(
+                direct_cell,
+                self.indices_intra,
+                self.indexToSymbol,
+                hIntraTemp,
+                hInterTemp,
+                coords,
+                coords,
+                self.configuration["r_values"]["first"],
+                self.configuration["r_values"]["step"],
+                self.r_cutoff,
+            )
 
-        np.multiply(hIntraTemp, cell_volume, hIntraTemp)
-        np.multiply(hInterTemp, cell_volume, hInterTemp)
+            np.multiply(hIntraTemp, cell_volume, hIntraTemp)
+            np.multiply(hInterTemp, cell_volume, hInterTemp)
+        else:
+            hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
+            hIntraTemp = None
+            van_hove_distinct_all_inter(
+                direct_cell,
+                self.indices_intra,
+                self.indexToSymbol,
+                None,
+                hInterTemp,
+                coords,
+                coords,
+                self.configuration["r_values"]["first"],
+                self.configuration["r_values"]["step"],
+                self.r_cutoff,
+            )
+            np.multiply(hInterTemp, cell_volume, hInterTemp)
 
         return index, (cell_volume, hIntraTemp, hInterTemp)
 
@@ -217,7 +242,8 @@ class DistanceHistogram(IJob):
         # volume can vary during the MD (e.g. NPT conditions).
         # This volume is the one that intervene in the density
         # calculation.
-        self.hIntra += x[1]
+        if self.indices_intra:
+            self.hIntra += x[1]
         self.hInter += x[2]
 
         for k, v in list(self._nAtomsPerElement.items()):
