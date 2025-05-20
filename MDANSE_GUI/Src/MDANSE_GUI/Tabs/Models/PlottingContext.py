@@ -274,9 +274,15 @@ class SingleDataset:
             axis_values = self.x_axis(axis_name)
             axis_unit = self._current_units[axis_name]
             picked_value = axis_values[index_tuple[axis_index]]
-            significant_digit = np.floor(
-                np.log10(abs(np.mean(axis_values[1:] - axis_values[:-1])))
-            ).astype(int)
+            if len(axis_values) > 1:
+                significant_digit = np.floor(
+                    np.log10(abs(np.mean(axis_values[1:] - axis_values[:-1])))
+                ).astype(int)
+            elif len(axis_values) == 1:
+                significant_digit = np.floor(np.log10(abs(axis_values[0]))).astype(int)
+            else:
+                label += f"{axis_name} has no values, unit {axis_unit}"
+                continue
             if significant_digit < 0:
                 picked_value = round(picked_value, abs(significant_digit) + 2)
             else:

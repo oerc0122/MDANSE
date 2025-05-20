@@ -89,6 +89,10 @@ class PositionPowerSpectrum(IJob):
 
         instrResolution = self.configuration["instrument_resolution"]
 
+        self.add_ideal_results = (
+            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        )
+
         self._outputData.add(
             "time",
             "LineOutputVariable",
@@ -134,6 +138,15 @@ class PositionPowerSpectrum(IJob):
                 main_result=True,
                 partial_result=True,
             )
+            if self.add_ideal_results:
+                self._outputData.add(
+                    f"pps_ideal_{element}",
+                    "LineOutputVariable",
+                    (instrResolution["n_romegas"],),
+                    axis="romega",
+                    units="au",
+                )
+
         self._outputData.add(
             "pacf_total",
             "LineOutputVariable",
@@ -149,6 +162,14 @@ class PositionPowerSpectrum(IJob):
             units="au",
             main_result=True,
         )
+        if self.add_ideal_results:
+            self._outputData.add(
+                "pps_ideal_total",
+                "LineOutputVariable",
+                (instrResolution["n_romegas"],),
+                axis="romega",
+                units="au",
+            )
 
         self._atoms = self.configuration["trajectory"][
             "instance"
@@ -215,11 +236,20 @@ class PositionPowerSpectrum(IJob):
                 self.configuration["instrument_resolution"]["time_step"],
                 fft="rfft",
             )
+            if self.add_ideal_results:
+                self._outputData[f"pps_ideal_{element}"][:] = get_spectrum(
+                    self._outputData[f"pacf_{element}"],
+                    None,
+                    self.configuration["instrument_resolution"]["time_step"],
+                    fft="rfft",
+                )
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
         assign_weights(self._outputData, weight_dict, "pacf_%s")
         assign_weights(self._outputData, weight_dict, "pps_%s")
+        if self.add_ideal_results:
+            assign_weights(self._outputData, weight_dict, "pps_ideal_%s")
         self._outputData["pacf_total"][:] = weighted_sum(
             self._outputData,
             weight_dict,
@@ -230,6 +260,12 @@ class PositionPowerSpectrum(IJob):
             weight_dict,
             "pps_%s",
         )
+        if self.add_ideal_results:
+            self._outputData["pps_ideal_total"][:] = weighted_sum(
+                self._outputData,
+                weight_dict,
+                "pps_ideal_%s",
+            )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

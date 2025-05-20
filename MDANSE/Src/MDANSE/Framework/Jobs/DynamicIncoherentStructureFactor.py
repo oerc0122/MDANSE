@@ -114,6 +114,10 @@ class DynamicIncoherentStructureFactor(IJob):
 
         self._nOmegas = self._instrResolution["n_omegas"]
 
+        self.add_ideal_results = (
+            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+        )
+
         self._outputData.add(
             "q",
             "LineOutputVariable",
@@ -165,6 +169,14 @@ class DynamicIncoherentStructureFactor(IJob):
                 main_result=True,
                 partial_result=True,
             )
+            if self.add_ideal_results:
+                self._outputData.add(
+                    f"s(q,f)_ideal_{element}",
+                    "SurfaceOutputVariable",
+                    (self._nQShells, self._nOmegas),
+                    axis="q|omega",
+                    units="nm2/ps",
+                )
 
         self._outputData.add(
             "f(q,t)_total",
@@ -181,6 +193,14 @@ class DynamicIncoherentStructureFactor(IJob):
             units="nm2/ps",
             main_result=True,
         )
+        if self.add_ideal_results:
+            self._outputData.add(
+                "s(q,f)_ideal_total",
+                "SurfaceOutputVariable",
+                (self._nQShells, self._nOmegas),
+                axis="q|omega",
+                units="nm2/ps",
+            )
 
     def run_step(self, index):
         """
@@ -257,6 +277,8 @@ class DynamicIncoherentStructureFactor(IJob):
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
         assign_weights(self._outputData, weight_dict, "f(q,t)_%s")
         assign_weights(self._outputData, weight_dict, "s(q,f)_%s")
+        if self.add_ideal_results:
+            assign_weights(self._outputData, weight_dict, "s(q,f)_ideal_%s")
         for element, number in list(nAtomsPerElement.items()):
             extra_scaling = 1.0 / number
             self._outputData[f"f(q,t)_{element}"] *= extra_scaling
@@ -266,6 +288,13 @@ class DynamicIncoherentStructureFactor(IJob):
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
+            if self.add_ideal_results:
+                self._outputData[f"s(q,f)_ideal_{element}"][:] = get_spectrum(
+                    self._outputData[f"f(q,t)_{element}"],
+                    None,
+                    self.configuration["instrument_resolution"]["time_step"],
+                    axis=1,
+                )
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
             self._outputData,
@@ -278,6 +307,13 @@ class DynamicIncoherentStructureFactor(IJob):
             weight_dict,
             "s(q,f)_%s",
         )
+
+        if self.add_ideal_results:
+            self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
+                self._outputData,
+                weight_dict,
+                "s(q,f)_ideal_%s",
+            )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],
