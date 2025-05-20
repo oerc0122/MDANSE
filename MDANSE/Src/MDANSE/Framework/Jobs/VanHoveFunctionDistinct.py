@@ -34,6 +34,37 @@ DETAILED_CELL_MESSAGE = (
 )
 
 
+def distance_array_2D(
+    ref_atoms: np.ndarray, other_atoms: np.ndarray, cell_array: np.ndarray
+):
+    """Given two input arrays of atomic positions sized
+    (N,3) and (M,3), returns an (M, N) array of distances
+    between the atoms.
+
+    Parameters
+    ----------
+    ref_atoms : np.ndarray
+        (N, 3)-shaped array of atom positions
+    other_atoms : np.ndarray
+        (M, 3)-shaped array of atom positions
+    cell_array : np.ndarray
+        direct matrix of the unit cell of the system
+
+    Returns
+    -------
+    np.ndarray
+        (N, M)-shaped array of distances between atoms from the two arrays
+    """
+    diff_frac = other_atoms.reshape((len(other_atoms), 1, 3)) - ref_atoms.reshape(
+        (1, len(ref_atoms), 3)
+    )
+    temp = diff_frac
+    temp -= np.round(temp)
+    diff_real = np.matmul(temp, cell_array)
+    r = np.sqrt((diff_real**2).sum(axis=2))
+    return r
+
+
 def van_hove_distinct(
     cell: np.ndarray,
     indices_intra: np.ndarray[int],
@@ -108,35 +139,31 @@ def van_hove_distinct(
         try:
             endlimit = limits_t0[nlim_t0 + 1]
         except IndexError:
-            reference = KDTree(coords_t0[lim_t0:])
+            reference = coords_t0[lim_t0:]
+            ref_indices = np.arange(lim_t0, len(coords_t0), dtype=int)
         else:
-            reference = KDTree(coords_t0[lim_t0:endlimit])
+            reference = coords_t0[lim_t0:endlimit]
+            ref_indices = np.arange(lim_t0, endlimit, dtype=int)
         for nlim_t1, lim_t1 in enumerate(limits_t1):
             try:
                 endlimit_t1 = limits_t1[nlim_t1 + 1]
             except IndexError:
                 subset_coords = coords_t1[lim_t1:]
+                sub_indices = np.arange(lim_t1, len(coords_t1), dtype=int)
             else:
                 subset_coords = coords_t1[lim_t1:endlimit_t1]
-            for xyz_offsets in it.product([-1, 0, 1], repeat=3):
-                moved = KDTree(
-                    subset_coords
-                    + cell[0] * xyz_offsets[0]
-                    + cell[1] * xyz_offsets[1]
-                    + cell[2] * xyz_offsets[2],
-                )
-                distance_dict = reference.sparse_distance_matrix(moved, rmax)
-                bin_values = (
-                    (np.array(list(distance_dict.values())) - rmin) / dr
-                ).astype(int)
-                for value_index, pair in enumerate(distance_dict.keys()):
-                    if pair[0] == pair[1]:
+                sub_indices = np.arange(lim_t1, endlimit_t1, dtype=int)
+            distance_array = distance_array_2D(reference, subset_coords, cell)
+            bin_values = ((distance_array - rmin) / dr).astype(int)
+            for ref_index in ref_indices:
+                for sub_index in sub_indices:
+                    if ref_index == sub_index:
                         continue
-                    type_tuple = symbolindex[pair[0]], symbolindex[pair[1]]
-                    if indices_intra[pair[0]] == indices_intra[pair[1]]:
-                        intra_bins[type_tuple][bin_values[value_index]] += 1
+                    type_tuple = symbolindex[ref_index], symbolindex[sub_index]
+                    if indices_intra[ref_index] == indices_intra[sub_index]:
+                        intra_bins[type_tuple][bin_values[ref_index, sub_index]] += 1
                     else:
-                        inter_bins[type_tuple][bin_values[value_index]] += 1
+                        inter_bins[type_tuple][bin_values[ref_index, sub_index]] += 1
 
     for type_tuple, counter in intra_bins.items():
         for bin_index, counts in counter.items():
@@ -229,32 +256,28 @@ def van_hove_distinct_all_inter(
         try:
             endlimit = limits_t0[nlim_t0 + 1]
         except IndexError:
-            reference = KDTree(coords_t0[lim_t0:])
+            reference = coords_t0[lim_t0:]
+            ref_indices = np.arange(lim_t0, len(coords_t0), dtype=int)
         else:
-            reference = KDTree(coords_t0[lim_t0:endlimit])
+            reference = coords_t0[lim_t0:endlimit]
+            ref_indices = np.arange(lim_t0, endlimit, dtype=int)
         for nlim_t1, lim_t1 in enumerate(limits_t1):
             try:
                 endlimit_t1 = limits_t1[nlim_t1 + 1]
             except IndexError:
                 subset_coords = coords_t1[lim_t1:]
+                sub_indices = np.arange(lim_t1, len(coords_t1), dtype=int)
             else:
                 subset_coords = coords_t1[lim_t1:endlimit_t1]
-            for xyz_offsets in it.product([-1, 0, 1], repeat=3):
-                moved = KDTree(
-                    subset_coords
-                    + cell[0] * xyz_offsets[0]
-                    + cell[1] * xyz_offsets[1]
-                    + cell[2] * xyz_offsets[2],
-                )
-                distance_dict = reference.sparse_distance_matrix(moved, rmax)
-                bin_values = (
-                    (np.array(list(distance_dict.values())) - rmin) / dr
-                ).astype(int)
-                for value_index, pair in enumerate(distance_dict.keys()):
-                    if pair[0] == pair[1]:
+                sub_indices = np.arange(lim_t1, endlimit_t1, dtype=int)
+            distance_array = distance_array_2D(reference, subset_coords, cell)
+            bin_values = ((distance_array - rmin) / dr).astype(int)
+            for ref_index in ref_indices:
+                for sub_index in sub_indices:
+                    if ref_index == sub_index:
                         continue
-                    type_tuple = symbolindex[pair[0]], symbolindex[pair[1]]
-                    inter_bins[type_tuple][bin_values[value_index]] += 1
+                    type_tuple = symbolindex[ref_index], symbolindex[sub_index]
+                    inter_bins[type_tuple][bin_values[ref_index, sub_index]] += 1
 
     for type_tuple, counter in inter_bins.items():
         for bin_index, counts in counter.items():
@@ -397,7 +420,7 @@ class VanHoveFunctionDistinct(IJob):
             self.configuration["frames"]["duration"],
             units="ps",
         )
-        if self.indices_intra:
+        if self.indices_intra is not None:
             self._outputData.add(
                 "g(r,t)_intra_total",
                 "SurfaceOutputVariable",
@@ -421,7 +444,7 @@ class VanHoveFunctionDistinct(IJob):
             main_result=True,
         )
         for x, y in self._elementsPairs:
-            if self.indices_intra:
+            if self.indices_intra is not None:
                 self._outputData.add(
                     f"g(r,t)_intra_{x}{y}",
                     "SurfaceOutputVariable",
@@ -509,17 +532,18 @@ class VanHoveFunctionDistinct(IJob):
             conf_t0 = self.configuration["trajectory"]["instance"].configuration(
                 frame_index_t0,
             )
-            conf_t0.fold_coordinates()
             coords_t0 = conf_t0.coordinates[self._indices]
 
             frame_index_t1 = self.configuration["frames"]["value"][i + time]
             conf_t1 = self.configuration["trajectory"]["instance"].configuration(
                 frame_index_t1,
             )
-            conf_t1.fold_coordinates()
             coords_t1 = conf_t1.coordinates[self._indices]
             direct_cell = conf_t1.unit_cell.direct
-
+            inverse_cell0 = conf_t0.unit_cell.inverse
+            inverse_cell1 = conf_t1.unit_cell.inverse
+            frac_coords_t0 = coords_t0 @ inverse_cell0
+            frac_coords_t1 = coords_t1 @ inverse_cell1
             intra = np.zeros_like(bins_intra)
             inter = np.zeros_like(bins_inter)
 
@@ -530,8 +554,8 @@ class VanHoveFunctionDistinct(IJob):
                     self.indexToSymbol,
                     intra,
                     inter,
-                    coords_t0,
-                    coords_t1,
+                    frac_coords_t0,
+                    frac_coords_t1,
                     self.configuration["r_values"]["first"],
                     self.configuration["r_values"]["step"],
                     self.r_cutoff,
@@ -544,8 +568,8 @@ class VanHoveFunctionDistinct(IJob):
                     self.indexToSymbol,
                     intra,
                     inter,
-                    coords_t0,
-                    coords_t1,
+                    frac_coords_t0,
+                    frac_coords_t1,
                     self.configuration["r_values"]["first"],
                     self.configuration["r_values"]["step"],
                     self.r_cutoff,
@@ -571,7 +595,7 @@ class VanHoveFunctionDistinct(IJob):
             configurations at the inputted time difference.
 
         """
-        if self.indices_intra:
+        if self.indices_intra is not None:
             self.h_intra[..., time] += x[0]
             self.h_inter[..., time] += x[1]
         else:
@@ -596,30 +620,30 @@ class VanHoveFunctionDistinct(IJob):
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj
-                if self.indices_intra:
+                if self.indices_intra is not None:
                     self.h_intra[idi, idj] += self.h_intra[idj, idi]
                 self.h_inter[idi, idj] += self.h_inter[idj, idi]
 
             fact = 2 * nij * self.n_configs * self.shell_volumes
-            if self.indices_intra:
+            if self.indices_intra is not None:
                 van_hove_intra = self.h_intra[idi, idj, ...] / fact[:, np.newaxis]
                 van_hove_inter = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
                 van_hove_total = van_hove_intra + van_hove_inter
             else:
                 van_hove_total = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
 
-            if self.indices_intra:
+            if self.indices_intra is not None:
                 for i, van_h in zip(
-                    ["intra", "inter", "total"],
+                    ["_intra", "_inter", ""],
                     [van_hove_intra, van_hove_inter, van_hove_total],
                 ):
-                    self._outputData[f"g(r,t)_{i}_{''.join(pair)}"][...] = van_h
+                    self._outputData[f"g(r,t){i}_{''.join(pair)}"][...] = van_h
             else:
                 self._outputData[f"g(r,t)_{''.join(pair)}"][...] = van_hove_total
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
-        if self.indices_intra:
+        if self.indices_intra is not None:
             for i in ["_intra", "_inter", ""]:
                 assign_weights(
                     self._outputData,

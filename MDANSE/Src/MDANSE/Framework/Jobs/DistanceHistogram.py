@@ -115,7 +115,7 @@ class DistanceHistogram(IJob):
         nElements = len(self.selectedElements)
 
         # The histogram of the intramolecular distances.
-        if self.indices_intra:
+        if self.indices_intra is not None:
             self.hIntra = np.zeros(
                 (
                     nElements,
@@ -179,10 +179,10 @@ class DistanceHistogram(IJob):
         direct_cell = conf.unit_cell.direct
         cell_volume = conf.unit_cell.volume
 
-        conf.fold_coordinates()
         coords = conf["coordinates"][self._indices]
+        frac_coords = coords @ conf.unit_cell.inverse
 
-        if self.indices_intra:
+        if self.indices_intra is not None:
             hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
             hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
 
@@ -192,8 +192,8 @@ class DistanceHistogram(IJob):
                 self.indexToSymbol,
                 hIntraTemp,
                 hInterTemp,
-                coords,
-                coords,
+                frac_coords,
+                frac_coords,
                 self.configuration["r_values"]["first"],
                 self.configuration["r_values"]["step"],
                 self.r_cutoff,
@@ -210,8 +210,8 @@ class DistanceHistogram(IJob):
                 self.indexToSymbol,
                 None,
                 hInterTemp,
-                coords,
-                coords,
+                frac_coords,
+                frac_coords,
                 self.configuration["r_values"]["first"],
                 self.configuration["r_values"]["step"],
                 self.r_cutoff,
@@ -242,7 +242,7 @@ class DistanceHistogram(IJob):
         # volume can vary during the MD (e.g. NPT conditions).
         # This volume is the one that intervene in the density
         # calculation.
-        if self.indices_intra:
+        if self.indices_intra is not None:
             self.hIntra += x[1]
         self.hInter += x[2]
 

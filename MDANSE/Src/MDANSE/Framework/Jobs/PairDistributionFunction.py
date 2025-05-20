@@ -59,7 +59,7 @@ class PairDistributionFunction(DistanceHistogram):
             units="nm",
         )
 
-        if self.indices_intra:
+        if self.indices_intra is not None:
             for x, y in self._elementsPairs:
                 for i in ["pdf", "rdf", "tcf"]:
                     self._outputData.add(
@@ -77,7 +77,7 @@ class PairDistributionFunction(DistanceHistogram):
                         units="au",
                     )
                     self._outputData.add(
-                        f"{i}_total_{x}{y}",
+                        f"{i}_{x}{y}",
                         "LineOutputVariable",
                         (npoints,),
                         axis="r",
@@ -99,7 +99,7 @@ class PairDistributionFunction(DistanceHistogram):
                     )
 
         for i in ["pdf", "rdf", "tcf"]:
-            if self.indices_intra:
+            if self.indices_intra is not None:
                 self._outputData.add(
                     f"{i}_intra_total",
                     "LineOutputVariable",
@@ -146,26 +146,26 @@ class PairDistributionFunction(DistanceHistogram):
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj
-                if self.indices_intra:
+                if self.indices_intra is not None:
                     self.hIntra[idi, idj] += self.hIntra[idj, idi]
                 self.hInter[idi, idj] += self.hInter[idj, idi]
 
             fact = 2 * nij * nFrames * shellVolumes
 
-            if self.indices_intra:
+            if self.indices_intra is not None:
                 pdf_intra = self.hIntra[idi, idj, :] / fact
                 pdf_inter = self.hInter[idi, idj, :] / fact
                 pdf_total = pdf_intra + pdf_inter
 
                 for i, pdf in zip(
-                    ["intra", "inter", "total"],
+                    ["_intra", "_inter", ""],
                     [pdf_intra, pdf_inter, pdf_total],
                 ):
-                    self._outputData[f"pdf_{i}_{pair[0]}{pair[1]}"][:] = pdf
-                    self._outputData[f"rdf_{i}_{pair[0]}{pair[1]}"][:] = (
+                    self._outputData[f"pdf{i}_{pair[0]}{pair[1]}"][:] = pdf
+                    self._outputData[f"rdf{i}_{pair[0]}{pair[1]}"][:] = (
                         shellSurfaces * self.averageDensity * pdf
                     )
-                    self._outputData[f"tcf_{i}_{pair[0]}{pair[1]}"][:] = (
+                    self._outputData[f"tcf{i}_{pair[0]}{pair[1]}"][:] = (
                         densityFactor
                         * self.averageDensity
                         * (pdf if i == "intra" else pdf - 1)
@@ -183,7 +183,7 @@ class PairDistributionFunction(DistanceHistogram):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
-        if self.indices_intra:
+        if self.indices_intra is not None:
             for i in ["_intra", "_inter", ""]:
                 assign_weights(
                     self._outputData,
