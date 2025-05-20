@@ -23,7 +23,6 @@ from MDANSE.Chemistry import ChemicalSystem
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.MLogging import LOG
-from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 
 CELL_SIZE_LIMIT = 1e-9
 DETAILED_CELL_MESSAGE = (
@@ -37,7 +36,7 @@ DETAILED_CELL_MESSAGE = (
 
 def van_hove_distinct(
     cell: np.ndarray,
-    indices_intra: dict[int, set[int]],
+    indices_intra: np.ndarray[int],
     symbolindex: list[int],
     intra: np.ndarray,
     inter: np.ndarray,
@@ -63,7 +62,7 @@ def van_hove_distinct(
     ----------
     cell : np.ndarray
         direct matrix of the unit cell of the system
-    indices_intra : Dict[int, set[int]]
+    indices_intra : np.ndarray[int]
         array indices of the distance matrix elements for each molecule in the system
     symbolindex : List[int]
         list of int values of atom types in the system
@@ -134,7 +133,7 @@ def van_hove_distinct(
                     if pair[0] == pair[1]:
                         continue
                     type_tuple = symbolindex[pair[0]], symbolindex[pair[1]]
-                    if pair[1] in indices_intra.get(pair[0], {}):
+                    if indices_intra[pair[0]] == indices_intra[pair[1]]:
                         intra_bins[type_tuple][bin_values[value_index]] += 1
                     else:
                         inter_bins[type_tuple][bin_values[value_index]] += 1
@@ -158,8 +157,12 @@ def van_hove_distinct(
     return intra, inter
 
 
-def intramolecular_lookup_dict(chemical_system: ChemicalSystem) -> dict[int, set[int]]:
+def intramolecular_lookup_dict(chemical_system: ChemicalSystem) -> np.ndarray[int]:
     """Build a lookup dictionary of atom indices in the same molecule.
+
+    Two atoms belonging to the same molecule will return the same value
+    in the dictionary. Atoms not belonging to any molecule will return
+    a negative value.
 
     Parameters
     ----------
@@ -168,15 +171,17 @@ def intramolecular_lookup_dict(chemical_system: ChemicalSystem) -> dict[int, set
 
     Returns
     -------
-    dict[int, set[int]]
-        for each atom index, set of other indices in the same molecule
+    dict[int, int]
+        for each atom index, the index of the corresponding molecule
 
     """
-    result = {}
+    result = -1 * np.arange(chemical_system.number_of_atoms, dtype=int)
+    mol_index = 1
     for molecule in chemical_system._clusters:
-        index_set = set(molecule)
-        for index in index_set:
-            result[index] = index_set
+        for mol_indices in chemical_system._clusters[molecule]:
+            for index in mol_indices:
+                result[index] = mol_index
+            mol_index += 1
     return result
 
 
@@ -319,15 +324,11 @@ class VanHoveFunctionDistinct(IJob):
                 units="au",
             )
 
-        lut = atom_index_to_molecule_index(
-            self.configuration["trajectory"]["instance"].chemical_system,
-        )
         self._indices = [
             idx
             for idxs in self.configuration["atom_selection"]["indices"]
             for idx in idxs
         ]
-        self.indexToMolecule = np.array([lut[i] for i in self._indices], dtype=np.int32)
         self.indexToSymbol = np.array(
             [
                 self.selectedElements.index(name)

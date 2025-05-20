@@ -108,12 +108,6 @@ class DistanceHistogram(IJob):
             dtype=np.int32,
         )
 
-        lut = atom_index_to_molecule_index(
-            self.configuration["trajectory"]["instance"].chemical_system,
-        )
-
-        self.indexToMolecule = np.array([lut[i] for i in self._indices], dtype=np.int32)
-
         nElements = len(self.selectedElements)
 
         # The histogram of the intramolecular distances.
@@ -181,14 +175,14 @@ class DistanceHistogram(IJob):
         coords = conf["coordinates"][self._indices]
 
         hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
-        hTotalTemp = np.zeros(self.hInter.shape, dtype=np.float64)
+        hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
 
         van_hove_distinct(
             direct_cell,
             self.indices_intra,
             self.indexToSymbol,
             hIntraTemp,
-            hTotalTemp,
+            hInterTemp,
             coords,
             coords,
             self.configuration["r_values"]["first"],
@@ -197,9 +191,9 @@ class DistanceHistogram(IJob):
         )
 
         np.multiply(hIntraTemp, cell_volume, hIntraTemp)
-        np.multiply(hTotalTemp, cell_volume, hTotalTemp)
+        np.multiply(hInterTemp, cell_volume, hInterTemp)
 
-        return index, (cell_volume, hIntraTemp, hTotalTemp)
+        return index, (cell_volume, hIntraTemp, hInterTemp)
 
     def combine(self, _index, x):
         """Add the results of run_step to the output arrays.
@@ -224,7 +218,7 @@ class DistanceHistogram(IJob):
         # This volume is the one that intervene in the density
         # calculation.
         self.hIntra += x[1]
-        self.hInter += x[2] - x[1]
+        self.hInter += x[2]
 
         for k, v in list(self._nAtomsPerElement.items()):
             self._concentrations[k] += float(v) / nAtoms
