@@ -99,9 +99,14 @@ class DistanceHistogram(IJob):
         ]
         self._indices = np.array(self._indices, dtype=np.int32)
 
-        self.indices_intra = intramolecular_lookup_dict(
-            self.configuration["trajectory"]["instance"].chemical_system,
-        )
+        if self.configuration["trajectory"][
+            "instance"
+        ].chemical_system.unique_molecules():
+            self.indices_intra = intramolecular_lookup_dict(
+                self.configuration["trajectory"]["instance"].chemical_system,
+            )
+        else:
+            self.indices_intra = None
         self.selectedElements = self.configuration["atom_selection"]["unique_names"]
 
         self.indexToSymbol = np.array(

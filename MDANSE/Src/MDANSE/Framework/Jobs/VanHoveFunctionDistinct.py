@@ -122,16 +122,6 @@ def van_hove_distinct(
     """
     nbins = intra.shape[2]
     unique_types = np.unique(symbolindex)
-    type_indices = {}
-    for type1 in unique_types:
-        type_indices[type1] = np.where(symbolindex == type1)
-
-    inter_bins = {}
-    intra_bins = {}
-    for type1 in unique_types:
-        for type2 in unique_types:
-            inter_bins[(type1, type2)] = collections.Counter()
-            intra_bins[(type1, type2)] = collections.Counter()
 
     limits_t0 = range(0, len(coords_t0), size_limit)
     limits_t1 = range(0, len(coords_t1), size_limit)
@@ -153,35 +143,49 @@ def van_hove_distinct(
             else:
                 subset_coords = coords_t1[lim_t1:endlimit_t1]
                 sub_indices = np.arange(lim_t1, endlimit_t1, dtype=int)
+            type_indices_ref, type_indices_sub = {}, {}
+            for type1 in unique_types:
+                type_indices_ref[type1] = np.where(symbolindex[ref_indices] == type1)[0]
+                type_indices_sub[type1] = np.where(symbolindex[sub_indices] == type1)[0]
+            mols_ref = indices_intra[ref_indices]
+            mols_sub = indices_intra[sub_indices]
+            intra_mask = mols_ref.reshape((1, len(mols_ref))) == mols_sub.reshape(
+                (len(mols_sub), 1)
+            )
             distance_array = distance_array_2D(reference, subset_coords, cell)
             bin_values = ((distance_array - rmin) / dr).astype(int)
-            for ref_index in ref_indices:
-                for sub_index in sub_indices:
-                    if ref_index == sub_index:
-                        continue
-                    type_tuple = symbolindex[ref_index], symbolindex[sub_index]
-                    if indices_intra[ref_index] == indices_intra[sub_index]:
-                        intra_bins[type_tuple][bin_values[ref_index, sub_index]] += 1
-                    else:
-                        inter_bins[type_tuple][bin_values[ref_index, sub_index]] += 1
+            if ref_indices[0] == sub_indices[0]:
+                diag_len = min(len(ref_indices), len(sub_indices))
+                bin_values[range(diag_len), range(diag_len)] = -1
+            for type_ref in unique_types:
+                for type_sub in unique_types:
+                    bins_subset = bin_values[
+                        np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
+                    ]
+                    bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
+                    for bin, counts in zip(bin_numbers, bin_counts):
+                        if bin < 0:
+                            continue
+                        elif bin >= nbins:
+                            continue
+                        else:
+                            inter[type_sub, type_ref, bin] += counts
+            bin_values[np.where(np.logical_not(intra_mask))] = -1
+            for type_ref in unique_types:
+                for type_sub in unique_types:
+                    bins_subset = bin_values[
+                        np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
+                    ]
+                    bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
+                    for bin, counts in zip(bin_numbers, bin_counts):
+                        if bin < 0:
+                            continue
+                        elif bin >= nbins:
+                            continue
+                        else:
+                            intra[type_sub, type_ref, bin] += counts
 
-    for type_tuple, counter in intra_bins.items():
-        for bin_index, counts in counter.items():
-            if bin_index < 0:
-                continue
-            if bin_index >= nbins:
-                continue
-            intra[type_tuple[0], type_tuple[1], bin_index] += counts
-
-    for type_tuple, counter in inter_bins.items():
-        for bin_index, counts in counter.items():
-            if bin_index < 0:
-                continue
-            if bin_index >= nbins:
-                continue
-            inter[type_tuple[0], type_tuple[1], bin_index] += counts
-
-    return intra, inter
+    return intra, inter - 2 * intra
 
 
 def van_hove_distinct_all_inter(
@@ -241,14 +245,6 @@ def van_hove_distinct_all_inter(
     """
     nbins = inter.shape[2]
     unique_types = np.unique(symbolindex)
-    type_indices = {}
-    for type1 in unique_types:
-        type_indices[type1] = np.where(symbolindex == type1)
-
-    inter_bins = {}
-    for type1 in unique_types:
-        for type2 in unique_types:
-            inter_bins[(type1, type2)] = collections.Counter()
 
     limits_t0 = range(0, len(coords_t0), size_limit)
     limits_t1 = range(0, len(coords_t1), size_limit)
@@ -270,22 +266,28 @@ def van_hove_distinct_all_inter(
             else:
                 subset_coords = coords_t1[lim_t1:endlimit_t1]
                 sub_indices = np.arange(lim_t1, endlimit_t1, dtype=int)
+            type_indices_ref, type_indices_sub = {}, {}
+            for type1 in unique_types:
+                type_indices_ref[type1] = np.where(symbolindex[ref_indices] == type1)[0]
+                type_indices_sub[type1] = np.where(symbolindex[sub_indices] == type1)[0]
             distance_array = distance_array_2D(reference, subset_coords, cell)
             bin_values = ((distance_array - rmin) / dr).astype(int)
-            for ref_index in ref_indices:
-                for sub_index in sub_indices:
-                    if ref_index == sub_index:
-                        continue
-                    type_tuple = symbolindex[ref_index], symbolindex[sub_index]
-                    inter_bins[type_tuple][bin_values[ref_index, sub_index]] += 1
-
-    for type_tuple, counter in inter_bins.items():
-        for bin_index, counts in counter.items():
-            if bin_index < 0:
-                continue
-            if bin_index >= nbins:
-                continue
-            inter[type_tuple[0], type_tuple[1], bin_index] += counts
+            if ref_indices[0] == sub_indices[0]:
+                diag_len = min(len(ref_indices), len(sub_indices))
+                bin_values[range(diag_len), range(diag_len)] = -1
+            for type_ref in unique_types:
+                for type_sub in unique_types:
+                    bins_subset = bin_values[
+                        np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
+                    ]
+                    bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
+                    for bin, counts in zip(bin_numbers, bin_counts):
+                        if bin < 0:
+                            continue
+                        elif bin >= nbins:
+                            continue
+                        else:
+                            inter[type_sub, type_ref, bin] += counts
 
     return intra, inter
 
