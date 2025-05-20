@@ -147,15 +147,15 @@ class PairDistributionFunction(DistanceHistogram):
             else:
                 nij = ni * nj
                 if self.indices_intra is not None:
-                    self.hIntra[idi, idj] += self.hIntra[idj, idi]
-                self.hInter[idi, idj] += self.hInter[idj, idi]
+                    self.h_intra[idi, idj] += self.h_intra[idj, idi]
+                self.h_total[idi, idj] += self.h_total[idj, idi]
 
             fact = 2 * nij * nFrames * shellVolumes
 
             if self.indices_intra is not None:
-                pdf_intra = self.hIntra[idi, idj, :] / fact
-                pdf_inter = self.hInter[idi, idj, :] / fact
-                pdf_total = pdf_intra + pdf_inter
+                pdf_intra = self.h_intra[idi, idj, :] / fact
+                pdf_total = self.h_total[idi, idj, :] / fact
+                pdf_inter = pdf_total - pdf_intra
 
                 for i, pdf in zip(
                     ["_intra", "_inter", ""],
@@ -171,7 +171,7 @@ class PairDistributionFunction(DistanceHistogram):
                         * (pdf if i == "intra" else pdf - 1)
                     )
             else:
-                pdf = self.hInter[idi, idj, :] / fact
+                pdf = self.h_total[idi, idj, :] / fact
 
                 self._outputData[f"pdf_{pair[0]}{pair[1]}"][:] = pdf
                 self._outputData[f"rdf_{pair[0]}{pair[1]}"][:] = (
@@ -188,12 +188,12 @@ class PairDistributionFunction(DistanceHistogram):
                 assign_weights(
                     self._outputData,
                     weight_dict,
-                    "pdf{}_%s%s".format(i if i else "_total"),
+                    f"pdf{i}_%s%s",
                 )
                 pdf = weighted_sum(
                     self._outputData,
                     weight_dict,
-                    f"pdf{i if i else '_total'}_%s%s",
+                    f"pdf{i}_%s%s",
                 )
                 self._outputData[f"pdf{i}_total"][:] = pdf
                 self._outputData[f"rdf{i}_total"][:] = (

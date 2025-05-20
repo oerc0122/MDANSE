@@ -121,7 +121,7 @@ class DistanceHistogram(IJob):
 
         # The histogram of the intramolecular distances.
         if self.indices_intra is not None:
-            self.hIntra = np.zeros(
+            self.h_intra = np.zeros(
                 (
                     nElements,
                     nElements,
@@ -130,10 +130,10 @@ class DistanceHistogram(IJob):
                 dtype=np.float64,
             )
         else:
-            self.hIntra = None
+            self.h_intra = None
 
         # The histogram of the intermolecular distances.
-        self.hInter = np.zeros(
+        self.h_total = np.zeros(
             (nElements, nElements, len(self.configuration["r_values"]["mid_points"])),
             dtype=np.float64,
         )
@@ -188,15 +188,15 @@ class DistanceHistogram(IJob):
         frac_coords = coords @ conf.unit_cell.inverse
 
         if self.indices_intra is not None:
-            hIntraTemp = np.zeros(self.hIntra.shape, dtype=np.float64)
-            hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
+            hIntraTemp = np.zeros(self.h_intra.shape, dtype=np.float64)
+            hTotalTemp = np.zeros(self.h_total.shape, dtype=np.float64)
 
             van_hove_distinct(
                 direct_cell,
                 self.indices_intra,
                 self.indexToSymbol,
                 hIntraTemp,
-                hInterTemp,
+                hTotalTemp,
                 frac_coords,
                 frac_coords,
                 self.configuration["r_values"]["first"],
@@ -205,25 +205,25 @@ class DistanceHistogram(IJob):
             )
 
             np.multiply(hIntraTemp, cell_volume, hIntraTemp)
-            np.multiply(hInterTemp, cell_volume, hInterTemp)
+            np.multiply(hTotalTemp, cell_volume, hTotalTemp)
         else:
-            hInterTemp = np.zeros(self.hInter.shape, dtype=np.float64)
+            hTotalTemp = np.zeros(self.h_total.shape, dtype=np.float64)
             hIntraTemp = None
             van_hove_distinct_all_inter(
                 direct_cell,
                 self.indices_intra,
                 self.indexToSymbol,
                 None,
-                hInterTemp,
+                hTotalTemp,
                 frac_coords,
                 frac_coords,
                 self.configuration["r_values"]["first"],
                 self.configuration["r_values"]["step"],
                 self.r_cutoff,
             )
-            np.multiply(hInterTemp, cell_volume, hInterTemp)
+            np.multiply(hTotalTemp, cell_volume, hTotalTemp)
 
-        return index, (cell_volume, hIntraTemp, hInterTemp)
+        return index, (cell_volume, hIntraTemp, hTotalTemp)
 
     def combine(self, _index, x):
         """Add the results of run_step to the output arrays.
@@ -248,8 +248,8 @@ class DistanceHistogram(IJob):
         # This volume is the one that intervene in the density
         # calculation.
         if self.indices_intra is not None:
-            self.hIntra += x[1]
-        self.hInter += x[2]
+            self.h_intra += x[1]
+        self.h_total += x[2]
 
         for k, v in list(self._nAtomsPerElement.items()):
             self._concentrations[k] += float(v) / nAtoms

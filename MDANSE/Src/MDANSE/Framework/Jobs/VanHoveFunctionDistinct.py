@@ -70,7 +70,7 @@ def van_hove_distinct(
     indices_intra: np.ndarray[int],
     symbolindex: list[int],
     intra: np.ndarray,
-    inter: np.ndarray,
+    total: np.ndarray,
     coords_t0: np.ndarray,
     coords_t1: np.ndarray,
     rmin: float,
@@ -99,7 +99,7 @@ def van_hove_distinct(
         list of int values of atom types in the system
     intra : np.ndarray
         the array of distance counts between atoms in the same molecule
-    inter : np.ndarray
+    total : np.ndarray
         the array of distance counts between atoms in different molecules
     coords_t0 : np.ndarray
         array of atom positions at time t0
@@ -169,7 +169,7 @@ def van_hove_distinct(
                         elif bin >= nbins:
                             continue
                         else:
-                            inter[type_sub, type_ref, bin] += counts
+                            total[type_sub, type_ref, bin] += counts
             bin_values[np.where(np.logical_not(intra_mask))] = -1
             for type_ref in unique_types:
                 for type_sub in unique_types:
@@ -185,7 +185,7 @@ def van_hove_distinct(
                         else:
                             intra[type_sub, type_ref, bin] += counts
 
-    return intra, inter - 2 * intra
+    return intra, total
 
 
 def van_hove_distinct_all_inter(
@@ -193,7 +193,7 @@ def van_hove_distinct_all_inter(
     indices_intra: None,
     symbolindex: list[int],
     intra: None,
-    inter: np.ndarray,
+    total: np.ndarray,
     coords_t0: np.ndarray,
     coords_t1: np.ndarray,
     rmin: float,
@@ -222,7 +222,7 @@ def van_hove_distinct_all_inter(
         list of int values of atom types in the system
     intra : None
         added for compatibility but omitted in the calculations
-    inter : np.ndarray
+    total : np.ndarray
         the array of distance counts between atoms in different molecules
     coords_t0 : np.ndarray
         array of atom positions at time t0
@@ -243,7 +243,7 @@ def van_hove_distinct_all_inter(
         intra and total input arrays modified by adding new counts
 
     """
-    nbins = inter.shape[2]
+    nbins = total.shape[2]
     unique_types = np.unique(symbolindex)
 
     limits_t0 = range(0, len(coords_t0), size_limit)
@@ -287,9 +287,9 @@ def van_hove_distinct_all_inter(
                         elif bin >= nbins:
                             continue
                         else:
-                            inter[type_sub, type_ref, bin] += counts
+                            total[type_sub, type_ref, bin] += counts
 
-    return intra, inter
+    return intra, total
 
 
 def intramolecular_lookup_dict(chemical_system: ChemicalSystem) -> np.ndarray[int]:
@@ -501,7 +501,7 @@ class VanHoveFunctionDistinct(IJob):
         self.h_intra = np.zeros(
             (self.nElements, self.nElements, self.n_mid_points, self.numberOfSteps),
         )
-        self.h_inter = np.zeros(
+        self.h_total = np.zeros(
             (self.nElements, self.nElements, self.n_mid_points, self.numberOfSteps),
         )
 
@@ -521,11 +521,11 @@ class VanHoveFunctionDistinct(IJob):
         -------
         tuple[int, tuple[np.ndarray]]
             A tuple containing the time difference and a tuple of the
-            inter and intramolecular distance histograms.
+            total and intramolecular distance histograms.
 
         """
         bins_intra = np.zeros((self.nElements, self.nElements, self.n_mid_points))
-        bins_inter = np.zeros((self.nElements, self.nElements, self.n_mid_points))
+        bins_total = np.zeros((self.nElements, self.nElements, self.n_mid_points))
 
         # average the distance histograms at the inputted time
         # difference over a number of configuration
@@ -547,29 +547,29 @@ class VanHoveFunctionDistinct(IJob):
             frac_coords_t0 = coords_t0 @ inverse_cell0
             frac_coords_t1 = coords_t1 @ inverse_cell1
             intra = np.zeros_like(bins_intra)
-            inter = np.zeros_like(bins_inter)
+            total = np.zeros_like(bins_total)
 
             if self.indices_intra is None:
-                intra, inter = van_hove_distinct_all_inter(
+                intra, total = van_hove_distinct_all_inter(
                     direct_cell,
                     self.indices_intra,
                     self.indexToSymbol,
                     intra,
-                    inter,
+                    total,
                     frac_coords_t0,
                     frac_coords_t1,
                     self.configuration["r_values"]["first"],
                     self.configuration["r_values"]["step"],
                     self.r_cutoff,
                 )
-                bins_inter += conf_t1.unit_cell.volume * inter
+                bins_total += conf_t1.unit_cell.volume * total
             else:
-                intra, inter = van_hove_distinct(
+                intra, total = van_hove_distinct(
                     direct_cell,
                     self.indices_intra,
                     self.indexToSymbol,
                     intra,
-                    inter,
+                    total,
                     frac_coords_t0,
                     frac_coords_t1,
                     self.configuration["r_values"]["first"],
@@ -577,13 +577,13 @@ class VanHoveFunctionDistinct(IJob):
                     self.r_cutoff,
                 )
                 bins_intra += conf_t1.unit_cell.volume * intra
-                bins_inter += conf_t1.unit_cell.volume * inter
+                bins_total += conf_t1.unit_cell.volume * total
 
             # The van Hove function will be divided by the density,
             # we multiply my the volume here and divide by the number
             # of atoms in finalize.
 
-        return time, (bins_intra, bins_inter)
+        return time, (bins_intra, bins_total)
 
     def combine(self, time: int, x: tuple[np.ndarray, np.ndarray]):
         """Add the results into the histograms for the input time difference.
@@ -599,9 +599,9 @@ class VanHoveFunctionDistinct(IJob):
         """
         if self.indices_intra is not None:
             self.h_intra[..., time] += x[0]
-            self.h_inter[..., time] += x[1]
+            self.h_total[..., time] += x[1]
         else:
-            self.h_inter[..., time] += x[1]
+            self.h_total[..., time] += x[1]
 
     def finalize(self):
         """Apply the scaling to the summed up results.
@@ -624,15 +624,15 @@ class VanHoveFunctionDistinct(IJob):
                 nij = ni * nj
                 if self.indices_intra is not None:
                     self.h_intra[idi, idj] += self.h_intra[idj, idi]
-                self.h_inter[idi, idj] += self.h_inter[idj, idi]
+                self.h_total[idi, idj] += self.h_total[idj, idi]
 
             fact = 2 * nij * self.n_configs * self.shell_volumes
             if self.indices_intra is not None:
                 van_hove_intra = self.h_intra[idi, idj, ...] / fact[:, np.newaxis]
-                van_hove_inter = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
-                van_hove_total = van_hove_intra + van_hove_inter
+                van_hove_total = self.h_total[idi, idj, ...] / fact[:, np.newaxis]
+                van_hove_inter = van_hove_total - van_hove_intra
             else:
-                van_hove_total = self.h_inter[idi, idj, ...] / fact[:, np.newaxis]
+                van_hove_total = self.h_total[idi, idj, ...] / fact[:, np.newaxis]
 
             if self.indices_intra is not None:
                 for i, van_h in zip(
@@ -650,12 +650,12 @@ class VanHoveFunctionDistinct(IJob):
                 assign_weights(
                     self._outputData,
                     weight_dict,
-                    f"g(r,t){i if i else '_total'}_%s%s",
+                    f"g(r,t){i}_%s%s",
                 )
                 pdf = weighted_sum(
                     self._outputData,
                     weight_dict,
-                    f"g(r,t){i if i else '_total'}_%s%s",
+                    f"g(r,t){i}_%s%s",
                 )
                 self._outputData[f"g(r,t){i}_total"][...] = pdf
         else:
