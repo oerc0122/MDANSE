@@ -27,6 +27,7 @@ from .RangeWidget import RangeWidget
 from .StringWidget import StringWidget
 from .VectorListWidget import VectorListWidget
 from .VectorWidget import VectorWidget
+from .InputFileWidget import InputFileWidget
 
 WIDGETS = {
     "VectorConfigurator": VectorWidget,
@@ -37,6 +38,7 @@ WIDGETS = {
     "IntegerConfigurator": IntegerWidget,
     "RangeConfigurator": RangeWidget,
     "VectorList": VectorListWidget,
+    "VectorInputFileConfigurator": InputFileWidget,
 }
 
 
@@ -84,7 +86,6 @@ class QVectorParameters(WidgetBase):
         self._widgets_in_layout.clear()
 
         self._defaults = []
-        print(vector_type)
         self._generator = QVectorGenerator.indirect_subclass_dictionary()[vector_type]
 
         for param, (config_type, settings) in self._generator.gui_defaults.items():
