@@ -105,4 +105,5 @@ WIDGET_LOOKUP = {
     "MDTrajTimeStepConfigurator": MDAnalysisMDTrajTimeStepWidget,
     "MDTrajTrajectoryFileConfigurator": MultiInputFileWidget,
     "MDTrajTopologyFileConfigurator": MDTrajTopologyFileWidget,
+    "VectorInputFileConfigurator": InputFileWidget,
 }

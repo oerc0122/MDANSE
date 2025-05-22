@@ -13,47 +13,54 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import os
-from pathlib import PurePath
+from pathlib import Path
+from typing import Optional
 
-from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFileDialog, QLineEdit, QPushButton
-
+from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.MLogging import LOG
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
+from qtpy.QtCore import QObject, Slot
+from qtpy.QtWidgets import QFileDialog, QLineEdit, QPushButton
 
 
 class InputFileWidget(WidgetBase):
-    def __init__(self, *args, file_dialog=QFileDialog.getOpenFileName, **kwargs):
-        super().__init__(*args, **kwargs)
-        configurator = kwargs.get("configurator", None)
-        if configurator is not None:
-            default_value = configurator.default
-        else:
-            default_value = ""
-        parent = kwargs.get("parent", None)
+    def __init__(
+        self,
+        parent: Optional[QObject] = None,
+        *args,
+        wildcard: str = "",
+        configurator: Optional[IConfigurator],
+        file_dialog=QFileDialog.getOpenFileName,
+        default: str = "",
+        **kwargs,
+    ):
+        super().__init__(parent=parent, *args, configurator=configurator, default=default, **kwargs)
+
+        default_value = configurator.default
+
         self._parent = parent
+        self.default_path = Path().absolute()
+
         if parent is not None:
             self._job_name = parent._job_name
             self._settings = parent._settings
-        try:
-            parent = kwargs.get("parent", None)
-            self.default_path = PurePath(parent._default_path)
-        except KeyError:
-            self.default_path = PurePath(os.path.abspath("."))
-            LOG.error("KeyError in OutputFilesWidget - can't get default path.")
-        except AttributeError:
-            self.default_path = PurePath(os.path.abspath("."))
-            LOG.error("AttributeError in OutputFilesWidget - can't get default path.")
-        default_value = kwargs.get("default", "")
+
+            try:
+                self.default_path = Path(parent._default_path)
+            except (KeyError, AttributeError) as err:
+                LOG.error(f"{type(err).__name__} in InputFileWidget - can't get default path.")
+
+        default_value = default
         if self._tooltip:
             self._tooltip_text = self._tooltip
         else:
             self._tooltip_text = "Specify a path to an existing file."
+
         try:
             file_association = configurator.wildcard
         except AttributeError:
-            file_association = kwargs.get("wildcard", "")
+            file_association = wildcard
+
         self._qt_file_association = file_association
         self._default_value = default_value
         self.add_widgets_to_layout()
@@ -87,31 +94,26 @@ class InputFileWidget(WidgetBase):
         new_value = self._file_dialog(
             self.parent(),  # the parent of the dialog
             "Load file",  # the label of the window
-            str(self._parent._default_path),  # the initial search path
+            str(self._default_path),  # the initial search path
             self._qt_file_association,  # text string specifying the file name filter.
         )
         if new_value is not None and new_value[0]:
-            self._field.setText(str(PurePath(new_value[0])))
+            val = Path(new_value[0])
+
+            self._field.setText(str(val))
             self.updateValue()
             try:
-                LOG.info(
-                    f"Settings path of {self._job_name} to {os.path.split(new_value[0])[0]}"
-                )
+                LOG.info(f"Setting path of {self._job_name} to {val.parent}")
                 if self._parent is not None:
-                    self._parent._default_path = str(
-                        PurePath(os.path.split(new_value[0])[0])
-                    )
+                    self._parent._default_path = str(val.parent)
             except Exception:
-                LOG.error(
-                    f"session.set_path failed for {self._job_name}, {os.path.split(new_value[0])[0]}"
-                )
+                LOG.error(f"session.set_path failed for {self._job_name}, {val.parent}")
 
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""
         strval = self._field.text()
-        if len(strval) < 1:
-            self._empty = True
+        self._empty = not strval.strip()
+        if self._empty:
             return self._default_value
-        else:
-            self._empty = False
+
         return strval
