@@ -148,25 +148,15 @@ class XRayStaticStructureFactor(DistanceHistogram):
                     axis="q",
                     units="au",
                 )
-                self._outputData.add(
-                    f"xssf_total_{pair_str}",
-                    "LineOutputVariable",
-                    (nq,),
-                    axis="q",
-                    units="au",
-                    main_result=True,
-                    partial_result=True,
-                )
-            else:
-                self._outputData.add(
-                    f"xssf_{pair_str}",
-                    "LineOutputVariable",
-                    (nq,),
-                    axis="q",
-                    units="au",
-                    main_result=True,
-                    partial_result=True,
-                )
+            self._outputData.add(
+                f"xssf_{pair_str}",
+                "LineOutputVariable",
+                (nq,),
+                axis="q",
+                units="au",
+                main_result=True,
+                partial_result=True,
+            )
 
             ni = nAtomsPerElement[pair[0]]
             nj = nAtomsPerElement[pair[1]]
@@ -195,7 +185,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
                     1.0
                     + fact1 * np.sum((r**2) * (pdfInter - 1.0) * sincqr, axis=1) * dr
                 )
-                self._outputData[f"xssf_total_{pair_str}"][:] = (
+                self._outputData[f"xssf_{pair_str}"][:] = (
                     self._outputData[f"xssf_intra_{pair_str}"][:]
                     + self._outputData[f"xssf_inter_{pair_str}"][:]
                 )
@@ -207,14 +197,14 @@ class XRayStaticStructureFactor(DistanceHistogram):
                 )
         if self.indices_intra is not None:
             self._outputData.add(
-                "xssf_intra",
+                "xssf_intra_total",
                 "LineOutputVariable",
                 (nq,),
                 axis="q",
                 units="au",
             )
             self._outputData.add(
-                "xssf_inter",
+                "xssf_inter_total",
                 "LineOutputVariable",
                 (nq,),
                 axis="q",
@@ -244,12 +234,12 @@ class XRayStaticStructureFactor(DistanceHistogram):
         if self.indices_intra is not None:
             assign_weights(self._outputData, weight_dict, "xssf_intra_%s%s")
             assign_weights(self._outputData, weight_dict, "xssf_inter_%s%s")
-            assign_weights(self._outputData, weight_dict, "xssf_total_%s%s")
+            assign_weights(self._outputData, weight_dict, "xssf_%s%s")
             xssfIntra = weighted_sum(self._outputData, weight_dict, "xssf_intra_%s%s")
-            self._outputData["xssf_intra"][:] = xssfIntra
+            self._outputData["xssf_intra_total"][:] = xssfIntra
 
             xssfInter = weighted_sum(self._outputData, weight_dict, "xssf_inter_%s%s")
-            self._outputData["xssf_inter"][:] = xssfInter
+            self._outputData["xssf_inter_total"][:] = xssfInter
 
             self._outputData["xssf_total"][:] = xssfIntra + xssfInter
         else:

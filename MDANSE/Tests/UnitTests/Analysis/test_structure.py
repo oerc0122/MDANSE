@@ -10,7 +10,7 @@ short_traj = CONV_DIR / "short_trajectory_after_changes.mdt"
 mdmc_traj = CONV_DIR / "Ar_mdmc_h5md.h5"
 com_traj = CONV_DIR / "com_trajectory.mdt"
 nonorth_traj = CONV_DIR / "nonorthogonal_cell.mdt"
-
+molecule_traj = CONV_DIR / "named_molecules.mdt"
 
 ################################################################
 # Job parameters                                               #
@@ -47,6 +47,7 @@ def parameters():
     ("short_traj", short_traj),
     ("mdmc_traj", mdmc_traj),
     ("com_traj", com_traj),
+    ("mol_traj", molecule_traj),
 ], ids=lambda x: x[0])
 @pytest.mark.parametrize("job_info", [
         ("SolventAccessibleSurface", ["sas"]),
