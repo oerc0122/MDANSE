@@ -175,7 +175,6 @@ class StaticStructureFactor(DistanceHistogram):
                     partial_result=True,
                 )
 
-
             ni = nAtomsPerElement[pair[0]]
             nj = nAtomsPerElement[pair[1]]
 
@@ -200,7 +199,8 @@ class StaticStructureFactor(DistanceHistogram):
                     fact1 * np.sum((r**2) * pdfIntra * sincqr, axis=1) * dr
                 )
                 self._outputData[f"ssf_inter_{pair_str}"][:] = (
-                    1.0 + fact1 * np.sum((r**2) * (pdfInter - 1.0) * sincqr, axis=1) * dr
+                    1.0
+                    + fact1 * np.sum((r**2) * (pdfInter - 1.0) * sincqr, axis=1) * dr
                 )
                 self._outputData[f"ssf_total_{pair_str}"][:] = (
                     self._outputData[f"ssf_intra_{pair_str}"][:]
@@ -209,7 +209,8 @@ class StaticStructureFactor(DistanceHistogram):
             else:
                 pdfTotal = self.h_total[idi, idj, :] / fact
                 self._outputData[f"ssf_{pair_str}"][:] = (
-                    1.0 + fact1 * np.sum((r**2) * (pdfTotal - 1.0) * sincqr, axis=1) * dr
+                    1.0
+                    + fact1 * np.sum((r**2) * (pdfTotal - 1.0) * sincqr, axis=1) * dr
                 )
 
         if self.indices_intra is not None:
@@ -237,7 +238,7 @@ class StaticStructureFactor(DistanceHistogram):
         if self.indices_intra is not None:
             assign_weights(self._outputData, weight_dict, "ssf_intra_%s%s")
             assign_weights(self._outputData, weight_dict, "ssf_inter_%s%s")
-            assign_weights(self._outputData, weight_dict, "ssf_total_%s%s")        
+            assign_weights(self._outputData, weight_dict, "ssf_total_%s%s")
             ssfIntra = weighted_sum(self._outputData, weight_dict, "ssf_intra_%s%s")
             self._outputData["ssf_intra"][:] = ssfIntra
             ssfInter = weighted_sum(self._outputData, weight_dict, "ssf_inter_%s%s")
@@ -245,7 +246,9 @@ class StaticStructureFactor(DistanceHistogram):
             self._outputData["ssf_total"][:] = ssfIntra + ssfInter
         else:
             assign_weights(self._outputData, weight_dict, "ssf_%s%s")
-            self._outputData["ssf_total"][:] = weighted_sum(self._outputData, weight_dict, "ssf_%s%s")
+            self._outputData["ssf_total"][:] = weighted_sum(
+                self._outputData, weight_dict, "ssf_%s%s"
+            )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

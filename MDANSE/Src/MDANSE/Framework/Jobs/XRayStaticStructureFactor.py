@@ -168,7 +168,6 @@ class XRayStaticStructureFactor(DistanceHistogram):
                     partial_result=True,
                 )
 
-
             ni = nAtomsPerElement[pair[0]]
             nj = nAtomsPerElement[pair[1]]
 
@@ -193,7 +192,8 @@ class XRayStaticStructureFactor(DistanceHistogram):
                     fact1 * np.sum((r**2) * pdfIntra * sincqr, axis=1) * dr
                 )
                 self._outputData[f"xssf_inter_{pair_str}"][:] = (
-                    1.0 + fact1 * np.sum((r**2) * (pdfInter - 1.0) * sincqr, axis=1) * dr
+                    1.0
+                    + fact1 * np.sum((r**2) * (pdfInter - 1.0) * sincqr, axis=1) * dr
                 )
                 self._outputData[f"xssf_total_{pair_str}"][:] = (
                     self._outputData[f"xssf_intra_{pair_str}"][:]
@@ -202,7 +202,8 @@ class XRayStaticStructureFactor(DistanceHistogram):
             else:
                 pdfTotal = self.h_total[idi, idj, :] / fact
                 self._outputData[f"xssf_{pair_str}"][:] = (
-                    1.0 + fact1 * np.sum((r**2) * (pdfTotal - 1.0) * sincqr, axis=1) * dr
+                    1.0
+                    + fact1 * np.sum((r**2) * (pdfTotal - 1.0) * sincqr, axis=1) * dr
                 )
         if self.indices_intra is not None:
             self._outputData.add(
@@ -253,7 +254,9 @@ class XRayStaticStructureFactor(DistanceHistogram):
             self._outputData["xssf_total"][:] = xssfIntra + xssfInter
         else:
             assign_weights(self._outputData, weight_dict, "xssf_%s%s")
-            self._outputData["xssf_total"][:] = weighted_sum(self._outputData, weight_dict, "xssf_%s%s")
+            self._outputData["xssf_total"][:] = weighted_sum(
+                self._outputData, weight_dict, "xssf_%s%s"
+            )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

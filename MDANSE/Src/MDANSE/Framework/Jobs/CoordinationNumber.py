@@ -134,7 +134,7 @@ class CoordinationNumber(DistanceHistogram):
                     units="au",
                     main_result=True,
                 )
-            else:                
+            else:
                 self._outputData.add(
                     f"cn_{pair_str}",
                     "LineOutputVariable",
@@ -151,7 +151,6 @@ class CoordinationNumber(DistanceHistogram):
                     units="au",
                     main_result=True,
                 )
-
 
         nFrames = self.configuration["frames"]["number"]
 

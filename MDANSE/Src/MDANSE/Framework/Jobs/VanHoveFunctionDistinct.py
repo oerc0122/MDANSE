@@ -75,7 +75,6 @@ def van_hove_distinct(
     coords_t1: np.ndarray,
     rmin: float,
     dr: float,
-    rmax: float,
     size_limit: int = 1024,
 ):
     """Return the histogram of interatomic distances.
@@ -109,8 +108,6 @@ def van_hove_distinct(
         lowest distance allowed in the binning of the results
     dr : float
         size of the binning step
-    rmax: float
-        maximum interatomic distance to include in the results
     size_limit : int
         array size over which the calculation will be split into segments
 
@@ -190,7 +187,7 @@ def van_hove_distinct(
 
 def van_hove_distinct_all_inter(
     cell: np.ndarray,
-    indices_intra: None,
+    _indices_intra: None,
     symbolindex: list[int],
     intra: None,
     total: np.ndarray,
@@ -198,7 +195,6 @@ def van_hove_distinct_all_inter(
     coords_t1: np.ndarray,
     rmin: float,
     dr: float,
-    rmax: float,
     size_limit: int = 1024,
 ):
     """Return the histogram of interatomic distances.
@@ -232,8 +228,6 @@ def van_hove_distinct_all_inter(
         lowest distance allowed in the binning of the results
     dr : float
         size of the binning step
-    rmax: float
-        maximum interatomic distance to include in the results
     size_limit : int
         array size over which the calculation will be split into segments
 
@@ -400,7 +394,6 @@ class VanHoveFunctionDistinct(IJob):
         )
 
         self.n_mid_points = len(self.configuration["r_values"]["mid_points"])
-        self.r_cutoff = self.configuration["r_values"]["last"]
 
         conf = self.configuration["trajectory"]["instance"].configuration(
             self.configuration["frames"]["first"],
@@ -560,7 +553,6 @@ class VanHoveFunctionDistinct(IJob):
                     frac_coords_t1,
                     self.configuration["r_values"]["first"],
                     self.configuration["r_values"]["step"],
-                    self.r_cutoff,
                 )
                 bins_total += conf_t1.unit_cell.volume * total
             else:
@@ -574,7 +566,6 @@ class VanHoveFunctionDistinct(IJob):
                     frac_coords_t1,
                     self.configuration["r_values"]["first"],
                     self.configuration["r_values"]["step"],
-                    self.r_cutoff,
                 )
                 bins_intra += conf_t1.unit_cell.volume * intra
                 bins_total += conf_t1.unit_cell.volume * total

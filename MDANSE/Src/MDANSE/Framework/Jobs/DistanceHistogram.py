@@ -138,8 +138,6 @@ class DistanceHistogram(IJob):
             dtype=np.float64,
         )
 
-        self.r_cutoff = self.configuration["r_values"]["last"]
-
         self.scaleconfig = np.zeros(
             (self.configuration["atom_selection"]["selection_length"], 3),
             dtype=np.float64,
@@ -201,7 +199,6 @@ class DistanceHistogram(IJob):
                 frac_coords,
                 self.configuration["r_values"]["first"],
                 self.configuration["r_values"]["step"],
-                self.r_cutoff,
             )
 
             np.multiply(hIntraTemp, cell_volume, hIntraTemp)
@@ -219,7 +216,6 @@ class DistanceHistogram(IJob):
                 frac_coords,
                 self.configuration["r_values"]["first"],
                 self.configuration["r_values"]["step"],
-                self.r_cutoff,
             )
             np.multiply(hTotalTemp, cell_volume, hTotalTemp)
 
