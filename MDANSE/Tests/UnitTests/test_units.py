@@ -110,6 +110,10 @@ def test_prefixes(prefix):
     ((1., "Hz"), True, "K", nullcontext(4.79924307e-11)),
     ((1., "Hz"), True, "J", nullcontext(6.62607015e-34)),
     ((1., "Hz"), True, "Hz", nullcontext(1)),
+
+    ((1., "kcal/mol"), True, "kcal_per_mole", nullcontext(1)),
+    ((1., "kJ/mol"), True, "kJ_per_mole", nullcontext(1)),
+    ((1., "1/nm"), True, "inv_nm", nullcontext(1)),
 ])
 def test_conversion(from_, equivalent, to, expected):
     m = measure(*from_, equivalent=equivalent)
