@@ -224,7 +224,7 @@ class MDAnalysis(Converter):
 
             if hasattr(self.u.trajectory.ts, "forces"):
                 conf["gradients"] = self.u.trajectory.ts.forces * measure(
-                    1.0, "kJ/mol ang"
+                    1.0, "kJ/mol ang", equivalent=True
                 ).toval("uma nm/ps2")
 
         if float(self.configuration["time_step"]["value"]) == 0.0:
