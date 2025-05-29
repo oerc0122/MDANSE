@@ -55,7 +55,6 @@ class MdanseTrajectory:
         self._property_map = {}
         self._data_types = {}
         self._property_cache = {}
-        self._atom_database_cache = {}
 
         self._h5_filename = Path(h5_filename)
 
@@ -109,7 +108,8 @@ class MdanseTrajectory:
         self._h5_file.close()
 
     def __getitem__(
-        self, frame: int
+        self,
+        frame: int,
     ) -> Union[RealConfiguration, PeriodicRealConfiguration]:
         """Return the atom configuration for a specific frame.
 
@@ -206,7 +206,8 @@ class MdanseTrajectory:
         return grp["coordinates"][frame].astype(np.float64)
 
     def configuration(
-        self, frame: int
+        self,
+        frame: int,
     ) -> Union[RealConfiguration, PeriodicRealConfiguration]:
         """Return the atom configuration for a specific frame.
 
@@ -284,7 +285,13 @@ class MdanseTrajectory:
         return grp["coordinates"].shape[0]
 
     def read_com_trajectory(
-        self, atom_indices, first=0, last=None, step=1, box_coordinates=False
+        self,
+        atom_indices,
+        first=0,
+        last=None,
+        step=1,
+        *,
+        box_coordinates=False,
     ):
         """Build the trajectory of the center of mass of a set of atoms.
 
@@ -389,7 +396,13 @@ class MdanseTrajectory:
         return box_coordinates
 
     def read_atomic_trajectory(
-        self, index, first=0, last=None, step=1, box_coordinates=False
+        self,
+        index,
+        first=0,
+        last=None,
+        step=1,
+        *,
+        box_coordinates=False,
     ):
         """Read an atomic trajectory. The trajectory is corrected from box jumps.
 
@@ -477,23 +490,49 @@ class MdanseTrajectory:
         """
         return variable in self._h5_file["/configuration"]
 
-    def get_atom_property(self, symbol: str, property: str):
+    def get_atom_property(
+        self, symbol: str, property_name: str
+    ) -> Union[float, int, str]:
+        """Get the value of a property for an atom type.
+
+        If the trajectory's built-in atom database does not have
+        the right atom, the function will fall back on the
+        global atom database.
+
+        Parameters
+        ----------
+        symbol : str
+            Atom type label
+        property_name : str
+            Name of the atom property
+
+        Returns
+        -------
+        Union[float, int, str]
+            The value from the database converted to its type
+
+        Raises
+        ------
+        KeyError
+            The property name is not in the trajectory's database
+
+        """
         if not self._has_database:
-            return ATOMS_DATABASE.get_atom_property(symbol, property)
-        elif symbol not in self._has_atoms:
+            return ATOMS_DATABASE.get_atom_property(symbol, property_name)
+        if symbol not in self._has_atoms:
             if symbol in self._h5_file["/atom_database"]:
                 self._has_atoms.append(symbol)
             else:
-                return ATOMS_DATABASE.get_atom_property(symbol, property)
-        if property not in self._property_map:
+                return ATOMS_DATABASE.get_atom_property(symbol, property_name)
+        if property_name not in self._property_map:
             temp = np.where(
                 self._h5_file["/atom_database/property_labels"][:]
-                == property.encode("utf-8")
+                == property_name.encode("utf-8"),
             )[0]
             if len(temp) == 0:
-                if property == "dummy":
+                if property_name == "dummy":
                     try:
-                        return ATOMS_DATABASE.get_atom_property(symbol, property)
+                        return ATOMS_DATABASE.get_atom_property(symbol, property_name)
                     except KeyError:
                         if (
                             "_" in symbol
@@ -501,11 +540,11 @@ class MdanseTrajectory:
                             return 0  # the molecule atoms are not dummy
                 else:
                     raise KeyError(
-                        f"Property {property} is not in the trajectory's internal database."
+                        f"Property {property_name} is not in the trajectory's internal database."
                     )
             index = temp.flatten()[0]
-            self._property_map[property] = index
-        index = self._property_map[property]
+            self._property_map[property_name] = index
+        index = self._property_map[property_name]
         if index not in self._data_types:
             self._data_types[index] = self._h5_file["/atom_database/property_types"][
                 index
@@ -517,27 +556,45 @@ class MdanseTrajectory:
                 value = value.real
             self._property_cache[(symbol, index)] = value
         value = self._property_cache[(symbol, index)]
-        if property == "color":
+        if property_name == "color":
             value = float(value)
             num1 = round(value // 0x10000)
             num2 = round((value - num1 * 0x10000) // 0x100)
-            num3 = round((value - num1 * 0x10000 - num2 * 0x100))
+            num3 = round(value - num1 * 0x10000 - num2 * 0x100)
             return ";".join([str(int(x)) for x in [num1, num2, num3]])
         if data_type == b"int":
             return int(value)
-        elif data_type == b"str":
+        if data_type == b"str":
             if isinstance(value, bytes):
                 return value.decode("utf-8")
             return value
-        value = float(value)
-        return value
+        return float(value)
 
     def atoms_in_database(self) -> list[str]:
+        """Return the list of all the atom types in the database.
+
+        This list should match the list of unique atom types in the
+        ChemicalSystem of this trajectory.
+
+        Returns
+        -------
+        list[str]
+            All the atom types saved in the trajectory's database
+
+        """
         if "atom_database" not in self._h5_file:
             return ATOMS_DATABASE.atoms
         return list(self._h5_file["/atom_database"].keys())
 
     def properties_in_database(self) -> list[str]:
+        """Return all the atom properties saved in the trajectory's database.
+
+        Returns
+        -------
+        list[str]
+            All the properties saved in the trajectory's database
+
+        """
         if "atom_database" not in self._h5_file:
             return ATOMS_DATABASE.properties
         return [
@@ -546,11 +603,14 @@ class MdanseTrajectory:
         ]
 
     @property
-    def chemical_system(self):
-        """Return the chemical system stored in the trajectory.
+    def chemical_system(self) -> ChemicalSystem:
+        """Return the ChemicalSystem of this trajectory.
 
-        :return: the chemical system
-        :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
+        Returns
+        -------
+        ChemicalSystem
+            Object storing the information about atoms and bonds
+
         """
         return self._chemical_system
 
