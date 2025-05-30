@@ -307,15 +307,3 @@ class IConfigurator(dict, metaclass=SubclassFactory):
                 return False
 
         return True
-
-    def get_information(self):
-        """
-        Returns some informations about this configurator.
-
-        :return: the information about this configurator
-        :rtype: str
-
-        :note: this is an abstract method.
-        """
-
-        return ""
