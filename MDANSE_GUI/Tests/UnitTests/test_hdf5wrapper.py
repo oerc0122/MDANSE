@@ -22,7 +22,6 @@ import numpy as np
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import Trajectory, TrajectoryWriter
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from MDANSE_GUI.MolecularViewer.readers.hdf5wrapper import HDF5Wrapper
 
@@ -69,7 +68,7 @@ def sample_trajectory(chemical_system, sample_configuration):
 def wrapper(sample_trajectory):
     traj_object = Trajectory(sample_trajectory)
     wrapper = HDF5Wrapper(
-        sample_trajectory, traj_object.trajectory, traj_object.chemical_system
+        sample_trajectory, traj_object, traj_object.chemical_system
     )
     return wrapper
 

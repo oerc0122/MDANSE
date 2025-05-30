@@ -177,7 +177,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self.reset_camera = False
 
-    def _new_trajectory_object(self, fname: str, data: Trajectory):
+    def _new_trajectory_object(self, fname: str, trajectory: Trajectory):
         """Creates and sets a new trajectory reader for the input trajectory.
 
         Parameters
@@ -187,7 +187,7 @@ class MolecularViewer(QtWidgets.QWidget):
         data : Trajectory
             instance of the MDANSE input trajectory handler
         """
-        reader = hdf5wrapper.HDF5Wrapper(fname, data.trajectory, data.chemical_system)
+        reader = hdf5wrapper.HDF5Wrapper(fname, trajectory, trajectory.chemical_system)
         self.set_reader(reader)
 
     @Slot(float)
