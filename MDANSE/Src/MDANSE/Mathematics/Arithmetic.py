@@ -115,8 +115,7 @@ def assign_weights(
 
 def weighted_sum(
     values: Dict[str, np.ndarray],
-    weights: Dict[str, float],
-    key: str,
+    matches: set[str],
 ):
     """Sums up partial datasets multiplied by their scaling factors.
     The scaling factors have to be set before, typically by calling
@@ -126,10 +125,8 @@ def weighted_sum(
     ----------
     values : Dict[str, np.ndarray]
         Dictionary of data arrays containing analysis results.
-    weights : Dict[str, float]
-        Dictionary of scaling factors per dataset
-    key : str
-        A string data set name with formatting elements (placeholders for chemical element labels)
+    matches : set[str]
+        A set of keys to run the summation over.
 
     Returns
     -------
@@ -137,7 +134,6 @@ def weighted_sum(
         total sum of all the component arrays scaled by their weights
     """
     weightedSum = 0.0
-    matches = {key % k for k in weights if k not in ["sum"]}
 
     for val in (val for key, val in values.items() if key in matches):
         weightedSum += val * val.scaling_factor

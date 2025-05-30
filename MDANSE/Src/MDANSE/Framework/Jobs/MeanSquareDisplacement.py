@@ -76,16 +76,6 @@ class MeanSquareDisplacement(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            }
-        },
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
             }
         },
     )
@@ -198,8 +188,8 @@ class MeanSquareDisplacement(IJob):
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
         assign_weights(self._outputData, weight_dict, "msd_%s")
-        msdTotal = weighted_sum(self._outputData, weight_dict, "msd_%s")
-
+        matches = set([f"msd_{ele}" for ele in nAtomsPerElement])
+        msdTotal = weighted_sum(self._outputData, matches)
         self._outputData.add(
             "msd_total",
             "LineOutputVariable",
@@ -207,6 +197,10 @@ class MeanSquareDisplacement(IJob):
             axis="time",
             units="nm2",
             main_result=True,
+        )
+
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "msd_%s_%s"
         )
 
         self._outputData.write(

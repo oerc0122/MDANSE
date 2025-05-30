@@ -13,13 +13,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
-import collections
-
-
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
 )
+from MDANSE.Mathematics.Arithmetic import weighted_sum
 
 
 class GroupingLevelConfigurator(SingleChoiceConfigurator):
@@ -49,7 +46,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         :param choices: the level of granularities allowed for the input value. If None all levels are allowed.
         :type choices: one of ['atom','group','residue','chain','molecule'] or None
         """
-        usual_choices = ["atom", "molecule", "group"]
+        usual_choices = ["atom", "molecule"]
 
         if choices is None:
             choices = usual_choices
@@ -72,6 +69,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         SingleChoiceConfigurator.configure(self, value)
 
+        self["level"] = value
+
         if value == "atom":
             return
         trajConfig = self._configurable[self._dependencies["trajectory"]]
@@ -81,42 +80,44 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         elements = []
         names = []
         masses = []
+        group_names = []
+        group_elements = {}
+        group_n_atms = {}
         mass_lookup = chemical_system.atom_property("atomic_weight")
 
         if value == "molecule":
             for mol_name in chemical_system._clusters.keys():
+                n_atms = 0
                 for mol_number, cluster in enumerate(
                     chemical_system._clusters[mol_name]
                 ):
-                    indices.append(cluster)
-                    elements.append([chemical_system.atom_list[x] for x in cluster])
-                    names.append(f"{mol_name}_mol{mol_number + 1}")
-                    masses.append([mass_lookup[x] for x in cluster])
-        elif value == "group":
-            for group_name, group_indices in chemical_system._labels.items():
-                residue = set(group_indices)
-                counter = 1
-                for clustername, clusterlist in chemical_system._clusters.items():
-                    for cluster in clusterlist:
-                        molecule = set(cluster)
-                        if molecule.issubset(residue) or residue.issubset(molecule):
-                            indices.append(list(molecule.intersection(residue)))
-                            elements.append(
-                                [chemical_system.atom_list[x] for x in cluster]
-                            )
-                            names.append(f"{group_name}_num{counter}_in_{clustername}")
-                            masses.append([mass_lookup[x] for x in cluster])
-                            counter += 1
+                    for x in cluster:
+                        if x not in atomSelectionConfig["flatten_indices"]:
+                            continue
+                        indices.append([x])
+                        elements.append(chemical_system.atom_list[x])
+                        names.append(f"{mol_name}_{chemical_system.atom_list[x]}")
+                        masses.append(mass_lookup[x])
+                        n_atms += 1
+
+                group_name_elements = [
+                    chemical_system.atom_list[x]
+                    for x in chemical_system._clusters[mol_name][0]
+                ]
+                group_names.append(mol_name)
+                group_elements[mol_name] = set(group_name_elements)
+                group_n_atms[mol_name] = n_atms
 
         atomSelectionConfig["indices"] = indices
         atomSelectionConfig["elements"] = elements
         atomSelectionConfig["masses"] = masses
         atomSelectionConfig["names"] = names
         atomSelectionConfig["selection_length"] = len(names)
-        atomSelectionConfig["unique_names"] = sorted(set(atomSelectionConfig["names"]))
+        atomSelectionConfig["unique_names"] = sorted(set(names))
 
-        self["level"] = value
-        self["group_indices"] = list(range(len(names)))
+        self["group_names"] = set(group_names)
+        self["group_elements"] = group_elements
+        self["group_n_atms"] = group_n_atms
         if atomSelectionConfig["selection_length"] == 0:
             self.error_status = "This option resulted in nothing being selected in the current trajectory"
 
@@ -150,3 +151,32 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             return "Not configured yet\n"
 
         return f"Grouping level: {self['value']!r}\n"
+
+    def add_grouped_totals(self, output_data, key):
+        """Add the grouped totals to the output data.
+
+        Parameters
+        ----------
+        output_data : Dict[str, np.ndarray]
+            Dictionary of data arrays containing analysis results.
+        key : str
+            The key used to match the individual component to sum over.
+        """
+        tot_n_atms = self._configurable[
+            self._dependencies["atom_selection"]]["selection_length"]
+
+        if self["level"] != "atom":
+            for name in self["group_names"]:
+                group_elements = self["group_elements"][name]
+                c_name = self["group_n_atms"][name] / tot_n_atms
+                matches = set([key % (name, ele) for ele in group_elements])
+                msdTotal = weighted_sum(output_data, matches) / c_name
+                output_data.add(
+                    f"msd_{name}_total",
+                    "LineOutputVariable",
+                    msdTotal,
+                    axis="time",
+                    units="nm2",
+                    main_result=True,
+                )
+                output_data[f"msd_{name}_total"].scaling_factor = c_name
