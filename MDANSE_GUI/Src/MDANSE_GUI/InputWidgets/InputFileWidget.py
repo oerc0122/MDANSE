@@ -29,14 +29,13 @@ class InputFileWidget(WidgetBase):
         parent: Optional[QObject] = None,
         *args,
         wildcard: str = "",
-        configurator: Optional[IConfigurator],
         file_dialog=QFileDialog.getOpenFileName,
         default: str = "",
         **kwargs,
     ):
-        super().__init__(parent=parent, *args, configurator=configurator, default=default, **kwargs)
+        super().__init__(parent=parent, *args, default=default, **kwargs)
 
-        default_value = configurator.default
+        default_value = self._configurator.default
 
         self._parent = parent
         self.default_path = Path().absolute()
@@ -57,14 +56,13 @@ class InputFileWidget(WidgetBase):
             self._tooltip_text = "Specify a path to an existing file."
 
         try:
-            file_association = configurator.wildcard
+            file_association = self._configurator.wildcard
         except AttributeError:
             file_association = wildcard
 
         self._qt_file_association = file_association
         self._default_value = default_value
         self.add_widgets_to_layout()
-        self._configurator = configurator
         self._file_dialog = file_dialog
         self.updateValue()
 
@@ -103,8 +101,8 @@ class InputFileWidget(WidgetBase):
             self._field.setText(str(val))
             self.updateValue()
             try:
-                LOG.info(f"Setting path of {self._job_name} to {val.parent}")
                 if self._parent is not None:
+                    LOG.info(f"Setting path of {self._job_name} to {val.parent}")
                     self._parent._default_path = str(val.parent)
             except Exception:
                 LOG.error(f"session.set_path failed for {self._job_name}, {val.parent}")
@@ -117,3 +115,40 @@ class InputFileWidget(WidgetBase):
             return self._default_value
 
         return strval
+
+class OptionalInputFileWidget(InputFileWidget):
+    """Optional file doesn't need to care if underlying file is valid until you try to load."""
+    def __init__(self, *args, button_label: str, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.button_label = button_label
+
+    def add_widgets_to_layout(self):
+        super().add_widgets_to_layout()
+
+        button = QPushButton(self.button_label, self._base)
+        button.clicked.connect(self.load_file)
+        self._layout.addWidget(button)
+
+    def load_file(self):
+        current_value = self.get_widget_value()
+        if self._empty:
+            self.clear_error()
+            return
+
+        try:
+            self._configurator.configure(current_value)
+        except Exception:
+            self.mark_error(
+                "COULD NOT SET THIS VALUE - you may need to change the values in other widgets"
+            )
+        self.value_changed.emit()
+        if self._configurator.valid:
+            self.clear_error()
+            self.value_updated.emit()
+        else:
+            self.mark_error(self._configurator.error_status)
+
+    @Slot()
+    def updateValue(self):
+        pass
