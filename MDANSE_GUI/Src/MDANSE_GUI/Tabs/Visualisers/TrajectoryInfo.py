@@ -20,8 +20,66 @@ import numpy as np
 from qtpy.QtCore import Slot, Signal
 from qtpy.QtWidgets import QTextBrowser
 
+from MDANSE.Framework.Formats.HDFFormat import check_metadata
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
+
 if TYPE_CHECKING:
     from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
+
+
+def trajectory_summary(traj: Trajectory):
+    val = []
+    try:
+        time_axis = traj.time()
+    except Exception:
+        timeline = "No time information!\n"
+    else:
+        if len(time_axis) < 1:
+            timeline = "N/A\n"
+        elif len(time_axis) < 5:
+            timeline = f"{time_axis}\n"
+        else:
+            timeline = f"[{time_axis[0]}, {time_axis[1]}, ..., {time_axis[-1]}]\n"
+
+    val.append("Path:")
+    val.append(f"{traj.filename}\n")
+    val.append("Number of steps:")
+    val.append(f"{len(traj)}\n")
+    val.append("Configuration:")
+    val.append(f"\tIs periodic: {traj.unit_cell(0) is not None}\n")
+    try:
+        val.append(f"First unit cell (nm):\n{traj.unit_cell(0)._unit_cell}\n")
+    except Exception:
+        val.append("No unit cell information\n")
+    val.append("Frame times (1st, 2nd, ..., last) in ps:")
+    val.append(timeline)
+    val.append("Variables:")
+    for k in traj.variables():
+        v = traj.variable(k)
+        try:
+            val.append(f"\t- {k}: {v.shape}")
+        except AttributeError:
+            try:
+                val.append(f"\t- {k}: {v['value'].shape}")
+            except KeyError:
+                continue
+
+    val.append("\nConversion history:")
+    metadata = check_metadata(traj.file)
+    for k, v in metadata.items():
+        val.append(f"{k}: {v}")
+
+    mol_types = {}
+    val.append("\nMolecular types found:")
+    for molname, mollist in traj.chemical_system._clusters.items():
+        val.append(f"Molecule: {molname}; Count: {len(mollist)}")
+
+    for k, v in mol_types.items():
+        val.append(f"\t- {v:d} {k}")
+
+    val = "\n".join(val)
+
+    return val
 
 
 class TrajectoryInfo(QTextBrowser):
@@ -37,7 +95,7 @@ class TrajectoryInfo(QTextBrowser):
     def update_panel(self, data: tuple):
         fullpath, incoming = data
         try:
-            text = incoming.info()  # this is from a trajectory object
+            text = trajectory_summary(incoming)  # this is from a trajectory object
         except AttributeError:
             self.error.emit(f"Trajectory info received {incoming}")
             self.clear()

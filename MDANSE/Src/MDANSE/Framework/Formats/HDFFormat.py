@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 import h5py
+import json
 
 from MDANSE import PLATFORM
 from MDANSE.Framework.Formats.IFormat import IFormat
@@ -26,6 +27,56 @@ from MDANSE.MLogging import LOG
 if TYPE_CHECKING:
     from MDANSE.Framework.Jobs.IJob import IJob
     from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
+
+
+json_decoder = json.decoder.JSONDecoder()
+
+
+def check_metadata(hdf5_file: h5py.File) -> dict[str, str]:
+    """Extract metadata from an MDANSE HDF5 file.
+
+    Parameters
+    ----------
+    hdf5_file : h5py.File
+        MDANSE output file, .mda or .mdt
+
+    Returns
+    -------
+    dict[str, str]
+        dictionary of saved input information used to create the file
+
+    """
+    meta_dict = {}
+
+    def put_into_dict(name, obj):
+        try:
+            string = obj[:][0]
+        except TypeError:
+            try:
+                string = obj[0]
+            except TypeError:
+                return
+        try:
+            string = string.decode()
+        except KeyError:
+            LOG.debug(f"Decode failed for {name}: {obj}")
+            meta_dict[name] = str(obj)
+        else:
+            try:
+                meta_dict[name] = json_decoder.decode(string)
+            except ValueError:
+                meta_dict[name] = string
+
+    try:
+        meta = hdf5_file["metadata"]
+    except KeyError:
+        return
+    else:
+        meta.visititems(put_into_dict)
+
+    meta_dict["<b>file header</b>"] = "\n" + hdf5_file.attrs.get("header", "no header")
+
+    return meta_dict
 
 
 class HDFFormat(IFormat):

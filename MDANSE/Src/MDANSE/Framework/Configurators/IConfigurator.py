@@ -116,6 +116,15 @@ class IConfigurator(dict, metaclass=SubclassFactory):
 
         self._name = name
 
+        self._printable_attributes = [
+            "_name",
+            "_original_input",
+            "_configured",
+            "_valid",
+            "_default",
+            "_error_status",
+        ]
+
         self._configurable = kwargs.get("configurable", None)
 
         self._root = kwargs.get("root", None)
@@ -144,6 +153,16 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         self._error_status = "OK"
 
         self._original_input = ""
+
+    def __str__(self) -> str:
+        return "\n".join(
+            [""]
+            + [
+                f"{label}={str(getattr(self, label, 'Not set'))}"
+                for label in self._printable_attributes
+            ]
+            + [f"{key}={str(self.get(key, 'Not set'))}" for key in self.keys()]
+        )
 
     @property
     def configurable(self):
