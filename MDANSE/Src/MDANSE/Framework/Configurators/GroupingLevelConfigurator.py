@@ -162,8 +162,9 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         key : str
             The key used to match the individual component to sum over.
         """
-        tot_n_atms = self._configurable[
-            self._dependencies["atom_selection"]]["selection_length"]
+        tot_n_atms = self._configurable[self._dependencies["atom_selection"]][
+            "selection_length"
+        ]
 
         if self["level"] != "atom":
             for name in self["group_names"]:
