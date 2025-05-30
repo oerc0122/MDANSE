@@ -162,7 +162,7 @@ class Action(QWidget):
             ddict["source_object"] = self._input_trajectory
 
             widget_class = widget_lookup[dtype]
-            print(widget_class)
+
             input_widget = widget_class(parent=self, **ddict)
             widget = input_widget._base
 

@@ -27,7 +27,7 @@ from MDANSE_GUI.InputWidgets.FloatWidget import FloatWidget
 from MDANSE_GUI.InputWidgets.FramesWidget import FramesWidget
 from MDANSE_GUI.InputWidgets.HDFTrajectoryWidget import HDFTrajectoryWidget
 from MDANSE_GUI.InputWidgets.InputDirectoryWidget import InputDirectoryWidget
-from MDANSE_GUI.InputWidgets.InputFileWidget import InputFileWidget
+from MDANSE_GUI.InputWidgets.InputFileWidget import InputFileWidget, OptionalInputFileWidget
 from MDANSE_GUI.InputWidgets.InstrumentResolutionWidget import InstrumentResolutionWidget
 from MDANSE_GUI.InputWidgets.IntegerWidget import IntegerWidget
 from MDANSE_GUI.InputWidgets.InterpolationOrderWidget import InterpolationOrderWidget
@@ -105,5 +105,5 @@ WIDGET_LOOKUP = {
     "MDTrajTimeStepConfigurator": MDAnalysisMDTrajTimeStepWidget,
     "MDTrajTrajectoryFileConfigurator": MultiInputFileWidget,
     "MDTrajTopologyFileConfigurator": MDTrajTopologyFileWidget,
-    "VectorInputFileConfigurator": InputFileWidget,
+    "VectorInputFileConfigurator": OptionalInputFileWidget,
 }

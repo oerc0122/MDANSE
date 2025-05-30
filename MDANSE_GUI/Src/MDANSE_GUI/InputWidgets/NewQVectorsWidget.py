@@ -90,6 +90,7 @@ class QVectorParameters(WidgetBase):
 
         for param, (config_type, settings) in self._generator.gui_defaults.items():
             cls = WIDGETS[config_type]
+
             configurator = IConfigurator.create(
                 config_type, param, configurable=self._generator, **settings
             )
@@ -143,11 +144,12 @@ class NewQVectorsWidget(WidgetBase):
         self._use_shells_container.setLayout(layout)
         self._use_shells_container.setToolTip("Whether to integrate over shells.")
         self._use_shells = QCheckBox(None)
+        self._use_shells.setChecked(use_shells)
         layout.addWidget(self._use_shells)
         self._use_shells_widgets_in_layout = []
         self._use_shells_widgets = []
         self._layout.addWidget(self._use_shells_container)
-        exclude = {"shells", "width"}
+        self._exclude = ["shells", "width"]
 
         self._widgets_in_layout = []
         self._widgets = []
@@ -170,7 +172,7 @@ class NewQVectorsWidget(WidgetBase):
 
             self._layout.addWidget(base, stretch=widget._relative_size)
 
-            if param in exclude:
+            if param in self._exclude:
                 self._use_shells_widgets_in_layout.append(base)
                 self._use_shells_widgets.append(widget)
             else:
@@ -200,9 +202,7 @@ class NewQVectorsWidget(WidgetBase):
 
     @Slot()
     def rebuild(self):
-        use_shells = self._use_shells.checkState() is Qt.CheckState.Checked
-
-        if use_shells:
+        if self.use_shells:
             to_add = [
                 name
                 for name, cls in QVectorGenerator.indirect_subclass_dictionary().items()
@@ -216,7 +216,11 @@ class NewQVectorsWidget(WidgetBase):
         self._selector.setCurrentText("SphericalQVectors")
 
         for base, widget in zip(self._use_shells_widgets_in_layout, self._use_shells_widgets):
-            base.setEnabled(use_shells)
+            base.setEnabled(self.use_shells)
+
+    @property
+    def use_shells(self):
+        return self._use_shells.checkState() is Qt.CheckState.Checked
 
     def type_change_update(self):
         # need to disconnect itemChanged otherwise updateValue will
@@ -241,6 +245,12 @@ class NewQVectorsWidget(WidgetBase):
         for param, widget in zip(self._configurator.gui_defaults, self._widgets):
             pardict[param] = get_value(widget)
 
+        pardict["use_shells"] = self.use_shells
+        if self.use_shells:
+            for param, widget in zip(self._exclude, self._use_shells_widgets):
+                pardict[param] = get_value(widget)
+
+        print(pardict)
         return pardict
 
     def configure_using_default(self):

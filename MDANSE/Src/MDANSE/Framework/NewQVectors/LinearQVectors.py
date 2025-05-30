@@ -77,7 +77,6 @@ class LinearQVectors(QVectorGenerator):
             {
                 "label": "In reciprocal lattice",
                 "tooltip": "Whether parameters are defined in the basis of the reciprocal lattice or absolute HKL coordinates.",
-                "default": "vector_list.txt",
             },
         ),
     }
@@ -417,11 +416,9 @@ class PathLinearQVectors(QVectorGenerator):
                 "label": "K Points",
                 "tooltip": "Path segment end-points on the path that the q-vectors will follow.",
                 "n_rows": 3,
+                "n_dims": 3,
+                "wildcard": "(*) All files;;",
             },
-        ),
-        "file": (
-            "VectorInputFileConfigurator",
-            {"label": "From File", "tooltip": ("Read vectors from file."), "default": "vector_list.txt"},
         ),
         "q_step": (
             "OptionalFloatConfigurator",

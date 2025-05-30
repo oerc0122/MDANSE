@@ -45,10 +45,11 @@ class VectorList(IConfigurator):
     def __init__(
         self,
         name: str,
-        valueType: Literal[float, int] = float,
+        valueType: type[int] | type[float] = float,
         normalize: bool = False,
         notNull: bool = False,
         dimension: int = 3,
+        wildcard: str | None = None,
         **kwargs,
     ):
         IConfigurator.__init__(self, name, **kwargs)
@@ -57,6 +58,10 @@ class VectorList(IConfigurator):
         self._normalize = normalize
         self._notNull = notNull
         self._dimension = dimension
+
+        if wildcard is not None:
+            self._wildcard = wildcard
+
 
     def configure(self, value: npt.ArrayLike) -> None:
         """Configure a vector.
@@ -91,7 +96,20 @@ class VectorList(IConfigurator):
         self.error_status = "OK"
 
     @property
-    def valueType(self) -> Literal[float, int]:
+    def wildcard(self) -> str:
+        """
+        Returns the wildcard used to filter the input file.
+
+        Returns
+        -------
+        str
+            the wildcard used to filter the input file.
+        """
+
+        return self._wildcard
+
+    @property
+    def valueType(self) -> type[float] | type[int]:
         """Values type of the vector.
 
         Returns
