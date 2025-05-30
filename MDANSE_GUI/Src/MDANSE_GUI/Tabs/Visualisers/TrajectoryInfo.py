@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+import traceback
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -21,6 +22,7 @@ from qtpy.QtCore import Slot, Signal
 from qtpy.QtWidgets import QTextBrowser
 
 from MDANSE.Framework.Formats.HDFFormat import check_metadata
+from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 if TYPE_CHECKING:
@@ -66,16 +68,13 @@ def trajectory_summary(traj: Trajectory):
 
     val.append("\nConversion history:")
     metadata = check_metadata(traj.file)
-    for k, v in metadata.items():
-        val.append(f"{k}: {v}")
+    if metadata:
+        for k, v in metadata.items():
+            val.append(f"{k}: {v}")
 
-    mol_types = {}
     val.append("\nMolecular types found:")
     for molname, mollist in traj.chemical_system._clusters.items():
         val.append(f"Molecule: {molname}; Count: {len(mollist)}")
-
-    for k, v in mol_types.items():
-        val.append(f"\t- {v:d} {k}")
 
     val = "\n".join(val)
 
@@ -96,14 +95,19 @@ class TrajectoryInfo(QTextBrowser):
         fullpath, incoming = data
         try:
             text = trajectory_summary(incoming)  # this is from a trajectory object
-        except AttributeError:
-            self.error.emit(f"Trajectory info received {incoming}")
+        except AttributeError as err:
+            LOG.error(
+                "Could not summarise trajectory %s.\n Error: %s.\n Traceback: %s",
+                incoming,
+                err,
+                traceback.format_exc(),
+            )
             self.clear()
             return
         try:
             cs = incoming.chemical_system
         except AttributeError:
-            self.error.emit(f"Trajectory {incoming} has no chemical system")
+            LOG.error("Trajectory %s has no chemical system", incoming)
         else:
             text += self.summarise_chemical_system(cs)
         filtered = self.filter(text)

@@ -18,6 +18,9 @@ import abc
 import json
 from pathlib import Path
 
+from more_itertools import value_chain
+import numpy as np
+
 from MDANSE.Core.Error import Error
 
 from MDANSE.Core.SubclassFactory import SubclassFactory
@@ -29,6 +32,8 @@ class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Path):
             return str(obj)
+        if isinstance(obj, np.ndarray):
+            return "\n".join(str(row) for row in obj)
         return super().default(obj)
 
 
@@ -156,12 +161,14 @@ class IConfigurator(dict, metaclass=SubclassFactory):
 
     def __str__(self) -> str:
         return "\n".join(
-            [""]
-            + [
-                f"{label}={str(getattr(self, label, 'Not set'))}"
-                for label in self._printable_attributes
-            ]
-            + [f"{key}={str(self.get(key, 'Not set'))}" for key in self.keys()]
+            value_chain(
+                "",
+                [
+                    f"{label}={str(getattr(self, label, 'Not set'))}"
+                    for label in self._printable_attributes
+                ],
+                [f"{key}={str(self.get(key, 'Not set'))}" for key in self.keys()],
+            )
         )
 
     @property

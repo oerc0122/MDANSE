@@ -48,7 +48,22 @@ def check_metadata(hdf5_file: h5py.File) -> dict[str, str]:
     """
     meta_dict = {}
 
-    def put_into_dict(name, obj):
+    def put_into_dict(name: str, obj: bytes):
+        """Put an entry from an HDF5 dataset into a dictionary, as string.
+
+        This helper function is used together with the visititems method
+        of HDF5 datasets, provided by h5py. It will be called for each
+        dataset in the 'metadata' group, and it will try to convert
+        the contents of that dataset to string, which will then be stored
+        in the meta_dict dictionary.
+
+        Parameters
+        ----------
+        name : str
+            name (key) of the dataset from an HDF5 group
+        obj : bytes
+            contents of the dataset (text stored as 'bytes')
+        """
         try:
             string = obj[:][0]
         except TypeError:
@@ -77,6 +92,38 @@ def check_metadata(hdf5_file: h5py.File) -> dict[str, str]:
     meta_dict["<b>file header</b>"] = "\n" + hdf5_file.attrs.get("header", "no header")
 
     return meta_dict
+
+
+def write_metadata(job: "IJob", output_file: h5py.File):
+    """Save parameters of IJob in the output file.
+
+    Parameters
+    ----------
+    job : IJob
+        IJob instance, typically Converter
+    output_file : h5py.File
+        an open HDF5 file, typically .mdt
+
+    """
+    string_dt = h5py.special_dtype(vlen=str)
+    meta = output_file.create_group("metadata")
+    meta.create_dataset(
+        "task_name", (1,), data=str(job.__class__.__name__), dtype=string_dt
+    )
+    meta.create_dataset(
+        "MDANSE_version",
+        (1,),
+        data=str(metadata.version("MDANSE")),
+        dtype=string_dt,
+    )
+
+    inputs = job.output_configuration()
+
+    if inputs is not None:
+        LOG.info(inputs)
+        dgroup = meta.create_group("inputs")
+        for key, value in inputs.items():
+            dgroup.create_dataset(key, (1,), data=value, dtype=string_dt)
 
 
 class HDFFormat(IFormat):
