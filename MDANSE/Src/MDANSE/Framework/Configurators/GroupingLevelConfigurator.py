@@ -55,10 +55,12 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         SingleChoiceConfigurator.__init__(self, name, choices=choices, **kwargs)
 
-    def configure(self, value):
+    def configure(self, value: str):
         """
-        :param value: the level of granularity at which the atoms should be grouped
-        :type value: str
+        Parameters
+        ----------
+        value : str
+            The level of granularity at which the atoms should be grouped
         """
         self._original_input = value
 
@@ -73,10 +75,12 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         if value == "atom":
             return
+
         trajConfig = self._configurable[self._dependencies["trajectory"]]
         atomSelectionConfig = self._configurable[self._dependencies["atom_selection"]]
         chemical_system = trajConfig["instance"].chemical_system
         indices = []
+        flatten_indices = []
         elements = []
         names = []
         masses = []
@@ -88,6 +92,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         if value == "molecule":
             for mol_name in chemical_system._clusters.keys():
                 n_atms = 0
+                group_name_elements = []
                 for mol_number, cluster in enumerate(
                     chemical_system._clusters[mol_name]
                 ):
@@ -95,20 +100,18 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                         if x not in atomSelectionConfig["flatten_indices"]:
                             continue
                         indices.append([x])
-                        elements.append(chemical_system.atom_list[x])
+                        flatten_indices.append(x)
+                        elements.append([chemical_system.atom_list[x]])
+                        group_name_elements.append(chemical_system.atom_list[x])
                         names.append(f"{mol_name}_{chemical_system.atom_list[x]}")
-                        masses.append(mass_lookup[x])
+                        masses.append([mass_lookup[x]])
                         n_atms += 1
-
-                group_name_elements = [
-                    chemical_system.atom_list[x]
-                    for x in chemical_system._clusters[mol_name][0]
-                ]
                 group_names.append(mol_name)
-                group_elements[mol_name] = set(group_name_elements)
+                group_elements[mol_name] = group_name_elements
                 group_n_atms[mol_name] = n_atms
 
         atomSelectionConfig["indices"] = indices
+        atomSelectionConfig["flatten_indices"] = flatten_indices
         atomSelectionConfig["elements"] = elements
         atomSelectionConfig["masses"] = masses
         atomSelectionConfig["names"] = names
@@ -120,25 +123,6 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         self["group_n_atms"] = group_n_atms
         if atomSelectionConfig["selection_length"] == 0:
             self.error_status = "This option resulted in nothing being selected in the current trajectory"
-
-    @staticmethod
-    def find_parent(atom, level):
-        """
-        Retrieve recursively the parent of a given atom at a given level.
-        For example, a level of 1 will return the direct parent of the atom.
-
-        :note: this is a static method
-
-        :param atom: the atom for which the parent is searched for
-        :type atom: Atom object
-        :param level: the level of the parent
-        :type level: int
-        """
-
-        for _ in range(level):
-            atom = atom.parent
-
-        return atom
 
     def get_information(self):
         """
@@ -168,7 +152,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         if self["level"] != "atom":
             for name in self["group_names"]:
-                group_elements = self["group_elements"][name]
+                group_elements = set(self["group_elements"][name])
                 c_name = self["group_n_atms"][name] / tot_n_atms
                 matches = set([key % (name, ele) for ele in group_elements])
                 msdTotal = weighted_sum(output_data, matches) / c_name

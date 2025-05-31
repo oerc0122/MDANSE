@@ -79,6 +79,16 @@ class MeanSquareDisplacement(IJob):
             }
         },
     )
+    settings["atom_transmutation"] = (
+        "AtomTransmutationConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
+            }
+        },
+    )
     settings["weights"] = (
         "WeightsConfigurator",
         {
