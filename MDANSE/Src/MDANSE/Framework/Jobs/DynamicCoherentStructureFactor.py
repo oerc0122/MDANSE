@@ -356,22 +356,16 @@ class DynamicCoherentStructureFactor(IJob):
                 )
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "f(q,t)_%s%s",
+            self._outputData, "f(q,t)_%s%s", self._elementsPairs
         )
 
         self._outputData["s(q,f)_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "s(q,f)_%s%s",
+            self._outputData, "s(q,f)_%s%s", self._elementsPairs
         )
 
         if self.add_ideal_results:
             self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
-                self._outputData,
-                weight_dict,
-                "s(q,f)_ideal_%s%s",
+                self._outputData, "s(q,f)_ideal_%s%s", self._elementsPairs
             )
 
         self._outputData.write(

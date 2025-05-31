@@ -296,14 +296,10 @@ class VanHoveFunctionSelf(IJob):
         assign_weights(self._outputData, weight_dict, "g(r,t)_%s")
         assign_weights(self._outputData, weight_dict, "4_pi_r2_g(r,t)_%s")
         self._outputData["g(r,t)_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "g(r,t)_%s",
+            self._outputData, "g(r,t)_%s", nAtomsPerElement
         )
         self._outputData["4_pi_r2_g(r,t)_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "4_pi_r2_g(r,t)_%s",
+            self._outputData, "4_pi_r2_g(r,t)_%s", nAtomsPerElement
         )
 
         self._outputData.write(

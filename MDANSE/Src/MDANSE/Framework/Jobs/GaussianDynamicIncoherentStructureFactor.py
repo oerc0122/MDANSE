@@ -301,20 +301,14 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         if self.add_ideal_results:
             assign_weights(self._outputData, weight_dict, "s(q,f)_ideal_%s")
         self._outputData["f(q,t)_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "f(q,t)_%s",
+            self._outputData, "f(q,t)_%s", nAtomsPerElement
         )
         self._outputData["s(q,f)_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "s(q,f)_%s",
+            self._outputData, "s(q,f)_%s", nAtomsPerElement
         )
         if self.add_ideal_results:
             self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
-                self._outputData,
-                weight_dict,
-                "s(q,f)_ideal_%s",
+                self._outputData, "s(q,f)_ideal_%s", nAtomsPerElement
             )
 
         # since GDISF ~ exp(-msd * q2 / 6.0) the MSD isn't weighted in
@@ -323,9 +317,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
         assign_weights(self._outputData, weight_dict, "msd_%s")
         self._outputData["msd_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "msd_%s",
+            self._outputData, "msd_%s", nAtomsPerElement
         )
 
         self._outputData.write(

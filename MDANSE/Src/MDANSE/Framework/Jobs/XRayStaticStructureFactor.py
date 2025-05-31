@@ -235,7 +235,9 @@ class XRayStaticStructureFactor(DistanceHistogram):
             assign_weights(self._outputData, weight_dict, "xssf_intra_%s%s")
             assign_weights(self._outputData, weight_dict, "xssf_inter_%s%s")
             assign_weights(self._outputData, weight_dict, "xssf_%s%s")
-            xssfIntra = weighted_sum(self._outputData, weight_dict, "xssf_intra_%s%s")
+            xssfIntra = weighted_sum(
+                self._outputData, "xssf_intra_%s%s", self._elementsPairs
+            )
             self._outputData["xssf_intra_total"][:] = xssfIntra
 
             xssfInter = weighted_sum(self._outputData, weight_dict, "xssf_inter_%s%s")
@@ -245,7 +247,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
         else:
             assign_weights(self._outputData, weight_dict, "xssf_%s%s")
             self._outputData["xssf_total"][:] = weighted_sum(
-                self._outputData, weight_dict, "xssf_%s%s"
+                self._outputData, "xssf_%s%s", self._elementsPairs
             )
 
         self._outputData.write(

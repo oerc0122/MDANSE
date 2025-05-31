@@ -192,8 +192,8 @@ class PairDistributionFunction(DistanceHistogram):
                 )
                 pdf = weighted_sum(
                     self._outputData,
-                    weight_dict,
                     f"pdf{i}_%s%s",
+                    self._elementsPairs,
                 )
                 self._outputData[f"pdf{i}_total"][:] = pdf
                 self._outputData[f"rdf{i}_total"][:] = (
@@ -212,8 +212,8 @@ class PairDistributionFunction(DistanceHistogram):
             )
             pdf = weighted_sum(
                 self._outputData,
-                weight_dict,
                 "pdf_%s%s",
+                self._elementsPairs,
             )
             self._outputData["pdf_total"][:] = pdf
             self._outputData["rdf_total"][:] = shellSurfaces * self.averageDensity * pdf

@@ -179,11 +179,7 @@ class DensityProfile(IJob):
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, n_atoms_per_element, 1)
         assign_weights(self._outputData, weight_dict, "dp_%s")
-        dp_total = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "dp_%s",
-        )
+        dp_total = weighted_sum(self._outputData, "dp_%s", n_atoms_per_element)
 
         self._outputData.add(
             "dp_total", "LineOutputVariable", dp_total, axis="r", units="au"

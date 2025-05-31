@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import List, Dict, Tuple
+from typing import Dict, Tuple, Iterable, Union
 import itertools
 
 import numpy as np
@@ -113,10 +113,7 @@ def assign_weights(
         values[k].scaling_factor *= w
 
 
-def weighted_sum(
-    values: Dict[str, np.ndarray],
-    matches: set[str],
-):
+def weighted_sum(values: Dict[str, np.ndarray], match_key: str, match_vals: Iterable):
     """Sums up partial datasets multiplied by their scaling factors.
     The scaling factors have to be set before, typically by calling
     the assign_weights function.
@@ -125,17 +122,20 @@ def weighted_sum(
     ----------
     values : Dict[str, np.ndarray]
         Dictionary of data arrays containing analysis results.
-    matches : set[str]
-        A set of keys to run the summation over.
+    match_key: str
+        A key used to generate the list of matches to sum over.
+    match_vals: Iterable[Union[Tuple[str], str]]
+        The values used to generate the list of matches to sum over.
 
     Returns
     -------
     np.ndarray
-        total sum of all the component arrays scaled by their weights
+        Total sum of all the component arrays scaled by their weights
     """
-    weightedSum = 0.0
+    matches = [match_key % val for val in match_vals]
+    weighted_sum = 0.0
 
     for val in (val for key, val in values.items() if key in matches):
-        weightedSum += val * val.scaling_factor
+        weighted_sum += val * val.scaling_factor
 
-    return weightedSum
+    return weighted_sum

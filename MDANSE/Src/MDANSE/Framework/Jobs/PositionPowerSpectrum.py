@@ -252,19 +252,19 @@ class PositionPowerSpectrum(IJob):
             assign_weights(self._outputData, weight_dict, "pps_ideal_%s")
         self._outputData["pacf_total"][:] = weighted_sum(
             self._outputData,
-            weight_dict,
             "pacf_%s",
+            nAtomsPerElement,
         )
         self._outputData["pps_total"][:] = weighted_sum(
             self._outputData,
-            weight_dict,
             "pps_%s",
+            nAtomsPerElement,
         )
         if self.add_ideal_results:
             self._outputData["pps_ideal_total"][:] = weighted_sum(
                 self._outputData,
-                weight_dict,
                 "pps_ideal_%s",
+                nAtomsPerElement,
             )
 
         self._outputData.write(

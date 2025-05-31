@@ -537,42 +537,30 @@ class CurrentCorrelationFunction(IJob):
             assign_weights(self._outputData, weight_dict, "J(q,f)_long_ideal_%s%s")
             assign_weights(self._outputData, weight_dict, "J(q,f)_trans_ideal_%s%s")
         jqtLongTotal = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "j(q,t)_long_%s%s",
+            self._outputData, "j(q,t)_long_%s%s", self._elementsPairs
         )
         self._outputData["j(q,t)_long_total"][:] = jqtLongTotal
         jqtTransTotal = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "j(q,t)_trans_%s%s",
+            self._outputData, "j(q,t)_trans_%s%s", self._elementsPairs
         )
         self._outputData["j(q,t)_trans_total"][:] = jqtTransTotal
 
         sqfLongTotal = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "J(q,f)_long_%s%s",
+            self._outputData, "J(q,f)_long_%s%s", self._elementsPairs
         )
         self._outputData["J(q,f)_long_total"][:] = sqfLongTotal
         sqfTransTotal = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "J(q,f)_trans_%s%s",
+            self._outputData, "J(q,f)_trans_%s%s", self._elementsPairs
         )
         self._outputData["J(q,f)_trans_total"][:] = sqfTransTotal
 
         if self.add_ideal_results:
             sqfLongTotal = weighted_sum(
-                self._outputData,
-                weight_dict,
-                "J(q,f)_long_ideal_%s%s",
+                self._outputData, "J(q,f)_long_ideal_%s%s", self._elementsPairs
             )
             self._outputData["J(q,f)_long_ideal_total"][:] = sqfLongTotal
             sqfTransTotal = weighted_sum(
-                self._outputData,
-                weight_dict,
-                "J(q,f)_trans_ideal_%s%s",
+                self._outputData, "J(q,f)_trans_ideal_%s%s", self._elementsPairs
             )
             self._outputData["J(q,f)_trans_ideal_total"][:] = sqfTransTotal
 

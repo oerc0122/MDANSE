@@ -297,22 +297,16 @@ class DynamicIncoherentStructureFactor(IJob):
                 )
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "f(q,t)_%s",
+            self._outputData, "f(q,t)_%s", nAtomsPerElement
         )
 
         self._outputData["s(q,f)_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "s(q,f)_%s",
+            self._outputData, "s(q,f)_%s", nAtomsPerElement
         )
 
         if self.add_ideal_results:
             self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
-                self._outputData,
-                weight_dict,
-                "s(q,f)_ideal_%s",
+                self._outputData, "s(q,f)_ideal_%s", nAtomsPerElement
             )
 
         self._outputData.write(

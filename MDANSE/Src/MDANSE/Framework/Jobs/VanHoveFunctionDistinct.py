@@ -644,9 +644,7 @@ class VanHoveFunctionDistinct(IJob):
                     f"g(r,t){i}_%s%s",
                 )
                 pdf = weighted_sum(
-                    self._outputData,
-                    weight_dict,
-                    f"g(r,t){i}_%s%s",
+                    self._outputData, f"g(r,t){i}_%s%s", self._elementsPairs
                 )
                 self._outputData[f"g(r,t){i}_total"][...] = pdf
         else:
@@ -655,11 +653,7 @@ class VanHoveFunctionDistinct(IJob):
                 weight_dict,
                 "g(r,t)_%s%s",
             )
-            pdf = weighted_sum(
-                self._outputData,
-                weight_dict,
-                "g(r,t)_%s%s",
-            )
+            pdf = weighted_sum(self._outputData, "g(r,t)_%s%s", self._elementsPairs)
             self._outputData["g(r,t)_total"][...] = pdf
 
         self._outputData.write(

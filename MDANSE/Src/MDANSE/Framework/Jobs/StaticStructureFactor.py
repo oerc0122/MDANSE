@@ -229,15 +229,19 @@ class StaticStructureFactor(DistanceHistogram):
             assign_weights(self._outputData, weight_dict, "ssf_intra_%s%s")
             assign_weights(self._outputData, weight_dict, "ssf_inter_%s%s")
             assign_weights(self._outputData, weight_dict, "ssf_%s%s")
-            ssfIntra = weighted_sum(self._outputData, weight_dict, "ssf_intra_%s%s")
+            ssfIntra = weighted_sum(
+                self._outputData, "ssf_intra_%s%s", self._elementsPairs
+            )
             self._outputData["ssf_intra_total"][:] = ssfIntra
-            ssfInter = weighted_sum(self._outputData, weight_dict, "ssf_inter_%s%s")
+            ssfInter = weighted_sum(
+                self._outputData, "ssf_inter_%s%s", self._elementsPairs
+            )
             self._outputData["ssf_inter_total"][:] = ssfInter
             self._outputData["ssf_total"][:] = ssfIntra + ssfInter
         else:
             assign_weights(self._outputData, weight_dict, "ssf_%s%s")
             self._outputData["ssf_total"][:] = weighted_sum(
-                self._outputData, weight_dict, "ssf_%s%s"
+                self._outputData, "ssf_%s%s", self._elementsPairs
             )
 
         self._outputData.write(

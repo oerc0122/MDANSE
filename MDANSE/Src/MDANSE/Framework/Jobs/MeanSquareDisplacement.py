@@ -198,8 +198,7 @@ class MeanSquareDisplacement(IJob):
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
         assign_weights(self._outputData, weight_dict, "msd_%s")
-        matches = set([f"msd_{ele}" for ele in nAtomsPerElement])
-        msdTotal = weighted_sum(self._outputData, matches)
+        msdTotal = weighted_sum(self._outputData, "msd_%s", nAtomsPerElement)
         self._outputData.add(
             "msd_total",
             "LineOutputVariable",

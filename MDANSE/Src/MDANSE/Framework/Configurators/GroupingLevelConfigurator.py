@@ -154,8 +154,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             for name in self["group_names"]:
                 group_elements = set(self["group_elements"][name])
                 c_name = self["group_n_atms"][name] / tot_n_atms
-                matches = set([key % (name, ele) for ele in group_elements])
-                msdTotal = weighted_sum(output_data, matches) / c_name
+                match_vals = [(name, ele) for ele in group_elements]
+                msdTotal = weighted_sum(output_data, key, match_vals) / c_name
                 output_data.add(
                     f"msd_{name}_total",
                     "LineOutputVariable",

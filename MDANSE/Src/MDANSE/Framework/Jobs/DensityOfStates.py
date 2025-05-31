@@ -272,20 +272,14 @@ class DensityOfStates(IJob):
         if self.add_ideal_results:
             assign_weights(self._outputData, weight_dict, "dos_ideal_%s")
         self._outputData["vacf_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "vacf_%s",
+            self._outputData, "vacf_%s", nAtomsPerElement
         )
         self._outputData["dos_total"][:] = weighted_sum(
-            self._outputData,
-            weight_dict,
-            "dos_%s",
+            self._outputData, "dos_%s", nAtomsPerElement
         )
         if self.add_ideal_results:
             self._outputData["dos_ideal_total"][:] = weighted_sum(
-                self._outputData,
-                weight_dict,
-                "dos_ideal_%s",
+                self._outputData, "dos_ideal_%s", nAtomsPerElement
             )
 
         self._outputData.write(
