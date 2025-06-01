@@ -159,13 +159,13 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 group_elements = set(self["group_elements"][group_name])
                 conc = self["group_n_atms"][group_name] / tot_n_atms
                 match_vals = [(group_name, ele) for ele in group_elements]
-                msdTotal = (
+                total_results = (
                     weighted_sum(output_data, result_name + "_%s_%s", match_vals) / conc
                 )
                 output_data.add(
                     f"{result_name}_{group_name}_total",
                     "LineOutputVariable",
-                    msdTotal,
+                    total_results,
                     **kwargs,
                 )
                 output_data[f"{result_name}_{group_name}_total"].scaling_factor = conc
