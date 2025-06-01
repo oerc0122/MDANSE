@@ -61,6 +61,15 @@ class DensityOfStates(IJob):
         "ProjectionConfigurator",
         {"label": "project coordinates"},
     )
+    settings["grouping_level"] = (
+        "GroupingLevelConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
+    )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
@@ -71,6 +80,7 @@ class DensityOfStates(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
     )
@@ -271,15 +281,30 @@ class DensityOfStates(IJob):
         assign_weights(self._outputData, weight_dict, "dos_%s")
         if self.add_ideal_results:
             assign_weights(self._outputData, weight_dict, "dos_ideal_%s")
+
         self._outputData["vacf_total"][:] = weighted_sum(
             self._outputData, "vacf_%s", nAtomsPerElement
         )
         self._outputData["dos_total"][:] = weighted_sum(
             self._outputData, "dos_%s", nAtomsPerElement
         )
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "vacf", axis="time", units="nm2/ps2", main_result=True
+        )
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "dos", axis="romega", units="au", main_result=True
+        )
+
         if self.add_ideal_results:
             self._outputData["dos_ideal_total"][:] = weighted_sum(
                 self._outputData, "dos_ideal_%s", nAtomsPerElement
+            )
+            self.configuration["grouping_level"].add_grouped_totals(
+                self._outputData,
+                "dos_ideal",
+                axis="romega",
+                units="au",
+                main_result=True,
             )
 
         self._outputData.write(

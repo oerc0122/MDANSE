@@ -66,10 +66,6 @@ class MeanSquareDisplacement(IJob):
         "ProjectionConfigurator",
         {"label": "project coordinates"},
     )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
     settings["grouping_level"] = (
         "GroupingLevelConfigurator",
         {
@@ -78,6 +74,10 @@ class MeanSquareDisplacement(IJob):
                 "atom_selection": "atom_selection",
             }
         },
+    )
+    settings["atom_selection"] = (
+        "AtomSelectionConfigurator",
+        {"dependencies": {"trajectory": "trajectory"}},
     )
     settings["atom_transmutation"] = (
         "AtomTransmutationConfigurator",
@@ -209,7 +209,7 @@ class MeanSquareDisplacement(IJob):
         )
 
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "msd_%s_%s"
+            self._outputData, "msd", axis="time", units="nm2", main_result=True
         )
 
         self._outputData.write(

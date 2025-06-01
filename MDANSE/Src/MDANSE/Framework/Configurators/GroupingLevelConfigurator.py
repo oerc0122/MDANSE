@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+import numpy as np
+
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
 )
@@ -136,32 +138,34 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         return f"Grouping level: {self['value']!r}\n"
 
-    def add_grouped_totals(self, output_data, key):
+    def add_grouped_totals(
+        self, output_data: dict[str, np.ndarray], result_name: str, **kwargs
+    ):
         """Add the grouped totals to the output data.
 
         Parameters
         ----------
-        output_data : Dict[str, np.ndarray]
+        output_data : dict[str, np.ndarray]
             Dictionary of data arrays containing analysis results.
-        key : str
-            The key used to match the individual component to sum over.
+        result_name : str
+            The name of the results.
         """
         tot_n_atms = self._configurable[self._dependencies["atom_selection"]][
             "selection_length"
         ]
 
         if self["level"] != "atom":
-            for name in self["group_names"]:
-                group_elements = set(self["group_elements"][name])
-                c_name = self["group_n_atms"][name] / tot_n_atms
-                match_vals = [(name, ele) for ele in group_elements]
-                msdTotal = weighted_sum(output_data, key, match_vals) / c_name
+            for group_name in self["group_names"]:
+                group_elements = set(self["group_elements"][group_name])
+                conc = self["group_n_atms"][group_name] / tot_n_atms
+                match_vals = [(group_name, ele) for ele in group_elements]
+                msdTotal = (
+                    weighted_sum(output_data, result_name + "_%s_%s", match_vals) / conc
+                )
                 output_data.add(
-                    f"msd_{name}_total",
+                    f"{result_name}_{group_name}_total",
                     "LineOutputVariable",
                     msdTotal,
-                    axis="time",
-                    units="nm2",
-                    main_result=True,
+                    **kwargs,
                 )
-                output_data[f"msd_{name}_total"].scaling_factor = c_name
+                output_data[f"{result_name}_{group_name}_total"].scaling_factor = conc
