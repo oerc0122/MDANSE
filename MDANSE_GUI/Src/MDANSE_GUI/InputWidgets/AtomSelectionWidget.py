@@ -295,6 +295,7 @@ class SelectionHelper(QDialog):
 
         At the moment it is possible to use .mda files containing a selection,
         or JSON text files."""
+        self.selection_model.finalise_manual_selection()
         fname = QFileDialog.getSaveFileName(
             self,
             "Save current selection to a JSON file",
