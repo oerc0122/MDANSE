@@ -118,7 +118,12 @@ class BasicSelectionWidget(QGroupBox):
 
     new_selection = Signal(str)
 
-    def __init__(self, parent=None, widget_label="Atom selection widget"):
+    def __init__(
+        self,
+        parent=None,
+        widget_label="Atom selection widget",
+        add_standard_widgets=True,
+    ):
         """Create subwidgets common to atom selection.
 
         Parameters
@@ -134,7 +139,8 @@ class BasicSelectionWidget(QGroupBox):
         self.setLayout(layout)
         self.setTitle(widget_label)
         self.add_specific_widgets()
-        self.add_standard_widgets()
+        if add_standard_widgets:
+            self.add_standard_widgets()
 
     def parameter_dictionary(self) -> dict[str, Any]:
         """Collect and return selection function parameters."""
@@ -171,6 +177,31 @@ class BasicSelectionWidget(QGroupBox):
         funtion_parameters = self.parameter_dictionary()
         funtion_parameters["operation_type"] = self.get_mode()
         self.new_selection.emit(json.dumps(funtion_parameters))
+
+
+class GUISelection(BasicSelectionWidget):
+    """Widget for confirming and cancelling manual selection in 3D view."""
+
+    def __init__(self, parent=None, widget_label="Manual Selection"):
+        """Pass inputs to the parent class init.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            parent in the Qt hierarchy, by default None
+        widget_label : str, optional
+            Text over the widget, by default "ALL ATOMS"
+
+        """
+        super().__init__(parent, widget_label, add_standard_widgets=False)
+
+    def add_specific_widgets(self):
+        """Add GUI selection buttons, not connected."""
+        layout = self.layout()
+        self.confirm_gui_selection = QPushButton("CONFIRM manual selection", self)
+        self.undo_gui_selection = QPushButton("Undo GUI selection", self)
+        for button in [self.confirm_gui_selection, self.undo_gui_selection]:
+            layout.addWidget(button)
 
 
 class AllAtomSelection(BasicSelectionWidget):

@@ -14,6 +14,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+from collections import Counter
+
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
@@ -76,3 +78,39 @@ def invert_selection(
     """
     all_indices = select_all(trajectory)
     return all_indices - selection
+
+
+def toggle_selection(
+    trajectory: Trajectory,
+    current_selection: set[int],
+    clicked_atoms: list[int],
+    **_kwargs: str,
+) -> set[int]:
+    """Invert the selection state of atoms clicked in the GUI.
+
+    Return the updated selection.
+
+    Parameters
+    ----------
+    trajectory : Trajectory
+        a trajectory containing atoms to be selected
+    current_selection : Set[int]
+        set of indices that had been selected before manual selection
+    clicked_atoms : List[int]
+        list of atom indices that have been clicked so far
+
+    Returns
+    -------
+    Set[int]
+        set of all the indices in the trajectory which were not in the input selection
+
+    """
+    not_selected = select_all(trajectory) - current_selection
+    click_counter = Counter(clicked_atoms)
+    flipped = set()
+    for index, state in click_counter.items():
+        if state % 2:
+            flipped.add(index)
+    removed = current_selection & flipped
+    added = not_selected & flipped
+    return (current_selection - removed) | added

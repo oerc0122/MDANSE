@@ -24,6 +24,7 @@ from MDANSE.Framework.AtomSelector.general_selection import (
     invert_selection,
     select_all,
     select_none,
+    toggle_selection,
 )
 from MDANSE.Framework.AtomSelector.group_selection import select_labels, select_pattern
 from MDANSE.Framework.AtomSelector.molecule_selection import select_molecules
@@ -124,6 +125,10 @@ class ReusableSelection:
         function_name = function_parameters.get("function_name", "select_all")
         if function_name == "invert_selection":
             new_selection = self.all_idxs.difference(selection)
+        elif function_name == "toggle_selection":
+            new_selection = toggle_selection(
+                trajectory, selection, function_parameters.get("clicked_atoms", [])
+            )
         else:
             operation_type = function_parameters.get("operation_type", "union")
             function = function_lookup[function_name]

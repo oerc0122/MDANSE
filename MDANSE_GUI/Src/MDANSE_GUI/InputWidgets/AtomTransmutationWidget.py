@@ -127,6 +127,7 @@ class TransmutationHelper(SelectionHelper):
         transmutation and update the transmutation textbox with the new
         transmutation setting.
         """
+        self.inner_model.finalise_manual_selection()
         selection_string = self.selection_model.current_steps()
         self.transmuter.apply_transmutation(
             selection_string, self.transmutation_combo.currentText()

@@ -42,6 +42,7 @@ from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewerWithPickin
 from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
 from MDANSE_GUI.Widgets.SelectionWidgets import (
     AllAtomSelection,
+    GUISelection,
     AtomSelection,
     IndexSelection,
     LabelSelection,
@@ -71,6 +72,12 @@ class SelectionModel(QStandardItemModel):
         self._trajectory = trajectory
         self._selection = ReusableSelection()
         self._current_selection = set()
+        self._last_item = None
+        self._clicked_atoms = []
+
+    def clear(self):
+        self._clicked_atoms = []
+        return super().clear()
 
     def rebuild_selection(self, last_operation: str) -> SelectionValidity:
         """Update the current selection based on the text in the GUI.
@@ -93,6 +100,7 @@ class SelectionModel(QStandardItemModel):
             item = self.itemFromIndex(index)
             json_string = item.text()
             total_dict[row] = json.loads(json_string)
+            self._last_item = item
         self._selection.load_from_json(json.dumps(total_dict))
         self._current_selection = self._selection.select_in_trajectory(self._trajectory)
         if last_operation:
@@ -110,6 +118,14 @@ class SelectionModel(QStandardItemModel):
             return SelectionValidity.USELESS_SELECTION
         return None
 
+    @Slot(int)
+    def on_atom_clicked(self, index: int):
+        self._clicked_atoms.append(index)
+
+    @Slot()
+    def clear_manual_selection(self):
+        self._clicked_atoms = []
+
     def current_selection(self, last_operation: str = "") -> set[int]:
         """Return the selected atom indices.
 
@@ -124,6 +140,7 @@ class SelectionModel(QStandardItemModel):
             indices of all the selected atoms
 
         """
+        self.finalise_manual_selection()
         self.rebuild_selection(last_operation)
         return self._selection.select_in_trajectory(self._trajectory)
 
@@ -145,9 +162,20 @@ class SelectionModel(QStandardItemModel):
             result[row] = python_object
         return json.dumps(result)
 
+    def finalise_manual_selection(self):
+        if self._clicked_atoms:
+            new_params = {
+                "function_name": "toggle_selection",
+                "clicked_atoms": self._clicked_atoms,
+            }
+            json_string = json.dumps(new_params)
+            self._clicked_atoms = []
+            self.accept_from_widget(json_string)
+
     @Slot(str)
     def accept_from_widget(self, json_string: str):
         """Add a selection operation sent from a selection widget."""
+        self.finalise_manual_selection()
         new_item = QStandardItem(json_string)
         new_item.setEditable(False)
         self.appendRow(new_item)
@@ -207,7 +235,7 @@ class SelectionHelper(QDialog):
         self.selection_textbox.setReadOnly(True)
 
         mol_view = MolecularViewerWithPicking()
-        mol_view.picked_atoms_changed.connect(self.update_from_3d_view)
+        mol_view.clicked_atom_index.connect(self.update_from_3d_view)
         self.view_3d = View3D(mol_view)
         self.view_3d.update_panel(traj_data)
 
@@ -237,6 +265,7 @@ class SelectionHelper(QDialog):
         Some issues occur in the
         3D viewer when it is closed and then reopened.
         """
+        self.selection_model.finalise_manual_selection()
         a0.ignore()
         self.hide()
 
@@ -327,6 +356,7 @@ class SelectionHelper(QDialog):
 
         self.selection_widgets = [
             AllAtomSelection(self),
+            GUISelection(self),
             AtomSelection(self, self.trajectory),
             IndexSelection(self),
             MoleculeSelection(self, self.trajectory),
@@ -338,7 +368,13 @@ class SelectionHelper(QDialog):
 
         for widget in self.selection_widgets:
             select_layout.addWidget(widget)
-            widget.new_selection.connect(self.selection_model.accept_from_widget)
+            if isinstance(widget, GUISelection):
+                widget.confirm_gui_selection.clicked.connect(
+                    self.selection_model.finalise_manual_selection
+                )
+                widget.undo_gui_selection.clicked.connect(self.undo_manual_selection)
+            else:
+                widget.new_selection.connect(self.selection_model.accept_from_widget)
 
         invert_layout = QHBoxLayout()
         label = QLabel("Current selection:")
@@ -358,13 +394,19 @@ class SelectionHelper(QDialog):
         return [scroll_area]
 
     @Slot()
+    def undo_manual_selection(self):
+        self.selection_model.clear_manual_selection()
+        self.recalculate_selection()
+
+    @Slot()
     def recalculate_selection(self):
         """Update atom indices after selection change."""
         self.selected = self.selection_model.current_selection()
         self.view_3d._viewer.change_picked(self.selected)
         self.update_selection_textbox()
 
-    def update_from_3d_view(self, _selection: set[int]) -> None:
+    @Slot(int)
+    def update_from_3d_view(self, index: int) -> None:
         """Update atom indices after an atom has been clicked.
 
         A selection/deselection was made in the 3d view, update the
@@ -376,6 +418,7 @@ class SelectionHelper(QDialog):
             Selection indexes from the 3d view.
 
         """
+        self.selection_model.on_atom_clicked(index)
         self.update_selection_textbox()
 
     @Slot()

@@ -153,6 +153,7 @@ class ChargeHelper(SelectionHelper):
         """Set the field of the PartialChargeWidget to the currently
         chosen setting in this widget.
         """
+        self.inner_model.finalise_manual_selection()
         self._field.setText(self.mapper.get_json_setting())
 
 
