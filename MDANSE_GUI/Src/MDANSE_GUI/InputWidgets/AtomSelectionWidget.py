@@ -18,7 +18,7 @@ import json
 from enum import Enum
 
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
-from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
@@ -167,7 +167,7 @@ class SelectionHelper(QDialog):
 
     def __init__(
         self,
-        traj_data: tuple[str, HDFTrajectoryInputData],
+        traj_data: tuple[str, Trajectory],
         model: SelectionModel,
         parent,
         *args,
@@ -177,7 +177,7 @@ class SelectionHelper(QDialog):
 
         Parameters
         ----------
-        traj_data : tuple[str, HDFTrajectoryInputData]
+        traj_data : tuple[str, Trajectory]
             A tuple of the trajectory data used to load the 3D viewer.
         model : SelectionModel
             Data object storing selection operations, shared with the main widget
@@ -186,7 +186,7 @@ class SelectionHelper(QDialog):
         super().__init__(parent, *args, **kwargs)
         self.setWindowTitle(self._helper_title)
 
-        self.trajectory = traj_data[1].trajectory
+        self.trajectory = traj_data[1]
         self.system = self.trajectory.chemical_system
         self.selection_model = model
         self.atm_full_names = self.system.name_list
@@ -405,11 +405,11 @@ class AtomSelectionWidget(WidgetBase):
             self._configurator._dependencies["trajectory"]
         ]
         traj_filename = traj_config["filename"]
-        hdf_traj = traj_config["hdf_trajectory"]
-        self.selection_model = SelectionModel(hdf_traj.trajectory)
+        trajectory = traj_config["instance"]
+        self.selection_model = SelectionModel(trajectory)
         if use_list_view:
             self._field.setModel(self.selection_model)
-        self.helper = self.create_helper((traj_filename, hdf_traj))
+        self.helper = self.create_helper((traj_filename, trajectory))
         helper_button = QPushButton(self._push_button_text, self._base)
         helper_button.clicked.connect(self.helper_dialog)
         self._layout.addWidget(self._field)
@@ -420,7 +420,7 @@ class AtomSelectionWidget(WidgetBase):
 
     def create_helper(
         self,
-        traj_data: tuple[str, HDFTrajectoryInputData],
+        traj_data: tuple[str, Trajectory],
     ) -> SelectionHelper:
         """Create the selection dialog.
 
@@ -429,7 +429,7 @@ class AtomSelectionWidget(WidgetBase):
 
         Parameters
         ----------
-        traj_data : tuple[str, HDFTrajectoryInputData]
+        traj_data : tuple[str, Trajectory]
             A tuple of the trajectory data used to load the 3D viewer.
 
         Returns
