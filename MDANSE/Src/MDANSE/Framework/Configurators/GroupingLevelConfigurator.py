@@ -124,7 +124,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         atomSelectionConfig["selection_length"] = len(names)
         atomSelectionConfig["unique_names"] = sorted(set(names))
 
-        self["group_names"] = set(group_names)
+        self["group_names"] = sorted(set(group_names))
         self["group_elements"] = group_elements
         self["group_n_atms"] = group_n_atms
         if atomSelectionConfig["selection_length"] == 0:
@@ -166,7 +166,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         if self["level"] != "atom":
             for group_name in self["group_names"]:
-                group_elements = set(self["group_elements"][group_name])
+                group_elements = sorted(set(self["group_elements"][group_name]))
                 conc = self["group_n_atms"][group_name] / tot_n_atms
                 match_vals = [(group_name, ele) for ele in group_elements]
                 results = (
