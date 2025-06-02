@@ -70,7 +70,7 @@ class TransmutationHelper(SelectionHelper):
         self.transmutation_combo = QComboBox()
         self.transmutation_combo.addItems(ATOMS_DATABASE.atoms)
         self._field = field
-        self.inner_model = SelectionModel(traj_data[1].trajectory)
+        self.inner_model = SelectionModel(traj_data[1])
         super().__init__(
             traj_data,
             self.inner_model,

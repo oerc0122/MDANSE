@@ -68,7 +68,7 @@ class ChargeHelper(SelectionHelper):
         self.charge_textbox.setReadOnly(True)
         self.charge_qline = QLineEdit()
         self.charge_qline.setValidator(QDoubleValidator())
-        self.inner_model = SelectionModel(traj_data[1].trajectory)
+        self.inner_model = SelectionModel(traj_data[1])
         self._field = field
         super().__init__(traj_data, self.inner_model, parent, *args, **kwargs)
         charge_reset = QPushButton("Reset CHARGES", self)

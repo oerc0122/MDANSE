@@ -16,14 +16,15 @@
 
 import json
 from enum import Enum
+from pathlib import Path
 
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
-    QAbstractItemView,
     QDialog,
+    QFileDialog,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -152,6 +153,14 @@ class SelectionModel(QStandardItemModel):
         self.appendRow(new_item)
         self.selection_changed.emit()
 
+    @Slot(str)
+    def create_from_string(self, json_string: str):
+        """Initialise a new selection from a string."""
+        self.clear()
+        dictionary = json.loads(json_string)
+        for selection_line in dictionary.values():
+            self.accept_from_widget(json.dumps(selection_line))
+
 
 class SelectionHelper(QDialog):
     """Generates a string that specifies the atom selection.
@@ -193,6 +202,7 @@ class SelectionHelper(QDialog):
         self.molecule_names = self.system.unique_molecules()
         self.labels = list(map(str, self.system._labels))
 
+        self._trajectory_path = Path(self.trajectory.filename).parent
         self.selection_textbox = QPlainTextEdit()
         self.selection_textbox.setReadOnly(True)
 
@@ -245,6 +255,25 @@ class SelectionHelper(QDialog):
         reset.clicked.connect(self.reset)
         close.clicked.connect(self.close)
         return [reset, close]
+
+    def create_optional_save_button(self):
+        button = QPushButton("Save selection", self)
+        button.clicked.connect(self.save_selection_dialog)
+        self.bottom_buttons.addWidget(button)
+
+    def save_selection_dialog(self) -> None:
+        """Load a selection from a file.
+
+        At the moment it is possible to use .mda files containing a selection,
+        or JSON text files."""
+        fname = QFileDialog.getSaveFileName(
+            self,
+            "Save current selection to a JSON file",
+            str(self._trajectory_path),
+            "MDANSE selection files (*.json);;All files(*.*)",
+        )
+        if len(fname[0]):
+            self.selection_model._selection.save_to_json_file(fname[0])
 
     def create_layouts(self) -> list[QVBoxLayout]:
         """Call functions creating other widgets.
@@ -390,6 +419,7 @@ class AtomSelectionWidget(WidgetBase):
     """The atoms selection widget."""
 
     _push_button_text = "Atom selection helper"
+    _load_button_text = "Load selection from file"
     _default_value = "{}"
     _tooltip_text = "Specify which atoms will be used in the analysis. The input is a JSON string, and can be created using the helper dialog."
 
@@ -399,6 +429,8 @@ class AtomSelectionWidget(WidgetBase):
         self._value = self._default_value
         if use_list_view:
             self._field = QListView(self._base)
+            load_button = QPushButton(self._load_button_text, self._base)
+            load_button.clicked.connect(self.load_selection_from_file_dialog)
         else:
             self._field = QLineEdit(self._base)
         traj_config = self._configurator._configurable[
@@ -406,6 +438,7 @@ class AtomSelectionWidget(WidgetBase):
         ]
         traj_filename = traj_config["filename"]
         trajectory = traj_config["instance"]
+        self._trajectory_path = Path(traj_filename).parent
         self.selection_model = SelectionModel(trajectory)
         if use_list_view:
             self._field.setModel(self.selection_model)
@@ -414,9 +447,12 @@ class AtomSelectionWidget(WidgetBase):
         helper_button.clicked.connect(self.helper_dialog)
         self._layout.addWidget(self._field)
         self._layout.addWidget(helper_button)
+        if use_list_view:
+            self._layout.addWidget(load_button)
         self.update_labels()
         self.updateValue()
         self._field.setToolTip(self._tooltip_text)
+        self.helper.create_optional_save_button()
 
     def create_helper(
         self,
@@ -451,6 +487,34 @@ class AtomSelectionWidget(WidgetBase):
             if hasattr(self.helper, "previous_geometry"):
                 self.helper.restoreGeometry(self.helper.previous_geometry)
             self.helper.show()
+
+    @Slot()
+    def load_selection_from_file_dialog(self) -> None:
+        """Load a selection from a file.
+
+        At the moment it is possible to use .mda files containing a selection,
+        or JSON text files."""
+        fnames = QFileDialog.getOpenFileNames(
+            self._base,
+            "Load selection from a file (JSON or MDA)",
+            str(self._trajectory_path),
+            "MDANSE selection files (*.mda *.json);;HDF5 files (*.h5);;HDF5 files(*.hdf);;All files(*.*)",
+        )
+        if fnames is None:
+            return
+        if len(fnames[0]) < 1:
+            return
+        temp_selection = ReusableSelection()
+        for fname in fnames[0]:
+            try:
+                temp_selection.load_from_hdf5(fname)
+            except OSError:
+                try:
+                    temp_selection.load_from_json_file(fname)
+                except json.JSONDecodeError:
+                    continue
+            new_selection = temp_selection.convert_to_json()
+        self.helper.selection_model.create_from_string(new_selection)
 
     def get_widget_value(self) -> str:
         """Return the current text in the input field.

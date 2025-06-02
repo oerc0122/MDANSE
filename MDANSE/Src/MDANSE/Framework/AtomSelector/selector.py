@@ -14,8 +14,10 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+import h5py
 import json
-from typing import Any, Optional
+from typing import Any, Optional, Union
+from pathlib import Path
 
 from MDANSE.Framework.AtomSelector.atom_selection import select_atoms
 from MDANSE.Framework.AtomSelector.general_selection import (
@@ -29,6 +31,7 @@ from MDANSE.Framework.AtomSelector.spatial_selection import (
     select_positions,
     select_sphere,
 )
+from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 function_lookup = {
@@ -233,3 +236,56 @@ class ReusableSelection:
             if not isinstance(v0, dict):
                 raise TypeError(f"Selection {v0} is not a dictionary.")
             self.set_selection(number=k0, function_parameters=v0)
+
+    def load_from_json_file(self, filename: Union[Path, str]):
+        """Load a selection from a JSON text file
+
+        Parameters
+        ----------
+        filename : Union[Path, str]
+            name of a text file containing just a selection in JSON format
+
+        """
+        with open(filename) as source:
+            json_setting = json.load(source)
+            for k0, v0 in json_setting.items():
+                if not isinstance(v0, dict):
+                    raise TypeError(f"Selection {v0} is not a dictionary.")
+                self.set_selection(number=k0, function_parameters=v0)
+
+    def save_to_json_file(self, filename: Union[Path, str]):
+        """Output all the operations as a JSON string.
+
+        For the purpose of storing the selection independent of the
+        trajectory it is acting on, this method encodes the sequence
+        of selection operations as a string.
+
+        Returns
+        -------
+        str
+            All the operations of this selection, encoded as string
+
+        """
+        with open(filename, "w") as target:
+            json.dump(self.operations, target)
+
+    def load_from_hdf5(self, filename: str):
+        """Load selection from an HDF5 output file (MDA format).
+
+        Parameters
+        ----------
+        filename : str
+            path to an MDA file, given as string
+
+        """
+        source = h5py.File(filename)
+        try:
+            byte_string = source["metadata/inputs/atom_selection"][0]
+        except KeyError as err:
+            LOG.error(f"atom selection string not found in file {filename}")
+            source.close()
+            raise OSError from err
+        else:
+            json_string = json.loads(byte_string.decode())
+        source.close()
+        self.load_from_json(json_string)
