@@ -168,7 +168,7 @@ class SelectionHelper(QDialog):
     def __init__(
         self,
         traj_data: tuple[str, HDFTrajectoryInputData],
-        field: QLineEdit,
+        model: SelectionModel,
         parent,
         *args,
         **kwargs,
@@ -179,9 +179,8 @@ class SelectionHelper(QDialog):
         ----------
         traj_data : tuple[str, HDFTrajectoryInputData]
             A tuple of the trajectory data used to load the 3D viewer.
-        field : QLineEdit
-            The QLineEdit field that will need to be updated when
-            applying the setting.
+        model : SelectionModel
+            Data object storing selection operations, shared with the main widget
 
         """
         super().__init__(parent, *args, **kwargs)
@@ -189,8 +188,7 @@ class SelectionHelper(QDialog):
 
         self.trajectory = traj_data[1].trajectory
         self.system = self.trajectory.chemical_system
-        self.selection_model = SelectionModel(self.trajectory)
-        self._field = field
+        self.selection_model = model
         self.atm_full_names = self.system.name_list
         self.molecule_names = self.system.unique_molecules()
         self.labels = list(map(str, self.system._labels))
@@ -205,9 +203,9 @@ class SelectionHelper(QDialog):
 
         layouts = self.create_layouts()
 
-        bottom = QHBoxLayout()
+        self.bottom_buttons = QHBoxLayout()
         for button in self.create_buttons():
-            bottom.addWidget(button)
+            self.bottom_buttons.addWidget(button)
 
         helper_layout = QHBoxLayout()
         sub_layout = QVBoxLayout()
@@ -215,7 +213,7 @@ class SelectionHelper(QDialog):
         helper_layout.addLayout(sub_layout)
         for layout in layouts[1:]:
             sub_layout.addLayout(layout)
-        sub_layout.addLayout(bottom)
+        sub_layout.addLayout(self.bottom_buttons)
 
         self.setLayout(helper_layout)
 
@@ -242,13 +240,11 @@ class SelectionHelper(QDialog):
             create_layouts.
 
         """
-        apply = QPushButton("Use Setting")
-        reset = QPushButton("Reset")
+        reset = QPushButton("Reset SELECTION")
         close = QPushButton("Close")
-        apply.clicked.connect(self.apply)
         reset.clicked.connect(self.reset)
         close.clicked.connect(self.close)
-        return [apply, reset, close]
+        return [reset, close]
 
     def create_layouts(self) -> list[QVBoxLayout]:
         """Call functions creating other widgets.
@@ -381,10 +377,6 @@ class SelectionHelper(QDialog):
             text.append(f"{idx}  ({self.atm_full_names[idx]})\n")
         self.selection_textbox.setPlainText("".join(text))
 
-    def apply(self) -> None:
-        """Send the selection from the dialog to the main widget."""
-        self._field.setText(self.selection_model.current_steps())
-
     def reset(self) -> None:
         """Reset the helper to the default state."""
         self.selection_model.clear()
@@ -401,19 +393,22 @@ class AtomSelectionWidget(WidgetBase):
     _default_value = "{}"
     _tooltip_text = "Specify which atoms will be used in the analysis. The input is a JSON string, and can be created using the helper dialog."
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, use_list_view: bool = True, **kwargs):
         """Create the main widget for atom selection."""
         super().__init__(*args, **kwargs)
         self._value = self._default_value
-        self._field = QLineEdit(self._default_value, self._base)
-        self._field.setPlaceholderText(self._default_value)
-        self._field.setMaxLength(2147483647)  # set to the largest possible
-        self._field.textChanged.connect(self.updateValue)
+        if use_list_view:
+            self._field = QListView(self._base)
+        else:
+            self._field = QLineEdit(self._base)
         traj_config = self._configurator._configurable[
             self._configurator._dependencies["trajectory"]
         ]
         traj_filename = traj_config["filename"]
         hdf_traj = traj_config["hdf_trajectory"]
+        self.selection_model = SelectionModel(hdf_traj.trajectory)
+        if use_list_view:
+            self._field.setModel(self.selection_model)
         self.helper = self.create_helper((traj_filename, hdf_traj))
         helper_button = QPushButton(self._push_button_text, self._base)
         helper_button.clicked.connect(self.helper_dialog)
@@ -443,7 +438,7 @@ class AtomSelectionWidget(WidgetBase):
             Create and return the selection helper QDialog.
 
         """
-        return SelectionHelper(traj_data, self._field, self._base)
+        return SelectionHelper(traj_data, self.selection_model, self._base)
 
     @Slot()
     def helper_dialog(self) -> None:
@@ -466,9 +461,4 @@ class AtomSelectionWidget(WidgetBase):
             The JSON selector setting.
 
         """
-        selection_string = self._field.text()
-        if len(selection_string) < 1:
-            self._empty = True
-            return self._default_value
-        self._empty = False
-        return selection_string
+        return self.selection_model.current_steps()

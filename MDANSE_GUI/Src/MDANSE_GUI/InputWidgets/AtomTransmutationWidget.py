@@ -29,7 +29,7 @@ from MDANSE.Framework.Configurators.AtomTransmutationConfigurator import AtomTra
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE_GUI.InputWidgets.AtomSelectionWidget import AtomSelectionWidget
-from MDANSE_GUI.InputWidgets.AtomSelectionWidget import SelectionHelper
+from MDANSE_GUI.InputWidgets.AtomSelectionWidget import SelectionHelper, SelectionModel
 
 
 class TransmutationHelper(SelectionHelper):
@@ -69,13 +69,18 @@ class TransmutationHelper(SelectionHelper):
         self.transmutation_textbox.setReadOnly(True)
         self.transmutation_combo = QComboBox()
         self.transmutation_combo.addItems(ATOMS_DATABASE.atoms)
+        self._field = field
+        self.inner_model = SelectionModel(traj_data[1].trajectory)
         super().__init__(
             traj_data,
-            field,
+            self.inner_model,
             parent,
             *args,
             **kwargs,
         )
+        transmutation_reset = QPushButton("Reset CHARGES", self)
+        transmutation_reset.clicked.connect(self.reset_transmuation)
+        self.bottom_buttons.addWidget(transmutation_reset)
         self.update_transmutation_textbox()
 
     def right_widgets(self) -> list[QWidget]:
@@ -127,6 +132,7 @@ class TransmutationHelper(SelectionHelper):
             selection_string, self.transmutation_combo.currentText()
         )
         self.update_transmutation_textbox()
+        self.apply()
 
     def update_transmutation_textbox(self) -> None:
         """Update the transmutation textbox with the current transmuter
@@ -142,11 +148,11 @@ class TransmutationHelper(SelectionHelper):
 
         self.transmutation_textbox.setText("".join(text))
 
-    def reset(self):
+    def reset_transmuation(self):
         """Reset the transmuter so that no transmutation are set."""
-        super().reset()
         self.transmuter.reset_setting()
         self.update_transmutation_textbox()
+        self.apply()
 
     def apply(self) -> None:
         """Set the field of the AtomTransmutationWidget to the currently
@@ -161,6 +167,9 @@ class AtomTransmutationWidget(AtomSelectionWidget):
     _push_button_text = "Atom transmutation helper"
     _default_value = "{}"
     _tooltip_text = "Specify the atom transmutation that will be used in the analysis. The input is a JSON string, and can be created using the helper dialog."
+
+    def __init__(self, *args, _use_list_view=True, **kwargs):
+        super().__init__(*args, use_list_view=False, **kwargs)
 
     def create_helper(
         self, traj_data: tuple[str, HDFTrajectoryInputData]

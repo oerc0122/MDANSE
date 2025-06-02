@@ -28,7 +28,7 @@ from qtpy.QtGui import QDoubleValidator
 from MDANSE.Framework.Configurators.PartialChargeConfigurator import PartialChargeMapper
 from MDANSE.Framework.InputData.HDFTrajectoryInputData import HDFTrajectoryInputData
 from MDANSE_GUI.InputWidgets.AtomSelectionWidget import AtomSelectionWidget
-from MDANSE_GUI.InputWidgets.AtomSelectionWidget import SelectionHelper
+from MDANSE_GUI.InputWidgets.AtomSelectionWidget import SelectionHelper, SelectionModel
 
 
 class ChargeHelper(SelectionHelper):
@@ -68,7 +68,12 @@ class ChargeHelper(SelectionHelper):
         self.charge_textbox.setReadOnly(True)
         self.charge_qline = QLineEdit()
         self.charge_qline.setValidator(QDoubleValidator())
-        super().__init__(traj_data, field, parent, *args, **kwargs)
+        self.inner_model = SelectionModel(traj_data[1].trajectory)
+        self._field = field
+        super().__init__(traj_data, self.inner_model, parent, *args, **kwargs)
+        charge_reset = QPushButton("Reset CHARGES", self)
+        charge_reset.clicked.connect(self.reset_charges)
+        self.bottom_buttons.addWidget(charge_reset)
         self.all_selection = False
         self.update_charge_textbox()
 
@@ -124,6 +129,7 @@ class ChargeHelper(SelectionHelper):
         selection_string = self.selection_model.current_steps()
         self.mapper.update_charges(selection_string, charge)
         self.update_charge_textbox()
+        self.apply()
 
     def update_charge_textbox(self) -> None:
         """Update the partial charge textbox with the current charge
@@ -137,11 +143,11 @@ class ChargeHelper(SelectionHelper):
 
         self.charge_textbox.setText("".join(text))
 
-    def reset(self):
+    def reset_charges(self):
         """Reset the mapper so that no charges are set."""
-        super().reset()
         self.mapper.reset_setting()
         self.update_charge_textbox()
+        self.apply()
 
     def apply(self) -> None:
         """Set the field of the PartialChargeWidget to the currently
@@ -156,6 +162,9 @@ class PartialChargeWidget(AtomSelectionWidget):
     _push_button_text = "Partial charge helper"
     _default_value = "{}"
     _tooltip_text = "Specify the partial charges that will be used in the analysis. The input is a JSON string, and can be created using the helper dialog."
+
+    def __init__(self, *args, _use_list_view=True, **kwargs):
+        super().__init__(*args, use_list_view=False, **kwargs)
 
     def create_helper(
         self, traj_data: tuple[str, HDFTrajectoryInputData]
