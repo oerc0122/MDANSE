@@ -163,11 +163,11 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         return "\n".join(
             value_chain(
                 "",
-                [
+                (
                     f"{label}={str(getattr(self, label, 'Not set'))}"
                     for label in self._printable_attributes
-                ],
-                [f"{key}={str(self.get(key, 'Not set'))}" for key in self.keys()],
+                ),
+                (f"{key}={str(self.get(key, 'Not set'))}" for key in self),
             )
         )
 
