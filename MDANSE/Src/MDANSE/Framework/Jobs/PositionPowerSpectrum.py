@@ -271,10 +271,20 @@ class PositionPowerSpectrum(IJob):
             nAtomsPerElement,
         )
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "pacf", axis="time", units="nm2", main_result=True
+            self._outputData,
+            "pacf",
+            "LineOutputVariable",
+            axis="time",
+            units="nm2",
+            main_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "pps", axis="romega", units="au", main_result=True
+            self._outputData,
+            "pps",
+            "LineOutputVariable",
+            axis="romega",
+            units="au",
+            main_result=True,
         )
         if self.add_ideal_results:
             self._outputData["pps_ideal_total"][:] = weighted_sum(
@@ -285,6 +295,7 @@ class PositionPowerSpectrum(IJob):
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,
                 "pps_ideal",
+                "LineOutputVariable",
                 axis="romega",
                 units="au",
                 main_result=True,

@@ -289,10 +289,20 @@ class DensityOfStates(IJob):
             self._outputData, "dos_%s", nAtomsPerElement
         )
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "vacf", axis="time", units="nm2/ps2", main_result=True
+            self._outputData,
+            "vacf",
+            "LineOutputVariable",
+            axis="time",
+            units="nm2/ps2",
+            main_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "dos", axis="romega", units="au", main_result=True
+            self._outputData,
+            "dos",
+            "LineOutputVariable",
+            axis="romega",
+            units="au",
+            main_result=True,
         )
 
         if self.add_ideal_results:
@@ -302,6 +312,7 @@ class DensityOfStates(IJob):
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,
                 "dos_ideal",
+                "LineOutputVariable",
                 axis="romega",
                 units="au",
                 main_result=True,

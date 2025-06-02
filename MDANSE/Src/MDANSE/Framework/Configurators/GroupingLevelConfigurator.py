@@ -109,7 +109,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                         flatten_indices.append(x)
                         elements.append([chemical_system.atom_list[x]])
                         group_name_elements.append(chemical_system.atom_list[x])
-                        names.append(f"{mol_name}_{chemical_system.atom_list[x]}")
+                        names.append(f"[{mol_name}]_{chemical_system.atom_list[x]}")
                         masses.append([mass_lookup[x]])
                         n_atms += 1
                 group_names.append(mol_name)
@@ -143,7 +143,11 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         return f"Grouping level: {self['value']!r}\n"
 
     def add_grouped_totals(
-        self, output_data: dict[str, np.ndarray], result_name: str, **kwargs
+        self,
+        output_data: dict[str, np.ndarray],
+        result_name: str,
+        data_type: str,
+        **kwargs,
     ):
         """Add the grouped totals to the output data.
 
@@ -151,6 +155,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         ----------
         output_data : dict[str, np.ndarray]
             Dictionary of data arrays containing analysis results.
+        data_type : str
+            The plotting type of the data.
         result_name : str
             The name of the results.
         """
@@ -163,28 +169,14 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 group_elements = set(self["group_elements"][group_name])
                 conc = self["group_n_atms"][group_name] / tot_n_atms
                 match_vals = [(group_name, ele) for ele in group_elements]
-                total_results = (
-                    weighted_sum(output_data, result_name + "_%s_%s", match_vals) / conc
+                results = (
+                    weighted_sum(output_data, result_name + "_[%s]_%s", match_vals) / conc
                 )
-
-                results_shape = total_results.shape
-                if len(results_shape) == 1:
-                    data_type = "LineOutputVariable"
-                elif len(results_shape) == 2:
-                    data_type = "SurfaceOutputVariable"
-                elif len(results_shape) == 3:
-                    data_type = "VolumeOutputVariable"
-                else:
-                    raise NotImplementedError(
-                        f"Adding results for {len(results_shape)} dimensional "
-                        f"data is not supported."
-                    )
-
                 output_data.add(
-                    f"{result_name}_{group_name}_total",
+                    f"{result_name}_[{group_name}]_total",
                     data_type,
-                    results_shape,
+                    results.shape,
                     **kwargs,
                 )
-                output_data[f"{result_name}_{group_name}_total"][...] = total_results
-                output_data[f"{result_name}_{group_name}_total"].scaling_factor = conc
+                output_data[f"{result_name}_[{group_name}]_total"][...] = results
+                output_data[f"{result_name}_[{group_name}]_total"].scaling_factor = conc

@@ -229,7 +229,12 @@ class VelocityAutoCorrelationFunction(IJob):
         self._outputData["vacf_total"][:] = vacfTotal
 
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "vacf", axis="time", units="nm2/ps2", main_result=True
+            self._outputData,
+            "vacf",
+            "LineOutputVariable",
+            axis="time",
+            units="nm2/ps2",
+            main_result=True,
         )
 
         self._outputData.write(

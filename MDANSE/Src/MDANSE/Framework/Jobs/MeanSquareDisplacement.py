@@ -209,7 +209,12 @@ class MeanSquareDisplacement(IJob):
         )
 
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "msd", axis="time", units="nm2", main_result=True
+            self._outputData,
+            "msd",
+            "LineOutputVariable",
+            axis="time",
+            units="nm2",
+            main_result=True,
         )
 
         self._outputData.write(

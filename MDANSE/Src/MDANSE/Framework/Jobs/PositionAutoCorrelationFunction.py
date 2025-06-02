@@ -182,7 +182,12 @@ class PositionAutoCorrelationFunction(IJob):
         )
 
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "pacf", axis="time", units="nm2", main_result=True
+            self._outputData,
+            "pacf",
+            "LineOutputVariable",
+            axis="time",
+            units="nm2",
+            main_result=True,
         )
 
         self._outputData.write(
