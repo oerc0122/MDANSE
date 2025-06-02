@@ -325,7 +325,11 @@ class VanHoveFunctionSelf(IJob):
             self._outputData, "g(r,t)", axis="r|time", units="au", main_result=True
         )
         self.configuration["grouping_level"].add_grouped_totals(
-            self._outputData, "4_pi_r2_g(r,t)", axis="r|time", units="au", main_result=True
+            self._outputData,
+            "4_pi_r2_g(r,t)",
+            axis="r|time",
+            units="au",
+            main_result=True,
         )
 
         self._outputData.write(

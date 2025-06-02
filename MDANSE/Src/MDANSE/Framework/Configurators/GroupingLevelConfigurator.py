@@ -177,7 +177,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 else:
                     raise NotImplementedError(
                         f"Adding results for {len(results_shape)} dimensional "
-                        f"data is not supported.")
+                        f"data is not supported."
+                    )
 
                 output_data.add(
                     f"{result_name}_{group_name}_total",
