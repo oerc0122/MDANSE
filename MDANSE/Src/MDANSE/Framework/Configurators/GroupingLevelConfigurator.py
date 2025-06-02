@@ -170,7 +170,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 conc = self["group_n_atms"][group_name] / tot_n_atms
                 match_vals = [(group_name, ele) for ele in group_elements]
                 results = (
-                    weighted_sum(output_data, result_name + "_[%s]_%s", match_vals) / conc
+                    weighted_sum(output_data, result_name + "_[%s]_%s", match_vals)
+                    / conc
                 )
                 output_data.add(
                     f"{result_name}_[{group_name}]_total",
