@@ -92,6 +92,10 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         mass_lookup = chemical_system.atom_property("atomic_weight")
 
         if value == "molecule":
+            if len(trajConfig["instance"].chemical_system.unique_molecules()) == 0:
+                self.error_status = "The trajectory does not contain molecules."
+                return
+
             for mol_name in chemical_system._clusters.keys():
                 n_atms = 0
                 group_name_elements = []
@@ -162,10 +166,24 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 total_results = (
                     weighted_sum(output_data, result_name + "_%s_%s", match_vals) / conc
                 )
+
+                results_shape = total_results.shape
+                if len(results_shape) == 1:
+                    data_type = "LineOutputVariable"
+                elif len(results_shape) == 2:
+                    data_type = "SurfaceOutputVariable"
+                elif len(results_shape) == 3:
+                    data_type = "VolumeOutputVariable"
+                else:
+                    raise NotImplementedError(
+                        f"Adding results for {len(results_shape)} dimensional "
+                        f"data is not supported.")
+
                 output_data.add(
                     f"{result_name}_{group_name}_total",
-                    "LineOutputVariable",
-                    total_results,
+                    data_type,
+                    results_shape,
                     **kwargs,
                 )
+                output_data[f"{result_name}_{group_name}_total"][...] = total_results
                 output_data[f"{result_name}_{group_name}_total"].scaling_factor = conc

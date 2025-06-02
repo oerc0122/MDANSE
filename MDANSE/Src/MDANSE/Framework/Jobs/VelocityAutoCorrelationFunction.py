@@ -76,6 +76,15 @@ class VelocityAutoCorrelationFunction(IJob):
         "ProjectionConfigurator",
         {"label": "project coordinates"},
     )
+    settings["grouping_level"] = (
+        "GroupingLevelConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
+    )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
@@ -86,6 +95,7 @@ class VelocityAutoCorrelationFunction(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
     )
@@ -217,6 +227,10 @@ class VelocityAutoCorrelationFunction(IJob):
         assign_weights(self._outputData, weight_dict, "vacf_%s")
         vacfTotal = weighted_sum(self._outputData, "vacf_%s", nAtomsPerElement)
         self._outputData["vacf_total"][:] = vacfTotal
+
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "vacf", axis="time", units="nm2/ps2", main_result=True
+        )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

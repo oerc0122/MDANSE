@@ -53,6 +53,15 @@ class PositionPowerSpectrum(IJob):
         "ProjectionConfigurator",
         {"label": "project coordinates"},
     )
+    settings["grouping_level"] = (
+        "GroupingLevelConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
+    )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
@@ -63,6 +72,7 @@ class PositionPowerSpectrum(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
     )
@@ -260,11 +270,24 @@ class PositionPowerSpectrum(IJob):
             "pps_%s",
             nAtomsPerElement,
         )
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "pacf", axis="time", units="nm2", main_result=True
+        )
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "pps", axis="romega", units="au", main_result=True
+        )
         if self.add_ideal_results:
             self._outputData["pps_ideal_total"][:] = weighted_sum(
                 self._outputData,
                 "pps_ideal_%s",
                 nAtomsPerElement,
+            )
+            self.configuration["grouping_level"].add_grouped_totals(
+                self._outputData,
+                "pps_ideal",
+                axis="romega",
+                units="au",
+                main_result=True,
             )
 
         self._outputData.write(

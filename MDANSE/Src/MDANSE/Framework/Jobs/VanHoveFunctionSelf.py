@@ -112,9 +112,28 @@ class VanHoveFunctionSelf(IJob):
             "max_value": False,
         },
     )
+    settings["grouping_level"] = (
+        "GroupingLevelConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
+    )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
+    )
+    settings["atom_transmutation"] = (
+        "AtomTransmutationConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
+            }
+        },
     )
     settings["weights"] = (
         "WeightsConfigurator",
@@ -300,6 +319,13 @@ class VanHoveFunctionSelf(IJob):
         )
         self._outputData["4_pi_r2_g(r,t)_total"][:] = weighted_sum(
             self._outputData, "4_pi_r2_g(r,t)_%s", nAtomsPerElement
+        )
+
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "g(r,t)", axis="r|time", units="au", main_result=True
+        )
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "4_pi_r2_g(r,t)", axis="r|time", units="au", main_result=True
         )
 
         self._outputData.write(

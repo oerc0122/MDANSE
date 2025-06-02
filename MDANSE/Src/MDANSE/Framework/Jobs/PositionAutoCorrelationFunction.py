@@ -20,7 +20,6 @@ from scipy.signal import correlate
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
-from MDANSE.Mathematics.Signal import normalisation_factor
 
 
 class PositionAutoCorrelationFunction(IJob):
@@ -47,19 +46,18 @@ class PositionAutoCorrelationFunction(IJob):
         "ProjectionConfigurator",
         {"label": "project coordinates"},
     )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
     settings["grouping_level"] = (
         "GroupingLevelConfigurator",
         {
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
             }
         },
+    )
+    settings["atom_selection"] = (
+        "AtomSelectionConfigurator",
+        {"dependencies": {"trajectory": "trajectory"}},
     )
     settings["atom_transmutation"] = (
         "AtomTransmutationConfigurator",
@@ -67,6 +65,7 @@ class PositionAutoCorrelationFunction(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
     )
@@ -173,7 +172,6 @@ class PositionAutoCorrelationFunction(IJob):
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
         assign_weights(self._outputData, weight_dict, "pacf_%s")
         pacfTotal = weighted_sum(self._outputData, "pacf_%s", nAtomsPerElement)
-
         self._outputData.add(
             "pacf_total",
             "LineOutputVariable",
@@ -181,6 +179,10 @@ class PositionAutoCorrelationFunction(IJob):
             axis="time",
             units="nm2",
             main_result=True,
+        )
+
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData, "pacf", axis="time", units="nm2", main_result=True
         )
 
         self._outputData.write(
