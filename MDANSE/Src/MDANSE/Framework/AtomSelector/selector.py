@@ -14,10 +14,11 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-import h5py
 import json
-from typing import Any, Optional, Union
 from pathlib import Path
+from typing import Any, Optional, Union
+
+import h5py
 
 from MDANSE.Framework.AtomSelector.atom_selection import select_atoms
 from MDANSE.Framework.AtomSelector.general_selection import (
@@ -121,13 +122,16 @@ class ReusableSelection:
         -------
         set[int]
             indices of selected atoms from all operations so far
+
         """
         function_name = function_parameters.get("function_name", "select_all")
         if function_name == "invert_selection":
             new_selection = self.all_idxs.difference(selection)
         elif function_name == "toggle_selection":
             new_selection = toggle_selection(
-                trajectory, selection, function_parameters.get("clicked_atoms", [])
+                trajectory,
+                selection,
+                function_parameters.get("clicked_atoms", []),
             )
         else:
             operation_type = function_parameters.get("operation_type", "union")
@@ -174,7 +178,9 @@ class ReusableSelection:
             return True
         operation_type = function_parameters.get("operation_type", "union")
         selection = self.apply_single_selection(
-            function_parameters, trajectory, current_selection
+            function_parameters,
+            trajectory,
+            current_selection,
         )
         return ((selection - current_selection) and operation_type == "union") or (
             (current_selection - selection) and operation_type != "union"
@@ -205,7 +211,9 @@ class ReusableSelection:
         for number in sequence:
             function_parameters = self.operations[number]
             selection = self.apply_single_selection(
-                function_parameters, trajectory, selection
+                function_parameters,
+                trajectory,
+                selection,
             )
         return selection
 
@@ -243,7 +251,7 @@ class ReusableSelection:
             self.set_selection(number=k0, function_parameters=v0)
 
     def load_from_json_file(self, filename: Union[Path, str]):
-        """Load a selection from a JSON text file
+        """Load a selection from a JSON text file.
 
         Parameters
         ----------

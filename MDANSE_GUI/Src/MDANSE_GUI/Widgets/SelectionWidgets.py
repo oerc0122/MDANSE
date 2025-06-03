@@ -121,8 +121,9 @@ class BasicSelectionWidget(QGroupBox):
     def __init__(
         self,
         parent=None,
-        widget_label="Atom selection widget",
-        add_standard_widgets=True,
+        *,
+        widget_label: str = "Atom selection widget",
+        add_standard_widgets: bool = True,
     ):
         """Create subwidgets common to atom selection.
 
@@ -132,6 +133,8 @@ class BasicSelectionWidget(QGroupBox):
             parent in the Qt hierarchy, by default None
         widget_label : str, optional
             Text shown above the widget, by default "Atom selection widget"
+        add_standard_widgets: bool, optional
+            if True, the operation type combo box and apply button appead in the widget
 
         """
         super().__init__(parent)
@@ -519,6 +522,8 @@ class PatternSelection(BasicSelectionWidget):
 class PositionSelection(BasicSelectionWidget):
     """GUI frontend for select_positions."""
 
+    N_DIMS = 3
+
     def __init__(
         self,
         parent=None,
@@ -581,8 +586,8 @@ class PositionSelection(BasicSelectionWidget):
             enable = False
         else:
             if (
-                len(self._current_lower_limit) != 3
-                or len(self._current_upper_limit) != 3
+                len(self._current_lower_limit) != self.N_DIMS
+                or len(self._current_upper_limit) != self.N_DIMS
             ):
                 enable = False
         self.commit_button.setEnabled(enable)
@@ -599,6 +604,8 @@ class PositionSelection(BasicSelectionWidget):
 
 class SphereSelection(BasicSelectionWidget):
     """GUI frontend for select_sphere."""
+
+    N_DIMS = 3
 
     def __init__(
         self,
@@ -656,7 +663,7 @@ class SphereSelection(BasicSelectionWidget):
         except (TypeError, ValueError):
             enable = False
         else:
-            if len(self._current_sphere_centre) != 3:
+            if len(self._current_sphere_centre) != self.N_DIMS:
                 enable = False
         self.commit_button.setEnabled(enable)
 
