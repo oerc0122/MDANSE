@@ -131,18 +131,6 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         if atomSelectionConfig["selection_length"] == 0:
             self.error_status = "This option resulted in nothing being selected in the current trajectory"
 
-    def get_information(self):
-        """
-        Returns some informations about this configurator.
-
-        :return: the information about this configurator
-        :rtype: str
-        """
-        if "value" not in self:
-            return "Not configured yet\n"
-
-        return f"Grouping level: {self['value']!r}\n"
-
     def add_grouped_totals(
         self,
         output_data: dict[str, np.ndarray],
