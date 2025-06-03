@@ -219,7 +219,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 ].scaling_factor = conc
 
         else:
-            raise NotImplementedError(f"Grouped total for dim > 2 not implemented.")
+            raise NotImplementedError("Grouped total for dim > 2 not implemented.")
 
     def pair_labels(self):
         """
