@@ -137,6 +137,7 @@ class ChargeHelper(SelectionHelper):
         except ValueError:
             # probably an empty QLineEdit box
             return
+        self.selection_model.finalise_manual_selection()
         selection_string = self.selection_model.current_steps()
         self.mapper.update_charges(selection_string, charge)
         self.update_charge_textbox()
@@ -160,7 +161,6 @@ class ChargeHelper(SelectionHelper):
 
     def apply(self) -> None:
         """Pass the charge setting to the main widget."""
-        self.inner_model.finalise_manual_selection()
         self._field.setText(self.mapper.get_json_setting())
 
 

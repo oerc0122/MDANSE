@@ -19,6 +19,7 @@ from enum import Enum
 from pathlib import Path
 
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
+from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtGui import QStandardItem, QStandardItemModel
@@ -581,26 +582,28 @@ class AtomSelectionWidget(WidgetBase):
         At the moment it is possible to use .mda files,
         or JSON text files.
         """
-        fnames = QFileDialog.getOpenFileNames(
+        fname = QFileDialog.getOpenFileName(
             self._base,
             "Load selection from a file (JSON or MDA)",
             str(self._trajectory_path),
             "MDANSE selection files (*.mda *.json);;HDF5 files (*.h5);;HDF5 files(*.hdf);;All files(*.*)",
-        )
-        if fnames is None:
+        )[0]
+        if fname is None:
             return
-        if len(fnames[0]) < 1:
+        if len(fname) < 1:
             return
         temp_selection = ReusableSelection()
-        for fname in fnames[0]:
+        try:
+            temp_selection.load_from_hdf5(fname)
+        except OSError:
+            LOG.warning("File %s could not be read as an HDF5 file", fname)
             try:
-                temp_selection.load_from_hdf5(fname)
-            except OSError:
-                try:
-                    temp_selection.load_from_json_file(fname)
-                except json.JSONDecodeError:
-                    continue
-            new_selection = temp_selection.convert_to_json()
+                temp_selection.load_from_json_file(fname)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                LOG.warning("File %s could not be read using JSON decoder", fname)
+                LOG.warning("Selection will NOT be loaded from %s", fname)
+                return
+        new_selection = temp_selection.convert_to_json()
         self.helper.selection_model.create_from_string(new_selection)
 
     def get_widget_value(self) -> str:

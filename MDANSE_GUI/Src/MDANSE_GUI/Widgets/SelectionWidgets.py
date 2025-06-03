@@ -196,7 +196,7 @@ class GUISelection(BasicSelectionWidget):
             Text over the widget, by default "ALL ATOMS"
 
         """
-        super().__init__(parent, widget_label, add_standard_widgets=False)
+        super().__init__(parent, widget_label=widget_label, add_standard_widgets=False)
 
     def add_specific_widgets(self):
         """Add GUI selection buttons, not connected."""
@@ -221,7 +221,7 @@ class AllAtomSelection(BasicSelectionWidget):
             Text over the widget, by default "ALL ATOMS"
 
         """
-        super().__init__(parent, widget_label)
+        super().__init__(parent, widget_label=widget_label)
 
     def add_specific_widgets(self):
         """Add the INVERT button."""
@@ -273,7 +273,7 @@ class AtomSelection(BasicSelectionWidget):
             self.selection_types += ["type"]
         if self.atom_names:
             self.selection_types += ["name"]
-        super().__init__(parent, widget_label)
+        super().__init__(parent, widget_label=widget_label)
 
     def add_specific_widgets(self):
         """Create selection combo boxes."""
@@ -322,7 +322,7 @@ class IndexSelection(BasicSelectionWidget):
             Text shown above the widget, by default "Index selection"
 
         """
-        super().__init__(parent, widget_label)
+        super().__init__(parent, widget_label=widget_label)
         self.selection_keyword = "index_list"
 
     def add_specific_widgets(self):
@@ -393,7 +393,7 @@ class MoleculeSelection(BasicSelectionWidget):
         self.molecule_names = []
         if trajectory:
             self.molecule_names = trajectory.chemical_system.unique_molecules()
-        super().__init__(parent, widget_label)
+        super().__init__(parent, widget_label=widget_label)
 
     def add_specific_widgets(self):
         """Create the combo box for molecule names."""
@@ -435,7 +435,7 @@ class LabelSelection(BasicSelectionWidget):
         self.labels = []
         if trajectory:
             self.labels = list(trajectory.chemical_system._labels.keys())
-        super().__init__(parent, widget_label)
+        super().__init__(parent, widget_label=widget_label)
 
     def add_specific_widgets(self):
         """Create the combo box for atom labels."""
@@ -479,7 +479,7 @@ class PatternSelection(BasicSelectionWidget):
             "sulphate": "[#16X4](~[#8])(~[#8])(~[#8])~[#8]",
             "thiol": "[#16X2;H1]~[H]",
         }
-        super().__init__(parent, widget_label)
+        super().__init__(parent, widget_label=widget_label)
 
     def add_specific_widgets(self):
         """Create the pattern text field."""
@@ -552,7 +552,7 @@ class PositionSelection(BasicSelectionWidget):
 
         self._current_lower_limit = self._lower_limit.copy()
         self._current_upper_limit = self._upper_limit.copy()
-        super().__init__(parent, widget_label)
+        super().__init__(parent, widget_label=widget_label)
 
     def add_specific_widgets(self):
         """Create text input fields with validators."""
@@ -632,7 +632,7 @@ class SphereSelection(BasicSelectionWidget):
         temp_coordinates = trajectory.coordinates(0)
         self._current_sphere_centre = np.mean(temp_coordinates, axis=0)
         self._current_sphere_radius = round(np.min(np.std(temp_coordinates, axis=0)), 3)
-        super().__init__(parent, widget_label)
+        super().__init__(parent, widget_label=widget_label)
 
     def add_specific_widgets(self):
         """Create the text input fields for sphere radius and centre."""
