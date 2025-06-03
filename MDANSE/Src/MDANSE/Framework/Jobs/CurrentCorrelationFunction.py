@@ -530,16 +530,32 @@ class CurrentCorrelationFunction(IJob):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2, conc_exp=0.5)
-        assign_weights(self._outputData, weight_dict, "j(q,t)_long_%s", self.labels, dim=2)
-        assign_weights(self._outputData, weight_dict, "j(q,t)_trans_%s", self.labels, dim=2)
-        assign_weights(self._outputData, weight_dict, "J(q,f)_long_%s", self.labels, dim=2)
-        assign_weights(self._outputData, weight_dict, "J(q,f)_trans_%s", self.labels, dim=2)
+        assign_weights(
+            self._outputData, weight_dict, "j(q,t)_long_%s", self.labels, dim=2
+        )
+        assign_weights(
+            self._outputData, weight_dict, "j(q,t)_trans_%s", self.labels, dim=2
+        )
+        assign_weights(
+            self._outputData, weight_dict, "J(q,f)_long_%s", self.labels, dim=2
+        )
+        assign_weights(
+            self._outputData, weight_dict, "J(q,f)_trans_%s", self.labels, dim=2
+        )
         if self.add_ideal_results:
             assign_weights(
-                self._outputData, weight_dict, "J(q,f)_long_ideal_%s", self.labels, dim=2
+                self._outputData,
+                weight_dict,
+                "J(q,f)_long_ideal_%s",
+                self.labels,
+                dim=2,
             )
             assign_weights(
-                self._outputData, weight_dict, "J(q,f)_trans_ideal_%s", self.labels, dim=2
+                self._outputData,
+                weight_dict,
+                "J(q,f)_trans_ideal_%s",
+                self.labels,
+                dim=2,
             )
         jqtLongTotal = weighted_sum(self._outputData, "j(q,t)_long_%s", self.labels)
         self._outputData["j(q,t)_long_total"][:] = jqtLongTotal

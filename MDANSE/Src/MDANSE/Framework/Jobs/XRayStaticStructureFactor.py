@@ -232,8 +232,12 @@ class XRayStaticStructureFactor(DistanceHistogram):
         )
         weight_dict = get_weights(asf, nAtomsPerElement, 2)
         if self.indices_intra is not None:
-            assign_weights(self._outputData, weight_dict, "xssf_intra_%s", self.labels, dim=2)
-            assign_weights(self._outputData, weight_dict, "xssf_inter_%s", self.labels, dim=2)
+            assign_weights(
+                self._outputData, weight_dict, "xssf_intra_%s", self.labels, dim=2
+            )
+            assign_weights(
+                self._outputData, weight_dict, "xssf_inter_%s", self.labels, dim=2
+            )
             assign_weights(self._outputData, weight_dict, "xssf_%s", self.labels, dim=2)
             xssfIntra = weighted_sum(self._outputData, "xssf_intra_%s", self.labels)
             self._outputData["xssf_intra_total"][:] = xssfIntra

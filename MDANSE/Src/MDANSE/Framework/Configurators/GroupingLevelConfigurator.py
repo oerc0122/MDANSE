@@ -188,12 +188,13 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 output_data[f"{result_name}_[{grp}]_total"].scaling_factor = conc
         elif dim == 2:
             for grp_i, grp_j in it.combinations_with_replacement(
-                self["group_names"], 2):
+                self["group_names"], 2
+            ):
                 eles_i = sorted(set(self["group_elements"][grp_i]))
                 eles_j = sorted(set(self["group_elements"][grp_j]))
                 conc_i = self["group_n_atms"][grp_i] / tot_n_atms
                 conc_j = self["group_n_atms"][grp_j] / tot_n_atms
-                conc = (conc_i * conc_j)**conc_exp
+                conc = (conc_i * conc_j) ** conc_exp
 
                 if grp_i == grp_j:
                     iterable = it.combinations_with_replacement(eles_i, 2)
@@ -202,7 +203,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 labels = [((grp_i, grp_j, *pair), "") for pair in iterable]
 
                 results = (
-                    weighted_sum(output_data, result_name + "_[%s][%s]_%s%s", labels) / conc
+                    weighted_sum(output_data, result_name + "_[%s][%s]_%s%s", labels)
+                    / conc
                 )
 
                 output_data.add(
@@ -212,7 +214,9 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     **kwargs,
                 )
                 output_data[f"{result_name}_[{grp_i}][{grp_j}]_total"][...] = results
-                output_data[f"{result_name}_[{grp_i}][{grp_j}]_total"].scaling_factor = conc
+                output_data[
+                    f"{result_name}_[{grp_i}][{grp_j}]_total"
+                ].scaling_factor = conc
 
         else:
             raise NotImplementedError(f"Grouped total for dim > 2 not implemented.")
