@@ -237,7 +237,7 @@ class StaticStructureFactor(DistanceHistogram):
         else:
             assign_weights(self._outputData, weight_dict, "ssf_%s", self.labels)
             self._outputData["ssf_total"][:] = weighted_sum(
-                self._outputData, "ssf_%s%s", self.labels
+                self._outputData, "ssf_%s", self.labels
             )
 
         self._outputData.write(
