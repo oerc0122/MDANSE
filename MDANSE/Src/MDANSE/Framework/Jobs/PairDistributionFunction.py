@@ -185,16 +185,8 @@ class PairDistributionFunction(DistanceHistogram):
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
         if self.indices_intra is not None:
             for i in ["_intra", "_inter", ""]:
-                assign_weights(
-                    self._outputData,
-                    weight_dict,
-                    f"pdf{i}_%s%s",
-                )
-                pdf = weighted_sum(
-                    self._outputData,
-                    f"pdf{i}_%s%s",
-                    self._elementsPairs,
-                )
+                assign_weights(self._outputData, weight_dict, f"pdf{i}_%s", self.labels, dim=2)
+                pdf = weighted_sum(self._outputData, f"pdf{i}_%s", self.labels)
                 self._outputData[f"pdf{i}_total"][:] = pdf
                 self._outputData[f"rdf{i}_total"][:] = (
                     shellSurfaces * self.averageDensity * pdf
@@ -205,16 +197,8 @@ class PairDistributionFunction(DistanceHistogram):
                     * (pdf if i == "_intra" else pdf - 1)
                 )
         else:
-            assign_weights(
-                self._outputData,
-                weight_dict,
-                "pdf_%s%s",
-            )
-            pdf = weighted_sum(
-                self._outputData,
-                "pdf_%s%s",
-                self._elementsPairs,
-            )
+            assign_weights(self._outputData, weight_dict, "pdf_%s", self.labels, dim=2)
+            pdf = weighted_sum(self._outputData, "pdf_%s", self.labels)
             self._outputData["pdf_total"][:] = pdf
             self._outputData["rdf_total"][:] = shellSurfaces * self.averageDensity * pdf
             self._outputData["tcf_total"][:] = (

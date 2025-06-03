@@ -78,8 +78,10 @@ def get_weights(
 def assign_weights(
     values: Dict[str, np.ndarray],
     weights: Dict[str, float],
-    key: str,
+    match_key: str,
+    match_labels: Iterable,
     symmetric: bool = True,
+    dim: int = 1,
 ):
     """Updates the scaling factors of partial datasets, without
     modifying the data.
@@ -90,18 +92,21 @@ def assign_weights(
         Dictionary of data arrays containing analysis results.
     weights : Dict[str, float]
         Dictionary of scaling factors per dataset
-    key : str
-        A string data set name with formatting elements (placeholders for chemical element labels)
+    match_key: str
+        A key used to generate the dict of matches to assign weights for.
+    match_labels: Iterable
+        The labels used to generate the dict of matches to assign weights for.
     symmetric : bool, optional
         do not generate results for the same elements in a different sequence, by default True
+    dim : int
+        Number of combinations of the elements.
 
     Returns
     -------
     np.ndarray
         total sum of all the component arrays scaled by their weights
     """
-    matches = {key % k: k for k in weights if k not in ["sum"]}
-    dim = key.count("%s")
+    matches = {match_key % label: k for label, k in match_labels}
 
     for k in values.keys() & matches:
         if symmetric:
@@ -113,7 +118,7 @@ def assign_weights(
         values[k].scaling_factor *= w
 
 
-def weighted_sum(values: Dict[str, np.ndarray], match_key: str, match_vals: Iterable):
+def weighted_sum(values: Dict[str, np.ndarray], match_key: str, match_labels: Iterable):
     """Sums up partial datasets multiplied by their scaling factors.
     The scaling factors have to be set before, typically by calling
     the assign_weights function.
@@ -124,15 +129,15 @@ def weighted_sum(values: Dict[str, np.ndarray], match_key: str, match_vals: Iter
         Dictionary of data arrays containing analysis results.
     match_key: str
         A key used to generate the list of matches to sum over.
-    match_vals: Iterable[Union[Tuple[str], str]]
-        The values used to generate the list of matches to sum over.
+    match_vals: Iterable
+        The labels used to generate the list of matches to sum over.
 
     Returns
     -------
     np.ndarray
         Total sum of all the component arrays scaled by their weights
     """
-    matches = [match_key % val for val in match_vals]
+    matches = [match_key % val[0] for val in match_labels]
     weighted_sum = 0.0
 
     for val in (val for key, val in values.items() if key in matches):

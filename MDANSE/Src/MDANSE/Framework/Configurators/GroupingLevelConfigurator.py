@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+import itertools as it
 import numpy as np
 
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
@@ -147,6 +148,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         output_data: dict[str, np.ndarray],
         result_name: str,
         data_type: str,
+        dim: int = 1,
+        conc_exp: float = 1.0,
         **kwargs,
     ):
         """Add the grouped totals to the output data.
@@ -164,20 +167,87 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             "selection_length"
         ]
 
-        if self["level"] != "atom":
-            for group_name in self["group_names"]:
-                group_elements = sorted(set(self["group_elements"][group_name]))
-                conc = self["group_n_atms"][group_name] / tot_n_atms
-                match_vals = [(group_name, ele) for ele in group_elements]
+        if self["level"] == "atom":
+            return
+
+        if dim == 1:
+            for grp in self["group_names"]:
+                grp_ele = sorted(set(self["group_elements"][grp]))
+                conc = self["group_n_atms"][grp] / tot_n_atms
+                labels = [((grp, ele), "") for ele in grp_ele]
                 results = (
-                    weighted_sum(output_data, result_name + "_[%s]_%s", match_vals)
-                    / conc
+                    weighted_sum(output_data, result_name + "_[%s]_%s", labels) / conc
                 )
                 output_data.add(
-                    f"{result_name}_[{group_name}]_total",
+                    f"{result_name}_[{grp}]_total",
                     data_type,
                     results.shape,
                     **kwargs,
                 )
-                output_data[f"{result_name}_[{group_name}]_total"][...] = results
-                output_data[f"{result_name}_[{group_name}]_total"].scaling_factor = conc
+                output_data[f"{result_name}_[{grp}]_total"][...] = results
+                output_data[f"{result_name}_[{grp}]_total"].scaling_factor = conc
+        elif dim == 2:
+            for grp_i, grp_j in it.combinations_with_replacement(
+                self["group_names"], 2):
+                eles_i = sorted(set(self["group_elements"][grp_i]))
+                eles_j = sorted(set(self["group_elements"][grp_j]))
+                conc_i = self["group_n_atms"][grp_i] / tot_n_atms
+                conc_j = self["group_n_atms"][grp_j] / tot_n_atms
+                conc = (conc_i * conc_j)**conc_exp
+
+                if grp_i == grp_j:
+                    iterable = it.combinations_with_replacement(eles_i, 2)
+                else:
+                    iterable = it.product(eles_i, eles_j)
+                labels = [((grp_i, grp_j, *pair), "") for pair in iterable]
+
+                results = (
+                    weighted_sum(output_data, result_name + "_[%s][%s]_%s%s", labels) / conc
+                )
+
+                output_data.add(
+                    f"{result_name}_[{grp_i}][{grp_j}]_total",
+                    data_type,
+                    results.shape,
+                    **kwargs,
+                )
+                output_data[f"{result_name}_[{grp_i}][{grp_j}]_total"][...] = results
+                output_data[f"{result_name}_[{grp_i}][{grp_j}]_total"].scaling_factor = conc
+
+        else:
+            raise NotImplementedError(f"Grouped total for dim > 2 not implemented.")
+
+    def pair_labels(self):
+        """
+        Returns
+        -------
+        list[str, tuple[str, str]]
+            The labels of the results and the labels of the individual
+            atoms in a tuple.
+        """
+        labels = []
+
+        if self["level"] == "atom":
+            atom_selection = self._configurable[self._dependencies["atom_selection"]]
+            selected_elements = atom_selection["unique_names"]
+            element_pairs = sorted(
+                it.combinations_with_replacement(selected_elements, 2),
+            )
+            for ele_i, ele_j in element_pairs:
+                labels.append((f"{ele_i}{ele_j}", (ele_i, ele_j)))
+            return labels
+
+        for grp_i, grp_j in it.combinations_with_replacement(self["group_names"], 2):
+            eles_i = sorted(set(self["group_elements"][grp_i]))
+            eles_j = sorted(set(self["group_elements"][grp_j]))
+            if grp_i == grp_j:
+                iterable = it.combinations_with_replacement(eles_i, 2)
+            else:
+                iterable = it.product(eles_i, eles_j)
+            for ele_i, ele_j in iterable:
+                pair_label = f"[{grp_i}][{grp_j}]_{ele_i}{ele_j}"
+                label_i = f"[{grp_i}]_{ele_i}"
+                label_j = f"[{grp_j}]_{ele_j}"
+                labels.append((pair_label, (label_i, label_j)))
+
+        return labels

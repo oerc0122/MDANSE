@@ -110,6 +110,11 @@ class DensityOfStates(IJob):
             self.configuration["instrument_resolution"]["kernel"] != "ideal"
         )
 
+        self.labels = [
+            (element, (element,))
+            for element in self.configuration["atom_selection"].get_natoms()
+        ]
+
         self._outputData.add(
             "time",
             "LineOutputVariable",
@@ -277,16 +282,16 @@ class DensityOfStates(IJob):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
-        assign_weights(self._outputData, weight_dict, "vacf_%s")
-        assign_weights(self._outputData, weight_dict, "dos_%s")
+        assign_weights(self._outputData, weight_dict, "vacf_%s", self.labels)
+        assign_weights(self._outputData, weight_dict, "dos_%s", self.labels)
         if self.add_ideal_results:
-            assign_weights(self._outputData, weight_dict, "dos_ideal_%s")
+            assign_weights(self._outputData, weight_dict, "dos_ideal_%s", self.labels)
 
         self._outputData["vacf_total"][:] = weighted_sum(
-            self._outputData, "vacf_%s", nAtomsPerElement
+            self._outputData, "vacf_%s", self.labels
         )
         self._outputData["dos_total"][:] = weighted_sum(
-            self._outputData, "dos_%s", nAtomsPerElement
+            self._outputData, "dos_%s", self.labels
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -307,7 +312,7 @@ class DensityOfStates(IJob):
 
         if self.add_ideal_results:
             self._outputData["dos_ideal_total"][:] = weighted_sum(
-                self._outputData, "dos_ideal_%s", nAtomsPerElement
+                self._outputData, "dos_ideal_%s", self.labels
             )
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,

@@ -392,6 +392,7 @@ class VanHoveFunctionDistinct(IJob):
         self._elementsPairs = sorted(
             it.combinations_with_replacement(self.selectedElements, 2),
         )
+        self.labels = [("".join(pair), pair) for pair in self._elementsPairs]
 
         self.n_mid_points = len(self.configuration["r_values"]["mid_points"])
 
@@ -639,21 +640,13 @@ class VanHoveFunctionDistinct(IJob):
         if self.indices_intra is not None:
             for i in ["_intra", "_inter", ""]:
                 assign_weights(
-                    self._outputData,
-                    weight_dict,
-                    f"g(r,t){i}_%s%s",
+                    self._outputData, weight_dict, f"g(r,t){i}_%s", self.labels, dim=2
                 )
-                pdf = weighted_sum(
-                    self._outputData, f"g(r,t){i}_%s%s", self._elementsPairs
-                )
+                pdf = weighted_sum(self._outputData, f"g(r,t){i}_%s", self.labels)
                 self._outputData[f"g(r,t){i}_total"][...] = pdf
         else:
-            assign_weights(
-                self._outputData,
-                weight_dict,
-                "g(r,t)_%s%s",
-            )
-            pdf = weighted_sum(self._outputData, "g(r,t)_%s%s", self._elementsPairs)
+            assign_weights(self._outputData, weight_dict, "g(r,t)_%s", self.labels, dim=2)
+            pdf = weighted_sum(self._outputData, "g(r,t)_%s", self.labels)
             self._outputData["g(r,t)_total"][...] = pdf
 
         self._outputData.write(

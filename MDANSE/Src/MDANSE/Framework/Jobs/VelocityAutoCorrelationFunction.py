@@ -119,6 +119,11 @@ class VelocityAutoCorrelationFunction(IJob):
 
         self.numberOfSteps = self.configuration["atom_selection"]["selection_length"]
 
+        self.labels = [
+            (element, (element,))
+            for element in self.configuration["atom_selection"].get_natoms()
+        ]
+
         # Will store the time.
         self._outputData.add(
             "time",
@@ -224,8 +229,8 @@ class VelocityAutoCorrelationFunction(IJob):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
-        assign_weights(self._outputData, weight_dict, "vacf_%s")
-        vacfTotal = weighted_sum(self._outputData, "vacf_%s", nAtomsPerElement)
+        assign_weights(self._outputData, weight_dict, "vacf_%s", self.labels)
+        vacfTotal = weighted_sum(self._outputData, "vacf_%s", self.labels)
         self._outputData["vacf_total"][:] = vacfTotal
 
         self.configuration["grouping_level"].add_grouped_totals(

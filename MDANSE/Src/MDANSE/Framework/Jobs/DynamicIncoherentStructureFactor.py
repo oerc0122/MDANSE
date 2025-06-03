@@ -118,6 +118,11 @@ class DynamicIncoherentStructureFactor(IJob):
             self.configuration["instrument_resolution"]["kernel"] != "ideal"
         )
 
+        self.labels = [
+            (element, (element,))
+            for element in self.configuration["atom_selection"].get_natoms()
+        ]
+
         self._outputData.add(
             "q",
             "LineOutputVariable",
@@ -275,10 +280,12 @@ class DynamicIncoherentStructureFactor(IJob):
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
-        assign_weights(self._outputData, weight_dict, "f(q,t)_%s")
-        assign_weights(self._outputData, weight_dict, "s(q,f)_%s")
+        assign_weights(self._outputData, weight_dict, "f(q,t)_%s", self.labels)
+        assign_weights(self._outputData, weight_dict, "s(q,f)_%s", self.labels)
         if self.add_ideal_results:
-            assign_weights(self._outputData, weight_dict, "s(q,f)_ideal_%s")
+            assign_weights(
+                self._outputData, weight_dict, "s(q,f)_ideal_%s", self.labels
+            )
         for element, number in list(nAtomsPerElement.items()):
             extra_scaling = 1.0 / number
             self._outputData[f"f(q,t)_{element}"] *= extra_scaling
@@ -297,16 +304,16 @@ class DynamicIncoherentStructureFactor(IJob):
                 )
 
         self._outputData["f(q,t)_total"][:] = weighted_sum(
-            self._outputData, "f(q,t)_%s", nAtomsPerElement
+            self._outputData, "f(q,t)_%s", self.labels
         )
 
         self._outputData["s(q,f)_total"][:] = weighted_sum(
-            self._outputData, "s(q,f)_%s", nAtomsPerElement
+            self._outputData, "s(q,f)_%s", self.labels
         )
 
         if self.add_ideal_results:
             self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
-                self._outputData, "s(q,f)_ideal_%s", nAtomsPerElement
+                self._outputData, "s(q,f)_ideal_%s", self.labels
             )
 
         self._outputData.write(

@@ -153,6 +153,7 @@ class DistanceHistogram(IJob):
         self._elementsPairs = sorted(
             itertools.combinations_with_replacement(self.selectedElements, 2),
         )
+        self.labels = [("".join(pair), pair) for pair in self._elementsPairs]
 
     def run_step(self, index):
         """Run a single step of the analysis.

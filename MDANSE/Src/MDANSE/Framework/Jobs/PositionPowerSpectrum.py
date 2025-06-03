@@ -103,6 +103,11 @@ class PositionPowerSpectrum(IJob):
             self.configuration["instrument_resolution"]["kernel"] != "ideal"
         )
 
+        self.labels = [
+            (element, (element,))
+            for element in self.configuration["atom_selection"].get_natoms()
+        ]
+
         self._outputData.add(
             "time",
             "LineOutputVariable",
@@ -256,19 +261,19 @@ class PositionPowerSpectrum(IJob):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
-        assign_weights(self._outputData, weight_dict, "pacf_%s")
-        assign_weights(self._outputData, weight_dict, "pps_%s")
+        assign_weights(self._outputData, weight_dict, "pacf_%s", self.labels)
+        assign_weights(self._outputData, weight_dict, "pps_%s", self.labels)
         if self.add_ideal_results:
-            assign_weights(self._outputData, weight_dict, "pps_ideal_%s")
+            assign_weights(self._outputData, weight_dict, "pps_ideal_%s", self.labels)
         self._outputData["pacf_total"][:] = weighted_sum(
             self._outputData,
             "pacf_%s",
-            nAtomsPerElement,
+            self.labels,
         )
         self._outputData["pps_total"][:] = weighted_sum(
             self._outputData,
             "pps_%s",
-            nAtomsPerElement,
+            self.labels,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -290,7 +295,7 @@ class PositionPowerSpectrum(IJob):
             self._outputData["pps_ideal_total"][:] = weighted_sum(
                 self._outputData,
                 "pps_ideal_%s",
-                nAtomsPerElement,
+                self.labels,
             )
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,

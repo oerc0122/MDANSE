@@ -104,6 +104,11 @@ class ElasticIncoherentStructureFactor(IJob):
 
         self._nFrames = self.configuration["frames"]["number"]
 
+        self.labels = [
+            (element, (element,))
+            for element in self.configuration["atom_selection"].get_natoms()
+        ]
+
         self._outputData.add(
             "q",
             "LineOutputVariable",
@@ -201,9 +206,9 @@ class ElasticIncoherentStructureFactor(IJob):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 1)
-        assign_weights(self._outputData, weight_dict, "eisf_%s")
+        assign_weights(self._outputData, weight_dict, "eisf_%s", self.labels)
         self._outputData["eisf_total"][:] = weighted_sum(
-            self._outputData, "eisf_%s", nAtomsPerElement
+            self._outputData, "eisf_%s", self.labels
         )
 
         self._outputData.write(

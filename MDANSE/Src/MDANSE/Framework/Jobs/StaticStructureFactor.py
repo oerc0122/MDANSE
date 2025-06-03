@@ -226,22 +226,18 @@ class StaticStructureFactor(DistanceHistogram):
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
         if self.indices_intra is not None:
-            assign_weights(self._outputData, weight_dict, "ssf_intra_%s%s")
-            assign_weights(self._outputData, weight_dict, "ssf_inter_%s%s")
-            assign_weights(self._outputData, weight_dict, "ssf_%s%s")
-            ssfIntra = weighted_sum(
-                self._outputData, "ssf_intra_%s%s", self._elementsPairs
-            )
+            assign_weights(self._outputData, weight_dict, "ssf_intra_%s", self.labels, dim=2)
+            assign_weights(self._outputData, weight_dict, "ssf_inter_%s", self.labels, dim=2)
+            assign_weights(self._outputData, weight_dict, "ssf_%s", self.labels, dim=2)
+            ssfIntra = weighted_sum(self._outputData, "ssf_intra_%s", self.labels)
             self._outputData["ssf_intra_total"][:] = ssfIntra
-            ssfInter = weighted_sum(
-                self._outputData, "ssf_inter_%s%s", self._elementsPairs
-            )
+            ssfInter = weighted_sum(self._outputData, "ssf_inter_%s", self.labels)
             self._outputData["ssf_inter_total"][:] = ssfInter
             self._outputData["ssf_total"][:] = ssfIntra + ssfInter
         else:
-            assign_weights(self._outputData, weight_dict, "ssf_%s%s")
+            assign_weights(self._outputData, weight_dict, "ssf_%s", self.labels, dim=2)
             self._outputData["ssf_total"][:] = weighted_sum(
-                self._outputData, "ssf_%s%s", self._elementsPairs
+                self._outputData, "ssf_%s%s", self.labels
             )
 
         self._outputData.write(
