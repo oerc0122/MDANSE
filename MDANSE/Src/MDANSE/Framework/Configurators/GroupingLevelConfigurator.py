@@ -158,10 +158,15 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         ----------
         output_data : dict[str, np.ndarray]
             Dictionary of data arrays containing analysis results.
-        data_type : str
-            The plotting type of the data.
         result_name : str
             The name of the results.
+        data_type : str
+            The plotting type of the data.
+        dim : int
+            Number of repeats of the elements.
+        conc_exp : float
+            The exponent the at the product of the concentrations are taken
+            to (e.g. (c_i * c_j)**0.5 which is used for DCSF jobs).
         """
         tot_n_atms = self._configurable[self._dependencies["atom_selection"]][
             "selection_length"

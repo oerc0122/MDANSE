@@ -99,7 +99,7 @@ def assign_weights(
     symmetric : bool, optional
         do not generate results for the same elements in a different sequence, by default True
     dim : int
-        Number of combinations of the elements.
+        Number of repeats of the elements.
 
     Returns
     -------
