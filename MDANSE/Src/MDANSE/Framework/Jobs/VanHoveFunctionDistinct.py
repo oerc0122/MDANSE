@@ -645,9 +645,7 @@ class VanHoveFunctionDistinct(IJob):
                 pdf = weighted_sum(self._outputData, f"g(r,t){i}_%s", self.labels)
                 self._outputData[f"g(r,t){i}_total"][...] = pdf
         else:
-            assign_weights(
-                self._outputData, weight_dict, "g(r,t)_%s", self.labels
-            )
+            assign_weights(self._outputData, weight_dict, "g(r,t)_%s", self.labels)
             pdf = weighted_sum(self._outputData, "g(r,t)_%s", self.labels)
             self._outputData["g(r,t)_total"][...] = pdf
 

@@ -530,18 +530,10 @@ class CurrentCorrelationFunction(IJob):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2, conc_exp=0.5)
-        assign_weights(
-            self._outputData, weight_dict, "j(q,t)_long_%s", self.labels
-        )
-        assign_weights(
-            self._outputData, weight_dict, "j(q,t)_trans_%s", self.labels
-        )
-        assign_weights(
-            self._outputData, weight_dict, "J(q,f)_long_%s", self.labels
-        )
-        assign_weights(
-            self._outputData, weight_dict, "J(q,f)_trans_%s", self.labels
-        )
+        assign_weights(self._outputData, weight_dict, "j(q,t)_long_%s", self.labels)
+        assign_weights(self._outputData, weight_dict, "j(q,t)_trans_%s", self.labels)
+        assign_weights(self._outputData, weight_dict, "J(q,f)_long_%s", self.labels)
+        assign_weights(self._outputData, weight_dict, "J(q,f)_trans_%s", self.labels)
         if self.add_ideal_results:
             assign_weights(
                 self._outputData,
