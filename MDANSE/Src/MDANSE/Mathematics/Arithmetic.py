@@ -81,7 +81,6 @@ def assign_weights(
     match_key: str,
     match_labels: Iterable,
     symmetric: bool = True,
-    dim: int = 1,
 ):
     """Updates the scaling factors of partial datasets, without
     modifying the data.
@@ -98,8 +97,6 @@ def assign_weights(
         The labels used to generate the dict of matches to assign weights for.
     symmetric : bool, optional
         do not generate results for the same elements in a different sequence, by default True
-    dim : int
-        Number of repeats of the elements.
 
     Returns
     -------
@@ -110,7 +107,7 @@ def assign_weights(
 
     for k in values.keys() & matches:
         if symmetric:
-            permutations = set(itertools.permutations(matches[k], r=dim))
+            permutations = set(itertools.permutations(matches[k], r=len(matches[k])))
             w = sum(weights[p] for p in permutations)
         else:
             w = weights[matches[k]]
