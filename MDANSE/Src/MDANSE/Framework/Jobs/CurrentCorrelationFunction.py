@@ -540,14 +540,12 @@ class CurrentCorrelationFunction(IJob):
                 weight_dict,
                 "J(q,f)_long_ideal_%s",
                 self.labels,
-                dim=2,
             )
             assign_weights(
                 self._outputData,
                 weight_dict,
                 "J(q,f)_trans_ideal_%s",
                 self.labels,
-                dim=2,
             )
         jqtLongTotal = weighted_sum(self._outputData, "j(q,t)_long_%s", self.labels)
         self._outputData["j(q,t)_long_total"][:] = jqtLongTotal
