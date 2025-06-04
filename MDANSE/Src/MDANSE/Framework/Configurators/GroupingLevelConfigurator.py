@@ -134,8 +134,28 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         self["group_names"] = sorted(set(group_names))
         self["group_elements"] = group_elements
         self["group_n_atms"] = group_n_atms
+        self["name_to_element"] = {}
+        for name, element in zip(names, elements):
+            self["name_to_element"][name] = element[0]
         if atomSelectionConfig["selection_length"] == 0:
             self.error_status = "This option resulted in nothing being selected in the current trajectory"
+
+    def get_element_from_label(self, label: str) -> str:
+        """Returns the element for a given label.
+
+        Parameters
+        ----------
+        label : str
+            The label of the element e.g. [H2_O1]_H
+
+        Returns
+        -------
+        str
+            The element of the inputted label.
+        """
+        if self["level"] == "atom":
+            return label
+        return self["name_to_element"][label]
 
     def add_grouped_totals(
         self,
@@ -243,7 +263,6 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 output_data[
                     f"{result_name}_[{grp_i}][{grp_j}]_total"
                 ].scaling_factor = conc
-
         else:
             raise NotImplementedError("Grouped total for dim > 2 not implemented.")
 
@@ -294,7 +313,6 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 label_i = f"[{grp_i}]_{ele_i}"
                 label_j = f"[{grp_j}]_{ele_j}"
                 labels.append((pair_label, (label_i, label_j)))
-
         return labels
 
     def update_pair_results(
