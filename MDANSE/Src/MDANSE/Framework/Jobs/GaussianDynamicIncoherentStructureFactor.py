@@ -331,7 +331,6 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             main_result=True,
         )
 
-
         if self.add_ideal_results:
             self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
                 self._outputData, "s(q,f)_ideal_%s", self.labels

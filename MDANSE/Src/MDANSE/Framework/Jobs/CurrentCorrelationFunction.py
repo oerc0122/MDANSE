@@ -480,13 +480,17 @@ class CurrentCorrelationFunction(IJob):
         rho_l, rho_t = x
         n_configs = self.configuration["frames"]["n_configs"]
         for pair_str, (label_i, label_j) in self.labels:
-            corr_l = correlate(rho_l[label_i], rho_l[label_j][:n_configs], mode="valid")[
+            corr_l = correlate(
+                rho_l[label_i], rho_l[label_j][:n_configs], mode="valid"
+            )[
                 :,
                 0,
                 0,
             ] / (3 * n_configs * rho_l[label_i].shape[2])
             self._outputData[f"j(q,t)_long_{pair_str}"][index, :] += corr_l.real
-            corr_t = correlate(rho_t[label_i], rho_t[label_j][:n_configs], mode="valid")[
+            corr_t = correlate(
+                rho_t[label_i], rho_t[label_j][:n_configs], mode="valid"
+            )[
                 :,
                 0,
                 0,
