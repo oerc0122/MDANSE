@@ -1,3 +1,5 @@
+.. _plotting-options:
+
 Plotting the Results
 ====================
 
@@ -74,6 +76,8 @@ selected data sets to the new plot.
 
 Once you have switched to the Plot Holder tab, you can further customise
 the specific plots.
+
+.. _plotter-csv-output:
 
 Data as Text
 ------------
@@ -181,12 +185,12 @@ contains the settings affecting the appearance of the individual curves.
 Specifically:
 
 - the "Use it?" checkbox can be unchecked to remove a curve
-from the plot,
+  from the plot,
 - the "Marker" field changes the point marker used for a data set,
 - the "Line style" field changes between solid, dashed and dotted lines,
 - the "Colour" field can change the colour of a curve,
 - the "Apply weights" checkbox can be unchecked to remove the scaling
-factor applied according to the weights scheme (See also :ref:`weighting-scheme`).
+  factor applied according to the weights scheme (See also :ref:`weighting-scheme`).
 
 Currently, the line style, marker and colour settings are ignored
 for 2D arrays. As there is only one table entry per data set, setting

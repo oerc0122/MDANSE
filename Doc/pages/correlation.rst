@@ -1,5 +1,5 @@
 
-.. _appendix-fca:
+.. _correlation-frames:
 
 Time Series
 ===========
