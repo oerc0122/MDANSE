@@ -625,6 +625,22 @@ class VanHoveFunctionDistinct(IJob):
         """
 
         def calc_func(label_i, label_j):
+            """Calculates the distinct part of the van Hove function
+            for a given pair of element labels.
+
+            Parameters
+            ----------
+            label_i : str
+                The element label.
+            label_j : str
+                The element label.
+
+            Returns
+            -------
+            tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]
+                The total results and if molecules exist then also
+                the inter and intra results.
+            """
             n_atms = self.configuration["atom_selection"].get_natoms()
             ni = n_atms[label_i]
             nj = n_atms[label_j]
@@ -666,6 +682,16 @@ class VanHoveFunctionDistinct(IJob):
                 assign_weights(self._outputData, weight_dict, f"g(r,t){i}_%s", labels)
                 vhs = weighted_sum(self._outputData, f"g(r,t){i}_%s", labels)
                 self._outputData[f"g(r,t){i}_total"][...] = vhs
+                self.configuration["grouping_level"].add_grouped_totals(
+                    self._outputData,
+                    f"g(r,t){i}",
+                    "SurfaceOutputVariable",
+                    dim=2,
+                    intra=i == "_intra",
+                    axis="r|time",
+                    units="au",
+                    main_result=True,
+                )
         else:
             assign_weights(self._outputData, weight_dict, "g(r,t)_%s", self.labels)
             vhs = weighted_sum(self._outputData, "g(r,t)_%s", self.labels)

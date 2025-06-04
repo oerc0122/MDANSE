@@ -141,6 +141,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         data_type: str,
         dim: int = 1,
         conc_exp: float = 1.0,
+        intra: bool = False,
         **kwargs,
     ):
         """Add the grouped totals to the output data.
@@ -158,6 +159,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         conc_exp : float
             The exponent the at the product of the concentrations are taken
             to (e.g. (c_i * c_j)**0.5 which is used for DCSF jobs).
+        intra: bool
+            Add total results for intra results.
         """
         tot_n_atms = self._configurable[self._dependencies["atom_selection"]][
             "selection_length"
@@ -183,6 +186,30 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 output_data[f"{result_name}_[{grp}]_total"][...] = results
                 output_data[f"{result_name}_[{grp}]_total"].scaling_factor = conc
         elif dim == 2:
+            if intra:
+                for grp in self["group_names"]:
+                    eles = sorted(set(self["group_elements"][grp]))
+                    conc = (self["group_n_atms"][grp] / tot_n_atms) ** conc_exp
+                    labels = [
+                        ((grp, *pair), "")
+                        for pair in it.combinations_with_replacement(eles, 2)
+                    ]
+
+                    results = (
+                        weighted_sum(output_data, result_name + "_[%s]_%s%s", labels)
+                        / conc
+                    )
+
+                    output_data.add(
+                        f"{result_name}_[{grp}]_total",
+                        data_type,
+                        results.shape,
+                        **kwargs,
+                    )
+                    output_data[f"{result_name}_[{grp}]_total"][...] = results
+                    output_data[f"{result_name}_[{grp}]_total"].scaling_factor = conc
+                return
+
             for grp_i, grp_j in it.combinations_with_replacement(
                 self["group_names"], 2
             ):
@@ -222,7 +249,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         Parameters
         ----------
         intra : bool
-            Returns the intral label data if true.
+            Returns the intra label data if true.
 
         Returns
         -------
