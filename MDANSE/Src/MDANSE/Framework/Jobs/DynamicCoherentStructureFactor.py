@@ -156,12 +156,6 @@ class DynamicCoherentStructureFactor(IJob):
             units="au",
         )
 
-        self._elementsPairs = sorted(
-            itertools.combinations_with_replacement(
-                self.configuration["atom_selection"]["unique_names"],
-                2,
-            ),
-        )
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()
         self.add_ideal_results = (
             self.configuration["instrument_resolution"]["kernel"] != "ideal"

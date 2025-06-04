@@ -173,9 +173,6 @@ class CurrentCorrelationFunction(IJob):
 
         self._nFrames = self.configuration["frames"]["n_frames"]
         self._elements = self.configuration["atom_selection"]["unique_names"]
-        self._elementsPairs = sorted(
-            itertools.combinations_with_replacement(self._elements, 2),
-        )
         self.labels = self.configuration["grouping_level"].pair_labels()
 
         self._indicesPerElement = self.configuration["atom_selection"].get_indices()

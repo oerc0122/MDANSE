@@ -405,7 +405,6 @@ class VanHoveFunctionDistinct(IJob):
         else:
             self.indices_intra = None
 
-        self._nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         self.selectedElements = self.configuration["atom_selection"]["unique_names"]
         self.nElements = len(self.selectedElements)
         self._elementsPairs = sorted(
