@@ -1,7 +1,7 @@
 Plotting the Results
 ====================
 
-In this section, we'll explore various plotting options of MDANSE.
+In this section, we will outline various plotting options of MDANSE.
 
 There are two tabs in the GUI which deal with data plotting.
 "Plot Creator" is used for loading the data files and selecting
@@ -15,18 +15,22 @@ the specific data sets to be plotted, and is shown in
 
    At first, the plot creator does not contain any data files.
 
-"Plot Holder" stores individual plots in separate tabs, and the
-currently selected tab is the one that will receive new data
-sets. Every time you perform an action in the "Plot Creator"
-tab that has an effect on the contents of the "Plot Holder",
-the "Plot Holder" tab will be highlighted in the GUI
+"Plot Holder" stores individual plots in separate tabs. The
+currently selected plot tab is the one that will receive new data
+sets. The "Plot Data" button in the Plot Creator sends
+the currently selected data sets to the current plot in
+the Plot Holder.
+
+Every time you perform an action in the Plot Creator
+tab that has an effect on the contents of the Plot Holder,
+the Plot Holder tab will be highlighted in the GUI
 (see :numref:`figure-plot-loaded`).
 
 Loading the Results
 ~~~~~~~~~~~~~~~~~~~
 
-The MDANSE GUI can load the .mda file that are the output of different
-analysis types. When you load the files in the "Plot Creator" tab,
+The MDANSE GUI can load the .mda files, which are the output of different
+analysis types. When you load the files in the Plot Creator tab,
 they will appear in the tree view on the left.
 
 .. _figure-plot-loaded:
@@ -41,15 +45,16 @@ Viewing the Results
 
 Quick Plot
 ----------
-Double-click the name of a file in the "Plot Creator" tab.
-The main result from that file will be plotted in the "Plot Holder" tab.
-For each analysis type, MDANSE labels several datasets as "main" result
-and as "partial" result. The datasets with the tag "main" will be show
+
+Double-click the name of a file in the Plot Creator tab.
+The main result from that file will be plotted in the Plot Holder tab.
+For each analysis type, MDANSE marks several datasets as "main" results
+and as "partial" results. The datasets with the tag "main" will be shown
 in a quick plot, and those with the tag "partial" will additionally be
 set to the dashed line style.
 
 If you need to visualise some other data set which is not considered to
-be a main result, you will have to manually add it to plot selection.
+be the main result, you will have to manually add it to plot selection.
 
 Manual Plotting
 ---------------
@@ -58,16 +63,16 @@ Selecting the datasets manually is slower, but offers greater control
 over the contents of the plot. In this approach, datasets from several
 files can be put in a single plot, allowing them to be compared directly.
 
-In "Plot Creator", you can unfold the tree view of a data file. All the data
+In Plot Creator, you can unfold the tree view of a data file. All the data
 sets will be listed there, and clicking any of them will add them to the
 list of data sets to be plotted.
 
 Typically, you will want to use the "New Plot" button first to create an
-empty plot. The "Plot Holder" will automatically make the new plot the
+empty plot. The Plot Holder will automatically make the new plot the
 active one, so you can just click "Plot Data" afterwards to send your
 selected data sets to the new plot.
 
-Once you have switched to the "Plot Holder" tab, you can further customise
+Once you have switched to the Plot Holder tab, you can further customise
 the specific plots.
 
 Data as Text
@@ -184,7 +189,7 @@ from the plot,
 factor applied according to the weights scheme (See also :ref:`weighting-scheme`).
 
 Currently, the line style, marker and colour settings are ignored
-for 2D arrays. As there is only one entry per data set, setting
+for 2D arrays. As there is only one table entry per data set, setting
 all the curves from a 2D data set to a single colour, style or marker
 type would make it difficult to distinguish between specific curves.
 
@@ -193,7 +198,12 @@ type would make it difficult to distinguish between specific curves.
 .. figure:: ./Pictures/plot_dos_details.png
    :align: center
 
-   These settings have been applied to a plot of four 1D curves.
+   These settings have been applied to the plot in
+   :numref:`figure-plot-dos-single`.
+
+Additionally, the plots in MDANSE are created using matplotlib,
+and the can use the standard matplotlib toolbar to switch the
+plot axes to logarithmic scale.
 
 Slicing a 2D array
 ------------------
