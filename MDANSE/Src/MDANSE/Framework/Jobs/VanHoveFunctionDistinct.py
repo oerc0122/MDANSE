@@ -355,9 +355,28 @@ class VanHoveFunctionDistinct(IJob):
             "dependencies": {"trajectory": "trajectory"},
         },
     )
+    settings["grouping_level"] = (
+        "GroupingLevelConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
+    )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
+    )
+    settings["atom_transmutation"] = (
+        "AtomTransmutationConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
+            }
+        },
     )
     settings["weights"] = (
         "WeightsConfigurator",
@@ -392,7 +411,8 @@ class VanHoveFunctionDistinct(IJob):
         self._elementsPairs = sorted(
             it.combinations_with_replacement(self.selectedElements, 2),
         )
-        self.labels = [("".join(pair), pair) for pair in self._elementsPairs]
+        self.labels = self.configuration["grouping_level"].pair_labels()
+        self.labels_intra = self.configuration["grouping_level"].pair_labels(intra=True)
 
         self.n_mid_points = len(self.configuration["r_values"]["mid_points"])
 
@@ -439,24 +459,26 @@ class VanHoveFunctionDistinct(IJob):
             units="au",
             main_result=True,
         )
-        for x, y in self._elementsPairs:
-            if self.indices_intra is not None:
+        if self.indices_intra is not None:
+            for label, _ in self.labels_intra:
                 self._outputData.add(
-                    f"g(r,t)_intra_{x}{y}",
+                    f"g(r,t)_intra_{label}",
                     "SurfaceOutputVariable",
                     (self.n_mid_points, self.numberOfSteps),
                     axis="r|time",
                     units="au",
                 )
+            for label, _ in self.labels:
                 self._outputData.add(
-                    f"g(r,t)_inter_{x}{y}",
+                    f"g(r,t)_inter_{label}",
                     "SurfaceOutputVariable",
                     (self.n_mid_points, self.numberOfSteps),
                     axis="r|time",
                     units="au",
                 )
+        for label, _ in self.labels:
             self._outputData.add(
-                f"g(r,t)_{x}{y}",
+                f"g(r,t)_{label}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.numberOfSteps),
                 axis="r|time",
@@ -601,14 +623,14 @@ class VanHoveFunctionDistinct(IJob):
         Using the distance histograms calculate, normalize and save the
         distinct part of the van Hove function.
         """
-        nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
 
-        for pair in self._elementsPairs:
-            ni = nAtomsPerElement[pair[0]]
-            nj = nAtomsPerElement[pair[1]]
+        def calc_func(label_i, label_j):
+            n_atms = self.configuration["atom_selection"].get_natoms()
+            ni = n_atms[label_i]
+            nj = n_atms[label_j]
 
-            idi = self.selectedElements.index(pair[0])
-            idj = self.selectedElements.index(pair[1])
+            idi = self.selectedElements.index(label_i)
+            idj = self.selectedElements.index(label_j)
 
             if idi == idj:
                 nij = ni**2 / 2.0
@@ -623,31 +645,31 @@ class VanHoveFunctionDistinct(IJob):
                 van_hove_intra = self.h_intra[idi, idj, ...] / fact[:, np.newaxis]
                 van_hove_total = self.h_total[idi, idj, ...] / fact[:, np.newaxis]
                 van_hove_inter = van_hove_total - van_hove_intra
+                return van_hove_total, van_hove_inter, van_hove_intra
             else:
                 van_hove_total = self.h_total[idi, idj, ...] / fact[:, np.newaxis]
+                return van_hove_total, None, None
 
-            if self.indices_intra is not None:
-                for i, van_h in zip(
-                    ["_intra", "_inter", ""],
-                    [van_hove_intra, van_hove_inter, van_hove_total],
-                ):
-                    self._outputData[f"g(r,t){i}_{''.join(pair)}"][...] = van_h
-            else:
-                self._outputData[f"g(r,t)_{''.join(pair)}"][...] = van_hove_total
+        self.configuration["grouping_level"].update_pair_results(
+            calc_func, self._outputData, "g(r,t)"
+        )
 
+        nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
         if self.indices_intra is not None:
             for i in ["_intra", "_inter", ""]:
-                assign_weights(
-                    self._outputData, weight_dict, f"g(r,t){i}_%s", self.labels
-                )
-                pdf = weighted_sum(self._outputData, f"g(r,t){i}_%s", self.labels)
-                self._outputData[f"g(r,t){i}_total"][...] = pdf
+                if i == "_intra":
+                    labels = self.labels_intra
+                else:
+                    labels = self.labels
+                assign_weights(self._outputData, weight_dict, f"g(r,t){i}_%s", labels)
+                vhs = weighted_sum(self._outputData, f"g(r,t){i}_%s", labels)
+                self._outputData[f"g(r,t){i}_total"][...] = vhs
         else:
             assign_weights(self._outputData, weight_dict, "g(r,t)_%s", self.labels)
-            pdf = weighted_sum(self._outputData, "g(r,t)_%s", self.labels)
-            self._outputData["g(r,t)_total"][...] = pdf
+            vhs = weighted_sum(self._outputData, "g(r,t)_%s", self.labels)
+            self._outputData["g(r,t)_total"][...] = vhs
 
         self._outputData.write(
             self.configuration["output_files"]["root"],
