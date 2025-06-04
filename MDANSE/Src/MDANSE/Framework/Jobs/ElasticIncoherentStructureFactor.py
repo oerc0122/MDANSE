@@ -56,19 +56,18 @@ class ElasticIncoherentStructureFactor(IJob):
         "ProjectionConfigurator",
         {"label": "project coordinates"},
     )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
     settings["grouping_level"] = (
         "GroupingLevelConfigurator",
         {
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
             }
         },
+    )
+    settings["atom_selection"] = (
+        "AtomSelectionConfigurator",
+        {"dependencies": {"trajectory": "trajectory"}},
     )
     settings["atom_transmutation"] = (
         "AtomTransmutationConfigurator",
@@ -76,6 +75,7 @@ class ElasticIncoherentStructureFactor(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
     )
@@ -209,6 +209,15 @@ class ElasticIncoherentStructureFactor(IJob):
         assign_weights(self._outputData, weight_dict, "eisf_%s", self.labels)
         self._outputData["eisf_total"][:] = weighted_sum(
             self._outputData, "eisf_%s", self.labels
+        )
+
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData,
+            "eisf",
+            "LineOutputVariable",
+            axis="q",
+            units="au",
+            main_result=True,
         )
 
         self._outputData.write(

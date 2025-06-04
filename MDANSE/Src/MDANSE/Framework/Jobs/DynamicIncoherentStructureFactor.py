@@ -53,9 +53,9 @@ class DynamicIncoherentStructureFactor(IJob):
         "QVectorsConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
     )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    settings["projection"] = (
+        "ProjectionConfigurator",
+        {"label": "project coordinates"},
     )
     settings["grouping_level"] = (
         "GroupingLevelConfigurator",
@@ -63,9 +63,12 @@ class DynamicIncoherentStructureFactor(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
             }
         },
+    )
+    settings["atom_selection"] = (
+        "AtomSelectionConfigurator",
+        {"dependencies": {"trajectory": "trajectory"}},
     )
     settings["atom_transmutation"] = (
         "AtomTransmutationConfigurator",
@@ -73,12 +76,9 @@ class DynamicIncoherentStructureFactor(IJob):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
-    )
-    settings["projection"] = (
-        "ProjectionConfigurator",
-        {"label": "project coordinates"},
     )
     settings["weights"] = (
         "WeightsConfigurator",
@@ -310,10 +310,34 @@ class DynamicIncoherentStructureFactor(IJob):
         self._outputData["s(q,f)_total"][:] = weighted_sum(
             self._outputData, "s(q,f)_%s", self.labels
         )
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData,
+            "f(q,t)",
+            "SurfaceOutputVariable",
+            axis="q|time",
+            units="au",
+            main_result=True,
+        )
+        self.configuration["grouping_level"].add_grouped_totals(
+            self._outputData,
+            "s(q,f)",
+            "SurfaceOutputVariable",
+            axis="q|romega",
+            units="au",
+            main_result=True,
+        )
 
         if self.add_ideal_results:
             self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
                 self._outputData, "s(q,f)_ideal_%s", self.labels
+            )
+            self.configuration["grouping_level"].add_grouped_totals(
+                self._outputData,
+                "s(q,f)_ideal",
+                "SurfaceOutputVariable",
+                axis="q|romega",
+                units="au",
+                main_result=True,
             )
 
         self._outputData.write(
