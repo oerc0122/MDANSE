@@ -379,7 +379,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                         ...
                     ] = intra
 
-    def label_pairs(self, labels : list[str], all_pairs) -> list[tuple[str, str]]:
+    def label_pairs(self, labels: list[str], all_pairs) -> list[tuple[str, str]]:
         """
         Parameters
         ----------
