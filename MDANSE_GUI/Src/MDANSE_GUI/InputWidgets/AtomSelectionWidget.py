@@ -601,9 +601,11 @@ class AtomSelectionWidget(WidgetBase):
                 LOG.info("File %s could not be read using JSON decoder", fname)
                 LOG.warning("Selection will NOT be loaded from %s", fname)
                 return
-        if temp_selection.operations:
-            new_selection = temp_selection.convert_to_json()
-            self.helper.selection_model.create_from_string(new_selection)
+        if not temp_selection.operations:
+            LOG.warning("Selection from %s was empty and will be ignored", fname)
+            return
+        new_selection = temp_selection.convert_to_json()
+        self.helper.selection_model.create_from_string(new_selection)
 
     def get_widget_value(self) -> str:
         """Return the current text in the input field.

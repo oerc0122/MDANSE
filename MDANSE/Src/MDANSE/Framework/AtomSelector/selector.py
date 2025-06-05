@@ -294,9 +294,9 @@ class ReusableSelection:
         with h5py.File(filename) as source:
             try:
                 byte_string = source["metadata/inputs/atom_selection"][0]
-            except KeyError as err:
-                LOG.error(f"atom selection string not found in file {filename}")
-                raise OSError from err
+            except KeyError:
+                LOG.warning(f"atom selection string not found in file {filename}")
+                json_string = "{}"
             else:
                 json_string = json.loads(byte_string.decode())
             self.load_from_json(json_string)
