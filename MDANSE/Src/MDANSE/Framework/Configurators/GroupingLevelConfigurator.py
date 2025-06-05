@@ -327,7 +327,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         Parameters
         ----------
-        calc_func : Callable[[str, str],  Iterable[tuple[str, bool, np.ndarray]]]
+        calc_func : Callable[[str, str], Iterable[tuple[str, bool, np.ndarray]]]
             A function which yields the results name, a bool which
             specifies whether it correspond to intermolecular atom
             pairs and the results.
