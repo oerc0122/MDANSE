@@ -356,9 +356,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 label_j = f"[{grp_j}]_{ele_j}"
                 for name, intra, result in calc_func(label_i, label_j):
                     if intra and grp_i == grp_j:
-                        output_data[f"{name}_[{grp_i}]_{ele_i}{ele_j}"][...] = (
-                            result
-                        )
+                        output_data[f"{name}_[{grp_i}]_{ele_i}{ele_j}"][...] = result
                     elif intra and grp_i != grp_j:
                         continue
                     else:
