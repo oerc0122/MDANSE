@@ -340,7 +340,7 @@ class SelectionHelper(QDialog):
             str(self._trajectory_path),
             "MDANSE selection files (*.json);;All files(*.*)",
         )
-        if len(fname[0]):
+        if fname[0]:
             self.selection_model._selection.save_to_json_file(fname[0])
 
     def create_layouts(self) -> list[QVBoxLayout]:
