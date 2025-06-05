@@ -136,8 +136,9 @@ class PairDistributionFunction(DistanceHistogram):
             Yields
             ------
             tuple[str, bool, np.ndarray]
-                A tuple of the results name, and a bool specifying whether
-                results correspond to  intermolecular atom pairs.
+                A tuple of the results name, a bool specifying whether
+                results correspond to intermolecular atom pairs, and
+                the results.
             """
             ni = nAtomsPerElement[label_i]
             nj = nAtomsPerElement[label_j]
