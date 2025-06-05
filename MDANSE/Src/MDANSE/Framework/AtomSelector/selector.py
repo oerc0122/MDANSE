@@ -291,14 +291,12 @@ class ReusableSelection:
             path to an MDA file, given as string
 
         """
-        source = h5py.File(filename)
-        try:
-            byte_string = source["metadata/inputs/atom_selection"][0]
-        except KeyError as err:
-            LOG.error(f"atom selection string not found in file {filename}")
-            source.close()
-            raise OSError from err
-        else:
-            json_string = json.loads(byte_string.decode())
-        source.close()
-        self.load_from_json(json_string)
+        with h5py.File(filename) as source:
+            try:
+                byte_string = source["metadata/inputs/atom_selection"][0]
+            except KeyError as err:
+                LOG.error(f"atom selection string not found in file {filename}")
+                raise OSError from err
+            else:
+                json_string = json.loads(byte_string.decode())
+            self.load_from_json(json_string)

@@ -536,10 +536,10 @@ class AtomSelectionWidget(WidgetBase):
         self._layout.addWidget(helper_button)
         if use_list_view:
             self._layout.addWidget(load_button)
+            self.helper.create_optional_save_button()
         self.update_labels()
         self.updateValue()
         self._field.setToolTip(self._tooltip_text)
-        self.helper.create_optional_save_button()
 
     def create_helper(
         self,

@@ -175,7 +175,7 @@ class PartialChargeWidget(AtomSelectionWidget):
         " the helper dialog."
     )
 
-    def __init__(self, *args, _use_list_view=True, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Create the widget for setting atom charges.
 
         Parameters
@@ -184,8 +184,8 @@ class PartialChargeWidget(AtomSelectionWidget):
             ignored here. This widget always sets use_list_view=False
 
         """
-        if "use_list_view" in kwargs:
-            raise TypeError(f"Cannot use list view with {type(self).__name__}."
+        if kwargs.get("use_list_view", False):
+            raise TypeError(f"Cannot use list view with {type(self).__name__}.")
         super().__init__(*args, use_list_view=False, **kwargs)
 
     def create_helper(self, traj_data: tuple[str, Trajectory]) -> ChargeHelper:

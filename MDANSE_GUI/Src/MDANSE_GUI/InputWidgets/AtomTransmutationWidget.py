@@ -90,7 +90,7 @@ class TransmutationHelper(SelectionHelper):
             *args,
             **kwargs,
         )
-        transmutation_reset = QPushButton("Reset CHARGES", self)
+        transmutation_reset = QPushButton("Reset TRANSMUTATION", self)
         transmutation_reset.clicked.connect(self.reset_transmuation)
         self.bottom_buttons.addWidget(transmutation_reset)
         self.update_transmutation_textbox()
@@ -181,7 +181,7 @@ class AtomTransmutationWidget(AtomSelectionWidget):
         " the helper dialog."
     )
 
-    def __init__(self, *args, _use_list_view: bool = True, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Create the main widget for transmuting atom types.
 
         Parameters
@@ -190,6 +190,8 @@ class AtomTransmutationWidget(AtomSelectionWidget):
             If True, a ListView will replace LineEdit, by default True
 
         """
+        if kwargs.get("use_list_view", False):
+            raise TypeError(f"Cannot use list view with {type(self).__name__}.")
         super().__init__(*args, use_list_view=False, **kwargs)
 
     def create_helper(self, traj_data: tuple[str, Trajectory]) -> TransmutationHelper:
