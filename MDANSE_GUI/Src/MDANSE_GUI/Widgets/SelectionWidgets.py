@@ -120,7 +120,7 @@ class BasicSelectionWidget(QGroupBox):
 
     def __init__(
         self,
-        parent=None,
+        parent: Optional[QWidget] = None,
         *,
         widget_label: str = "Atom selection widget",
         add_standard_widgets: bool = True,
@@ -185,7 +185,12 @@ class BasicSelectionWidget(QGroupBox):
 class GUISelection(BasicSelectionWidget):
     """Widget for confirming and cancelling manual selection in 3D view."""
 
-    def __init__(self, parent=None, widget_label="Manual Selection"):
+    def __init__(
+        self, 
+        parent: Optional[QWidget] = None,
+        *,
+        widget_label: str = "Manual Selection"
+    ):
         """Pass inputs to the parent class init.
 
         Parameters
@@ -198,7 +203,7 @@ class GUISelection(BasicSelectionWidget):
         """
         super().__init__(parent, widget_label=widget_label, add_standard_widgets=False)
 
-    def add_specific_widgets(self):
+    def add_specific_widgets(self) -> None:
         """Add GUI selection buttons, not connected."""
         layout = self.layout()
         self.confirm_gui_selection = QPushButton("CONFIRM manual selection", self)

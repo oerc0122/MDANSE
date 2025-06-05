@@ -93,16 +93,16 @@ def toggle_selection(
     Parameters
     ----------
     trajectory : Trajectory
-        a trajectory containing atoms to be selected
-    current_selection : Set[int]
-        set of indices that had been selected before manual selection
-    clicked_atoms : List[int]
-        list of atom indices that have been clicked so far
+        A trajectory containing atoms to be selected.
+    current_selection : set[int]
+        Set of indices that had been selected before manual selection.
+    clicked_atoms : list[int]
+        List of atom indices that have been clicked so far.
 
     Returns
     -------
-    Set[int]
-        set of all the indices in the trajectory which were not in the input selection
+    set[int]
+        New selection after manual selection.
 
     """
     click_counter = Counter(clicked_atoms)
