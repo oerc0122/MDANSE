@@ -624,7 +624,9 @@ class VanHoveFunctionDistinct(IJob):
         distinct part of the van Hove function.
         """
 
-        def calc_func(label_i: str, label_j: str) -> Generator[tuple[str, bool, np.ndarray]]:
+        def calc_func(
+            label_i: str, label_j: str
+        ) -> Generator[tuple[str, bool, np.ndarray]]:
             """Calculates the distinct part of the van Hove function
             for a given pair of element labels.
 

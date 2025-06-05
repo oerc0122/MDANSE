@@ -158,7 +158,9 @@ class CoordinationNumber(DistanceHistogram):
                 self.h_total[idi, idj] += self.h_total[idj, idi]
                 self.h_total[idj, idi] = self.h_total[idi, idj]
 
-        def calc_func(label_i: str, label_j: str) -> Generator[tuple[str, bool, np.ndarray]]:
+        def calc_func(
+            label_i: str, label_j: str
+        ) -> Generator[tuple[str, bool, np.ndarray]]:
             """Calculates the coordination number for a given pair of
             element labels.
 

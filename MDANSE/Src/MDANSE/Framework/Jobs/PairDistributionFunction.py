@@ -123,8 +123,8 @@ class PairDistributionFunction(DistanceHistogram):
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
 
         def calc_func(label_i, label_j):
-            """Calculates the distinct part of the PDF, RDF and TCF
-            for a given pair of element labels.
+            """Calculates the PDF, RDF and TCF for a given pair of
+            element labels.
 
             Parameters
             ----------
@@ -160,7 +160,8 @@ class PairDistributionFunction(DistanceHistogram):
                 [
                     pdf_total := self.h_total[idi, idj, :] / fact,
                     pdf_intra := self.h_intra[idi, idj, :] / fact
-                    if self.intra else None,
+                    if self.intra
+                    else None,
                     pdf_total - pdf_intra if self.intra else None,
                 ],
             ):

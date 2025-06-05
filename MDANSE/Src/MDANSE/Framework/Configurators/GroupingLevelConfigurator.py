@@ -319,9 +319,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
     def update_pair_results(
         self,
-        calc_func: Callable[
-            [str, str], Generator[tuple[str, bool, np.ndarray]]
-        ],
+        calc_func: Callable[[str, str], Generator[tuple[str, bool, np.ndarray]]],
         output_data: OutputData,
         all_pairs: bool = False,
     ):
