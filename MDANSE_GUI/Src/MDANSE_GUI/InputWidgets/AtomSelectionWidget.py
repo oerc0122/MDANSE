@@ -588,19 +588,17 @@ class AtomSelectionWidget(WidgetBase):
             str(self._trajectory_path),
             "MDANSE selection files (*.mda *.json);;HDF5 files (*.h5);;HDF5 files(*.hdf);;All files(*.*)",
         )[0]
-        if fname is None:
-            return
-        if len(fname) < 1:
+        if not fname:
             return
         temp_selection = ReusableSelection()
         try:
             temp_selection.load_from_hdf5(fname)
         except OSError:
-            LOG.warning("File %s could not be read as an HDF5 file", fname)
+            LOG.info("File %s could not be read as an HDF5 file", fname)
             try:
                 temp_selection.load_from_json_file(fname)
             except (json.JSONDecodeError, UnicodeDecodeError):
-                LOG.warning("File %s could not be read using JSON decoder", fname)
+                LOG.info("File %s could not be read using JSON decoder", fname)
                 LOG.warning("Selection will NOT be loaded from %s", fname)
                 return
         new_selection = temp_selection.convert_to_json()
