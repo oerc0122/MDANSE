@@ -55,6 +55,15 @@ class CoordinationNumber(DistanceHistogram):
             "dependencies": {"trajectory": "trajectory"},
         },
     )
+    settings["grouping_level"] = (
+        "GroupingLevelConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
+    )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
@@ -65,6 +74,7 @@ class CoordinationNumber(DistanceHistogram):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
     )
@@ -85,72 +95,37 @@ class CoordinationNumber(DistanceHistogram):
             units="nm",
         )
 
-        for pair in self._elementsPairs:
-            invPair = pair[::-1]
-            pair_str = "".join(map(str, pair))
-            inv_pair_str = "".join(map(str, invPair))
-            if self.indices_intra is not None:
+        self.labels = self.configuration["grouping_level"].pair_labels(all_pairs=True)
+        self.labels_intra = self.configuration["grouping_level"].pair_labels(
+            intra=True, all_pairs=True
+        )
+
+        if self.indices_intra is not None:
+            for label, _ in self.labels_intra:
                 self._outputData.add(
-                    f"cn_intra_{pair_str}",
+                    f"cn_intra_{label}",
                     "LineOutputVariable",
                     (npoints,),
                     axis="r",
                     units="au",
                 )
+            for label, _ in self.labels:
                 self._outputData.add(
-                    f"cn_inter_{pair_str}",
+                    f"cn_inter_{label}",
                     "LineOutputVariable",
                     (npoints,),
                     axis="r",
                     units="au",
                 )
-                self._outputData.add(
-                    f"cn_total_{pair_str}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                    main_result=True,
-                )
-                self._outputData.add(
-                    f"cn_intra_{inv_pair_str}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                )
-                self._outputData.add(
-                    f"cn_inter_{inv_pair_str}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                )
-                self._outputData.add(
-                    f"cn_total_{inv_pair_str}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                    main_result=True,
-                )
-            else:
-                self._outputData.add(
-                    f"cn_{pair_str}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                    main_result=True,
-                )
-                self._outputData.add(
-                    f"cn_{inv_pair_str}",
-                    "LineOutputVariable",
-                    (npoints,),
-                    axis="r",
-                    units="au",
-                    main_result=True,
-                )
+        for label, _ in self.labels:
+            self._outputData.add(
+                f"cn_{label}",
+                "LineOutputVariable",
+                (npoints,),
+                axis="r",
+                units="au",
+                main_result=True,
+            )
 
         nFrames = self.configuration["frames"]["number"]
 
@@ -169,17 +144,13 @@ class CoordinationNumber(DistanceHistogram):
             self._concentrations[k] /= nFrames
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
-        for pair in self._elementsPairs:
-            at1, at2 = pair
-            invPair = pair[::-1]
-            pair_str = "".join(map(str, pair))
-            inv_pair_str = "".join(map(str, invPair))
 
-            ni = nAtomsPerElement[at1]
-            nj = nAtomsPerElement[at2]
+        def calc_func(label_i, label_j):
+            ni = nAtomsPerElement[label_i]
+            nj = nAtomsPerElement[label_j]
 
-            idi = self.selectedElements.index(at1)
-            idj = self.selectedElements.index(at2)
+            idi = self.selectedElements.index(label_i)
+            idj = self.selectedElements.index(label_j)
 
             if idi == idj:
                 nij = ni**2 / 2.0
@@ -191,46 +162,23 @@ class CoordinationNumber(DistanceHistogram):
 
             fact = 2 * nij * nFrames * shellVolumes
 
+            rho_i = self.averageDensity * self._concentrations[label_i]
+
             if self.indices_intra is not None:
                 self.h_intra[idi, idj, :] /= fact
-            self.h_total[idi, idj, :] /= fact
-
-            if self.indices_intra is not None:
+                self.h_total[idi, idj, :] /= fact
                 cnIntra = np.add.accumulate(self.h_intra[idi, idj, :] * r2) * dr
-            cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
-
-            if self.indices_intra is not None:
+                cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
                 cnInter = cnTotal - cnIntra
-
-            cAlpha = self._concentrations[pair[0]]
-            cBeta = self._concentrations[pair[1]]
-
-            if self.indices_intra is not None:
-                self._outputData[f"cn_intra_{pair_str}"][:] = (
-                    self.averageDensity * cBeta * cnIntra
-                )
-                self._outputData[f"cn_inter_{pair_str}"][:] = (
-                    self.averageDensity * cBeta * cnInter
-                )
-                self._outputData[f"cn_total_{pair_str}"][:] = (
-                    self.averageDensity * cBeta * cnTotal
-                )
-                self._outputData[f"cn_intra_{inv_pair_str}"][:] = (
-                    self.averageDensity * cAlpha * cnIntra
-                )
-                self._outputData[f"cn_inter_{inv_pair_str}"][:] = (
-                    self.averageDensity * cAlpha * cnInter
-                )
-                self._outputData[f"cn_total_{inv_pair_str}"][:] = (
-                    self.averageDensity * cAlpha * cnTotal
-                )
+                return rho_i * cnTotal, rho_i * cnInter, rho_i * cnIntra
             else:
-                self._outputData[f"cn_{pair_str}"][:] = (
-                    self.averageDensity * cBeta * cnTotal
-                )
-                self._outputData[f"cn_{inv_pair_str}"][:] = (
-                    self.averageDensity * cAlpha * cnTotal
-                )
+                self.h_total[idi, idj, :] /= fact
+                cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
+                return rho_i * cnTotal, None, None
+
+        self.configuration["grouping_level"].update_pair_results(
+            calc_func, self._outputData, "cn", all_pairs=True
+        )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

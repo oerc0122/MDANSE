@@ -266,12 +266,17 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         else:
             raise NotImplementedError("Grouped total for dim > 2 not implemented.")
 
-    def pair_labels(self, intra=False) -> list[tuple[str, tuple[str, str]]]:
-        """
+    def pair_labels(
+        self, intra=False, all_pairs=False
+    ) -> list[tuple[str, tuple[str, str]]]:
+        """Generates pair labels.
+
         Parameters
         ----------
         intra : bool
             Returns the intra label data if true.
+        all_pairs : bool
+            Returns all pairs of labels e.g. OH and HO.
 
         Returns
         -------
@@ -284,31 +289,28 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         if self["level"] == "atom":
             atom_selection = self._configurable[self._dependencies["atom_selection"]]
             selected_elements = atom_selection["unique_names"]
-            element_pairs = sorted(
-                it.combinations_with_replacement(selected_elements, 2),
-            )
-            for ele_i, ele_j in element_pairs:
+            for ele_i, ele_j in self.label_pairs(selected_elements, all_pairs):
                 labels.append((f"{ele_i}{ele_j}", (ele_i, ele_j)))
             return labels
 
         if intra:
             for grp in self["group_names"]:
                 eles = sorted(set(self["group_elements"][grp]))
-                for ele_i, ele_j in it.combinations_with_replacement(eles, 2):
+                for ele_i, ele_j in self.label_pairs(eles, all_pairs):
                     pair_label = f"[{grp}]_{ele_i}{ele_j}"
                     label_i = f"[{grp}]_{ele_i}"
                     label_j = f"[{grp}]_{ele_j}"
                     labels.append((pair_label, (label_i, label_j)))
             return labels
 
-        for grp_i, grp_j in it.combinations_with_replacement(self["group_names"], 2):
+        for grp_i, grp_j in self.label_pairs(self["group_names"], all_pairs):
             eles_i = sorted(set(self["group_elements"][grp_i]))
             eles_j = sorted(set(self["group_elements"][grp_j]))
-            if grp_i == grp_j:
-                iterable = it.combinations_with_replacement(eles_i, 2)
+            if grp_i == grp_j and not all_pairs:
+                pairs = it.combinations_with_replacement(eles_i, 2)
             else:
-                iterable = it.product(eles_i, eles_j)
-            for ele_i, ele_j in iterable:
+                pairs = it.product(eles_i, eles_j)
+            for ele_i, ele_j in sorted(pairs):
                 pair_label = f"[{grp_i}][{grp_j}]_{ele_i}{ele_j}"
                 label_i = f"[{grp_i}]_{ele_i}"
                 label_j = f"[{grp_j}]_{ele_j}"
@@ -322,6 +324,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         ],
         output_data: OutputData,
         result_name: str,
+        all_pairs: bool = False,
     ):
         """Updates the output data with pair results.
 
@@ -334,14 +337,13 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             The output data object to write the results to.
         result_name : str
             The name of the results.
+        all_pairs : bool
+            Updates all pairs of labels e.g. OH and HO.
         """
         if self["level"] == "atom":
             atom_selection = self._configurable[self._dependencies["atom_selection"]]
             selected_elements = atom_selection["unique_names"]
-            element_pairs = sorted(
-                it.combinations_with_replacement(selected_elements, 2),
-            )
-            for ele_i, ele_j in element_pairs:
+            for ele_i, ele_j in self.label_pairs(selected_elements, all_pairs):
                 total, inter, intra = calc_func(ele_i, ele_j)
                 output_data[f"{result_name}_{ele_i}{ele_j}"][...] = total
                 if intra is not None and inter is not None:
@@ -352,7 +354,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         for grp_i, grp_j in it.combinations_with_replacement(self["group_names"], 2):
             eles_i = sorted(set(self["group_elements"][grp_i]))
             eles_j = sorted(set(self["group_elements"][grp_j]))
-            if grp_i == grp_j:
+            if grp_i == grp_j and not all_pairs:
                 iterable = it.combinations_with_replacement(eles_i, 2)
             else:
                 iterable = it.product(eles_i, eles_j)
@@ -376,3 +378,23 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     output_data[f"{result_name}_intra_[{grp_i}]_{ele_i}{ele_j}"][
                         ...
                     ] = intra
+
+    def label_pairs(self, labels : list[str], all_pairs) -> list[tuple[str, str]]:
+        """
+        Parameters
+        ----------
+        labels : list[str]
+            List of labels.
+        all_pairs : bool
+            Return all pairs if true or only the unique pairs if false.
+
+        Returns
+        -------
+        list[tuple[str, str]]
+            A list of label pairs.
+        """
+        if all_pairs:
+            iterable = it.product(labels, repeat=2)
+        else:
+            iterable = it.combinations_with_replacement(labels, 2)
+        return sorted(iterable)
