@@ -105,12 +105,7 @@ def toggle_selection(
         set of all the indices in the trajectory which were not in the input selection
 
     """
-    not_selected = select_all(trajectory) - current_selection
     click_counter = Counter(clicked_atoms)
-    flipped = set()
-    for index, state in click_counter.items():
-        if state % 2:
-            flipped.add(index)
-    removed = current_selection & flipped
-    added = not_selected & flipped
-    return (current_selection - removed) | added
+    # Add current selection count as True
+    click_counter.update(current_selection)
+    return {index for index, state in click_counter.items() if state % 2}

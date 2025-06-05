@@ -44,10 +44,9 @@ def select_labels(
 
     """
     system = trajectory.chemical_system
-    result = set()
-    for label in atom_labels:
-        result |= set(system._labels.get(label, []))
-    return result
+    return {struc 
+            for label in atom_labels 
+            for struc in system._labels.get(label, []))}
 
 
 def select_pattern(

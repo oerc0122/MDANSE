@@ -181,7 +181,7 @@ class AtomTransmutationWidget(AtomSelectionWidget):
         " the helper dialog."
     )
 
-    def __init__(self, *args, _use_list_view=True, **kwargs):
+    def __init__(self, *args, _use_list_view: bool = True, **kwargs):
         """Create the main widget for transmuting atom types.
 
         Parameters

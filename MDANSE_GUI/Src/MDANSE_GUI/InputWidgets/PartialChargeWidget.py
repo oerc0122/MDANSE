@@ -184,6 +184,8 @@ class PartialChargeWidget(AtomSelectionWidget):
             ignored here. This widget always sets use_list_view=False
 
         """
+        if "use_list_view" in kwargs:
+            raise TypeError(f"Cannot use list view with {type(self).__name__}."
         super().__init__(*args, use_list_view=False, **kwargs)
 
     def create_helper(self, traj_data: tuple[str, Trajectory]) -> ChargeHelper:
