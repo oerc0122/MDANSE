@@ -466,6 +466,8 @@ class VanHoveFunctionDistinct(IJob):
                 (self.n_mid_points, self.numberOfSteps),
                 axis="r|time",
                 units="au",
+                main_result=True,
+                partial_result=True,
             )
         if self.intra:
             for label, _ in self.labels_intra:
