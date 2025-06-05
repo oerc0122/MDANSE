@@ -126,7 +126,7 @@ def weighted_sum(values: Dict[str, np.ndarray], match_key: str, match_labels: It
         Dictionary of data arrays containing analysis results.
     match_key: str
         A key used to generate the list of matches to sum over.
-    match_vals: Iterable
+    match_labels: Iterable
         The labels used to generate the list of matches to sum over.
 
     Returns
