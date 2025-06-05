@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import Generator
+from typing import Iterable
 import collections
 import itertools as it
 
@@ -626,7 +626,7 @@ class VanHoveFunctionDistinct(IJob):
 
         def calc_func(
             label_i: str, label_j: str
-        ) -> Generator[tuple[str, bool, np.ndarray]]:
+        ) -> Iterable[tuple[str, bool, np.ndarray]]:
             """Calculates the distinct part of the van Hove function
             for a given pair of element labels.
 

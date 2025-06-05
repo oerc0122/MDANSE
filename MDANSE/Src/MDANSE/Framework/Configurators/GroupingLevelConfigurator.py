@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import Callable, Generator
+from typing import Callable, Iterable
 import itertools as it
 
 import numpy as np
@@ -319,7 +319,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
     def update_pair_results(
         self,
-        calc_func: Callable[[str, str], Generator[tuple[str, bool, np.ndarray]]],
+        calc_func: Callable[[str, str], Iterable[tuple[str, bool, np.ndarray]]],
         output_data: OutputData,
         all_pairs: bool = False,
     ):
