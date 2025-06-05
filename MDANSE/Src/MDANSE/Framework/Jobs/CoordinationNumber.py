@@ -13,11 +13,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
+import itertools as it
 import collections
 
 import numpy as np
-
 
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
 
@@ -145,6 +144,19 @@ class CoordinationNumber(DistanceHistogram):
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
 
+        # symmetrize the data
+        for label_i, label_j in sorted(
+            it.combinations_with_replacement(self.selectedElements, 2),
+        ):
+            idi = self.selectedElements.index(label_i)
+            idj = self.selectedElements.index(label_j)
+            if idi != idj:
+                if self.indices_intra is not None:
+                    self.h_intra[idi, idj] += self.h_intra[idj, idi]
+                    self.h_intra[idj, idi] = self.h_intra[idi, idj]
+                self.h_total[idi, idj] += self.h_total[idj, idi]
+                self.h_total[idj, idi] = self.h_total[idi, idj]
+
         def calc_func(label_i, label_j):
             ni = nAtomsPerElement[label_i]
             nj = nAtomsPerElement[label_j]
@@ -156,13 +168,10 @@ class CoordinationNumber(DistanceHistogram):
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj
-                if self.indices_intra is not None:
-                    self.h_intra[idi, idj] += self.h_intra[idj, idi]
-                self.h_total[idi, idj] += self.h_total[idj, idi]
 
             fact = 2 * nij * nFrames * shellVolumes
 
-            rho_i = self.averageDensity * self._concentrations[label_i]
+            rho_j = self.averageDensity * self._concentrations[label_j]
 
             if self.indices_intra is not None:
                 self.h_intra[idi, idj, :] /= fact
@@ -170,11 +179,11 @@ class CoordinationNumber(DistanceHistogram):
                 cnIntra = np.add.accumulate(self.h_intra[idi, idj, :] * r2) * dr
                 cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
                 cnInter = cnTotal - cnIntra
-                return rho_i * cnTotal, rho_i * cnInter, rho_i * cnIntra
+                return rho_j * cnTotal, rho_j * cnInter, rho_j * cnIntra
             else:
                 self.h_total[idi, idj, :] /= fact
                 cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
-                return rho_i * cnTotal, None, None
+                return rho_j * cnTotal, None, None
 
         self.configuration["grouping_level"].update_pair_results(
             calc_func, self._outputData, "cn", all_pairs=True
