@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import Callable, Optional
+from typing import Callable, Generator
 import itertools as it
 
 import numpy as np
@@ -320,23 +320,21 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
     def update_pair_results(
         self,
         calc_func: Callable[
-            [str, str], tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]
+            [str, str], Generator[tuple[str, bool, np.ndarray]]
         ],
         output_data: OutputData,
-        result_name: str,
         all_pairs: bool = False,
     ):
         """Updates the output data with pair results.
 
         Parameters
         ----------
-        calc_func : Callable[[str, str], tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]]
-            A function which calculates the total, inter and intra
-            molecular results, given two atom labels.
+        calc_func : Callable[[str, str],  Generator[tuple[str, bool, np.ndarray]]]
+            A function which yields the results name, a bool which
+            specifies whether it correspond to intermolecular atom
+            pairs and the results.
         output_data : OutputData
             The output data object to write the results to.
-        result_name : str
-            The name of the results.
         all_pairs : bool
             Updates all pairs of labels e.g. OH and HO.
         """
@@ -344,11 +342,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             atom_selection = self._configurable[self._dependencies["atom_selection"]]
             selected_elements = atom_selection["unique_names"]
             for ele_i, ele_j in self.label_pairs(selected_elements, all_pairs):
-                total, inter, intra = calc_func(ele_i, ele_j)
-                output_data[f"{result_name}_{ele_i}{ele_j}"][...] = total
-                if intra is not None and inter is not None:
-                    output_data[f"{result_name}_inter_{ele_i}{ele_j}"][...] = inter
-                    output_data[f"{result_name}_intra_{ele_i}{ele_j}"][...] = intra
+                for name, _, result in calc_func(ele_i, ele_j):
+                    output_data[f"{name}_{ele_i}{ele_j}"][...] = result
             return
 
         for grp_i, grp_j in it.combinations_with_replacement(self["group_names"], 2):
@@ -361,23 +356,15 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             for ele_i, ele_j in iterable:
                 label_i = f"[{grp_i}]_{ele_i}"
                 label_j = f"[{grp_j}]_{ele_j}"
-                total, inter, intra = calc_func(label_i, label_j)
-                if inter is None or intra is None:
-                    raise ValueError(
-                        f"Grouping level {self['level']} was used, so atom "
-                        f"groups exist but there were no inter and intra "
-                        f"results."
-                    )
-                output_data[f"{result_name}_[{grp_i}][{grp_j}]_{ele_i}{ele_j}"][...] = (
-                    total
-                )
-                output_data[f"{result_name}_inter_[{grp_i}][{grp_j}]_{ele_i}{ele_j}"][
-                    ...
-                ] = inter
-                if grp_i == grp_j:
-                    output_data[f"{result_name}_intra_[{grp_i}]_{ele_i}{ele_j}"][
-                        ...
-                    ] = intra
+                for name, intra, result in calc_func(ele_i, ele_j):
+                    if intra:
+                        output_data[f"{name}_[{grp_i}]_{label_i}{label_j}"][...] = (
+                            result
+                        )
+                    else:
+                        output_data[f"{name}_[{grp_i}][{grp_j}]_{label_i}{label_j}"][
+                            ...
+                        ] = result
 
     def label_pairs(self, labels: list[str], all_pairs) -> list[tuple[str, str]]:
         """

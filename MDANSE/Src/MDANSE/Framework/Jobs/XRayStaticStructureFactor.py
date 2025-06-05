@@ -81,6 +81,15 @@ class XRayStaticStructureFactor(DistanceHistogram):
         "RangeConfigurator",
         {"valueType": float, "includeLast": True, "mini": 0.0, "default": (0, 500, 1)},
     )
+    settings["grouping_level"] = (
+        "GroupingLevelConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
+    )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
@@ -91,6 +100,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
     )
@@ -133,7 +143,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
         for pair in self._elementsPairs:
             pair_str = "".join(map(str, pair))
-            if self.indices_intra is not None:
+            if self.intra:
                 self._outputData.add(
                     f"xssf_intra_{pair_str}",
                     "LineOutputVariable",
@@ -173,7 +183,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
                 self.h_total[idi, idj] += self.h_total[idj, idi]
 
             fact = 2 * nij * nFrames * shellVolumes
-            if self.indices_intra is not None:
+            if self.intra:
                 pdfIntra = self.h_intra[idi, idj, :] / fact
                 pdfTotal = self.h_total[idi, idj, :] / fact
                 pdfInter = pdfTotal - pdfIntra
@@ -195,7 +205,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
                     1.0
                     + fact1 * np.sum((r**2) * (pdfTotal - 1.0) * sincqr, axis=1) * dr
                 )
-        if self.indices_intra is not None:
+        if self.intra:
             self._outputData.add(
                 "xssf_intra_total",
                 "LineOutputVariable",
@@ -231,7 +241,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
             for k in list(nAtomsPerElement.keys())
         )
         weight_dict = get_weights(asf, nAtomsPerElement, 2)
-        if self.indices_intra is not None:
+        if self.intra:
             assign_weights(self._outputData, weight_dict, "xssf_intra_%s", self.labels)
             assign_weights(self._outputData, weight_dict, "xssf_inter_%s", self.labels)
             assign_weights(self._outputData, weight_dict, "xssf_%s", self.labels)

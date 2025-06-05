@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from typing import Generator
 import itertools as it
 import collections
 
@@ -99,7 +100,16 @@ class CoordinationNumber(DistanceHistogram):
             intra=True, all_pairs=True
         )
 
-        if self.indices_intra is not None:
+        for label, _ in self.labels:
+            self._outputData.add(
+                f"cn_{label}",
+                "LineOutputVariable",
+                (npoints,),
+                axis="r",
+                units="au",
+                main_result=True,
+            )
+        if self.intra:
             for label, _ in self.labels_intra:
                 self._outputData.add(
                     f"cn_intra_{label}",
@@ -116,15 +126,6 @@ class CoordinationNumber(DistanceHistogram):
                     axis="r",
                     units="au",
                 )
-        for label, _ in self.labels:
-            self._outputData.add(
-                f"cn_{label}",
-                "LineOutputVariable",
-                (npoints,),
-                axis="r",
-                units="au",
-                main_result=True,
-            )
 
         nFrames = self.configuration["frames"]["number"]
 
@@ -157,7 +158,23 @@ class CoordinationNumber(DistanceHistogram):
                 self.h_total[idi, idj] += self.h_total[idj, idi]
                 self.h_total[idj, idi] = self.h_total[idi, idj]
 
-        def calc_func(label_i, label_j):
+        def calc_func(label_i: str, label_j: str) -> Generator[tuple[str, bool, np.ndarray]]:
+            """Calculates the coordination number for a given pair of
+            element labels.
+
+            Parameters
+            ----------
+            label_i : str
+                The element label.
+            label_j : str
+                The element label.
+
+            Yields
+            ------
+            tuple[str, bool, np.ndarray]
+                A tuple of the results name, a bool specifying whether
+                results correspond to  intermolecular atom pairs.
+            """
             ni = nAtomsPerElement[label_i]
             nj = nAtomsPerElement[label_j]
 
@@ -173,20 +190,19 @@ class CoordinationNumber(DistanceHistogram):
 
             rho_j = self.averageDensity * self._concentrations[label_j]
 
-            if self.indices_intra is not None:
+            self.h_total[idi, idj, :] /= fact
+            cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
+            yield "cn", False, rho_j * cnTotal
+
+            if self.intra:
                 self.h_intra[idi, idj, :] /= fact
-                self.h_total[idi, idj, :] /= fact
                 cnIntra = np.add.accumulate(self.h_intra[idi, idj, :] * r2) * dr
-                cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
                 cnInter = cnTotal - cnIntra
-                return rho_j * cnTotal, rho_j * cnInter, rho_j * cnIntra
-            else:
-                self.h_total[idi, idj, :] /= fact
-                cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
-                return rho_j * cnTotal, None, None
+                yield "cn_inter", False, rho_j * cnInter
+                yield "cn_intra", True, rho_j * cnIntra
 
         self.configuration["grouping_level"].update_pair_results(
-            calc_func, self._outputData, "cn", all_pairs=True
+            calc_func, self._outputData, all_pairs=True
         )
 
         self._outputData.write(

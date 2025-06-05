@@ -59,6 +59,15 @@ class StaticStructureFactor(DistanceHistogram):
         "RangeConfigurator",
         {"valueType": float, "includeLast": True, "mini": 0.0, "default": (0, 500, 1)},
     )
+    settings["grouping_level"] = (
+        "GroupingLevelConfigurator",
+        {
+            "dependencies": {
+                "trajectory": "trajectory",
+                "atom_selection": "atom_selection",
+            }
+        },
+    )
     settings["atom_selection"] = (
         "AtomSelectionConfigurator",
         {"dependencies": {"trajectory": "trajectory"}},
@@ -69,6 +78,7 @@ class StaticStructureFactor(DistanceHistogram):
             "dependencies": {
                 "trajectory": "trajectory",
                 "atom_selection": "atom_selection",
+                "grouping_level": "grouping_level",
             }
         },
     )
@@ -175,13 +185,13 @@ class StaticStructureFactor(DistanceHistogram):
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj
-                if self.indices_intra is not None:
+                if self.intra:
                     self.h_intra[idi, idj] += self.h_intra[idj, idi]
                 self.h_total[idi, idj] += self.h_total[idj, idi]
 
             fact = 2 * nij * nFrames * shellVolumes
 
-            if self.indices_intra is not None:
+            if self.intra:
                 pdfIntra = self.h_intra[idi, idj, :] / fact
                 pdfTotal = self.h_total[idi, idj, :] / fact
                 pdfInter = pdfTotal - pdfIntra
@@ -203,7 +213,7 @@ class StaticStructureFactor(DistanceHistogram):
                     + fact1 * np.sum((r**2) * (pdfTotal - 1.0) * sincqr, axis=1) * dr
                 )
 
-        if self.indices_intra is not None:
+        if self.intra:
             self._outputData.add(
                 "ssf_intra_total", "LineOutputVariable", (nq,), axis="q", units="au"
             )
@@ -225,7 +235,7 @@ class StaticStructureFactor(DistanceHistogram):
 
         weights = self.configuration["weights"].get_weights()
         weight_dict = get_weights(weights, nAtomsPerElement, 2)
-        if self.indices_intra is not None:
+        if self.intra:
             assign_weights(self._outputData, weight_dict, "ssf_intra_%s", self.labels)
             assign_weights(self._outputData, weight_dict, "ssf_inter_%s", self.labels)
             assign_weights(self._outputData, weight_dict, "ssf_%s", self.labels)
