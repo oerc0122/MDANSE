@@ -16,7 +16,7 @@
 
 import json
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
@@ -29,6 +29,7 @@ from qtpy.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QWidget,
 )
 from rdkit.Chem import MolFromSmarts
 
@@ -186,10 +187,10 @@ class GUISelection(BasicSelectionWidget):
     """Widget for confirming and cancelling manual selection in 3D view."""
 
     def __init__(
-        self, 
+        self,
         parent: Optional[QWidget] = None,
         *,
-        widget_label: str = "Manual Selection"
+        widget_label: str = "Manual Selection",
     ):
         """Pass inputs to the parent class init.
 
