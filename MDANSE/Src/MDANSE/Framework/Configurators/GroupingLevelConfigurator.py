@@ -351,16 +351,18 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 iterable = it.combinations_with_replacement(eles_i, 2)
             else:
                 iterable = it.product(eles_i, eles_j)
-            for ele_i, ele_j in iterable:
+            for ele_i, ele_j in sorted(iterable):
                 label_i = f"[{grp_i}]_{ele_i}"
                 label_j = f"[{grp_j}]_{ele_j}"
-                for name, intra, result in calc_func(ele_i, ele_j):
-                    if intra:
-                        output_data[f"{name}_[{grp_i}]_{label_i}{label_j}"][...] = (
+                for name, intra, result in calc_func(label_i, label_j):
+                    if intra and grp_i == grp_j:
+                        output_data[f"{name}_[{grp_i}]_{ele_i}{ele_j}"][...] = (
                             result
                         )
+                    elif intra and grp_i != grp_j:
+                        continue
                     else:
-                        output_data[f"{name}_[{grp_i}][{grp_j}]_{label_i}{label_j}"][
+                        output_data[f"{name}_[{grp_i}][{grp_j}]_{ele_i}{ele_j}"][
                             ...
                         ] = result
 

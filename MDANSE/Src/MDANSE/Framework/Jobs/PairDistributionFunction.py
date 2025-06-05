@@ -207,31 +207,17 @@ class PairDistributionFunction(DistanceHistogram):
                     * self.averageDensity
                     * (pdf if i == "_intra" else pdf - 1)
                 )
-                self.configuration["grouping_level"].add_grouped_totals(
-                    self._outputData,
-                    f"pdf{i}",
-                    "LineOutputVariable",
-                    intra=i == "_intra",
-                    axis="r",
-                    units="au",
-                    main_result=True,
-                )
-                self.configuration["grouping_level"].add_grouped_totals(
-                    self._outputData,
-                    f"rdf{i}",
-                    "LineOutputVariable",
-                    intra=i == "_intra",
-                    axis="r",
-                    units="au",
-                )
-                self.configuration["grouping_level"].add_grouped_totals(
-                    self._outputData,
-                    f"tcf{i}",
-                    "LineOutputVariable",
-                    intra=i == "_intra",
-                    axis="r",
-                    units="au",
-                )
+                for j in ["pdf", "rdf", "tcf"]:
+                    self.configuration["grouping_level"].add_grouped_totals(
+                        self._outputData,
+                        f"{j}{i}",
+                        "LineOutputVariable",
+                        dim=2,
+                        intra=i == "_intra",
+                        axis="r",
+                        units="au",
+                        main_result=j == "pdf",
+                    )
         else:
             assign_weights(self._outputData, weight_dict, "pdf_%s", self.labels)
             pdf = weighted_sum(self._outputData, "pdf_%s", self.labels)
