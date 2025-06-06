@@ -244,7 +244,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
             if (
                 "scaling_factor"
                 not in self.configuration["disf_input_file"]["instance"][
-                    "s(q,f)_{}".format(element)
+                    f"s(q,f)_{element}"
                 ].attrs.keys()
             ):
                 raise NeutronDynamicTotalStructureFactorError(
