@@ -85,9 +85,6 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         chemical_system = trajConfig["instance"].chemical_system
 
         if value == "atom":
-            self["name_to_element"] = {}
-            for ele in atomSelectionConfig.get_natoms():
-                self["name_to_element"][ele] = ele
             return
 
         indices = []
