@@ -18,6 +18,7 @@ from typing import Callable
 import itertools as it
 
 import numpy.typing as npt
+from more_itertools import collapse
 
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
@@ -57,8 +58,6 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         if choices is None:
             choices = usual_choices
-        else:
-            choices += [x for x in usual_choices if x not in choices]
 
         SingleChoiceConfigurator.__init__(self, name, choices=choices, **kwargs)
 
@@ -84,7 +83,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         atomSelectionConfig = self._configurable[self._dependencies["atom_selection"]]
         chemical_system = trajConfig["instance"].chemical_system
 
-        if value == "atom":
+        if value == "atom" or value == "each atom":
             return
 
         indices = []
@@ -114,7 +113,6 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                             continue
                         mol_selected = True
                         indices.append([x])
-                        flatten_indices.append(x)
                         elements.append([chemical_system.atom_list[x]])
                         group_name_elements.append(chemical_system.atom_list[x])
                         names.append(f"[{mol_name}]_{chemical_system.atom_list[x]}")
@@ -125,20 +123,31 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     group_elements[mol_name] = group_name_elements
                     group_n_atms[mol_name] = n_atms
 
+            self["name_to_element"] = {}
+            for name, element in zip(names, elements):
+                self["name_to_element"][name] = element[0]
+            self["group_names"] = sorted(set(group_names))
+            self["group_elements"] = group_elements
+            self["group_n_atms"] = group_n_atms
+
+        if value == "each molecule":
+            for mol_name in chemical_system._clusters.keys():
+                for mol_number, cluster in enumerate(
+                    chemical_system._clusters[mol_name]
+                ):
+                    indices.append(cluster)
+                    elements.append([chemical_system.atom_list[x] for x in cluster])
+                    names.append(f"{mol_name}_mol{mol_number + 1}")
+                    masses.append([mass_lookup[x] for x in cluster])
+
         atomSelectionConfig["indices"] = indices
-        atomSelectionConfig["flatten_indices"] = flatten_indices
+        atomSelectionConfig["flatten_indices"] = collapse(indices)
         atomSelectionConfig["elements"] = elements
         atomSelectionConfig["masses"] = masses
         atomSelectionConfig["names"] = names
         atomSelectionConfig["selection_length"] = len(names)
         atomSelectionConfig["unique_names"] = sorted(set(names))
 
-        self["group_names"] = sorted(set(group_names))
-        self["group_elements"] = group_elements
-        self["group_n_atms"] = group_n_atms
-        self["name_to_element"] = {}
-        for name, element in zip(names, elements):
-            self["name_to_element"][name] = element[0]
         if atomSelectionConfig["selection_length"] == 0:
             self.error_status = "This option resulted in nothing being selected in the current trajectory"
 
