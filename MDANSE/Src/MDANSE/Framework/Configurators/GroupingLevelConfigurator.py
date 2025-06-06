@@ -17,7 +17,7 @@ from collections.abc import Iterator
 from typing import Callable
 import itertools as it
 
-import numpy as np
+import numpy.typing as npt
 
 from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
@@ -164,19 +164,22 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
     def add_grouped_totals(
         self,
-        output_data: dict[str, np.ndarray],
+        output_data: dict[str, npt.NDArray],
         result_name: str,
         data_type: str,
         dim: int = 1,
         conc_exp: float = 1.0,
         intra: bool = False,
+        scaling_factor: bool = True,
+        post_func: Callable[[npt.NDArray], npt.NDArray] = lambda x: x,
+        post_label: str = "total",
         **kwargs,
     ):
         """Add the grouped totals to the output data.
 
         Parameters
         ----------
-        output_data : dict[str, np.ndarray]
+        output_data : dict[str, npt.NDArray]
             Dictionary of data arrays containing analysis results.
         result_name : str
             The name of the results.
@@ -189,6 +192,12 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             to (e.g. (c_i * c_j)**0.5 which is used for DCSF jobs).
         intra: bool
             Add total results for intra results.
+        scaling_factor: bool
+            Add the scaling factor to the output data if True.
+        post_func: Callable[[npt.NDArray], npt.NDArray]
+            A function which is applied to the results.
+        post_label: str
+            The label to be added for grouped summed results.
         """
         tot_n_atms = self._configurable[self._dependencies["atom_selection"]][
             "selection_length"
@@ -206,13 +215,18 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     weighted_sum(output_data, result_name + "_[%s]_%s", labels) / conc
                 )
                 output_data.add(
-                    f"{result_name}_[{grp}]_total",
+                    f"{result_name}_[{grp}]_{post_label}",
                     data_type,
                     results.shape,
                     **kwargs,
                 )
-                output_data[f"{result_name}_[{grp}]_total"][...] = results
-                output_data[f"{result_name}_[{grp}]_total"].scaling_factor = conc
+                output_data[f"{result_name}_[{grp}]_{post_label}"][...] = post_func(
+                    results
+                )
+                if scaling_factor:
+                    output_data[
+                        f"{result_name}_[{grp}]_{post_label}"
+                    ].scaling_factor = conc
         elif dim == 2:
             if intra:
                 for grp in self["group_names"]:
@@ -229,13 +243,18 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     )
 
                     output_data.add(
-                        f"{result_name}_[{grp}]_total",
+                        f"{result_name}_[{grp}]_{post_label}",
                         data_type,
                         results.shape,
                         **kwargs,
                     )
-                    output_data[f"{result_name}_[{grp}]_total"][...] = results
-                    output_data[f"{result_name}_[{grp}]_total"].scaling_factor = conc
+                    output_data[f"{result_name}_[{grp}]_{post_label}"][...] = post_func(
+                        results
+                    )
+                    if scaling_factor:
+                        output_data[
+                            f"{result_name}_[{grp}]_{post_label}"
+                        ].scaling_factor = conc
                 return
 
             for grp_i, grp_j in it.combinations_with_replacement(
@@ -259,15 +278,18 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 )
 
                 output_data.add(
-                    f"{result_name}_[{grp_i}][{grp_j}]_total",
+                    f"{result_name}_[{grp_i}][{grp_j}]_{post_label}",
                     data_type,
                     results.shape,
                     **kwargs,
                 )
-                output_data[f"{result_name}_[{grp_i}][{grp_j}]_total"][...] = results
-                output_data[
-                    f"{result_name}_[{grp_i}][{grp_j}]_total"
-                ].scaling_factor = conc
+                output_data[f"{result_name}_[{grp_i}][{grp_j}]_{post_label}"][...] = (
+                    post_func(results)
+                )
+                if scaling_factor:
+                    output_data[
+                        f"{result_name}_[{grp_i}][{grp_j}]_{post_label}"
+                    ].scaling_factor = conc
         else:
             raise NotImplementedError("Grouped total for dim > 2 not implemented.")
 
@@ -324,7 +346,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
     def update_pair_results(
         self,
-        calc_func: Callable[[str, str], Iterator[tuple[str, bool, np.ndarray]]],
+        calc_func: Callable[[str, str], Iterator[tuple[str, bool, npt.NDArray]]],
         output_data: OutputData,
         all_pairs: bool = False,
     ):
@@ -332,7 +354,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         Parameters
         ----------
-        calc_func : Callable[[str, str], Iterable[tuple[str, bool, np.ndarray]]]
+        calc_func : Callable[[str, str], Iterable[tuple[str, bool, npt.NDArray]]]
             A function which yields the results name, a bool which
             specifies whether it correspond to intermolecular atom
             pairs and the results.
