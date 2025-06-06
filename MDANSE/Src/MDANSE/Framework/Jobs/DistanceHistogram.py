@@ -161,9 +161,6 @@ class DistanceHistogram(IJob):
         for k in list(self._nAtomsPerElement.keys()):
             self._concentrations[k] = 0.0
 
-        self._elementsPairs = sorted(
-            itertools.combinations_with_replacement(self.selectedElements, 2),
-        )
         self.labels = self.configuration["grouping_level"].pair_labels()
         self.labels_intra = self.configuration["grouping_level"].pair_labels(intra=True)
 

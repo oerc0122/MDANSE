@@ -441,29 +441,7 @@ class VanHoveFunctionDistinct(IJob):
             self.configuration["frames"]["duration"],
             units="ps",
         )
-        if self.intra:
-            self._outputData.add(
-                "g(r,t)_intra_total",
-                "SurfaceOutputVariable",
-                (self.n_mid_points, self.numberOfSteps),
-                axis="r|time",
-                units="au",
-            )
-            self._outputData.add(
-                "g(r,t)_inter_total",
-                "SurfaceOutputVariable",
-                (self.n_mid_points, self.numberOfSteps),
-                axis="r|time",
-                units="au",
-            )
-        self._outputData.add(
-            "g(r,t)_total",
-            "SurfaceOutputVariable",
-            (self.n_mid_points, self.numberOfSteps),
-            axis="r|time",
-            units="au",
-            main_result=True,
-        )
+
         for label, _ in self.labels:
             self._outputData.add(
                 f"g(r,t)_{label}",
@@ -474,6 +452,14 @@ class VanHoveFunctionDistinct(IJob):
                 main_result=True,
                 partial_result=True,
             )
+        self._outputData.add(
+            "g(r,t)_total",
+            "SurfaceOutputVariable",
+            (self.n_mid_points, self.numberOfSteps),
+            axis="r|time",
+            units="au",
+            main_result=True,
+        )
         if self.intra:
             for label, _ in self.labels_intra:
                 self._outputData.add(
@@ -491,6 +477,20 @@ class VanHoveFunctionDistinct(IJob):
                     axis="r|time",
                     units="au",
                 )
+            self._outputData.add(
+                "g(r,t)_intra_total",
+                "SurfaceOutputVariable",
+                (self.n_mid_points, self.numberOfSteps),
+                axis="r|time",
+                units="au",
+            )
+            self._outputData.add(
+                "g(r,t)_inter_total",
+                "SurfaceOutputVariable",
+                (self.n_mid_points, self.numberOfSteps),
+                axis="r|time",
+                units="au",
+            )
 
         self._indices = [
             idx
@@ -661,7 +661,7 @@ class VanHoveFunctionDistinct(IJob):
             idi = self.selectedElements.index(label_i)
             idj = self.selectedElements.index(label_j)
 
-            if idi == idj:
+            if label_i == label_j:
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj

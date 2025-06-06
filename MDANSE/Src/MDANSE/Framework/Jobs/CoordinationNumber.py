@@ -146,12 +146,12 @@ class CoordinationNumber(DistanceHistogram):
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
 
         # symmetrize the data
-        for label_i, label_j in sorted(
+        for i, j in sorted(
             it.combinations_with_replacement(self.selectedElements, 2),
         ):
-            idi = self.selectedElements.index(label_i)
-            idj = self.selectedElements.index(label_j)
-            if idi != idj:
+            idi = self.selectedElements.index(i)
+            idj = self.selectedElements.index(j)
+            if i != j:
                 if self.indices_intra is not None:
                     self.h_intra[idi, idj] += self.h_intra[idj, idi]
                     self.h_intra[idj, idi] = self.h_intra[idi, idj]
@@ -184,7 +184,7 @@ class CoordinationNumber(DistanceHistogram):
             idi = self.selectedElements.index(label_i)
             idj = self.selectedElements.index(label_j)
 
-            if idi == idj:
+            if label_i == label_j:
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj

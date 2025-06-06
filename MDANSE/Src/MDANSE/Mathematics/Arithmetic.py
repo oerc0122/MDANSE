@@ -21,7 +21,7 @@ import numpy as np
 
 def get_weights(
     props: dict[str, float], contents: dict[str, int], dim: int, conc_exp: float = 1.0
-) -> tuple[dict[tuple[str], float], float]:
+) -> dict[str, float]:
     """Calculate the scaling factors to be applied to output datasets.
 
     Returns a dictionary of scaling factors, where the

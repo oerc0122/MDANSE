@@ -148,7 +148,7 @@ class PairDistributionFunction(DistanceHistogram):
             idi = self.selectedElements.index(label_i)
             idj = self.selectedElements.index(label_j)
 
-            if idi == idj:
+            if label_i == label_j:
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj
