@@ -14,7 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from collections.abc import Iterator
-from typing import Callable
+from typing import Callable, Optional
 import itertools as it
 
 import numpy.typing as npt
@@ -28,31 +28,35 @@ from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
 
 
 class GroupingLevelConfigurator(SingleChoiceConfigurator):
-    """
-    This configurator allows to choose the level of granularity in the atom selection.
+    """This configurator changes the atom selections and groups
+    atoms together by changing the atoms names or by grouping their
+    indices together.
 
-    When reading the trajectory, the level of granularity will be applied by grouping the atoms of the selection
-    to a single dummy-atoms located on the center of gravity of those atoms.
-
-    The level of granularity currently supported are:
-
-    * 'atom': no grouping will be performed
-    * 'group': the atoms that belongs to an AtomCluster object will be grouped as a single atom per object while the ones that belongs to a Molecule, NucleotideChain, PeptideChain and Protein object will be grouped according to the chemical group they belong to (e.g. peptide group, methyl group ...)
-    * 'residue': the atoms that belongs to anAtomCluster or Molecule object will be grouped as a single atom per object while the ones thta belongs to a NucleotideChain, PeptideChain or Protein object will be grouped according to the residue to which they belong to (e.g. Histidine, Cytosyl ...)
-    * 'chain': the atoms that belongs to an AtomCluster or Molecule object will be grouped as a single atom per object while the ones that belongs to a NucleotideChain, PeptideChain or Protein object will be grouped according to the chain they belong to
-    * 'molecule': the atoms that belongs to any chemical entity will be grouped as a single atom per object
+    The grouping levels currently supported are:
+    * 'atom': no changes are made to the atom selection
+    * 'each atom': no changes are made to the atom selection
+    * 'molecule': this changes the atom names in the atom selection so that
+        it includes the molecule name that they are a part of e.g. [H2_O1]_H
+        for water molecules hydrogen atom. Job in mdanse will sum results
+        based on the atom names so that results like f(q,t)_[H2_O1]_H will
+        be obtained.
+    * 'each molecule': this changes the atom selection so that the atom
+        indices for each molecule will be grouped together. Jobs can
+        then run calculations can be run for each group of indices
+        together.
     """
 
     _default = "atom"
 
-    def __init__(self, name, choices=None, **kwargs):
+    def __init__(self, name: str, choices: Optional[list[str]] = None, **kwargs):
         """
-        Initializes the configurator.
-
-        :param name: the name of the configurator as it will appear in the configuration
-        :type name: str
-        :param choices: the level of granularities allowed for the input value. If None all levels are allowed.
-        :type choices: one of ['atom','group','residue','chain','molecule'] or None
+        Parameters
+        ----------
+        name : str
+            The name of the configurator.
+        choices : Optional[list[str]]
+            The grouping choices allowed for the job that will be
+            configured.
         """
         usual_choices = ["atom", "molecule"]
 
@@ -87,7 +91,6 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             return
 
         indices = []
-        flatten_indices = []
         elements = []
         names = []
         masses = []
