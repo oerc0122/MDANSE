@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from collections.abc import Iterator
+from collections.abc import Iterable
 import itertools
 
 import numpy as np
@@ -79,7 +79,7 @@ def assign_weights(
     values: dict[str, np.ndarray],
     weights: dict[str, float],
     match_key: str,
-    match_labels: Iterator,
+    match_labels: Iterable,
     symmetric: bool = True,
 ):
     """Updates the scaling factors of partial datasets, without
@@ -93,7 +93,7 @@ def assign_weights(
         Dictionary of scaling factors per dataset
     match_key: str
         A key used to generate the dict of matches to assign weights for.
-    match_labels: Iterator
+    match_labels: Iterable
         The labels used to generate the dict of matches to assign weights for.
     symmetric : bool, optional
         do not generate results for the same elements in a different sequence, by default True
@@ -115,7 +115,7 @@ def assign_weights(
         values[k].scaling_factor *= w
 
 
-def weighted_sum(values: dict[str, np.ndarray], match_key: str, match_labels: Iterator):
+def weighted_sum(values: dict[str, np.ndarray], match_key: str, match_labels: Iterable):
     """Sums up partial datasets multiplied by their scaling factors.
     The scaling factors have to be set before, typically by calling
     the assign_weights function.
@@ -126,7 +126,7 @@ def weighted_sum(values: dict[str, np.ndarray], match_key: str, match_labels: It
         Dictionary of data arrays containing analysis results.
     match_key: str
         A key used to generate the list of matches to sum over.
-    match_labels: Iterator
+    match_labels: Iterable
         The labels used to generate the list of matches to sum over.
 
     Returns
