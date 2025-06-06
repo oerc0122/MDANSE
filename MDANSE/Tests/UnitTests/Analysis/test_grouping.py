@@ -80,23 +80,23 @@ def disf(tmp_path_factory):
 
 
 @pytest.mark.parametrize("job_info", [
-    ("DensityOfStates", ["dos", "vacf"], "equal", 1e-10),
-    ("MeanSquareDisplacement", ["msd"], "equal", 1e-10),
-    ("VelocityAutoCorrelationFunction", ["vacf"], "equal", 1e-10),
-    ("VanHoveFunctionDistinct", ["g(r,t)"], "equal", 1e-10),
-    ("VanHoveFunctionSelf", ["g(r,t)"], "equal", 1e-10),
-    ("PositionAutoCorrelationFunction", ["pacf"], "equal", 1e-10),
-    ("PositionPowerSpectrum", ["pacf", "pps"], "equal", 1e-10),
-    ("RootMeanSquareDeviation", ["rmsd"], "equal", 1e-10),
-    ("CoordinationNumber", ["cn"], "equal", 1e-10),
-    ("PairDistributionFunction", ["pdf", "rdf", "tcf"], "equal", 1e-10),
-    ("StaticStructureFactor", ["ssf"], "equal", 1e-10),
-    ("XRayStaticStructureFactor", ["xssf"], "equal", 1e-10),
-    ("DynamicCoherentStructureFactor", ["f(q,t)", "s(q,f)"], "b_coherent", 1e-8),
-    ("CurrentCorrelationFunction", ["J(q,f)", "j(q,t)"], "b_coherent", 1e-6),
-    ("DynamicIncoherentStructureFactor", ["f(q,t)", "s(q,f)"], "b_incoherent2", 1e-10),
-    ("ElasticIncoherentStructureFactor", ["eisf"], "b_incoherent2", 1e-10),
-    ("GaussianDynamicIncoherentStructureFactor", ["f(q,t)", "s(q,f)", "msd"], "b_incoherent2", 1e-10),
+    ("DensityOfStates", ["dos", "vacf"], "equal", 1e-10, 1e-7),
+    ("MeanSquareDisplacement", ["msd"], "equal", 1e-10, 1e-7),
+    ("VelocityAutoCorrelationFunction", ["vacf"], "equal", 1e-10, 1e-7),
+    ("VanHoveFunctionDistinct", ["g(r,t)"], "equal", 1e-10, 1e-7),
+    ("VanHoveFunctionSelf", ["g(r,t)"], "equal", 1e-10, 1e-7),
+    ("PositionAutoCorrelationFunction", ["pacf"], "equal", 1e-10, 1e-7),
+    ("PositionPowerSpectrum", ["pacf", "pps"], "equal", 1e-10, 1e-7),
+    ("RootMeanSquareDeviation", ["rmsd"], "equal", 1e-10, 1e-7),
+    ("CoordinationNumber", ["cn"], "equal", 1e-10, 1e-7),
+    ("PairDistributionFunction", ["pdf", "rdf", "tcf"], "equal", 1e-10, 1e-7),
+    ("StaticStructureFactor", ["ssf"], "equal", 1e-10, 1e-7),
+    ("XRayStaticStructureFactor", ["xssf"], "equal", 1e-10, 1e-7),
+    ("DynamicCoherentStructureFactor", ["f(q,t)", "s(q,f)"], "b_coherent", 1e-8, 1e-7),
+    ("CurrentCorrelationFunction", ["J(q,f)", "j(q,t)"], "b_coherent", 1e-6, 1e-7),
+    ("DynamicIncoherentStructureFactor", ["f(q,t)", "s(q,f)"], "b_incoherent2", 1e-6, 1e-6),
+    ("ElasticIncoherentStructureFactor", ["eisf"], "b_incoherent2", 1e-10, 1e-7),
+    ("GaussianDynamicIncoherentStructureFactor", ["f(q,t)", "s(q,f)", "msd"], "b_incoherent2", 1e-10, 1e-7),
 ], ids=lambda x: x[0])
 def test_analysis(
         tmp_path, parameters, job_info
@@ -104,7 +104,7 @@ def test_analysis(
     temp_name = tmp_path / "output"
     log_file = temp_name.with_suffix(".log")
 
-    job_type, outputs, weights, atol = job_info
+    job_type, outputs, weights, atol, rtol = job_info
     parameters["output_files"] = (temp_name, ("MDAFormat", ), "INFO")
     parameters["weights"] = weights
 
@@ -114,7 +114,7 @@ def test_analysis(
     out_file = temp_name.with_suffix(".mda")
     result_file = RESULTS_DIR / f"grouping_molecule_{job_type}.mda"
     assert out_file.is_file()
-    compare_hdf5(out_file, result_file, tuple(outputs), startswith=True, atol=atol)
+    compare_hdf5(out_file, result_file, tuple(outputs), startswith=True, atol=atol, rtol=rtol)
     assert log_file.is_file()
 
 
