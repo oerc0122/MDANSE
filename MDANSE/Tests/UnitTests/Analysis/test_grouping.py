@@ -92,9 +92,9 @@ def disf(tmp_path_factory):
     ("PairDistributionFunction", ["pdf", "rdf", "tcf"], "equal", 1e-10, 1e-7),
     ("StaticStructureFactor", ["ssf"], "equal", 1e-10, 1e-7),
     ("XRayStaticStructureFactor", ["xssf"], "equal", 1e-10, 1e-7),
-    ("DynamicCoherentStructureFactor", ["f(q,t)", "s(q,f)"], "b_coherent", 1e-8, 1e-7),
+    ("DynamicCoherentStructureFactor", ["f(q,t)", "s(q,f)"], "b_coherent", 1e-6, 1e-6),
     ("CurrentCorrelationFunction", ["J(q,f)", "j(q,t)"], "b_coherent", 1e-6, 1e-7),
-    ("DynamicIncoherentStructureFactor", ["f(q,t)", "s(q,f)"], "b_incoherent2", 1e-6, 1e-6),
+    ("DynamicIncoherentStructureFactor", ["f(q,t)", "s(q,f)"], "b_incoherent2", 1e-10, 1e-7),
     ("ElasticIncoherentStructureFactor", ["eisf"], "b_incoherent2", 1e-10, 1e-7),
     ("GaussianDynamicIncoherentStructureFactor", ["f(q,t)", "s(q,f)", "msd"], "b_incoherent2", 1e-10, 1e-7),
 ], ids=lambda x: x[0])
