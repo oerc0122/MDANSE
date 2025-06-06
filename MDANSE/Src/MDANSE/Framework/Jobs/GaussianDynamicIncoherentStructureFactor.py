@@ -355,7 +355,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
             "msd",
-            "SurfaceOutputVariable",
+            "LineOutputVariable",
             axis="time",
             units="nm2",
             main_result=True,
