@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from typing import Iterable
+from collections.abc import Iterator
 import collections
 
 import numpy as np
@@ -194,7 +194,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
 
         def calc_func(
             label_i: str, label_j: str
-        ) -> Iterable[tuple[str, bool, np.ndarray]]:
+        ) -> Iterator[tuple[str, bool, np.ndarray]]:
             """Calculates the xray static structure factor for a given
             pair of element labels.
 
