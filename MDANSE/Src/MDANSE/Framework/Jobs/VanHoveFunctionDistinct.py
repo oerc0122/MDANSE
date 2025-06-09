@@ -479,7 +479,9 @@ class VanHoveFunctionDistinct(IJob):
             ],
             dtype=np.int32,
         )
-        if self.indices_intra and len(self.indices_intra) > len(self._indices):
+        if self.indices_intra is not None and len(self.indices_intra) > len(
+            self._indices
+        ):
             self.indices_intra = self.indices_intra[self._indices]
 
         # usually the normalization is 4 * pi * r^2 * dr which is

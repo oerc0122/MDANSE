@@ -108,7 +108,9 @@ class DistanceHistogram(IJob):
         else:
             self.indices_intra = None
         self.selectedElements = self.configuration["atom_selection"]["unique_names"]
-        if self.indices_intra and len(self.indices_intra) > len(self._indices):
+        if self.indices_intra is not None and len(self.indices_intra) > len(
+            self._indices
+        ):
             self.indices_intra = self.indices_intra[self._indices]
 
         self.indexToSymbol = np.array(
