@@ -267,7 +267,7 @@ class StaticStructureFactor(DistanceHistogram):
             all_weights,
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
-            2
+            2,
         )
         if self.intra:
             assign_weights(

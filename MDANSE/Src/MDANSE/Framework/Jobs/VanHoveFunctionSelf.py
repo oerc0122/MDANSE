@@ -323,7 +323,7 @@ class VanHoveFunctionSelf(IJob):
             all_weights,
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
-            1
+            1,
         )
         assign_weights(self._outputData, weight_dict, "g(r,t)_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "4_pi_r2_g(r,t)_%s", self.labels)

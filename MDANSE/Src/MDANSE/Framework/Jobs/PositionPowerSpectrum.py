@@ -265,7 +265,7 @@ class PositionPowerSpectrum(IJob):
             all_weights,
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
-            1
+            1,
         )
         assign_weights(self._outputData, weight_dict, "pacf_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "pps_%s", self.labels)

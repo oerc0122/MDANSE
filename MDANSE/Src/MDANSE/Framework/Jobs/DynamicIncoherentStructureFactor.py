@@ -284,7 +284,7 @@ class DynamicIncoherentStructureFactor(IJob):
             all_weights,
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
-            1
+            1,
         )
         assign_weights(self._outputData, weight_dict, "f(q,t)_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "s(q,f)_%s", self.labels)

@@ -233,7 +233,7 @@ class VelocityAutoCorrelationFunction(IJob):
             all_weights,
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
-            1
+            1,
         )
         assign_weights(self._outputData, weight_dict, "vacf_%s", self.labels)
         vacfTotal = weighted_sum(self._outputData, "vacf_%s", self.labels)

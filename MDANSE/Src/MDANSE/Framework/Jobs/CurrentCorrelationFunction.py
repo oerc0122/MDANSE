@@ -543,7 +543,7 @@ class CurrentCorrelationFunction(IJob):
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
             2,
-            conc_exp=0.5
+            conc_exp=0.5,
         )
         assign_weights(self._outputData, weight_dict, "j(q,t)_long_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "j(q,t)_trans_%s", self.labels)

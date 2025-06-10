@@ -696,7 +696,7 @@ class VanHoveFunctionDistinct(IJob):
             all_weights,
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
-            2
+            2,
         )
         if self.intra:
             for i in ["_intra", "_inter", ""]:

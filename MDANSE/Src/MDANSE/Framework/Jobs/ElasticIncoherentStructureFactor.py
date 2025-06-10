@@ -210,7 +210,7 @@ class ElasticIncoherentStructureFactor(IJob):
             all_weights,
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
-            1
+            1,
         )
         assign_weights(self._outputData, weight_dict, "eisf_%s", self.labels)
         self._outputData["eisf_total"][:] = weighted_sum(

@@ -206,7 +206,7 @@ class MeanSquareDisplacement(IJob):
             all_weights,
             nAtomsPerElement,
             self.configuration["atom_selection"].get_all_natoms(),
-            1
+            1,
         )
         assign_weights(self._outputData, weight_dict, "msd_%s", self.labels)
         msdTotal = weighted_sum(self._outputData, "msd_%s", self.labels)
