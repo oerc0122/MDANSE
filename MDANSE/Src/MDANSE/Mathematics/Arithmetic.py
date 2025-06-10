@@ -134,7 +134,7 @@ def weighted_sum(values: dict[str, np.ndarray], match_key: str, match_labels: It
     np.ndarray
         Total sum of all the component arrays scaled by their weights
     """
-    matches = [match_key % val[0] for val in match_labels]
+    matches = {match_key % val[0] for val in match_labels}
     weighted_sum = 0.0
 
     for val in (val for key, val in values.items() if key in matches):

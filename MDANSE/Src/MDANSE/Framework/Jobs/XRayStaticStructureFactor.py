@@ -207,10 +207,12 @@ class XRayStaticStructureFactor(DistanceHistogram):
 
             Yields
             ------
-            tuple[str, bool, np.ndarray]
-                A tuple of the results name, a bool specifying whether
-                results correspond to intermolecular atom pairs, and
-                the results.
+            name : str
+                Results name
+            inter : bool
+                Whether results are intermolecular atom pairs.
+            results : np.ndarray
+                The results.
             """
             ni = nAtomsPerElement[label_i]
             nj = nAtomsPerElement[label_j]

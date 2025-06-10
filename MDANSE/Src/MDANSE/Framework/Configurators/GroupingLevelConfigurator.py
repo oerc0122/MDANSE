@@ -87,7 +87,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         atomSelectionConfig = self._configurable[self._dependencies["atom_selection"]]
         chemical_system = trajConfig["instance"].chemical_system
 
-        if value == "atom" or value == "each atom":
+        if value in {"atom", "each atom"}:
             return
 
         indices = []
@@ -104,7 +104,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 self.error_status = "The trajectory does not contain molecules."
                 return
 
-            for mol_name in chemical_system._clusters.keys():
+            for mol_name in chemical_system._clusters:
                 n_atms = 0
                 group_name_elements = []
                 mol_selected = False
@@ -126,14 +126,13 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     group_elements[mol_name] = group_name_elements
                     group_n_atms[mol_name] = n_atms
 
-            self["name_to_element"] = {}
-            for name, element in zip(names, elements):
-                self["name_to_element"][name] = element[0]
+            self["name_to_element"] = {name: element[0]
+                                       for name, element in zip(names, elements)}
             self["group_names"] = sorted(set(group_names))
             self["group_elements"] = group_elements
             self["group_n_atms"] = group_n_atms
 
-        if value == "each molecule":
+        elif value == "each molecule":
             for mol_name in chemical_system._clusters.keys():
                 for mol_number, cluster in enumerate(
                     chemical_system._clusters[mol_name]
@@ -355,7 +354,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
     def update_pair_results(
         self,
-        calc_func: Callable[[str, str], Iterator[tuple[str, bool, npt.NDArray]]],
+        calc_func: Callable[[str, str], Iterable[tuple[str, bool, npt.NDArray]]],
         output_data: OutputData,
         all_pairs: bool = False,
     ):
@@ -391,10 +390,11 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 label_i = f"[{grp_i}]_{ele_i}"
                 label_j = f"[{grp_j}]_{ele_j}"
                 for name, intra, result in calc_func(label_i, label_j):
+                    if intra and grp_i != grp_j:
+                        continue
+
                     if intra and grp_i == grp_j:
                         output_data[f"{name}_[{grp_i}]_{ele_i}{ele_j}"][...] = result
-                    elif intra and grp_i != grp_j:
-                        continue
                     else:
                         output_data[f"{name}_[{grp_i}][{grp_j}]_{ele_i}{ele_j}"][
                             ...
