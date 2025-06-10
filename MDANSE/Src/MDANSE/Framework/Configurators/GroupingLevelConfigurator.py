@@ -144,7 +144,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     masses.append([mass_lookup[x] for x in cluster])
 
         atomSelectionConfig["indices"] = indices
-        atomSelectionConfig["flatten_indices"] = collapse(indices)
+        atomSelectionConfig["flatten_indices"] = list(collapse(indices))
         atomSelectionConfig["elements"] = elements
         atomSelectionConfig["masses"] = masses
         atomSelectionConfig["names"] = names
@@ -178,6 +178,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         data_type: str,
         dim: int = 1,
         conc_exp: float = 1.0,
+        *,
         intra: bool = False,
         scaling_factor: bool = True,
         post_func: Callable[[npt.NDArray], npt.NDArray] = lambda x: x,
@@ -303,7 +304,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             raise NotImplementedError("Grouped total for dim > 2 not implemented.")
 
     def pair_labels(
-        self, intra=False, all_pairs=False
+        self, *, intra: bool = False, all_pairs: bool = False
     ) -> list[tuple[str, tuple[str, str]]]:
         """Generates pair labels.
 
@@ -325,28 +326,30 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         if self["level"] == "atom":
             atom_selection = self._configurable[self._dependencies["atom_selection"]]
             selected_elements = atom_selection["unique_names"]
-            for ele_i, ele_j in self.label_pairs(selected_elements, all_pairs):
+            for ele_i, ele_j in self.label_pairs(
+                selected_elements, all_pairs=all_pairs
+            ):
                 labels.append((f"{ele_i}{ele_j}", (ele_i, ele_j)))
             return labels
 
         if intra:
             for grp in self["group_names"]:
                 eles = sorted(set(self["group_elements"][grp]))
-                for ele_i, ele_j in self.label_pairs(eles, all_pairs):
+                for ele_i, ele_j in self.label_pairs(eles, all_pairs=all_pairs):
                     pair_label = f"[{grp}]_{ele_i}{ele_j}"
                     label_i = f"[{grp}]_{ele_i}"
                     label_j = f"[{grp}]_{ele_j}"
                     labels.append((pair_label, (label_i, label_j)))
             return labels
 
-        for grp_i, grp_j in self.label_pairs(self["group_names"], all_pairs):
+        for grp_i, grp_j in self.label_pairs(self["group_names"], all_pairs=all_pairs):
             eles_i = sorted(set(self["group_elements"][grp_i]))
             eles_j = sorted(set(self["group_elements"][grp_j]))
             if grp_i == grp_j and not all_pairs:
                 pairs = it.combinations_with_replacement(eles_i, 2)
             else:
                 pairs = it.product(eles_i, eles_j)
-            for ele_i, ele_j in sorted(pairs):
+            for ele_i, ele_j in pairs:
                 pair_label = f"[{grp_i}][{grp_j}]_{ele_i}{ele_j}"
                 label_i = f"[{grp_i}]_{ele_i}"
                 label_j = f"[{grp_j}]_{ele_j}"
@@ -375,7 +378,9 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         if self["level"] == "atom":
             atom_selection = self._configurable[self._dependencies["atom_selection"]]
             selected_elements = atom_selection["unique_names"]
-            for ele_i, ele_j in self.label_pairs(selected_elements, all_pairs):
+            for ele_i, ele_j in self.label_pairs(
+                selected_elements, all_pairs=all_pairs
+            ):
                 for name, _, result in calc_func(ele_i, ele_j):
                     output_data[f"{name}_{ele_i}{ele_j}"][...] = result
             return
@@ -387,7 +392,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 iterable = it.combinations_with_replacement(eles_i, 2)
             else:
                 iterable = it.product(eles_i, eles_j)
-            for ele_i, ele_j in sorted(iterable):
+            for ele_i, ele_j in iterable:
                 label_i = f"[{grp_i}]_{ele_i}"
                 label_j = f"[{grp_j}]_{ele_j}"
                 for name, intra, result in calc_func(label_i, label_j):
@@ -401,11 +406,13 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                             ...
                         ] = result
 
-    def label_pairs(self, labels: list[str], all_pairs) -> list[tuple[str, str]]:
+    def label_pairs(
+        self, labels: Iterable[str], *, all_pairs: bool
+    ) -> list[tuple[str, str]]:
         """
         Parameters
         ----------
-        labels : list[str]
+        labels : Iterable[str]
             List of labels.
         all_pairs : bool
             Return all pairs if true or only the unique pairs if false.

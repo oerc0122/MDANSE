@@ -146,9 +146,7 @@ class CoordinationNumber(DistanceHistogram):
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()
 
         # symmetrize the data
-        for i, j in sorted(
-            it.combinations_with_replacement(self.selectedElements, 2),
-        ):
+        for i, j in it.combinations_with_replacement(self.selectedElements, 2):
             idi = self.selectedElements.index(i)
             idj = self.selectedElements.index(j)
             if i != j:

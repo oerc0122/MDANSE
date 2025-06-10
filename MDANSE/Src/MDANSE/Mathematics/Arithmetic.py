@@ -79,7 +79,7 @@ def assign_weights(
     values: dict[str, np.ndarray],
     weights: dict[str, float],
     match_key: str,
-    match_labels: Iterable,
+    match_labels: Iterable[tuple[str, tuple[str, ...]]],
     symmetric: bool = True,
 ):
     """Updates the scaling factors of partial datasets, without
@@ -93,7 +93,7 @@ def assign_weights(
         Dictionary of scaling factors per dataset
     match_key: str
         A key used to generate the dict of matches to assign weights for.
-    match_labels: Iterable
+    match_labels: Iterable[tuple[str, Union[tuple[str, ], tuple[str, str]]]]
         The labels used to generate the dict of matches to assign weights for.
     symmetric : bool, optional
         do not generate results for the same elements in a different sequence, by default True

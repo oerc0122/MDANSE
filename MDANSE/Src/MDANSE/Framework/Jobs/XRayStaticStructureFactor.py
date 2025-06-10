@@ -256,20 +256,17 @@ class XRayStaticStructureFactor(DistanceHistogram):
             calc_func, self._outputData
         )
 
-        asf = dict(
-            (
-                name,
-                atomic_scattering_factor(
-                    ele[0],
-                    self._outputData["q"],
-                    self.configuration["trajectory"]["instance"],
-                ),
+        asf = {
+            name: atomic_scattering_factor(
+                ele[0],
+                self._outputData["q"],
+                self.configuration["trajectory"]["instance"],
             )
             for name, ele in zip(
                 self.configuration["atom_selection"]["names"],
                 self.configuration["atom_selection"]["elements"],
             )
-        )
+        }
         weight_dict = get_weights(asf, nAtomsPerElement, 2)
         if self.intra:
             assign_weights(
