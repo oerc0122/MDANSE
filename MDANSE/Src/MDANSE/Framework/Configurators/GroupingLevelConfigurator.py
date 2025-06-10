@@ -13,7 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from collections.abc import Iterator
+from collections.abc import Iterable
 from typing import Callable, Optional
 import itertools as it
 
@@ -126,8 +126,9 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     group_elements[mol_name] = group_name_elements
                     group_n_atms[mol_name] = n_atms
 
-            self["name_to_element"] = {name: element[0]
-                                       for name, element in zip(names, elements)}
+            self["name_to_element"] = {
+                name: element[0] for name, element in zip(names, elements)
+            }
             self["group_names"] = sorted(set(group_names))
             self["group_elements"] = group_elements
             self["group_n_atms"] = group_n_atms
