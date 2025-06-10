@@ -268,7 +268,24 @@ class XRayStaticStructureFactor(DistanceHistogram):
                 self.configuration["atom_selection"]["elements"],
             )
         }
-        weight_dict = get_weights(asf, nAtomsPerElement, 2)
+        all_asf = {
+            name: atomic_scattering_factor(
+                ele[0],
+                self._outputData["q"],
+                self.configuration["trajectory"]["instance"],
+            )
+            for name, ele in zip(
+                self.configuration["atom_selection"]["all_names"],
+                self.configuration["atom_selection"]["all_elements"],
+            )
+        }
+        weight_dict = get_weights(
+            asf,
+            all_asf,
+            nAtomsPerElement,
+            self.configuration["atom_selection"].get_all_natoms(),
+            2,
+        )
         if self.intra:
             assign_weights(
                 self._outputData, weight_dict, "xssf_intra_%s", self.labels_intra
