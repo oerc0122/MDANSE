@@ -17,6 +17,7 @@ from collections.abc import Iterator
 import collections
 
 import numpy as np
+import numpy.typing as npt
 
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
@@ -194,7 +195,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
 
         def calc_func(
             label_i: str, label_j: str
-        ) -> Iterator[tuple[str, bool, np.ndarray]]:
+        ) -> Iterator[tuple[str, bool, npt.NDArray]]:
             """Calculates the xray static structure factor for a given
             pair of element labels.
 
@@ -208,10 +209,10 @@ class XRayStaticStructureFactor(DistanceHistogram):
             Yields
             ------
             name : str
-                Results name
+                The results name.
             inter : bool
-                Whether results are intermolecular atom pairs.
-            results : np.ndarray
+                Whether results are for intermolecular atom pairs.
+            results : npt.NDArray
                 The results.
             """
             ni = nAtomsPerElement[label_i]

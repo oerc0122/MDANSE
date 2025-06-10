@@ -17,6 +17,7 @@ from collections.abc import Iterator
 import collections
 
 import numpy as np
+import numpy.typing as npt
 
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
@@ -199,7 +200,7 @@ class StaticStructureFactor(DistanceHistogram):
 
         def calc_func(
             label_i: str, label_j: str
-        ) -> Iterator[tuple[str, bool, np.ndarray]]:
+        ) -> Iterator[tuple[str, bool, npt.NDArray]]:
             """Calculates the SSF for a given pair of element labels.
 
             Parameters
@@ -211,10 +212,12 @@ class StaticStructureFactor(DistanceHistogram):
 
             Yields
             ------
-            tuple[str, bool, np.ndarray]
-                A tuple of the results name, a bool specifying whether
-                results correspond to intermolecular atom pairs, and
-                the results.
+            name : str
+                The results name.
+            inter : bool
+                Whether results are for intermolecular atom pairs.
+            results : npt.NDArray
+                The results.
             """
             ni = nAtomsPerElement[label_i]
             nj = nAtomsPerElement[label_j]
