@@ -15,12 +15,18 @@
 #
 import itertools
 from collections.abc import Iterable
+from typing import Union
 
 import numpy as np
 
 
 def get_weights(
-    props: dict[str, float], contents: dict[str, int], dim: int, conc_exp: float = 1.0
+    selected_props: dict[str, float],
+    all_props: dict[str, float],
+    selected_contents: dict[str, int],
+    all_contents: dict[str, int],
+    dim: int,
+    conc_exp: float = 1.0,
 ) -> dict[str, float]:
     """Calculate the scaling factors to be applied to output datasets.
 
@@ -29,10 +35,14 @@ def get_weights(
 
     Parameters
     ----------
-    props : dict[str, float]
-        Dictionary of values of an atom property for a selected object, averaged over atoms in that object
-    contents : dict[str, int]
-        Dictionary of numbers of atoms in an object
+    selected_props : dict[str, float]
+        Dictionary of values of an atom property for the selected subset of the trajectory, averaged over atoms in that object
+    all_props : dict[str, float]
+        Dictionary of values of an atom property for the trajectory, averaged over atoms in that object
+    selected_contents : dict[str, int]
+        Dictionary of numbers of atoms in the selected subset of the trajectory
+    all_contents : dict[str, int]
+        Dictionary of numbers of atoms of the trajectory
     dim : int
         number of atom types in the label of the output datasets (e.g. 1 for "O", 2 for "CuCu")
     conc_exp : float
@@ -44,22 +54,11 @@ def get_weights(
     Tuple(Dict[Tuple[str], float], float)
         Dictionary of scaling factors per dataset key, and a sum of all the factors
     """
-    normFactor = 0.0
-
-    weights = {}
-
-    n_atms = sum(contents[el] for el in props)
-    cartesianProduct = itertools.product(props, repeat=dim)
-    for elements in cartesianProduct:
-        atom_conc_product = np.prod([contents[el] / n_atms for el in elements])
-        property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
-
-        factor = atom_conc_product**conc_exp * property_product
-        # E.g. for property b_coh, 5 Cu atoms, 100 total atoms, and dim=2
-        # factor = (5*5/(100*100))**conc_exp * b_coh(Cu)*b_coh(Cu)
-
-        weights[elements] = np.float64(np.copy(factor))
-        normFactor += atom_conc_product * property_product
+    n_atms = sum(all_contents[el] for el in all_props)
+    weights, _ = adjust_weights(
+        selected_props, selected_contents, n_atms, dim, conc_exp
+    )
+    _, normFactor = adjust_weights(all_props, all_contents, n_atms, dim, conc_exp)
 
     normalise = True
     try:
@@ -73,6 +72,54 @@ def get_weights(
     weights["sum"] = normFactor
 
     return weights
+
+
+def adjust_weights(
+    props: dict[str, float],
+    contents: dict[str, int],
+    n_atms: int,
+    dim: int,
+    conc_exp: float = 1.0,
+) -> tuple[dict[Union[str, tuple[str]], float], float]:
+    """Combine the weights based on whether they will be used for nth-body
+    property and adjust them based on their atom concentrations.
+
+    Parameters
+    ----------
+    props : dict[str, float]
+        Dictionary of values of an atom property for the selected subset of the trajectory, averaged over atoms in that object
+    contents : dict[str, int]
+        Dictionary of numbers of atoms in the selected subset of the trajectory
+    n_atms : int
+        Total number of atoms of the trajectory.
+    dim : int
+        number of atom types in the label of the output datasets (e.g. 1 for "O", 2 for "CuCu")
+    conc_exp : float
+        The exponent the at the product of the concentrations are taken
+        to (e.g. (c_i * c_j)**0.5 which is used for DCSF jobs).
+
+    Returns
+    -------
+    tuple[dict[Union[str, tuple[str]], float], float]
+        The dictionary of weights and a normalisation factor.
+    """
+    normFactor = 0.0
+
+    weights = {}
+
+    cartesianProduct = itertools.product(props, repeat=dim)
+    for elements in cartesianProduct:
+        atom_conc_product = np.prod([contents[el] / n_atms for el in elements])
+        property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
+
+        factor = atom_conc_product**conc_exp * property_product
+        # E.g. for property b_coh, 5 Cu atoms, 100 total atoms, and dim=2
+        # factor = (5*5/(100*100))**conc_exp * b_coh(Cu)*b_coh(Cu)
+
+        weights[elements] = np.float64(np.copy(factor))
+        normFactor += atom_conc_product * property_product
+
+    return weights, normFactor
 
 
 def assign_weights(

@@ -173,8 +173,14 @@ class PositionAutoCorrelationFunction(IJob):
         for element, number in list(nAtomsPerElement.items()):
             self._outputData[f"pacf_{element}"] /= number
 
-        weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        selected_weights, all_weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(
+            selected_weights,
+            all_weights,
+            nAtomsPerElement,
+            self.configuration["atom_selection"].get_all_natoms(),
+            1
+        )
         assign_weights(self._outputData, weight_dict, "pacf_%s", self.labels)
         pacfTotal = weighted_sum(self._outputData, "pacf_%s", self.labels)
         self._outputData.add(

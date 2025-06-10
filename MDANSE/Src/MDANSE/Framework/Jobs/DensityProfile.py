@@ -192,8 +192,14 @@ class DensityProfile(IJob):
         for element in n_atoms_per_element:
             self._outputData[f"dp_{element}"] /= self.numberOfSteps
 
-        weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, n_atoms_per_element, 1)
+        selected_weights, all_weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(
+            selected_weights,
+            all_weights,
+            n_atoms_per_element,
+            self.configuration["atom_selection"].get_all_natoms(),
+            1
+        )
         assign_weights(self._outputData, weight_dict, "dp_%s", self.labels)
         dp_total = weighted_sum(self._outputData, "dp_%s", self.labels)
 

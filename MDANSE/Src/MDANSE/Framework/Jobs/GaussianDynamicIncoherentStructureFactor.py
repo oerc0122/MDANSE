@@ -299,8 +299,14 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                     axis=1,
                 )
 
-        weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        selected_weights, all_weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(
+            selected_weights,
+            all_weights,
+            nAtomsPerElement,
+            self.configuration["atom_selection"].get_all_natoms(),
+            1
+        )
         assign_weights(self._outputData, weight_dict, "f(q,t)_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "s(q,f)_%s", self.labels)
         if self.add_ideal_results:
@@ -345,8 +351,14 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         # since GDISF ~ exp(-msd * q2 / 6.0) the MSD isn't weighted in
         # the exp lets save the MSD with equal weights
-        weights = self.configuration["weights"].get_weights("equal")
-        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        selected_weights, all_weights = self.configuration["weights"].get_weights(prop="equal")
+        weight_dict = get_weights(
+            selected_weights,
+            all_weights,
+            nAtomsPerElement,
+            self.configuration["atom_selection"].get_all_natoms(),
+            1
+        )
         assign_weights(self._outputData, weight_dict, "msd_%s", self.labels)
         self._outputData["msd_total"][:] = weighted_sum(
             self._outputData, "msd_%s", self.labels

@@ -317,8 +317,14 @@ class VanHoveFunctionSelf(IJob):
                 number**2 * self.n_configs * self.configuration["r_values"]["step"]
             )
 
-        weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        selected_weights, all_weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(
+            selected_weights,
+            all_weights,
+            nAtomsPerElement,
+            self.configuration["atom_selection"].get_all_natoms(),
+            1
+        )
         assign_weights(self._outputData, weight_dict, "g(r,t)_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "4_pi_r2_g(r,t)_%s", self.labels)
         self._outputData["g(r,t)_total"][:] = weighted_sum(

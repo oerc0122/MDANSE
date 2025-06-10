@@ -536,8 +536,15 @@ class CurrentCorrelationFunction(IJob):
                     fft="rfft",
                 )
 
-        weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 2, conc_exp=0.5)
+        selected_weights, all_weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(
+            selected_weights,
+            all_weights,
+            nAtomsPerElement,
+            self.configuration["atom_selection"].get_all_natoms(),
+            2,
+            conc_exp=0.5
+        )
         assign_weights(self._outputData, weight_dict, "j(q,t)_long_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "j(q,t)_trans_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "J(q,f)_long_%s", self.labels)

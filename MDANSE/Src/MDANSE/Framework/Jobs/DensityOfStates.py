@@ -280,8 +280,14 @@ class DensityOfStates(IJob):
                     fft="rfft",
                 )
 
-        weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 1)
+        selected_weights, all_weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(
+            selected_weights,
+            all_weights,
+            nAtomsPerElement,
+            self.configuration["atom_selection"].get_all_natoms(),
+            1,
+        )
         assign_weights(self._outputData, weight_dict, "vacf_%s", self.labels)
         assign_weights(self._outputData, weight_dict, "dos_%s", self.labels)
         if self.add_ideal_results:

@@ -261,8 +261,14 @@ class StaticStructureFactor(DistanceHistogram):
             calc_func, self._outputData
         )
 
-        weights = self.configuration["weights"].get_weights()
-        weight_dict = get_weights(weights, nAtomsPerElement, 2)
+        selected_weights, all_weights = self.configuration["weights"].get_weights()
+        weight_dict = get_weights(
+            selected_weights,
+            all_weights,
+            nAtomsPerElement,
+            self.configuration["atom_selection"].get_all_natoms(),
+            2
+        )
         if self.intra:
             assign_weights(
                 self._outputData, weight_dict, "ssf_intra_%s", self.labels_intra

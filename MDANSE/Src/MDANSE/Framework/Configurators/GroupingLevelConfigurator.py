@@ -93,6 +93,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         indices = []
         elements = []
         names = []
+        all_elements = []
+        all_names = []
         masses = []
         group_names = []
         group_elements = {}
@@ -112,6 +114,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     chemical_system._clusters[mol_name]
                 ):
                     for x in cluster:
+                        all_elements.append([chemical_system.atom_list[x]])
+                        all_names.append(f"[{mol_name}]_{chemical_system.atom_list[x]}")
                         if x not in atomSelectionConfig["flatten_indices"]:
                             continue
                         mol_selected = True
@@ -148,6 +152,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         atomSelectionConfig["elements"] = elements
         atomSelectionConfig["masses"] = masses
         atomSelectionConfig["names"] = names
+        atomSelectionConfig["all_elements"] = all_elements
+        atomSelectionConfig["all_names"] = all_names
         atomSelectionConfig["selection_length"] = len(names)
         atomSelectionConfig["unique_names"] = sorted(set(names))
 
