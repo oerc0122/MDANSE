@@ -336,7 +336,6 @@ class VanHoveFunctionSelf(IJob):
             units="au",
             main_result=True,
             partial_result=True,
-
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
