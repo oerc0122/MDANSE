@@ -168,7 +168,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nOmegas),
                 axis="q|omega",
-                units="nm2/ps",
+                units="au",
                 main_result=True,
                 partial_result=True,
             )
@@ -185,7 +185,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                     "SurfaceOutputVariable",
                     (self._nQShells, self._nOmegas),
                     axis="q|omega",
-                    units="nm2/ps",
+                    units="au",
                 )
 
         self._outputData.add(
@@ -200,7 +200,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             "SurfaceOutputVariable",
             (self._nQShells, self._nOmegas),
             axis="q|omega",
-            units="nm2/ps",
+            units="au",
             main_result=True,
         )
         self._outputData.add(
@@ -216,7 +216,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nOmegas),
                 axis="q|omega",
-                units="nm2/ps",
+                units="au",
             )
 
         self._atoms = self.configuration["trajectory"][
@@ -326,7 +326,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             self._outputData,
             "s(q,f)",
             "SurfaceOutputVariable",
-            axis="q|romega",
+            axis="q|omega",
             units="au",
             main_result=True,
         )
@@ -339,7 +339,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 self._outputData,
                 "s(q,f)_ideal",
                 "SurfaceOutputVariable",
-                axis="q|romega",
+                axis="q|omega",
                 units="au",
                 main_result=True,
             )

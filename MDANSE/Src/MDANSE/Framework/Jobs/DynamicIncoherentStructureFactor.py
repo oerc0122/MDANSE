@@ -170,7 +170,7 @@ class DynamicIncoherentStructureFactor(IJob):
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nOmegas),
                 axis="q|omega",
-                units="nm2/ps",
+                units="au",
                 main_result=True,
                 partial_result=True,
             )
@@ -180,7 +180,7 @@ class DynamicIncoherentStructureFactor(IJob):
                     "SurfaceOutputVariable",
                     (self._nQShells, self._nOmegas),
                     axis="q|omega",
-                    units="nm2/ps",
+                    units="au",
                 )
 
         self._outputData.add(
@@ -195,7 +195,7 @@ class DynamicIncoherentStructureFactor(IJob):
             "SurfaceOutputVariable",
             (self._nQShells, self._nOmegas),
             axis="q|omega",
-            units="nm2/ps",
+            units="au",
             main_result=True,
         )
         if self.add_ideal_results:
@@ -204,7 +204,7 @@ class DynamicIncoherentStructureFactor(IJob):
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nOmegas),
                 axis="q|omega",
-                units="nm2/ps",
+                units="au",
             )
 
     def run_step(self, index):
@@ -322,7 +322,7 @@ class DynamicIncoherentStructureFactor(IJob):
             self._outputData,
             "s(q,f)",
             "SurfaceOutputVariable",
-            axis="q|romega",
+            axis="q|omega",
             units="au",
             main_result=True,
         )
@@ -335,7 +335,7 @@ class DynamicIncoherentStructureFactor(IJob):
                 self._outputData,
                 "s(q,f)_ideal",
                 "SurfaceOutputVariable",
-                axis="q|romega",
+                axis="q|omega",
                 units="au",
                 main_result=True,
             )
