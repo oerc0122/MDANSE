@@ -371,7 +371,6 @@ class DynamicCoherentStructureFactor(IJob):
             conc_exp=0.5,
             axis="q|time",
             units="au",
-            main_result=True,
         )
 
         self._outputData["s(q,f)_total"][:] = weighted_sum(
@@ -386,6 +385,7 @@ class DynamicCoherentStructureFactor(IJob):
             axis="q|omega",
             units="au",
             main_result=True,
+            partial_result=True,
         )
 
         if self.add_ideal_results:
@@ -400,7 +400,6 @@ class DynamicCoherentStructureFactor(IJob):
                 conc_exp=0.5,
                 axis="q|omega",
                 units="au",
-                main_result=True,
             )
 
         self._outputData.write(

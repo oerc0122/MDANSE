@@ -220,7 +220,8 @@ class PairDistributionFunction(DistanceHistogram):
                         intra=i == "_intra",
                         axis="r",
                         units="au",
-                        main_result=j == "pdf",
+                        main_result=j == "pdf" and i == "",
+                        partial_result=j == "pdf" and i == "",
                     )
         else:
             assign_weights(self._outputData, weight_dict, "pdf_%s", self.labels)

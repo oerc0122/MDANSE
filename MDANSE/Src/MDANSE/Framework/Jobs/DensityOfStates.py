@@ -299,7 +299,6 @@ class DensityOfStates(IJob):
             "LineOutputVariable",
             axis="time",
             units="nm2/ps2",
-            main_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -308,6 +307,7 @@ class DensityOfStates(IJob):
             axis="romega",
             units="au",
             main_result=True,
+            partial_result=True,
         )
 
         if self.add_ideal_results:
@@ -320,7 +320,6 @@ class DensityOfStates(IJob):
                 "LineOutputVariable",
                 axis="romega",
                 units="au",
-                main_result=True,
             )
 
         self._outputData.write(

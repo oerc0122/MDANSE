@@ -218,6 +218,7 @@ class ElasticIncoherentStructureFactor(IJob):
             axis="q",
             units="au",
             main_result=True,
+            partial_result=True,
         )
 
         self._outputData.write(

@@ -162,6 +162,7 @@ class RootMeanSquareDeviation(IJob):
             post_func=lambda x: np.sqrt(x / n_atms),
             post_label="all",
             main_result=True,
+            partial_result=True,
         )
 
         nAtomsPerElement = self.configuration["atom_selection"].get_natoms()

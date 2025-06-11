@@ -220,6 +220,7 @@ class MeanSquareDisplacement(IJob):
             axis="time",
             units="nm2",
             main_result=True,
+            partial_result=True,
         )
 
         self._outputData.write(

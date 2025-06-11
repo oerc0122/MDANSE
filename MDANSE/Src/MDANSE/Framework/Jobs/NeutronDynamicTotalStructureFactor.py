@@ -449,7 +449,6 @@ class NeutronDynamicTotalStructureFactor(IJob):
             "SurfaceOutputVariable",
             axis="q|time",
             units="au",
-            main_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -459,7 +458,6 @@ class NeutronDynamicTotalStructureFactor(IJob):
             conc_exp=0.5,
             axis="q|time",
             units="au",
-            main_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -468,6 +466,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
             axis="q|omega",
             units="au",
             main_result=True,
+            partial_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -478,6 +477,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
             axis="q|omega",
             units="au",
             main_result=True,
+            partial_result=True,
         )
 
         # Compute total F(Q,t) = inc + coh

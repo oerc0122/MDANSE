@@ -710,7 +710,8 @@ class VanHoveFunctionDistinct(IJob):
                     intra=i == "_intra",
                     axis="r|time",
                     units="au",
-                    main_result=True,
+                    main_result=i == "",
+                    partial_result=i == "",
                 )
         else:
             assign_weights(self._outputData, weight_dict, "g(r,t)_%s", self.labels)

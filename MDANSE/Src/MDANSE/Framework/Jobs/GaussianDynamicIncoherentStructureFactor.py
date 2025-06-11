@@ -320,7 +320,6 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             "SurfaceOutputVariable",
             axis="q|time",
             units="au",
-            main_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -329,6 +328,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             axis="q|omega",
             units="au",
             main_result=True,
+            partial_result=True,
         )
 
         if self.add_ideal_results:
@@ -341,7 +341,6 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 "SurfaceOutputVariable",
                 axis="q|omega",
                 units="au",
-                main_result=True,
             )
 
         # since GDISF ~ exp(-msd * q2 / 6.0) the MSD isn't weighted in
@@ -358,7 +357,6 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             "LineOutputVariable",
             axis="time",
             units="nm2",
-            main_result=True,
         )
 
         self._outputData.write(

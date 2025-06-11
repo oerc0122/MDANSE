@@ -568,7 +568,6 @@ class CurrentCorrelationFunction(IJob):
             conc_exp=0.5,
             axis="q|time",
             units="au",
-            main_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -578,7 +577,6 @@ class CurrentCorrelationFunction(IJob):
             conc_exp=0.5,
             axis="q|time",
             units="au",
-            main_result=True,
         )
 
         sqfLongTotal = weighted_sum(self._outputData, "J(q,f)_long_%s", self.labels)
@@ -594,6 +592,7 @@ class CurrentCorrelationFunction(IJob):
             axis="q|romega",
             units="au",
             main_result=True,
+            partial_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -604,6 +603,7 @@ class CurrentCorrelationFunction(IJob):
             axis="q|romega",
             units="au",
             main_result=True,
+            partial_result=True,
         )
 
         if self.add_ideal_results:
@@ -623,7 +623,6 @@ class CurrentCorrelationFunction(IJob):
                 conc_exp=0.5,
                 axis="q|romega",
                 units="au",
-                main_result=True,
             )
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,
@@ -633,7 +632,6 @@ class CurrentCorrelationFunction(IJob):
                 conc_exp=0.5,
                 axis="q|romega",
                 units="au",
-                main_result=True,
             )
 
         self._outputData.write(

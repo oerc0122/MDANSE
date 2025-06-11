@@ -207,6 +207,8 @@ class VanHoveFunctionSelf(IJob):
                 (self.n_mid_points, self.n_frames),
                 axis="r|time",
                 units="au",
+                main_result=True,
+                partial_result=True,
             )
             self._outputData.add(
                 f"4_pi_r2_g(r,t)_{element}",
@@ -333,6 +335,8 @@ class VanHoveFunctionSelf(IJob):
             axis="r|time",
             units="au",
             main_result=True,
+            partial_result=True,
+
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -340,7 +344,6 @@ class VanHoveFunctionSelf(IJob):
             "SurfaceOutputVariable",
             axis="r|time",
             units="au",
-            main_result=True,
         )
 
         self._outputData.write(

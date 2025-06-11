@@ -281,7 +281,6 @@ class PositionPowerSpectrum(IJob):
             "LineOutputVariable",
             axis="time",
             units="nm2",
-            main_result=True,
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
@@ -290,6 +289,7 @@ class PositionPowerSpectrum(IJob):
             axis="romega",
             units="au",
             main_result=True,
+            partial_result=True,
         )
         if self.add_ideal_results:
             self._outputData["pps_ideal_total"][:] = weighted_sum(
@@ -303,7 +303,6 @@ class PositionPowerSpectrum(IJob):
                 "LineOutputVariable",
                 axis="romega",
                 units="au",
-                main_result=True,
             )
 
         self._outputData.write(
