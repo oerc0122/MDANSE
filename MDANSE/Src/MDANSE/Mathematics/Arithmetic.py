@@ -66,7 +66,7 @@ def get_weights(
     except TypeError:
         normalise = abs(normFactor) > 0.0  # if normFactor is 0, all weights are 0 too.
     if normalise:
-        for k in list(weights.keys()):
+        for k in weights:
             weights[k] /= np.float64(normFactor)
 
     weights["sum"] = normFactor

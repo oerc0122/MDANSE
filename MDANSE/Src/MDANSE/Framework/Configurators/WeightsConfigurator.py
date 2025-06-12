@@ -139,10 +139,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
             ),
         ]:
             w = defaultdict(float)
-            for name, elements in itertools.islice(
-                zip(atm_names, atm_elements),
-                len(atm_names),
-            ):
+            for name, elements in zip(atm_names, atm_elements):
                 w[name] += sum(
                     self._trajectory.get_atom_property(element, prop)
                     for element in elements
