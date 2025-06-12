@@ -280,7 +280,15 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 eles_j = sorted(set(self["group_elements"][grp_j]))
                 conc_i = self["group_n_atms"][grp_i] / tot_n_atms
                 conc_j = self["group_n_atms"][grp_j] / tot_n_atms
-                conc = (conc_i * conc_j) ** conc_exp
+                if grp_i != grp_j:
+                    # for the cross terms we divide by 2 since f(q,t)_OH
+                    # includes only OH or HO, it gets summed to the total
+                    # properly by the weight scheme. Similarly, we will
+                    # have a factor of two in the scaling factor for the
+                    # cross terms of the molecular case.
+                    conc = 2 * (conc_i * conc_j) ** conc_exp
+                else:
+                    conc = (conc_i * conc_j) ** conc_exp
 
                 if grp_i == grp_j:
                     iterable = it.combinations_with_replacement(eles_i, 2)
