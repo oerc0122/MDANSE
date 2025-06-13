@@ -51,6 +51,6 @@ def test_disf_selection_plus_inverse_results_equal_to_all_selection_results(tmp_
     with h5py.File(result_all) as all, h5py.File(result_select) as select, h5py.File(result_inv) as inv:
         for key in ["/f(q,t)_total", "/s(q,f)_total"]:
             all_results = np.array(all[key])
-            select_results = np.array(select[key])
-            inv_results = np.array(inv[key])
+            select_results = np.array(select[key]) * select[key].attrs["scaling_factor"]
+            inv_results = np.array(inv[key]) * inv[key].attrs["scaling_factor"]
             np.testing.assert_allclose(all_results, select_results + inv_results)

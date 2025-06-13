@@ -248,9 +248,9 @@ class PairDistributionFunction(DistanceHistogram):
             self._outputData["tcf_total"][:] = (
                 densityFactor * self.averageDensity * (pdf - factor) / factor
             )
-            self._outputData[f"pdf_total"].scaling_factor = factor
-            self._outputData[f"rdf_total"].scaling_factor = factor
-            self._outputData[f"tcf_total"].scaling_factor = factor
+            self._outputData["pdf_total"].scaling_factor = factor
+            self._outputData["rdf_total"].scaling_factor = factor
+            self._outputData["tcf_total"].scaling_factor = factor
 
         self._outputData.write(
             self.configuration["output_files"]["root"],
