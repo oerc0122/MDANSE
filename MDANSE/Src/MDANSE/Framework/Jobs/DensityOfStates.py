@@ -293,12 +293,19 @@ class DensityOfStates(IJob):
         if self.add_ideal_results:
             assign_weights(self._outputData, weight_dict, "dos_ideal_%s", self.labels)
 
-        self._outputData["vacf_total"][:] = weighted_sum(
-            self._outputData, "vacf_%s", self.labels
+        n_selected = sum(nAtomsPerElement.values())
+        n_total = sum(self.configuration["atom_selection"].get_all_natoms().values())
+        fact = n_selected / n_total
+
+        self._outputData["vacf_total"][:] = (
+            weighted_sum(self._outputData, "vacf_%s", self.labels) / fact
         )
-        self._outputData["dos_total"][:] = weighted_sum(
-            self._outputData, "dos_%s", self.labels
+        self._outputData["vacf_total"].scaling_factor = fact
+        self._outputData["dos_total"][:] = (
+            weighted_sum(self._outputData, "dos_%s", self.labels) / fact
         )
+        self._outputData["dos_total"].scaling_factor = fact
+
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
             "vacf",
@@ -317,9 +324,10 @@ class DensityOfStates(IJob):
         )
 
         if self.add_ideal_results:
-            self._outputData["dos_ideal_total"][:] = weighted_sum(
-                self._outputData, "dos_ideal_%s", self.labels
+            self._outputData["dos_ideal_total"][:] = (
+                weighted_sum(self._outputData, "dos_ideal_%s", self.labels) / fact
             )
+            self._outputData["dos_ideal_total"].scaling_factor = fact
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,
                 "dos_ideal",

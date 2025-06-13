@@ -314,12 +314,19 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 self._outputData, weight_dict, "s(q,f)_ideal_%s", self.labels
             )
 
-        self._outputData["f(q,t)_total"][:] = weighted_sum(
-            self._outputData, "f(q,t)_%s", self.labels
+        n_selected = sum(nAtomsPerElement.values())
+        n_total = sum(self.configuration["atom_selection"].get_all_natoms().values())
+        fact = n_selected / n_total
+
+        self._outputData["f(q,t)_total"][:] = (
+            weighted_sum(self._outputData, "f(q,t)_%s", self.labels) / fact
         )
-        self._outputData["s(q,f)_total"][:] = weighted_sum(
-            self._outputData, "s(q,f)_%s", self.labels
+        self._outputData["f(q,t)_total"].scaling_factor = fact
+        self._outputData["s(q,f)_total"][:] = (
+            weighted_sum(self._outputData, "s(q,f)_%s", self.labels) / fact
         )
+        self._outputData["s(q,f)_total"].scaling_factor = fact
+
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
             "f(q,t)",
@@ -338,9 +345,11 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         )
 
         if self.add_ideal_results:
-            self._outputData["s(q,f)_ideal_total"][:] = weighted_sum(
-                self._outputData, "s(q,f)_ideal_%s", self.labels
+            self._outputData["s(q,f)_ideal_total"][:] = (
+                weighted_sum(self._outputData, "s(q,f)_ideal_%s", self.labels) / fact
             )
+            self._outputData["s(q,f)_ideal_total"].scaling_factor = fact
+
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,
                 "s(q,f)_ideal",
@@ -362,9 +371,11 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             1,
         )
         assign_weights(self._outputData, weight_dict, "msd_%s", self.labels)
-        self._outputData["msd_total"][:] = weighted_sum(
-            self._outputData, "msd_%s", self.labels
+        self._outputData["msd_total"][:] = (
+            weighted_sum(self._outputData, "msd_%s", self.labels) / fact
         )
+        self._outputData["msd_total"].scaling_factor = fact
+
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
             "msd",
