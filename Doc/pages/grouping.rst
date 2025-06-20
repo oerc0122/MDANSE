@@ -28,7 +28,7 @@ The total is a weighted sum of all partial components
 .. math::
    :label: atompartial2
 
-    F_{\text{coh}}(\mathbf{q},t) = W_{\text{CC}} F_{\text{coh}, \text{CC}}(\mathbf{q},t) + W_{\text{CH}} F_{\text{coh}, \text{CH}}(\mathbf{q},t) + \cdots
+    F_{\text{coh}}(\mathbf{q},t) = W_{\text{CC}} F_{\text{coh}, \text{CC}}(\mathbf{q},t) + W_{\text{CH}} F_{\text{coh}, \text{CH}}(\mathbf{q},t) + \cdots.
 
 Similarly the partial incoherent intermediate
 scattering functions are obtained for each unique atom in the system e.g.
@@ -46,7 +46,7 @@ of all partial components
 .. math::
    :label: atompartial2
 
-    F_{\text{inc}}(\mathbf{q},t) = W_{\text{C}} F_{\text{inc}, \text{C}}(\mathbf{q},t) + W_{\text{H}} F_{\text{inc}, \text{H}}(\mathbf{q},t) + \cdots,
+    F_{\text{inc}}(\mathbf{q},t) = W_{\text{C}} F_{\text{inc}, \text{C}}(\mathbf{q},t) + W_{\text{H}} F_{\text{inc}, \text{H}}(\mathbf{q},t) + W_{\text{O}} F_{\text{inc}, \text{O}}(\mathbf{q},t),
 
 see :ref:`weighting-scheme` for further details.
 
@@ -66,7 +66,7 @@ partial coherent intermediate scattering functions is
 .. math::
    :label: moleculepartial1
 
-   F_{\text{coh},\text{HO}}^{[\text{EtOH}][\text{H2O}]}{(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\text{H}}^{\text{EtOH}}c_{\text{O}}^{\text{H2O}}}}}{\sum\limits_{j \in (\text{EtOH}\, \cap\, H)}{\sum\limits_{k \in (\text{H2O}\, \cap\, O)}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}},
+   F_{\text{coh},\text{HO}}^{[\text{EtOH}][\text{H2O}]}{(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\text{H}}^{\text{EtOH}}c_{\text{O}}^{\text{H2O}}}}}{\sum\limits_{j \in (\text{EtOH}\, \cap\, \text{H})}{\sum\limits_{k \in (\text{H2O}\, \cap\, \text{O})}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}},
 
 where :math:`c_{\text{H}}^{\text{EtOH}} = N_{\text{H}}^{\text{EtOH}} / N` and
 :math:`c_{\text{O}}^{\text{H2O}} = N_{\text{O}}^{\text{H2O}} / N`.
@@ -112,7 +112,7 @@ carbon atoms is
 .. math::
    :label: moleculepartial5
 
-   F_{\text{inc},\text{C}}^{\text{EtOH}}{(\mathbf{q},t ) = \frac{1}{Nc_{\text{C}}^{\text{EtOH}}}}{\sum\limits_{j \in (\text{C}\, \cap \, \text{EtOH})}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle},
+   F_{\text{inc},\text{C}}^{\text{EtOH}}{(\mathbf{q},t ) = \frac{1}{Nc_{\text{C}}^{\text{EtOH}}}}{\sum\limits_{j \in (\text{EtOH}\, \cap \, \text{C})}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle},
 
 the molecular incoherent intermediate scattering functions for ethanol
 is
@@ -127,29 +127,61 @@ With incoherent scattering length weights
 .. math::
    :label: moleculepartial7
 
-   W_{\text{C}}^{\text{EtOH}} = \frac{c_{\text{C}}^{\text{EtOH}}b_{\text{inc},C}^{2}}{c_{\text{C}}^{\text{EtOH}}b_{\text{inc},C}^{2} + \cdots}.
+   W_{\text{C}}^{\text{EtOH}} = \frac{c_{\text{C}}^{\text{EtOH}}b_{\text{inc},\text{C}}^{2}}{c_{\text{C}}^{\text{EtOH}}b_{\text{inc},\text{C}}^{2} + \cdots}.
 
 The total incoherent intermediate scattering functions
 is a weighted sum of all molecular terms
 
 .. math::
-    :label:
+    :label: moleculepartial8
 
     F_{\text{inc}}(\mathbf{q},t ) = c_{\text{EtOH}}F_{\text{inc},\text{EtOH}}(\mathbf{q},t ) + c_{\text{H2O}}F_{\text{inc},\text{H2O}}(\mathbf{q},t )
 
-where here the weight are the atom contrations of the atoms in ethanol
-and water.
-
-Scaling Factors
-~~~~~~~~~~~~~~~
-Similarly to the atom grouping, the total results with molecule grouping
-are a weighted sum of atomic or molecular terms. In MDANSE either, scaled or
-unscaled results can be plotted and may be more useful for the specific
-results that has been calculated. For example
+where here the weight are the atom concentrations of the atoms in ethanol
+and water. Similarly to the atom grouping, the total results with molecule
+grouping are a weighted sum of atomic or molecular terms. In MDANSE either,
+scaled or unscaled results can be plotted and may be more useful for the
+specific results that has been calculated.
 
 
+Other Groupings Schemes
+^^^^^^^^^^^^^^^^^^^^^^^
+
+In this section includes some analysis calculations with a group
+setting which does follow the above mechanism.
+
+Root Mean Square Deviation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Grouping in the root mean squared deviation (RMSD) analysis calculation
+works similarly to the above mechanism except for the fact that the RMSD
+analysis does not use a weight scheme and the grouping is done before
+the square root function is applied to the mean square displacement.
+Grouping is done in this way so that the grouping with the RMSD analysis
+gives the same result as the RMSD analysis when only those atom in the
+group are selected. For our water and ethanol system the molecule grouping
+the RMSD of water is
+
+.. math::
+    :label: RMSDPart1
+
+    \text{RMSD}_{\text{H2O}}(t) = \sqrt{ \frac{1}{Nc_{\text{H2O}}} \sum\limits_{j \in \text{H2O}} \vert \mathbf{r}_{j}(t) - \mathbf{r}_{j}(t_{\mathrm{ref}}) \vert^{2} }
+
+and RMSD of the hydrogen atoms in water is
+
+.. math::
+    :label: RMSDPart2
+
+    \text{RMSD}^{\text{H2O}}_{\text{H}}(t) = \sqrt{ \frac{1}{Nc^{\text{H2O}}_{\text{H}}} \sum\limits_{j \in (\text{H}\, \cap \, \text{H2O})} \vert \mathbf{r}_{j}(t) - \mathbf{r}_{j}(t_{\mathrm{ref}}) \vert^{2} }.
 
 
-Other Groupings
-^^^^^^^^^^^^^^^
+Root Mean Square Fluctuation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The root mean square fluctuation (RMSF) analysis does not average
+results but instead calculates them on an per atom or molecule basis.
+As a result the group setting in the RMSF function has two options:
+``each atom`` or ``each molecule``. With the ``each atom`` option RMSF
+are calculated for each atom in the system. With the ``each molecule``
+option the RMSF is calculated from the center of masses of each molecule
+in the system.
