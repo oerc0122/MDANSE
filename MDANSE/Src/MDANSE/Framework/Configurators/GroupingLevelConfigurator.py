@@ -30,11 +30,22 @@ from MDANSE.Mathematics.Arithmetic import weighted_sum
 class GroupingLevelConfigurator(SingleChoiceConfigurator):
     """Define how the partial results will be grouped in the output.
 
-    'atom' - partial results for each chemical elements are output.
-    'molecule' - for each molecule type, a set of outputs will be created,
-      showing how different elements in that molecule contributed to the
-      total signal.
+    The grouping levels currently supported are:
+    * 'atom': no changes are made to the atom selection
+    * 'each atom': no changes are made to the atom selection
+    * 'molecule': this changes the atom names in the atom selection so that
+        it includes the molecule name that they are a part of e.g. <H2_O1>/H
+        for water molecules hydrogen atom. Job in mdanse will sum results
+        based on the atom names so that results like f(q,t)/<H2_O1>/H will
+        be obtained.
+    * 'each molecule': this changes the atom selection so that the atom
+        indices for each molecule will be grouped together. Jobs can
+        then run calculations can be run for each group of indices
+        together.
     """
+
+    GROUP_TEMPLATE = "{result_name}/<{grp}>/{post_label}"
+    PAIR_GROUP_TEMPLATE = "{result_name}/<{grp_i}><{grp_j>/{post_label}"
 
     _default = "atom"
 
@@ -156,7 +167,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         Parameters
         ----------
         label : str
-            The label of the element e.g. [H2_O1]_H
+            The label of the element e.g. <H2_O1>/H
 
         Returns
         -------
@@ -169,7 +180,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
     def add_grouped_totals(
         self,
-        output_data: dict[str, npt.NDArray],
+        output_data: OutputData,
         result_name: str,
         data_type: str,
         dim: int = 1,
@@ -217,22 +228,21 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 grp_ele = sorted(set(self["group_elements"][grp]))
                 conc = self["group_n_atms"][grp] / tot_n_atms
                 labels = [((grp, ele), "") for ele in grp_ele]
+                group_id = self.GROUP_TEMPLATE.format(result_name, grp, post_label)
+
                 results = (
-                    weighted_sum(output_data, result_name + "_[%s]_%s", labels) / conc
+                    weighted_sum(output_data, result_name + "/<%s>/%s", labels) / conc
                 )
+
                 output_data.add(
-                    f"{result_name}_[{grp}]_{post_label}",
+                    group_id,
                     data_type,
                     results.shape,
                     **kwargs,
                 )
-                output_data[f"{result_name}_[{grp}]_{post_label}"][...] = post_func(
-                    results
-                )
+                output_data[group_id][...] = post_func(results)
                 if scaling_factor:
-                    output_data[
-                        f"{result_name}_[{grp}]_{post_label}"
-                    ].scaling_factor = conc
+                    output_data[group_id].scaling_factor = conc
         elif dim == 2:
             if intra:
                 for grp in self["group_names"]:
@@ -244,23 +254,21 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     ]
 
                     results = (
-                        weighted_sum(output_data, result_name + "_[%s]_%s%s", labels)
+                        weighted_sum(output_data, result_name + "/<%s>/%s%s", labels)
                         / conc
                     )
 
+                    group_id = self.GROUP_TEMPLATE.format(result_name, grp, post_label)
+
                     output_data.add(
-                        f"{result_name}_[{grp}]_{post_label}",
+                        group_id,
                         data_type,
                         results.shape,
                         **kwargs,
                     )
-                    output_data[f"{result_name}_[{grp}]_{post_label}"][...] = post_func(
-                        results
-                    )
+                    output_data[group_id][...] = post_func(results)
                     if scaling_factor:
-                        output_data[
-                            f"{result_name}_[{grp}]_{post_label}"
-                        ].scaling_factor = conc
+                        output_data[group_id].scaling_factor = conc
                 return
 
             for grp_i, grp_j in it.combinations_with_replacement(
@@ -287,23 +295,21 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 labels = [((grp_i, grp_j, *pair), "") for pair in iterable]
 
                 results = (
-                    weighted_sum(output_data, result_name + "_[%s][%s]_%s%s", labels)
+                    weighted_sum(output_data, result_name + "/<%s><%s>/%s%s", labels)
                     / conc
                 )
 
+                group_id = self.PAIR_GROUP_TEMPLATE.format(result_name, grp_i, grp_j, post_label)
+
                 output_data.add(
-                    f"{result_name}_[{grp_i}][{grp_j}]_{post_label}",
+                    group_id,
                     data_type,
                     results.shape,
                     **kwargs,
                 )
-                output_data[f"{result_name}_[{grp_i}][{grp_j}]_{post_label}"][...] = (
-                    post_func(results)
-                )
+                output_data[group_id][...] = post_func(results)
                 if scaling_factor:
-                    output_data[
-                        f"{result_name}_[{grp_i}][{grp_j}]_{post_label}"
-                    ].scaling_factor = conc
+                    output_data[group_id].scaling_factor = conc
         else:
             raise NotImplementedError("Grouped total for dim > 2 not implemented.")
 
@@ -340,23 +346,24 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             for grp in self["group_names"]:
                 eles = sorted(set(self["group_elements"][grp]))
                 for ele_i, ele_j in self.label_pairs(eles, all_pairs=all_pairs):
-                    pair_label = f"[{grp}]_{ele_i}{ele_j}"
-                    label_i = f"[{grp}]_{ele_i}"
-                    label_j = f"[{grp}]_{ele_j}"
+                    pair_label = f"<{grp}>/{ele_i}{ele_j}"
+                    label_i = f"<{grp}>/{ele_i}"
+                    label_j = f"<{grp}>/{ele_j}"
                     labels.append((pair_label, (label_i, label_j)))
             return labels
 
         for grp_i, grp_j in self.label_pairs(self["group_names"], all_pairs=all_pairs):
             eles_i = sorted(set(self["group_elements"][grp_i]))
             eles_j = sorted(set(self["group_elements"][grp_j]))
+
             if grp_i == grp_j and not all_pairs:
                 pairs = it.combinations_with_replacement(eles_i, 2)
             else:
                 pairs = it.product(eles_i, eles_j)
             for ele_i, ele_j in pairs:
-                pair_label = f"[{grp_i}][{grp_j}]_{ele_i}{ele_j}"
-                label_i = f"[{grp_i}]_{ele_i}"
-                label_j = f"[{grp_j}]_{ele_j}"
+                pair_label = f"<{grp_i}><{grp_j}>/{ele_i}{ele_j}"
+                label_i = f"<{grp_i}>/{ele_i}"
+                label_j = f"<{grp_j}>/{ele_j}"
                 labels.append((pair_label, (label_i, label_j)))
         return labels
 
@@ -386,7 +393,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 selected_elements, all_pairs=all_pairs
             ):
                 for name, _, result in calc_func(ele_i, ele_j):
-                    output_data[f"{name}_{ele_i}{ele_j}"][...] = result
+                    output_data[f"{name}/{ele_i}{ele_j}"][...] = result
             return
 
         for grp_i, grp_j in it.combinations_with_replacement(self["group_names"], 2):
@@ -396,19 +403,21 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 iterable = it.combinations_with_replacement(eles_i, 2)
             else:
                 iterable = it.product(eles_i, eles_j)
+
             for ele_i, ele_j in iterable:
-                label_i = f"[{grp_i}]_{ele_i}"
-                label_j = f"[{grp_j}]_{ele_j}"
+                label_i = f"<{grp_i}>/{ele_i}"
+                label_j = f"<{grp_j}>/{ele_j}"
                 for name, intra, result in calc_func(label_i, label_j):
                     if intra and grp_i != grp_j:
                         continue
 
+                    post_label = "".join((ele_i, ele_j))
+
                     if intra and grp_i == grp_j:
-                        output_data[f"{name}_[{grp_i}]_{ele_i}{ele_j}"][...] = result
+                        group_id = self.GROUP_TEMPLATE.format(name, grp_i, post_label)
                     else:
-                        output_data[f"{name}_[{grp_i}][{grp_j}]_{ele_i}{ele_j}"][
-                            ...
-                        ] = result
+                        group_id = self.PAIR_GROUP_TEMPLATE(name, grp_i, grp_j, post_label)
+                    output_data[group_id][...] = result
 
     def label_pairs(
         self, labels: Iterable[str], *, all_pairs: bool

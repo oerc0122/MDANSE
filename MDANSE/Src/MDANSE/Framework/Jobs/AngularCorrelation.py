@@ -95,14 +95,14 @@ class AngularCorrelation(IJob):
         )
 
         self._outputData.add(
-            "time",
+            "ac/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
 
         self._outputData.add(
-            "axis_index",
+            "ac/axes/axis_index",
             "LineOutputVariable",
             np.arange(
                 self.configuration["trajectory"][
@@ -115,17 +115,17 @@ class AngularCorrelation(IJob):
         )
 
         self._outputData.add(
-            "ac",
+            "ac/ac",
             "LineOutputVariable",
             (self.configuration["frames"]["n_frames"],),
-            axis="time",
+            axis="ac/axes/time",
             units="au",
             main_result=True,
         )
 
         if self.configuration["per_axis"]["value"]:
             self._outputData.add(
-                "ac_per_axis",
+                "ac/per_axis",
                 "SurfaceOutputVariable",
                 (
                     self.configuration["trajectory"][
@@ -135,7 +135,7 @@ class AngularCorrelation(IJob):
                     ),
                     self.configuration["frames"]["n_frames"],
                 ),
-                axis="axis_index|time",
+                axis="ac/axes/axis_index|ac/axes/time",
                 units="au",
                 main_result=True,
                 partial_result=True,
@@ -191,17 +191,17 @@ class AngularCorrelation(IJob):
             #. x (any): The returned result(s) of run_step
         """
 
-        self._outputData["ac"] += x
+        self._outputData["ac/ac"] += x
 
         if self.configuration["per_axis"]["value"]:
-            self._outputData["ac_per_axis"][index, :] = x
+            self._outputData["ac/per_axis"][index, :] = x
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        self._outputData["ac"] /= self.configuration["trajectory"][
+        self._outputData["ac/ac"] /= self.configuration["trajectory"][
             "instance"
         ].chemical_system.number_of_molecules(
             self.configuration["molecule_name"]["value"]
