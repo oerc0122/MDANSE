@@ -480,6 +480,7 @@ class CurrentCorrelationFunction(IJob):
         rho_l, rho_t = x
         n_configs = self.configuration["frames"]["n_configs"]
         for pair_str, (label_i, label_j) in self.labels:
+            print(label_i, label_j)
             corr_l = correlate(
                 rho_l[label_i], rho_l[label_j][:n_configs], mode="valid"
             )[

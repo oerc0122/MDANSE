@@ -44,13 +44,25 @@ def compare_hdf5(result_path: Path, benchmark_path: Path,
             else:
                 subset = slice(None)
 
-            a = (result[f"/{key}"] * result[f"/{key}"].attrs["scaling_factor"]
-                 if scale_result else
-                 result[f"/{key}"])
-            b = (benchmark[f"/{key}"][subset] * benchmark[f"/{key}"].attrs["scaling_factor"]
-                 if scale_benchmark else
-                 benchmark[f"/{key}"][subset])
+            if isinstance(result[f"/{key}"], h5py.Dataset):
+                search = (key,)
+            else:
+                # Recursive search through all datasets.
+                search = []
+                def visitor(name: str, obj: type):
+                    if isinstance(obj, h5py.Dataset):
+                        search.append(f"{key}/{name}")
+                result[f"/{key}"].visititems(visitor)
 
-            np.testing.assert_allclose(a, b,
-                                       atol=atol, rtol=rtol,
-                                       err_msg=f"Failure in key {key!r}.")
+            for test in search:
+
+                a = (result[f"/{test}"] * result[f"/{test}"].attrs["scaling_factor"]
+                     if scale_result else
+                     result[f"/{test}"])
+                b = (benchmark[f"/{test}"][subset] * benchmark[f"/{test}"].attrs["scaling_factor"]
+                     if scale_benchmark else
+                     benchmark[f"/{test}"][subset])
+
+                np.testing.assert_allclose(a, b,
+                                           atol=atol, rtol=rtol,
+                                           err_msg=f"Failure in key {test!r}.")

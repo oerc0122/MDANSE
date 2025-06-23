@@ -85,8 +85,8 @@ def disf(tmp_path_factory):
         ("DensityOfStates", ["dos", "vacf"], "equal", 1e-10, 1e-7),
         ("MeanSquareDisplacement", ["msd"], "equal", 1e-10, 1e-7),
         ("VelocityAutoCorrelationFunction", ["vacf"], "equal", 1e-10, 1e-7),
-        ("VanHoveFunctionDistinct", ["g(r,t)"], "equal", 1e-10, 1e-7),
-        ("VanHoveFunctionSelf", ["g(r,t)"], "equal", 1e-10, 1e-7),
+        ("VanHoveFunctionDistinct", ["vh/g(r,t)"], "equal", 1e-10, 1e-7),
+        ("VanHoveFunctionSelf", ["vh/g(r,t)"], "equal", 1e-10, 1e-7),
         ("PositionAutoCorrelationFunction", ["pacf"], "equal", 1e-10, 1e-7),
         ("PositionPowerSpectrum", ["pacf", "pps"], "equal", 1e-10, 1e-7),
         ("RootMeanSquareDeviation", ["rmsd"], "equal", 1e-10, 1e-7),
@@ -101,10 +101,10 @@ def disf(tmp_path_factory):
             1e-6,
             1e-6,
         ),
-        ("CurrentCorrelationFunction", ["J(q,f)", "j(q,t)"], "b_coherent", 1e-6, 1e-7),
+        ("CurrentCorrelationFunction", ["ccf/J(q,f)", "ccf/j(q,t)"], "b_coherent", 1e-6, 1e-7),
         (
             "DynamicIncoherentStructureFactor",
-            ["f(q,t)", "s(q,f)"],
+            ["disf/f(q,t)", "disf/s(q,f)"],
             "b_incoherent",
             1e-10,
             1e-7,
@@ -199,7 +199,7 @@ def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
     assert log_file.is_file()
 
     compare_hdf5(
-        out_file, result_file, ("f(q,t)", "s(q,f)"), startswith=True, atol=1e-6
+        out_file, result_file, ("ndsf/f(q,t)", "ndsf/s(q,f)"), startswith=True, atol=1e-6
     )
 
 
@@ -228,4 +228,4 @@ def test_ssfsf(generate_benchmarks, tmp_path, dcsf):
     assert out_file.is_file()
     assert log_file.is_file()
 
-    compare_hdf5(out_file, result_file, "ssf_total", startswith=True, atol=1e-6)
+    compare_hdf5(out_file, result_file, "ssf/total", startswith=True, atol=1e-6)

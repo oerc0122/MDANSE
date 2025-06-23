@@ -132,7 +132,7 @@ class PositionPowerSpectrum(IJob):
             "pps/res/time_window",
             "LineOutputVariable",
             instrResolution["time_window_positive"],
-            axis="time",
+            axis="pps/axes/time",
             units="au",
         )
 
@@ -152,7 +152,7 @@ class PositionPowerSpectrum(IJob):
             "pps/res/omega_window",
             "LineOutputVariable",
             instrResolution["omega_window"],
-            axis="omega",
+            axis="pps/axes/omega",
             units="au",
         )
 

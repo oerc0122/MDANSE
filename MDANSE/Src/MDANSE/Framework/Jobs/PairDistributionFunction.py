@@ -83,7 +83,7 @@ class PairDistributionFunction(DistanceHistogram):
             if self.intra:
                 for label, _ in self.labels_intra:
                     self._outputData.add(
-                        f"{i}/intra_{label}",
+                        f"{i}/intra/{label}",
                         "LineOutputVariable",
                         (npoints,),
                         axis=f"{i}/axes/r",
@@ -91,21 +91,21 @@ class PairDistributionFunction(DistanceHistogram):
                     )
                 for label, _ in self.labels:
                     self._outputData.add(
-                        f"{i}/inter_{label}",
+                        f"{i}/inter/{label}",
                         "LineOutputVariable",
                         (npoints,),
                         axis=f"{i}/axes/r",
                         units="au",
                     )
                 self._outputData.add(
-                    f"{i}/intra_total",
+                    f"{i}/intra/total",
                     "LineOutputVariable",
                     (npoints,),
                     axis=f"{i}/axes/r",
                     units="au",
                 )
                 self._outputData.add(
-                    f"{i}/inter_total",
+                    f"{i}/inter/total",
                     "LineOutputVariable",
                     (npoints,),
                     axis=f"{i}/axes/r",
@@ -163,7 +163,7 @@ class PairDistributionFunction(DistanceHistogram):
             fact = 2 * nij * nFrames * shellVolumes
 
             for i, pdf in zip(
-                ("", "intra", "inter"),
+                ("", "/intra", "/inter"),
                 (
                     pdf_total := self.h_total[idi, idj, :] / fact,
                     pdf_intra := self.h_intra[idi, idj, :] / fact
@@ -172,18 +172,18 @@ class PairDistributionFunction(DistanceHistogram):
                     pdf_total - pdf_intra if self.intra else None,
                 ),
             ):
-                yield f"pdf/{i}", i == "intra", pdf
+                yield f"pdf{i}", i == "/intra", pdf
                 yield (
-                    f"rdf/{i}",
-                    i == "intra",
+                    f"rdf{i}",
+                    i == "/intra",
                     shellSurfaces * self.averageDensity * pdf,
                 )
                 yield (
-                    f"tcf/{i}",
-                    i == "intra",
+                    f"tcf{i}",
+                    i == "/intra",
                     densityFactor
                     * self.averageDensity
-                    * (pdf if i == "intra" else pdf - 1),
+                    * (pdf if i == "/intra" else pdf - 1),
                 )
                 if self.indices_intra is None:
                     break
@@ -206,7 +206,7 @@ class PairDistributionFunction(DistanceHistogram):
         factor = (n_selected / n_total) ** 2
 
         if self.intra:
-            for i in ("/intra_", "/inter", ""):
+            for i in ("/intra", "/inter", ""):
                 if i == "/intra":
                     labels = self.labels_intra
                 else:
@@ -229,7 +229,7 @@ class PairDistributionFunction(DistanceHistogram):
                 for j in ("pdf", "rdf", "tcf"):
                     self.configuration["grouping_level"].add_grouped_totals(
                         self._outputData,
-                        f"{j}/{i}",
+                        f"{j}{i}",
                         "LineOutputVariable",
                         dim=2,
                         intra=i == "/intra",

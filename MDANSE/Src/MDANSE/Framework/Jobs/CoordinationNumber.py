@@ -202,7 +202,7 @@ class CoordinationNumber(DistanceHistogram):
 
             self.h_total[idi, idj, :] /= fact
             cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
-            yield "cn/cn", False, rho_j * cnTotal
+            yield "cn", False, rho_j * cnTotal
 
             if self.intra:
                 self.h_intra[idi, idj, :] /= fact

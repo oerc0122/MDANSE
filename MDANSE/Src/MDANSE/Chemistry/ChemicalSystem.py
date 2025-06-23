@@ -89,7 +89,8 @@ class ChemicalSystem:
         ]
         self._atom_types = [str(x) for x in element_list]
         self._total_number_of_atoms = len(self._atom_indices)
-        self._unique_elements.update(set(element_list))
+        self._unique_elements.update(element_list)
+
         if name_list is not None:
             self._atom_names = [str(x) for x in name_list]
 

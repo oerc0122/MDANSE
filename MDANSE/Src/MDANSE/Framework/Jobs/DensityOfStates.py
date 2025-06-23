@@ -140,7 +140,7 @@ class DensityOfStates(IJob):
         )
 
         self._outputData.add(
-            "dos/res/omega", "LineOutputVariable", instrResolution["omega"], units="rad/ps"
+            "dos/axes/omega", "LineOutputVariable", instrResolution["omega"], units="rad/ps"
         )
         self._outputData.add(
             "dos/axes/romega", "LineOutputVariable", instrResolution["romega"], units="rad/ps"
