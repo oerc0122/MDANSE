@@ -150,7 +150,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "Inconsistent omegas between dcsf and disf input files"
             )
 
-        self._outputData.add("ndsf/axes/omega", "LineOutputVariable", dcsf_omegas, units="rad/ps")
+        self._outputData.add("ndsf/axes/omega", "LineOutputVariable", dcsf_omega, units="rad/ps")
 
         # Check omega window consistency
         dcsf_omega_window, disf_omega_window = self._get_data_from_files("res/omega_window")
@@ -216,8 +216,8 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 )
 
         for element in self.configuration["atom_selection"]["unique_names"]:
-            fqt = self.configuration["disf_input_file"]["instance"][f"f(q,t)_{element}"]
-            sqf = self.configuration["disf_input_file"]["instance"][f"s(q,f)_{element}"]
+            fqt = self.configuration["disf_input_file"]["instance"][f"disf/f(q,t)/{element}"]
+            sqf = self.configuration["disf_input_file"]["instance"][f"disf/s(q,f)/{element}"]
             self._outputData.add(
                 f"ndsf/f(q,t)_inc/{element}",
                 "SurfaceOutputVariable",
@@ -257,7 +257,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         nQValues = len(dcsf_q)
         nTimes = len(dcsf_time)
-        nOmegas = len(dcsf_omegas)
+        nOmegas = len(dcsf_omega)
 
         self._outputData.add(
             "ndsf/f(q,t)_coh/total",

@@ -136,7 +136,7 @@ class StructureFactorFromScatteringFunction(IJob):
 
         for pair_str, (label_i, label_j) in self.labels:
             fqt = self.configuration["dcsf_input_file"]["instance"][
-                f"f(q,t)/{pair_str}"
+                f"dcsf/f(q,t)/{pair_str}"
             ]
             sqrt_cij = sqrt(
                 nAtomsPerElement[label_i] * nAtomsPerElement[label_j] * norm_natoms**2

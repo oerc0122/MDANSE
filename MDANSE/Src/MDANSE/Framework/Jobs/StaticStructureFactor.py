@@ -311,7 +311,7 @@ class StaticStructureFactor(DistanceHistogram):
             self._outputData["ssf/total"][:] = (
                 weighted_sum(self._outputData, "ssf/%s", self.labels) / fact
             )
-            self._outputData["ssf_total"].scaling_factor = fact
+            self._outputData["ssf/total"].scaling_factor = fact
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

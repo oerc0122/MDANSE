@@ -337,7 +337,7 @@ class DensityOfStates(IJob):
             self._outputData["dos/ideal/total"][:] = weighted_sum(
                 self._outputData, "dos/ideal/%s", self.labels
             ) / fact
-            self._outputData["dos_ideal_total"].scaling_factor = fact
+            self._outputData["dos/ideal/total"].scaling_factor = fact
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,
                 "dos/ideal",

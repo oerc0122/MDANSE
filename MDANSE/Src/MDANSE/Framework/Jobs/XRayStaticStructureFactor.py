@@ -272,7 +272,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
         all_asf = {
             name: atomic_scattering_factor(
                 ele[0],
-                self._outputData["q"],
+                self._outputData["xssf/axes/q"],
                 self.configuration["trajectory"]["instance"],
             )
             for name, ele in zip(

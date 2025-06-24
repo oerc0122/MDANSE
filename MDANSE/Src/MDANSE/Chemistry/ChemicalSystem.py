@@ -89,8 +89,7 @@ class ChemicalSystem:
         ]
         self._atom_types = [str(x) for x in element_list]
         self._total_number_of_atoms = len(self._atom_indices)
-        self._unique_elements.update(element_list)
-
+        self._unique_elements.update(set(element_list))
         if name_list is not None:
             self._atom_names = [str(x) for x in name_list]
 
@@ -113,7 +112,7 @@ class ChemicalSystem:
 
     def add_clusters(self, group_list: list[list[int]]):
         for group in group_list:
-            sorted_group = sorted(set(group))
+            sorted_group = list(sorted(set(group)))
             if len(sorted_group) < 2:
                 continue
             atom_list = [self._atom_types[index] for index in group]
@@ -164,10 +163,13 @@ class ChemicalSystem:
         set[int]
             An set of matched atom indices.
         """
+        substruct_set = set()
         matches = self.rdkit_mol.GetSubstructMatches(
             Chem.MolFromSmarts(smarts), maxMatches=maxmatches
         )
-        return {ind for match in matches for ind in match}
+        for match in matches:
+            substruct_set.update(match)
+        return substruct_set
 
     @property
     def atom_list(self) -> list[str]:

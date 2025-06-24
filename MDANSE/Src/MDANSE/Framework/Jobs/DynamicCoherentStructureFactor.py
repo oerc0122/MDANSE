@@ -147,7 +147,7 @@ class DynamicCoherentStructureFactor(IJob):
         )
 
         self._outputData.add(
-            "dcsf/res/omega",
+            "dcsf/axes/omega",
             "LineOutputVariable",
             self._instrResolution["omega"],
             units="rad/ps",
@@ -156,7 +156,7 @@ class DynamicCoherentStructureFactor(IJob):
             "dcsf/res/omega_window",
             "LineOutputVariable",
             self._instrResolution["omega_window"],
-            axis="dcsf/res/omega",
+            axis="dcsf/axes/omega",
             units="au",
         )
 
@@ -412,7 +412,7 @@ class DynamicCoherentStructureFactor(IJob):
                 weighted_sum(self._outputData, "dcsf/s(q,f)/ideal/%s", self.labels)
                 / fact
             )
-            self._outputData["s(q,f)_ideal_total"].scaling_factor = fact
+            self._outputData["dcsf/s(q,f)/ideal/total"].scaling_factor = fact
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,
                 "dcsf/s(q,f)/ideal",

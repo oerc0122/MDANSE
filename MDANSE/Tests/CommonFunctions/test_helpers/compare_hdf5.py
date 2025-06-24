@@ -50,11 +50,17 @@ def compare_hdf5(result_path: Path, benchmark_path: Path,
                 # Recursive search through all datasets.
                 search = []
                 def visitor(name: str, obj: type):
-                    if isinstance(obj, h5py.Dataset):
+                    if isinstance(obj, h5py.Dataset) and "axes" not in name:
                         search.append(f"{key}/{name}")
                 result[f"/{key}"].visititems(visitor)
 
+            assert search, f"No keys matching search term '{key}' found"
+
             for test in search:
+
+                assert test in result, f"Key ({test}) not found in result."
+                assert test in benchmark, f"Key ({test}) not found in benchmark."
+
 
                 a = (result[f"/{test}"] * result[f"/{test}"].attrs["scaling_factor"]
                      if scale_result else

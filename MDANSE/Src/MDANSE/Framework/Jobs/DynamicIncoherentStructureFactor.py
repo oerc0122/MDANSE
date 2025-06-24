@@ -131,86 +131,86 @@ class DynamicIncoherentStructureFactor(IJob):
         ]
 
         self._outputData.add(
-            "dicf/axes/q",
+            "disf/axes/q",
             "LineOutputVariable",
             self.configuration["q_vectors"]["shells"],
             units="1/nm",
         )
 
         self._outputData.add(
-            "dicf/axes/time",
+            "disf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
         self._outputData.add(
-            "dicf/res/time_window",
+            "disf/res/time_window",
             "LineOutputVariable",
             self._instrResolution["time_window"],
             units="au",
         )
 
         self._outputData.add(
-            "dicf/res/omega",
+            "disf/axes/omega",
             "LineOutputVariable",
             self._instrResolution["omega"],
             units="rad/ps",
         )
         self._outputData.add(
-            "dicf/res/omega_window",
+            "disf/res/omega_window",
             "LineOutputVariable",
             self._instrResolution["omega_window"],
-            axis="dicf/res/omega",
+            axis="disf/axes/omega",
             units="au",
         )
 
         for element in self.configuration["atom_selection"]["unique_names"]:
             self._outputData.add(
-                f"dicf/f(q,t)/{element}",
+                f"disf/f(q,t)/{element}",
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nFrames),
-                axis="dicf/axes/q|dicf/axes/time",
+                axis="disf/axes/q|disf/axes/time",
                 units="au",
             )
             self._outputData.add(
-                f"dicf/s(q,f)/{element}",
+                f"disf/s(q,f)/{element}",
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nOmegas),
-                axis="dicf/axes/q|dicf/axes/omega",
+                axis="disf/axes/q|disf/axes/omega",
                 units="au",
                 main_result=True,
                 partial_result=True,
             )
             if self.add_ideal_results:
                 self._outputData.add(
-                    f"dicf/s(q,f)/ideal/{element}",
+                    f"disf/s(q,f)/ideal/{element}",
                     "SurfaceOutputVariable",
                     (self._nQShells, self._nOmegas),
-                    axis="dicf/axes/q|dicf/axes/omega",
+                    axis="disf/axes/q|disf/axes/omega",
                     units="au",
                 )
 
         self._outputData.add(
-            "dicf/f(q,t)/total",
+            "disf/f(q,t)/total",
             "SurfaceOutputVariable",
             (self._nQShells, self._nFrames),
-            axis="dicf/axes/q|dicf/axes/time",
+            axis="disf/axes/q|disf/axes/time",
             units="au",
         )
         self._outputData.add(
-            "dicf/s(q,f)/total",
+            "disf/s(q,f)/total",
             "SurfaceOutputVariable",
             (self._nQShells, self._nOmegas),
-            axis="dicf/axes/q|dicf/axes/omega",
+            axis="disf/axes/q|disf/axes/omega",
             units="au",
             main_result=True,
         )
         if self.add_ideal_results:
             self._outputData.add(
-                "dicf/s(q,f)/ideal/total",
+                "disf/s(q,f)/ideal/total",
                 "SurfaceOutputVariable",
                 (self._nQShells, self._nOmegas),
-                axis="dicf/axes/q|dicf/axes/omega",
+                axis="disf/axes/q|disf/axes/omega",
                 units="au",
             )
 
@@ -274,7 +274,7 @@ class DynamicIncoherentStructureFactor(IJob):
 
         element = self.configuration["atom_selection"]["names"][index]
         for i, v in enumerate(disf_per_q_shell.values()):
-            self._outputData[f"dicf/f(q,t)/{element}"][i, :] += v
+            self._outputData[f"disf/f(q,t)/{element}"][i, :] += v
 
     def finalize(self):
         """
@@ -296,24 +296,24 @@ class DynamicIncoherentStructureFactor(IJob):
             self.configuration["atom_selection"].get_all_natoms(),
             1,
         )
-        assign_weights(self._outputData, weight_dict, "dicf/f(q,t)/%s", self.labels)
-        assign_weights(self._outputData, weight_dict, "dicf/s(q,f)/%s", self.labels)
+        assign_weights(self._outputData, weight_dict, "disf/f(q,t)/%s", self.labels)
+        assign_weights(self._outputData, weight_dict, "disf/s(q,f)/%s", self.labels)
         if self.add_ideal_results:
             assign_weights(
-                self._outputData, weight_dict, "dicf/s(q,f)/ideal_%s", self.labels
+                self._outputData, weight_dict, "disf/s(q,f)/ideal_%s", self.labels
             )
         for element, number in list(nAtomsPerElement.items()):
             extra_scaling = 1.0 / number
-            self._outputData[f"dicf/f(q,t)/{element}"] *= extra_scaling
-            self._outputData[f"dicf/s(q,f)/{element}"][:] = get_spectrum(
-                self._outputData[f"dicf/f(q,t)/{element}"],
+            self._outputData[f"disf/f(q,t)/{element}"] *= extra_scaling
+            self._outputData[f"disf/s(q,f)/{element}"][:] = get_spectrum(
+                self._outputData[f"disf/f(q,t)/{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
             if self.add_ideal_results:
-                self._outputData[f"dicf/s(q,f)/ideal/{element}"][:] = get_spectrum(
-                    self._outputData[f"dicf/f(q,t)/{element}"],
+                self._outputData[f"disf/s(q,f)/ideal/{element}"][:] = get_spectrum(
+                    self._outputData[f"disf/f(q,t)/{element}"],
                     None,
                     self.configuration["instrument_resolution"]["time_step"],
                     axis=1,
@@ -323,45 +323,45 @@ class DynamicIncoherentStructureFactor(IJob):
         n_total = sum(self.configuration["atom_selection"].get_all_natoms().values())
         fact = n_selected / n_total
 
-        self._outputData["dicf/f(q,t)/total"][:] = (
-            weighted_sum(self._outputData, "dicf/f(q,t)/%s", self.labels) / fact
+        self._outputData["disf/f(q,t)/total"][:] = (
+            weighted_sum(self._outputData, "disf/f(q,t)/%s", self.labels) / fact
         )
-        self._outputData["dicf/f(q,t)/total"].scaling_factor = fact
+        self._outputData["disf/f(q,t)/total"].scaling_factor = fact
 
-        self._outputData["dicf/s(q,f)/total"][:] = (
-            weighted_sum(self._outputData, "dicf/s(q,f)/%s", self.labels) / fact
+        self._outputData["disf/s(q,f)/total"][:] = (
+            weighted_sum(self._outputData, "disf/s(q,f)/%s", self.labels) / fact
         )
-        self._outputData["dicf/s(q,f)/total"].scaling_factor = fact
+        self._outputData["disf/s(q,f)/total"].scaling_factor = fact
 
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
-            "dicf/f(q,t)",
+            "disf/f(q,t)",
             "SurfaceOutputVariable",
-            axis="dicf/axes/q|dicf/axes/time",
+            axis="disf/axes/q|disf/axes/time",
             units="au",
         )
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,
-            "dicf/s(q,f)",
+            "disf/s(q,f)",
             "SurfaceOutputVariable",
-            axis="dicf/axes/q|dicf/axes/omega",
+            axis="disf/axes/q|disf/axes/omega",
             units="au",
             main_result=True,
             partial_result=True,
         )
 
         if self.add_ideal_results:
-            self._outputData["dicf/s(q,f)/ideal/total"][:] = (
-                weighted_sum(self._outputData, "dicf/s(q,f)/ideal/%s", self.labels)
+            self._outputData["disf/s(q,f)/ideal/total"][:] = (
+                weighted_sum(self._outputData, "disf/s(q,f)/ideal/%s", self.labels)
                 / fact
             )
-            self._outputData["dicf/s(q,f)/ideal/total"].scaling_factor = fact
+            self._outputData["disf/s(q,f)/ideal/total"].scaling_factor = fact
 
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,
-                "dicf/s(q,f)/ideal",
+                "disf/s(q,f)/ideal",
                 "SurfaceOutputVariable",
-                axis="dicf/axes/q|dicf/axes/omega",
+                axis="disf/axes/q|disf/axes/omega",
                 units="au",
             )
 

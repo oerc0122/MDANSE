@@ -326,7 +326,9 @@ class VanHoveFunctionSelf(IJob):
             1,
         )
         assign_weights(self._outputData, weight_dict, "vh/g(r,t)/%s", self.labels)
-        assign_weights(self._outputData, weight_dict, "vh/4_pi_r2_g(r,t)/%s", self.labels)
+        assign_weights(
+            self._outputData, weight_dict, "vh/4_pi_r2_g(r,t)/%s", self.labels
+        )
 
         n_selected = sum(nAtomsPerElement.values())
         n_total = sum(self.configuration["atom_selection"].get_all_natoms().values())
@@ -336,7 +338,7 @@ class VanHoveFunctionSelf(IJob):
             weighted_sum(self._outputData, "vh/g(r,t)/%s", self.labels) / fact
         )
         self._outputData["vh/g(r,t)/total"].scaling_factor = fact
-        self._outputData["vh/4_pi_r2/g(r,t)_total"][:] = (
+        self._outputData["vh/4_pi_r2_g(r,t)/total"][:] = (
             weighted_sum(self._outputData, "vh/4_pi_r2_g(r,t)/%s", self.labels) / fact
         )
         self._outputData["vh/4_pi_r2_g(r,t)/total"].scaling_factor = fact

@@ -198,7 +198,7 @@ class PositionAutoCorrelationFunction(IJob):
             units="nm2",
             main_result=True,
         )
-        self._outputData["pacf_total"].scaling_factor = fact
+        self._outputData["pacf/total"].scaling_factor = fact
 
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,

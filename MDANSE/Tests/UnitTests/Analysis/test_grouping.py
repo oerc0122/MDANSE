@@ -93,15 +93,21 @@ def disf(tmp_path_factory):
         ("CoordinationNumber", ["cn"], "equal", 1e-10, 1e-7),
         ("PairDistributionFunction", ["pdf", "rdf", "tcf"], "equal", 1e-10, 1e-7),
         ("StaticStructureFactor", ["ssf"], "equal", 1e-10, 1e-7),
-        ("XRayStaticStructureFactor", ["xssf"], "equal", 1e-10, 1e-7),
+        ("XRayStaticStructureFactor", ["xssf/total"], "equal", 1e-10, 1e-7),
         (
             "DynamicCoherentStructureFactor",
-            ["f(q,t)", "s(q,f)"],
+            ["dcsf/f(q,t)", "dcsf/s(q,f)"],
             "b_coherent",
             1e-6,
             1e-6,
         ),
-        ("CurrentCorrelationFunction", ["ccf/J(q,f)", "ccf/j(q,t)"], "b_coherent", 1e-6, 1e-7),
+        (
+            "CurrentCorrelationFunction",
+            ["ccf/J(q,f)", "ccf/j(q,t)"],
+            "b_coherent",
+            1e-6,
+            1e-7,
+        ),
         (
             "DynamicIncoherentStructureFactor",
             ["disf/f(q,t)", "disf/s(q,f)"],
@@ -109,10 +115,16 @@ def disf(tmp_path_factory):
             1e-10,
             1e-7,
         ),
-        ("ElasticIncoherentStructureFactor", ["eisf"], "b_incoherent", 1e-10, 1e-7),
+        (
+            "ElasticIncoherentStructureFactor",
+            ["eisf/eisf"],
+            "b_incoherent",
+            1e-10,
+            1e-7,
+        ),
         (
             "GaussianDynamicIncoherentStructureFactor",
-            ["f(q,t)", "s(q,f)", "msd"],
+            ["gdisf/f(q,t)", "gdisf/s(q,f)", "msd/msd"],
             "b_incoherent",
             1e-10,
             1e-7,
@@ -167,7 +179,7 @@ def test_rmsf(generate_benchmarks, tmp_path, parameters):
     assert out_file.is_file()
     assert log_file.is_file()
 
-    compare_hdf5(out_file, result_file, "rmsf", startswith=True)
+    compare_hdf5(out_file, result_file, "rmsf/rmsf", startswith=True)
 
 
 def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
@@ -199,7 +211,11 @@ def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
     assert log_file.is_file()
 
     compare_hdf5(
-        out_file, result_file, ("ndsf/f(q,t)", "ndsf/s(q,f)"), startswith=True, atol=1e-6
+        out_file,
+        result_file,
+        ("ndsf/f(q,t)", "ndsf/s(q,f)"),
+        startswith=True,
+        atol=1e-6,
     )
 
 
