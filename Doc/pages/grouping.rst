@@ -71,7 +71,7 @@ partial coherent intermediate scattering functions is
 where :math:`c_{\text{H}}^{\text{EtOH}} = N_{\text{H}}^{\text{EtOH}} / N` and
 :math:`c_{\text{O}}^{\text{H2O}} = N_{\text{O}}^{\text{H2O}} / N`.
 :math:`N_{\text{H}}^{\text{EtOH}}` and :math:`N_{\text{O}}^{\text{H2O}}` are
-the total number of atoms atoms of hydrogen in ethanol and oxygen in water respectively,
+the total number of atoms of hydrogen in ethanol and oxygen in water respectively,
 and :math:`N` is the total number of atom in the system. The molecular
 coherent intermediate scattering functions between ethanol and water is
 proportional to the weighted sum of the partial terms
@@ -100,7 +100,7 @@ is a weighted sum of all molecular terms
 
    F_{\text{coh}}(\mathbf{q},t) = \sqrt{c_{\text{EtOH}} c_{\text{EtOH}}}F_{\text{coh}}^{[\text{EtOH}][\text{EtOH}]}(\mathbf{q},t) + \sqrt{c_{\text{EtOH}} c_{\text{H2O}}}F_{\text{coh}}^{[\text{EtOH}][\text{H2O}]}(\mathbf{q},t) + \cdots
 
-where here the weights are simply the square roots of the product of the
+where the weights are simply the square roots of the product of the
 atom concentrations.
 
 Similarly the partial incoherent intermediate
@@ -114,7 +114,7 @@ carbon atoms is
 
    F_{\text{inc},\text{C}}^{\text{EtOH}}{(\mathbf{q},t ) = \frac{1}{Nc_{\text{C}}^{\text{EtOH}}}}{\sum\limits_{j \in (\text{EtOH}\, \cap \, \text{C})}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle},
 
-the molecular incoherent intermediate scattering functions for ethanol
+and the molecular incoherent intermediate scattering functions for ethanol
 is
 
 .. math::
@@ -122,7 +122,7 @@ is
 
    c_{\text{EtOH}}F_{\text{inc},\text{EtOH}}(\mathbf{q},t ) = W^{\text{EtOH}}_{\text{C}} F_{\text{inc},\text{C}}^{\text{EtOH}}(\mathbf{q},t ) + W^{\text{EtOH}}_{\text{H}}F_{\text{inc},\text{H}}^{\text{EtOH}}(\mathbf{q},t ) + \cdots.
 
-With incoherent scattering length weights
+with incoherent scattering length weights of
 
 .. math::
    :label: moleculepartial7
@@ -137,7 +137,7 @@ is a weighted sum of all molecular terms
 
     F_{\text{inc}}(\mathbf{q},t ) = c_{\text{EtOH}}F_{\text{inc},\text{EtOH}}(\mathbf{q},t ) + c_{\text{H2O}}F_{\text{inc},\text{H2O}}(\mathbf{q},t )
 
-where here the weight are the atom concentrations of the atoms in ethanol
+where the weight are the atom concentrations of the atoms in ethanol
 and water. Similarly to the atom grouping, the total results with molecule
 grouping are a weighted sum of atomic or molecular terms. In MDANSE either,
 scaled or unscaled results can be plotted and may be more useful for the
