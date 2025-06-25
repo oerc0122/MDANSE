@@ -8,10 +8,11 @@ Results Grouping
 Atom Grouping
 ^^^^^^^^^^^^^
 
-With the default settings, MDANSE will group results by atom so that results are
-summed for all atoms of each type in the system and those results are
-summed using the :ref:`weighting-scheme` to obtain the total. Lets
-consider a system of water and ethanol. With atom grouping,
+With the default settings, MDANSE will group results by atom type, so that
+partial results are summed into datasets, with one dataset per atom type
+present in the system. The total result is calculated from these partial
+results using the :ref:`weighting-scheme`. Let's
+consider a system consisting of a mixture of water and ethanol. With atom grouping,
 the partial coherent intermediate scattering
 functions are obtained for each unique pair of atoms in the system:
 CC, CH, CO, HH, HO, and OO. For example, the C and H partial coherent
@@ -53,7 +54,7 @@ see :ref:`weighting-scheme` for further details.
 Molecule Grouping
 ^^^^^^^^^^^^^^^^^
 
-MDANSE can also group results by molecule so that they are summed for
+MDANSE can also group results by molecule type, so that they are summed for
 all atoms of each type on each type of molecule, again we will consider
 a system of water and ethanol. With molecule grouping, the partial
 coherent intermediate scattering functions are obtained for each
@@ -61,7 +62,7 @@ unique pair of molecules and their atoms types:
 [EtOH][EtOH]_CC, [EtOH][EtOH]_CH, [EtOH][H2O]_HO, and etc. Where
 [EtOH][H2O]_HO are all pairs of H and O atoms where H are the hydrogen
 atoms in ethanol and O are the oxygen atoms in water. The [EtOH][H2O]_HO
-partial coherent intermediate scattering functions is
+partial coherent intermediate scattering function is
 
 .. math::
    :label: moleculepartial1
@@ -69,7 +70,7 @@ partial coherent intermediate scattering functions is
    F_{\text{coh},\text{HO}}^{[\text{EtOH}][\text{H2O}]}{(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\text{H}}^{\text{EtOH}}c_{\text{O}}^{\text{H2O}}}}}{\sum\limits_{j \in (\text{EtOH}\, \cap\, \text{H})}{\sum\limits_{k \in (\text{H2O}\, \cap\, \text{O})}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}},
 
 where :math:`c_{\text{H}}^{\text{EtOH}} = N_{\text{H}}^{\text{EtOH}} / N` and
-:math:`c_{\text{O}}^{\text{H2O}} = N_{\text{O}}^{\text{H2O}} / N`.
+:math:`c_{\text{O}}^{\text{H2O}} = N_{\text{O}}^{\text{H2O}} / N`. Here,
 :math:`N_{\text{H}}^{\text{EtOH}}` and :math:`N_{\text{O}}^{\text{H2O}}` are
 the total number of atoms of hydrogen in ethanol and oxygen in water respectively,
 and :math:`N` is the total number of atom in the system. The molecular
@@ -83,9 +84,9 @@ proportional to the weighted sum of the partial terms
     &+ W_{\text{CO}}^{[\text{EtOH}][\text{H2O}]} F_{\text{coh},\text{CO}}^{[\text{EtOH}][\text{H2O}]}(\mathbf{q},t) + \cdots
 
 where :math:`c_{\text{EtOH}} = N_{\text{EtOH}} / N` and
-:math:`c_{\text{H2O}} = N_{\text{H2O}} / N`. :math:`N_{\text{EtOH}}`
+:math:`c_{\text{H2O}} = N_{\text{H2O}} / N`. Here, :math:`N_{\text{EtOH}}`
 and :math:`N_{\text{H2O}}` are the total number of atoms in ethanol and
-water respectively and for coherent scattering lengths
+water respectively. For coherent scattering lengths
 
 .. math::
    :label: moleculepartial3
@@ -106,7 +107,7 @@ atom concentrations.
 Similarly the partial incoherent intermediate
 scattering functions are obtained for each molecule and its atom types:
 [EtOH]_C, [EtOH]_H, [EtOH]_O, [H2O]_H, and [H2O]_O. For example,
-the partial incoherent intermediate scattering functions for ethanols
+the partial incoherent intermediate scattering functions for ethanol's
 carbon atoms is
 
 .. math::
@@ -139,7 +140,7 @@ is a weighted sum of all molecular terms
 
 where the weight are the atom concentrations of the atoms in ethanol
 and water. Similarly to the atom grouping, the total results with molecule
-grouping are a weighted sum of atomic or molecular terms. In MDANSE either,
+grouping are a weighted sum of atomic or molecular terms. In MDANSE, either
 scaled or unscaled results can be plotted and may be more useful for the
 specific results that has been calculated.
 
@@ -179,7 +180,7 @@ Root Mean Square Fluctuation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The root mean square fluctuation (RMSF) analysis does not average
-results but instead calculates them on an per atom or molecule basis.
+results but instead calculates them on an per-atom or per-molecule basis.
 As a result the group setting in the RMSF function has two options:
 ``each atom`` or ``each molecule``. With the ``each atom`` option RMSF
 are calculated for each atom in the system. With the ``each molecule``

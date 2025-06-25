@@ -172,11 +172,11 @@ the manual selection can be saved.
 Atom Selection Results
 ~~~~~~~~~~~~~~~~~~~~~~
 
-In MDANSE the scaled total results from a calculation with selection will always
-be a fraction of the total results when all atoms are selected. This is
-done so that, for example, the total results from calculation with a
-selection and its inverse selection sum to give the total results for
-the calculation will all atom selected. For example, the DCSF and DISF
+In MDANSE, the scaled total results from a calculation with selection will always
+be a fraction of the total results (i.e. when all atoms are selected). This is
+done so that, for example, the total results from two calculation, one with a
+selection and the other with its inverse selection, add up to give the total results
+for the calculation will all atom selected. For example, the DCSF and DISF
 with selection is
 
 .. math::
@@ -191,7 +191,7 @@ with selection is
 
 where :math:`N` is the total number of all atoms,
 :math:`c_{\alpha\, \cap\, s} = N_{\alpha\, \cap\, s} / N`, and :math:`N_{\alpha\, \cap\, s}`
-is the total number of :math:`\alpha` atoms in the selection. With selection
+is the total number of :math:`\alpha` atoms in the selection. With selection,
 the DCSF and DISF weights are
 
 .. math::
@@ -206,7 +206,7 @@ and
 
    W_{\alpha} = \frac{c_{\alpha\, \cap\, s} b_{\mathrm{inc},\alpha}^2}{\sum_{\gamma} c_{\gamma} b_{\mathrm{inc},\gamma}^2}
 
-so that the normalisation factor on the weights do not depend on the selection.
+so that the normalisation factors on the weights do not depend on the selection.
 The total DCSF and DISF results are a weighted sum of the partial terms
 
 .. math::
@@ -214,11 +214,11 @@ The total DCSF and DISF results are a weighted sum of the partial terms
 
     F_{\text{coh}}(\mathbf{q},t) = \frac{N}{N_{s}} \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} F_{\text{coh},\alpha\beta}(\mathbf{q},t), \quad  F_{\text{inc}}(\mathbf{q},t) = \frac{N}{N_{s}} \sum_{\alpha} W_{\alpha} F_{\text{inc},\alpha}(\mathbf{q},t).
 
-where :math:`N_s` is the total number of selected atoms. So that the
+where :math:`N_s` is the total number of selected atoms. This way the
 total results are equivalent to the a system which only contains those
-atoms assuming the weights normalisation factor is unchanged. The
-total results can also be rescaled so that it is a fraction of the total
-results with all atoms selected
+atoms, assuming the weights normalisation factor is unchanged. The
+total result from a selection can also be rescaled so that it is a fraction
+of the total results with all atoms selected
 
 .. math::
    :label: selection4
