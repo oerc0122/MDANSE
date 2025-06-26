@@ -155,12 +155,11 @@ Root Mean Square Deviation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Grouping in the root mean squared deviation (RMSD) analysis calculation
-works similarly to the above mechanism except for the fact that the RMSD
-analysis does not use a weight scheme and the grouping is done before
-the square root function is applied to the mean square displacement.
-Grouping is done in this way so that the grouping with the RMSD analysis
+works similarly to the above mechanism. In the RMSD calculation, grouping
+is done before the square root function is applied to the mean square
+displacement. This means that grouping with the RMSD analysis will
 gives the same result as the RMSD analysis when only those atom in the
-group are selected. For our water and ethanol system the molecule grouping
+group selected. For our water and ethanol system the molecule grouping
 the RMSD of water is
 
 .. math::
