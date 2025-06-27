@@ -327,7 +327,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
             self._outputData["xssf/total"][:] = (
                 weighted_sum(self._outputData, "xssf/%s", self.labels) / fact
             )
-            self._outputData["xssf_total"].scaling_factor = fact
+            self._outputData["xssf/total"].scaling_factor = fact
 
         self._outputData.write(
             self.configuration["output_files"]["root"],
