@@ -90,14 +90,22 @@ class ConfiguratorError(Error):
 
 
 class IConfigurator(dict, metaclass=SubclassFactory):
-    """The base class for configurator objects.
+    """The parent class for all the input parameter parsers.
 
-    A configurator is an input parser for a variable required by any subclass
-    of Configurable.
+    This class implements the base class for configurator objects.
+    A configurator object is a dictionary-derived object that is used
+    to configure one item of a given configuration. Once the input
+    value given for that item is configured, the dictionary is updated
+    with keys/values providing information about this item.
 
-    In some cases, a configurator may depend on another configurator.
-    A 'dependencies' keyword argument can be used to list the other
-    configurators that the current one will need to access.
+    A configurator is not designed to be used as a stand-alone object.
+    It should be used within the scope of a Configurable object that
+    will store a complete configuration for a given task (e.g. job,
+    Q vectors, instrument resolution ...).
+
+    Usually, configurator objects are self-consistent but for complex ones,
+    it can happen that they depends on other configurators of the
+    configuration.
     """
 
     _default = None
