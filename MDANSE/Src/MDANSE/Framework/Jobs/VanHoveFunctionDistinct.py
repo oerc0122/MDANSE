@@ -709,7 +709,9 @@ class VanHoveFunctionDistinct(IJob):
                     labels = self.labels_intra
                 else:
                     labels = self.labels
-                assign_weights(self._outputData, weight_dict, f"vh/g(r,t){i}/%s", labels)
+                assign_weights(
+                    self._outputData, weight_dict, f"vh/g(r,t){i}/%s", labels
+                )
                 vhs = weighted_sum(self._outputData, f"vh/g(r,t){i}/%s", labels)
                 self._outputData[f"vh/g(r,t){i}/total"][...] = vhs / fact
                 self._outputData[f"vh/g(r,t){i}/total"].scaling_factor = fact

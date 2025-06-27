@@ -173,7 +173,9 @@ class RootMeanSquareDeviation(IJob):
                 self._outputData[f"rmsd/{element}"] / number
             )
 
-        self._outputData["rmsd/total"][:] = np.sqrt(self._outputData["rmsd/total"] / n_atms)
+        self._outputData["rmsd/total"][:] = np.sqrt(
+            self._outputData["rmsd/total"] / n_atms
+        )
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

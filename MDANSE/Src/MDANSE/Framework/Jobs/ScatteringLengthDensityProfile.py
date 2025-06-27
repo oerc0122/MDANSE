@@ -104,7 +104,9 @@ class ScatteringLengthDensityProfile(IJob):
         axis_length = np.sqrt(np.sum(axis**2))
         self._n_bins = int(axis_length / self._dr) + 1
 
-        self._outputData.add("dp/axes/r", "LineOutputVariable", (self._n_bins,), units="nm")
+        self._outputData.add(
+            "dp/axes/r", "LineOutputVariable", (self._n_bins,), units="nm"
+        )
 
         self._indices_per_element = self.configuration["atom_selection"].get_indices()
         self._elements = list(self.configuration["atom_selection"].get_natoms().keys())
@@ -123,7 +125,7 @@ class ScatteringLengthDensityProfile(IJob):
 
         for element in self._elements:
             self._outputData.add(
-                f"dp/{element}",
+                f"dp/number/{element}",
                 "LineOutputVariable",
                 (self._n_bins,),
                 axis="dp/axes/r",
@@ -131,16 +133,16 @@ class ScatteringLengthDensityProfile(IJob):
             )
 
         self._outputData.add(
-            "dp/total",
+            "dp/number/total",
             "LineOutputVariable",
             (self._n_bins,),
             axis="dp/axes/r",
             units="1 / ang3",
         )
 
-        for component in ["", "/incoherent", "/total"]:
+        for component in ["/sldp", "/incoherent", "/total"]:
             self._outputData.add(
-                f"dp/sldp{component}",
+                f"sldp{component}",
                 "LineOutputVariable",
                 (self._n_bins,),
                 axis="dp/axes/r",
@@ -206,10 +208,12 @@ class ScatteringLengthDensityProfile(IJob):
         slice_volume, density_profile = data
 
         for element, hist in density_profile.items():
-            self._outputData[f"dp/{element}"] += hist / slice_volume
+            self._outputData[f"dp/number/{element}"] += hist / slice_volume
             slen_list = self.scattering_lengths[element]
-            for component, scat_len in zip(["", "/incoherent", "/total"], slen_list):
-                self._outputData[f"dp/sldp{component}"] += scat_len * hist / slice_volume
+            for component, scat_len in zip(
+                ["/sldp", "/incoherent", "/total"], slen_list
+            ):
+                self._outputData[f"sldp{component}"] += scat_len * hist / slice_volume
 
     def finalize(self) -> None:
         """
@@ -219,8 +223,10 @@ class ScatteringLengthDensityProfile(IJob):
         n_atoms_per_element = self.configuration["atom_selection"].get_natoms()
 
         for element in n_atoms_per_element:
-            self._outputData[f"dp/{element}"] /= self.numberOfSteps
-            self._outputData["dp/total"] += self._outputData[f"dp/{element}"]
+            self._outputData[f"dp/number/{element}"] /= self.numberOfSteps
+            self._outputData["dp/number/total"] += self._outputData[
+                f"dp/number/{element}"
+            ]
 
         n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.configuration["atom_selection"].get_all_natoms().values())
@@ -228,15 +234,15 @@ class ScatteringLengthDensityProfile(IJob):
 
         self._indices_per_element
 
-        for dset in ["dp/total", "dp/sldp", "dp/sldp/incoherent", "dp/sldp/total"]:
+        for dset in ["dp/number/total", "sldp/sldp", "sldp/incoherent", "sldp/total"]:
             self._outputData[dset] /= fact
             self._outputData[dset].scaling_factor = fact
 
         r_values = np.linspace(0, self._extent / self.numberOfSteps, self._n_bins + 1)
         self._outputData["dp/axes/r"][:] = (r_values[1:] + r_values[:-1]) / 2
 
-        for component in ["", "/incoherent", "/total"]:
-            self._outputData[f"dp/sldp{component}"] *= 1e6 / self.numberOfSteps
+        for component in ["/sldp", "/incoherent", "/total"]:
+            self._outputData[f"sldp{component}"] *= 1e6 / self.numberOfSteps
 
         self._outputData.write(
             self.configuration["output_files"]["root"],

@@ -156,7 +156,11 @@ class OrderParameter(IJob):
             main_result=True,
         )
         self._outputData.add(
-            "op/s2", "LineOutputVariable", (self._nAxis,), axis="op/axes/time", units="au"
+            "op/s2",
+            "LineOutputVariable",
+            (self._nAxis,),
+            axis="op/axes/time",
+            units="au",
         )
 
         if self.configuration["per_axis"]["value"]:

@@ -130,7 +130,6 @@ class DensityOfStates(IJob):
             units="ps",
         )
 
-
         self._outputData.add(
             "dos/res/time_window",
             "LineOutputVariable",
@@ -140,10 +139,16 @@ class DensityOfStates(IJob):
         )
 
         self._outputData.add(
-            "dos/axes/omega", "LineOutputVariable", instrResolution["omega"], units="rad/ps"
+            "dos/axes/omega",
+            "LineOutputVariable",
+            instrResolution["omega"],
+            units="rad/ps",
         )
         self._outputData.add(
-            "dos/axes/romega", "LineOutputVariable", instrResolution["romega"], units="rad/ps"
+            "dos/axes/romega",
+            "LineOutputVariable",
+            instrResolution["romega"],
+            units="rad/ps",
         )
         self._outputData.add(
             "dos/res/omega_window",
@@ -334,9 +339,9 @@ class DensityOfStates(IJob):
         )
 
         if self.add_ideal_results:
-            self._outputData["dos/ideal/total"][:] = weighted_sum(
-                self._outputData, "dos/ideal/%s", self.labels
-            ) / fact
+            self._outputData["dos/ideal/total"][:] = (
+                weighted_sum(self._outputData, "dos/ideal/%s", self.labels) / fact
+            )
             self._outputData["dos/ideal/total"].scaling_factor = fact
             self.configuration["grouping_level"].add_grouped_totals(
                 self._outputData,

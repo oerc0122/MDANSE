@@ -89,7 +89,9 @@ class NeutronDynamicTotalStructureFactor(IJob):
         out = {}
         for file, prop in zip(("dcsf", "disf"), self._expand(props)):
             try:
-                out[file] = self.configuration[f"{file}_input_file"]["instance"][prop][:]
+                out[file] = self.configuration[f"{file}_input_file"]["instance"][prop][
+                    :
+                ]
             except KeyError:
                 raise NeutronDynamicTotalStructureFactorError(
                     f"No `{prop}` found in {file} input file"
@@ -118,10 +120,14 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "Inconsistent times between dcsf and disf input files"
             )
 
-        self._outputData.add("ndsf/axes/time", "LineOutputVariable", dcsf_time, units="ps")
+        self._outputData.add(
+            "ndsf/axes/time", "LineOutputVariable", dcsf_time, units="ps"
+        )
 
         # Check time window consistency
-        dcsf_time_window, disf_time_window = self._get_data_from_files("res/time_window")
+        dcsf_time_window, disf_time_window = self._get_data_from_files(
+            "res/time_window"
+        )
 
         if not np.all(dcsf_time_window == disf_time_window):
             raise NeutronDynamicTotalStructureFactorError(
@@ -150,10 +156,14 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "Inconsistent omegas between dcsf and disf input files"
             )
 
-        self._outputData.add("ndsf/axes/omega", "LineOutputVariable", dcsf_omega, units="rad/ps")
+        self._outputData.add(
+            "ndsf/axes/omega", "LineOutputVariable", dcsf_omega, units="rad/ps"
+        )
 
         # Check omega window consistency
-        dcsf_omega_window, disf_omega_window = self._get_data_from_files("res/omega_window")
+        dcsf_omega_window, disf_omega_window = self._get_data_from_files(
+            "res/omega_window"
+        )
 
         if not np.all(dcsf_omega_window == disf_omega_window):
             raise NeutronDynamicTotalStructureFactorError(
@@ -216,8 +226,12 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 )
 
         for element in self.configuration["atom_selection"]["unique_names"]:
-            fqt = self.configuration["disf_input_file"]["instance"][f"disf/f(q,t)/{element}"]
-            sqf = self.configuration["disf_input_file"]["instance"][f"disf/s(q,f)/{element}"]
+            fqt = self.configuration["disf_input_file"]["instance"][
+                f"disf/f(q,t)/{element}"
+            ]
+            sqf = self.configuration["disf_input_file"]["instance"][
+                f"disf/s(q,f)/{element}"
+            ]
             self._outputData.add(
                 f"ndsf/f(q,t)_inc/{element}",
                 "SurfaceOutputVariable",
@@ -396,10 +410,10 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 ele_i, "b_incoherent"
             )
             self._outputData[f"ndsf/f(q,t)_inc/{label}"].scaling_factor *= (
-                bi ** 2 * number * norm_natoms
+                bi**2 * number * norm_natoms
             )
             self._outputData[f"ndsf/s(q,f)_inc/{label}"].scaling_factor *= (
-                bi ** 2 * number * norm_natoms
+                bi**2 * number * norm_natoms
             )
             self._outputData["ndsf/f(q,t)_inc/total"][:] += (
                 self._outputData[f"ndsf/f(q,t)_inc/{label}"][:]

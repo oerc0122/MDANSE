@@ -34,9 +34,9 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
     * 'atom': no changes are made to the atom selection
     * 'each atom': no changes are made to the atom selection
     * 'molecule': this changes the atom names in the atom selection so that
-        it includes the molecule name that they are a part of e.g. <H2_O1>_H
-        for water molecules hydrogen atom. Job in mdanse will sum results
-        based on the atom names so that results like f(q,t)/<H2_O1>_H will
+        it includes the molecule name that they are a part of e.g. <H2_O1>/H
+        for a water molecule's hydrogen atom. Job in mdanse will sum results
+        based on the atom names so that results like f(q,t)/<H2_O1>/H will
         be obtained.
     * 'each molecule': this changes the atom selection so that the atom
         indices for each molecule will be grouped together. Jobs can
@@ -44,8 +44,8 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         together.
     """
 
-    GROUP_TEMPLATE = "{}/<{}>_{}"
-    PAIR_GROUP_TEMPLATE = "{}/<{}><{}>_{}"
+    GROUP_TEMPLATE = "{}/<{}>/{}"
+    PAIR_GROUP_TEMPLATE = "{}/<{}><{}>/{}"
 
     _default = "atom"
 
@@ -116,14 +116,14 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 ):
                     for x in cluster:
                         all_elements.append([chemical_system.atom_list[x]])
-                        all_names.append(f"[{mol_name}]_{chemical_system.atom_list[x]}")
+                        all_names.append(f"<{mol_name}>/{chemical_system.atom_list[x]}")
                         if x not in atomSelectionConfig["flatten_indices"]:
                             continue
                         mol_selected = True
                         indices.append([x])
                         elements.append([chemical_system.atom_list[x]])
                         group_name_elements.append(chemical_system.atom_list[x])
-                        names.append(f"<{mol_name}>_{chemical_system.atom_list[x]}")
+                        names.append(f"<{mol_name}>/{chemical_system.atom_list[x]}")
                         masses.append([mass_lookup[x]])
                         n_atms += 1
                 if mol_selected:
@@ -165,7 +165,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
         Parameters
         ----------
         label : str
-            The label of the element e.g. <H2_O1>_H
+            The label of the element e.g. <H2_O1>/H
 
         Returns
         -------
@@ -229,7 +229,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 group_id = self.GROUP_TEMPLATE.format(result_name, grp, post_label)
 
                 results = (
-                    weighted_sum(output_data, result_name + "/<%s>_%s", labels) / conc
+                    weighted_sum(output_data, result_name + "/<%s>/%s", labels) / conc
                 )
 
                 output_data.add(
@@ -252,7 +252,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                     ]
 
                     results = (
-                        weighted_sum(output_data, result_name + "/<%s>_%s%s", labels)
+                        weighted_sum(output_data, result_name + "/<%s>/%s%s", labels)
                         / conc
                     )
 
@@ -293,11 +293,13 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 labels = [((grp_i, grp_j, *pair), "") for pair in iterable]
 
                 results = (
-                    weighted_sum(output_data, result_name + "/<%s><%s>_%s%s", labels)
+                    weighted_sum(output_data, result_name + "/<%s><%s>/%s%s", labels)
                     / conc
                 )
 
-                group_id = self.PAIR_GROUP_TEMPLATE.format(result_name, grp_i, grp_j, post_label)
+                group_id = self.PAIR_GROUP_TEMPLATE.format(
+                    result_name, grp_i, grp_j, post_label
+                )
 
                 output_data.add(
                     group_id,
@@ -344,9 +346,9 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             for grp in self["group_names"]:
                 eles = sorted(set(self["group_elements"][grp]))
                 for ele_i, ele_j in self.label_pairs(eles, all_pairs=all_pairs):
-                    pair_label = f"<{grp}>_{ele_i}{ele_j}"
-                    label_i = f"<{grp}>_{ele_i}"
-                    label_j = f"<{grp}>_{ele_j}"
+                    pair_label = f"<{grp}>/{ele_i}{ele_j}"
+                    label_i = f"<{grp}>/{ele_i}"
+                    label_j = f"<{grp}>/{ele_j}"
                     labels.append((pair_label, (label_i, label_j)))
             return labels
 
@@ -359,9 +361,9 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
             else:
                 pairs = it.product(eles_i, eles_j)
             for ele_i, ele_j in pairs:
-                pair_label = f"<{grp_i}><{grp_j}>_{ele_i}{ele_j}"
-                label_i = f"<{grp_i}>_{ele_i}"
-                label_j = f"<{grp_j}>_{ele_j}"
+                pair_label = f"<{grp_i}><{grp_j}>/{ele_i}{ele_j}"
+                label_i = f"<{grp_i}>/{ele_i}"
+                label_j = f"<{grp_j}>/{ele_j}"
                 labels.append((pair_label, (label_i, label_j)))
         return labels
 
@@ -403,18 +405,20 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
                 iterable = it.product(eles_i, eles_j)
 
             for ele_i, ele_j in iterable:
-                label_i = f"<{grp_i}>_{ele_i}"
-                label_j = f"<{grp_j}>_{ele_j}"
+                label_i = f"<{grp_i}>/{ele_i}"
+                label_j = f"<{grp_j}>/{ele_j}"
                 for name, intra, result in calc_func(label_i, label_j):
                     if intra and grp_i != grp_j:
                         continue
 
-                    post_label = "".join((ele_i, ele_j))
+                    post_label = f"{ele_i}{ele_j}"
 
                     if intra and grp_i == grp_j:
                         group_id = self.GROUP_TEMPLATE.format(name, grp_i, post_label)
                     else:
-                        group_id = self.PAIR_GROUP_TEMPLATE.format(name, grp_i, grp_j, post_label)
+                        group_id = self.PAIR_GROUP_TEMPLATE.format(
+                            name, grp_i, grp_j, post_label
+                        )
                     output_data[group_id][...] = result
 
     def label_pairs(

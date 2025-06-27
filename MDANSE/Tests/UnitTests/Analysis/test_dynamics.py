@@ -81,6 +81,7 @@ def test_pps(generate_benchmarks, tmp_path):
             for fn in ("pacf", "pps")
         ],
         scale_result=True,
+        scale_benchmark=True,
     )
 
 

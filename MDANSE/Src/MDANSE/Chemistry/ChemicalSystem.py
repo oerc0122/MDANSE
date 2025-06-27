@@ -170,13 +170,10 @@ class ChemicalSystem:
         set[int]
             An set of matched atom indices.
         """
-        substruct_set = set()
         matches = self.rdkit_mol.GetSubstructMatches(
             Chem.MolFromSmarts(smarts), maxMatches=maxmatches
         )
-        for match in matches:
-            substruct_set.update(match)
-        return substruct_set
+        return {ind for match in matches for ind in match}
 
     @property
     def atom_list(self) -> list[str]:

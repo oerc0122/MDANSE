@@ -153,7 +153,7 @@ class CurrentCorrelationFunction(IJob):
         )
 
         self._outputData.add(
-            "ccf/res/omega",
+            "ccf/axes/omega",
             "LineOutputVariable",
             self._instrResolution["omega"],
             units="rad/ps",
@@ -167,10 +167,10 @@ class CurrentCorrelationFunction(IJob):
         )
 
         self._outputData.add(
-            "ccf/axes/omega_window",
+            "ccf/res/omega_window",
             "LineOutputVariable",
             self._instrResolution["omega_window"],
-            axis="ccf/res/omega",
+            axis="ccf/axes/omega",
             units="au",
         )
 
@@ -480,7 +480,6 @@ class CurrentCorrelationFunction(IJob):
         rho_l, rho_t = x
         n_configs = self.configuration["frames"]["n_configs"]
         for pair_str, (label_i, label_j) in self.labels:
-            print(label_i, label_j)
             corr_l = correlate(
                 rho_l[label_i], rho_l[label_j][:n_configs], mode="valid"
             )[
@@ -532,12 +531,14 @@ class CurrentCorrelationFunction(IJob):
                     axis=1,
                     fft="rfft",
                 )
-                self._outputData[f"ccf/J(q,f)_trans/ideal/{pair_str}"][:] = get_spectrum(
-                    self._outputData[f"ccf/j(q,t)_trans/{pair_str}"],
-                    None,
-                    self.configuration["instrument_resolution"]["time_step"],
-                    axis=1,
-                    fft="rfft",
+                self._outputData[f"ccf/J(q,f)_trans/ideal/{pair_str}"][:] = (
+                    get_spectrum(
+                        self._outputData[f"ccf/j(q,t)_trans/{pair_str}"],
+                        None,
+                        self.configuration["instrument_resolution"]["time_step"],
+                        axis=1,
+                        fft="rfft",
+                    )
                 )
 
         selected_weights, all_weights = self.configuration["weights"].get_weights()
@@ -550,9 +551,13 @@ class CurrentCorrelationFunction(IJob):
             conc_exp=0.5,
         )
         assign_weights(self._outputData, weight_dict, "ccf/j(q,t)_long/%s", self.labels)
-        assign_weights(self._outputData, weight_dict, "ccf/j(q,t)_trans/%s", self.labels)
+        assign_weights(
+            self._outputData, weight_dict, "ccf/j(q,t)_trans/%s", self.labels
+        )
         assign_weights(self._outputData, weight_dict, "ccf/J(q,f)_long/%s", self.labels)
-        assign_weights(self._outputData, weight_dict, "ccf/J(q,f)_trans/%s", self.labels)
+        assign_weights(
+            self._outputData, weight_dict, "ccf/J(q,f)_trans/%s", self.labels
+        )
         if self.add_ideal_results:
             assign_weights(
                 self._outputData,
@@ -573,7 +578,9 @@ class CurrentCorrelationFunction(IJob):
 
         jqtLongTotal = weighted_sum(self._outputData, "ccf/j(q,t)_long/%s", self.labels)
         self._outputData["ccf/j(q,t)_long/total"][:] = jqtLongTotal
-        jqtTransTotal = weighted_sum(self._outputData, "ccf/j(q,t)_trans/%s", self.labels)
+        jqtTransTotal = weighted_sum(
+            self._outputData, "ccf/j(q,t)_trans/%s", self.labels
+        )
         self._outputData["ccf/j(q,t)_trans/total"][:] = jqtTransTotal
         self._outputData["ccf/j(q,t)_long/total"].scaling_factor = fact
         self._outputData["ccf/j(q,t)_trans/total"].scaling_factor = fact
@@ -598,7 +605,9 @@ class CurrentCorrelationFunction(IJob):
 
         sqfLongTotal = weighted_sum(self._outputData, "ccf/J(q,f)_long/%s", self.labels)
         self._outputData["ccf/J(q,f)_long/total"][:] = sqfLongTotal
-        sqfTransTotal = weighted_sum(self._outputData, "ccf/J(q,f)_trans/%s", self.labels)
+        sqfTransTotal = weighted_sum(
+            self._outputData, "ccf/J(q,f)_trans/%s", self.labels
+        )
         self._outputData["ccf/J(q,f)_trans/total"][:] = sqfTransTotal
         self.configuration["grouping_level"].add_grouped_totals(
             self._outputData,

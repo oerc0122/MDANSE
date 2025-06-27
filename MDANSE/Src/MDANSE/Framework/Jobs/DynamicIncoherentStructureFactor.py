@@ -300,7 +300,7 @@ class DynamicIncoherentStructureFactor(IJob):
         assign_weights(self._outputData, weight_dict, "disf/s(q,f)/%s", self.labels)
         if self.add_ideal_results:
             assign_weights(
-                self._outputData, weight_dict, "disf/s(q,f)/ideal_%s", self.labels
+                self._outputData, weight_dict, "disf/s(q,f)/ideal/%s", self.labels
             )
         for element, number in list(nAtomsPerElement.items()):
             extra_scaling = 1.0 / number

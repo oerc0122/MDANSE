@@ -79,7 +79,12 @@ class StructureFactorFromScatteringFunction(IJob):
 
         inputFile = self.configuration["dcsf_input_file"]["instance"]
 
-        self._outputData.add("ssf/axes/q", "LineOutputVariable", inputFile["dcsf/axes/q"][:], units="1/nm")
+        self._outputData.add(
+            "ssf/axes/q",
+            "LineOutputVariable",
+            inputFile["dcsf/axes/q"][:],
+            units="1/nm",
+        )
         nq = len(inputFile["dcsf/axes/q"][:])
         self.labels = self.configuration["grouping_level"].pair_labels()
 

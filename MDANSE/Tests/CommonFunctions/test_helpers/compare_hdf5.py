@@ -48,7 +48,6 @@ def compare_hdf5(
             else:
                 subset = slice(None)
 
-            print(result.keys())
             if isinstance(result[f"/{key}"], h5py.Dataset):
                 search = (key,)
             else:

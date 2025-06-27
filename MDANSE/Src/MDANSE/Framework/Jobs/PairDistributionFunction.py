@@ -54,7 +54,6 @@ class PairDistributionFunction(DistanceHistogram):
         """Perform the last steps of the analysis and write out results."""
         npoints = len(self.configuration["r_values"]["mid_points"])
 
-
         for i in ("pdf", "rdf", "tcf"):
             self._outputData.add(
                 f"{i}/axes/r",
@@ -222,11 +221,8 @@ class PairDistributionFunction(DistanceHistogram):
                     * self.averageDensity
                     * (pdf / factor if i == "/intra" else (pdf - factor) / factor)
                 )
-                self._outputData[f"pdf{i}/total"].scaling_factor = factor
-                self._outputData[f"rdf{i}/total"].scaling_factor = factor
-                self._outputData[f"tcf{i}/total"].scaling_factor = factor
-
                 for j in ("pdf", "rdf", "tcf"):
+                    self._outputData[f"{j}{i}/total"].scaling_factor = factor
                     self.configuration["grouping_level"].add_grouped_totals(
                         self._outputData,
                         f"{j}{i}",
