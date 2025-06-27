@@ -119,12 +119,13 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         self.name = name
 
         self._printable_attributes = [
-            "_name",
+            "name",
             "_original_input",
-            "_configured",
-            "_valid",
-            "_default",
+            "configured",
+            "valid",
+            "default",
             "_error_status",
+            "_warning_status",
         ]
 
         self.configurable = kwargs.get("configurable")
@@ -291,7 +292,7 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         if configured is None:
             configured = [
                 str(name)
-                for name, prop in self.configurable._configuration.values()
+                for name, prop in self.configurable._configuration.items()
                 if prop.is_configured()
             ]
         return all(c in configured for c in self.dependencies.values())
