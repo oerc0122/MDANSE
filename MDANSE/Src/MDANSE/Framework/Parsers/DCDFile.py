@@ -17,18 +17,15 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Iterator
-from itertools import islice
-from os import SEEK_SET
 from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import numpy.typing as npt
-from more_itertools import chunked, one
+from more_itertools import chunked, one, take
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Parsers.FortranUnformat import binary_file_reader
-from MDANSE.Framework.Parsers.Parser import Parser
 from MDANSE.Framework.Units import measure
 from MDANSE.Mathematics.Geometry import get_basis_vectors_from_cell_parameters
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
@@ -48,16 +45,18 @@ class DCDFileError(Error):
     pass
 
 
-class DCDFile(Parser):
-    def __init__(self, filename: Path | str, **kwargs):
-        super().__init__(filename)
+class DCDFile:
+    def __init__(self, filename: Path | str):
+        self.filename = Path(filename)
         self._byte_order = self.get_byte_order(filename)
 
         dtype = np.dtype(np.float64)
         self._dtype = dtype.newbyteorder(self._byte_order)
-        with self.filename.open("rb") as in_file:
-            reader = binary_file_reader(in_file, self._byte_order)
-            self.read_header(reader)
+
+        self._input = self.filename.open("rb")
+        self.reader = binary_file_reader(self._input)
+
+        self.read_header()
 
     @staticmethod
     def get_byte_order(filename: Path | str) -> Literal[">", "<"]:
@@ -70,10 +69,10 @@ class DCDFile(Parser):
         for order in ("<", ">"):
             if one(struct.unpack(order + "i", data)) == 84:
                 return order
+        else:
+            raise ByteOrderError(f"Invalid byte order. {filename} not a valid DCD file")
 
-        raise ByteOrderError(f"Invalid byte order. {filename} not a valid DCD file")
-
-    def read_header(self, reader) -> None:
+    def read_header(self) -> None:
         """Read a DCD file header.
 
         Notes
@@ -81,7 +80,7 @@ class DCDFile(Parser):
         c.f. https://www.ks.uiuc.edu/Research/vmd/plugins/molfile/dcdplugin.html
         """
         # Read a block
-        data = next(reader)
+        data = next(self.reader)
 
         if data[:4] != b"CORD":
             raise DCDFileError("Unrecognized DCD format")
@@ -90,8 +89,7 @@ class DCDFile(Parser):
         self.charmm = one(struct.unpack(self._byte_order + "i", data[-4:]))
 
         struc = "9if10i" if self.charmm else "9id9i"
-
-        temp = struct.unpack(self._byte_order + struc, data)
+        temp = struct.unpack(self.byteOrder + struc, data)
 
         (
             self.n_frames,
@@ -100,7 +98,7 @@ class DCDFile(Parser):
             _,  # Zeroes
             self.n_fixed,
             self.time_delta,
-            self.has_pbc_data,
+            self.has_pbc,
             self.has_4d,
         ) = temp[0], temp[1], temp[2], temp[3:8], temp[8], temp[9], temp[10], temp[11]
 
@@ -114,25 +112,23 @@ class DCDFile(Parser):
         )
 
         # Read a block
-        data = next(reader)
+        data = next(self.reader)
 
-        self.title = b"\n".join(
-            chunk.strip() for chunk in map(bytes, chunked(data[4:], 80))
-        )
+        self.title = b"\n".join(map(bytes.strip, chunked(data[4:], 80)))
 
         # Read a block
-        data = next(reader)
+        data = next(self.reader)
 
         # Read the number of atoms.
-        self._n_atoms = one(struct.unpack(self._byte_order + "i", data))
+        self.n_atoms = one(struct.unpack(self._byte_order + "i", data))
 
-    def read_step(self, reader) -> tuple[UnitCell | None, npt.NDArray[float]]:
+    def read_step(self) -> tuple[UnitCell | None, npt.NDArray[float]]:
         """
         Reads a frame of the DCD file.
         """
 
         if self.has_pbc_data:
-            unit_cell = np.frombuffer(next(reader), dtype=self._dtype, count=6)
+            unit_cell = np.frombuffer(next(self.reader), dtype=self._dtype, count=6)
             unit_cell = unit_cell[[0, 2, 5, 1, 3, 4]]
             # The unit cell is converted from ang to nm
             unit_cell[0:3] *= measure(1.0, "ang").toval("nm")
@@ -154,38 +150,20 @@ class DCDFile(Parser):
         else:
             unit_cell = None
 
-        config = (
-            np.frombuffer(
-                b"".join(islice(reader, 3)),
-                count=3 * self.n_atoms,
-                dtype=np.float32,
-            )
-            .reshape(self.n_atoms, 3, order="F")
-            .astype(np.float64)
-        )
+        config = np.frombuffer(
+            b"".join(take(self.reader, 3)), count=3 * self.n_atoms, dtype=self._dtype
+        ).reshape(self.n_atoms, 3)
         config *= measure(1.0, "ang").toval("nm")
 
-        if self.has_4d:
-            reader.send(1)
+        if self["has_4d"]:
+            self.reader.send(1)
 
         return unit_cell, config
 
     @property
-    def n_atoms(self) -> int:
-        return self._n_atoms
-
-    @property
-    def element_list(self) -> list[str]:
-        return ["Unknown"] * self.n_atoms
-
-    @property
     def frames(self) -> Iterator:
-        with self.filename.open("rb") as inp:
-            reader = binary_file_reader(inp, self._byte_order)
-            self.read_header(reader)
-
-            try:
-                while True:
-                    yield self.read_step(reader)
-            except StopIteration:
-                pass
+        try:
+            while True:
+                yield self.read_step()
+        except StopIteration:
+            return

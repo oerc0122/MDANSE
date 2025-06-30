@@ -1,5 +1,4 @@
 """General parser for the Fortran Unformatted file format."""
-
 from __future__ import annotations
 
 from collections.abc import Generator
@@ -17,14 +16,13 @@ STRUCT_CONV: dict[str, Literal["<", ">"]] = {
 FROM_BYTES_CONV: dict[str, Literal["little", "big"]] = {
     "big": "big",
     "little": "little",
-    "<": "little",
-    ">": "big",
+    ">": "little",
+    "<": "big",
 }
 
 
-def binary_file_reader(
-    file: BinaryIO, endian: Literal["big", "little", ">", "<"] = "big"
-) -> FortranBinaryReader:
+
+def binary_file_reader(file: BinaryIO, endian: Literal["big", "little", ">", "<"] = "big") -> FortranBinaryReader:
     """Yield the elements of a Fortran unformatted file.
 
     Parameters

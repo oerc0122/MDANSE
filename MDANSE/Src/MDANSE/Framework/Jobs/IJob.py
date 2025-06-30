@@ -264,12 +264,12 @@ class IJob(Configurable, metaclass=SubclassFactory):
     def initialize(self):
         try:
             if (
-                "output_files" in self.configuration
-                and self.configuration["output_files"]["write_logs"]
+                hasattr(self, "output_files")
+                and self.output_files.write_logs
             ):
-                log_filename = str(self.configuration["output_files"]["root"]) + ".log"
+                log_filename = str(self.output_files.path.with_suffix(".log"))
                 self.add_log_file_handler(
-                    log_filename, self.configuration["output_files"]["log_level"]
+                    log_filename, self.output_files.log_level.value
                 )
         except KeyError:
             LOG.error("IJob did not find 'write_logs' in output_files")
@@ -513,10 +513,13 @@ class IJob(Configurable, metaclass=SubclassFactory):
         "remote": _run_remote,
     }
 
-    def run(self, parameters, status: bool = False, prog_bar: bool = False):
+    def run(self, parameters: dict[str, Any] | None = None, status: bool = False, prog_bar: bool = False):
         """
         Run the job.
         """
+        if parameters is None:
+            parameters = {}
+
         if isinstance(self._status, JobStatus) and hasattr(self._status, "state"):
             raise RuntimeError(
                 f"Unable to run an instance of job with name {self._name} more than once."
@@ -528,8 +531,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
             if status and self._status is None:
                 self._status = self._status_constructor(self)
 
-            self.setup(parameters)
-            self.check_status()
+            for key, val in parameters:
+                setattr(self, key, val)
 
             self.initialize()
 

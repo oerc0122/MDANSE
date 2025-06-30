@@ -15,25 +15,20 @@
 #
 from __future__ import annotations
 
-import collections
-import struct
-
 import numpy as np
+from more_itertools import ilen
 
-from MDANSE.Core.Error import Error
-from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Framework.Parsers import DCDFile, PDBFile
-from MDANSE.Framework.Units import measure
-from MDANSE.Mathematics.Geometry import get_basis_vectors_from_cell_parameters
-from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
-from MDANSE.MolecularDynamics.Trajectory import (
-    TrajectoryWriter,
+from MDANSE.Framework.ConfigDescriptors import (
+    BooleanConfigDesc,
+    FloatConfigDesc,
+    OutputTrajectoryConfigDesc,
+    PathConfigDesc,
 )
-from MDANSE.MolecularDynamics.UnitCell import UnitCell
-
-PI_2 = 0.5 * np.pi
-RECSCALE32BIT = 1
-RECSCALE64BIT = 2
+from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parsers.DCDFile import DCDFile
+from MDANSE.IO.MinimalPDBReader import MinimalPDBReader
+from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
+from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 
 class DCD(Converter):
@@ -41,49 +36,19 @@ class DCD(Converter):
 
     label = "DCD"
 
-    settings = collections.OrderedDict()
-    settings["pdb_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "PDB files (*.pdb);;All files (*)",
-            "default": "INPUT_FILENAME.pdb",
-            "label": "Input PDB file",
-            "parser": PDBFile,
-        },
+    pdb_file = PathConfigDesc(
+        mode="R",
+        extensions="PDB files (*.pdb);;All files (*)",
+        label="Input PDB file",
     )
-    settings["dcd_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "DCD files (*.dcd);;All files (*)",
-            "default": "INPUT_FILENAME.dcd",
-            "label": "Input DCD file",
-            "parser": DCDFile,
-        },
+    dcd_file = PathConfigDesc(
+        mode="R",
+        extensions="DCD files (*.dcd);;All files (*)",
+        label="Input PDB file",
     )
-    settings["atom_aliases"] = (
-        "AtomMappingConfigurator",
-        {
-            "default": "{}",
-            "label": "Atom mapping",
-            "dependencies": {"input_file": "pdb_file"},
-        },
-    )
-    settings["time_step"] = (
-        "FloatConfigurator",
-        {"default": 1.0, "label": "Time step (ps)"},
-    )
-    settings["fold"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Fold coordinates into box"},
-    )
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {
-            "formats": ["MDTFormat"],
-            "root": "pdb_file",
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
-        },
-    )
+    time_step = FloatConfigDesc(default=1.0, minimum=1e-9, label="Time step (ps)")
+    fold = BooleanConfigDesc(label="Fold coordinates into box")
+    output_files = OutputTrajectoryConfigDesc()
 
     def initialize(self):
         """
@@ -91,48 +56,49 @@ class DCD(Converter):
         """
         super().initialize()
 
-        # The number of steps of the analysis.
-        self.numberOfSteps = self.configuration["dcd_file"].instance.n_frames
+        self.reader = DCDFile(self.dcd_file)
 
-        self.frames = self.configuration["dcd_file"].instance.frames
+        # The number of steps of the analysis.
+        self.numberOfSteps = ilen(self.reader.frames)
 
         # Create all chemical entities from the PDB file.
-        self._chemical_system = self.configuration[
-            "pdb_file"
-        ].instance.build_chemical_system(self.configuration["atom_aliases"]["value"])
+        pdb_reader = MinimalPDBReader(self.pdb_file)
+        self._chemical_system = pdb_reader._chemical_system
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
-            self.configuration["output_files"]["file"],
+            self.output_files.path,
             self._chemical_system,
             self.numberOfSteps,
-            positions_dtype=self.configuration["output_files"]["dtype"],
-            chunking_limit=self.configuration["output_files"]["chunk_size"],
-            compression=self.configuration["output_files"]["compression"],
+            positions_dtype=self.output_files.dtype,
+            chunking_limit=self.output_files.chunk_size,
+            compression=self.output_files.compression,
         )
 
     def run_step(self, index):
-        """
-        Runs a single step of the job.\n
+        """Runs a single step of the job.
 
-        :Parameters:
-            #. index (int): The index of the step.
-        :Returns:
-            #. index (int): The index of the step.
-        """
+        Parameters
+        ----------
+        index : int
+            Index of the loop.
 
+        Returns
+        -------
+        tuple[int, None]
+        """
         # The x, y and z values of the current frame.
-        unit_cell, config = next(self.frames)
+        unit_cell, config = self.reader.read_step()
 
         conf = PeriodicRealConfiguration(
             self._trajectory._chemical_system, config, unit_cell
         )
 
-        if self.configuration["fold"]["value"]:
+        if self.fold:
             conf.fold_coordinates()
 
         # The current time.
-        time = index * self.configuration["time_step"]["value"]
+        time = index * self.time_step
 
         # Store a snapshot of the current configuration in the output trajectory.
         self._trajectory.dump_configuration(
@@ -142,11 +108,14 @@ class DCD(Converter):
         return index, None
 
     def combine(self, index, x):
-        """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
+        """Dummy combine step.
+
+        Parameters
+        ----------
+        _index : int
+            Unused.
+        _x : None
+            Unused.
         """
 
         pass

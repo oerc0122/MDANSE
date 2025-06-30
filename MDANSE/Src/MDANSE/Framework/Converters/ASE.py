@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import collections
 from contextlib import suppress
+from enum import Enum, auto
 from math import sqrt
 
 import numpy as np
@@ -29,9 +30,13 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
 from MDANSE.Framework.ConfigDescriptors import (
+    AtomMapping,
     BooleanConfigDesc,
     FloatConfigDesc,
     IntegerConfigDesc,
+    OutputTrajectoryConfigDesc,
+    PathConfigDesc,
+    SingleChoiceConfigDesc,
 )
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Parsers import ASEParser
@@ -63,40 +68,27 @@ class ASE(Converter):
     category = ("Converters", "General")
     label = "ASE"
 
-    settings = collections.OrderedDict()
-    settings["trajectory_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "label": "An MD trajectory file supported by ASE",
-            "default": "INPUT_FILENAME",
-            "parser": ASEParser,
-        },
+    trajectory_file = PathConfigDesc(
+        mode="r",
+        label="An MD trajectory file supported by ASE",
+        default="INPUT_FILENAME",
     )
-    settings["atom_aliases"] = (
-        "AtomMappingConfigurator",
-        {
-            "default": "{}",
-            "label": "Atom mapping",
-            "dependencies": {"input_file": "trajectory_file"},
-        },
+    atom_aliases = AtomMapping(
+        depends=("trajectory_file",), label="Atom mapping", default={}
     )
-    settings["time_unit"] = (
-        "SingleChoiceConfigurator",
-        {"label": "Time step unit", "choices": ["fs", "ps", "ns"], "default": "fs"},
+    time_unit = SingleChoiceConfigDesc(
+        ("fs", "ps", "ns"), default="fs", label="Time step unit"
+    )
+    time_step = FloatConfigDesc(default=1.0, minimum=1e-9, label="Time step")
+    n_steps = IntegerConfigDesc(
+        default=0, minimum=0, label="Number of time steps (0 for automatic detection)"
     )
     time_step = FloatConfigDesc(default=1.0, mini=1e-9, label="Time step")
     n_steps = IntegerConfigDesc(
         default=0, mini=0, label="Number of time steps (0 for automatic detection)"
     )
     fold = BooleanConfigDesc(label="Fold coordinates into box")
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
-            "formats": ["MDTFormat"],
-            "root": "trajectory_file",
-        },
-    )
+    output_files = OutputTrajectoryConfigDesc()
 
     UNIT_CONV = {
         "energy": measure(1.0, "eV").toval("Da nm2 / ps2"),
@@ -117,16 +109,15 @@ class ASE(Converter):
         self._backup_cell = None
         self._keep_running = True
         self._initial_masses = None
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
 
         # The number of steps of the analysis.
         self.numberOfSteps = self.n_steps
 
-        self._timestep = float(self.configuration["time_step"]["value"]) * measure(
-            1.0, self.configuration["time_unit"]["value"]
-        ).toval("ps")
+        self._timestep = float(self.time_step) * measure(1.0, self.time_unit).toval(
+            "ps"
+        )
 
-        self.parse_first_step(self._atomicAliases)
+        self.parse_first_step(self.atom_aliases)
         LOG.info(f"isPeriodic after parse_first_step: {self._isPeriodic}")
         self._start = 0
 
@@ -135,12 +126,12 @@ class ASE(Converter):
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
-            self.configuration["output_files"]["file"],
+            self.output_files.path,
             self._chemical_system,
             self.numberOfSteps,
-            positions_dtype=self.configuration["output_files"]["dtype"],
-            chunking_limit=self.configuration["output_files"]["chunk_size"],
-            compression=self.configuration["output_files"]["compression"],
+            positions_dtype=self.output_files.dtype,
+            chunking_limit=self.output_files.chunk_size,
+            compression=self.output_files.compression,
             initial_charges=self._initial_charges,
         )
 
@@ -170,7 +161,7 @@ class ASE(Converter):
             frame = next(self._input)
         else:
             LOG.info("ASE using the slower way")
-            frame = self.trajectory_file[index]
+            frame = read(self.trajectory_file, index=index)
 
         assert isinstance(frame, Atoms)
 
@@ -208,16 +199,9 @@ class ASE(Converter):
                 real_conf = PeriodicRealConfiguration(
                     self._trajectory.chemical_system, coords, unitCell, **variables
                 )
-            except ValueError:
-                self._keep_running = False
-                LOG.warning(
-                    f"Could not create configuration for frame {index}. Will skip the rest"
-                )
-                return index, None
-            if self.fold:
-                real_conf.fold_coordinates()
-        else:
-            try:
+                if self.fold:
+                    real_conf.fold_coordinates()
+            else:
                 real_conf = RealConfiguration(
                     self._trajectory.chemical_system, coords, **variables
                 )
@@ -277,15 +261,17 @@ class ASE(Converter):
     def parse_first_step(self, mapping):
         try:
             self._total_number_of_steps = len(self._input)
-            self._input = self.trajectory_file.as_trajectory
+            self._input = ASETrajectory(self.trajectory_file)
             first_frame = self._input[0]
             LOG.debug(
                 "Length found using len(self._input)=%d", self._total_number_of_steps
             )
         except Exception:
-            self._total_number_of_steps = ilen(self.trajectory_file.frames)
-            self._input = self.trajectory_file.frames
-            first_frame = self.trajectory_file[0]
+            self._total_number_of_steps = ilen(iread(self.trajectory_file))
+            self._input = iread(
+                self.trajectory_file  # , index="[:]"
+            )
+            first_frame = read(self.trajectory_file, index=0)
             LOG.debug("Length found using ilen=%d", self._total_number_of_steps)
 
         assert isinstance(first_frame, Atoms)

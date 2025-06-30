@@ -15,11 +15,11 @@
 #
 import json
 import re
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from enum import Enum, auto
 from math import isclose
 from pathlib import Path
-from typing import Collection, Optional, SupportsFloat, SupportsInt, Union
+from typing import Optional, SupportsFloat, SupportsInt, Union
 
 import numpy as np
 
@@ -37,17 +37,6 @@ __all__ = [
     "ArrayConfigDesc",
     "VectorConfigDesc",
 ]
-
-
-class FileModes(Enum):
-    MUST_EXIST = auto()
-    MAY_EXIST = auto()
-    MUST_NOT_EXIST = auto()
-
-    R = MUST_EXIST
-    W = MAY_EXIST
-    X = MUST_NOT_EXIST
-    A = MUST_EXIST
 
 
 def _nop(x):
@@ -181,7 +170,7 @@ class IntegerConfigDesc(ConfigureDescriptor[int]):
     def __init__(
         self, minimum: Optional[int] = None, maximum: Optional[int] = None, **params
     ):
-        super().__init__(mini=minimum, maxi=maximum, **params)
+        super().__init__(**params)
         self.minimum = minimum
         self.maximum = maximum
 
@@ -314,9 +303,19 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
     This configurator allows to input a path value.
     """
 
+    class FileModes(Enum):
+        MUST_EXIST = auto()
+        MAY_EXIST = auto()
+        MUST_NOT_EXIST = auto()
+
+        R = MUST_EXIST
+        W = MAY_EXIST
+        X = MUST_NOT_EXIST
+        A = MUST_EXIST
+
     def __init__(
         self,
-        mode: FileModes,
+        mode: FileModes | str,
         *,
         extensions: Collection[str] = (),
         directory: bool = False,
@@ -325,7 +324,9 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
         super().__init__(**params)
 
         self.mode = (
-            FileModes[mode.upper()] if isinstance(mode, str) else FileModes(mode)
+            self.FileModes[mode.upper()]
+            if isinstance(mode, str)
+            else self.FileModes(mode)
         )
 
         self.extension = extensions
@@ -333,17 +334,17 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
 
     def validate(self, value, *_) -> Path:
         try:
-            value = Path(value)
-        except Exception as error:
+            value = Path(value).expanduser()
+        except TypeError as error:
             raise ConfigError(f"Value ({value}) is not a valid Path.") from error
 
         super().validate(value)
 
-        if self.mode is FileModes.MAY_EXIST:
+        if self.mode is self.FileModes.MAY_EXIST:
             pass
-        elif self.mode is FileModes.MUST_EXIST and not value.exists():
+        elif self.mode is self.FileModes.MUST_EXIST and not value.exists():
             raise ConfigError(f"File at ({value}) does not exist.")
-        elif self.mode is FileModes.MUST_NOT_EXIST and value.exists():
+        elif self.mode is self.FileModes.MUST_NOT_EXIST and value.exists():
             raise ConfigError(f"File at ({value}) must not exist.")
 
         return value

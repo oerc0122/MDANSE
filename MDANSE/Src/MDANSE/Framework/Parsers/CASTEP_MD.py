@@ -17,14 +17,17 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Collection, Iterable, Iterator
-from functools import cached_property
+from functools import cached_property, partial
 from itertools import dropwhile
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+from ase import Atoms
+from ase.io import iread
 from ase.io.trajectory import Trajectory as ASETrajectory
-from more_itertools import first, one, split_at
+from more_itertools import consume, first, one, split_at
 
 from MDANSE.Framework.AtomMapping import AtomLabel
 from MDANSE.Framework.Units import measure
@@ -38,6 +41,9 @@ AUT = measure(2.4188843265864e-17, "s").toval("ps")
 
 
 class CASTEPMDFile(Parser):
+    def __init__(self, filename: Path | str):
+        super().__init__(filename)
+
     @staticmethod
     def float_list_handler(x: str) -> npt.NDArray[float]:
         return np.array(x.split(), dtype=np.float64)
@@ -73,17 +79,19 @@ class CASTEPMDFile(Parser):
 
     @property
     def frames(self) -> Iterator:
-        with open(self.filename, encoding="utf-8") as castep_file:
-            file = map(str.strip, castep_file)
+        with open(self.filename) as castep_file:
+            castep_file = map(str.strip, castep_file)
 
             # Skip header
-            file = dropwhile(lambda line: not line.startswith("END"), file)
-            next(file)
+            castep_file = dropwhile(
+                lambda line: not line.startswith("END"), castep_file
+            )
+            next(castep_file)
 
-            file = split_at(file, lambda line: not line)
-            file = filter(None, file)
+            castep_file = split_at(castep_file, lambda line: not line)
+            castep_file = filter(None, castep_file)
 
-            yield from map(self.parse_frame, file)
+            yield from map(self.parse_frame, castep_file)
 
     @staticmethod
     def parse_frame(frame: Iterable[str]) -> dict[str, Any]:
@@ -93,7 +101,7 @@ class CASTEPMDFile(Parser):
             data, *key = line.split("<--")
 
             if not key:
-                accum["time"] = float(data) * AUT
+                accum["time"] = data
             else:
                 key = one(key).strip()
                 if key not in "RVF":
@@ -111,3 +119,11 @@ class CASTEPMDFile(Parser):
     def element_list(self) -> Collection[str]:
         first_frame = first(self.frames)
         return [spec for (spec, ind), _ in first_frame["R"]]
+
+    @property
+    def atom_labels(self) -> Iterable[AtomLabel]:
+        return super().atom_labels()
+
+    @property
+    def n_atoms(self) -> int:
+        return len(self.element_list)

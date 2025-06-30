@@ -21,3 +21,18 @@ from .IFormat import IFormat as IFormat
 from .MDAFormat import MDAFormat as MDAFormat
 from .MDTFormat import MDTFormat as MDTFormat
 from .TextFormat import TextFormat as TextFormat
+
+
+class OutputFormats(Enum):
+    MDAFormat = auto()
+    TextFormat = auto()
+    FileInMemory = auto()
+    MDTFormat = auto()
+
+    @classmethod
+    def _missing_(cls, value: str | int):
+        for member in cls:
+            if (isinstance(value, str) and member.name == value) or (
+                isinstance(value, int) and member.value == value
+            ):
+                return member
