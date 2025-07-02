@@ -37,6 +37,8 @@ identified and corrected. Please help us develop MDANSE by reporting any
 problems you experience when using the code. The preferred way of reporting
 problems is by adding them to the
 [GitHub issue tracker](https://github.com/ISISNeutronMuon/MDANSE/issues).
+You can also send a message to MDANSE-help@stfc.ac.uk to get in touch
+with MDANSE developers.
 
 ## Quick start: installation
 
@@ -86,7 +88,7 @@ Other information including example scripts can be found on the [MDANSE website]
 
 ## What can MDANSE do?
 
-Firstly, MDANSE can interface with MD simulation software.
+Firstly, MDANSE can read the output of many MD simulation packages.
 It does this by providing converters for different file formats
 into an .MDT file (HDF format), which is then used for all
 calculations. The following MD packages are supported:
@@ -186,7 +188,7 @@ G. Goret, B. Aoun, E. Pellegrini. J Chem Inf Model. (2017) 57(1):1-5.
 ## License
 
 MDANSE is licensed under GPL-3.0. See
-[LICENSE](https://github.com/ISISNeutronMuon/MDANSE/blob/develop/LICENSE)
+[LICENSE](https://github.com/ISISNeutronMuon/MDANSE/blob/protos/LICENSE)
 for more information.
 
 ## Acknowledgements
