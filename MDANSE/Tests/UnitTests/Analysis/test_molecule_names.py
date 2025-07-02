@@ -43,8 +43,8 @@ def parameters():
 @pytest.mark.parametrize(
     "job_info",
     [
-        ("AreaPerMolecule", ["area_per_molecule"]),
-        ("AngularCorrelation", ["ac"]),
+        ("AreaPerMolecule", ["apm/area_per_molecule"]),
+        ("AngularCorrelation", ["ac/ac"]),
     ], ids=lambda x: x[0],
 )
 def test_structure_analysis(generate_benchmarks, tmp_path, parameters, job_info):
