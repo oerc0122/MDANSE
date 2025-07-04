@@ -139,7 +139,7 @@ class NewQVectorsConfigurator(IConfigurator):
             )
 
     def preview_output_axis(self):
-        if not self.is_configured() or not self._valid:
+        if not self.is_configured() or not self.valid:
             return None, None
         return list(self.q_vecs), "1/nm"
 

@@ -280,7 +280,7 @@ class LatticeSphericalQVectors(QVectorGenerator):
         lattice = lattice if lattice is not None else self.lattice
 
         hkl_radius = (
-            ceil(radius[1] / np.linalg.norm(e)) + 1 for e in lattice.transposed_inverse
+            ceil(radius[1] / np.linalg.norm(e)) + 1 for e in lattice.inverse
         )
 
         extent = (range(-hkl, hkl + 1) for hkl in hkl_radius)
@@ -304,7 +304,7 @@ class LatticeSphericalQVectors(QVectorGenerator):
 
         hkl_radius = (
             ceil(self.radius / np.linalg.norm(e)) + 1
-            for e in lattice.transposed_inverse
+            for e in lattice.inverse
         )
 
         extent = (range(-hkl, hkl + 1) for hkl in hkl_radius)
