@@ -15,17 +15,17 @@
 #
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable
-from dataclasses import dataclass
+from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
 
+from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import GUIComponent
 from MDANSE.Framework.Formats import OutputFormats
 from MDANSE.MLogging import LogLevels
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor
+from .AbsConfigDesc import ConfigError
 from .BaseTypesDescriptor import IntegerConfigDesc, PathConfigDesc
 from .ChoiceConfigDesc import MultipleChoiceConfigDesc, SingleChoiceConfigDesc
 
@@ -55,7 +55,7 @@ class OutputFormatConfigDesc(MultipleChoiceConfigDesc):
         )
 
 
-class OutputFileConfigDesc:
+class OutputFileConfigDesc(GUIComponent):
     out_format = OutputFormatConfigDesc(("MDAFormat", "TextFormat"))
     log_level = LogLevelConfigDesc(default=LogLevels.NONE, label="Reporting log level.")
     path = PathConfigDesc(mode="w")
@@ -66,7 +66,7 @@ class OutputFileConfigDesc:
         level: LogLevels = LogLevels.NONE,
         **kwargs,
     ):
-        ConfigureDescriptor.__init__(self, **kwargs)
+        super().__init__(self, **kwargs)
         self.log_level = level
         self.out_format = formats
 
@@ -90,7 +90,9 @@ class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
     out_format = OutputFormatConfigDesc(
         ("MDTFormat",),
     )
-    dtype = SingleChoiceConfigDesc(choices=(np.float16, np.float32, np.float64), default=np.float64)
+    dtype = SingleChoiceConfigDesc(
+        choices=(np.float16, np.float32, np.float64), default=np.float64
+    )
     chunk_size = IntegerConfigDesc(minimum=32, maximum=65536, default=128)
     compression = SingleChoiceConfigDesc(
         choices=("none", *TrajectoryWriter.allowed_compression), default="none"

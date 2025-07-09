@@ -14,12 +14,12 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import multiprocessing
-from dataclasses import dataclass
 
 from MDANSE.Framework.ConfigDescriptors import IntegerConfigDesc, SingleChoiceConfigDesc
+from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import GUIComponent
 
 
-class RunningModeConfigDesc:
+class RunningModeConfigDesc(GUIComponent):
     mode = SingleChoiceConfigDesc(choices=("single-core", "multicore", "remote"))
     n_procs = IntegerConfigDesc(
         minimum=1, maximum=multiprocessing.cpu_count(), default=1

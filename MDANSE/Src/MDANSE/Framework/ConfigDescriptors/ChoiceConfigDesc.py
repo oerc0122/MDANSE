@@ -16,9 +16,11 @@
 from __future__ import annotations
 
 from collections.abc import Container, Sequence
-from typing import TypeVar
+from typing import Any, TypeVar
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor
+from MDANSE.Core.get_deep_attr import get_deep_attr
+
+from .AbsConfigDesc import ConfigError, ConfigureDescriptor, MultipleValues
 
 T = TypeVar("T")
 
@@ -57,27 +59,18 @@ class ChoiceConfigDesc(ConfigureDescriptor):
 
         if value < 0:
             raise ConfigError(f"Invalid n_choices ({value}) must be >0")
-        self._n_choices = value
+        self._n_choices = int(value)
 
 
-class MultipleChoiceConfigDesc(ChoiceConfigDesc):
-    def validate_choices(self, values: Sequence[T]):
-        return set(values) <= self.choices
-
-    def validate_exclude(self, values: Sequence[T]):
-        return set(values) > self.exclude
+class MultipleChoiceConfigDesc(MultipleValues, ChoiceConfigDesc):
+    def __init__(self, choices: Container[T], n_choices: int | None, **params):
+        super().__init__(choices=choices, n_choices=n_choices, **params)
 
     def validate(self, values: Sequence[T], *_) -> Sequence[T]:
-        self._original_input = values
+        values = super().validate(values)
 
         if len(values) > self.n_choices:
             raise ConfigError(f"Too many options selected ({values}).")
-
-        # self.indices = [self._choices.find(value) for value in values]
-        # if any(index < 0 for index in self.indices):
-        #     raise ConfigError(
-        #         f"{', '.join(set(self.choices) - set(values))} are not valid choices."
-        #     )
 
         return values
 
@@ -86,9 +79,37 @@ class SingleChoiceConfigDesc(ChoiceConfigDesc):
     def __init__(self, choices: Container[T], **params):
         super().__init__(choices=choices, n_choices=1, **params)
 
-    def validate(self, value: T, *_) -> T:
-        self._original_input = value
 
-        super().validate(value)
+class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
+    def __init__(self, choices: str, depends: dict[str, str], **params):
+        if "choices" not in depends:
+            raise ConfigError(f"{type(self).__name__} requires 'choices' in `depends`")
+        super().__init__(choices=choices, depends=depends, **params)
+        self.last_choices = set()
 
+    @property
+    def choices(self) -> set[T]:
+        return self.last_choices
+
+    @choices.setter
+    def choices(self, value: str) -> None:
+        self._choices = value
+
+    def validate(self, value: T, deps: dict[str, Any]) -> T:
+        choices = set(get_deep_attr(deps["choices"], self._choices))
+
+        if not self.validate_exclude(value):
+            raise ConfigError(
+                f"Value ({value!r}) in excluded values ({', '.join(self.exclude)})."
+            )
+
+        if not self.validate_choices(value, choices):
+            raise ConfigError(
+                f"Value ({value!r}) not in choices ({', '.join(self.choices)})."
+            )
+
+        self.last_choices = choices
         return value
+
+class DynamicMultiChoiceConfigDesc(MultipleValues, DynamicSingleChoiceConfigDesc):
+    pass

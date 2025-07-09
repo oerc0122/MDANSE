@@ -22,8 +22,9 @@ from pathlib import Path
 from typing import Optional, SupportsFloat, SupportsInt, Union
 
 import numpy as np
+from more_itertools import numeric_range
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor
+from .AbsConfigDesc import ConfigError, ConfigureDescriptor, MinMax
 
 cjoin = ", ".join
 
@@ -34,6 +35,7 @@ __all__ = [
     "StringConfigDesc",
     "PathConfigDesc",
     "RangeConfigDesc",
+    "NumericRangeConfigDesc",
     "ArrayConfigDesc",
     "VectorConfigDesc",
 ]
@@ -81,8 +83,6 @@ class BooleanConfigDesc(ConfigureDescriptor[bool]):
         "0": False,
     }
 
-    _old_name = "BooleanConfigurator"
-
     def __init__(self, default: bool = False, **params):
         super().__init__(default=default, **params)
 
@@ -96,52 +96,18 @@ class BooleanConfigDesc(ConfigureDescriptor[bool]):
         return self._alias[value]
 
 
-class FloatConfigDesc(ConfigureDescriptor[float]):
+class FloatConfigDesc(ConfigureDescriptor[float], MinMax[float]):
     """
     This configurator allows to input a float value.
     """
 
-    _old_name = "FloatConfigurator"
-
     def __init__(
         self,
-        minimum: Optional[float] = None,
-        maximum: Optional[float] = None,
-        non_zero: float = 0.0,
+        non_zero: float | None = None,
         **params,
     ):
         super().__init__(**params)
-        self.minimum = minimum
-        self.maximum = maximum
-        self.non_zero = 0.0
-
-    @property
-    def minimum(self) -> Optional[float]:
-        """
-        Returns the minimum value allowed for an input float.
-
-        :return: the minimum value allowed for an input value float.
-        :rtype: int or None
-        """
-        return self._minimum
-
-    @minimum.setter
-    def minimum(self, value: Optional[SupportsFloat]):
-        self._minimum = float(value) if value is not None else -np.inf
-
-    @property
-    def maximum(self) -> Optional[int]:
-        """
-        Returns the maximum value allowed for an input float.
-
-        :return: the maximum value allowed for an input value float.
-        :rtype: int or None
-        """
-        return self._minimum
-
-    @maximum.setter
-    def maximum(self, value: Optional[SupportsFloat]):
-        self._maximum = float(value) if value is not None else np.inf
+        self.non_zero = non_zero
 
     def validate(self, value: SupportsFloat, *_) -> float:
         try:
@@ -151,60 +117,19 @@ class FloatConfigDesc(ConfigureDescriptor[float]):
 
         super().validate(value)
 
-        if self.minimum > value > self.maximum:
-            raise ConfigError(
-                f"Value ({value}) outside of valid range ({self.minimum}-{self.maximum})"
-            )
+        self.validate_range(value)
 
-        if self.non_zero and isclose(value, 0.0, self.non_zero):
+        if self.non_zero is not None and isclose(value, 0.0, abs_tol=self.non_zero):
             raise ConfigError(f"Non-null val ({value}) is too close to zero.")
 
         return value
 
 
-class IntegerConfigDesc(ConfigureDescriptor[int]):
+class IntegerConfigDesc(ConfigureDescriptor[int], MinMax[int]):
     """Configurator takes an integer input."""
 
-    _old_name = "IntegerConfigurator"
-
-    def __init__(
-        self, minimum: Optional[int] = None, maximum: Optional[int] = None, **params
-    ):
+    def __init__(self, **params):
         super().__init__(**params)
-        self.minimum = minimum
-        self.maximum = maximum
-
-    @property
-    def minimum(self) -> Optional[int]:
-        """
-        Returns the minimum value allowed for an input int.
-
-        Returns
-        -------
-        int or None
-            The minimum value allowed for an input value int.
-        """
-        return self._minimum
-
-    @minimum.setter
-    def minimum(self, value: Optional[SupportsInt]):
-        self._minimum = int(value) if value is not None else -np.inf
-
-    @property
-    def maximum(self) -> Optional[int]:
-        """
-        Returns the maximum value allowed for an input int.
-
-        Returns
-        -------
-        int or None
-            The maximum value allowed for an input value int.
-        """
-        return self._minimum
-
-    @maximum.setter
-    def maximum(self, value: Optional[SupportsInt]):
-        self._maximum = int(value) if value is not None else np.inf
 
     def validate(self, value: SupportsInt, *_) -> int:
         try:
@@ -214,10 +139,7 @@ class IntegerConfigDesc(ConfigureDescriptor[int]):
 
         super().validate(value)
 
-        if self.minimum > value > self.maximum:
-            raise ConfigError(
-                f"Value ({value}) outside of valid range ({self.minimum}, {self.maximum})"
-            )
+        self.validate_range(value)
 
         return value
 
@@ -269,7 +191,7 @@ class StringConfigDesc(ConfigureDescriptor[str]):
     ):
         super().__init__(**params)
         self.case = StrCases(case)
-        self.regex = re.compile(regex)
+        self.regex = regex
 
     @property
     def regex(self) -> Optional[re.Pattern]:
@@ -279,6 +201,8 @@ class StringConfigDesc(ConfigureDescriptor[str]):
     def regex(self, value: Optional[re.Pattern]) -> None:
         if value is None:
             self._regex = None
+            return
+        self.regex = re.compile(value)
 
     def validate(self, value: str, *_) -> float:
         try:
@@ -290,7 +214,7 @@ class StringConfigDesc(ConfigureDescriptor[str]):
 
         super().validate(value)
 
-        if self.regex and not self.regex.match(value):
+        if self.regex is not None and not self.regex.match(value):
             raise ConfigError(
                 f"Value ({value}) does not match requirement {self.regex.pattern}."
             )
@@ -350,71 +274,61 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
         return value
 
 
-class RangeConfigDesc(ConfigureDescriptor[range]):
+class RangeConfigDesc(ConfigureDescriptor[range], MinMax[int]):
     """
     This configurator allows a user to input a range value.
     """
 
     def __init__(
         self,
-        default=range(1),
-        *,
-        minimum=0,
-        maximum=None,
         **params,
     ):
-        super().__init__(default=default, **params)
-
-        self.minimum = minimum
-        self.maximum = maximum
-
-    @property
-    def minimum(self) -> Optional[int]:
-        """
-        Returns the minimum value allowed for an input int.
-
-        Returns
-        -------
-        int or None
-            The minimum value allowed for an input value int.
-        """
-        return self._minimum
-
-    @minimum.setter
-    def minimum(self, value: Optional[SupportsInt]):
-        self._minimum = int(value) if value is not None else -np.inf
-
-    @property
-    def maximum(self) -> Optional[int]:
-        """
-        Returns the maximum value allowed for an input int.
-
-        Returns
-        -------
-        int or None
-            The maximum value allowed for an input value int.
-        """
-        return self._minimum
-
-    @maximum.setter
-    def maximum(self, value: Optional[SupportsInt]):
-        self._maximum = int(value) if value is not None else np.inf
+        super().__init__(**params)
 
     def validate(self, value, *_) -> range:
-        if isinstance(value, Sequence):
+        if isinstance(value, int):
+            value = range(value)
+        elif isinstance(value, Sequence):
             value = range(*value)
         elif isinstance(value, dict):
             value = range(**value)
-
-        if not isinstance(value, range):
+        elif not isinstance(value, range):
             raise ConfigError(
                 f"Do not know how to convert {type(value).__name__} to range"
             )
 
-        if self.minimum > value.start > self.maximum:
-            raise ConfigError(f"Start outside range ({self.minimum}-{self.maximum})")
-        if self.minimum > value.stop > self.maximum:
-            raise ConfigError(f"End outside range ({self.minimum}-{self.maximum})")
+        self.validate_range(value.start)
+        self.validate_range(value.stop)
+
+        return value
+
+
+class NumericRangeConfigDesc(ConfigureDescriptor[numeric_range], MinMax[float]):
+    """
+    This configurator allows a user to input a generalised range.
+    """
+
+    def __init__(self, **params):
+        super().__init__(**params)
+
+    def validate(self, value, *_) -> numeric_range:
+        if isinstance(value, (float, int)):
+            value = numeric_range(value)
+        elif isinstance(value, Sequence):
+            value = numeric_range(*value)
+        elif isinstance(value, dict):
+            value = numeric_range(**value)
+        elif isinstance(value, range):
+            value = numeric_range(value.start, value.stop, value.step)
+        elif not isinstance(value, numeric_range):
+            raise ConfigError(
+                f"Do not know how to convert {type(value).__name__} to range"
+            )
+
+        assert value is numeric_range
+
+        self.validate_range(value._start)
+        self.validate_range(value._stop)
 
         return value
 

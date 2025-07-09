@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Container, Iterator
-from typing import Any, Generic, TypeVar
+from collections.abc import Collection, Container, Iterator
+from typing import Generic, TypeVar
+
+import numpy as np
 
 from MDANSE.Core.Error import Error
 
@@ -14,7 +16,28 @@ class ConfigError(Error):
     pass
 
 
-class ConfigureDescriptor(ABC, Generic[T]):
+class GUIComponent(ABC):
+    """Abstract mixin for classes which can have a GUI Component."""
+
+    def __init__(
+        self,
+        *,
+        label: str = "",
+        tooltip: str = "",
+    ):
+        self.label = label
+        self.tooltip = tooltip
+
+        self.__doc__ += f"""
+GUI Description
+---------------
+{self.label}
+
+{self.tooltip}
+        """
+
+
+class ConfigureDescriptor(ABC, GUIComponent, Generic[T]):
     """Abstract configure descriptor.
 
     Parameters
@@ -45,9 +68,7 @@ class ConfigureDescriptor(ABC, Generic[T]):
         choices: Container[T] | None = None,
         exclude: Container[T] = (),
         mutex: Container[str] = (),
-        depends: Container[str] = (),
-        label: str = "",
-        tooltip: str = "",
+        depends: dict[str, str] | None = None,
     ):
         self.default: T = default
         self.optional = optional if optional is not None else default is not SENTINEL
@@ -56,16 +77,7 @@ class ConfigureDescriptor(ABC, Generic[T]):
         self.exclude = exclude
 
         self.mutex = mutex
-        self.depends = depends
-
-        self.label = label
-        self.tooltip = tooltip
-
-        self.__doc__ = f"""\
-{self.label}
-
-{self.tooltip}
-        """
+        self.depends = depends if depends is not None else {}
 
     def __set_name__(self, owner: object, name: str):
         self.name = name
@@ -87,7 +99,9 @@ class ConfigureDescriptor(ABC, Generic[T]):
         return (getattr(owner, f"_{ex}_configured") for ex in self.mutex)
 
     def _bad_deps(self, owner: object) -> Iterator[bool]:
-        return (not getattr(owner, f"_{dep}_configured") for dep in self.depends)
+        return (
+            not getattr(owner, f"_{dep}_configured") for dep in self.depends.values()
+        )
 
     def __set__(self, owner: object, value):
         setattr(owner, self.configured_var, False)
@@ -102,7 +116,7 @@ class ConfigureDescriptor(ABC, Generic[T]):
                 f"Mutually exclusive value ({', '.join(self._bad_mutex)}) is also configured."
             )
 
-        deps = {dep: getattr(owner, dep).value for dep in self.depends}
+        deps = {dep: getattr(owner, key) for dep, key in self.depends.items()}
 
         setattr(owner, self.private_name, self.validate(value, deps))
         setattr(owner, self.configured_var, True)
@@ -140,11 +154,13 @@ class ConfigureDescriptor(ABC, Generic[T]):
             return
         self._exclude = set(value)
 
-    def validate_choices(self, value: T) -> bool:
-        return not self.choices or value in self.choices
+    def validate_choices(self, value: T, choices: set[T] | None = None) -> bool:
+        choices = self.choices if choices is None else choices
+        return not choices or value in choices
 
-    def validate_exclude(self, value: T) -> bool:
-        return not self.exclude or value not in self.exclude
+    def validate_exclude(self, value: T, exclude: set[T] | None = None) -> bool:
+        exclude = self.exclude if exclude is None else exclude
+        return not exclude or value not in exclude
 
     @abstractmethod
     def validate(self, value: T, *_deps) -> T:
@@ -160,3 +176,77 @@ class ConfigureDescriptor(ABC, Generic[T]):
             raise ConfigError(
                 f"Value ({value!r}) in excluded values ({', '.join(self.exclude)})."
             )
+
+        return value
+
+
+class MinMax(ABC, Generic[T]):
+    def __init__(self, minimum: T | None = None, maximum: T | None = None):
+        self.minimum = minimum
+        self.maximum = maximum
+
+    @property
+    def minimum(self) -> T | None:
+        """
+        Returns the minimum value allowed for an input int.
+
+        Returns
+        -------
+        int or None
+            The minimum value allowed for an input value int.
+        """
+        return self._minimum
+
+    @minimum.setter
+    def minimum(self, value: T | None) -> None:
+        self._minimum = value if value is not None else -np.inf
+
+    @property
+    def maximum(self) -> T | None:
+        """
+        Returns the maximum value allowed for an input int.
+
+        Returns
+        -------
+        int or None
+            The maximum value allowed for an input value int.
+        """
+        return self._maximum
+
+    @maximum.setter
+    def maximum(self, value: T | None) -> None:
+        self._maximum = value if value is not None else np.inf
+
+    def validate_range(self, value: T, range: tuple[T, T] | None = None) -> None:
+        mini, maxi = range if range is not None else self.minimum, self.maximum
+
+        if mini > value > maxi:
+            raise ConfigError(
+                f"Value ({value}) outside of valid range ({mini}, {maxi})"
+            )
+
+    def validate_minimum(self, value: T, mini: T | None = None) -> None:
+        mini = mini if mini is not None else self.minimum
+
+        if mini > value:
+            raise ConfigError(f"Value ({value}) less than minimum ({mini})")
+
+    def validate_maximum(self, value: T, maxi: T | None = None) -> None:
+        maxi = maxi if maxi is not None else self.maximum
+
+        if maxi > value:
+            raise ConfigError(f"Value ({value}) greater than maximum ({maxi})")
+
+
+class MultipleValues(ABC):
+    def validate_choices(
+        self, values: Collection[T], choices: set[T] | None = None
+    ) -> bool:
+        choices = self.choices if choices is None else choices
+        return set(values) <= choices
+
+    def validate_exclude(
+        self, values: Collection[T], exclude: set[T] | None = None
+    ) -> bool:
+        exclude = self.exclude if exclude is None else exclude
+        return set(values) > exclude
