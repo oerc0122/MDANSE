@@ -18,9 +18,15 @@ from __future__ import annotations
 import numpy as np
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.Framework.AtomMapping import get_element_from_mapping
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomMapping,
+    BooleanConfigDesc,
+    OutputTrajectoryConfigDesc,
+    PathConfigDesc,
+)
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Framework.Parsers import TrjFile, XTDFile
+from MDANSE.Framework.Parsers.trj import TrjFile
+from MDANSE.Framework.Parsers.xtd import XTDFile
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
@@ -36,45 +42,19 @@ class Forcite(Converter):
 
     label = "Forcite"
 
-    settings = {}
-    settings["xtd_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "XTD files (*.xtd);;All files (*)",
-            "default": "INPUT_FILENAME.xtd",
-            "label": "Input XTD file",
-            "parser": XTDFile,
-        },
+    xtd_file = PathConfigDesc(
+        mode="r",
+        label="Input XTD file",
     )
-    settings["trj_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "TRJ files (*.trj);;All files (*)",
-            "default": "INPUT_FILENAME.trj",
-            "label": "Input TRJ file",
-            "parser": TrjFile,
-        },
+    trj_file = PathConfigDesc(
+        mode="r",
+        label="Input TRJ file",
     )
-    settings["atom_aliases"] = (
-        "AtomMappingConfigurator",
-        {
-            "default": "{}",
-            "label": "Atom mapping",
-            "dependencies": {"input_file": "xtd_file"},
-        },
+    atom_aliases = AtomMapping(
+        depends={"trajectory": "trajectory_file"}, label="Atom mapping", default={}
     )
-    settings["fold"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Fold coordinates into box"},
-    )
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {
-            "formats": ["MDTFormat"],
-            "root": "xtd_file",
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
-        },
-    )
+    fold = BooleanConfigDesc(label="Fold coordinates into box")
+    output_files = OutputTrajectoryConfigDesc()
 
     def initialize(self):
         """
@@ -82,58 +62,54 @@ class Forcite(Converter):
         """
         super().initialize()
 
-        self.atom_aliases = self.configuration["atom_aliases"]["value"]
+        self._atomicAliases = self.atom_aliases
 
-        self.xtd_file = self.configuration["xtd_file"].instance
-        self.trj_file = self.configuration["trj_file"].instance
+        self._xtdfile = XTDFile(self.xtd_file)
 
         self._chemical_system = ChemicalSystem()
-        coordinates = np.vstack([atom.xyz for atom in self.xtd_file._atoms.values()])
-
-        element_list = [
-            get_element_from_mapping(self.atom_aliases, atom.element, type=atom.name)
-            for atom in self.xtd_file._atoms.values()
-        ]
-
-        charges = [atom.charge for atom in self.xtd_file._atoms.values()]
-        name_list = [atom.name for atom in self.xtd_file._atoms.values()]
+        coordinates = np.vstack([atom.xyz for atom in self._xtdfile._atoms.values()])
+        element_list = [atom.element for atom in self._xtdfile._atoms.values()]
+        charges = [atom.charge for atom in self._xtdfile._atoms.values()]
+        name_list = [atom.name for atom in self._xtdfile._atoms.values()]
         unique_labels = set(name_list)
         label_dict = {label: [] for label in unique_labels}
-        for temp_index, atom in enumerate(self.xtd_file._atoms.values()):
+        for temp_index, atom in enumerate(self._xtdfile._atoms.values()):
             label_dict[atom.name].append(temp_index)
 
         self._chemical_system.initialise_atoms(element_list, name_list)
-        self._chemical_system.add_bonds(self.xtd_file._bonds)
+        self._chemical_system.add_bonds(self._xtdfile._bonds)
         self._chemical_system.add_labels(label_dict)
         self._chemical_system.find_clusters_from_bonds()
 
-        if self.xtd_file.pbc:
+        if self._xtdfile.pbc:
             boxConf = PeriodicBoxConfiguration(
-                self._chemical_system, coordinates, self.xtd_file.cell
+                self._chemical_system, coordinates, self._xtdfile.cell
             )
             real_conf = boxConf.to_real_configuration()
         else:
             coordinates *= measure(1.0, "ang").toval("nm")
             real_conf = RealConfiguration(
-                self._chemical_system, coordinates, unit_cell=self.xtd_file._cell
+                self._chemical_system, coordinates, unit_cell=self._xtdfile._cell
             )
 
         real_conf.fold_coordinates()
-        self.system = real_conf
+        self._configuration = real_conf
+
+        self._trjfile = TrjFile(self.trj_file)
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.trj_file.n_frames - 1
+        self.numberOfSteps = self._trjfile.n_frames
 
-        self.frames = self.trj_file.frames
+        self.frames = self._trjfile.frames
 
-        if self.trj_file.velocities_written:
+        if self._trjfile.velocities_written:
             self._velocities = np.zeros(
                 (self._chemical_system.number_of_atoms, 3), dtype=np.float64
             )
         else:
             self._velocities = None
 
-        if self.trj_file.gradients_written:
+        if self._trjfile.gradients_written:
             self._gradients = np.zeros(
                 (self._chemical_system.number_of_atoms, 3), dtype=np.float64
             )
@@ -142,12 +118,12 @@ class Forcite(Converter):
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
-            self.configuration["output_files"]["file"],
+            self.output_files.path,
             self._chemical_system,
             self.numberOfSteps,
-            positions_dtype=self.configuration["output_files"]["dtype"],
-            chunking_limit=self.configuration["output_files"]["chunk_size"],
-            compression=self.configuration["output_files"]["compression"],
+            positions_dtype=self.output_files.dtype,
+            chunking_limit=self.output_files.chunk_size,
+            compression=self.output_files.compression,
             initial_charges=charges,
         )
 
@@ -167,20 +143,20 @@ class Forcite(Converter):
         frame = next(self.frames)
 
         # # If the universe is periodic set its shape with the current dimensions of the unit cell.
-        conf = self.system
-        conf["coordinates"][self.trj_file.movable_atoms, :] = frame["pos"]
+        conf = self._configuration
+        conf["coordinates"][self._trjfile.movable_atoms, :] = frame["pos"]
         if conf.is_periodic:
-            if self.trj_file.options.defcel:
+            if self._trjfile.options.defcel:
                 conf.unit_cell = frame["cell"]
-            if self.configuration["fold"]["value"]:
+            if self.fold:
                 conf.fold_coordinates()
 
         if self._velocities is not None:
-            self._velocities[self.trj_file.movable_atoms, :] = frame["vel"]
+            self._velocities[self._trjfile.movable_atoms, :] = frame["vel"]
             conf["velocities"] = self._velocities
 
         if self._gradients is not None:
-            self._gradients[self.trj_file.movable_atoms, :] = frame["force"]
+            self._gradients[self._trjfile.movable_atoms, :] = frame["force"]
             conf["gradients"] = self._gradients
 
         self._trajectory.dump_configuration(

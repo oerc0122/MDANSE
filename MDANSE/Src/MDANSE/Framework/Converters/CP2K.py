@@ -24,6 +24,12 @@ from more_itertools import all_equal
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomMapping,
+    BooleanConfigDesc,
+    OutputTrajectoryConfigDesc,
+    PathConfigDesc,
+)
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Parsers import CP2KCellFile, XYZFile
 from MDANSE.Framework.Units import measure
@@ -50,64 +56,36 @@ class CP2K(Converter):
 
     label = "CP2K"
 
-    settings = collections.OrderedDict()
-    settings["pos_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "XYZ files (*.xyz);;All files (*)",
-            "default": "INPUT_FILENAME.xyz",
-            "label": "Positions file (XYZ)",
-            "parser": XYZFile,
-        },
+    UNITS = {
+        "pos": measure(1.0, iunit="ang").toval("nm"),
+        "cell": measure(1.0, iunit="ang").toval("nm"),
+        "vel": measure(1.0, iunit="ang/fs").toval("nm/ps"),
+        "force": measure(1.0, iunit="Da ang / fs2").toval("Da nm / ps2"),
+        "time": measure(1.0, iunit="fs").toval("ps"),
+    }
+
+    pos_file = PathConfigDesc("r", extensions=(".xyz",), label="Positions file (XYZ)")
+    vel_file = PathConfigDesc(
+        "r",
+        extensions=(".xyz",),
+        optional=True,
+        default=None,
+        label="Velocity file (XYZ, optional)",
     )
-    settings["vel_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "XYZ files (*.xyz);;All files (*)",
-            "default": "",
-            "label": "Velocity file (XYZ, optional)",
-            "parser": XYZFile,
-            "optional": True,
-        },
+    force_file = PathConfigDesc(
+        "r",
+        extensions=(".xyz",),
+        optional=True,
+        default=None,
+        label="Force file (XYZ, optional)",
     )
-    settings["force_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "XYZ files (*.xyz);;All files (*)",
-            "default": "",
-            "label": "Force file (XYZ, optional)",
-            "parser": XYZFile,
-            "optional": True,
-        },
+    cell_file = PathConfigDesc(
+        "r", extensions=(".cell",), label="CP2K unit cell file (.cell)"
     )
-    settings["cell_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "Cell files (*.cell);;All files (*)",
-            "default": "INPUT_FILENAME.cell",
-            "label": "CP2K unit cell file (.cell)",
-            "parser": CP2KCellFile,
-        },
-    )
-    settings["atom_aliases"] = (
-        "AtomMappingConfigurator",
-        {
-            "default": "{}",
-            "label": "Atom mapping",
-            "dependencies": {"input_file": "pos_file"},
-        },
-    )
-    settings["fold"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Fold coordinates into box"},
-    )
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {
-            "formats": ["MDTFormat"],
-            "root": "pos_file",
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
-        },
+    atom_aliases = AtomMapping(depends={"trajectory": "pos_file"})
+    fold = BooleanConfigDesc(default=False, label="Fold coordinates into box")
+    output_files = OutputTrajectoryConfigDesc(
+        label="MDANSE trajectory (filename, format)"
     )
 
     def initialize(self):
@@ -149,12 +127,12 @@ class CP2K(Converter):
         self._chemical_system.initialise_atoms(element_list)
 
         self._trajectory = TrajectoryWriter(
-            self.configuration["output_files"]["file"],
+            self.output_files.path,
             self._chemical_system,
             self.numberOfSteps,
-            positions_dtype=self.configuration["output_files"]["dtype"],
-            chunking_limit=self.configuration["output_files"]["chunk_size"],
-            compression=self.configuration["output_files"]["compression"],
+            positions_dtype=self.output_files.dtype,
+            chunking_limit=self.output_files.chunk_size,
+            compression=self.output_files.compression,
         )
 
         data_to_be_written = ["configuration", "time"]
@@ -225,6 +203,5 @@ class CP2K(Converter):
 
         # Close the output trajectory.
         self._trajectory.write_standard_atom_database()
-        self._trajectory.close()
 
         super().finalize()

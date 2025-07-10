@@ -71,10 +71,9 @@ class ASE(Converter):
     trajectory_file = PathConfigDesc(
         mode="r",
         label="An MD trajectory file supported by ASE",
-        default="INPUT_FILENAME",
     )
     atom_aliases = AtomMapping(
-        depends=("trajectory_file",), label="Atom mapping", default={}
+        depends={"trajectory": "trajectory_file"}, label="Atom mapping", default={}
     )
     time_unit = SingleChoiceConfigDesc(
         ("fs", "ps", "ns"), default="fs", label="Time step unit"

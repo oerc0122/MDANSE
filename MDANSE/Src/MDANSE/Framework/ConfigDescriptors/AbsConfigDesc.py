@@ -16,7 +16,7 @@ class ConfigError(Error):
     pass
 
 
-class GUIComponent(ABC):
+class Parameter(ABC):
     """Abstract mixin for classes which can have a GUI Component."""
 
     def __init__(
@@ -28,6 +28,7 @@ class GUIComponent(ABC):
         self.label = label
         self.tooltip = tooltip
 
+        self.__doc__ = self.__doc__ or ""
         self.__doc__ += f"""
 GUI Description
 ---------------
@@ -37,7 +38,7 @@ GUI Description
         """
 
 
-class ConfigureDescriptor(ABC, GUIComponent, Generic[T]):
+class ConfigureDescriptor(Parameter, Generic[T]):
     """Abstract configure descriptor.
 
     Parameters
@@ -69,6 +70,9 @@ class ConfigureDescriptor(ABC, GUIComponent, Generic[T]):
         exclude: Container[T] = (),
         mutex: Container[str] = (),
         depends: dict[str, str] | None = None,
+        label: str = "",
+        tooltip: str = "",
+        **params,
     ):
         self.default: T = default
         self.optional = optional if optional is not None else default is not SENTINEL
@@ -77,7 +81,13 @@ class ConfigureDescriptor(ABC, GUIComponent, Generic[T]):
         self.exclude = exclude
 
         self.mutex = mutex
-        self.depends = depends if depends is not None else {}
+
+        self.depends: dict[str, str] = depends if depends is not None else {}
+
+        if missing := (self.required_deps() - self.depends.keys()):
+            raise ConfigError(f"Required deps ({', '.join(missing)}) missing.")
+
+        super().__init__(label=label, tooltip=tooltip)
 
     def __set_name__(self, owner: object, name: str):
         self.name = name
@@ -120,6 +130,9 @@ class ConfigureDescriptor(ABC, GUIComponent, Generic[T]):
 
         setattr(owner, self.private_name, self.validate(value, deps))
         setattr(owner, self.configured_var, True)
+
+    def required_deps(self) -> set[str]:
+        return set()
 
     @property
     def choices(self) -> set[T]:
@@ -181,9 +194,10 @@ class ConfigureDescriptor(ABC, GUIComponent, Generic[T]):
 
 
 class MinMax(ABC, Generic[T]):
-    def __init__(self, minimum: T | None = None, maximum: T | None = None):
+    def __init__(self, minimum: T | None = None, maximum: T | None = None, *args, **kwargs):
         self.minimum = minimum
         self.maximum = maximum
+        super().__init__(*args, **kwargs)
 
     @property
     def minimum(self) -> T | None:
@@ -217,8 +231,11 @@ class MinMax(ABC, Generic[T]):
     def maximum(self, value: T | None) -> None:
         self._maximum = value if value is not None else np.inf
 
-    def validate_range(self, value: T, range: tuple[T, T] | None = None) -> None:
-        mini, maxi = range if range is not None else self.minimum, self.maximum
+    def validate_range(self, value: T, ranges: tuple[T, T] | None = None) -> None:
+        if ranges is not None:
+            mini, maxi = ranges
+        else:
+            mini, maxi = self.minimum, self.maximum
 
         if mini > value > maxi:
             raise ConfigError(

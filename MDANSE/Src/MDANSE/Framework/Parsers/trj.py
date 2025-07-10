@@ -1,22 +1,4 @@
-#    This file is part of MDANSE.
-#
-#    MDANSE is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-from __future__ import annotations
-
 import struct
-from collections.abc import Collection
 from typing import NamedTuple
 
 import numpy as np
@@ -149,27 +131,26 @@ class TrjFile(Parser):
                 self.velocities_written = data[-4]
                 self.gradients_written = data[-3]
 
-            frame_data = [
+            self.frame_data = [
                 "step_info",
                 "cell_prop_info",
             ]
             if self.options.lcanon:
-                frame_data.append("nose")
+                self.frame_data.append("nose")
             if self.options.pertype:
-                frame_data.extend(("cell", "natoms"))
+                self.frame_data.extend(("cell", "natoms"))
             if self.options.lnpecan:
-                frame_data.append("pecan")
+                self.frame_data.append("pecan")
             if self.options.ltmpdamp:
-                frame_data.append("temp_damp")
+                self.frame_data.append("temp_damp")
 
-            frame_data.extend(("pos_x", "pos_y", "pos_z"))
+            self.frame_data.extend(("pos_x", "pos_y", "pos_z"))
 
             if self.velocities_written:
-                frame_data.extend(("vel_x", "vel_y", "vel_z"))
+                self.frame_data.extend(("vel_x", "vel_y", "vel_z"))
             if self.gradients_written:
-                frame_data.extend(("force_x", "force_y", "force_z"))
+                self.frame_data.extend(("force_x", "force_y", "force_z"))
 
-            self.frame_data = tuple(frame_data)
             self.framesize = len(self.frame_data)
             parser.send(-1)
 
@@ -207,7 +188,7 @@ class TrjFile(Parser):
 
     def read_frame(self, parser: binary_file_reader):
         accum = {}
-        iter = zip(self.frame_data, parser, strict=False)
+        iter = zip(self.frame_data, parser)
         for typ, rec in iter:
             if typ.startswith(("pos", "vel", "force")):
                 key = typ.split("_")[0]
@@ -232,5 +213,5 @@ class TrjFile(Parser):
                 yield frame
 
     @property
-    def element_list(self) -> Collection[str]:
-        return ("du",)
+    def element_list(self):
+        return None

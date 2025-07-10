@@ -44,13 +44,14 @@ class CASTEP(Converter):
         mode="r",
         extensions=(".md", "*"),
         label="A CASTEP MD trajectory file.",
-        default="INPUT_FILENAME",
     )
     atom_aliases = AtomMapping(
-        depends=("trajectory_file",), label="Atom mapping", default={}
+        depends={"trajectory": "trajectory_file"}, label="Atom mapping", default={},
     )
     fold = BooleanConfigDesc(label="Fold coordinates into box")
     output_files = OutputTrajectoryConfigDesc()
+
+    enabled = True
 
     def initialize(self):
         """

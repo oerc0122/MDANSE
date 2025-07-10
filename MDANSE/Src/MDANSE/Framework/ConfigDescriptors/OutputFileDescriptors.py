@@ -17,10 +17,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
-from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import GUIComponent
+from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import Parameter
 from MDANSE.Framework.Formats import OutputFormats
 from MDANSE.MLogging import LogLevels
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
@@ -55,7 +56,7 @@ class OutputFormatConfigDesc(MultipleChoiceConfigDesc):
         )
 
 
-class OutputFileConfigDesc(GUIComponent):
+class OutputFileConfigDesc(Parameter):
     out_format = OutputFormatConfigDesc(("MDAFormat", "TextFormat"))
     log_level = LogLevelConfigDesc(default=LogLevels.NONE, label="Reporting log level.")
     path = PathConfigDesc(mode="w")
@@ -66,7 +67,7 @@ class OutputFileConfigDesc(GUIComponent):
         level: LogLevels = LogLevels.NONE,
         **kwargs,
     ):
-        super().__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self.log_level = level
         self.out_format = formats
 
@@ -81,6 +82,14 @@ class OutputFileConfigDesc(GUIComponent):
     def __str__(self) -> str:
         return f"{type(self).__name__}({self.path=}, {self.out_format=}, {self.log_level=})"
 
+    @property
+    def configuration(self) -> dict[str, Any]:
+        return {
+            "path": self.path,
+            "log_level": self.log_level,
+            "formats": self.out_format,
+        }
+
 
 class OutputFilePlusMemConfigDesc(OutputFileConfigDesc):
     out_format = OutputFormatConfigDesc(("MDAFormat", "TextFormat", "FileInMemory"))
@@ -91,7 +100,13 @@ class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
         ("MDTFormat",),
     )
     dtype = SingleChoiceConfigDesc(
-        choices=(np.float16, np.float32, np.float64), default=np.float64
+        choices=(np.float16, np.float32, np.float64),
+        default=np.float64,
+        aliases=(
+            dict.fromkeys(("64", "float64", "float", float, 64), np.float64)
+            | dict.fromkeys(("32", "float32", "single", 32), np.float32)
+            | dict.fromkeys(("16", "float16", "half", 16), np.float16)
+        ),
     )
     chunk_size = IntegerConfigDesc(minimum=32, maximum=65536, default=128)
     compression = SingleChoiceConfigDesc(
@@ -115,3 +130,15 @@ class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
 
     def __str__(self) -> str:
         return f"{type(self).__name__}({self.path=}, {self.log_level=}, {self.dtype=}, {self.chunk_size=}, {self.compression=})"
+
+    @property
+    def dtype_size(self) -> int:
+        return int(str(self.dtype)[-4:-2])
+
+    @property
+    def configuration(self) -> dict[str, Any]:
+        return super().configuration() | {
+            "dtype": self.dtype_size,
+            "chunk_size": self.chunk_size,
+            "compression": self.compression,
+        }

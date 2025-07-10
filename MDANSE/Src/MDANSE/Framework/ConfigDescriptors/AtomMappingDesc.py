@@ -30,7 +30,11 @@ class AtomMapping(ConfigureDescriptor[dict]):
     def __init__(self, default: dict[str, dict[str, str]] | str = {}, **kwargs):
         super().__init__(default=default, **kwargs)
 
-    def validate(self, value: dict | str, file_info) -> dict:
+    def required_deps(self) -> set[str]:
+        return super().required_deps() | {"trajectory"}
+
+    def validate(self, value: dict | str, deps: dict[str, object]) -> dict:
+        file_info = deps["trajectory"]
         if isinstance(value, dict):
             pass
         elif isinstance(value, str):

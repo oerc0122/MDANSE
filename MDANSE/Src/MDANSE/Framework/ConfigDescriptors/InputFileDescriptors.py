@@ -20,6 +20,3 @@ class MDANSETrajectoryFile(PathConfigDesc):
         value = super().validate(value)
 
         return Trajectory(value)
-
-    def __del__(self) -> None:
-        self.file.close()

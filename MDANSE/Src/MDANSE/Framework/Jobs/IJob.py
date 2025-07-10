@@ -30,7 +30,7 @@ import traceback
 from collections.abc import Sequence
 from logging import FileHandler
 from logging.handlers import QueueHandler, QueueListener
-from multiprocessing import Queue
+from multiprocessing import Process, Queue
 from pathlib import Path
 from typing import Any
 
@@ -39,7 +39,7 @@ from more_itertools import consumer, first_true
 from MDANSE import PLATFORM
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
-from MDANSE.Framework.Configurable import Configurable
+from MDANSE.Framework.ConfigDescriptors.Configurable import Configurable
 from MDANSE.Framework.Jobs.JobStatus import JobStates, JobStatus
 from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
 from MDANSE.MLogging import FMT, LOG
@@ -200,6 +200,11 @@ class IJob(Configurable, metaclass=SubclassFactory):
     ancestor = []
     runscript_import_line = "from MDANSE.Framework.Jobs.IJob import IJob"
 
+    enabled = False
+
+    def check_status(self):
+        pass
+
     @classmethod
     def define_unique_name(cls):
         """
@@ -217,12 +222,10 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
         return name
 
-    def __init__(self, trajectory_input="mdanse"):
+    def __init__(self):
         """
         The base class constructor.
         """
-
-        Configurable.__init__(self, trajectory_input=trajectory_input)
 
         self._outputData = OutputData()
 
@@ -248,10 +251,6 @@ class IJob(Configurable, metaclass=SubclassFactory):
     def name(self):
         return self._name
 
-    @property
-    def configuration(self):
-        return self._configuration
-
     def finalize(self):
         if self._log_filename is not None:
             self.remove_log_file_handler()
@@ -263,10 +262,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
     def initialize(self):
         try:
-            if (
-                hasattr(self, "output_files")
-                and self.output_files.write_logs
-            ):
+            if hasattr(self, "output_files") and self.output_files.write_logs:
                 log_filename = str(self.output_files.path.with_suffix(".log"))
                 self.add_log_file_handler(
                     log_filename, self.output_files.log_level.value
@@ -327,11 +323,13 @@ class IJob(Configurable, metaclass=SubclassFactory):
         ----------
         jobFile : Path
             The name of the output job file.
-        parameters : Optional[dict[str, Any]]
+        parameters : dict[str, Any] or None
             If not None, the parameters with which the job file will be built.
         """
         if parameters is None:
             parameters = cls.get_default_parameters()
+
+        jobFile = Path(jobFile)
 
         parameters = {
             key: (val, label) if not isinstance(val, Path) else (str(val), label)
@@ -350,7 +348,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 )
             )
 
-        os.chmod(jobFile, stat.S_IRWXU)
+        jobFile.chmod(stat.S_IRWXU)
 
     def combine(self):
         if self._status is not None:
@@ -428,9 +426,9 @@ class IJob(Configurable, metaclass=SubclassFactory):
         for i in range(self.numberOfSteps):
             inputQueue.put(i)
 
-        for _ in range(self.configuration["running_mode"]["slots"]):
+        for _ in range(self.running_mode.slots):
             self._run_multicore_check_terminate(listener)
-            p = multiprocessing.Process(
+            p = Process(
                 target=self.process_tasks_queue,
                 args=(inputQueue, outputQueue, log_queues),
             )
@@ -513,7 +511,12 @@ class IJob(Configurable, metaclass=SubclassFactory):
         "remote": _run_remote,
     }
 
-    def run(self, parameters: dict[str, Any] | None = None, status: bool = False, prog_bar: bool = False):
+    def run(
+        self,
+        parameters: dict[str, Any] | None = None,
+        status: bool = False,
+        prog_bar: bool = False,
+    ):
         """
         Run the job.
         """
@@ -543,8 +546,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
             if getattr(self, "numberOfSteps", 0) <= 0:
                 raise JobError(self, f"Invalid number of steps for job {self._name}")
 
-            if "running_mode" in self.configuration:
-                mode = self.configuration["running_mode"]["mode"]
+            if "running_mode" in self.parameters:
+                mode = self.running_mode.mode
             else:
                 mode = "single-core"
 

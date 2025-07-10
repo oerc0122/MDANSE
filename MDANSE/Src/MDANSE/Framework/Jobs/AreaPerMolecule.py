@@ -20,6 +20,14 @@ import collections
 import numpy as np
 
 from MDANSE.Core.Error import Error
+from MDANSE.Framework.ConfigDescriptors import (
+    DynamicSingleChoiceConfigDesc,
+    FramesConfigDesc,
+    MDANSETrajectoryFile,
+    OutputFileConfigDesc,
+    RunningModeConfigDesc,
+    SingleChoiceConfigDesc,
+)
 from MDANSE.Framework.Jobs.IJob import IJob
 
 
@@ -46,36 +54,24 @@ class AreaPerMolecule(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["axis"] = (
-        "SingleChoiceConfigurator",
-        {
-            "label": "area vectors",
-            "choices": ["ab", "bc", "ac"],
-            "default": "ab",
-        },
-    )
-    settings["molecule_name"] = (
-        "MoleculeSelectionConfigurator",
-        {
-            "label": "molecule name",
-            "default": "",
-            "dependencies": {"trajectory": "trajectory"},
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
-
     _AXIS_MAP = {
         "ab": (0, 1),
         "bc": (1, 2),
         "ac": (0, 2),
     }
+
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    axis = SingleChoiceConfigDesc(
+        choices=_AXIS_MAP.keys(), default="ab", label="Area vectors"
+    )
+    molecule_name = DynamicSingleChoiceConfigDesc(
+        choices="chemical_system._clusters.keys()", depends={"choices": "trajectory"}
+    )
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
+
+    enabled = True
 
     def initialize(self):
         """
@@ -84,34 +80,33 @@ class AreaPerMolecule(IJob):
         super().initialize()
 
         # This will define the number of steps of the analysis. MUST be defined for all analysis.
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.numberOfSteps = len(self.frames)
 
         # Extract the indices corresponding to the axis selection (a=0,b=1,c=2).
-        axis_labels = self.configuration["axis"]["value"]
+        axis_labels = self.axis
         self._axisIndexes = self._AXIS_MAP[axis_labels]
 
         # The number of molecules that match the input name. Must be > 0.
         self._nMolecules = len(
-            self.trajectory.chemical_system._clusters[
-                self.configuration["molecule_name"]["value"]
-            ]
+            self.trajectory.chemical_system._clusters[self.molecule_name]
         )
+
         if self._nMolecules == 0:
             raise AreaPerMoleculeError(
-                f"No molecule matches {self.configuration['molecule_name']['value']!r} name."
+                f"No molecule matches {self.molecule_name!r} name."
             )
 
         self._outputData.add(
             "apm/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["time"],
+            self.frames.times,
             units="ps",
         )
 
         self._outputData.add(
             "apm/area_per_molecule",
             "LineOutputVariable",
-            (self.configuration["frames"]["number"],),
+            (len(self.frames),),
             axis="apm/axes/time",
             units="1/nm2",
             main_result=True,
@@ -129,7 +124,7 @@ class AreaPerMolecule(IJob):
         """
 
         # Get the frame index
-        frame_index = self.configuration["frames"]["value"][index]
+        frame_index = self.frames[index]
 
         configuration = self.trajectory.configuration(frame_index)
 
@@ -144,7 +139,7 @@ class AreaPerMolecule(IJob):
                 "You can add a box using TrajectoryEditor."
             ) from None
 
-        apm = np.sqrt(np.sum(normalVect**2)) / self._nMolecules
+        apm = np.linalg.norm(normalVect) / self._nMolecules
 
         return index, apm
 
@@ -161,8 +156,8 @@ class AreaPerMolecule(IJob):
         """
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.root,
+            self.output_files.formats,
             str(self),
             self,
         )

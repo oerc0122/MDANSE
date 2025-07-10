@@ -15,7 +15,6 @@
 #
 from __future__ import annotations
 
-from collections.abc import Iterable
 from pathlib import Path
 from typing import NamedTuple, NoReturn
 from xml.etree import ElementTree
@@ -24,7 +23,6 @@ import numpy as np
 import numpy.typing as npt
 from more_itertools import first
 
-from MDANSE.Framework.AtomMapping import AtomLabel
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
@@ -102,7 +100,7 @@ class XTDFile(Parser):
         self._bonds = []
 
         for node in root.iter("Bond"):
-            if "ImageOf" in node.attrib:
+            if "imageOf" in node.attrib:
                 continue
 
             idx1, idx2 = self._get_comma_prop(node, "Connects", int, atoms_mapping)
@@ -112,25 +110,16 @@ class XTDFile(Parser):
             atm2.bonded_to.add(idx1)
 
         self._clusters = [
-            [
-                prop
-                for prop in self._get_comma_prop(
-                    node, "Children", int, atoms_mapping, skip_missing=True
-                )
-                if prop is not None
-            ]
+            [p for p in self._get_comma_prop(node, "Children", int, atoms_mapping, skip_missing=True) if p is not None]
             for node in root.iter("Molecule")
-            if "ImageOf" not in node.attrib
+            if "imageOf" not in node.attrib
         ]
 
     @staticmethod
     def _get_comma_prop(
-        node,
-        key: str,
-        to_type: type = str,
-        retrieve: dict | None = None,
-        skip_missing: bool = False,
+        node, key: str, to_type: type = str, retrieve: dict | None = None, skip_missing: bool = False
     ):
+
         data = map(to_type, node.attrib[key].split(","))
 
         if retrieve is None:
@@ -143,20 +132,8 @@ class XTDFile(Parser):
 
     @property
     def element_list(self) -> list[str]:
-        return [atom.element for atom in self._atoms.values()]
+        return [atom.name for atom in self._atoms.values()]
 
     @property
     def frames(self) -> NoReturn:
         raise StopIteration
-
-    @property
-    def atom_labels(self) -> Iterable[AtomLabel]:
-        """Return the set of atom labels.
-
-        Yields
-        ------
-        AtomLabel
-            An atom label.
-        """
-        for atom in self._atoms.values():
-            yield AtomLabel(atom.element, type=atom.name)

@@ -34,11 +34,13 @@ class ChoiceConfigDesc(ConfigureDescriptor):
         self,
         *,
         n_choices: int | None,
+        aliases: dict[Any, T] | None = None,
         **params,
     ):
         super().__init__(**params)
 
         self.n_choices = n_choices
+        self.aliases = aliases if aliases is not None else {}
 
     @property
     def n_choices(self) -> int:
@@ -67,6 +69,7 @@ class MultipleChoiceConfigDesc(MultipleValues, ChoiceConfigDesc):
         super().__init__(choices=choices, n_choices=n_choices, **params)
 
     def validate(self, values: Sequence[T], *_) -> Sequence[T]:
+        values = [self.aliases.get(value, value) for value in values]
         values = super().validate(values)
 
         if len(values) > self.n_choices:
@@ -79,6 +82,9 @@ class SingleChoiceConfigDesc(ChoiceConfigDesc):
     def __init__(self, choices: Container[T], **params):
         super().__init__(choices=choices, n_choices=1, **params)
 
+    def validate(self, value: T, *_) -> T:
+        value = self.aliases.get(value, value)
+        return super().validate(value)
 
 class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
     def __init__(self, choices: str, depends: dict[str, str], **params):
@@ -86,6 +92,9 @@ class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
             raise ConfigError(f"{type(self).__name__} requires 'choices' in `depends`")
         super().__init__(choices=choices, depends=depends, **params)
         self.last_choices = set()
+
+    def required_deps(self) -> set[str]:
+        return super().required_deps() | {"choices"}
 
     @property
     def choices(self) -> set[T]:
@@ -97,6 +106,11 @@ class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
 
     def validate(self, value: T, deps: dict[str, Any]) -> T:
         choices = set(get_deep_attr(deps["choices"], self._choices))
+
+        if not choices:
+            raise ConfigError(
+                f"No valid choices at deps['choices'].{self._choices}"
+            )
 
         if not self.validate_exclude(value):
             raise ConfigError(

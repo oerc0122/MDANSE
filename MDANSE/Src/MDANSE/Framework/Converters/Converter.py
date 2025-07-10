@@ -34,6 +34,8 @@ class Converter(IJob, metaclass=SubclassFactory):
         "from MDANSE.Framework.Converters.Converter import Converter"
     )
 
+    enabled = False
+
     @abstractmethod
     def run_step(self, index):
         pass

@@ -16,11 +16,11 @@
 import multiprocessing
 
 from MDANSE.Framework.ConfigDescriptors import IntegerConfigDesc, SingleChoiceConfigDesc
-from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import GUIComponent
+from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import Parameter
 
 
-class RunningModeConfigDesc(GUIComponent):
-    mode = SingleChoiceConfigDesc(choices=("single-core", "multicore", "remote"))
+class RunningModeConfigDesc(Parameter):
+    mode = SingleChoiceConfigDesc(choices=("single-core", "multicore", "remote"), default="single-core")
     n_procs = IntegerConfigDesc(
         minimum=1, maximum=multiprocessing.cpu_count(), default=1
     )

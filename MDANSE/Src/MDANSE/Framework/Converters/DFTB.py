@@ -17,6 +17,12 @@ from __future__ import annotations
 
 import collections
 
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomMapping,
+    BooleanConfigDesc,
+    OutputTrajectoryConfigDesc,
+    PathConfigDesc,
+)
 from MDANSE.Framework.Converters.Forcite import Forcite
 from MDANSE.Framework.Parsers import TrjFile, XTDFile
 
@@ -26,42 +32,21 @@ class DFTB(Forcite):
 
     label = "DFTB"
 
+    xtd_file = PathConfigDesc(
+        mode="r",
+        extensions=(".xtd", "*"),
+        label="The XTD file.",
+    )
+    trj_file = PathConfigDesc(
+        mode="r",
+        extensions=(".trj", "*"),
+        label="The TRJ file.",
+    )
+    atom_aliases = AtomMapping(
+        depends={"trajectory": "xtd_file"},
+        label="Atom mapping",
+        default={},
+    )
+    fold = BooleanConfigDesc(label="Fold coordinates into box")
+    output_files = OutputTrajectoryConfigDesc()
     settings = collections.OrderedDict()
-    settings["xtd_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "XTD files (*.xtd);;All files (*)",
-            "default": "INPUT_FILENAME.xtd",
-            "label": "The XTD file",
-            "parser": XTDFile,
-        },
-    )
-    settings["trj_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "TRJ files (*.trj);;All files (*)",
-            "default": "INPUT_FILENAME.trj",
-            "label": "The TRJ file",
-            "parser": TrjFile,
-        },
-    )
-    settings["atom_aliases"] = (
-        "AtomMappingConfigurator",
-        {
-            "default": "{}",
-            "label": "Atom mapping",
-            "dependencies": {"input_file": "xtd_file"},
-        },
-    )
-    settings["fold"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Fold coordinates into box"},
-    )
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {
-            "formats": ["MDTFormat"],
-            "root": "xtd_file",
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
-        },
-    )

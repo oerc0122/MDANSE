@@ -18,6 +18,7 @@ import re
 from collections.abc import Collection, Sequence
 from enum import Enum, auto
 from math import isclose
+from numbers import Number
 from pathlib import Path
 from typing import Optional, SupportsFloat, SupportsInt, Union
 
@@ -96,7 +97,7 @@ class BooleanConfigDesc(ConfigureDescriptor[bool]):
         return self._alias[value]
 
 
-class FloatConfigDesc(ConfigureDescriptor[float], MinMax[float]):
+class FloatConfigDesc(MinMax[float], ConfigureDescriptor[float]):
     """
     This configurator allows to input a float value.
     """
@@ -125,7 +126,7 @@ class FloatConfigDesc(ConfigureDescriptor[float], MinMax[float]):
         return value
 
 
-class IntegerConfigDesc(ConfigureDescriptor[int], MinMax[int]):
+class IntegerConfigDesc(MinMax[int], ConfigureDescriptor[int]):
     """Configurator takes an integer input."""
 
     def __init__(self, **params):
@@ -274,7 +275,7 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
         return value
 
 
-class RangeConfigDesc(ConfigureDescriptor[range], MinMax[int]):
+class RangeConfigDesc(MinMax[int], ConfigureDescriptor[range]):
     """
     This configurator allows a user to input a range value.
     """
@@ -303,7 +304,7 @@ class RangeConfigDesc(ConfigureDescriptor[range], MinMax[int]):
         return value
 
 
-class NumericRangeConfigDesc(ConfigureDescriptor[numeric_range], MinMax[float]):
+class NumericRangeConfigDesc(MinMax[Number], ConfigureDescriptor[numeric_range]):
     """
     This configurator allows a user to input a generalised range.
     """
