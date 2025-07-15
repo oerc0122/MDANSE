@@ -26,12 +26,12 @@ from qtpy.QtWidgets import (
     QSizePolicy,
     QSlider,
     QSpinBox,
+    QSplitter,
     QStyle,
     QTabWidget,
     QTreeView,
     QVBoxLayout,
     QWidget,
-    QSplitter,
 )
 
 from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
