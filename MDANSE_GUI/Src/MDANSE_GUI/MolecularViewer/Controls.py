@@ -31,7 +31,7 @@ from qtpy.QtWidgets import (
     QTreeView,
     QVBoxLayout,
     QWidget,
-    QSplitter
+    QSplitter,
 )
 
 from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
@@ -96,7 +96,9 @@ class ViewerControls(QWidget):
         super(QWidget, self).__init__(*args, **kwargs)
         _ = QGridLayout(self)
         self._splitter = QSplitter()
-        self.layout().addWidget(self._splitter, 0, 0, 1, 1)  # row, column, rowSpan, columnSpan
+        self.layout().addWidget(
+            self._splitter, 0, 0, 1, 1
+        )  # row, column, rowSpan, columnSpan
         self._viewer = None
         self._buttons = {}
         self._delegates = {}
