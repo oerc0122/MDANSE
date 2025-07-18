@@ -250,7 +250,8 @@ class MolecularViewer(QtWidgets.QWidget):
         """
         self.current_axes_type = axes_option
         self.update_axes()
-        self.update_renderer()
+        self._iren.GetRenderWindow().Render()
+        self._iren.Render()
 
     def trace_from_dialog(self, params: dict[str, Any]):
         """Passes the input parameter dictionary to the method
@@ -973,6 +974,7 @@ class MolecularViewer(QtWidgets.QWidget):
             self._renderer.ResetCamera()
             self.reset_camera = False
 
+        self._iren.GetRenderWindow().Render()
         self._iren.Render()
 
 
