@@ -594,12 +594,14 @@ class MolecularViewer(QtWidgets.QWidget):
             return
 
         if self.current_axes_type == "cartesian":
+            transform = vtk.vtkTransform()
+            transform.Identity()
             parts = self.axes_assembly.GetParts()
             parts.InitTraversal()
             for i in range(parts.GetNumberOfItems()):
                 arrow = parts.GetNextProp()
-                arrow.SetUserTransform(None)
-            self.label_actor.SetUserTransform(None)
+                arrow.SetUserTransform(transform)
+            self.label_actor.SetUserTransform(transform)
             for widget in self.axes_widgets:
                 widget.SetEnabled(True)
             self.label_actor.SetXAxisLabelText("X")
