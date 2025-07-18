@@ -524,6 +524,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self._atom_colours = []
         self._current_frame = 0
         self.reset_all_polydata()
+        self.update_axes()
 
         self.update_renderer()
 
@@ -566,13 +567,10 @@ class MolecularViewer(QtWidgets.QWidget):
 
     def update_axes(self):
         """Updates the axes depending on the axes type used."""
+        for widget in self.arrow_widgets:
+            widget.SetEnabled(False)
         if self.current_axes_type == "none":
-            for widget in self.arrow_widgets:
-                widget.SetEnabled(False)
             return
-        else:
-            for widget in self.arrow_widgets:
-                widget.SetEnabled(True)
 
         identity = vtk.vtkTransform()
         identity.Identity()
@@ -588,6 +586,8 @@ class MolecularViewer(QtWidgets.QWidget):
             self.arrow_actors[1].SetYAxisLabelText("b*")
             self.arrow_actors[2].SetZAxisLabelText("c*")
         elif self.current_axes_type == "cartesian":
+            for widget in self.arrow_widgets:
+                widget.SetEnabled(True)
             self.arrow_actors[0].SetXAxisLabelText("X")
             self.arrow_actors[1].SetYAxisLabelText("Y")
             self.arrow_actors[2].SetZAxisLabelText("Z")
@@ -598,6 +598,9 @@ class MolecularViewer(QtWidgets.QWidget):
         uc = self._reader.read_pbc(self._current_frame)
         if uc is None:
             return
+
+        for widget in self.arrow_widgets:
+            widget.SetEnabled(True)
 
         if self.current_axes_type == "direct":
             matrix = uc.direct.copy()
