@@ -108,6 +108,7 @@ class ViewerControls(QWidget):
         self._animation_timer.timeout.connect(self.advance_frame)
         self._mutex = QMutex()
         self._frame_step = 1
+        self._current_step_size = 1
         self._time_per_frame = 80  # in ms
         self._frame_factor = 1  # just a scalar multiplication factor
         self._visibility = [True, True, True, True]
@@ -335,12 +336,14 @@ class ViewerControls(QWidget):
     @Slot(int)
     def setTimeStep(self, new_value: int):
         self._time_per_frame = new_value
-        self.animate()
+        if self._animation_timer.isActive():
+            self.animate(self._current_step_size)
 
     @Slot(int)
     def setFrameSkip(self, new_value: int):
         self._frame_factor = new_value
-        self.animate()
+        if self._animation_timer.isActive():
+            self.animate(self._current_step_size)
 
     @Slot(float)
     def setAtomSize(self, new_value: float):
@@ -374,7 +377,8 @@ class ViewerControls(QWidget):
         """
         if self._animation_timer.isActive():
             self._animation_timer.stop()
-        self._frame_step = step_size * self._frame_factor
+        self._current_step_size = step_size
+        self._frame_step = self._current_step_size * self._frame_factor
         self._animation_timer.setInterval(self._time_per_frame)
         self._animation_timer.start()
 
