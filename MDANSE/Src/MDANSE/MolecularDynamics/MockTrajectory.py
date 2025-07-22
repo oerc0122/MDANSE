@@ -231,7 +231,9 @@ class MockTrajectory:
     def time(self) -> np.ndarray:
         return self._time_axis
 
-    def coordinates(self, frame: int) -> np.ndarray:
+    def coordinates(
+        self, frame: int, atom_indices: slice | int = slice(None)
+    ) -> np.ndarray:
         """Returns the atom coordinates at the specified frame
 
         Parameters
@@ -258,7 +260,7 @@ class MockTrajectory:
 
         scaled_index = frame % self._real_length
 
-        return self._coordinates[scaled_index].astype(np.float64)
+        return self._coordinates[scaled_index, atom_indices, :].astype(np.float64)
 
     def configuration(self, frame: int) -> _Configuration:
         """An MDANSE Configuration at the specified frame number.
@@ -300,8 +302,8 @@ class MockTrajectory:
     def _load_unit_cells(self):
         """Only added for compatibility with Trajectory."""
 
-    def get_atom_property(self, atom_symbol: str, property: str):
-        return ATOMS_DATABASE.get_atom_property(atom_symbol, property)
+    def get_atom_property(self, atom_symbol: str, atom_property: str):
+        return ATOMS_DATABASE.get_atom_property(atom_symbol, atom_property)
 
     def atoms_in_database(self) -> list[str]:
         return ATOMS_DATABASE.atoms
@@ -421,11 +423,9 @@ class MockTrajectory:
 
         if self._pbc:
             real_coordinates = np.empty(box_coordinates.shape, dtype=np.float64)
-            comp = 0
-            for i in range(first, last, step):
+            for comp, i in enumerate(range(first, last, step)):
                 direct_cell = self.unit_cell(i).direct
                 real_coordinates[comp, :] = box_coordinates[comp, :] @ direct_cell
-                comp += 1
             return real_coordinates
         else:
             return box_coordinates
@@ -434,7 +434,7 @@ class MockTrajectory:
         self,
         index: int,
         first: int = 0,
-        last: int = None,
+        last: int | None = None,
         step: int = 1,
         *,
         box_coordinates: bool = False,

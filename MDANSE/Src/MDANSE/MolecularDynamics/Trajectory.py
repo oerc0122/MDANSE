@@ -15,11 +15,6 @@
 #
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from MDANSE.Chemistry.Databases import AtomsDatabase
-
 import copy
 import math
 from collections import Counter, defaultdict
@@ -27,22 +22,32 @@ from collections.abc import Sequence
 from functools import cached_property
 from operator import itemgetter
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal
 
 import h5py
 import numpy as np
+import numpy.typing as npt
+from more_itertools import always_iterable, only
 
 from MDANSE import PLATFORM
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Chemistry.Databases import str_to_num
-from MDANSE.MolecularDynamics.Configuration import RealConfiguration
+from MDANSE.MolecularDynamics.Configuration import _Configuration
+from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from MDANSE.Trajectory.H5MDTrajectory import H5MDTrajectory
 from MDANSE.Trajectory.MdanseTrajectory import MdanseTrajectory
+
+if TYPE_CHECKING:
+    from MDANSE.Chemistry.Databases import AtomsDatabase
+
 
 available_formats = {
     "MDANSE": MdanseTrajectory,
     "H5MD": H5MDTrajectory,
 }
+ValidFormats = Literal["MDANSE", "H5MD"]
+SLICE_ALL = np.s_[:]
 
 
 class Trajectory:
@@ -55,17 +60,16 @@ class Trajectory:
     such as the atom selection, atom transmutation and grouping.
     """
 
-    def __init__(self, filename, trajectory_format=None):
+    def __init__(self, filename, trajectory_format: ValidFormats | None = None):
         self._filename = filename
-        self._format = trajectory_format
-        if self._format is None:
-            self.guess_correct_format()
-        if self._format is None:
-            self._format = "MDANSE"
-        if self._format not in ("mock",):
+        self._format = (
+            trajectory_format if trajectory_format else self.guess_correct_format()
+        )
+
+        if self._format not in {"mock"}:
             self._trajectory = self.open_trajectory(self._format)
-        self._min_span = np.zeros(3)
-        self._max_span = np.zeros(3)
+        self._min_span = None
+        self._max_span = None
         self._grouping_level = "atom"
         self._atom_cache = {}
         self._selection = []
@@ -92,27 +96,29 @@ class Trajectory:
     @cached_property
     def element_from_label(self) -> dict[str, str]:
         """Maps the full atom labels to the chemical elements.
-        
+
         If grouping is used, atom labels may contain the molecule name
         as well as the chemical element of the atom, and will not match
         the entries in the atom database. This dictionary allows to get
         a valid atom database key for each atom in the system.
         """
-        mapping = {element : element for element in self.unique_elements}
+        mapping = {element: element for element in self.unique_elements}
         if self._grouping_level == "molecule":
             temp_names = {}
             for mol_name, clusters in self.chemical_system._clusters.items():
                 for cluster in clusters:
                     overlap = set(cluster).intersection(self.atom_indices)
                     for x in overlap:
-                        temp_names[f"<{mol_name}>/{self.atom_types[x]}"] = self.atom_types[x]
+                        temp_names[f"<{mol_name}>/{self.atom_types[x]}"] = (
+                            self.atom_types[x]
+                        )
             mapping.update(temp_names)
         return mapping
-    
+
     @cached_property
     def group_lookup(self) -> dict[str, int] | dict[str, list[int]]:
         """Dictionary of currently existing groups.
-        
+
         The keys are names of the group. The values can be the count
         of all atoms belonging to the group, or (for 'each molecule' only)
         a list of atom indices belonging to the individual molecule.
@@ -142,7 +148,7 @@ class Trajectory:
                 for cluster in clusters:
                     overlap = set(cluster).intersection(self.atom_indices)
                     for x in overlap:
-                        temp_names[x] = (f"<{mol_name}>/{self.atom_types[x]}")
+                        temp_names[x] = f"<{mol_name}>/{self.atom_types[x]}"
             atom_names = copy.deepcopy(self.atom_types)
             for k, v in temp_names.items():
                 atom_names[k] = v
@@ -195,7 +201,9 @@ class Trajectory:
         self._grouping_level = grouping_level
 
     def get_weights(
-        self, *, prop: str | None = None,
+        self,
+        *,
+        prop: str | None = None,
     ) -> tuple[dict[str, float], dict[str, float]]:
         """Generate a dictionary of weights.
 
@@ -213,7 +221,11 @@ class Trajectory:
         """
         weights = []
         for n_elements, atm_names, atm_elements in [
-            (self.get_natoms(), self.selection_getter(self.atom_names), self.selection_getter(self.atom_types)),
+            (
+                self.get_natoms(),
+                self.selection_getter(self.atom_names),
+                self.selection_getter(self.atom_types),
+            ),
             (
                 self.get_all_natoms(),
                 self.atom_names,
@@ -277,16 +289,21 @@ class Trajectory:
         """
         all_elements = np.array(self.atom_names)
         unique_elements = set(self.selection_getter(all_elements))
-        indices_per_element = {element: list(np.where(all_elements==element)[0]) for element in unique_elements}
+        indices_per_element = {
+            element: list(np.where(all_elements == element)[0])
+            for element in unique_elements
+        }
         return indices_per_element
 
-    def guess_correct_format(self):
+    def guess_correct_format(self) -> ValidFormats:
         """This is a placeholder for now. As the number of
         formats increases, they will have to be handled here.
         """
         for fname, fclass in available_formats.items():
             if fclass.file_is_right(self._filename):
-                self._format = fname
+                return fname
+
+        return "MDANSE"
 
     def open_trajectory(self, trajectory_format):
         trajectory_class = available_formats[trajectory_format]
@@ -297,14 +314,18 @@ class Trajectory:
         """Close the trajectory."""
         self._trajectory.close()
 
-    def __getitem__(self, frame):
-        """Return the configuration at a given frame
+    def __getitem__(self, frame: int) -> dict[str, npt.NDArray[float]]:
+        """Return the configuration at a given frame.
 
-        :param frame: the frame
-        :type frame: int
+        Parameters
+        ----------
+        frame : int
+            Frame to get.
 
-        :return: the configuration
-        :rtype: dict of ndarray
+        Returns
+        -------
+        dict[str, npt.NDArray[float]]
+            Configuration at frame.
         """
         return self._trajectory[frame]
 
@@ -320,54 +341,81 @@ class Trajectory:
     def __len__(self):
         return len(self._trajectory)
 
-    def charges(self, frame):
-        """Return the coordinates at a given frame.
+    def charges(self, frame: int) -> npt.NDArray[float]:
+        """Return the electrical charge of atoms at a given frame.
 
-        :param frame: the frame
-        :type frame: int
+        Parameters
+        ----------
+        frame : int
+            Frame to load.
 
-        :return: the coordinates
-        :rtype: ndarray
+        Returns
+        -------
+        ndarray
+            Charges at given time.
+
         """
         return self._trajectory.charges(frame)
 
-    def coordinates(self, frame):
+    def coordinates(
+        self,
+        frame: slice | int,
+        atom_indices: slice | int = SLICE_ALL,
+    ) -> npt.NDArray[float]:
         """Return the coordinates at a given frame.
 
-        :param frame: the frame
-        :type frame: int
+        Parameters
+        ----------
+        frame : slice or int
+            Frame(s) to load.
+        atom_indices : slice or int
+            Atoms to select.
 
-        :return: the coordinates
-        :rtype: ndarray
+        Returns
+        -------
+        ndarray
+            The coordinates in given frame.
+
         """
-        return self._trajectory.coordinates(frame)
+        return self._trajectory.coordinates(frame, atom_indices)
 
-    def configuration(self, frame: int = 0):
+    def configuration(self, frame: int = 0) -> _Configuration:
         """Build and return a configuration at a given frame.
 
-        :param frame: the frame
-        :type frame: int
+        Parameters
+        ----------
+        frame : int
+            Frame to load.
 
-        :return: the configuration
-        :rtype: MDANSE.MolecularDynamics.Configuration.Configuration
+        Returns
+        -------
+        _Configuration
+            The configuration.
+
         """
         return self._trajectory.configuration(frame)
 
-    def _load_unit_cells(self):
+    def _load_unit_cells(self) -> None:
         """Load all the unit cells."""
         self._trajectory._load_unit_cells()
 
-    def time(self):
+    def time(self) -> npt.NDArray[float]:
+        """Time timesteps from file."""
         return self._trajectory.time()
 
-    def unit_cell(self, frame):
+    def unit_cell(self, frame: int) -> UnitCell | None:
         """Return the unit cell at a given frame. If no unit cell is defined, returns None.
 
-        :param frame: the frame number
-        :type frame: int
+        Parameters
+        ----------
+        frame : int
+            The frame number.
 
-        :return: the unit cell
-        :rtype: ndarray
+        Returns
+        -------
+        UnitCell or None
+            The unit cell or None if no unit cells found.
+
         """
         return self._trajectory.unit_cell(frame)
 
@@ -387,34 +435,45 @@ class Trajectory:
 
     @property
     def max_span(self):
-        if np.allclose(self._max_span, 0.0):
+        if self._max_span is None:
             self.calculate_coordinate_span()
         return self._max_span
 
     @property
     def min_span(self):
-        if np.allclose(self._min_span, 0.0):
+        if self._min_span is None:
             self.calculate_coordinate_span()
         return self._min_span
 
     def read_com_trajectory(
-        self, atom_indices, first=0, last=None, step=1, box_coordinates=False,
-    ):
+        self,
+        atom_indices: Sequence[int],
+        first: int = 0,
+        last: int | None = None,
+        step: int = 1,
+        *,
+        box_coordinates: bool = False,
+    ) -> npt.NDArray[float]:
         """Build the trajectory of the center of mass of a set of atoms.
 
-        :param atoms: the atoms for which the center of mass should be computed
-        :type atoms: list MDANSE.Chemistry.ChemicalSystem.Atom
-        :param first: the index of the first frame
-        :type first: int
-        :param last: the index of the last frame
-        :type last: int
-        :param step: the step in frame
-        :type step: int
-        :param box_coordinates: if True, the coordiniates are returned in box coordinates
-        :type step: bool
+        Parameters
+        ----------
+        atoms : Sequence[int]
+            The atoms for which the center of mass should be computed.
+        first : int
+            The index of the first frame. (Default value = 0)
+        last : int or None
+            The index of the last frame. (Default value = None)
+        step : int
+            Number of frames between each sample. (Default value = 1)
+        box_coordinates : bool
+            If `True`, the coordiniates are returned in box coordinates. (Default value = False)
 
-        :return: 2D array containing the center of mass trajectory for the selected frames
-        :rtype: ndarray
+        Returns
+        -------
+        ndarray
+            2D array containing the center of mass trajectory for the selected frames
+
         """
         return self._trajectory.read_com_trajectory(
             atom_indices,
@@ -424,67 +483,112 @@ class Trajectory:
             box_coordinates=box_coordinates,
         )
 
-    def to_real_coordinates(self, box_coordinates, first, last, step):
+    def to_real_coordinates(
+        self,
+        box_coordinates: npt.NDArray[float],
+        first: int = 0,
+        last: int | None = None,
+        step: int | None = None,
+    ) -> npt.NDArray[float]:
         """Convert box coordinates to real coordinates for a set of frames.
 
-        :param box_coordinates: a 2D array containing the box coordinates
-        :type box_coordinates: ndarray
-        :param first: the index of the first frame
-        :type first: int
-        :param last: the index of the last frame
-        :type last: int
-        :param step: the step in frame
-        :type step: int
+        Parameters
+        ----------
+        box_coordinates : ndarray
+            A 2D array containing the box coordinates.
+        first : int
+            The index of the first frame.
+        last : int or None
+            The index of the last frame.
+        step : int or None
+            The step in frame.
 
-        :return: 2D array containing the real coordinates converted from box coordinates.
-        :rtype: ndarray
+        Returns
+        -------
+        ndarray
+            2D array containing the real coordinates converted from box coordinates.
+
         """
         return self._trajectory.to_real_coordinates(box_coordinates, first, last, step)
 
     def read_atomic_trajectory(
-        self, index: int, first: int = 0, last: int | None = None, step: int = 1, *, box_coordinates: bool = False,
-    ):
-        """Read an atomic trajectory. The trajectory is corrected for box jumps.
+        self,
+        index: int,
+        first: int = 0,
+        last: int | None = None,
+        step: int | None = 1,
+        *,
+        box_coordinates: bool = False,
+    ) -> npt.NDArray[float]:
+        """Read an atomic trajectory. The trajectory is corrected from box jumps.
 
-        :param index: the index of the atom
-        :type index: int
-        :param first: the index of the first frame
-        :type first: int
-        :param last: the index of the last frame
-        :type last: int
-        :param step: the step in frame
-        :type step: int
-        :param box_coordinates: if True, the coordiniates are returned in box coordinates
-        :type step: bool
+        Parameters
+        ----------
+        index : int
+            The index of the atom.
+        first : int
+            The index of the first frame. (Default value = 0)
+        last : int
+            The index of the last frame. (Default value = None)
+        step : int
+            The step in frame. (Default value = 1)
+        box_coordinates : bool
+            If True, the coordiniates are returned in box coordinates (Default value = False).
 
-        :return: 2D array containing the atomic trajectory for the selected frames
-        :rtype: ndarray
+        Returns
+        -------
+        ndarray
+            2D array containing the atomic trajectory for the selected frames
+
         """
         return self._trajectory.read_atomic_trajectory(
-            index, first=first, last=last, step=step, box_coordinates=box_coordinates,
+            index,
+            first=first,
+            last=last,
+            step=step,
+            box_coordinates=box_coordinates,
         )
 
     def read_configuration_trajectory(
-        self, index, first=0, last=None, step=1, variable="velocities",
-    ):
-        """Read a given configuration variable through the trajectory for a given ato.
+        self,
+        index: int,
+        first: int = 0,
+        last: int | None = None,
+        step: int = 1,
+        variable: str = "velocities",
+    ) -> npt.NDArray[float]:
+        """Return trajectory values for one atom for a subset of frames.
 
-        :param index: the index of the atom
-        :type index: int
-        :param first: the index of the first frame
-        :type first: int
-        :param last: the index of the last frame
-        :type last: int
-        :param step: the step in frame
-        :type step: int
-        :param variable: the configuration variable to read
-        :type variable: str
+        Parameters
+        ----------
+        index : int
+            Atom index.
+        first : int, optional
+            First frame index, by default 0
+        last : int | None, optional
+            Last frame index, by default None
+        step : int, optional
+            Step in time frames, by default 1
+        variable : str, optional
+            Value to be read from trajectory, by default "velocities"
 
-        :return: 2D array containing the atomic trajectory for the selected frames
-        :rtype: ndarray
+        Returns
+        -------
+        ndarray
+            Value of 'variable' for one atom and selected frames.
+
+        Raises
+        ------
+        KeyError
+            If 'variable' is not in the trajectory file.
+
         """
         return self._trajectory.read_configuration_trajectory(
-            index, first=first, last=last, step=step, variable=variable,
+            index,
+            first=first,
+            last=last,
+            step=step,
+            variable=variable,
         )
 
     def has_variable(self, variable: str) -> bool:
@@ -504,19 +608,36 @@ class Trajectory:
         """
         return self._trajectory.has_variable(variable)
 
-    def get_atom_property(self, atom_symbol: str, property: str):
-        if (atom_symbol, property) not in self._atom_cache.keys():
-            val = self._trajectory.get_atom_property(atom_symbol, property)
+    def get_atom_property(
+        self, atom_symbol: str, atom_property: str
+    ) -> int | float | complex | str:
+        """Get the value of atom property for the atom type.
+
+        Parameters
+        ----------
+        atom_symbol : str
+            Atom type.
+        atom_property : str
+            Name of the atom property.
+
+        Returns
+        -------
+        int | float | complex | str
+            Value of the atom property as defined in the atom database.
+
+        """
+        if (atom_symbol, atom_property) not in self._atom_cache.keys():
+            val = self._trajectory.get_atom_property(atom_symbol, atom_property)
             try:
                 numval = complex(val)
             except (TypeError, ValueError):
-                self._atom_cache[(atom_symbol, property)] = val
+                self._atom_cache[(atom_symbol, atom_property)] = val
             else:
                 if np.isclose(numval.imag, 0.0):
-                    self._atom_cache[(atom_symbol, property)] = numval.real
+                    self._atom_cache[(atom_symbol, atom_property)] = numval.real
                 else:
-                    self._atom_cache[(atom_symbol, property)] = numval
-        return self._atom_cache[(atom_symbol, property)]
+                    self._atom_cache[(atom_symbol, atom_property)] = numval
+        return self._atom_cache[(atom_symbol, atom_property)]
 
     def has_atom(self, symbol: str):
         return symbol in self.atoms_in_database
@@ -542,50 +663,81 @@ class Trajectory:
 
     @property
     def atoms_in_database(self) -> list[str]:
+        """Return the names of atoms defined in the atom property database.
+
+        Here, it defaults to the central atom property database.
+
+        Returns
+        -------
+        list[str]
+            List of atom names that are present in the atom database.
+
+        """
         return self._trajectory.atoms_in_database()
 
     @property
     def properties_in_database(self) -> list[str]:
+        """Return the list of atom properties provided by the trajectory.
+
+        Here, it defaults to the central atom property database.
+
+        Returns
+        -------
+        list[str]
+            List of atom property names that can be accessed.
+
+        """
         return self._trajectory.properties_in_database()
 
     @property
-    def chemical_system(self):
-        """Return the chemical system stored in the trajectory.
+    def chemical_system(self) -> ChemicalSystem:
+        """Return the ChemicalSystem of this trajectory.
 
-        :return: the chemical system
-        :rtype: MDANSE.Chemistry.ChemicalSystem.ChemicalSystem
+        Returns
+        -------
+        ChemicalSystem
+            Object storing the information about atoms and bonds
+
         """
         return self._trajectory.chemical_system
 
     @property
-    def file(self):
+    def file(self) -> h5py.File:
         """Return the trajectory file object.
 
-        :return: the trajectory file object
-        :rtype: HDF5 file object
+        Returns
+        -------
+        h5py.File
+            The trajectory file object.
+
         """
         return self._trajectory.file
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         """Return the trajectory filename.
 
-        :return: the trajectory filename
-        :rtype: str
+        Returns
+        -------
+        str
+            The trajectory filename.
+
         """
         return self._trajectory.filename
 
-    def variable(self, name: str):
-        """Return a variable stored in the trajectory
-        under the key 'name'.
-        """
+    def variable(self, name: str) -> h5py.Dataset:
+        """Return the dataset corresponding to a trajectory variable called 'name'."""
+
         return self._trajectory.variable(name)
 
-    def variables(self):
-        """Return the configuration variables stored in this trajectory.
+    def variables(self) -> list[str]:
+        """Return the names of available variables.
 
-        :return; the configuration variable
-        :rtype: list
+        Returns
+        -------
+        list[str]
+            List of variables present in the file.
+
         """
         return self._trajectory.variables()
 
@@ -631,7 +783,9 @@ atom_radii = [
 
 
 def create_average_atom(
-    atom_dictionary: dict[str, int], database: Trajectory, radius_padding: float = 0.0,
+    atom_dictionary: dict[str, int],
+    database: Trajectory,
+    radius_padding: float = 0.0,
 ):
     all_properties = database.properties_in_database
     values = {}
@@ -784,19 +938,25 @@ class TrajectoryWriter:
         string_dt = h5py.special_dtype(vlen=str)
         if "property_labels" not in group:
             label_dataset = group.create_dataset(
-                "property_labels", data=200 * [""], dtype=string_dt,
+                "property_labels",
+                data=200 * [""],
+                dtype=string_dt,
             )
         else:
             label_dataset = self._h5_file["/atom_database/property_labels"]
         if "property_types" not in group:
             type_dataset = group.create_dataset(
-                "property_types", data=200 * [""], dtype=string_dt,
+                "property_types",
+                data=200 * [""],
+                dtype=string_dt,
             )
         else:
             type_dataset = self._h5_file["/atom_database/property_types"]
         if "property_units" not in group:
             unit_dataset = group.create_dataset(
-                "property_units", data=[""] * 200, dtype=string_dt,
+                "property_units",
+                data=[""] * 200,
+                dtype=string_dt,
             )
         else:
             unit_dataset = self._h5_file["/atom_database/property_units"]
@@ -840,16 +1000,18 @@ class TrajectoryWriter:
             else:
                 atom_dataset[mapping[key]] = numval
         colour = properties["color"]
-        try:
-            temp = int(colour)
-        except (TypeError, ValueError):
-            try:
-                colour = bytes(map(int, colour.split(";")))
-            except AttributeError:
-                colour = bytes(map(int, colour[0].split(";")))
-            atom_dataset[mapping["color"]] = int.from_bytes(colour, byteorder="big")
+
+        if colour.isdigit():
+            atom_dataset[mapping["color"]] = int(colour)
+
         else:
-            atom_dataset[mapping["color"]] = colour
+            # Get str/bytes from possible array
+            colour = only(always_iterable(colour))
+
+            assert isinstance(colour, (str, bytes))
+
+            colour = bytes(map(int, colour.split(";")))
+            atom_dataset[mapping["color"]] = int.from_bytes(colour, byteorder="big")
 
     def write_atom_database(
         self,
@@ -859,7 +1021,7 @@ class TrajectoryWriter:
         optional_molecule_radii: dict[str, float] | None = None,
     ):
         """Write atom properties into the trajectory file.
-        
+
         The properties are copied into the file from an input trajectory.
         If an artificial atom is introduced to represent a molecule,
         the averaged properties will be created based on the molecule's composition.
@@ -872,7 +1034,7 @@ class TrajectoryWriter:
             database object containing atom properties
         optional_molecule_radii : dict[str, float], optional
             dictionary of {name: radius} pairs, for arificial atoms
-        
+
         """
         for atom_symbol in symbols:
             if database.has_atom(atom_symbol):
@@ -882,11 +1044,15 @@ class TrajectoryWriter:
                 if optional_molecule_radii is not None:
                     molecule_radius = optional_molecule_radii.get(atom_symbol, 0.0)
                 property_dict = create_average_atom(
-                    atom_dict, database, radius_padding=molecule_radius,
+                    atom_dict,
+                    database,
+                    radius_padding=molecule_radius,
                 )
             if hasattr(database, "_properties"):
                 self.write_atom_properties(
-                    atom_symbol, property_dict, database._properties,
+                    atom_symbol,
+                    property_dict,
+                    database._properties,
                 )
             else:
                 self.write_atom_properties(atom_symbol, property_dict)
@@ -1058,7 +1224,10 @@ class TrajectoryWriter:
         time_dset = self._h5_file.get("time", None)
         if time_dset is None:
             time_dset = self._h5_file.create_dataset(
-                "time", shape=(self._n_steps,), chunks=(1,), dtype=np.float64,
+                "time",
+                shape=(self._n_steps,),
+                chunks=(1,),
+                dtype=np.float64,
             )
             time_dset.attrs["units"] = units.get("time", "")
         time_dset[self._current_index] = time
@@ -1120,7 +1289,11 @@ class RigidBodyTrajectoryGenerator:
         cross = np.zeros((n_steps, 3, 3), np.float64)
 
         rcms = self._trajectory.read_com_trajectory(
-            atoms, first, last, step, box_coordinates=True,
+            atoms,
+            first,
+            last,
+            step,
+            box_coordinates=True,
         )
 
         # relative coords of the CONTIGUOUS reference
@@ -1134,7 +1307,9 @@ class RigidBodyTrajectoryGenerator:
             inverse_unit_cells = inverse_unit_cells[first:last:step, :, :]
 
         for i, at in enumerate(atoms):
-            r = self._trajectory.read_atomic_trajectory(i, first, last, step, box_coordinates=True)
+            r = self._trajectory.read_atomic_trajectory(
+                i, first, last, step, box_coordinates=True
+            )
             r = r - rcms
 
             r = r[:, np.newaxis, :]

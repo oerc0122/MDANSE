@@ -20,7 +20,7 @@ import json
 from collections import defaultdict
 from collections.abc import ItemsView
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional, SupportsComplex, Union
 
 from MDANSE.Core.Error import Error
 from MDANSE.Core.Platform import PLATFORM
@@ -32,13 +32,13 @@ from MDANSE.MLogging import LOG
 TOLERANCE_IMG = 1e-13
 
 
-def str_to_num(numstr: str) -> float | complex:
+def str_to_num(numstr: SupportsComplex) -> float | complex:
     """Convert the number from string format to float or complex.
 
     Parameters
     ----------
-    numstr : str
-        number, saved as string
+    numstr : SupportsComplex
+        Input to be converted or stripped of imaginary part.
 
     Returns
     -------
