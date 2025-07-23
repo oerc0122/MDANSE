@@ -109,8 +109,17 @@ class MolecularViewer(QtWidgets.QWidget):
         setattr(self._iren, "keyPressEvent", dummy_method)
 
         self._renderer = vtk.vtkRenderer()
+        self._renderer.SetLayer(0)
+        # create another renderer for the atoms labels, we want the
+        # labels to be ontop of the atoms so they can be read more
+        # easily
+        self._label_renderer = vtk.vtkRenderer()
+        self._label_renderer.SetLayer(1)
+        self._label_renderer.SetBackgroundAlpha(0)
 
+        self._iren.GetRenderWindow().SetNumberOfLayers(2)
         self._iren.GetRenderWindow().AddRenderer(self._renderer)
+        self._iren.GetRenderWindow().AddRenderer(self._label_renderer)
 
         self._iren.GetRenderWindow().SetPosition((0, 0))
 
@@ -126,6 +135,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self.atom_actor = None
         self._last_coords = None
+        self.atom_label_actors = []
 
         layout = QtWidgets.QStackedLayout(self)
         layout.addWidget(self._iren)
@@ -135,6 +145,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self._camera = vtk.vtkCamera()
         # associate camera to renderer
         self._renderer.SetActiveCamera(self._camera)
+        self._label_renderer.SetActiveCamera(self._camera)
         self._camera.SetFocalPoint(0, 0, 0)
         self._camera.SetPosition(0, 0, 20)
 
@@ -531,9 +542,33 @@ class MolecularViewer(QtWidgets.QWidget):
 
         del self._actors
 
+    def create_atom_label_actors(self):
+        if self._reader is None:
+            return []
+
+        atom_label_actors = []
+        for i, coord in enumerate(self._reader.read_frame(self._current_frame)):
+            actor = vtk.vtkBillboardTextActor3D()
+            actor.SetPosition(*coord)
+            actor.SetInput(f"{i}")
+            atom_label_actors.append(actor)
+        self.atom_label_actors = atom_label_actors
+
+        return atom_label_actors
+
+    def clear_atom_labels(self):
+        if not self.atom_label_actors:
+            return
+
+        for actor in self.atom_label_actors:
+            self._label_renderer.RemoveActor(actor)
+
+        self.atom_label_actors = []
+
     def clear_panel(self) -> None:
         """Clears the Molecular Viewer panel"""
         self.clear_trajectory()
+        self.clear_atom_labels()
 
         self._reader = None
 
@@ -922,6 +957,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self.reset_camera = True
         self.clear_trajectory()
+        self.clear_atom_labels()
 
         self._reader = reader
 
@@ -994,6 +1030,7 @@ class MolecularViewer(QtWidgets.QWidget):
         """
         # deleting old frame
         self.clear_trajectory(clear_isosurfaces=False)
+        self.clear_atom_labels()
 
         # creating new polydata
         self._actors = vtk.vtkAssembly()
@@ -1002,6 +1039,10 @@ class MolecularViewer(QtWidgets.QWidget):
 
         # adding polydata to renderer
         self._renderer.AddActor(self._actors)
+
+        # overlay trajectory with atom labels
+        for actor in self.create_atom_label_actors():
+            self._label_renderer.AddActor(actor)
 
         # rendering
         if self.reset_camera:
