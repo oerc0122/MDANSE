@@ -459,7 +459,141 @@ class H5MDTrajectory(TrajectoryFile):
                 ]
             )
 
-        return masses.astype(np.float64)
+            com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
+
+        else:
+            com_traj = np.sum(
+                coords[:, atom_indices, :] * masses[np.newaxis, :, np.newaxis], axis=1
+            )
+            com_traj /= np.sum(masses)
+
+        return com_traj
+
+    def to_real_coordinates(self, box_coordinates, first, last, step):
+        """Convert box coordinates to real coordinates for a set of frames.
+
+        :param box_coordinates: a 2D array containing the box coordinates
+        :type box_coordinates: ndarray
+        :param first: the index of the first frame
+        :type first: int
+        :param last: the index of the last frame
+        :type last: int
+        :param step: the step in frame
+        :type step: int
+
+        :return: 2D array containing the real coordinates converted from box coordinates.
+        :rtype: ndarray
+        """
+        if self._unit_cells is not None:
+            real_coordinates = np.empty(box_coordinates.shape, dtype=np.float64)
+
+            for comp, i in enumerate(range(first, last, step)):
+                direct_cell = self.unit_cell(i).direct
+                real_coordinates[comp, :] = box_coordinates[comp, :] @ direct_cell
+            return real_coordinates
+        return box_coordinates
+
+    def read_atomic_trajectory(
+        self,
+        index: int,
+        first: int = 0,
+        last: int | None = None,
+        step: int = 1,
+        *,
+        box_coordinates: bool = False,
+    ) -> np.ndarray:
+        """Read an atomic trajectory. The trajectory is corrected from box jumps.
+
+        Parameters
+        ----------
+        index : int
+            Atom index.
+        first : int, optional
+            First frame index, by default 0
+        last : int | None, optional
+            Last frame index, by default None
+        step : int, optional
+            Step in time frames, by default 1
+        box_coordinates : bool, optional
+            If True, return fractional coordinates, by default False
+
+        Returns
+        -------
+        np.ndarray
+            Coordinates of one atom for specified time frames.
+
+        """
+        if last is None:
+            last = len(self)
+
+        grp = self._h5_file["/particles/all/position/value"]
+        try:
+            pos_unit = self._h5_file["/particles/all/position/value"].attrs["unit"]
+        except Exception:
+            conv_factor = 1.0
+        else:
+            if pos_unit in ("Ang", "Angstrom"):
+                pos_unit = "ang"
+            conv_factor = measure(1.0, pos_unit).toval("nm")
+        coords = grp[first:last:step, index, :].astype(np.float64) * conv_factor
+
+        if self._unit_cells is not None:
+            direct_cells = np.array(
+                [self.unit_cell(nf).direct for nf in range(first, last, step)],
+            )
+            inverse_cells = np.array(
+                [self.unit_cell(nf).inverse for nf in range(first, last, step)],
+            )
+            return atomic_trajectory(
+                coords,
+                direct_cells,
+                inverse_cells,
+                box_coordinates=box_coordinates,
+            )
+        return coords
+
+    def read_configuration_trajectory(
+        self,
+        index: int,
+        first: int = 0,
+        last: int | None = None,
+        step: int = 1,
+        variable="velocities",
+    ) -> np.ndarray:
+        """Return trajectory values for one atom for a subset of frames.
+
+        Parameters
+        ----------
+        index : int
+            Atom index.
+        first : int, optional
+            First frame index, by default 0
+        last : int | None, optional
+            Last frame index, by default None
+        step : int, optional
+            Step in time frames, by default 1
+        variable : str, optional
+            Value to be read from trajectory, by default "velocities"
+
+        Returns
+        -------
+        np.ndarray
+            Value of 'variable' for one atom and selected frames.
+
+        Raises
+        ------
+        KeyError
+            If 'variable' is not in the trajectory file.
+
+        """
+        if last is None:
+            last = len(self)
+
+        if not self.has_variable(variable):
+            raise KeyError(f"The variable {variable} is not stored in the trajectory")
+
+        grp = self._h5_file["/particles/all"]
+        return grp[variable]["value"][first:last:step, index, :].astype(np.float64)
 
     def has_variable(self, variable: str) -> bool:
         """Check if the trajectory has a specific variable e.g. velocities.

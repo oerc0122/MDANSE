@@ -63,23 +63,25 @@ class SliderPack(QWidget):
         self._valarray = np.ones(n_sliders) * 0.5
         self._steparray = np.ones(n_sliders) * 0.01
         self._clickarray = np.array(n_sliders * [101], dtype=int)
-        current_row = 0
-        for n in range(n_sliders):
+        for current_row in range(n_sliders):
             label = QLabel(self)
             slider = RestrictedSlider(self)
             slider.setOrientation(Qt.Orientation.Horizontal)
             box = QDoubleSpinBox(self)
-            box.setSingleStep(self._steparray[n])
+            box.setSingleStep(self._steparray[current_row])
+
             layout.addWidget(label, current_row, 0)
             layout.addWidget(slider, current_row, 1, 1, 2)
             layout.addWidget(box, current_row, 3)
-            current_row += 1
+
             self._labels.append(label)
             self._sliders.append(slider)
             self._spinboxes.append(box)
+
             slider.valueChanged.connect(self.slider_to_box)
             box.valueChanged.connect(self.box_to_slider)
             box.valueChanged.connect(self.collect_values)
+
             self._current_values.append(0)
         slider1 = self._sliders[0]
         slider2 = self._sliders[1]

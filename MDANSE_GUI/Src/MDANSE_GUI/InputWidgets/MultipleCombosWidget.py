@@ -23,7 +23,8 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 class MultipleCombosWidget(WidgetBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        configurator = kwargs.get("configurator", None)
+        configurator = kwargs.get("configurator")
+
         if configurator is None:
             option_list = kwargs.get("choices", [])
             number_of_boxes = 1
@@ -31,6 +32,7 @@ class MultipleCombosWidget(WidgetBase):
             option_list = configurator.choices
             default_option = configurator.default
             number_of_boxes = configurator.nChoices
+
         self._fields = []
         for field_number in range(number_of_boxes):
             field = QComboBox(self._base)

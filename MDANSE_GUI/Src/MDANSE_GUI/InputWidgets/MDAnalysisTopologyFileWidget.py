@@ -53,5 +53,5 @@ class MDAnalysisTopologyFileWidget(InputFileWidget):
             A tuple of the topology file path and format.
         """
         strval = super().get_widget_value()
-        format = self.format_combo.currentText()
-        return strval, format
+        fmt = self.format_combo.currentText()
+        return strval, fmt

@@ -62,7 +62,7 @@ class InstrumentList(QListView):
         instrument = self.model()._nodes[item[257]]
         if instrument is None:
             return
-        if instrument._name in self._backup_instruments.keys():
+        if instrument._name in self._backup_instruments:
             has_backup = True
         for action, method in [
             ("Delete instrument", self.deleteNode),
@@ -136,16 +136,15 @@ class InstrumentList(QListView):
     def resend_item(self):
         self.item_details.emit(self._current_instrument)
 
-    def add_instrument(self, optional_name=None) -> SimpleInstrument:
+    def add_instrument(self, optional_name: str = "") -> SimpleInstrument:
         model = self.model()
         if model is None:
             return
         new_instrument = SimpleInstrument()
         LOG.debug(f"New instrument, name: {new_instrument._name}")
-        if optional_name is None:
-            new_name = new_instrument._name
-        else:
-            new_name = optional_name
+
+        new_name = optional_name if optional_name else new_instrument._name
+
         model.append_object_and_embed((new_instrument, new_name))
         self._all_instruments.add(new_name)
         new_instrument.update_item()
@@ -174,7 +173,7 @@ class InstrumentList(QListView):
         except ParseError:
             LOG.error(f"File {filename} could not be parsed - TOML error")
             return
-        for key in tomldoc.keys():
+        for key, instrument_params in tomldoc.items():
             if key in self._all_instruments:
                 LOG.warning(
                     f"{key} already on instrument list. Overwriting from {filename}"
@@ -191,9 +190,9 @@ class InstrumentList(QListView):
                 return
             if keep_backups:
                 backup_instrument = SimpleInstrument()
-            instrument_params = tomldoc[key]
-            for input in SimpleInstrument.inputs():
-                param_key = input[0]
+
+            for inp in SimpleInstrument.inputs():
+                param_key = inp[0]
                 try:
                     new_value = instrument_params[param_key]
                 except KeyError:
@@ -220,8 +219,8 @@ class InstrumentList(QListView):
             if instrument is None:
                 continue
             table = tomlkit.table()
-            for input in SimpleInstrument.inputs():
-                param_key = input[0]
+            for inp in SimpleInstrument.inputs():
+                param_key = inp[0]
                 table[param_key] = getattr(instrument, param_key, "")
             newdoc[instrument._name] = table
         target_file.write(newdoc)

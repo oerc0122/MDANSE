@@ -21,6 +21,7 @@ from MDANSE.Core.SubclassFactory import SubclassFactory
 
 if TYPE_CHECKING:
     from MDANSE.Framework.Jobs.IJob import IJob
+    from MDANSE.Framework.Outputvariables import IOutputVariable
 
 
 class IFormat(metaclass=SubclassFactory):
@@ -37,14 +38,20 @@ class IFormat(metaclass=SubclassFactory):
         """
         Write a set of output variables into filename using a given file format.
 
-        :param filename: the path to the output file.
-        :type filename: str
-        :param data: the data to be written out.
-        :type data: dict of Framework.OutputVariables.IOutputVariable
-        :param header: the header to add to the output file.
-        :type header: str
-        :param run_instance: the instance of the job, to be queried for parameters
-        :type run_instance: IJob
+        Parameters
+        ----------
+        filename : str
+            the path to the output file.
+        data : dict[str, IOutputVariable]
+            the data to be written out.
+        header : str
+            the header to add to the output file. (Default value = "").
+        run_instance : IJob
+            the instance of the job, to be queried for parameters. (Default value = None).
+
+        Returns
+        -------
+        None
         """
 
         pass

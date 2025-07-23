@@ -127,10 +127,12 @@ def van_hove_distinct(
 
     """
     nbins = intra.shape[2]
+    bin_limits = range(nbins)
     unique_types = np.unique(symbolindex)
 
     limits_t0 = range(0, len(coords_t0), size_limit)
     limits_t1 = range(0, len(coords_t1), size_limit)
+
     for nlim_t0, lim_t0 in enumerate(limits_t0):
         try:
             endlimit = limits_t0[nlim_t0 + 1]
@@ -140,6 +142,7 @@ def van_hove_distinct(
         else:
             reference = coords_t0[lim_t0:endlimit]
             ref_indices = np.arange(lim_t0, endlimit, dtype=int)
+
         for nlim_t1, lim_t1 in enumerate(limits_t1):
             try:
                 endlimit_t1 = limits_t1[nlim_t1 + 1]
@@ -150,9 +153,11 @@ def van_hove_distinct(
                 subset_coords = coords_t1[lim_t1:endlimit_t1]
                 sub_indices = np.arange(lim_t1, endlimit_t1, dtype=int)
             type_indices_ref, type_indices_sub = {}, {}
+
             for type1 in unique_types:
                 type_indices_ref[type1] = np.where(symbolindex[ref_indices] == type1)[0]
                 type_indices_sub[type1] = np.where(symbolindex[sub_indices] == type1)[0]
+
             mols_ref = indices_intra[ref_indices]
             mols_sub = indices_intra[sub_indices]
             intra_mask = mols_ref.reshape((1, len(mols_ref))) == mols_sub.reshape(
@@ -160,36 +165,34 @@ def van_hove_distinct(
             )
             distance_array = distance_array_2D(reference, subset_coords, cell)
             bin_values = ((distance_array - rmin) / dr).astype(int)
+
             if ref_indices[0] == sub_indices[0]:
-                diag_len = min(len(ref_indices), len(sub_indices))
-                bin_values[range(diag_len), range(diag_len)] = -1
+                np.fill_diagonal(bin_values, -1)
+
             for type_ref in unique_types:
                 for type_sub in unique_types:
                     bins_subset = bin_values[
                         np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
                     ]
                     bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
-                    for bin, counts in zip(bin_numbers, bin_counts):
-                        if bin < 0:
+                    for bin_number, counts in zip(bin_numbers, bin_counts):
+                        if bin_number not in bin_limits:
                             continue
-                        elif bin >= nbins:
-                            continue
-                        else:
-                            total[type_sub, type_ref, bin] += counts
+
+                        total[type_sub, type_ref, bin_number] += counts
             bin_values[np.where(np.logical_not(intra_mask))] = -1
+
             for type_ref in unique_types:
                 for type_sub in unique_types:
                     bins_subset = bin_values[
                         np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
                     ]
                     bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
-                    for bin, counts in zip(bin_numbers, bin_counts):
-                        if bin < 0:
+                    for bin_number, counts in zip(bin_numbers, bin_counts):
+                        if bin_number not in bin_limits:
                             continue
-                        elif bin >= nbins:
-                            continue
-                        else:
-                            intra[type_sub, type_ref, bin] += counts
+
+                        intra[type_sub, type_ref, bin_number] += counts
 
     return intra, total
 
@@ -251,6 +254,7 @@ def van_hove_distinct_all_inter(
 
     limits_t0 = range(0, len(coords_t0), size_limit)
     limits_t1 = range(0, len(coords_t1), size_limit)
+
     for nlim_t0, lim_t0 in enumerate(limits_t0):
         try:
             endlimit = limits_t0[nlim_t0 + 1]
@@ -260,6 +264,7 @@ def van_hove_distinct_all_inter(
         else:
             reference = coords_t0[lim_t0:endlimit]
             ref_indices = np.arange(lim_t0, endlimit, dtype=int)
+
         for nlim_t1, lim_t1 in enumerate(limits_t1):
             try:
                 endlimit_t1 = limits_t1[nlim_t1 + 1]
@@ -270,27 +275,29 @@ def van_hove_distinct_all_inter(
                 subset_coords = coords_t1[lim_t1:endlimit_t1]
                 sub_indices = np.arange(lim_t1, endlimit_t1, dtype=int)
             type_indices_ref, type_indices_sub = {}, {}
+
             for type1 in unique_types:
                 type_indices_ref[type1] = np.where(symbolindex[ref_indices] == type1)[0]
                 type_indices_sub[type1] = np.where(symbolindex[sub_indices] == type1)[0]
+
             distance_array = distance_array_2D(reference, subset_coords, cell)
             bin_values = ((distance_array - rmin) / dr).astype(int)
+
             if ref_indices[0] == sub_indices[0]:
                 diag_len = min(len(ref_indices), len(sub_indices))
                 bin_values[range(diag_len), range(diag_len)] = -1
+
             for type_ref in unique_types:
                 for type_sub in unique_types:
                     bins_subset = bin_values[
                         np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
                     ]
                     bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
-                    for bin, counts in zip(bin_numbers, bin_counts):
-                        if bin < 0:
+                    for bin_number, counts in zip(bin_numbers, bin_counts):
+                        if bin_number < 0 or bin_number >= nbins:
                             continue
-                        elif bin >= nbins:
-                            continue
-                        else:
-                            total[type_sub, type_ref, bin] += counts
+
+                        total[type_sub, type_ref, bin_number] += counts
 
     return intra, total
 
@@ -317,8 +324,8 @@ def intramolecular_lookup_dict(
     """
     result = -1 * np.arange(chemical_system.number_of_atoms, dtype=int)
     mol_index = 1
-    for molecule in chemical_system._clusters:
-        for mol_indices in chemical_system._clusters[molecule]:
+    for molecule, cluster in chemical_system._clusters.items():
+        for mol_indices in cluster:
             for index in mol_indices:
                 result[index] = mol_index
             mol_index += 1
@@ -709,10 +716,9 @@ class VanHoveFunctionDistinct(IJob):
 
         if self.intra:
             for i in ["/intra", "/inter", ""]:
-                if i == "/intra":
-                    labels = self.labels_intra
-                else:
-                    labels = self.labels
+                is_intra = i == "/intra"
+                labels = self.labels_intra if is_intra else self.labels
+
                 assign_weights(
                     self._outputData, weight_dict, f"vh/g(r,t){i}/%s", labels
                 )
@@ -725,7 +731,7 @@ class VanHoveFunctionDistinct(IJob):
                     f"vh/g(r,t){i}",
                     "SurfaceOutputVariable",
                     dim=2,
-                    intra=i == "/intra",
+                    intra=is_intra,
                     axis="vh/axes/r|vh/axes/time",
                     units="au",
                     main_result=i == "",

@@ -1,4 +1,4 @@
-#    This file is part of MDANSE.
+#1;4000;40c#    This file is part of MDANSE.
 #
 #    MDANSE is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@ from __future__ import annotations
 import collections
 
 import MDAnalysis as mda
+from more_itertools import first
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
@@ -133,38 +134,36 @@ class MDAnalysis(Converter):
         label_dict = {}
 
         for at_number, at in enumerate(self.u.atoms):
-            kwargs = {}
-            for arg in ["element", "name", "type", "resname", "mass"]:
-                if hasattr(at, arg):
-                    kwargs[arg] = getattr(at, arg)
+            kwargs = {
+                arg: getattr(at, arg)
+                for arg in ("element", "name", "type", "resname", "mass")
+                if hasattr(at, arg)
+            }
+
             # the first out of the list above will be the main label
-            (k, main_label) = next(iter(kwargs.items()))
+            (k, main_label) = first(kwargs.items())
+
             # label_list will be populated too
-            if "resname" in kwargs:
-                tag = kwargs["resname"]
-            elif "type" in kwargs:
-                tag = kwargs["type"]
-            elif "name" in kwargs:
-                tag = kwargs["name"]
-            else:
-                tag = None
-            if tag:
-                if tag in label_dict.keys():
-                    label_dict[tag] += [at_number]
-                else:
-                    label_dict[tag] = [at_number]
+            for trial in ("resname", "type", "name"):
+                if tag := kwargs.get(trial):
+                    label_dict.setdefault(tag, [])
+                    label_dict[tag].append(at_number)
+                    break
+
             kwargs.pop(k)
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"], main_label, **kwargs
             )
 
-            name = None
-            for arg in ["name", "type", "element"]:
-                if hasattr(at, arg):
-                    name = getattr(at, arg)
+            for arg in ("name", "type", "element"):
+                if name := getattr(at, arg, None):
                     break
+            else:
+                name = None
+
             element_list.append(element)
             name_list.append(name)
+
         if None in name_list:
             name_list = None
         self._chemical_system.initialise_atoms(element_list, name_list)

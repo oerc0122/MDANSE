@@ -181,10 +181,10 @@ class Vector:
         @rtype: L{Vector}
         @raises ZeroDivisionError: if vector length is zero
         """
-        len = np.sqrt(np.add.reduce(self.array * self.array))
-        if len == 0:
+        vec_length = np.sqrt(np.add.reduce(self.array * self.array))
+        if vec_length == 0:
             raise ZeroDivisionError("Can't normalize a zero-length vector")
-        return Vector(np.divide(self.array, len))
+        return Vector(np.divide(self.array, vec_length))
 
     def cross(self, other):
         """
@@ -206,7 +206,7 @@ class Vector:
         @returns: an equivalent rank-1 tensor object
         @rtype: L{Scientific.Geometry.Tensor}
         """
-        return Tensor(self.array, 1)
+        return Tensor(self.array, True)
 
     def dyadic_product(self, other):
         """
@@ -218,9 +218,9 @@ class Vector:
         """
 
         if is_vector(other):
-            return Tensor(self.array[:, np.newaxis] * other.array[np.newaxis, :], 1)
+            return Tensor(self.array[:, np.newaxis] * other.array[np.newaxis, :], True)
         elif is_tensor(other):
-            return Tensor(self.array, 1) * other
+            return Tensor(self.array, True) * other
         else:
             raise TypeError("Dyadic product with non-vector")
 
@@ -426,7 +426,7 @@ class Tensor:
     is supported only for float elements.
     """
 
-    def __init__(self, elements, nocheck=None):
+    def __init__(self, elements, nocheck: bool = True):
         """
         @param elements: 2D array or nested list specifying the nine
                          tensor components
@@ -434,9 +434,8 @@ class Tensor:
         @type elements: C{Numeric.array} or C{list}
         """
         self.array = np.array(elements)
-        if nocheck is None:
-            if not np.logical_and.reduce(np.equal(np.array(self.array.shape), 3)):
-                raise ValueError("Tensor must have length 3 along any axis")
+        if not nocheck and all(axis == 3 for axis in self.array.shape):
+            raise ValueError("Tensor must have length 3 along all axes.")
         self.rank = len(self.array.shape)
 
     def __repr__(self):
@@ -446,37 +445,37 @@ class Tensor:
         return str(self.array)
 
     def __add__(self, other):
-        return Tensor(self.array + other.array, 1)
+        return Tensor(self.array + other.array, True)
 
     __radd__ = __add__
 
     def __neg__(self):
-        return Tensor(-self.array, 1)
+        return Tensor(-self.array, True)
 
     def __sub__(self, other):
-        return Tensor(self.array - other.array, 1)
+        return Tensor(self.array - other.array, True)
 
     def __rsub__(self, other):
-        return Tensor(other.array - self.array, 1)
+        return Tensor(other.array - self.array, True)
 
     def __mul__(self, other):
         if is_tensor(other):
             a = self.array[self.rank * (slice(None),) + (np.newaxis,)]
             b = other.array[other.rank * (slice(None),) + (np.newaxis,)]
-            return Tensor(np.inner(a, b), 1)
+            return Tensor(np.inner(a, b), True)
         elif is_vector(other):
             return other.__rmul__(self)
         else:
-            return Tensor(self.array * other, 1)
+            return Tensor(self.array * other, True)
 
     def __rmul__(self, other):
-        return Tensor(self.array * other, 1)
+        return Tensor(self.array * other, True)
 
     def __div__(self, other):
         if is_tensor(other):
             raise TypeError("Can't divide by a tensor")
         else:
-            return Tensor(self.array / (1.0 * other), 1)
+            return Tensor(self.array / (1.0 * other), True)
 
     __truediv__ = __div__
 
@@ -529,9 +528,9 @@ class Tensor:
         if is_tensor(other):
             a = self.array
             b = np.transpose(other.array, list(range(1, other.rank)) + [0])
-            return Tensor(np.inner(a, b), 1)
+            return Tensor(np.inner(a, b), True)
         else:
-            return Tensor(self.array * other, 1)
+            return Tensor(self.array * other, True)
 
     def diagonal(self, axis1=0, axis2=1):
         if self.rank == 2:
@@ -567,7 +566,8 @@ class Tensor:
         """
         if self.rank == 2:
             return Tensor(
-                0.5 * (self.array + np.transpose(self.array, np.array([1, 0]))), 1
+                0.5 * (self.array + np.transpose(self.array, np.array([1, 0]))),
+                True,
             )
         else:
             raise ValueError("Not yet implemented")
@@ -580,7 +580,8 @@ class Tensor:
         """
         if self.rank == 2:
             return Tensor(
-                0.5 * (self.array - np.transpose(self.array, np.array([1, 0]))), 1
+                0.5 * (self.array - np.transpose(self.array, np.array([1, 0]))),
+                True,
             )
         else:
             raise ValueError("Not yet implemented")

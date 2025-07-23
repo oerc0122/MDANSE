@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Iterable
-from pathlib import PurePath
-from typing import Union
+from pathlib import Path
+from typing import Literal
 
 from qtpy.QtCore import QObject, Qt, Signal, Slot
 from qtpy.QtGui import (
@@ -73,29 +73,42 @@ class GeneralInput(QObject):
     string_value = Signal(str)
     value_changed = Signal()
 
-    def __init__(self, *args, data_type=None, **kwargs):
+    DIALOGS = {
+        "in": QFileDialog.getOpenFileName,
+        "out": QFileDialog.getSaveFileName,
+    }
+
+    def __init__(
+        self,
+        *args,
+        data_type=None,
+        path=None,
+        default=None,
+        file_association=None,
+        file_direction: Literal["in", "out", "none"] = "none",
+        file_format: str = "",
+        **kwargs,
+    ):
         new_kwargs = copy.copy(kwargs)
         for kkey in InputFactory.reserved_keywords:
-            if kkey in new_kwargs.keys():
-                new_kwargs.pop(kkey)
+            new_kwargs.pop(kkey, None)
         super().__init__(*args, **{})
 
-        self.default_path = kwargs.get("path", None)
+        self.default_path = path
         self.data_type = data_type
-        self.default_value = kwargs.get("default", None)
+        self.default_value = default
         self.current_value = self.default_value
-        self.file_association = kwargs.get("file_association", None)
-        self.file_direction = kwargs.get("file_direction", "none")
-        self.file_format = kwargs.get("format", "")
-        if self.file_association is not None:
-            if len(self.file_association) < 1 and len(self.file_format) > 1:
-                self.file_association = "*." + self.file_format
-        if self.file_direction == "in":
-            self.file_dialog = QFileDialog.getOpenFileName
-        elif self.file_direction == "out":
-            self.file_dialog = QFileDialog.getSaveFileName
-        else:
-            self.file_dialog = None
+        self.file_association = file_association
+        self.file_direction = file_direction
+        self.file_format = format
+        if (
+            self.file_association is not None
+            and not self.file_association
+            and self.file_format
+        ):
+            self.file_association = "*." + self.file_format
+
+        self.file_dialog = self.DIALOGS.get(self.file_direction)
         LOG.info(kwargs)
 
     @Slot(str)
@@ -167,7 +180,7 @@ class GeneralInput(QObject):
             self.file_association,  # text string specifying the file name filter.
         )
         if new_value is not None:
-            self.updateValue(str(PurePath(new_value[0])), emit=True)
+            self.updateValue(str(Path(new_value[0])), emit=True)
 
 
 # class MultipleInput(GeneralInput):
@@ -282,9 +295,9 @@ class InputFactory:
         Returns:
             [base, layout] pair of QWidget and associated layout
         """
-        parent = kwargs.get("parent", None)
-        label_text = kwargs.get("label", None)
-        tooltip_text = kwargs.get("tooltip", None)
+        parent = kwargs.get("parent")
+        label_text = kwargs.get("label")
+        tooltip_text = kwargs.get("tooltip")
         base = QWidget(parent)
         layout = QHBoxLayout(base)
         base.setLayout(layout)
@@ -400,7 +413,7 @@ class InputFactory:
         """
         kind = kwargs.get("kind", "Boolean")
         default_value = kwargs.get("default", False)
-        tooltip_text = kwargs.get("tooltip", None)
+        tooltip_text = kwargs.get("tooltip")
         LOG.info(kind)
         LOG.info(default_value)
         LOG.info(tooltip_text)
@@ -422,9 +435,9 @@ class InputFactory:
         to filter out invalid inputs.
         """
         kind = kwargs.get("kind", "str")
-        default_value = kwargs.get("default", None)
-        tooltip_text = kwargs.get("tooltip", None)
-        minval = kwargs.get("mini", None)
+        default_value = kwargs.get("default")
+        tooltip_text = kwargs.get("tooltip")
+        minval = kwargs.get("mini")
         LOG.info(kind)
         LOG.info(default_value)
         LOG.info(tooltip_text)
@@ -458,10 +471,10 @@ class InputFactory:
         to filter out invalid inputs.
         """
         kind = kwargs.get("kind", "String")
-        default_value = kwargs.get("default", None)
-        tooltip_text = kwargs.get("tooltip", None)
-        minval = kwargs.get("mini", None)
-        number_of_fields = kwargs.get("howmany", None)
+        default_value = kwargs.get("default")
+        tooltip_text = kwargs.get("tooltip")
+        minval = kwargs.get("mini")
+        number_of_fields = kwargs.get("howmany")
         if number_of_fields is None:
             number_of_fields = len(default_value)
         LOG.info(kind)
@@ -497,7 +510,7 @@ class InputFactory:
         a list of possible values, we create a ComboBox"""
         kind = kwargs.get("kind", "String")
         default_value = kwargs.get("default", False)
-        tooltip_text = kwargs.get("tooltip", None)
+        tooltip_text = kwargs.get("tooltip")
         option_list = kwargs.get("choices", [])
         LOG.info(kind)
         LOG.info(default_value)
@@ -547,7 +560,7 @@ class InputVariable(QObject):
         """
         Returns
         -------
-        Union[float, int, str]
+        float or int or str
             The results from the input widget.
         """
         if isinstance(self.input_widget, QComboBox):
@@ -598,6 +611,11 @@ class InputDialog(QDialog):
 
     got_values = Signal(dict)
 
+    VALIDATORS = {
+        int: QIntValidator,
+        float: QDoubleValidator,
+    }
+
     def __init__(
         self, *args, fields: Iterable[InputVariable] = None, title: str = "", **kwargs
     ):
@@ -621,7 +639,7 @@ class InputDialog(QDialog):
         # the most important part: handling the variables
         for var in fields:
             label = var.label
-            format = var.format
+            fmt = var.format
             value = var.value
             widget = var.widget
             _helper_dialog = var.helper_dialog
@@ -634,16 +652,10 @@ class InputDialog(QDialog):
             if isinstance(value, list):
                 widget_instance.addItems(value)
             else:
-                if format is int:
-                    validator = QIntValidator(temp_base)
-                elif format is float:
-                    validator = QDoubleValidator(temp_base)
-                else:
-                    validator = None
                 widget_instance.setText(str(value))
                 widget_instance.setPlaceholderText(str(placeholder))
-                if validator is not None:
-                    widget_instance.setValidator(validator)
+                if (validator := self.VALIDATORS.get(fmt)) is not None:
+                    widget_instance.setValidator(validator(temp_base))
                 widget_instance.textChanged.connect(self.check_values)
             temp_layout.addWidget(widget_instance)
             var.input_widget = widget_instance

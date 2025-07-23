@@ -32,10 +32,8 @@ class MDTrajTimeStepConfigurator(FloatConfigurator):
         if not self.update_needed(value):
             return
 
-        try:
+        with suppress(TypeError, ValueError):
             value = float(value)
-        except (TypeError, ValueError):
-            pass
 
         if value in {None, "", 0.0}:
             coord_conf = self.configurable[self.dependencies["coordinate_files"]]

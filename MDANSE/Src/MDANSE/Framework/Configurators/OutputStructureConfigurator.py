@@ -64,7 +64,7 @@ class OutputStructureConfigurator(IConfigurator):
 
         self._original_input = value
 
-        root, format, logs = value
+        root, fmt, logs = value
         root = Path(root)
 
         if logs not in self.log_options:
@@ -79,12 +79,12 @@ class OutputStructureConfigurator(IConfigurator):
             self.error_status = f"the file {root} is not writable"
             return
 
-        if format not in self.formats:
+        if fmt not in self.formats:
             self.error_status = "Output format is not supported"
             return
 
         self["root"] = root
-        self["format"] = format
+        self["format"] = fmt
         self["file"] = root
         if self["file"].absolute() in self.forbidden_files:
             self.error_status = f"File {self['file']} is either open or being written into. Please pick another name."

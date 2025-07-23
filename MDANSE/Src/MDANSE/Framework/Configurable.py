@@ -68,19 +68,17 @@ class Configurable:
         """Remove the hdf_trajectory (file-based) from settings,
         and introduce an MDMC trajectory instead.
         """
-        for key, value in self.settings.items():
-            if key == "trajectory":
-                if value[0] == "HDFTrajectoryConfigurator":
-                    self.settings[key] = ("MDMCTrajectoryConfigurator", {})
+        val = self.settings.get("trajectory", [""])
+        if val[0] == "HDFTrajectoryConfigurator":
+            self.settings["trajectory"] = ("MDMCTrajectoryConfigurator", {})
 
     def mock_trajectory_input(self):
         """Remove the hdf_trajectory (file-based) from settings,
         and introduce a mock trajectory instead.
         """
-        for key, value in self.settings.items():
-            if key == "trajectory":
-                if value[0] == "HDFTrajectoryConfigurator":
-                    self.settings[key] = ("MockTrajectoryConfigurator", {})
+        val = self.settings.get("trajectory", [""])
+        if val[0] == "HDFTrajectoryConfigurator":
+            self.settings["trajectory"] = ("MockTrajectoryConfigurator", {})
 
     def build_configuration(self):
         from MDANSE.Framework.Configurators.IConfigurator import IConfigurator

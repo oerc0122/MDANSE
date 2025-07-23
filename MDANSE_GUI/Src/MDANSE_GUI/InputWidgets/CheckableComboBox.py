@@ -68,10 +68,7 @@ class CheckableComboBox(QComboBox):
             idx = self.view().indexAt(a1.pos()).row()
             item = self.model().item(idx)
 
-            if item.checkState() == Qt.Checked:
-                set_checked = False
-            else:
-                set_checked = True
+            set_checked = item.checkState() == Qt.Checked
 
             if idx == 0:
                 # need to block signals temporarily otherwise as we
@@ -116,10 +113,7 @@ class CheckableComboBox(QComboBox):
         if self.checked[idx] == set_checked:
             return
 
-        if set_checked:
-            check_uncheck = Qt.Checked
-        else:
-            check_uncheck = Qt.Unchecked
+        check_uncheck = Qt.Checked if set_checked else Qt.Unchecked
 
         self.checked[idx] = set_checked
         self.items[idx].setCheckState(check_uncheck)
@@ -144,7 +138,13 @@ class CheckableComboBox(QComboBox):
     def configure_using_default(self):
         """This is too complex to have a default value"""
 
-    def addItem(self, text: str, bold=False, italic=False, underline=False) -> None:
+    def addItem(
+        self,
+        text: str,
+        bold: bool = False,
+        italic: bool = False,
+        underline: bool = False,
+    ) -> None:
         """
         Parameters
         ----------

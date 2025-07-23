@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from itertools import islice
 
 import numpy as np
 
@@ -47,37 +48,29 @@ def check_trajectory(filename: str):
         _, _, atom_numbers, system_name = read_modern_header(source)
 
         total_atom_number = np.sum(atom_numbers)
-        fixed_cell = True
-        frame_numbers = True
+        # fixed_cell = True
+        # frame_numbers = True
 
         source.seek(0)
 
-        lines_read = 0
         names_found = 0
-        empty_found = 0
-        direct_configuration_found = 0
+        empty_found = False
+        direct_configuration_found = False
 
-        for line in source:
-            lines_read += 1
-            if lines_read > 2 * total_atom_number + 10:
-                break
+        for line in islice(source, 2 * total_atom_number + 11):
             if system_name in line:
                 names_found += 1
             if "irect configuration=" in line:
-                direct_configuration_found += 1
-            if len(line.split()) == 0:
-                empty_found += 1
+                direct_configuration_found = True
+            if not line.strip():
+                empty_found = True
 
-    if names_found > 1:
-        fixed_cell = False
-    if empty_found > 0:
-        frame_numbers = False
-    if direct_configuration_found > 0:
-        if not frame_numbers:
-            raise ValueError(
-                "File contains both 'direct configuration' and empty lines"
-            )
-        frame_numbers = True
+    if direct_configuration_found and empty_found:
+        raise ValueError("File contains both 'direct configuration' and empty lines")
+
+    fixed_cell = names_found <= 1
+    frame_numbers = direct_configuration_found or not empty_found
+
     return fixed_cell, frame_numbers
 
 
@@ -86,7 +79,7 @@ class XDATCARFileConfigurator(FileWithAtomDataConfigurator):
 
     def parse(self):
         filename = self["filename"]
-        self["instance"] = open(filename, encoding="utf-8")
+        self["instance"] = open(filename, encoding="utf-8")  # noqa: SIM115
 
         lines_read = sum(1 for _ in self["instance"])
 

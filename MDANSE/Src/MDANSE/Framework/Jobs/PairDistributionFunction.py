@@ -212,10 +212,10 @@ class PairDistributionFunction(DistanceHistogram):
 
         if self.intra:
             for i in ("/intra", "/inter", ""):
-                if i == "/intra":
-                    labels = self.labels_intra
-                else:
-                    labels = self.labels
+                is_intra = i == "/intra"
+
+                labels = self.labels_intra if is_intra else self.labels
+
                 assign_weights(self._outputData, weight_dict, f"pdf{i}/%s", labels)
                 pdf = weighted_sum(self._outputData, f"pdf{i}/%s", labels)
                 self._outputData[f"pdf{i}/total"][:] = pdf / factor
@@ -225,7 +225,7 @@ class PairDistributionFunction(DistanceHistogram):
                 self._outputData[f"tcf{i}/total"][:] = (
                     densityFactor
                     * self.averageDensity
-                    * (pdf / factor if i == "/intra" else (pdf - factor) / factor)
+                    * (pdf / factor if is_intra else (pdf - factor) / factor)
                 )
                 for j in ("pdf", "rdf", "tcf"):
                     self._outputData[f"{j}{i}/total"].scaling_factor = factor
@@ -235,7 +235,7 @@ class PairDistributionFunction(DistanceHistogram):
                         f"{j}{i}",
                         "LineOutputVariable",
                         dim=2,
-                        intra=i == "/intra",
+                        intra=is_intra,
                         axis=f"{j}/axes/r",
                         units="au",
                         main_result=j == "pdf" and i == "",

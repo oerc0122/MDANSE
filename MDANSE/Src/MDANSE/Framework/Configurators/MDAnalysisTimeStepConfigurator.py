@@ -36,10 +36,8 @@ class MDAnalysisTimeStepConfigurator(FloatConfigurator):
         if not self.update_needed(value):
             return
 
-        try:
+        with suppress(TypeError, ValueError):
             value = float(value)
-        except (TypeError, ValueError):
-            pass
 
         if value in {None, "", 0.0}:
             file_configurator = self.configurable[self.dependencies["topology_file"]]

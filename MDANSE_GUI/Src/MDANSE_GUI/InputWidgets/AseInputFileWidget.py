@@ -15,8 +15,7 @@
 #
 from __future__ import annotations
 
-import os
-from pathlib import PurePath
+from pathlib import Path
 
 from ase.io.formats import filetype
 from qtpy.QtCore import Slot
@@ -32,30 +31,31 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 class AseInputFileWidget(WidgetBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        configurator = kwargs.get("configurator", None)
-        if configurator is not None:
-            default_value = configurator.default
-        else:
-            default_value = ""
+        configurator = kwargs.get("configurator")
+        default_value = configurator.default if configurator is not None else ""
+
         try:
-            parent = kwargs.get("parent", None)
-            self.default_path = PurePath(parent.default_path)
-        except KeyError:
-            self.default_path = PurePath(os.path.abspath("."))
-            LOG.error("KeyError in InputFileWidget - can't get default path.")
-        except AttributeError:
-            self.default_path = PurePath(os.path.abspath("."))
-            LOG.error("AttributeError in InputFileWidget - can't get default path.")
+            parent = kwargs.get("parent")
+            self.default_path = Path(parent.default_path)
+        except (KeyError, AttributeError) as err:
+            self.default_path = Path.cwd()
+            LOG.error(
+                "%s in %s - can't get default path.",
+                type(err).__name__,
+                type(self).__name__,
+            )
+
         default_value = kwargs.get("default", "")
-        if self._tooltip:
-            tooltip_text = self._tooltip
-        else:
-            tooltip_text = "Specify a path to an existing file."
+
+        tooltip_text = self._tooltip or "Specify a path to an existing file."
+
         self._qt_file_association = kwargs.get("wildcard", "")
+
         combo = QComboBox(self._base)
         combo.addItems(AseInputFileConfigurator._allowed_formats)
         combo.setEditable(False)
         self._type_combo = combo
+
         field = QLineEdit(self._base)
         self._field = field
         field.textChanged.connect(self.updateValue)
@@ -63,9 +63,11 @@ class AseInputFileWidget(WidgetBase):
         field.setToolTip(tooltip_text)
         self._layout.addWidget(field)
         self._layout.addWidget(combo)
+
         button = QPushButton("Browse", self._base)
         button.clicked.connect(self.valueFromDialog)
         self._layout.addWidget(button)
+
         self._configurator = configurator
         self._file_dialog = QFileDialog.getOpenFileName
         self.updateValue()
@@ -84,7 +86,7 @@ class AseInputFileWidget(WidgetBase):
             self._qt_file_association,  # text string specifying the file name filter.
         )
         if new_value is not None:
-            self._field.setText(str(PurePath(new_value[0])))
+            self._field.setText(str(Path(new_value[0])))
             self.updateValue()
             try:
                 type_guess = filetype(new_value[0])

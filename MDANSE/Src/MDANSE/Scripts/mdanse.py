@@ -79,13 +79,30 @@ def show_trajectory_contents(args: Namespace):
     print(result)  # noqa: T201
 
 
-def show_results_contents(filename: str, *, verbose: bool) -> str:
-    text = str(filename) + "\n"
-    with h5py.File(filename) as source:
-        text += "===HEADER===\n"
-        if verbose:
-            for attr in source.attrs:
-                text += f"{attr}: {source.attrs[attr]}\n"
+        if len(parser.rargs) != 1:
+            raise CommandLineParserError(
+                f"Invalid number of arguments for {opt_str!r} option"
+            )
+
+        basename = parser.rargs[0]
+
+        filename = PLATFORM.temporary_files_directory() / basename
+
+        if not filename.exists():
+            raise CommandLineParserError("Invalid job name")
+
+        # Open the job temporary file
+        try:
+            with open(filename, "rb") as file:
+                info = pickle.load(file)
+
+        # If the file could not be opened/unpickled for whatever reason, try at the next checkpoint
+        except Exception:
+            raise CommandLineParserError(
+                f"The job {basename!r} could not be opened properly."
+            )
+
+        # The job file could be opened and unpickled properly
         else:
             for attr in source.attrs:
                 text += f"{attr}\n"

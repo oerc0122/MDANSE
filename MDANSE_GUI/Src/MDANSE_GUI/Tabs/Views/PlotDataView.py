@@ -204,16 +204,11 @@ class PlotDataView(QTreeView):
                 description = mda_data._metadata
             except AttributeError:
                 description = f"File {mda_data._file.filename}, no further information"
-        elif item_type == "dataset":
+        elif item_type in {"dataset", "group"}:
             dataset = model.inner_object(index)
             description = f"{dataset}{model_item.data(role=Qt.ItemDataRole.UserRole)}\n"
-            for key in dataset.attrs.keys():
-                description += f"{key}: {dataset.attrs[key]}\n"
-        elif item_type == "group":
-            dataset = model.inner_object(index)
-            description = f"{dataset}{model_item.data(role=Qt.ItemDataRole.UserRole)}\n"
-            for key in dataset.attrs.keys():
-                description += f"{key}: {dataset.attrs[key]}\n"
+            for key, value in dataset.attrs.items():
+                description += f"{key}: {value}\n"
         else:
             description = "generic item"
         self.item_details.emit(description)  # this should emit the job name

@@ -20,6 +20,8 @@ from collections.abc import Iterable
 from typing import Union
 
 import numpy as np
+import numpy.typing as npt
+from more_itertools import distinct_permutations
 
 
 def get_weights(
@@ -62,11 +64,10 @@ def get_weights(
     )
     _, normFactor = adjust_weights(all_props, all_contents, n_atms, dim, conc_exp)
 
-    normalise = True
-    try:
-        len(normFactor)
-    except TypeError:
-        normalise = abs(normFactor) > 0.0  # if normFactor is 0, all weights are 0 too.
+    normalise = (
+        isinstance(normFactor, Sized) or abs(normFactor) > 0.0
+    )  # if normFactor is 0, all weights are 0 too.
+
     if normalise:
         for k in weights:
             weights[k] /= np.float64(normFactor)
@@ -109,8 +110,7 @@ def adjust_weights(
 
     weights = {}
 
-    cartesianProduct = itertools.product(props, repeat=dim)
-    for elements in cartesianProduct:
+    for elements in cart_prod(props, repeat=dim):
         atom_conc_product = np.prod([contents[el] / n_atms for el in elements])
         property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
 
@@ -125,8 +125,8 @@ def adjust_weights(
 
 
 def assign_weights(
-    values: dict[str, np.ndarray],
-    weights: dict[str, float],
+    values: dict[str, npt.NDArray[float]],
+    weights: dict[tuple[str, ...], float],
     match_key: str,
     match_labels: Iterable[tuple[str, tuple[str, ...]]],
     symmetric: bool = True,
@@ -156,15 +156,18 @@ def assign_weights(
 
     for k in values.keys() & matches:
         if symmetric:
-            permutations = set(itertools.permutations(matches[k], r=len(matches[k])))
-            w = sum(weights[p] for p in permutations)
+            w = sum(
+                weights[p] for p in distinct_permutations(matches[k], r=len(matches[k]))
+            )
         else:
             w = weights[matches[k]]
 
         values[k].scaling_factor *= w
 
 
-def weighted_sum(values: dict[str, np.ndarray], match_key: str, match_labels: Iterable):
+def weighted_sum(
+    values: dict[str, npt.NDArray[float]], match_key: str, match_labels: Iterable
+):
     """Sums up partial datasets multiplied by their scaling factors.
     The scaling factors have to be set before, typically by calling
     the assign_weights function.

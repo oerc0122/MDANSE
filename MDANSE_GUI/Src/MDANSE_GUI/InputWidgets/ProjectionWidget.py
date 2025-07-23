@@ -22,13 +22,12 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class ProjectionWidget(WidgetBase):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, _source_object=None, **kwargs):
         super().__init__(*args, **kwargs)
-        _source_object = kwargs.get("source_object", None)
         bgroup = QButtonGroup(self._base)
-        for id, blabel in enumerate(["None", "Axial", "Planar"]):
+        for idx, blabel in enumerate(("None", "Axial", "Planar")):
             rbutton = QRadioButton(blabel, parent=self._base)
-            bgroup.addButton(rbutton, id=id)
+            bgroup.addButton(rbutton, id=idx)
             self._layout.addWidget(rbutton)
             if id == 0:
                 rbutton.setChecked(True)

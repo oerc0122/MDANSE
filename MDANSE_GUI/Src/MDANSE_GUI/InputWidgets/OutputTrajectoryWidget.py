@@ -15,9 +15,7 @@
 #
 from __future__ import annotations
 
-import os
-import os.path
-from pathlib import PurePath
+from pathlib import Path
 
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import (
@@ -43,37 +41,39 @@ class OutputTrajectoryWidget(WidgetBase):
         super().__init__(*args, layout_type="QGridLayout", **kwargs)
         default_value = self._configurator.default
         try:
-            self._parent = kwargs.get("parent", None)
-            self.default_path = PurePath(self._parent._default_path)
-        except KeyError:
-            self.default_path = PurePath(os.path.abspath("."))
-            LOG.error("KeyError in OutputTrajectoryWidget - can't get default path.")
-        except AttributeError:
-            self.default_path = PurePath(os.path.abspath("."))
+            self._parent = kwargs.get("parent")
+            self.default_path = Path(self._parent._default_path)
+        except (KeyError, AttributeError) as err:
+            self.default_path = Path.cwd()
             LOG.error(
-                "AttributeError in OutputTrajectoryWidget - can't get default path."
+                "%s in %s - can't get default path.",
+                type(err).__name__,
+                type(self).__name__,
             )
         else:
             self._session = self._parent._parent_tab._session
+
         try:
-            self._parent = kwargs.get("parent", None)
+            self._parent = kwargs.get("parent")
             jobname = str(self._parent._job_instance.label).replace(" ", "")
-            guess_name = str(
-                PurePath(os.path.join(self.default_path, jobname + "_trajectory1"))
-            )
+            guess_name = str(Path(self.default_path) / (jobname + "_trajectory1"))
         except Exception:
-            guess_name = str(PurePath(default_value[0]))
+            guess_name = str(Path(default_value[0]))
             LOG.error("It was not possible to get the job name from the parent")
-        while os.path.exists(guess_name + ".mdt"):
+
+        while Path(guess_name + ".mdt").exists():
             prefix, number = guess_name.split("_trajectory")
-            guess_name = str(PurePath(prefix + "_trajectory" + str(1 + int(number))))
+            guess_name = f"{prefix}_trajectory{1 + int(number)}"
+
         self.file_association = "MDT trajectory (*.mdt)"
         self._value = default_value
-        self._field = QLineEdit(str(guess_name), self._base)
-        self._field.setPlaceholderText(str(guess_name))
+        self._field = QLineEdit(guess_name, self._base)
+        self._field.setPlaceholderText(guess_name)
+
         self.dtype_box = QComboBox(self._base)
         self.dtype_box.addItems(["float16", "float32", "float64"])
         self.dtype_box.setCurrentText("float64")
+
         self.chunk_box = QSpinBox(self._base)
         self.chunk_box.setMinimum(1)
         self.chunk_box.setMaximum(0xFFFF)
@@ -83,12 +83,15 @@ class OutputTrajectoryWidget(WidgetBase):
             "Specifies the size of a single chunk in the HDF5 file."
             "Affects the performance of reading and writing the trajectory."
         )
+
         self.compression_box = QComboBox(self._base)
         self.compression_box.addItems(["none", "gzip"])
         self.compression_box.setCurrentText("gzip")
+
         # self.type_box.setCurrentText(default_value[1])
         browse_button = QPushButton("Browse", self._base)
         browse_button.clicked.connect(self.file_dialog)
+
         label = QLabel("Log file output:")
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         label2 = QLabel("Atoms per chunk")
@@ -97,8 +100,10 @@ class OutputTrajectoryWidget(WidgetBase):
             "Specifies the size of a single chunk in the HDF5 file."
             "Affects the performance of reading and writing the trajectory."
         )
+
         self.logs_combo = QComboBox(self._base)
         self.logs_combo.addItems(OutputTrajectoryConfigurator.log_options)
+
         self._layout.addWidget(self._field, 0, 0)
         self._layout.addWidget(self.dtype_box, 0, 1)
         self._layout.addWidget(self.compression_box, 0, 2)
@@ -107,11 +112,14 @@ class OutputTrajectoryWidget(WidgetBase):
         self._layout.addWidget(self.logs_combo, 1, 1)
         self._layout.addWidget(label2, 1, 2)
         self._layout.addWidget(self.chunk_box, 1, 3)
+
         self._default_value = default_value
         self._field.textChanged.connect(self.updateValue)
+
         self.default_labels()
         self.update_labels()
         self.updateValue()
+
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
@@ -150,8 +158,8 @@ class OutputTrajectoryWidget(WidgetBase):
             str(self.default_path),  # the initial search path
             self.file_association,  # text string specifying the file name filter.
         )
-        if len(new_value[0]) > 0:
-            self._field.setText(str(PurePath(new_value[0])))
+        if new_value[0]:
+            self._field.setText(str(Path(new_value[0])))
             self.updateValue()
 
     def get_widget_value(self):

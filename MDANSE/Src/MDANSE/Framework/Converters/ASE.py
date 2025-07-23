@@ -276,11 +276,11 @@ class ASE(Converter):
             self._input = ASETrajectory(self.configuration["trajectory_file"]["value"])
         except Exception:
             first_frame = read(self.configuration["trajectory_file"]["value"], index=0)
-            self._input = iread(
-                self.configuration["trajectory_file"]["value"]  # , index="[:]"
-            )
             self._total_number_of_steps = ilen(
                 iread(self.configuration["trajectory_file"]["value"])
+            )
+            self._input = iread(
+                self.configuration["trajectory_file"]["value"]  # , index="[:]"
             )
             LOG.debug(f"Length found using last_iterator={self._total_number_of_steps}")
         else:

@@ -171,16 +171,16 @@ class TrajectoryFilter(IJob):
             "time_step_ps", self.configuration["trajectory"]["md_time_step"]
         )
 
-        filter = filter_class(**filter_attributes)
+        filt = filter_class(**filter_attributes)
 
         trajectories = copy.deepcopy(self.atomic_trajectory_array)
 
         # Magnitude of zero frequency in filter response (equivalent to the average atomic positions)
-        zero_magnitude = np.abs(filter.freq_response.magnitudes[0])
+        zero_magnitude = np.abs(filt.freq_response.magnitudes[0])
 
         # Apply filter (only apply initial position offset to atoms if filter response f(0) != 1)
         filtered_coords = apply(
-            filter,
+            filt,
             trajectories,
             apply_offsets=not np.isclose(zero_magnitude, 1),
         )
@@ -222,7 +222,7 @@ class TrajectoryFilter(IJob):
         outputFile.create_group("metadata/filter").create_dataset(
             "trajectory_filter",
             (1,),
-            data=str(filter),
+            data=str(filt),
             dtype=h5py.string_dtype(),
         )
 
@@ -231,12 +231,12 @@ class TrajectoryFilter(IJob):
         super().finalize()
 
 
-def apply(filter: Filter, trajectories: np.ndarray, apply_offsets: bool) -> np.ndarray:
+def apply(filt: Filter, trajectories: np.ndarray, apply_offsets: bool) -> np.ndarray:
     """Apply the filter to the atomic trajectories.
 
     Parameter
     ---------
-    filter : Filter
+    filt : Filter
         The filter object to be applied.
     trajectories : np.ndarray
         Atomic trajectories array with shape (num atoms, 3, num timesteps).
@@ -254,7 +254,7 @@ def apply(filter: Filter, trajectories: np.ndarray, apply_offsets: bool) -> np.n
 
     for at, (x, y, z) in enumerate(trajectories):
         for i, component in enumerate((x, y, z)):
-            output = filter.apply(component)
+            output = filt.apply(component)
 
             if apply_offsets:
                 offset = component[0] - output[0]

@@ -15,8 +15,7 @@
 #
 from __future__ import annotations
 
-import os
-from pathlib import PurePath
+from pathlib import Path
 
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QFileDialog, QLineEdit, QPushButton
@@ -28,34 +27,38 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 class InputFileWidget(WidgetBase):
     def __init__(self, *args, file_dialog=QFileDialog.getOpenFileName, **kwargs):
         super().__init__(*args, **kwargs)
-        configurator = kwargs.get("configurator", None)
-        if configurator is not None:
-            default_value = configurator.default
-        else:
-            default_value = ""
-        parent = kwargs.get("parent", None)
+        configurator = kwargs.get("configurator")
+
+        default_value = configurator.default if configurator is not None else ""
+
+        parent = kwargs.get("parent")
+
         self._parent = parent
         if parent is not None:
             self._job_name = parent._job_name
             self._settings = parent._settings
+
         try:
-            parent = kwargs.get("parent", None)
-            self.default_path = PurePath(parent._default_path)
-        except KeyError:
-            self.default_path = PurePath(os.path.abspath("."))
-            LOG.error("KeyError in OutputFilesWidget - can't get default path.")
-        except AttributeError:
-            self.default_path = PurePath(os.path.abspath("."))
-            LOG.error("AttributeError in OutputFilesWidget - can't get default path.")
+            self.default_path = Path(parent._default_path)
+        except (KeyError, AttributeError) as err:
+            self.default_path = Path.cwd()
+            LOG.error(
+                "%s in %s - can't get default path.",
+                type(err).__name__,
+                type(self).__name__,
+            )
         default_value = kwargs.get("default", "")
+
         if self._tooltip:
             self._tooltip_text = self._tooltip
         else:
             self._tooltip_text = "Specify a path to an existing file."
+
         try:
             file_association = configurator.wildcard
         except AttributeError:
             file_association = kwargs.get("wildcard", "")
+
         self._qt_file_association = file_association
         self._default_value = default_value
         self.add_widgets_to_layout()
@@ -93,20 +96,15 @@ class InputFileWidget(WidgetBase):
             self._qt_file_association,  # text string specifying the file name filter.
         )
         if new_value is not None and new_value[0]:
-            self._field.setText(str(PurePath(new_value[0])))
+            self._field.setText(str(Path(new_value[0])))
             self.updateValue()
+            pth = Path(new_value[0]).parent
             try:
-                LOG.info(
-                    f"Settings path of {self._job_name} to {os.path.split(new_value[0])[0]}"
-                )
+                LOG.info(f"Settings path of {self._job_name} to {pth}")
                 if self._parent is not None:
-                    self._parent._default_path = str(
-                        PurePath(os.path.split(new_value[0])[0])
-                    )
+                    self._parent._default_path = str(pth)
             except Exception:
-                LOG.error(
-                    f"session.set_path failed for {self._job_name}, {os.path.split(new_value[0])[0]}"
-                )
+                LOG.error(f"session.set_path failed for {self._job_name}, {pth}")
 
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""

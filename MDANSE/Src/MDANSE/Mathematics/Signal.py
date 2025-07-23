@@ -20,9 +20,10 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from copy import copy
 from enum import Enum
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 import numpy as np
+import numpy.typing as npt
 from scipy import fftpack, signal
 
 from MDANSE.Core.Error import Error
@@ -77,28 +78,40 @@ INTERPOLATION_ORDER[5] = np.array(
 )
 
 
-def correlation(x, y=None, axis=0, sumOverAxis=None, average=None):
+def correlation(
+    x: npt.ArrayLike,
+    y: npt.ArrayLike | None = None,
+    /,
+    *,
+    axis: int = 0,
+    sumOverAxis: int | None = None,
+    average: int | None = None,
+) -> npt.NDArray[float]:
     """Returns the numerical correlation between two signals.
 
-    :param x: the first signal.
-    :type x: NumPy array
+    Parameters
+    ----------
+    x : ArrayLike
+        The first signal.
+    y : ArrayLike or None
+        If not None, the correlation between `x` and `y` is calculated.
+        If None, the autocorrelation of `x` will be computed. (Default value = None)
+    axis : int
+        The axis along which the correlation will be computed. (Default value = 0)
+    sumOverAxis : int or None
+        If not None, the computed correlations will be summed over a given axis. (Default value = None)
+    average : int or None
+        If not None, the computed correlations will be averaged over a given axis. (Default value = None)
 
-    :param y: if not None, the correlation is performed between `x` and `y`. If None, the autocorrelation of `x` will be computed.
-    :type y: NumPy array or None
+    Returns
+    -------
+    ndarray
+        the result of the numerical correlation.
 
-    :param axis: the axis along which the correlation will be computed.
-    :type axis: int
+    Notes
+    -----
+    The correlation is computed using the FCA algorithm.
 
-    :param sumOverAxis: if not None, the computed correlations will be sum over a given axis.
-    :type sumOverAxis: int or None
-
-    :param average: if not None, the computed correlations will be averaged over a given axis.
-    :type average: int or None
-
-    :return: the result of the numerical correlation.
-    :rtype: NumPy array
-
-    :note: The correlation is computed using the FCA algorithm.
     """
 
     x = np.array(x)
@@ -115,7 +128,7 @@ def correlation(x, y=None, axis=0, sumOverAxis=None, average=None):
 
     s = [slice(None)] * x.ndim
 
-    s[axis] = slice(0, n, 1)  # the total lenght along 'axis' direction is 2*n
+    s[axis] = slice(0, n, 1)  # the total length along 'axis' direction is 2*n
     # s selects all elements along all other directions,
     # and only half the elements along the 'axis' direction.
 
@@ -140,7 +153,7 @@ def correlation(x, y=None, axis=0, sumOverAxis=None, average=None):
     return corr
 
 
-def normalisation_factor(x: np.ndarray, axis: int = 0) -> np.ndarray:
+def normalisation_factor(x: npt.NDArray[float], axis: int = 0) -> npt.NDArray[float]:
     """Normalizes the signal by dividing x by the zeroth elements
     along the input axis.
 
@@ -257,14 +270,21 @@ def differentiate(a, dt=1.0, order=1):
     return ts
 
 
-def symmetrize(signal, axis=0):
-    """Return a symmetrized version of an input signal
+def symmetrize(signal: npt.NDArray[float], axis: int = 0):
+    """
 
-    :Parameters:
-        #. signal (np.ndarray): the input signal
-        #. axis (int): the axis along which the signal should be symmetrized
-    :Returns:
-        #. np.ndarray: the symmetrized signal
+    Parameters
+    ----------
+    signal : ndarray
+        The input signal.
+    axis : int
+         The axis along which the signal should be symmetrized. (Default value = 0)
+
+    Returns
+    -------
+    ndarray
+        The symmetrized signal.
+
     """
 
     s = [slice(None)] * signal.ndim
@@ -277,7 +297,13 @@ def symmetrize(signal, axis=0):
     return signal
 
 
-def get_spectrum(signal, window=None, timeStep=1.0, axis=0, fft="fft"):
+def get_spectrum(
+    signal: npt.NDArray[float],
+    window: npt.NDArray[float] | None = None,
+    timeStep: float = 1.0,
+    axis: int = 0,
+    fft: Literal["fft", "rfft"] = "fft",
+):
     signal = symmetrize(signal, axis)
 
     if window is None:
@@ -394,7 +420,7 @@ class Filter(ABC):
         self.set_filter_attributes(kwargs)
 
     def compute_frequencies(
-        self, transfer_function: TransferFunction, range: np.ndarray
+        self, transfer_function: TransferFunction, range_: np.ndarray
     ):
         """Computes the frequency magnitudes over given angular frequency range, from the filter transfer function.
 
@@ -407,7 +433,7 @@ class Filter(ABC):
         ----------
         transfer_function : TransferFunction
             Numerator and denominator of the filter transfer function.
-        range : np.ndarray
+        range_ : np.ndarray
             Range of frequency values over which to compute.
 
         Returns
@@ -417,9 +443,11 @@ class Filter(ABC):
 
         """
 
-        return signal.freqs(*transfer_function, worN=range)
+        return signal.freqs(
+            transfer_function.numerator, transfer_function.denominator, worN=range_
+        )
 
-    def apply(self, input: np.array) -> np.ndarray:
+    def apply(self, inp: npt.NDArray[float]) -> npt.NDArray[float]:
         """Returns the convolution of the digital designed filter with an input signal.
 
         See Also
@@ -443,7 +471,7 @@ class Filter(ABC):
             if Filter.Flags.DIGITAL_ONLY not in self.flags
             else self.coeffs
         )
-        return signal.filtfilt(coeffs.numerator, coeffs.denominator, input)
+        return signal.filtfilt(coeffs.numerator, coeffs.denominator, inp)
 
     def to_digital_coeffs(self) -> TransferFunction:
         """Returns the filter instance digital coefficients converted from analog, by performing a bilinear transform.
@@ -522,7 +550,7 @@ class Filter(ABC):
 
         # Compute filter response around frequencies given in range
         response = self.compute_frequencies(
-            transfer_function=expr, range=np.abs(freq_range)
+            transfer_function=expr, range_=np.abs(freq_range)
         )
         self._freq_response = FrequencyDomain(*response)
 
@@ -720,7 +748,7 @@ class Filter(ABC):
 
         """
         settings = type(self).__dict__["default_settings"]
-        for setting in settings.keys():
+        for setting in settings:
             description += f"""
   # {setting}
   {settings[setting]["description"]}
@@ -1081,7 +1109,7 @@ class Notch(Filter):
         self.freq_response = (self.coeffs, Filter.FrequencyRangeMethod.FFT)
 
     def compute_frequencies(
-        self, transfer_function: TransferFunction, range: np.ndarray
+        self, transfer_function: TransferFunction, range_: np.ndarray
     ):
         """Computes the frequency magnitudes over given cyclic frequency range, from the filter transfer function.
 
@@ -1103,7 +1131,7 @@ class Notch(Filter):
             Frequency response over a given range of cyclic frequencies.
         """
 
-        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, worN=range_, fs=self.sample_freq)
 
 
 class Peak(Filter):
@@ -1140,7 +1168,7 @@ class Peak(Filter):
         self.freq_response = (self.coeffs, Filter.FrequencyRangeMethod.FFT)
 
     def compute_frequencies(
-        self, transfer_function: TransferFunction, range: np.ndarray
+        self, transfer_function: TransferFunction, range_: np.ndarray
     ):
         """Computes the frequency magnitudes over given cyclic frequency range, from the filter transfer function.
 
@@ -1163,7 +1191,7 @@ class Peak(Filter):
 
         """
 
-        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, worN=range_, fs=self.sample_freq)
 
 
 class Comb(Filter):
@@ -1214,7 +1242,7 @@ class Comb(Filter):
         self.freq_response = (self.coeffs, Filter.FrequencyRangeMethod.FFT)
 
     def compute_frequencies(
-        self, transfer_function: TransferFunction, range: np.ndarray
+        self, transfer_function: TransferFunction, range_: np.ndarray
     ):
         """Computes the frequency magnitudes over given cyclic frequency range, from the filter transfer function.
 
@@ -1237,7 +1265,7 @@ class Comb(Filter):
 
         """
 
-        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, worN=range_, fs=self.sample_freq)
 
 
 FILTERS = (
@@ -1263,7 +1291,7 @@ DEFAULT_TIME_STEP = 0.005
 DEFAULT_N_STEPS = 320
 
 
-def filter_default_attributes(filter=DEFAULT_FILTER):
+def filter_default_attributes(filter_=DEFAULT_FILTER):
     """Get the filter-specific settings dictionary for a filter class.
 
     Parameters
@@ -1278,12 +1306,12 @@ def filter_default_attributes(filter=DEFAULT_FILTER):
 
     """
     return {
-        setting: values["value"] for setting, values in filter.default_settings.items()
+        setting: values["value"] for setting, values in filter_.default_settings.items()
     }
 
 
 def filter_description_string(
-    filter=DEFAULT_FILTER, settings=filter_default_attributes(DEFAULT_FILTER)
+    filter_=DEFAULT_FILTER, /, settings=filter_default_attributes(DEFAULT_FILTER)
 ) -> str:
     """Convert a filter class and filter settings dictionary to a string.
 
@@ -1300,4 +1328,4 @@ def filter_description_string(
         String representation of the filter settings dictionary.
 
     """
-    return json.dumps({"filter": filter.__name__, "attributes": settings})
+    return json.dumps({"filter": filter_.__name__, "attributes": settings})

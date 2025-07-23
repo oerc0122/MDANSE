@@ -203,6 +203,10 @@ class JobTab(GeneralTab):
         session: LocalSession,
         settings,
         logger,
+        *,
+        model=JobTree(filter="Analysis"),
+        combo_model=None,
+        instrument_model=None,
         **kwargs,
     ):
         action = Action(use_preview=True)
@@ -212,9 +216,6 @@ class JobTab(GeneralTab):
             session=session,
             settings=settings,
             logger=logger,
-            model=kwargs.get("model", JobTree(filter="Converters")),
-            combo_model=kwargs.get("combo_model", None),
-            instrument_model=kwargs.get("instrument_model", None),
             view=ActionsTree(),
             visualiser=action,
             layout=partial(

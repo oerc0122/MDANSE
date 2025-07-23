@@ -42,7 +42,7 @@ class OutputTrajectoryConfigurator(IConfigurator):
     log_options = ("no logs", "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL")
     _default = ("OUTPUT_TRAJECTORY", 64, 128, "none", "no logs")
 
-    def __init__(self, name, format=None, **kwargs):
+    def __init__(self, name, _fmt=None, **kwargs):
         """Initializes the configurator.
 
         :param name: the name of the configurator as it will appear in the configuration.

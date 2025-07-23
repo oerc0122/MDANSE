@@ -385,7 +385,7 @@ class MolecularViewer(QtWidgets.QWidget):
         new_isocontour.UseScalarTreeOn()
         new_isocontour.ComputeNormalsOn()
         if vtk.vtkVersion.GetVTKMajorVersion() < 6:
-            new_isocontour.SetInput(self.image)
+            new_isocontour.SetInput(self._image)
         else:
             new_isocontour.SetInputData(self._image)
         new_isocontour.SetValue(0, isovalue)
@@ -823,8 +823,8 @@ class MolecularViewer(QtWidgets.QWidget):
         diff = rs[js] - rs[ks]
         dist = np.sum(diff * diff, axis=1)
         sum_radii = (covs[js] + covs[ks] + tolerance) ** 2
-        js = js[(0 < dist) & (dist < sum_radii)]
-        ks = ks[(0 < dist) & (dist < sum_radii)]
+        js = js[(dist > 0) & (dist < sum_radii)]
+        ks = ks[(dist > 0) & (dist < sum_radii)]
         ls = not_du[js]
         ms = not_du[ks]
 

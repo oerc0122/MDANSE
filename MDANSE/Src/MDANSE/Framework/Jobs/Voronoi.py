@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import collections
 import math
+from collections import Counter
 
 import numpy as np
 from scipy.spatial import Delaunay as scipyDelaunay
@@ -147,56 +148,41 @@ class Voronoi(IJob):
         points_ids = Voronoi.regions  # Option qhull v FN
         valid_regions_points_ids = []
         valid_region_id = []
-        region_id = -1
-        for p in Voronoi.point_region:
-            region_id += 1
+        for region_id, p in enumerate(Voronoi.point_region):
             id_list = points_ids[p]
             if no_exc_min(id_list) >= 0:
                 valid_regions_points_ids.append(id_list)
                 valid_region_id.append(region_id)
 
-        valid_regions = {}
-        for i in range(len(valid_region_id)):
-            vrid = valid_region_id[i]
-            valid_regions[vrid] = valid_regions_points_ids[i]
+        valid_regions = dict(zip(valid_region_id, valid_regions_points_ids))
 
         # Extracting ridges of the valid Voronoi regions
         input_sites = Voronoi.ridge_points  # Option qhull v Fv (part of)
         self.max_region_id = input_sites.max()
 
         # Calculating neighbourhood
-        neighbourhood = np.zeros((self.max_region_id + 1), dtype=np.int32)
-        for s in input_sites.ravel():
-            neighbourhood[s] += 1
+        neighbourhood = Counter(input_sites.ravel())
 
         # Summing into neighbourhood histogram (for valid regions only)
-        for i in range(len(neighbourhood)):
-            v = neighbourhood[i]
-            if i in valid_region_id:
-                if v not in self.neighbourhood_hist.keys():
-                    self.neighbourhood_hist[v] = 1
-                else:
-                    self.neighbourhood_hist[v] += 1
+        self.neighbourhood_hist = Counter(neighbourhood.values())
 
         # Delaunay Tesselation of each valid voronoi region
         delaunay_regions_for_each_valid_voronoi_region = {}
-        for vrid, ids in list(valid_regions.items()):
+        for vrid, ids in valid_regions.items():
             if vrid >= self.nb_init_pts:
                 continue
             if len(ids) == 3:
                 delaunay_regions_for_each_valid_voronoi_region[vrid] = [ids]
                 continue
             lut = np.array(ids)
-            Delaunay = scipyDelaunay(vertices_coords[ids])
+            delaunay = scipyDelaunay(vertices_coords[ids])
             delaunay_regions_for_each_valid_voronoi_region[vrid] = [
-                lut[dv] for dv in Delaunay.simplices
+                lut[dv] for dv in delaunay.simplices
             ]
 
         # Volume Computation
         global_volumes = {}
-        for vrid, regions in list(
-            delaunay_regions_for_each_valid_voronoi_region.items()
-        ):
+        for vrid, regions in delaunay_regions_for_each_valid_voronoi_region.items():
             regions_volumes = []
             for vidx in regions:
                 coords = vertices_coords[vidx]
@@ -206,8 +192,7 @@ class Voronoi(IJob):
             global_volumes[vrid] = sum(regions_volumes)
 
         # Mean volume of Voronoi regions
-        mean = np.array(list(global_volumes.values())).mean()
-        self.mean_volume[index] = mean
+        self.mean_volume[index] = sum(global_volumes.values()) / len(global_volumes)
 
         return index, None
 

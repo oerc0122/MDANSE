@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import math
+from pathlib import Path
 from typing import TypeVar
 
 import numpy as np
@@ -260,7 +261,7 @@ class MockTrajectory:
 
         scaled_index = frame % self._real_length
 
-        return self._coordinates[scaled_index, atom_indices, :].astype(np.float64)
+        return self._coordinates[scaled_index, :, :].astype(np.float64)
 
     def configuration(self, frame: int) -> _Configuration:
         """An MDANSE Configuration at the specified frame number.
@@ -548,7 +549,7 @@ class MockTrajectory:
         bool
             True if velocities are stored in MockTrajectory
         """
-        return "velocities" in self._variables.keys()
+        return "velocities" in self._variables
 
     def has_variable(self, variable: str) -> bool:
         """True if the trajectory contains atom velocities,
@@ -559,7 +560,7 @@ class MockTrajectory:
         bool
             True if velocities are stored in MockTrajectory
         """
-        return variable in self._variables.keys()
+        return variable in self._variables
 
     def variables(self):
         """Return the configuration variables stored in this trajectory.
@@ -574,7 +575,7 @@ class MockTrajectory:
         return list(grp.keys())
 
     @classmethod
-    def from_json(cls, filename: str) -> Trajectory:
+    def from_json(cls, filename: Path | str) -> Trajectory:
         """Builds and returns an instance of MockTrajectory
         using the parameters in a JSON file.
 

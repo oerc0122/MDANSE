@@ -25,15 +25,23 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class HDFTrajectoryWidget(WidgetBase):
-    def __init__(self, *args, trajectory_instance: Trajectory | None = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        trajectory_instance: Trajectory | None = None,
+        source_object: str | None = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
-        filename = kwargs.get("source_object", None)
+        filename = source_object
+
         if trajectory_instance:
             self._configurator._instance = trajectory_instance
             self._configurator.configure_from_instance()
             filename = trajectory_instance.filename
         elif filename is not None:
             self._configurator.configure(str(filename))
+
         if not filename:
             label = QLabel("No Trajectory available", self._base)
             self._layout.addWidget(label)

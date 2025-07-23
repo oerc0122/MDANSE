@@ -59,8 +59,9 @@ class RGBValidator(QValidator):
 
     def validate(
         self, input_string: str, position: int
-    ) -> tuple[QValidator.State, int, str]:
+    ) -> tuple[QValidator.State, str, int]:
         """Implementation of the virtual method of QValidator.
+
         It takes in the string from a QLineEdit and the cursor position,
         and an enum value of the validator state. Widgets will reject
         inputs which change the state to Invalid.
@@ -74,8 +75,12 @@ class RGBValidator(QValidator):
 
         Returns
         -------
-        Tuple[int,str]
-            a tuple of (validator state, input string, cursor position)
+        State
+            Validator state.
+        str
+            Input string.
+        int
+            Cursor position.
         """
         state = QValidator.State.Intermediate
         comma_count = input_string.count(",")
@@ -88,13 +93,10 @@ class RGBValidator(QValidator):
                 else:
                     state = QValidator.State.Invalid
             else:
-                if any([x > 255 for x in rgb]):
-                    state = QValidator.State.Invalid
-                elif len(rgb) > 3:
+                if any(0 > x > 255 for x in rgb) or len(rgb) > 3:
                     state = QValidator.State.Invalid
                 elif len(rgb) == 3:
-                    if all([(x >= 0) and (x < 256) for x in rgb]):
-                        state = QValidator.State.Acceptable
+                    state = QValidator.State.Acceptable
                 else:
                     state = QValidator.State.Intermediate
         return state, input_string, position

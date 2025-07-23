@@ -21,7 +21,7 @@ import tarfile
 import time
 from importlib import metadata
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -72,49 +72,47 @@ class TextFormat(IFormat):
         filename = filename.parent / (filename.stem + "_text.tar")
 
         PLATFORM.create_directory(filename.parent)
-        tf = tarfile.open(filename, "w")
 
-        if header:
-            real_buffer = io.BytesIO()
-            tempStr = codecs.getwriter("utf-8")(real_buffer)
-            for line in header:
-                tempStr.write(str(line))
-            tempStr.write("\n\n")
-            real_buffer.seek(0)
-            info = tarfile.TarInfo(name="jobinfo.txt")
-            info.size = length_stringio(real_buffer)
-            info.mtime = time.time()
-            tf.addfile(tarinfo=info, fileobj=real_buffer)
+        with tarfile.open(filename, "w") as tf:
+            if header:
+                real_buffer = io.BytesIO()
+                tempStr = codecs.getwriter("utf-8")(real_buffer)
+                for line in header:
+                    tempStr.write(str(line))
+                tempStr.write("\n\n")
+                real_buffer.seek(0)
+                info = tarfile.TarInfo(name="jobinfo.txt")
+                info.size = length_stringio(real_buffer)
+                info.mtime = time.time()
+                tf.addfile(tarinfo=info, fileobj=real_buffer)
 
-        if run_instance is not None:
-            inputs = run_instance.output_configuration()
-            real_buffer = io.BytesIO()
-            tempStr = codecs.getwriter("utf-8")(real_buffer)
-            tempStr.write(f"run type: {run_instance.__class__.__name__}\n")
-            tempStr.write(f"MDANSE version: {metadata.version('MDANSE')}\n")
-            for key, value in inputs.items():
-                tempStr.write(f"parameters[{str(key)}] = {str(value)}\n")
-            tempStr.write("\n\n")
-            real_buffer.seek(0)
-            info = tarfile.TarInfo(name="job_parameters.txt")
-            info.size = length_stringio(real_buffer)
-            info.mtime = time.time()
-            tf.addfile(tarinfo=info, fileobj=real_buffer)
+            if run_instance is not None:
+                inputs = run_instance.output_configuration()
+                real_buffer = io.BytesIO()
+                tempStr = codecs.getwriter("utf-8")(real_buffer)
+                tempStr.write(f"run type: {run_instance.__class__.__name__}\n")
+                tempStr.write(f"MDANSE version: {metadata.version('MDANSE')}\n")
+                for key, value in inputs.items():
+                    tempStr.write(f"parameters[{str(key)}] = {str(value)}\n")
+                tempStr.write("\n\n")
+                real_buffer.seek(0)
+                info = tarfile.TarInfo(name="job_parameters.txt")
+                info.size = length_stringio(real_buffer)
+                info.mtime = time.time()
+                tf.addfile(tarinfo=info, fileobj=real_buffer)
 
-        for var in list(data.values()):
-            real_buffer = io.BytesIO()
-            tempStr = codecs.getwriter("utf-8")(real_buffer)
-            tempStr.write(var.info())
-            tempStr.write("\n\n")
-            cls.write_data(tempStr, var, data)
-            real_buffer.seek(0)
+            for var in data.values():
+                real_buffer = io.BytesIO()
+                tempStr = codecs.getwriter("utf-8")(real_buffer)
+                tempStr.write(var.info())
+                tempStr.write("\n\n")
+                cls.write_data(tempStr, var, data)
+                real_buffer.seek(0)
 
-            info = tarfile.TarInfo(name=f"{var.varname}{cls.extensions[0]}")
-            info.size = length_stringio(real_buffer)
-            info.mtime = time.time()
-            tf.addfile(tarinfo=info, fileobj=real_buffer)
-
-        tf.close()
+                info = tarfile.TarInfo(name=f"{var.varname}{cls.extensions[0]}")
+                info.size = length_stringio(real_buffer)
+                info.mtime = time.time()
+                tf.addfile(tarinfo=info, fileobj=real_buffer)
 
     @classmethod
     def write_data(cls, fileobject, data, allData):

@@ -343,7 +343,144 @@ class MdanseTrajectory(TrajectoryFile):
                 for at in self.chemical_system.atom_list
             ]
 
-        return np.array(masses).astype(np.float64)
+        coords = grp["coordinates"][first:last:step, atom_indices, :].astype(np.float64)
+
+        if coords.ndim == 2:
+            coords = coords[np.newaxis, :, :]
+
+        if self._unit_cells is not None:
+            direct_cells = np.array(
+                [uc.direct for uc in self._unit_cells[first:last:step]],
+            )
+            inverse_cells = np.array(
+                [uc.inverse for uc in self._unit_cells[first:last:step]],
+            )
+            temp_coords = contiguous_coordinates_real(
+                coords,
+                direct_cells,
+                inverse_cells,
+                [list(range(len(coords)))],
+                bring_to_centre=True,
+            )
+            com_coords = np.vstack(
+                [
+                    center_of_mass(temp_coords[tstep], masses)
+                    for tstep in range(len(temp_coords))
+                ],
+            )
+
+            com_traj = atomic_trajectory(com_coords, direct_cells, inverse_cells)
+
+        else:
+            com_traj = np.sum(
+                coords[:, atom_indices, :] * masses[np.newaxis, :, np.newaxis],
+                axis=1,
+            )
+            com_traj /= np.sum(masses)
+
+        return com_traj
+
+    def to_real_coordinates(self, box_coordinates, first, last, step):
+        """Convert box coordinates to real coordinates for a set of frames.
+
+        :param box_coordinates: a 2D array containing the box coordinates
+        :type box_coordinates: ndarray
+        :param first: the index of the first frame
+        :type first: int
+        :param last: the index of the last frame
+        :type last: int
+        :param step: the step in frame
+        :type step: int
+
+        :return: 2D array containing the real coordinates converted from box coordinates.
+        :rtype: ndarray
+        """
+        if self._unit_cells is not None:
+            real_coordinates = np.empty(box_coordinates.shape, dtype=np.float64)
+            for comp, i in enumerate(range(first, last, step)):
+                direct_cell = self._unit_cells[i].direct
+                real_coordinates[comp, :] = box_coordinates[comp, :] @ direct_cell
+            return real_coordinates
+        return box_coordinates
+
+    def read_atomic_trajectory(
+        self,
+        index,
+        first=0,
+        last=None,
+        step=1,
+        *,
+        box_coordinates=False,
+    ) -> np.ndarray:
+        """Read an atomic trajectory. The trajectory is corrected from box jumps.
+
+        :param index: the index of the atom
+        :type index: int
+        :param first: the index of the first frame
+        :type first: int
+        :param last: the index of the last frame
+        :type last: int
+        :param step: the step in frame
+        :type step: int
+        :param box_coordinates: if True, the coordiniates are returned in box coordinates
+        :type step: bool
+
+        :return: 2D array containing the atomic trajectory for the selected frames
+        :rtype: ndarray
+        """
+        if last is None:
+            last = len(self)
+
+        grp = self._h5_file["/configuration"]
+        coords = grp["coordinates"][first:last:step, index, :].astype(np.float64)
+
+        if self._unit_cells is not None:
+            direct_cells = np.array(
+                [self._unit_cells[nf].direct for nf in range(first, last, step)],
+            )
+            inverse_cells = np.array(
+                [self._unit_cells[nf].inverse for nf in range(first, last, step)],
+            )
+            return atomic_trajectory(
+                coords,
+                direct_cells,
+                inverse_cells,
+                box_coordinates=box_coordinates,
+            )
+        return coords
+
+    def read_configuration_trajectory(
+        self,
+        index,
+        first=0,
+        last=None,
+        step=1,
+        variable="velocities",
+    ):
+        """Read a given configuration variable through the trajectory for a given ato.
+
+        :param index: the index of the atom
+        :type index: int
+        :param first: the index of the first frame
+        :type first: int
+        :param last: the index of the last frame
+        :type last: int
+        :param step: the step in frame
+        :type step: int
+        :param variable: the configuration variable to read
+        :type variable: str
+
+        :return: 2D array containing the atomic trajectory for the selected frames
+        :rtype: ndarray
+        """
+        if last is None:
+            last = len(self)
+
+        if not self.has_variable(variable):
+            raise KeyError(f"The variable {variable} is not stored in the trajectory")
+
+        grp = self._h5_file["/configuration"]
+        return grp[variable][first:last:step, index, :].astype(np.float64)
 
     def has_variable(self, variable: str) -> bool:
         """Check if the trajectory has a specific variable e.g. velocities.

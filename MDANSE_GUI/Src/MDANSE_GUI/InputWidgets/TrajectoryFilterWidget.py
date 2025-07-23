@@ -1146,7 +1146,7 @@ class FilterDesigner(QDialog):
     def set_trajectory_power_spectrum(
         self,
         tr_filter: Filter,
-    ) -> Sequence[npt.NDArray[float]]:
+    ) -> tuple[npt.NDArray[float], npt.NDArray[float], npt.NDArray[float]]:
         """Put curves on the same scale for the plot.
 
         Generate an appropriately resampled power spectrum for the input trajectory,
@@ -1489,7 +1489,7 @@ class FilterDesigner(QDialog):
         """
         canvas = QWidget(self)
         layout = QVBoxLayout(canvas)
-        figure = mpl.figure(figsize=[fig_width, fig_height], dpi=dpi, frameon=True)
+        figure = mpl.figure(figsize=(fig_width, fig_height), dpi=dpi, frameon=True)
         figAgg = FigureCanvasQTAgg(figure)
         figAgg.setParent(canvas)
         toolbar = NavigationToolbar2QTAgg(figAgg, canvas)

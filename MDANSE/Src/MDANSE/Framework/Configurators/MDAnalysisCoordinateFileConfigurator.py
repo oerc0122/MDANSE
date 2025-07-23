@@ -44,13 +44,13 @@ class MDAnalysisCoordinateFileConfigurator(MultiInputFileConfigurator):
             which can be converted to a list using literal_eval and a
             string of the coordinate file format.
         """
-        values, format = setting
+        values, fmt = setting
         super().configure(values)
 
-        if format == "AUTO" or not self["filenames"]:
+        if fmt == "AUTO" or not self["filenames"]:
             self["format"] = None
-        elif format in mda._READERS:
-            self["format"] = format
+        elif fmt in mda._READERS:
+            self["format"] = fmt
         else:
             self.error_status = "MDAnalysis coordinate file format not recognised."
             return

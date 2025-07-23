@@ -15,9 +15,7 @@
 #
 from __future__ import annotations
 
-import os
-import os.path
-from pathlib import PurePath
+from pathlib import Path
 
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import QComboBox, QFileDialog, QLabel, QLineEdit, QPushButton
@@ -34,47 +32,55 @@ class OutputStructureWidget(WidgetBase):
         super().__init__(*args, layout_type="QGridLayout", **kwargs)
         default_value = self._configurator.default
         try:
-            parent = kwargs.get("parent", None)
-            self.default_path = PurePath(parent.default_path)
-        except KeyError:
-            self.default_path = PurePath(os.path.abspath("."))
-            LOG.error("KeyError in OutputTrajectoryWidget - can't get default path.")
-        except AttributeError:
-            self.default_path = PurePath(os.path.abspath("."))
+            parent = kwargs.get("parent")
+            self.default_path = Path(parent.default_path)
+        except (KeyError, AttributeError) as err:
+            self.default_path = Path.cwd()
             LOG.error(
-                "AttributeError in OutputTrajectoryWidget - can't get default path."
+                "%s in %s - can't get default path.",
+                type(err).__name__,
+                type(self).__name__,
             )
+
         try:
-            parent = kwargs.get("parent", None)
-            guess_name = str(PurePath(os.path.join(self.default_path, "POSCAR")))
+            parent = kwargs.get("parent")
+            guess_name = str(Path(self.default_path) / "POSCAR")
         except Exception:
-            guess_name = str(PurePath(default_value[0]))
+            guess_name = str(Path(default_value[0]))
             LOG.error("It was not possible to get the job name from the parent")
         else:
             self._session = parent._parent_tab._session
+
         self.file_association = "Output file name (*)"
         self._value = default_value
         self._field = QLineEdit(str(guess_name), self._base)
         self._field.setPlaceholderText(str(guess_name))
+
         self.format_box = QComboBox(self._base)
         self.format_box.addItems(self._configurator.formats)
         self.format_box.setCurrentText(default_value[1])
+
         browse_button = QPushButton("Browse", self._base)
         browse_button.clicked.connect(self.file_dialog)
+
         label = QLabel("Log file output:")
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
         self.logs_combo = QComboBox(self._base)
         self.logs_combo.addItems(OutputStructureConfigurator.log_options)
+
         self._layout.addWidget(self._field, 0, 0)
         self._layout.addWidget(self.format_box, 0, 1)
         self._layout.addWidget(browse_button, 0, 2)
         self._layout.addWidget(label, 1, 0)
         self._layout.addWidget(self.logs_combo, 1, 1)
+
         self._default_value = default_value
         self._field.textChanged.connect(self.updateValue)
         self.default_labels()
         self.update_labels()
         self.updateValue()
+
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
@@ -112,15 +118,16 @@ class OutputStructureWidget(WidgetBase):
             str(self.default_path),  # the initial search path
             self.file_association,  # text string specifying the file name filter.
         )
-        if len(new_value[0]) > 0:
-            self._field.setText(str(PurePath(new_value[0])))
+        if new_value[0]:
+            self._field.setText(str(Path(new_value[0])))
             self.updateValue()
 
     def get_widget_value(self):
         self._configurator.forbidden_files = self._session.reserved_filenames()
         filename = self._field.text()
-        if len(filename) < 1:
+        if not filename:
             filename = self._default_value[0]
-        format = self.format_box.currentText()
+
+        fmt = self.format_box.currentText()
         log_level = self.logs_combo.currentText()
-        return (os.path.abspath(filename), format, log_level)
+        return (str(Path(filename).absolute()), fmt, log_level)

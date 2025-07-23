@@ -15,8 +15,7 @@
 #
 from __future__ import annotations
 
-import os
-from pathlib import PurePath
+from pathlib import Path
 
 import tomlkit
 from qtpy.QtCore import QModelIndex, QObject, Qt, Signal, Slot
@@ -149,18 +148,17 @@ class UserSettingsModel(QStandardItemModel):
     ):
         group = self._settings.group(group_name)
         group._group_comment = new_value
+
         if column_number == 1:
-            if not group.set(item_name, new_value):
-                LOG.warning(
-                    f"Modify item: could not set item {item_name} to value {new_value} in group {group_name}"
-                )
-                LOG.debug(group.as_toml())
-        elif column_number == 2:
-            if not group.set_comment(item_name, new_value):
-                LOG.warning(
-                    f"Modify item: could not set comment {item_name} to value {new_value} in group {group_name}"
-                )
-                LOG.debug(group.as_toml())
+            check, typ_ = group.set, "item"
+        else:
+            check, typ_ = group.set_comment, "comment"
+
+        if not check(item_name, new_value):
+            LOG.warning(
+                f"Modify item: could not set {typ_} {item_name} to value {new_value} in group {group_name}"
+            )
+            LOG.debug(group.as_toml())
 
     @Slot("QStandardItem*")
     def on_value_changed(self, item: QStandardItem):
@@ -248,7 +246,7 @@ class SettingsGroup:
     def as_toml(self):
         results = tomlkit.table()
         results.comment(self._group_comment)
-        for key in self._settings.keys():
+        for key in self._settings:
             results[key] = self._settings[key]
             results[key].comment(self._comments.get(key, "---"))
         return results
@@ -258,11 +256,12 @@ class SettingsGroup:
 
 
 class SettingsFile:
-    def __init__(self, name, settings_path: str = None):
+    def __init__(self, name: str, settings_path: Path | str | None = None):
         if settings_path is None:
             settings_path = PLATFORM.application_directory()
+        settings_path = Path(settings_path)
         self._top_name = name
-        self._filename = os.path.join(settings_path, name + ".toml")
+        self._filename = settings_path / (name + ".toml")
         self._tomldoc = None
         self._file = TOMLFile(self._filename)
         self._groups = {}
@@ -280,11 +279,11 @@ class SettingsFile:
             LOG.warning(f"File {self._filename} could not be parsed.")
             return False
         else:
-            for key in self._tomldoc.keys():
+            for key in self._tomldoc:
                 table = self._tomldoc[key]
                 group = self._groups.get(key, SettingsGroup(key))
                 temp_values, temp_comments = {}, {}
-                for inner_key in table.keys():
+                for inner_key in table:
                     temp_values[inner_key] = table[inner_key]
                     temp_comments[inner_key] = table[inner_key].trivia.comment
                 group.populate(temp_values, temp_comments)
@@ -367,7 +366,7 @@ class StructuredSession(QObject):
         for _, config in self._configs.items():
             config.save_values()
 
-    def load(self, fname: str = None):
+    def load(self, fname: None = None):
         """Included for compatibility with LocalSession only.
         Now each component loads its own config separately."""
 
@@ -375,16 +374,16 @@ class StructuredSession(QObject):
         return self._reserved_filenames
 
     @Slot(str)
-    def protect_filename(self, some_filename: str):
-        new_filename = PurePath(os.path.abspath(some_filename))
+    def protect_filename(self, some_filename: Path | str):
+        new_filename = Path(some_filename).absolute()
         self._reserved_filenames.append(new_filename)
 
     @Slot(str)
-    def free_filename(self, some_filename: str):
-        filename = PurePath(os.path.abspath(some_filename))
+    def free_filename(self, some_filename: Path | str):
+        filename = Path(some_filename).absolute()
+
         if filename in self._reserved_filenames:
-            index = self._reserved_filenames.index(filename)
-            self._reserved_filenames.pop(index)
+            self._reserved_filenames.remove(filename)
 
     def main_settings(self):
         return self._configs[self._main_config_name]
@@ -435,7 +434,7 @@ class StructuredSession(QObject):
         )
         paths.add(
             "root_directory",
-            os.path.expanduser("~"),
+            Path.home(),
             "Starting path for any file search",
         )
         units.add("energy", "meV", "The unit of energy preferred by the user.")
@@ -450,7 +449,7 @@ class StructuredSession(QObject):
     def get_path(self, key: str) -> str:
         settings = self._configs[self._main_config_name]
         group = settings["paths"]
-        value = group.get(key, os.path.abspath("."))
+        value = group.get(key, Path.cwd())
         return value
 
     def set_path(self, key: str, value: str):

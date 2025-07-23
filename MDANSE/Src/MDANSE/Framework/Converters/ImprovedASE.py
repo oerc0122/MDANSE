@@ -16,10 +16,12 @@
 from __future__ import annotations
 
 import collections
+from contextlib import suppress
 
 import numpy as np
 from ase.io import iread, read
 from ase.io.trajectory import Trajectory as ASETrajectory
+from more_itertools import ilen
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
@@ -204,10 +206,8 @@ class ImprovedASE(Converter):
         """
 
         self._input.close()
-        try:
+        with suppress(Exception):
             self._extra_input.close()
-        except Exception:
-            pass
         # Close the output trajectory.
         self._trajectory.write_standard_atom_database()
         self._trajectory.close()
@@ -218,37 +218,32 @@ class ImprovedASE(Converter):
         element_list = None
 
         if self._fractionalCoordinates is None:
-            try:
+            with suppress(Exception):
                 self._fractionalCoordinates = np.all(ase_object.get_pbc())
-            except Exception:
-                pass
 
         if self._masses is None:
-            try:
+            with suppress(Exception):
                 self._masses = ase_object.get_masses()
-            except Exception:
-                pass
 
         if self.configuration["elements_from_mass"]["value"]:
             tolerance = self.configuration["mass_tolerance"]["value"]
             if self._masses is None:
                 return
-            else:
-                element_list = elements_from_masses(self._masses, tolerance=tolerance)
+
+            element_list = elements_from_masses(self._masses, tolerance=tolerance)
         else:
-            try:
+            with suppress(Exception):
                 element_list = ase_object.get_chemical_symbols()
-            except Exception:
-                pass
+
         if element_list is None:
             return
-        else:
-            if self._nAtoms is None:
-                self._nAtoms = len(element_list)
-            if self._chemical_system is None:
-                self._chemical_system = ChemicalSystem()
 
-                self._chemical_system.initialise_atoms(element_list)
+        if self._nAtoms is None:
+            self._nAtoms = len(element_list)
+        if self._chemical_system is None:
+            self._chemical_system = ChemicalSystem()
+
+            self._chemical_system.initialise_atoms(element_list)
 
     def parse_optional_config(self):
         try:
@@ -289,15 +284,11 @@ class ImprovedASE(Converter):
                 index=0,
                 format=self.configuration["trajectory_file"]["format"],
             )
-            last_iterator = 0
             generator = iread(
                 self.configuration["trajectory_file"]["value"],
                 format=self.configuration["trajectory_file"]["format"],
             )
-            for _ in generator:
-                last_iterator += 1
-            generator.close()
-            self._total_number_of_steps = last_iterator
+            self._total_number_of_steps = ilen(generator)
         else:
             first_frame = self._input[0]
             self._total_number_of_steps = len(self._input)

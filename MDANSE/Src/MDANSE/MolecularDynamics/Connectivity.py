@@ -170,8 +170,9 @@ class Connectivity:
             pair: (self._radii[pair[0]] + self._radii[pair[1]]) + tolerance
             for pair in pairs
         }
-        total_max_length = np.max([x for x in maxbonds.values()])
-        for _, frame_number in enumerate(samples):
+        total_max_length = max(maxbonds.values())
+
+        for frame_number in samples:
             distances = self.internal_distances(
                 frame_number=frame_number, max_distance=total_max_length
             )
@@ -180,8 +181,8 @@ class Connectivity:
                     frame_number=frame_number, max_distance=total_max_length
                 ):
                     for key, value in dist.items():
-                        if key not in distances.keys():
-                            distances[key] = value
+                        distances.setdefault(key, value)
+
         bonds = []
         bond_mapping = {atom_number: [] for atom_number in range(len(self._elements))}
         for key, value in distances.items():

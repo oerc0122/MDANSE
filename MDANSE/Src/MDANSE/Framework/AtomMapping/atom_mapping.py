@@ -41,12 +41,13 @@ class AtomLabel:
         # methods as of writing e.g. re.sub
         translation = str.maketrans("", "", ";=")
         self.atm_label = atm_label.translate(translation)
-        self.grp_label = ""
-        if kwargs:
-            for k, v in kwargs.items():
-                self.grp_label += f"{k}={str(v).translate(translation)};"
-            self.grp_label = self.grp_label[:-1]
-        self.mass = kwargs.get("mass", None)
+
+        self.grp_label = ";".join(
+            f"{k}={str(v).translate(translation)}" for k, v in kwargs.items()
+        )
+
+        self.mass = kwargs.get("mass")
+
         if self.mass is not None:
             self.mass = float(self.mass)
 
@@ -154,12 +155,13 @@ def guess_element(atm_label: str, mass: float | int | None = None) -> str:
     # guesses failed
     best_diff = np.inf
     if mass is not None:
+        best_match: str = ""
         for atm, properties in ATOMS_DATABASE._data.items():
             atm_mass = properties.get("atomic_weight", None)
             if atm_mass is None:
                 continue
             diff = abs(mass - atm_mass)
-            if diff < 1 and diff < best_diff:
+            if 1 > diff < best_diff:
                 best_match = atm
                 best_diff = diff
 
@@ -192,15 +194,15 @@ def get_element_from_mapping(
     str
         The symbol of the element from the MDANSE atom database.
     """
-    label = AtomLabel(label, **kwargs)
-    grp_label = label.grp_label
-    atm_label = label.atm_label
+    atom_label = AtomLabel(label, **kwargs)
+    grp_label = atom_label.grp_label
+    atm_label = atom_label.atm_label
     if grp_label in mapping and atm_label in mapping[grp_label]:
         element = mapping[grp_label][atm_label]
     elif "" in mapping and atm_label in mapping[""]:
         element = mapping[""][atm_label]
     else:
-        element = guess_element(atm_label, label.mass)
+        element = guess_element(atm_label, atom_label.mass)
     return element
 
 
@@ -241,12 +243,13 @@ def mapping_to_labels(mapping: dict[str, dict[str, str]]) -> list[AtomLabel]:
     """
     labels = []
     for grp_label, atm_map in mapping.items():
-        kwargs = {}
-        if grp_label:
-            for k, v in [i.split("=") for i in grp_label.split(";")]:
-                kwargs[k] = v
-        for atm_label in atm_map.keys():
-            labels.append(AtomLabel(atm_label, **kwargs))
+        kwargs = (
+            {k: v for k, v in (i.split("=") for i in grp_label.split(";"))}
+            if grp_label
+            else {}
+        )
+
+        labels.extend(AtomLabel(atm_label, **kwargs) for atm_label in atm_map)
     return labels
 
 

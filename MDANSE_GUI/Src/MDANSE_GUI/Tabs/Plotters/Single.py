@@ -19,6 +19,7 @@ import contextlib
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from more_itertools import take
 
 from MDANSE.MLogging import LOG
 from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
@@ -207,11 +208,10 @@ class Single(Plotter):
                 multi_curves = dataset.curves_vs_axis(
                     (best_unit, best_axis), max_limit=self._curve_limit_per_dataset
                 )
-                counter = 0
-                for key, value in multi_curves.items():
-                    counter += 1
-                    if counter >= self._curve_limit_per_dataset:
-                        break
+
+                for key, value in take(
+                    self._curve_limit_per_dataset, multi_curves.items()
+                ):
                     try:
                         [temp] = axes.plot(
                             dataset.x_axis(best_axis),

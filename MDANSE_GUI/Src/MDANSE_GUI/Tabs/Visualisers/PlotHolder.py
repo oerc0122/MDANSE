@@ -104,10 +104,9 @@ class PlotHolder(QTabWidget):
             self._context.pop(tab_id)
         if tab_id < len(self._plotter):
             self._plotter.pop(tab_id)
-        if self._current_id == tab_id:
-            if len(valid_id_values) > 0:
-                self._current_id = valid_id_values[0]
-                self.setCurrentIndex(self._current_id)
+        if self._current_id == tab_id and valid_id_values:
+            self._current_id = valid_id_values[0]
+            self.setCurrentIndex(self._current_id)
         self.removeTab(tab_id)
 
     @property
@@ -130,6 +129,11 @@ class PlotHolder(QTabWidget):
         except KeyError:
             LOG.error(f"PlotWidget is missing for tab {tab_id}")
             LOG.error(self._plotter)
+
+    @Slot(object)
+    def update_plot_details(self, _):
+        """This will change the line colour, thickness, etc.
+        At the moment it doesn't do anything."""
 
     @Slot()
     def update_plots(self):

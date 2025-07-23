@@ -19,6 +19,7 @@ from qtpy.QtCore import Qt, Signal, Slot
 from qtpy.QtGui import QBrush, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QComboBox, QSizePolicy, QTableView
 
+from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
@@ -82,13 +83,7 @@ class VectorModel(QStandardItemModel):
         return params
 
     def parse_vtype(self, vtype: str, value: str, vname: str):
-        if vtype == "RangeConfigurator":
-            inner_type = self._generator.settings[vname][1]["valueType"]
-            tempstring = value.strip("()[] ")
-            result = [inner_type(x) for x in tempstring.split(",")]
-            if len(result) == 3:
-                return result
-        elif vtype == "VectorConfigurator":
+        if vtype in {"RangeConfigurator", "VectorConfigurator"}:
             inner_type = self._generator.settings[vname][1]["valueType"]
             tempstring = value.strip("()[] ")
             result = [inner_type(x) for x in tempstring.split(",")]
@@ -105,11 +100,11 @@ class VectorModel(QStandardItemModel):
 
 
 class QVectorsWidget(WidgetBase):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, trajectory_configurator: IConfigurator = None, **kwargs):
         kwargs["layout_type"] = "QVBoxLayout"
         super().__init__(*args, **kwargs)
         self._relative_size = 3
-        trajectory_configurator = kwargs.get("trajectory_configurator", None)
+
         trajectory = None
         if trajectory_configurator is not None:
             trajectory = trajectory_configurator["instance"]

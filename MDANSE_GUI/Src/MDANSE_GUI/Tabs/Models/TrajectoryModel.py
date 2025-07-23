@@ -79,8 +79,8 @@ class TrajectoryModel(QStandardItemModel):
         self._next_number = itertools.count()
 
     @Slot(tuple)
-    def append_object(self, input: tuple) -> int:
-        full_name, label = input
+    def append_object(self, inp: tuple[str, str]) -> int:
+        full_name, label = inp
         retval = next(self._next_number)
         self._node_numbers.append(retval)
         self._trajectory_paths[retval] = full_name
@@ -129,9 +129,7 @@ class TrajectoryModel(QStandardItemModel):
         except AttributeError:
             return False
         traj = self.get_trajectory(node_number)
-        if isinstance(traj, Trajectory):
-            return True
-        return False
+        return isinstance(traj, Trajectory)
 
     def removeRow(self, row: int, parent: QModelIndex = QModelIndex()) -> bool:
         try:

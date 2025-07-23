@@ -15,7 +15,9 @@
 #
 from __future__ import annotations
 
-from qtpy.QtCore import QModelIndex, QMutex, QObject, Qt, Signal, Slot
+from typing import Any
+
+from qtpy.QtCore import QModelIndex, QMutex, QObject, Signal, Slot
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 
 
@@ -27,7 +29,7 @@ class GeneralModel(QStandardItemModel):
     error = Signal(str)
     all_elements = Signal(object)
 
-    def __init__(self, parent: QObject = None):
+    def __init__(self, parent: QObject | None = None):
         super().__init__(parent=parent)
         self.mutex = QMutex()
         self._node_numbers = []
@@ -35,8 +37,8 @@ class GeneralModel(QStandardItemModel):
         self._next_number = 0
 
     @Slot(tuple)
-    def append_object(self, input: tuple):
-        thing, label = input
+    def append_object(self, inp: tuple[Any, str]):
+        thing, label = inp
         self.mutex.lock()
         self._nodes[self._next_number] = thing
         self._node_numbers.append(self._next_number)
@@ -50,8 +52,8 @@ class GeneralModel(QStandardItemModel):
         return retval
 
     @Slot(tuple)
-    def append_object_and_embed(self, input: tuple):
-        thing, label = input
+    def append_object_and_embed(self, inp: tuple[Any, str]):
+        thing, label = inp
         self.mutex.lock()
         self._nodes[self._next_number] = thing
         self._node_numbers.append(self._next_number)
@@ -76,7 +78,7 @@ class GeneralModel(QStandardItemModel):
         self.mutex.unlock()
         self.all_elements.emit(result)
 
-    def removeRow(self, row: int, parent: QModelIndex = None):
+    def removeRow(self, row: int, parent: QModelIndex | None = None):
         self.mutex.lock()
         try:
             node_number = self.item(row).data()

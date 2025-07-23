@@ -149,13 +149,13 @@ class JobEntry(QObject):
         if not isinstance(time, float):
             return "N/A"
 
-        hr, min = divmod(time, 3600)
-        min, sec = divmod(min, 60)
+        hr, mins = divmod(time, 3600)
+        mins, sec = divmod(min, 60)
 
         if hr:
-            return f"{hr:.0f}hr {min:.0f}m {sec:.0f}s"
+            return f"{hr:.0f}hr {mins:.0f}m {sec:.0f}s"
         if min:
-            return f"{min:.0f}m {sec:.0f}s"
+            return f"{mins:.0f}m {sec:.0f}s"
 
         return f"{sec:.0f}s"
 

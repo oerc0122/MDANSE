@@ -16,8 +16,7 @@
 from __future__ import annotations
 
 import json
-import os
-from pathlib import PurePath
+from pathlib import Path
 
 from qtpy.QtCore import QObject, Signal, Slot
 
@@ -55,7 +54,7 @@ class LocalSession(QObject):
         self.populate_defaults()
 
     def populate_defaults(self):
-        self._paths["root_directory"] = os.path.expanduser("~")
+        self._paths["root_directory"] = str(Path.home())
         self._units["energy"] = "meV"
         self._units["time"] = "fs"
         self._units["distance"] = "ang"
@@ -64,22 +63,20 @@ class LocalSession(QObject):
         self._colours["style"] = "ggplot"
 
     @Slot(dict)
-    def update_units(self, input: dict):
-        for key, value in input.items():
-            self._units[key] = value
+    def update_units(self, inp: dict):
+        self._units.update(inp)
         self.new_units.emit(self._units)
 
     @Slot(str)
-    def update_cmap(self, input: str):
+    def update_cmap(self, inp: str):
         self._colours["colormap"] = input
         self.new_cmap.emit(self._colours["colormap"])
 
     def get_parameter(self, key: str) -> str:
-        value = self._parameters.get(key, None)
-        return value
+        return self._parameters.get(key, None)
 
     def get_path(self, key: str) -> str:
-        value = self._paths.get(key, os.path.abspath("."))
+        value = self._paths.get(key, str(Path.cwd()))
         return value
 
     def set_path(self, key: str, value: str):
@@ -96,39 +93,41 @@ class LocalSession(QObject):
         return [self._units, self._colours]
 
     @Slot()
-    def save(self, fname: str = None):
-        all_items = {}
-        all_items["paths"] = self._paths
-        all_items["units"] = self._units
-        all_items["colours"] = self._colours
-        output = json_encoder.encode(all_items)
+    def save(self, fname: Path | str | None = None):
+        all_items = {
+            "paths": self._paths,
+            "units": self._units,
+            "colours": self._colours,
+        }
+
         if fname is None:
-            if self._filename is None:
-                fname = os.path.join(
-                    PLATFORM.application_directory(), "gui_session.json"
-                )
-            else:
-                fname = self._filename
+            fname = (
+                self._filename
+                if self._filename
+                else PLATFORM.application_directory() / "gui_session.json"
+            )
+
         try:
-            with open(fname, "w") as target:
-                target.write(output)
+            with open(fname, "w") as out_file:
+                json.dump(all_items, out_file, cls=json_encoder)
         except Exception:
             return
-        else:
-            self._filename = fname
 
-    def load(self, fname: str = None):
+        self._filename = fname
+
+    def load(self, fname: Path | str | None = None):
         if fname is None:
-            fname = os.path.join(PLATFORM.application_directory(), "gui_session.json")
+            fname = PLATFORM.application_directory() / "gui_session.json"
+
         try:
             with open(fname, encoding="utf-8") as source:
-                all_items_text = source.readline()
+                all_items = json.load(source, cls=json_decoder)
         except Exception:
             LOG.warning(f"Failed to read session settings from {fname}")
-        else:
-            all_items = json_decoder.decode(all_items_text)
-            self._paths = all_items["paths"]
-            self._units = all_items["units"]
-            if "colours" in all_items:
-                self._colours = all_items["colours"]
-            self._filename = fname
+            return
+
+        self._paths = all_items["paths"]
+        self._units = all_items["units"]
+        if "colours" in all_items:
+            self._colours = all_items["colours"]
+        self._filename = fname

@@ -140,10 +140,9 @@ class GeneralTab(QObject):
         }
 
     def connect_units(self):
-        if self._visualiser is not None:
-            if self._visualiser._unit_lookup is None:
-                LOG.debug(f"Visualiser {self._visualiser} has no unit lookup")
-                self._visualiser._unit_lookup = self
+        if self._visualiser is not None and self._visualiser._unit_lookup is None:
+            LOG.debug(f"Visualiser {self._visualiser} has no unit lookup")
+            self._visualiser._unit_lookup = self
 
     def conversion_factor(self, input_unit: str) -> tuple[float, str]:
         """Finds the conversion factor from an input unit
@@ -167,22 +166,22 @@ class GeneralTab(QObject):
         """
         conversion_factor = 1.0
         target_unit = input_unit
-        property = unit_lookup.get(input_unit, "unknown")
+        unit_property = unit_lookup.get(input_unit, "unknown")
         unit_group = self._settings.group("units").as_dict()
         backup_group = self._global_settings.group("units").as_dict()
-        if property not in unit_group:
-            if property not in backup_group:
+        if unit_property not in unit_group:
+            if unit_property not in backup_group:
                 return conversion_factor, target_unit
             else:
-                target_unit = backup_group[property]
+                target_unit = backup_group[unit_property]
         else:
-            target_unit = unit_group[property]
+            target_unit = unit_group[unit_property]
         try:
             conversion_factor = measure(1.0, input_unit, equivalent=True).toval(
                 target_unit
             )
         except Exception:
-            target_unit = self._settings.default_value("units", property)
+            target_unit = self._settings.default_value("units", unit_property)
             conversion_factor = measure(1.0, input_unit, equivalent=True).toval(
                 target_unit
             )

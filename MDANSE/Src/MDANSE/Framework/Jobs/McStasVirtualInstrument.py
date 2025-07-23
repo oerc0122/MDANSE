@@ -24,6 +24,7 @@ from functools import partial
 from pathlib import Path
 
 import numpy as np
+from more_itertools import first_true
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Jobs.IJob import IJob
@@ -70,7 +71,7 @@ class McStasVirtualInstrument(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
+    settings = {}
     settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
     settings["frames"] = (
         "FramesConfigurator",
@@ -199,41 +200,43 @@ class McStasVirtualInstrument(IJob):
         sqw = ["sample_coh", "sample_inc"]
         sqwInput = ""
         self.outFile = {}
+
         for typ in sqw:
-            fout = tempfile.NamedTemporaryFile(mode="w", delete=False)
-            # for debugging, we use a real file here:
-            # fout = open(
-            #     "/Users/maciej.bartkowiak/an_example/mcstas/Persistent_file_for_"
-            #     + typ
-            #     + ".sqw",
-            #     "w",
-            # )
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as fout:
+                # for debugging, we use a real file here:
+                # fout = open(
+                #     "/Users/maciej.bartkowiak/an_example/mcstas/Persistent_file_for_"
+                #     + typ
+                #     + ".sqw",
+                #     "w",
+                # )
 
-            fout.write("# Physical parameters:\n")
-            for k, v in list(self._mcStasPhysicalParameters.items()):
-                fout.write(f"# {k} {v} \n")
+                fout.write("# Physical parameters:\n")
+                for k, v in list(self._mcStasPhysicalParameters.items()):
+                    fout.write(f"# {k} {v} \n")
 
-            fout.write(f"# Temperature {self.configuration['temperature']['value']} \n")
-            fout.write("#\n")
+                fout.write(
+                    f"# Temperature {self.configuration['temperature']['value']} \n"
+                )
+                fout.write("#\n")
 
-            for var in self.configuration[typ].variables:
-                fout.write(f"# {var}\n")
+                for var in self.configuration[typ].variables:
+                    fout.write(f"# {var}\n")
 
-                data = self.configuration[typ][var][:]
-                LOG.info(f"In {typ} the variable {var} has shape {data.shape}")
-                LOG.info(f"Values of {var}: min={data.min()}, max = {data.max()}")
-                data_unit = self.configuration[typ]._units[var]
-                try:
-                    data *= MCSTAS_UNITS_LUT[data_unit]
-                except KeyError:
-                    LOG.error(
-                        f"Could not find the physical unit {data_unit} in the lookup table."
-                    )
+                    data = self.configuration[typ][var][:]
+                    LOG.info(f"In {typ} the variable {var} has shape {data.shape}")
+                    LOG.info(f"Values of {var}: min={data.min()}, max = {data.max()}")
+                    data_unit = self.configuration[typ]._units[var]
+                    try:
+                        data *= MCSTAS_UNITS_LUT[data_unit]
+                    except KeyError:
+                        LOG.error(
+                            f"Could not find the physical unit {data_unit} in the lookup table."
+                        )
 
-                np.savetxt(fout, np.atleast_2d(data), delimiter=" ", newline="\n")
+                    np.savetxt(fout, np.atleast_2d(data), delimiter=" ", newline="\n")
 
-            fout.close()
-            self.outFile[typ] = fout.name
+                self.outFile[typ] = fout.name
             # self.outFile[typ] = (
             #     "/Users/maciej.bartkowiak/an_example/mcstas/Persistent_file_for_"
             #     + typ
@@ -328,60 +331,63 @@ class McStasVirtualInstrument(IJob):
         """
 
         sim_dir = Path(sim_dir)
-        typique_sim_fnames = ["mccode.sim", "mcstas.sim"]
+        trial_sim_fnames = ["mccode.sim", "mcstas.sim"]
 
-        for sim_fname in typique_sim_fnames:
+        for sim_fname in trial_sim_fnames:
             sim_file = sim_dir / sim_fname
             if sim_file.is_file():
                 break
-
-        if not sim_file:
+        else:
             raise Exception(f"Dataset {sim_file} does not exist!")
 
-        isBegin = partial(_startswith, "begin")
-        isCompFilename = partial(_startswith, "filename:")
+        is_begin = partial(_startswith, "begin")
+        is_filename_comp = partial(_startswith, "filename:")
+
         # First, determine if this is single or overview plot...
-        SimFile = list(filter(isBegin, open(sim_file).readlines()))
-        Datfile = 0
-        if SimFile == []:
-            FS = self.read_monitor(sim_file)
-            typ = FS["type"].split("(")[0].strip()
+        sim_data = list(
+            filter(is_begin, sim_file.read_text(encoding="utf-8").splitlines())
+        )
+        data_file = False
+
+        if not sim_data:
+            fs = self.read_monitor(sim_data)
+            typ = fs["type"].split("(")[0].strip()
             if typ != "multiarray_1d":
-                FS = self.save_single(FS)
+                fs = self.save_single(fs)
                 raise OSError("Invalid")
-                Datfile = 1
+                data_file = True
 
         # Get filenames from the sim file
-        MonFiles = list(filter(isCompFilename, open(sim_file).readlines()))
-        L = len(MonFiles)
-        FSlist = []
-        # Scan or overview?
-        if L == 0:
-            """Scan view"""
-            if Datfile == 0:
-                isFilename = partial(_startswith, "filename")
+        monitor_files = list(
+            filter(is_filename_comp, sim_file.read_text(encoding="utf-8").splitlines())
+        )
+        fs_list = []
 
-                Scanfile = list(filter(isFilename, open(sim_file).readlines()))
-                Scanfile = Scanfile[0].split(": ")
-                Scanfile = sim_dir / Scanfile[1].strip()
+        # Scan or overview?
+        if not monitor_files:
+            """Scan view"""
+            if data_file:
+                with sim_file.open("r", encoding="utf-8") as file:
+                    scan_file = first_true(file, pred=is_filename_comp)
+                scan_file = scan_file.rsplit(": ", maxsplit=1)[1].strip()
+                scan_path = sim_dir / scan_file
                 # Proceed to load scan datafile
-                FS = self.read_monitor(Scanfile)
-                L = (len(FS["variables"].split()) - 1) / 2
-                self.scan_flag = 1
-                for j in range(0, L):
-                    FSsingle = self.get_monitor(FS, j)
-                    FSlist[len(FSlist) :] = [FSsingle]
-                    FSlist[j] = self.save_single(FSsingle)
-                    self.scan_length = FSsingle["data"].shape[0]
+                fs = self.read_monitor(scan_path)
+                n = (len(fs["variables"].split()) - 1) // 2
+                self.scan_flag = True
+
+                for j in range(n):
+                    fs_single = self.get_monitor(fs, j)
+                    fs_list.append(self.save_single(fs_single))
+
+                    self.scan_length = fs_single["data"].shape[0]
         else:
             """Overview or single monitor"""
-            for j in range(0, L):
-                MonFile = MonFiles[j].split(":")
-                MonFile = MonFile[1].strip()
-                MonFile = sim_dir / MonFile
-                FS = self.read_monitor(MonFile)
-                FSlist[len(FSlist) :] = [FS]
-                FSlist[j] = self.save_single(FS)
+            for monitor_file in monitor_files:
+                path = monitor_file.split(":")[1].strip()
+                monitor_path = sim_dir / path
+                fs = self.read_monitor(monitor_path)
+                fs_list.append(self.save_single(fs))
 
     def save_single(self, FileStruct):
         """
@@ -453,7 +459,7 @@ class McStasVirtualInstrument(IJob):
 
         return FileStruct
 
-    def read_monitor(self, simFile):
+    def read_monitor(self, simFile: Path | str):
         """
         Read a monitor file (McCode format).
 
@@ -464,12 +470,13 @@ class McStasVirtualInstrument(IJob):
         :rtype: dict
         """
 
+        sim_file = Path(simFile)
+
         # Read header
         isHeader = partial(_startswith, "#")
-        f = open(simFile)
-        Lines = f.readlines()
+
+        Lines = sim_file.read_text(encoding="utf-8").splitlines()
         Header = list(filter(isHeader, Lines))
-        f.close()
 
         # Traverse header and define corresponding 'struct'
         strStruct = "{"

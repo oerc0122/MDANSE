@@ -41,10 +41,10 @@ class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
         setting : tuple
             A tuple containing the topology filepath and format.
         """
-        filepath, format = setting
-        if format == "AUTO":
+        filepath, fmt = setting
+        if fmt == "AUTO":
             self["format"] = None
-        elif format in mda._PARSERS:
+        elif fmt in mda._PARSERS:
             self["format"] = format
         else:
             self.error_status = "MDAnalysis topology file format not recognised."

@@ -17,7 +17,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from matplotlib import rcParams
 from matplotlib.pyplot import style as mpl_style
 
 from MDANSE.Core.SubclassFactory import SubclassFactory
@@ -87,7 +86,7 @@ class PlotterTemplate(metaclass=SubclassFactory):
             xaxis_unit = self._plotting_context.get_conversion_factor(best_unit)
             try:
                 _conversion_factor = measure(1.0, best_unit, equivalent=True).toval(
-                    xaxis_unit
+                    xaxis_unit,
                 )
             except Exception:
                 LOG.warning(f"Could not convert {best_unit} to {xaxis_unit}")
@@ -164,11 +163,9 @@ class PlotterTemplate(metaclass=SubclassFactory):
             return
         self._slider_reference.collect_values()
 
-    def clear(self, figure: Figure = None):
-        if figure is None:
-            target = self._figure
-        else:
-            target = figure
+    def clear(self, figure: Figure | None = None) -> None:
+        target = self._figure if figure is None else figure
+
         if target is None:
             return
         target.clear()
@@ -182,11 +179,9 @@ class PlotterTemplate(metaclass=SubclassFactory):
     def sliders_coupled(self) -> bool:
         return False
 
-    def get_figure(self, figure: Figure = None):
-        if figure is None:
-            target = self._figure
-        else:
-            target = figure
+    def get_figure(self, figure: Figure | None = None):
+        target = self._figure if figure is None else figure
+
         if target is None:
             LOG.error(f"PlottingContext can't plot to {target}")
             return
@@ -196,32 +191,23 @@ class PlotterTemplate(metaclass=SubclassFactory):
     def apply_settings(self, plotting_context: PlottingContext, colours=None):
         if colours is not None:
             self._current_colours = colours
+
         if plotting_context.set_axes() is None:
             LOG.debug("Axis check failed.")
             return
-        try:
-            matplotlib_style = colours["style"]
-        except Exception:
-            pass
-        else:
-            if matplotlib_style is not None:
-                mpl_style.use(matplotlib_style)
-        try:
-            bkg_col = colours["background"]
-        except Exception:
-            pass
-        else:
-            if bkg_col is not None:
-                for axes in self._axes:
-                    axes.set_facecolor(bkg_col)
-        try:
-            col_seq = colours["curves"]
-        except Exception:
-            pass
-        else:
-            if col_seq is not None:
-                for axes in self._axes:
-                    axes.set_prop_cycle("color", col_seq)
+
+        assert isinstance(colours, dict)
+
+        if (matplotlib_style := colours.get("style")) is not None:
+            mpl_style.use(matplotlib_style)
+
+        if (bkg_col := colours.get("background")) is not None:
+            for axes in self._axes:
+                axes.set_facecolor(bkg_col)
+
+        if (col_seq := colours.get("curves")) is not None:
+            for axes in self._axes:
+                axes.set_prop_cycle("color", col_seq)
 
     def enable_slider(self, allow_slider: bool = True):
         if allow_slider:
@@ -237,8 +223,8 @@ class PlotterTemplate(metaclass=SubclassFactory):
     def plot(
         self,
         plotting_context: PlottingContext,
-        figure: Figure = None,
-        update_only=False,
+        figure: Figure | None = None,
+        update_only: bool = False,
         toolbar=None,
     ):
         self._plotting_context = plotting_context

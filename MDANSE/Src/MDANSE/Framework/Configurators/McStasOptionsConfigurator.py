@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import tempfile
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -24,22 +25,19 @@ from MDANSE import PLATFORM
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 
 
-def parse_dictionary(input: str) -> dict[str, Any]:
-    big_line = input.strip("{}[] \n")
+def parse_dictionary(inp: str) -> dict[str, Any]:
+    big_line = inp.strip("{}[] \n")
     tokens = big_line.split(",")
     result = {}
     for entry in tokens:
-        temp = entry.split(":")
-        key, value = temp[0], ":".join(temp[1:])
+        key, value = entry.split(":", maxsplit=1)
         key = key.strip("' ")
         value = value.strip(" '")
         try:
             value = int(value)
         except Exception:
-            try:
+            with suppress(ValueError):
                 value = float(value)
-            except Exception:
-                pass
         result[key] = value
     return result
 

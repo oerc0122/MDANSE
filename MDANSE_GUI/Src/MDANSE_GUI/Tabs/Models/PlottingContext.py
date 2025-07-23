@@ -31,7 +31,7 @@ from matplotlib import rcParams
 from matplotlib.colors import to_hex as mpl_to_hex
 from matplotlib.lines import lineStyles
 from matplotlib.markers import MarkerStyle
-from more_itertools import nth_product
+from more_itertools import nth, nth_product, take
 from qtpy.QtCore import QModelIndex, Qt, Signal, Slot
 from qtpy.QtGui import QColor, QStandardItem, QStandardItemModel
 
@@ -345,7 +345,9 @@ class SingleDataset:
 
         Returns
         -------
-        str
+        unit : str
+            Unit of the longest axis.
+        axis : str
             Name of the longest axis.
 
         """
@@ -471,6 +473,7 @@ class SingleDataset:
 
         for current_dim, axis_name in enumerate(self._axes_order):
             axis_unit = self._axes_units[axis_name]
+
             if axis_unit == x_axis_unit and axis_name == x_axis_name:
                 slicer.append([slice(None)])
                 continue
