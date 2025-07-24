@@ -157,6 +157,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self._bonds_visible = True
         self._cell_visible = True
         self.current_axes_type = "cartesian"
+        self.atom_label_type = "none"
 
         self._iren.Initialize()
 
@@ -281,6 +282,20 @@ class MolecularViewer(QtWidgets.QWidget):
         """
         self.current_axes_type = axes_option
         self.update_axes()
+        self._iren.GetRenderWindow().Render()
+        self._iren.Render()
+
+    def _change_atom_labels(self, label_option: str):
+        """Changes the atoms label text.
+
+        Parameters
+        ----------
+        label_option : str
+            The atom label option.
+        """
+        self.atom_label_type = label_option
+        self.clear_atom_labels()
+        self.create_atom_label_actors()
         self._iren.GetRenderWindow().Render()
         self._iren.Render()
 
@@ -543,20 +558,76 @@ class MolecularViewer(QtWidgets.QWidget):
         del self._actors
 
     def create_atom_label_actors(self):
+        """Creates atom label actors, setting the text to the chosen
+        atom_label_type.
+        """
+        self.atom_label_actors = []
         if self._reader is None:
-            return []
+            return
+
+        if self.atom_label_type == "index":
+            labels = list(range(self._reader._n_atoms))
+        elif self.atom_label_type == "label":
+            label_dict = self._reader._trajectory.chemical_system._labels
+            if not label_dict:
+                return
+            keys = []
+            vals = []
+            for k, v in label_dict.items():
+                keys += [k] * len(v)
+                vals += v
+            labels, _ = zip(*sorted(zip(keys, vals), key=lambda x: x[1]))
+        elif self.atom_label_type == "atom":
+            labels = self._atoms
+        elif self.atom_label_type == "molecule":
+            label_dict = self._reader._trajectory.chemical_system._clusters
+            if not label_dict:
+                return
+            keys = []
+            vals = []
+            for k, v in label_dict.items():
+                indices = [i for j in v for i in j]
+                keys += [k] * len(indices)
+                vals += indices
+            labels, _ = zip(*sorted(zip(keys, vals), key=lambda x: x[1]))
+        else:
+            return
+
+        if len(labels) != self._reader._n_atoms:
+            return
 
         atom_label_actors = []
-        for i, coord in enumerate(self._reader.read_frame(self._current_frame)):
-            actor = vtk.vtkBillboardTextActor3D()
-            actor.SetPosition(*coord)
-            actor.SetInput(f"{i}")
-            atom_label_actors.append(actor)
+        for label, coord in zip(labels, self._reader.read_frame(self._current_frame)):
+            text = vtk.vtkVectorText()
+            text.SetText(f"{label}")
+
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputConnection(text.GetOutputPort())
+
+            follower = vtk.vtkFollower()
+            follower.SetMapper(mapper)
+            follower.SetScale(0.025)
+            follower.SetPosition(*coord)
+            follower.SetCamera(self._label_renderer.GetActiveCamera())
+
+            atom_label_actors.append(follower)
+            self._label_renderer.AddActor(follower)
+
         self.atom_label_actors = atom_label_actors
 
-        return atom_label_actors
+    def update_atom_label_actors(self):
+        """Updates the atom label follwer positions."""
+        if self._reader is None:
+            return
+
+        if not self.atom_label_actors or self.atom_label_type == "none":
+            return
+
+        for follower, coord in zip(self.atom_label_actors, self._reader.read_frame(self._current_frame)):
+            follower.SetPosition(*coord)
 
     def clear_atom_labels(self):
+        """Clears the atoms labels."""
         if not self.atom_label_actors:
             return
 
@@ -1011,6 +1082,8 @@ class MolecularViewer(QtWidgets.QWidget):
         self.reset_all_polydata()
         self._polydata.GetPointData().SetScalars(scalars)
 
+        self.create_atom_label_actors()
+
         self._colour_manager.onNewValues()
         self.new_max_frames.emit(self._n_frames - 1)
         self._trace_dialog.update_limits()
@@ -1030,7 +1103,6 @@ class MolecularViewer(QtWidgets.QWidget):
         """
         # deleting old frame
         self.clear_trajectory(clear_isosurfaces=False)
-        self.clear_atom_labels()
 
         # creating new polydata
         self._actors = vtk.vtkAssembly()
@@ -1040,9 +1112,8 @@ class MolecularViewer(QtWidgets.QWidget):
         # adding polydata to renderer
         self._renderer.AddActor(self._actors)
 
-        # overlay trajectory with atom labels
-        for actor in self.create_atom_label_actors():
-            self._label_renderer.AddActor(actor)
+        # update atom label positions
+        self.update_atom_label_actors()
 
         # rendering
         if self.reset_camera:
