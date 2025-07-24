@@ -623,7 +623,9 @@ class MolecularViewer(QtWidgets.QWidget):
         if not self.atom_label_actors or self.atom_label_type == "none":
             return
 
-        for follower, coord in zip(self.atom_label_actors, self._reader.read_frame(self._current_frame)):
+        for follower, coord in zip(
+            self.atom_label_actors, self._reader.read_frame(self._current_frame)
+        ):
             follower.SetPosition(*coord)
 
     def clear_atom_labels(self):
