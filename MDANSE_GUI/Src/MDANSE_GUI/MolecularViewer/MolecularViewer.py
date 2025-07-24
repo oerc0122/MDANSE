@@ -16,6 +16,7 @@
 import copy
 from typing import Any, Optional
 
+import more_itertools
 import numpy as np
 import vtk
 from qtpy import QtWidgets
@@ -572,7 +573,9 @@ class MolecularViewer(QtWidgets.QWidget):
             label_dict = self._reader._trajectory.chemical_system._labels
             if not label_dict:
                 return
-            keys = more_itertools.run_length.decode(((k, len(v)) for k, v in label_dict.items()))
+            keys = more_itertools.run_length.decode(
+                ((k, len(v)) for k, v in label_dict.items())
+            )
             labels = sorted(keys, key=label_dict.__getitem__)
         elif self.atom_label_type == "atom":
             labels = self._atoms
@@ -580,8 +583,12 @@ class MolecularViewer(QtWidgets.QWidget):
             label_dict = self._reader._trajectory.chemical_system._clusters
             if not label_dict:
                 return
-            label_dict = {k: list(more_itertools.collapse(v)) for k, v in label_dict.items()}
-            keys = more_itertools.run_length.decode(((k, len(v)) for k, v in label_dict.items()))
+            label_dict = {
+                k: list(more_itertools.collapse(v)) for k, v in label_dict.items()
+            }
+            keys = more_itertools.run_length.decode(
+                ((k, len(v)) for k, v in label_dict.items())
+            )
             labels = sorted(keys, key=label_dict.__getitem__)
         else:
             return
