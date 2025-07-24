@@ -116,6 +116,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self._label_renderer = vtk.vtkRenderer()
         self._label_renderer.SetLayer(1)
         self._label_renderer.SetBackgroundAlpha(0)
+        self._label_renderer.SetInteractive(False)
 
         self._iren.GetRenderWindow().SetNumberOfLayers(2)
         self._iren.GetRenderWindow().AddRenderer(self._renderer)
@@ -1147,7 +1148,7 @@ class MolecularViewerExtended(MolecularViewer):
         if self._last_coords is None:
             return
 
-        picker = vtk.vtkPropPicker()
+        picker = vtk.vtkCellPicker()
 
         picker.AddPickList(self.atom_actor)
         picker.PickFromListOn()
@@ -1200,7 +1201,7 @@ class MolecularViewerWithPicking(MolecularViewer):
         if self._picking_domain is None:
             return
 
-        picker = vtk.vtkPropPicker()
+        picker = vtk.vtkCellPicker()
 
         picker.AddPickList(self._picking_domain)
         picker.PickFromListOn()
