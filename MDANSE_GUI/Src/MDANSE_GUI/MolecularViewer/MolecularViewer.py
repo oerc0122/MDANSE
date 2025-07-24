@@ -286,7 +286,7 @@ class MolecularViewer(QtWidgets.QWidget):
         self._iren.GetRenderWindow().Render()
         self._iren.Render()
 
-    def _change_atom_labels(self, label_option: str):
+    def _change_atom_labels(self, label_option: str) -> None:
         """Changes the atoms label text.
 
         Parameters
@@ -572,25 +572,17 @@ class MolecularViewer(QtWidgets.QWidget):
             label_dict = self._reader._trajectory.chemical_system._labels
             if not label_dict:
                 return
-            keys = []
-            vals = []
-            for k, v in label_dict.items():
-                keys += [k] * len(v)
-                vals += v
-            labels, _ = zip(*sorted(zip(keys, vals), key=lambda x: x[1]))
+            keys = more_itertools.run_length.decode(((k, len(v)) for k, v in label_dict.items()))
+            labels = sorted(keys, key=label_dict.__getitem__)
         elif self.atom_label_type == "atom":
             labels = self._atoms
         elif self.atom_label_type == "molecule":
             label_dict = self._reader._trajectory.chemical_system._clusters
             if not label_dict:
                 return
-            keys = []
-            vals = []
-            for k, v in label_dict.items():
-                indices = [i for j in v for i in j]
-                keys += [k] * len(indices)
-                vals += indices
-            labels, _ = zip(*sorted(zip(keys, vals), key=lambda x: x[1]))
+            label_dict = {k: list(more_itertools.collapse(v)) for k, v in label_dict.items()}
+            keys = more_itertools.run_length.decode(((k, len(v)) for k, v in label_dict.items()))
+            labels = sorted(keys, key=label_dict.__getitem__)
         else:
             return
 
@@ -618,10 +610,11 @@ class MolecularViewer(QtWidgets.QWidget):
 
     def update_atom_label_actors(self):
         """Updates the atom label follwer positions."""
-        if self._reader is None:
-            return
-
-        if not self.atom_label_actors or self.atom_label_type == "none":
+        if (
+            self._reader is None
+            or not self.atom_label_actors
+            or self.atom_label_type == "none"
+        ):
             return
 
         for follower, coord in zip(
