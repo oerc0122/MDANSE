@@ -137,12 +137,13 @@ class Configurable:
         """
         errors = {}
         warnings = {}
-        for name, conf in list(self._configuration.items()):
+        for name, conf in self._configuration.items():
             if not conf.valid:
                 if conf.optional:
                     warnings[name] = conf.error_status
                 else:
                     errors[name] = conf.error_status
+
         if warnings:
             LOG.warning(
                 "\n".join(
@@ -150,6 +151,7 @@ class Configurable:
                     + [f"{entry}: {error}" for entry, error in warnings.items()]
                 )
             )
+
         if errors:
             raise RuntimeError(
                 "\n".join(

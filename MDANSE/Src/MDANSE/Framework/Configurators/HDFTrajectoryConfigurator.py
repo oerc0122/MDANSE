@@ -48,6 +48,10 @@ class HDFTrajectoryConfigurator(InputFileConfigurator):
             self.error_status = f"Could not use {value} as input trajectory"
             return
 
+        if not trajectory_instance.get_total_natoms():
+            self.error_status = "No atoms in selection or trajectory"
+            return
+
         self["instance"] = trajectory_instance
 
         self["filename"] = PLATFORM.get_path(trajectory_instance.filename)
@@ -59,9 +63,7 @@ class HDFTrajectoryConfigurator(InputFileConfigurator):
         time_axis = self["instance"].time()
         try:
             self["md_time_step"] = time_axis[1] - time_axis[0]
-        except IndexError:
-            self["md_time_step"] = 1.0
-        except ValueError:
+        except (IndexError, ValueError):
             self["md_time_step"] = 1.0
 
         self["has_velocities"] = "velocities" in self["instance"].variables()
