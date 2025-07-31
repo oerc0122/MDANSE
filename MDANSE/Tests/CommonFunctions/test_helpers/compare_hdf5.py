@@ -81,3 +81,5 @@ def compare_hdf5(
                 np.testing.assert_allclose(
                     a, b, atol=atol, rtol=rtol, err_msg=f"Failure in key {test!r}."
                 )
+
+                assert result[f"/{test}"].attrs["axis"] == benchmark[f"/{test}"].attrs["axis"]
