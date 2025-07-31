@@ -79,7 +79,7 @@ def add_grouped_totals(
             scaling_factor=scaling_factor,
             post_func=post_func,
             post_label=post_label,
-            **kwargs
+            **kwargs,
         )
     elif dim == 2:
         add_grouped_totals_2D(
@@ -92,7 +92,7 @@ def add_grouped_totals(
             scaling_factor=scaling_factor,
             post_func=post_func,
             post_label=post_label,
-            **kwargs
+            **kwargs,
         )
     else:
         raise NotImplementedError("Grouped total for dim > 2 not implemented.")
