@@ -16,6 +16,7 @@ def compare_hdf5(
     startswith: bool = False,
     scale_result: bool = False,
     scale_benchmark: bool = False,
+    compare_axis: bool = False,
 ) -> None:
     """
     Compare two h5py files by the keys given in comparison_keys.
@@ -34,6 +35,8 @@ def compare_hdf5(
         Whether result should be scaled.
     scale_benchmark : bool
         Whether benchmark should be scaled.
+    compare_axis : bool
+        Whether the axis should be checked.
     """
 
     with h5py.File(result_path) as result, h5py.File(benchmark_path) as benchmark:
@@ -82,4 +85,5 @@ def compare_hdf5(
                     a, b, atol=atol, rtol=rtol, err_msg=f"Failure in key {test!r}."
                 )
 
-                assert result[f"/{test}"].attrs["axis"] == benchmark[f"/{test}"].attrs["axis"]
+                if compare_axis:
+                    assert result[f"/{test}"].attrs["axis"] == benchmark[f"/{test}"].attrs["axis"]
