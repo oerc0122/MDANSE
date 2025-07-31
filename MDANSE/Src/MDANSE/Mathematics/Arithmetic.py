@@ -15,9 +15,8 @@
 #
 from __future__ import annotations
 
-import itertools
-from collections.abc import Iterable
-from typing import Union
+from collections.abc import Iterable, Sized
+from itertools import product as cart_prod
 
 import numpy as np
 import numpy.typing as npt

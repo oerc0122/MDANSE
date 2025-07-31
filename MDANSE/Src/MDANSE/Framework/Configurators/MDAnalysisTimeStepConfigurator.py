@@ -15,6 +15,8 @@
 #
 from __future__ import annotations
 
+from contextlib import suppress
+
 import MDAnalysis as mda
 
 from MDANSE.Framework.Configurators.FloatConfigurator import FloatConfigurator

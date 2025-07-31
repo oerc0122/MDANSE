@@ -150,7 +150,7 @@ class JobEntry(QObject):
             return "N/A"
 
         hr, mins = divmod(time, 3600)
-        mins, sec = divmod(min, 60)
+        mins, sec = divmod(mins, 60)
 
         if hr:
             return f"{hr:.0f}hr {mins:.0f}m {sec:.0f}s"

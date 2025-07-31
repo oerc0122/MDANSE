@@ -19,6 +19,7 @@ import traceback
 from pathlib import Path
 
 import numpy as np
+from more_itertools import loops
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -50,7 +51,6 @@ from MDANSE_GUI.InputWidgets import (
     FloatWidget,
     FramesWidget,
     HDFTrajectoryWidget,
-    InputDirectoryWidget,
     InputFileWidget,
     InstrumentResolutionWidget,
     IntegerWidget,
@@ -64,7 +64,6 @@ from MDANSE_GUI.InputWidgets import (
     MultiInputFileWidget,
     MultipleCombosWidget,
     OptionalFloatWidget,
-    OutputDirectoryWidget,
     OutputFilesWidget,
     OutputStructureWidget,
     OutputTrajectoryWidget,
@@ -73,7 +72,6 @@ from MDANSE_GUI.InputWidgets import (
     QVectorsWidget,
     RangeWidget,
     RunningModeWidget,
-    StringWidget,
     TrajectoryFilterWidget,
     UnitCellWidget,
     VectorWidget,
@@ -138,7 +136,13 @@ class Action(QWidget):
     run_and_load = Signal(list)
     new_path = Signal(str)
 
-    def __init__(self, *args, use_preview=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        use_preview: bool = False,
+        trajectory: Path | str | None = None,
+        **kwargs,
+    ):
         self._default_path = None
         self._input_traj_path = None
         self._parent_tab = None
@@ -152,7 +156,7 @@ class Action(QWidget):
         self._has_been_initialised = False
         self.execute_button = None
         self.post_execute_checkbox = None
-        input_trajectory = kwargs.pop("trajectory", None)
+        input_trajectory = trajectory
         self.set_trajectory(input_trajectory)
         super().__init__(*args, **kwargs)
 
@@ -178,21 +182,22 @@ class Action(QWidget):
             self._input_traj_path = None
             self._has_been_initialised = False
             return
+
         new_path = trajectory.filename
         if new_path == self._input_traj_path:
             LOG.debug("Skipping set_trajectory, no change.")
             return
+
         self._job_instance = IJob()
         self._trajectory_instance = trajectory
         self._trajectory_configurator = HDFTrajectoryConfigurator(
             "Input Trajectory", instance=trajectory
         )
         self._trajectory_configurator.configure_from_instance()
+
         self._input_traj_path = new_path
-        if self._input_traj_path is not None:
-            self._default_path = Path(self._input_traj_path).parent
-        else:
-            self._default_path = Path().absolute()
+        self._default_path = Path(new_path).parent
+
         if self._job_name is not None:
             self._parent_tab.set_path(self._job_name, str(self._default_path))
 
@@ -214,6 +219,11 @@ class Action(QWidget):
         self._widgets_in_layout = {}
         self._preview_box = None
 
+    @property
+    def job_name(self) -> str:
+        """Name of current job."""
+        return type(self._job_instance).__name__ if self._job_instance else "None"
+
     def update_panel(self, job_name: str) -> None:
         """Sets all the widgets for the selected job.
 
@@ -224,10 +234,10 @@ class Action(QWidget):
         """
         LOG.debug(
             "Old job type %s, new job type %s",
-            type(self._job_instance).__name__,
+            self.job_name,
             job_name,
         )
-        if type(self._job_instance).__name__ != job_name:
+        if self.job_name != job_name:
             self.clear_panel()
             self._has_been_initialised = False
 
@@ -256,10 +266,10 @@ class Action(QWidget):
         if "trajectory" in settings:
             if self._input_traj_path is None:
                 return
-            key, value = "trajectory", settings["trajectory"]
-            dtype = value[0]
-            ddict = value[1]
+            key, (dtype, ddict) = "trajectory", settings["trajectory"]
+
             configurator = job_instance.configuration[key]
+
             if key not in self._widgets_in_layout:
                 ddict.setdefault("label", key)
                 ddict["configurator"] = configurator
@@ -270,20 +280,22 @@ class Action(QWidget):
                 )
                 widget = input_widget._base
                 self.layout.addWidget(widget, stretch=input_widget._relative_size)
+
                 self._widgets_in_layout[key] = widget
                 self._widgets.append(input_widget)
                 self._trajectory_configurator = input_widget._configurator
             LOG.info("Set up input trajectory")
-        for key, value in settings.items():
+
+        for key, (dtype, ddict) in settings.items():
             if key in self._widgets_in_layout:
                 continue
-            dtype = value[0]
-            ddict = value[1]
+
             configurator = job_instance.configuration[key]
             ddict.setdefault("label", key)
             ddict["configurator"] = configurator
             ddict["source_object"] = self._input_traj_path
             ddict["trajectory_configurator"] = self._trajectory_configurator
+
             if dtype not in widget_lookup:
                 ddict["tooltip"] = (
                     "This is not implemented in the MDANSE GUI at the moment, and it MUST BE!"
@@ -294,6 +306,7 @@ class Action(QWidget):
                 self._widgets_in_layout[key] = widget
                 self._widgets.append(placeholder)
                 LOG.warning(f"Could not find the right widget for {key}")
+
             else:
                 widget_class = widget_lookup[dtype]
                 # expected = {key: ddict[key] for key in widget_class.__init__.__code__.co_varnames}
@@ -309,6 +322,7 @@ class Action(QWidget):
                 if self._use_preview and has_preview:
                     input_widget.value_updated.connect(self.show_output_prediction)
                 LOG.info(f"Set up the right widget for {key}")
+
             # self.handlers[key] = data_handler
         self._has_been_initialised = True
         self.check_inputs()
@@ -347,30 +361,31 @@ class Action(QWidget):
 
             self.layout.addWidget(buttonbase)
             self._widgets_in_layout["button_base"] = buttonbase
+
         self.apply_instrument()
         self.allow_execution()
 
-    def check_inputs(self) -> bool:
-        configured = False
-        iterations = 0
-        while not configured:
-            configured = True
+    def check_inputs(self):
+        for _ in loops(5):
             for widget in self._widgets:
                 widget.value_from_configurator()
-                configured = configured and widget._configurator.is_configured()
-            iterations += 1
-            if iterations > 3:
+
+            if all(widget._configurator.is_configured() for widget in self._widgets):
                 break
-        return configured
+        else:
+            LOG.error("Failed to configure widgets after 5 tries")
 
     @Slot()
     def test_file_outputs(self):
         if not self._has_been_initialised:
             return
+
         self.check_inputs()
+
         for widget in self._widgets:
             if isinstance(widget, (OutputFilesWidget, OutputTrajectoryWidget)):
                 widget.updateValue()
+
         self.allow_execution()
 
     def apply_instrument(self):
@@ -438,6 +453,7 @@ class Action(QWidget):
                 allow = False
                 widget.mark_error(widget._configurator.error_status, silent=True)
             has_warning = has_warning or widget.has_warning
+
         if self.execute_button is not None:
             self.execute_button.setEnabled(allow)
             if has_warning:
@@ -452,11 +468,9 @@ class Action(QWidget):
                 self.execute_button.setToolTip(
                     "Launch the job using the current parameters."
                 )
+
         if self.post_execute_checkbox is not None:
-            if self._job_name == "AverageStructure":
-                self.post_execute_checkbox.setEnabled(False)
-            else:
-                self.post_execute_checkbox.setEnabled(True)
+            self.post_execute_checkbox.setEnabled(self._job_name != "AverageStructure")
 
     @Slot()
     def cancel_dialog(self):
@@ -476,8 +490,10 @@ class Action(QWidget):
             str(currentpath),
             "Python script (*.py)",
         )
+
         if result == "":
             return None
+
         path = Path(result).parent
         try:
             _cname = self._job_name
@@ -485,17 +501,20 @@ class Action(QWidget):
             pass
         else:
             self._parent_tab.set_path(self._job_name + "_script", str(path))
+
         pardict = self.set_parameters(labels=True)
         self._job_instance.save(result, pardict)
 
-    def set_parameters(self, labels=False):
+    def set_parameters(self, *, labels: bool = False):
         results = {}
-        for widnum, key in enumerate(self._job_instance.settings.keys()):
+        for widget, (key, setting) in zip(
+            self._widgets, self._job_instance.settings.items()
+        ):
             if labels:
-                label = self._job_instance.settings[key][1]["label"]
-                results[key] = (self._widgets[widnum].get_widget_value(), label)
+                label = setting[1]["label"]
+                results[key] = (widget.get_widget_value(), label)
             else:
-                results[key] = self._widgets[widnum].get_widget_value()
+                results[key] = widget.get_widget_value()
         return results
 
     @Slot()

@@ -204,7 +204,7 @@ class JobTab(GeneralTab):
         settings,
         logger,
         *,
-        model=JobTree(filter="Analysis"),
+        model=None,
         combo_model=None,
         instrument_model=None,
         **kwargs,
@@ -216,6 +216,9 @@ class JobTab(GeneralTab):
             session=session,
             settings=settings,
             logger=logger,
+            model=model if model is not None else JobTree(filt="Analysis"),
+            combo_model=combo_model,
+            instrument_model=instrument_model,
             view=ActionsTree(),
             visualiser=action,
             layout=partial(

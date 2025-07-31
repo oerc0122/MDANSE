@@ -32,9 +32,8 @@ if TYPE_CHECKING:
     from MDANSE.Framework.Jobs.IJob import IJob
 
 
-def length_stringio(input: io.BytesIO) -> int:
-    result = input.getbuffer().nbytes
-    return result
+def length_stringio(inp: io.BytesIO) -> int:
+    return inp.getbuffer().nbytes
 
 
 class TextFormat(IFormat):

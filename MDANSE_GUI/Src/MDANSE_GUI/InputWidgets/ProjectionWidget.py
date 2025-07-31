@@ -15,6 +15,8 @@
 #
 from __future__ import annotations
 
+from itertools import chain
+
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QButtonGroup, QLabel, QLineEdit, QRadioButton
 
@@ -22,35 +24,40 @@ from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class ProjectionWidget(WidgetBase):
-    def __init__(self, *args, _source_object=None, **kwargs):
+    def __init__(self, *args, source_object=None, **kwargs):
         super().__init__(*args, **kwargs)
+
         bgroup = QButtonGroup(self._base)
         for idx, blabel in enumerate(("None", "Axial", "Planar")):
             rbutton = QRadioButton(blabel, parent=self._base)
             bgroup.addButton(rbutton, id=idx)
             self._layout.addWidget(rbutton)
-            if id == 0:
+            if idx == 0:
                 rbutton.setChecked(True)
+
         self._changing_label = QLabel("N/A", parent=self._base)
         self._layout.addWidget(self._changing_label)
         vfields = []
+
         for _ in range(3):
             temp = QLineEdit("0", self._base)
             self._layout.addWidget(temp)
             vfields.append(temp)
+
         self._button_group = bgroup
         self._vector_fields = vfields
         self._mode = 0
         self._button_group.idClicked.connect(self.button_switched)
         self.updateValue()
+
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
             tooltip_text = "The spatial properties in the analysis can be projected on a plane or on an axis, as chosen here."
-        for wid in vfields:
+
+        for wid in chain(vfields, self._button_group.buttons()):
             wid.setToolTip(tooltip_text)
-        for wid in self._button_group.buttons():
-            wid.setToolTip(tooltip_text)
+
         self.button_switched(0)
         self._button_group.buttonClicked.connect(self.updateValue)
         for vfield in self._vector_fields:
