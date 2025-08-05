@@ -25,8 +25,7 @@ from MDANSE.Framework.ConfigDescriptors import (
     PathConfigDesc,
 )
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Framework.Parsers.trj import TrjFile
-from MDANSE.Framework.Parsers.xtd import XTDFile
+from MDANSE.Framework.Parsers import TrjFile, XTDFile
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
@@ -44,10 +43,12 @@ class Forcite(Converter):
 
     xtd_file = PathConfigDesc(
         mode="r",
+        extensions={"XTD files": "*.xtd"},
         label="Input XTD file",
     )
     trj_file = PathConfigDesc(
         mode="r",
+        extensions={"TRJ files": "*.trj"},
         label="Input TRJ file",
     )
     atom_aliases = AtomMapping(

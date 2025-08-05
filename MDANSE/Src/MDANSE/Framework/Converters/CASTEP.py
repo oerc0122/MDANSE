@@ -18,6 +18,7 @@ from __future__ import annotations
 import collections
 
 import numpy as np
+from more_itertools import ilen
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
@@ -28,7 +29,7 @@ from MDANSE.Framework.ConfigDescriptors import (
     PathConfigDesc,
 )
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Framework.Parsers.CASTEP_MD import CASTEPMDFile
+from MDANSE.Framework.Parsers import CASTEPMDFile
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
@@ -42,11 +43,13 @@ class CASTEP(Converter):
 
     trajectory_file = PathConfigDesc(
         mode="r",
-        extensions=(".md", "*"),
+        extensions={"MD files": "*.md"},
         label="A CASTEP MD trajectory file.",
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "trajectory_file"}, label="Atom mapping", default={},
+        depends={"trajectory": "trajectory_file"},
+        label="Atom mapping",
+        default={},
     )
     fold = BooleanConfigDesc(label="Fold coordinates into box")
     output_files = OutputTrajectoryConfigDesc()

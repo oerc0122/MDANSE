@@ -110,16 +110,25 @@ class XTDFile(Parser):
             atm2.bonded_to.add(idx1)
 
         self._clusters = [
-            [p for p in self._get_comma_prop(node, "Children", int, atoms_mapping, skip_missing=True) if p is not None]
+            [
+                p
+                for p in self._get_comma_prop(
+                    node, "Children", int, atoms_mapping, skip_missing=True
+                )
+                if p is not None
+            ]
             for node in root.iter("Molecule")
             if "imageOf" not in node.attrib
         ]
 
     @staticmethod
     def _get_comma_prop(
-        node, key: str, to_type: type = str, retrieve: dict | None = None, skip_missing: bool = False
+        node,
+        key: str,
+        to_type: type = str,
+        retrieve: dict | None = None,
+        skip_missing: bool = False,
     ):
-
         data = map(to_type, node.attrib[key].split(","))
 
         if retrieve is None:

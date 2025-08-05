@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from __future__ import annotations
+
 import multiprocessing
 
 from MDANSE.Framework.ConfigDescriptors import IntegerConfigDesc, SingleChoiceConfigDesc
@@ -20,7 +22,9 @@ from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import Parameter
 
 
 class RunningModeConfigDesc(Parameter):
-    mode = SingleChoiceConfigDesc(choices=("single-core", "multicore", "remote"), default="single-core")
+    mode = SingleChoiceConfigDesc(
+        choices=("single-core", "multicore", "remote"), default="single-core"
+    )
     n_procs = IntegerConfigDesc(
         minimum=1, maximum=multiprocessing.cpu_count(), default=1
     )

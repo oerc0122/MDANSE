@@ -86,6 +86,7 @@ class SingleChoiceConfigDesc(ChoiceConfigDesc):
         value = self.aliases.get(value, value)
         return super().validate(value)
 
+
 class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
     def __init__(self, choices: str, depends: dict[str, str], **params):
         if "choices" not in depends:
@@ -108,9 +109,7 @@ class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
         choices = set(get_deep_attr(deps["choices"], self._choices))
 
         if not choices:
-            raise ConfigError(
-                f"No valid choices at deps['choices'].{self._choices}"
-            )
+            raise ConfigError(f"No valid choices at deps['choices'].{self._choices}")
 
         if not self.validate_exclude(value):
             raise ConfigError(
@@ -124,6 +123,7 @@ class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
 
         self.last_choices = choices
         return value
+
 
 class DynamicMultiChoiceConfigDesc(MultipleValues, DynamicSingleChoiceConfigDesc):
     pass

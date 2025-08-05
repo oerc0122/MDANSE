@@ -15,6 +15,8 @@
 #
 from __future__ import annotations
 
+from enum import Enum, auto
+
 from .FileInMemory import FileInMemory as FileInMemory
 from .HDFFormat import HDFFormat as HDFFormat
 from .IFormat import IFormat as IFormat

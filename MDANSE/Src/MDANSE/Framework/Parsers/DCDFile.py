@@ -69,8 +69,8 @@ class DCDFile:
         for order in ("<", ">"):
             if one(struct.unpack(order + "i", data)) == 84:
                 return order
-        else:
-            raise ByteOrderError(f"Invalid byte order. {filename} not a valid DCD file")
+
+        raise ByteOrderError(f"Invalid byte order. {filename} not a valid DCD file")
 
     def read_header(self) -> None:
         """Read a DCD file header.

@@ -77,9 +77,7 @@ class CASTEPMDFile(Parser):
             file = map(str.strip, castep_file)
 
             # Skip header
-            file = dropwhile(
-                lambda line: not line.startswith("END"), file
-            )
+            file = dropwhile(lambda line: not line.startswith("END"), file)
             next(file)
 
             file = split_at(file, lambda line: not line)

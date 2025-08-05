@@ -14,13 +14,10 @@ class Configurable:
     Within that framework, to be configurable, a class must:
         - Derive from this class
     """
+
     @property
     def configuration(self) -> dict[str, Any]:
-        return {
-            name: getattr(self, name)
-            for name in self.descriptors
-        }
-
+        return {name: getattr(self, name) for name in self.descriptors}
 
     @property
     def descriptors(self) -> dict[str, Parameter]:
@@ -39,8 +36,6 @@ class Configurable:
             name: obj.to_json() if isinstance(obj, Parameter) else obj
             for name, obj in self.configuration.items()
         }
-        from pprint import pprint
-        pprint(to_json)
         return json.dumps(to_json, cls=MDANSEEncoder)
 
     output_configuration = to_json
@@ -53,3 +48,11 @@ class Configurable:
             return False
 
         return True
+
+    def __repr__(self) -> str:
+        out = f"{type(self).__name__}(\n"
+        for param in self.parameters:
+            val = getattr(self, param)
+            out += f"  {param} = {val},\n"
+        out += ")"
+        return out

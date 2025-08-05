@@ -84,8 +84,8 @@ class FramesConfigDesc(RangeConfigDesc):
                 f"Do not know how to convert {type(value).__name__} to range"
             )
 
-        self.validate_range(value.start, (0, nsteps+1))
-        self.validate_range(value.stop, (0, nsteps+1))
+        self.validate_range(value.start, (0, nsteps + 1))
+        self.validate_range(value.stop, (0, nsteps + 1))
 
         return Frames(trajectory, value)
 

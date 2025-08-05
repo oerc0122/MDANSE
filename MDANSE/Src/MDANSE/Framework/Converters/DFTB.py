@@ -34,12 +34,12 @@ class DFTB(Forcite):
 
     xtd_file = PathConfigDesc(
         mode="r",
-        extensions=(".xtd", "*"),
+        extensions={"XTD file": ".xtd"},
         label="The XTD file.",
     )
     trj_file = PathConfigDesc(
         mode="r",
-        extensions=(".trj", "*"),
+        extensions={"TRJ file": ".trj"},
         label="The TRJ file.",
     )
     atom_aliases = AtomMapping(

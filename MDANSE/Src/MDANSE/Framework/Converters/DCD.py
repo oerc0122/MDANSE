@@ -37,13 +37,13 @@ class DCD(Converter):
     label = "DCD"
 
     pdb_file = PathConfigDesc(
-        mode="R",
-        extensions="PDB files (*.pdb);;All files (*)",
+        mode="r",
+        extensions={"PDB files": "*.pdb"},
         label="Input PDB file",
     )
     dcd_file = PathConfigDesc(
-        mode="R",
-        extensions="DCD files (*.dcd);;All files (*)",
+        mode="r",
+        extensions={"DCD files": "*.dcd"},
         label="Input PDB file",
     )
     time_step = FloatConfigDesc(default=1.0, minimum=1e-9, label="Time step (ps)")

@@ -23,6 +23,13 @@ from more_itertools import run_length
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomMapping,
+    BooleanConfigDesc,
+    FloatConfigDesc,
+    OutputTrajectoryConfigDesc,
+    PathConfigDesc,
+)
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Parsers import XDATCARFile
 from MDANSE.Framework.Units import measure
@@ -62,40 +69,23 @@ class VASP(Converter):
 
     label = "VASP"
 
-    settings = collections.OrderedDict()
-    settings["xdatcar_file"] = (
-        "FileWithAtomDataConfigurator",
-        {
-            "wildcard": "XDATCAR files (XDATCAR*);;All files (*)",
-            "default": "INPUT_FILENAME",
-            "label": "Input XDATCAR file",
-            "parser": XDATCARFile,
-        },
+    trajectory_file = PathConfigDesc(
+        mode="r",
+        extensions={"XDATCAR input": "XDATCAR*"},
+        label="Input XDATCAR file",
     )
-    settings["atom_aliases"] = (
-        "AtomMappingConfigurator",
-        {
-            "default": "{}",
-            "label": "Atom mapping",
-            "dependencies": {"input_file": "xdatcar_file"},
-        },
+    time_step = FloatConfigDesc(
+        label="Time step (fs)",
+        default=1.0,
+        minimum=1e-9,
     )
-    settings["time_step"] = (
-        "FloatConfigurator",
-        {"label": "Time step (fs)", "default": 1.0, "mini": 1.0e-9},
+    atom_aliases = AtomMapping(
+        depends={"trajectory": "trajectory_file"},
+        label="Atom mapping",
+        default={},
     )
-    settings["fold"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Fold coordinates into box"},
-    )
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {
-            "formats": ["MDTFormat"],
-            "root": "xdatcar_file",
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
-        },
-    )
+    fold = BooleanConfigDesc(label="Fold coordinates into box")
+    output_files = OutputTrajectoryConfigDesc()
 
     def initialize(self):
         """
@@ -103,30 +93,31 @@ class VASP(Converter):
         """
         super().initialize()
 
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
+        self._atomicAliases = self.atom_aliases
 
-        self.trajectory_file = self.configuration["xdatcar_file"].instance
-        self.frames = self.trajectory_file.frames
+        self._xdatcarFile = XDATCARFile(self.trajectory_file)
+
+        self.frames = self._xdatcarFile.frames
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.trajectory_file.n_frames
+        self.numberOfSteps = self._xdatcarFile.n_frames
 
         self._chemical_system = ChemicalSystem()
         element_list = [
             get_element_from_mapping(self._atomicAliases, symbol)
-            for symbol in self.trajectory_file.element_list
+            for symbol in self._xdatcarFile.element_list
         ]
 
         self._chemical_system.initialise_atoms(element_list)
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
-            self.configuration["output_files"]["file"],
+            self.output_files.path,
             self._chemical_system,
             self.numberOfSteps,
-            positions_dtype=self.configuration["output_files"]["dtype"],
-            chunking_limit=self.configuration["output_files"]["chunk_size"],
-            compression=self.configuration["output_files"]["compression"],
+            positions_dtype=self.output_files.dtype,
+            chunking_limit=self.output_files.chunk_size,
+            compression=self.output_files.compression,
         )
 
     def run_step(self, index):
@@ -151,16 +142,12 @@ class VASP(Converter):
         # The coordinates in VASP are in box format. Convert them into real coordinates.
         real_conf = conf.to_real_configuration()
 
-        if self.configuration["fold"]["value"]:
+        if self.fold:
             # The real coordinates are folded then into the simulation box (-L/2,L/2).
             real_conf.fold_coordinates()
 
         # Compute the actual time
-        time = (
-            frame["step"]
-            * self.configuration["time_step"]["value"]
-            * self.trajectory_file.UNIT_CONV["time"]
-        )
+        time = frame["step"] * self.time_step * self._xdatcarFile.UNIT_CONV["time"]
 
         # Dump the configuration to the output trajectory
         self._trajectory.dump_configuration(

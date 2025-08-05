@@ -5,6 +5,13 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from MDANSE.Framework.Configurators.ConfigFileConfigurator import \
+    ConfigFileConfigurator
+from MDANSE.Framework.Configurators.HDFTrajectoryConfigurator import \
+    HDFTrajectoryConfigurator
+from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parsers.LAMMPS import BoxStyle
+from MDANSE.Framework.Jobs.IJob import JobError
 from more_itertools import run_length
 from test_helpers.compare_hdf5 import compare_hdf5
 from test_helpers.paths import CONV_DIR, DATA_DIR
@@ -84,13 +91,10 @@ def _converter_test(
 
     converter = Converter.create(converter_type)
     converter.run(parameters, status=True)
+    print(repr(converter))
 
     if generate_benchmarks:
         return
-
-    traj_conf = HDFTrajectoryConfigurator("trajectory")
-    traj_conf.configure(out_name)
-    traj_conf["instance"].close()
 
     compare_hdf5(out_name, result_file, compare, atol=1e-6)
 

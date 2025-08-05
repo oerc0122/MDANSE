@@ -16,9 +16,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from os import SEEK_SET
-from pathlib import Path
-from typing import NamedTuple, TextIO
+from typing import NamedTuple
 
 import numpy as np
 from more_itertools import consume as drop
@@ -33,6 +31,7 @@ from MDANSE.IO.IOUtils import strip_comments
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
+from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 from .Parser import Parser
 
 
@@ -53,49 +52,42 @@ class FieldFileError(Error):
 class HistoryFile(Parser):
     UNIT_CONV = {
         "length": measure(1.0, "ang").toval("nm"),
-        "positions": measure(1.0, "ang").toval("nm"),
         "velocities": measure(1.0, "ang/ps").toval("nm/ps"),
         "gradients": measure(1.0, "Da ang / ps2").toval("Da nm / ps2"),
     }
 
     n_frames = None
 
-    def __init__(self, filename: Path | str):
-        super().__init__(filename)
+    def __init__(self, filename):
+        super().__init__()
 
         self.filename = filename
 
-        self._first_step = None
-        self._time_step = None
-
         with open(self.filename, encoding="utf-8") as file:
+            self.read_header(file)
+
             tmp = split_before(file, lambda line: line.startswith("timestep"))
-            self.read_header(next(tmp))
 
             frame = self.parse_step(first(tmp))
             self.atoms = frame["spec"]
 
             self.n_frames = ilen(tmp) + 1
 
-    def read_header(self, data: list[str]):
-        # Drop comment
+    def read_header(self, file):
+        drop(file, 1)
+        self.keytrj, self.imcon, self.natms = map(int, next(file).split()[:3])
 
-        self.keytrj, self.imcon, self.natm = map(int, data[1].split()[:3])
+        toks = next(file).split()
+        self._time_step = float(toks[5])
+        self._first_step = int(toks[1])
 
     def parse_step(self, step: list[str]):
         accum = {}
-        accum["true_step"] = int(step[0].split()[1])
-
-        if self._first_step is None:
-            self._first_step = accum["true_step"]
-            self._time_step = float(step[0].split()[5])
-
-        accum["step"] = accum["true_step"] - self._first_step
-        accum["time"] = accum["step"] * self._time_step
+        accum["step"] = int(step[0].split()[1])
 
         if self.imcon:
             cell = np.array([line.split() for line in step[1:4]], dtype=np.float64).T
-            cell *= self.UNIT_CONV["length"]
+            cell *= self._dist_conversion
             accum["unit_cell"] = UnitCell(cell)
         else:
             accum["unit_cell"] = None
@@ -103,23 +95,22 @@ class HistoryFile(Parser):
         accum["spec"] = [None] * self.natm
         accum["ind"] = np.empty(self.natm, dtype=int)
         accum["charge"] = np.empty(self.natm, dtype=float)
-        for i, line in enumerate(map(str.split, step[4 :: self.keytrj + 2])):
-            spec, ind, _mass, charge, *_rsd = line
-            ref = int(ind) - 1
-            accum["ind"][i] = int(ind)
-            accum["spec"][ref] = spec
-            accum["charge"][ref] = float(charge)
+        for i, line in enumerate(map(str.split, step[4 :: self.keytrj + 1])):
+            spec, ind, mass, charge, *_rsd = line
+            accum["ind"][i] = ind
+            accum["spec"][ind] = spec
+            accum["charge"][ind] = charge
 
-        keys = ("positions", "velocities", "gradients")[: self.keytrj + 1]
-
-        for i, key in enumerate(keys, 1):
+        for i, key in zip(
+            range(self.keytrj + 1), ("positions", "velocities", "gradients")
+        ):
             accum[key] = np.array(
                 list(map(str.split, step[4 + i :: self.keytrj + 2])), dtype=float
             )
 
-        ref = accum["ind"] - 1
-        for key in keys:
-            accum[key] = accum[key][ref, :] * self.UNIT_CONV[key]
+        for key in ("positions", "velocities", "gradients"):
+            if key in accum:
+                accum[key][:] = accum[key][ind]
 
         return accum
 
@@ -154,12 +145,12 @@ class FieldFile:
             molecules = split_at(
                 lines,
                 lambda line: line.upper() == "FINISH",
-                maxsplit=self.n_molecular_types,
+                maxsplit=self["n_molecular_types"],
             )
 
             self.molecules = [
                 self.parse_molecule(molecule)
-                for molecule in take(self.n_molecular_types, molecules)
+                for molecule in take(self["n_molecular_types"], molecules)
             ]
             molecules = iter(next(molecules))
 
@@ -218,7 +209,7 @@ class FieldFile:
 
                 for atom in block:
                     spec, mass, charge, *rep_froz = (atom + " 1 0").split()
-                    repeat, _frozen = map(int, rep_froz[:2])
+                    repeat, frozen = map(int, rep_froz[:2])
 
                     current_slice = np.s_[curr : curr + repeat]
                     specs[current_slice] = spec
@@ -246,11 +237,6 @@ class FieldFile:
             bonds=bonds,
         )
 
-    @property
-    def labels(self) -> list[AtomLabel]:
-        return list(self.atom_labels)
-
-    @property
     def atom_labels(self) -> Iterable[AtomLabel]:
         """
         Yields
@@ -259,7 +245,7 @@ class FieldFile:
             An atom label.
         """
         for molecule in self.molecules:
-            for atm_label, mass in zip(molecule.species, molecule.masses, strict=True):
+            for atm_label, mass in zip(molecule.species, molecule.masses):
                 yield AtomLabel(atm_label, molecule=molecule.name, mass=mass)
 
     def get_atom_charges(self) -> np.ndarray:
@@ -271,7 +257,8 @@ class FieldFile:
             array of floats, one value per atom
         """
         charge_groups = [
-            np.repeat(molecule.charges, molecule.n_mols) for molecule in self.molecules
+            np.repeat(molecule.charges, molecule.n_mols)
+            for molecule in self.molecules
         ]
 
         return np.concatenate(charge_groups)
@@ -304,7 +291,7 @@ class FieldFile:
                 get_element_from_mapping(
                     aliases, name, molecule=molecule.name, mass=mass
                 )
-                for name, mass in zip(molecule.species, molecule.masses, strict=True)
+                for name, mass in zip(molecule.species, molecule.masses)
             ]
             curr_name_list = molecule.species
             curr_cluster = np.arange(molecule.n_atoms, dtype=int)
@@ -312,7 +299,7 @@ class FieldFile:
             # Bonds 0-indexed in RDKit
             curr_bonds = np.array(molecule.bonds, dtype=int) - 1
 
-            for _ in range(molecule.n_mols):
+            for i in range(1, molecule.n_mols + 1):
                 element_list.extend(curr_element_list)
                 name_list.extend(curr_name_list)
                 bonds.extend(map(tuple, curr_bonds + curr_n))

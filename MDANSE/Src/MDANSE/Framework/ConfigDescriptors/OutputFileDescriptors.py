@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import numpy as np
 
@@ -29,6 +29,21 @@ from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from .AbsConfigDesc import ConfigError
 from .BaseTypesDescriptor import IntegerConfigDesc, PathConfigDesc
 from .ChoiceConfigDesc import MultipleChoiceConfigDesc, SingleChoiceConfigDesc
+
+
+class OldOutputSettings(NamedTuple):
+    path: Path | str
+    format: OutputFormats | str | int | Iterable[OutputFormats | str | int]
+    loglevel: LogLevels | int | str
+
+
+class OldTrajectorySettings(NamedTuple):
+    path: Path | str
+    dtype: int
+    chunk_size: int
+    compression: str
+    format: OutputFormats | str | int | Iterable[OutputFormats | str | int]
+    loglevel: LogLevels | int | str
 
 
 class LogLevelConfigDesc(SingleChoiceConfigDesc):
@@ -90,6 +105,12 @@ class OutputFileConfigDesc(Parameter):
             "formats": self.out_format,
         }
 
+    @classmethod
+    def from_old_tuple(cls, args: OldOutputSettings):
+        out = cls()
+        out.path, out.out_format, out.log_level = args
+        return out
+
 
 class OutputFilePlusMemConfigDesc(OutputFileConfigDesc):
     out_format = OutputFormatConfigDesc(("MDAFormat", "TextFormat", "FileInMemory"))
@@ -130,6 +151,13 @@ class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
 
     def __str__(self) -> str:
         return f"{type(self).__name__}({self.path=}, {self.log_level=}, {self.dtype=}, {self.chunk_size=}, {self.compression=})"
+
+    @classmethod
+    def from_old_tuple(cls, args: OldTrajectorySettings):
+        """Construct object from old-style tuple."""
+        out = cls()
+        out.path, out.dtype, out.chunk_size, out.compression, out.log_level = args
+        return out
 
     @property
     def dtype_size(self) -> int:

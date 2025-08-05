@@ -64,23 +64,23 @@ class CP2K(Converter):
         "time": measure(1.0, iunit="fs").toval("ps"),
     }
 
-    pos_file = PathConfigDesc("r", extensions=(".xyz",), label="Positions file (XYZ)")
+    pos_file = PathConfigDesc("r", extensions={"XYZ file": ".xyz"}, label="Positions file (XYZ)")
     vel_file = PathConfigDesc(
         "r",
-        extensions=(".xyz",),
+        extensions={"XYZ file": ".xyz"},
         optional=True,
         default=None,
         label="Velocity file (XYZ, optional)",
     )
     force_file = PathConfigDesc(
         "r",
-        extensions=(".xyz",),
+        extensions={"XYZ file": ".xyz"},
         optional=True,
         default=None,
         label="Force file (XYZ, optional)",
     )
     cell_file = PathConfigDesc(
-        "r", extensions=(".cell",), label="CP2K unit cell file (.cell)"
+        "r", extensions={"CP2K cell file": ".cell"}, label="CP2K unit cell file (.cell)"
     )
     atom_aliases = AtomMapping(depends={"trajectory": "pos_file"})
     fold = BooleanConfigDesc(default=False, label="Fold coordinates into box")
@@ -149,6 +149,8 @@ class CP2K(Converter):
 
         @note: the argument index is the index of the loop not the index of the frame.
         """
+
+        # Read the current coordinates in the XYZ file.
 
         data = {
             key: next(frames) * self.UNITS[key] for key, frames in self.frames.items()

@@ -40,6 +40,10 @@ from MDANSE import PLATFORM
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.Framework.ConfigDescriptors.Configurable import Configurable
+from MDANSE.Framework.ConfigDescriptors.OutputFileDescriptors import (
+    OutputFileConfigDesc,
+    OutputTrajectoryConfigDesc,
+)
 from MDANSE.Framework.Jobs.JobStatus import JobStates, JobStatus
 from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
 from MDANSE.MLogging import FMT, LOG
@@ -261,13 +265,21 @@ class IJob(Configurable, metaclass=SubclassFactory):
         return self._in_memory_result
 
     def initialize(self):
-        try:
-            if hasattr(self, "output_files") and self.output_files.write_logs:
-                log_filename = str(self.output_files.path.with_suffix(".log"))
+        if hasattr(self, "output_files"):
+            if isinstance(opf := self.output_files, tuple):
+                cls = (
+                    OutputFileConfigDesc
+                    if len(opf) == 3
+                    else OutputTrajectoryConfigDesc
+                )
+                self.output_files = cls.from_old_tuple(opf)
+
+            if self.output_files.write_logs:
+                log_filename = self.output_files.path.with_suffix(".log")
                 self.add_log_file_handler(
                     log_filename, self.output_files.log_level.value
                 )
-        except KeyError:
+        else:
             LOG.error("IJob did not find 'write_logs' in output_files")
 
         self.set_up_trajectory()
@@ -534,7 +546,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
             if status and self._status is None:
                 self._status = self._status_constructor(self)
 
-            for key, val in parameters:
+            for key, val in parameters.items():
                 setattr(self, key, val)
 
             self.initialize()
@@ -652,7 +664,7 @@ class {classname}(IJob):
             return None
         return templateFile
 
-    def add_log_file_handler(self, filename: str, level: str) -> None:
+    def add_log_file_handler(self, filename: Path, level: str) -> None:
         """Adds a file handle which is used to write the jobs logs.
 
         Parameters
@@ -663,21 +675,21 @@ class {classname}(IJob):
             The log level.
         """
         self._log_filename = filename
-        PLATFORM.create_directory(Path(self._log_filename).parent)
+        PLATFORM.create_directory(self._log_filename.parent)
         fh = FileHandler(self._log_filename, mode="w")
         # set the name so that we can track it and then close it later,
         # tracking the fh by storing it in this object causes issues
         # with multiprocessing jobs
-        fh.set_name(filename)
+        fh.set_name(str(filename))
         fh.setFormatter(FMT)
         fh.setLevel(level)
         LOG.addHandler(fh)
-        LOG.debug(f"Log handler added for filename {filename}")
+        LOG.debug(f"Log handler added for {filename}.")
 
     def remove_log_file_handler(self) -> None:
         """Removes the IJob file handle from the MDANSE logger."""
         LOG.debug("Disconnecting log handlers")
         for handler in LOG.handlers:
-            if handler.name == self._log_filename:
+            if handler.name == str(self._log_filename):
                 handler.close()
                 LOG.removeHandler(handler)

@@ -21,9 +21,10 @@ class LogLevels(Enum):
 
         value = "_".join(value.split()).upper()
 
-        for member in cls.members:
+        for member in cls:
             if value == member.name:
                 return member
+
 
 FMT = logging.Formatter(
     "%(asctime)s - %(levelname)s - process[%(process)d] - %(module)s %(lineno)d - %(message)s"

@@ -15,13 +15,21 @@
 #
 from __future__ import annotations
 
-import collections
+from collections import defaultdict
 from math import isclose
 
 import mdtraj as md
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomMapping,
+    BooleanConfigDesc,
+    FloatConfigDesc,
+    OutputTrajectoryConfigDesc,
+    PathConfigDesc,
+    SingleChoiceConfigDesc,
+)
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -41,89 +49,54 @@ class MDTraj(Converter):
 
     category = ("Converters", "General")
     label = "MDTraj"
-    settings = collections.OrderedDict()
 
-    settings["coordinate_files"] = (
-        "MDTrajTrajectoryFileConfigurator",
-        {
-            "wildcard": "All files (*)",
-            "default": '["INPUT_FILENAME"]',
-            "label": "Trajectory files",
-        },
+    topology_file = PathConfigDesc(
+        mode="r",
+        label="Topology file",
     )
-    settings["topology_file"] = (
-        "MDTrajTopologyFileConfigurator",
-        {
-            "wildcard": "All files (*)",
-            "default": "",
-            "label": "Topology file (optional)",
-            "dependencies": {"coordinate_files": "coordinate_files"},
-        },
+    topology_format = SingleChoiceConfigDesc(choices=())
+    coordinate_files = PathConfigDesc(
+        mode="r",
+        label="Coordinate file",
     )
-    settings["atom_aliases"] = (
-        "AtomMappingConfigurator",
-        {
-            "default": "{}",
-            "label": "Atom mapping",
-            "dependencies": {"input_file": "topology_file"},
-        },
+    coordinate_format = SingleChoiceConfigDesc(choices=())
+    time_step = FloatConfigDesc(
+        label="Time step",
+        default=1.0,
+        minimum=1e-9,
     )
-    settings["time_step"] = (
-        "MDTrajTimeStepConfigurator",
-        {
-            "label": "Time step (ps)",
-            "default": 0.0,
-            "mini": 0.0,
-            "dependencies": {
-                "coordinate_files": "coordinate_files",
-                "topology_file": "topology_file",
-            },
-        },
+    atom_aliases = AtomMapping(
+        depends={"trajectory": "trajectory_file"},
+        label="Atom mapping",
+        default={},
     )
-    settings["fold"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Fold coordinates into box"},
-    )
-    settings["discard_overlapping_frames"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Discard overlapping frames"},
-    )
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
-            "formats": ["MDTFormat"],
-            "root": "config_file",
-        },
-    )
+    discard_overlapping_frames = BooleanConfigDesc(label="Discard overlapping frames")
+    fold = BooleanConfigDesc(label="Fold coordinates into box")
+    output_files = OutputTrajectoryConfigDesc()
 
     def initialize(self):
         """Load the trajectory using MDTraj and create the
         trajectory writer.
         """
-        coord_files = self.configuration["coordinate_files"]["filenames"]
-        top_file = self.configuration["topology_file"]["filename"]
+        coord_files = self.coordinate_files
+        top_file = self.topology_file
         if top_file:
             self.traj = md.load(
                 coord_files,
                 top=top_file,
-                discard_overlapping_frames=self.configuration[
-                    "discard_overlapping_frames"
-                ]["value"],
+                discard_overlapping_frames=self.discard_overlapping_frames,
             )
         else:
             self.traj = md.load(
                 coord_files,
-                discard_overlapping_frames=self.configuration[
-                    "discard_overlapping_frames"
-                ]["value"],
+                discard_overlapping_frames=self.discard_overlapping_frames,
             )
 
         self.numberOfSteps = self.traj.n_frames
         mdtraj_to_mdanse = {}
 
         self._chemical_system = ChemicalSystem()
-        elements, atom_names, atom_labels = [], [], {}
+        elements, atom_names, atom_labels = [], [], defaultdict(list)
         for atnumber, at in enumerate(self.traj.topology.atoms):
             element = get_element_from_mapping(
                 self.configuration["atom_aliases"]["value"],
@@ -137,30 +110,24 @@ class MDTraj(Converter):
             atom_names.append(at.name)
             mdtraj_to_mdanse[at.index] = atnumber
             if at.residue.name:
-                try:
-                    atom_labels[at.residue.name]
-                except KeyError:
-                    atom_labels[at.residue.name] = [atnumber]
-                else:
-                    atom_labels[at.residue.name].append(atnumber)
+                atom_labels[at.residue.name].append(atnumber)
+
         self._chemical_system.initialise_atoms(elements, atom_names)
         self._chemical_system.add_labels(atom_labels)
-        bonds = []
-        for at1, at2 in self.traj.topology.bonds:
-            bonds.append([mdtraj_to_mdanse[at1.index], mdtraj_to_mdanse[at2.index]])
+        bonds = [
+            (mdtraj_to_mdanse[at1.index], mdtraj_to_mdanse[at2.index])
+            for at1, at2 in self.traj.topology.bonds
+        ]
         self._chemical_system.add_bonds(bonds)
         self._chemical_system.find_clusters_from_bonds()
 
-        kwargs = {
-            "positions_dtype": self.configuration["output_files"]["dtype"],
-            "chunking_limit": self.configuration["output_files"]["chunk_size"],
-            "compression": self.configuration["output_files"]["compression"],
-        }
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
             self.numberOfSteps,
-            **kwargs,
+            positions_dtype=self.output_files.path,
+            chunking_limit=self.output_files.chunk_size,
+            compression=self.output_files.compression,
         )
         super().initialize()
 
@@ -191,7 +158,7 @@ class MDTraj(Converter):
                     self.traj.unitcell_vectors[index],
                 ),
             )
-            if self.configuration["fold"]["value"]:
+            if self.fold:
                 conf.fold_coordinates()
 
         # TODO as of 11/12/2024 MDTraj does not read velocity data
@@ -203,10 +170,10 @@ class MDTraj(Converter):
 
         if self.numberOfSteps == 1:
             time = 0
-        elif isclose(float(self.configuration["time_step"]["value"]), 0.0):
+        elif isclose(self.time_step, 0.0):
             time = index * self.traj.timestep
         else:
-            time = index * float(self.configuration["time_step"]["value"])
+            time = index * self.time_step
 
         self._trajectory.dump_configuration(
             conf,

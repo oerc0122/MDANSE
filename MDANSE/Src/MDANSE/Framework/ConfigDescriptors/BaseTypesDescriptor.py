@@ -13,6 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from __future__ import annotations
+
 import json
 import re
 from collections.abc import Collection, Sequence
@@ -87,7 +89,7 @@ class BooleanConfigDesc(ConfigureDescriptor[bool]):
     def __init__(self, default: bool = False, **params):
         super().__init__(default=default, **params)
 
-    def validate(self, value: Union[bool, str], *_) -> bool:
+    def validate(self, value: bool | str, *_) -> bool:
         if isinstance(value, str):
             value = value.lower()
 
@@ -187,7 +189,7 @@ class StringConfigDesc(ConfigureDescriptor[str]):
         self,
         *,
         case: StrCases = StrCases.PRESERVE,
-        regex: Optional[re.Pattern] = None,
+        regex: str | re.Pattern | None = None,
         **params,
     ):
         super().__init__(**params)
@@ -195,11 +197,11 @@ class StringConfigDesc(ConfigureDescriptor[str]):
         self.regex = regex
 
     @property
-    def regex(self) -> Optional[re.Pattern]:
+    def regex(self) -> re.Pattern | None:
         return self._regex
 
     @regex.setter
-    def regex(self, value: Optional[re.Pattern]) -> None:
+    def regex(self, value: re.Pattern | None) -> None:
         if value is None:
             self._regex = None
             return
@@ -242,7 +244,7 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
         self,
         mode: FileModes | str,
         *,
-        extensions: Collection[str] = (),
+        extensions: dict[str, str] | None = None,
         directory: bool = False,
         **params,
     ):
@@ -254,7 +256,8 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
             else self.FileModes(mode)
         )
 
-        self.extension = extensions
+        self.extension = extensions or {}
+        self.extension.setdefault("All files", "*")
         self.directory = directory
 
     def validate(self, value, *_) -> Path:

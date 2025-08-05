@@ -33,7 +33,6 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
 from MDANSE.Framework.Units import measure
-from MDANSE.IO.IOUtils import UCEnum
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
@@ -116,7 +115,7 @@ class LAMMPSTrajectoryFileError(Error):
     pass
 
 
-class BoxStyle(UCEnum):
+class BoxStyle(Enum):
     """Different styles of "box" provided by LAMMPS.
 
     Handles conversion to standard 3x3 lattice vectors.
@@ -438,9 +437,7 @@ class LAMMPScustom(LAMMPSReader):
                 for i, (_, atom_line) in enumerate(take(self._nAtoms, file)):
                     temp = {
                         key: self._type_map[key](val)
-                        for key, val in zip(
-                            self.keywords, atom_line.split(), strict=False
-                        )
+                        for key, val in zip(self.keywords, atom_line.split())
                     }
                     idx = temp.get("id", 1)
 
@@ -547,7 +544,7 @@ class LAMMPScustom(LAMMPSReader):
         for i, line in enumerate(take(self._nAtoms, file), 1):
             temp = {
                 key: self._type_map[key](val)
-                for key, val in zip(self.keywords, line.split(), strict=False)
+                for key, val in zip(self.keywords, line.split())
             }
             idx = temp.get("id", i) - 1  # MDANSE 0-indexed
             coords[idx, :] = np.array(
@@ -871,7 +868,7 @@ class LAMMPSh5md(LAMMPSReader):
         self._nAtoms = len(self._file["/particles/all/position/value"][0])
 
         if len(atom_types) < self._nAtoms:
-            atom_types = round(self._nAtoms / len(atom_types)) * list(atom_types)
+            atom_types = int(round(self._nAtoms / len(atom_types))) * list(atom_types)
 
         self._fractionalCoordinates = False
         cell_edges = self._file["/particles/all/box/edges/value"][0]

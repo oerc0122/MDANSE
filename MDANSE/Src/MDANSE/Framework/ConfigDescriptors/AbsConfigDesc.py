@@ -194,7 +194,9 @@ class ConfigureDescriptor(Parameter, Generic[T]):
 
 
 class MinMax(ABC, Generic[T]):
-    def __init__(self, minimum: T | None = None, maximum: T | None = None, *args, **kwargs):
+    def __init__(
+        self, minimum: T | None = None, maximum: T | None = None, *args, **kwargs
+    ):
         self.minimum = minimum
         self.maximum = maximum
         super().__init__(*args, **kwargs)
