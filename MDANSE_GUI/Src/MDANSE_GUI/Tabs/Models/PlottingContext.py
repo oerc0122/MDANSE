@@ -53,6 +53,7 @@ class PlotArgs(NamedTuple):
     marker: str
     row: int
     main_axis: str
+    legend_label: str
 
 
 def get_mpl_markers():
@@ -546,7 +547,7 @@ class SingleDataset:
 
 plotting_column_labels = [
     "Dataset",
-    "Trajectory",
+    "Legend label",
     "Size",
     "Unit",
     "Main axis",
@@ -555,6 +556,7 @@ plotting_column_labels = [
     "Line style",
     "Marker",
     "Apply weights?",
+    "Trajectory",
 ]
 plotting_column_index = {
     label: number for number, label in enumerate(plotting_column_labels)
@@ -580,6 +582,8 @@ class PlottingContext(QStandardItemModel):
         self._colour_map = kwargs.get("colormap", "viridis")
         self._last_colour = 0
         self._unit_lookup = unit_lookup
+        self.use_legend = True
+        self.use_grid = True
         self.setHorizontalHeaderLabels(plotting_column_labels)
 
     def generate_colour(self, number: int) -> str:
@@ -716,6 +720,7 @@ class PlottingContext(QStandardItemModel):
                 "marker": row_data["Marker"].text(),
                 "row": row,
                 "main_axis": row_data["Main axis"].text(),
+                "legend_label": row_data["Legend label"].text(),
             }
 
             self._datasets[key].set_data_limits(data_number_string)
@@ -745,7 +750,7 @@ class PlottingContext(QStandardItemModel):
             QStandardItem(str(x))
             for x in [
                 new_dataset._name,
-                new_dataset._filename,
+                new_dataset._labels["medium"],
                 new_dataset._data.shape,
                 new_dataset._data_unit,
                 new_dataset.longest_axis()[-1],
@@ -754,6 +759,7 @@ class PlottingContext(QStandardItemModel):
                 new_dataset._linestyle,
                 "",
                 "",
+                new_dataset._filename,
             ]
         ]
 
