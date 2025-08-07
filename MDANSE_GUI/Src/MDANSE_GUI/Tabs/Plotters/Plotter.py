@@ -278,3 +278,22 @@ class Plotter(metaclass=SubclassFactory):
         axes = target.add_subplot(111)
         self._axes = [axes]
         self.apply_settings(plotting_context)
+
+    def plot_blank(self, *, draw_cross: bool = True):
+        """Inform the user that no data could be plotted.
+
+        Parameters
+        ----------
+        draw_cross : bool, optional
+            If True, plot two intersecting lines to indicate visually that plotting was not possible, by default True
+        """
+        figure = self.get_figure()
+        axes = figure.add_subplot(111)
+        if draw_cross:
+            axes.axline([0, 0], [1, 1], color="k", linestyle="-")
+            axes.axline([0, 1], [1, 0], color="k", linestyle="-")
+        axes.set_title("The data sets you selected could not be plotted.")
+        axes.set_xlabel(
+            "If you expected a plot, please check the settings you changed last."
+        )
+        figure.canvas.draw()

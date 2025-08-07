@@ -305,6 +305,10 @@ class SingleDataset:
             Data row indices, given as a list, range or slice.
 
         """
+        if not limit_string:
+            self._data_limits = None
+            return
+
         complete_subset = {}
 
         axes = map(len, self.dep_axes.values())
@@ -323,7 +327,7 @@ class SingleDataset:
                 )
                 continue
 
-        self._data_limits = list(complete_subset.keys()) if complete_subset else None
+        self._data_limits = list(complete_subset)
 
     def available_x_axes(self) -> list[str]:
         """Get a list of axis names used by this data set.
@@ -450,6 +454,11 @@ class SingleDataset:
         self._curves = {}
         self._curve_labels = {}
 
+        if self._data.ndim == 1:
+            self._curves[(0,)] = self.data
+            self._curve_labels[(0,)] = ""
+            return self.data
+
         data_shape = self._data.shape
         x_axis_unit, x_axis_name = x_axis_details
         slicer = []
@@ -471,15 +480,26 @@ class SingleDataset:
             indexer.append(indices)
             label_lookup.append(axis_name)
 
-        for index in self.curve_ind(max_limit):
-            index_tuple = nth_product(index, *indexer)
-            index_slicer = nth_product(index, *slicer)
+        if not indexer:
+            LOG.warning("Empty selection for data set %s", self._name)
+            return self._curves
 
-            self._curves[index_tuple] = self.data[index_slicer].squeeze()
-            self._curve_labels[index_tuple] = self.generate_curve_label(
-                index_tuple,
-                label_lookup,
-            )
+        for index in self.curve_ind(max_limit):
+            try:
+                index_tuple = nth_product(index, *indexer)
+                index_slicer = nth_product(index, *slicer)
+                self._curves[index_tuple] = self.data[index_slicer].squeeze()
+            except IndexError:
+                LOG.warning(
+                    "Skipping: in dataset %s, index %s is out of bounds",
+                    self._name,
+                    index,
+                )
+            else:
+                self._curve_labels[index_tuple] = self.generate_curve_label(
+                    index_tuple,
+                    label_lookup,
+                )
 
         return self._curves
 
@@ -566,7 +586,7 @@ plotting_column_index = {
 class PlottingContext(QStandardItemModel):
     """Data model storing data and user input used for plotting."""
 
-    needs_an_update = Signal()
+    needs_an_update = Signal("quint64")
 
     def __init__(self, *args, unit_lookup=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -582,6 +602,7 @@ class PlottingContext(QStandardItemModel):
         self._colour_map = kwargs.get("colormap", "viridis")
         self._last_colour = 0
         self._unit_lookup = unit_lookup
+        self.plot_widget_id = -1
         self.use_legend = True
         self.use_grid = True
         self.setHorizontalHeaderLabels(plotting_column_labels)
@@ -778,13 +799,17 @@ class PlottingContext(QStandardItemModel):
             f"0:{prod(len(arr) for arr in new_dataset.dep_axes.values())}:1"
         )
 
-        self.itemChanged.connect(self.needs_an_update)
+        self.itemChanged.connect(self.ask_for_update)
 
         temp = items[plotting_column_index["Colour"]]
         temp.setData(QColor(temp.text()), role=Qt.ItemDataRole.BackgroundRole)
 
         self.appendRow(items)
         self.add_dataset(new_dataset.spawn_imaginary_dataset())
+
+    @Slot()
+    def ask_for_update(self):
+        self.needs_an_update.emit(self.plot_widget_id)
 
     def set_axes(self):
         """Check that axis information can be found for datasets."""
@@ -811,7 +836,6 @@ class PlottingContext(QStandardItemModel):
         self._best_xunits = longest_axes
         self._all_xunits = all_axes
         self._unit_to_axname = unit_to_axname
-        # self.needs_an_update.emit()
         return "Configured!"
 
     @Slot()

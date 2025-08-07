@@ -207,6 +207,7 @@ class PlotWidget(QWidget):
         self._normaliser = None
         self._plotting_context = None
         self._slider_max = 100
+        self.unique_id = -1
         self.make_canvas()
         self.set_plotter("Single")
 
@@ -214,6 +215,8 @@ class PlotWidget(QWidget):
         """Assign a data model to the plot widget."""
         self._plotting_context = new_context
         self._plotting_context._figure = self._figure
+        self.unique_id = id(self)
+        self._plotting_context.plot_widget_id = self.unique_id
 
     @Slot(str)
     def set_plotter(self, plotter_option: str):
@@ -268,13 +271,20 @@ class PlotWidget(QWidget):
         """List all the plotters supported by this widget."""
         return [str(x) for x in Plotter.indirect_subclasses() if str(x) != "Text"]
 
+    def plot_blank(self):
+        """Show a blank plot to indicate that plotting failed."""
+        LOG.debug("PlotWidget is about to call self._plotter.plot_blank()")
+        if self._plotter is None:
+            self._plotter = Plotter()
+        self._plotter.plot_blank()
+
     @Slot()
     def use_legend(self, bool_flag: bool | None = None):
         if bool_flag is None:
             bool_flag = self._legend_box.isChecked()
         if self._plotting_context:
             self._plotting_context.use_legend = bool_flag
-            self._plotting_context.needs_an_update.emit()
+            self._plotting_context.ask_for_update()
 
     @Slot()
     def use_grid(self, bool_flag: bool | None = None):
@@ -282,7 +292,7 @@ class PlotWidget(QWidget):
             bool_flag = self._grid_box.isChecked()
         if self._plotting_context:
             self._plotting_context.use_grid = bool_flag
-            self._plotting_context.needs_an_update.emit()
+            self._plotting_context.ask_for_update()
 
     def plot_data(self, update_only=False):
         """Use the internal plotter instance to create a plot.
