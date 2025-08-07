@@ -156,16 +156,12 @@ class TrajectoryEditor(IJob):
                     selected_bonds.append([indx_map[i], indx_map[j]])
             new_chemical_system.add_bonds(selected_bonds)
 
-            selected_clusters = defaultdict(list)
-            for key, vals in self._input_chemical_system._clusters.items():
+            for vals in self._input_chemical_system._clusters.values():
                 for val in vals:
                     new_cluster = set(val) & selected_idxs
                     if new_cluster:
-                        new_cluster = [indx_map[i] for i in new_cluster]
-                        selected_clusters[key].append(new_cluster)
-
-            for vals in selected_clusters.values():
-                new_chemical_system.add_clusters(vals)
+                        new_cluster = [[indx_map[i] for i in new_cluster]]
+                        new_chemical_system.add_clusters(new_cluster)
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
