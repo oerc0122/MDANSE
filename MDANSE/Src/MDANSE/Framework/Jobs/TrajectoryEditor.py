@@ -15,6 +15,7 @@
 #
 
 import collections
+from collections import defaultdict
 
 import numpy as np
 
@@ -145,11 +146,26 @@ class TrajectoryEditor(IJob):
                 )
             coords = com_conf.contiguous_configuration().coordinates
         else:
-            new_chemical_system.add_bonds(self._input_chemical_system._bonds)
-            for key in self._input_chemical_system._clusters.keys():
-                new_chemical_system.add_clusters(
-                    self._input_chemical_system._clusters[key]
-                )
+            selected_idxs = set(self._indices)
+            indx_map = {j: i for i, j in enumerate(self._indices)}
+
+            selected_bonds = []
+            for bond_idxs in self._input_chemical_system._bonds:
+                if set(bond_idxs).issubset(selected_idxs):
+                    i, j = bond_idxs
+                    selected_bonds.append([indx_map[i], indx_map[j]])
+            new_chemical_system.add_bonds(selected_bonds)
+
+            selected_clusters = defaultdict(list)
+            for key, vals in self._input_chemical_system._clusters.items():
+                for val in vals:
+                    new_cluster = set(val) & selected_idxs
+                    if new_cluster:
+                        new_cluster = [indx_map[i] for i in new_cluster]
+                        selected_clusters[key].append(new_cluster)
+
+            for vals in selected_clusters.values():
+                new_chemical_system.add_clusters(vals)
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
