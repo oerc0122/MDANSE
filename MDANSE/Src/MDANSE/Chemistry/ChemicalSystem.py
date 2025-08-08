@@ -21,6 +21,7 @@ from functools import reduce
 from typing import Any, SupportsInt
 
 import h5py
+from more_itertools import padded
 import networkx as nx
 import numpy as np
 from rdkit import Chem
@@ -316,7 +317,7 @@ class ChemicalSystem:
             # we will pad them with -1, we will ignore these values
             # when the trajectory get loaded up see self.load
             size = max(len(val) for val in vals)
-            new_vals = [val + [-1] * (size - len(val)) for val in vals]
+            new_vals = [list(padded(val, fillvalue=-1, n=size)) for val in vals]
             clusters_group.create_dataset(key, data=new_vals)
 
     def load(self, trajectory: h5py.File | str):
