@@ -21,9 +21,9 @@ from functools import reduce
 from typing import Any, SupportsInt
 
 import h5py
-from more_itertools import padded
 import networkx as nx
 import numpy as np
+from more_itertools import padded
 from rdkit import Chem
 
 from MDANSE.Chemistry import ATOMS_DATABASE
