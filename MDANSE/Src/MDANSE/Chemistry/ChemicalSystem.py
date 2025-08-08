@@ -311,8 +311,13 @@ class ChemicalSystem:
         for key, value in self._labels.items():
             label_group.create_dataset(key, data=value)
         clusters_group = grp.create_group("clusters")
-        for key, value in self._clusters.items():
-            clusters_group.create_dataset(key, data=value)
+        for key, vals in self._clusters.items():
+            # unable to store array with inhomogeneous row lengths
+            # we will pad them with -1, we will ignore these values
+            # when the trajectory get loaded up see self.load
+            size = max(len(val) for val in vals)
+            new_vals = [val + [-1] * (size - len(val)) for val in vals]
+            clusters_group.create_dataset(key, data=new_vals)
 
     def load(self, trajectory: h5py.File | str):
         """Read the ChemicalSystem information from the trajectory.
@@ -360,7 +365,8 @@ class ChemicalSystem:
 
         for cluster in grp["clusters"]:
             self._clusters[str(cluster)] = [
-                [int(x) for x in line] for line in grp[f"clusters/{cluster}"]
+                [int(x) for x in line if int(x) >= 0]
+                for line in grp[f"clusters/{cluster}"]
             ]
         if close_on_end:
             source.close()
