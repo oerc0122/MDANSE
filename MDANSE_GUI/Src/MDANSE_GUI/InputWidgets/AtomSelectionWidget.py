@@ -19,7 +19,7 @@ import json
 from enum import Enum
 from pathlib import Path
 
-from qtpy.QtCore import Signal, Slot
+from qtpy.QtCore import Qt, Signal, Slot
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QDialog,
@@ -254,6 +254,7 @@ class SelectionHelper(QDialog):
         """
         super().__init__(parent, *args, **kwargs)
         self.setWindowTitle(self._helper_title)
+        self.setWindowFlags(Qt.Window)
 
         self.trajectory = traj_data[1]
         self.system = self.trajectory.chemical_system
