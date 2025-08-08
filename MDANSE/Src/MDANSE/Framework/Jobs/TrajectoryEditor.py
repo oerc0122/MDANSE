@@ -149,11 +149,11 @@ class TrajectoryEditor(IJob):
             selected_idxs = set(self._indices)
             indx_map = {j: i for i, j in enumerate(self._indices)}
 
-            selected_bonds = []
-            for bond_idxs in self._input_chemical_system._bonds:
-                if set(bond_idxs).issubset(selected_idxs):
-                    i, j = bond_idxs
-                    selected_bonds.append([indx_map[i], indx_map[j]])
+            selected_bonds = [
+                (indx_map[i], indx_map[j])
+                for i, j in self._input_chemical_system._bonds
+                if i in selected_idxs and j in selected_idxs
+            ]
             new_chemical_system.add_bonds(selected_bonds)
 
             selected_cluster = defaultdict(list)
