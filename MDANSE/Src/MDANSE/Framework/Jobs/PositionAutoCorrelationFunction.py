@@ -15,13 +15,22 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 from scipy.signal import correlate
 
-from MDANSE.Framework.AtomGrouping.grouping import (
-    add_grouped_totals,
+from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomSelection,
+    AtomTransmutation,
+    CorrelationWindow,
+    FramesConfigDesc,
+    GroupingLevel,
+    MDANSETrajectoryFile,
+    OutputFileConfigDesc,
+    PartialCharge,
+    ProjectionConfigDesc,
+    RunningModeConfigDesc,
+    Weights,
 )
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
@@ -43,48 +52,19 @@ class PositionAutoCorrelationFunction(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    projection = ProjectionConfigDesc(label="Project coordinates")
+    atom_charges = PartialCharge(
+        depends={"trajectory": "trajectory"},
     )
-    settings["projection"] = (
-        "ProjectionConfigurator",
-        {"label": "project coordinates"},
-    )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            }
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    weights = Weights()
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
 
     def initialize(self):
         """
@@ -102,7 +82,7 @@ class PositionAutoCorrelationFunction(IJob):
         self._outputData.add(
             "pacf/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["duration"],
+            self.frames.time,
             units="ps",
         )
 
@@ -111,7 +91,7 @@ class PositionAutoCorrelationFunction(IJob):
             self._outputData.add(
                 f"pacf/{element}",
                 "LineOutputVariable",
-                (self.configuration["frames"]["n_frames"],),
+                (len(self.frames),),
                 axis="pacf/axes/time",
                 units="nm2",
                 main_result=True,
@@ -136,17 +116,16 @@ class PositionAutoCorrelationFunction(IJob):
 
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.configuration["frames"]["first"],
-            last=self.configuration["frames"]["last"] + 1,
-            step=self.configuration["frames"]["step"],
+            first=self.frames.first_index,
+            last=self.frames.last_index + 1,
+            step=self.frames.step_index,
         )
 
         series = series - np.average(series, axis=0)
-        series = self.configuration["projection"]["projector"](series)
+        series = self.projection(series)
 
-        n_configs = self.configuration["frames"]["n_configs"]
-        atomicPACF = correlate(series, series[:n_configs], mode="valid") / (
-            3 * n_configs
+        atomicPACF = correlate(series, series[: self.frame_window], mode="valid") / (
+            3 * self.frame_window
         )
         return index, atomicPACF.T[0]
 
@@ -174,13 +153,12 @@ class PositionAutoCorrelationFunction(IJob):
         for element, number in list(nAtomsPerElement.items()):
             self._outputData[f"pacf/{element}"] /= number
 
-        selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.configuration["weights"]["property"]
-        )
-        if self.configuration["weights"]["property"] in ("b_coherent", "b_incoherent"):
+        selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
+        if self.weights in ("b_coherent", "b_incoherent"):
             for weights in selected_weights, all_weights:
                 for key, value in weights.items():
                     weights[key] = abs(value) ** 2
+
         weight_dict = get_weights(
             selected_weights,
             all_weights,
@@ -217,8 +195,8 @@ class PositionAutoCorrelationFunction(IJob):
         )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

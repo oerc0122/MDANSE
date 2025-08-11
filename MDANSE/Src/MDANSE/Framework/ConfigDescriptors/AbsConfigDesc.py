@@ -1,13 +1,32 @@
+#    This file is part of MDANSE.
+#
+#    MDANSE is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 from __future__ import annotations
 
+import json
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection, Container, Iterator
 from enum import Enum
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
+from warnings import Warning
 
 import numpy as np
+from more_itertools import value_chain
 
 from MDANSE.Core.Error import Error
+from MDANSE.IO.IOUtils import MDANSEEncoder
 
 SENTINEL = object()
 T = TypeVar("T")
@@ -18,17 +37,24 @@ class ConfigError(Error):
     pass
 
 
+class ConfigWarning(Warning):
+    pass
+
+
 class Parameter(ABC):
     """Abstract mixin for classes which can have a GUI Component."""
+
+    default_label = ""
+    default_tooltip = ""
 
     def __init__(
         self,
         *,
-        label: str = "",
-        tooltip: str = "",
+        label: str | None = None,
+        tooltip: str | None = None,
     ):
-        self.label = label
-        self.tooltip = tooltip
+        self.label = label or self.default_label
+        self.tooltip = tooltip or self.default_tooltip
 
         self.__doc__ = self.__doc__ or ""
         self.__doc__ += f"""
@@ -38,6 +64,66 @@ GUI Description
 
 {self.tooltip}
         """
+
+
+class Configurable:
+    """Allows any object that derives from it to be configurable within the MDANSE framework.
+
+    Within that framework, to be configurable, a class must:
+        - Derive from this class
+    """
+
+    @property
+    def configuration(self) -> dict[str, Any]:
+        return {name: getattr(self, name) for name in self.descriptors}
+
+    @property
+    def descriptors(self) -> dict[str, Parameter]:
+        """Get all descriptors owned by self."""
+        return {
+            name: param
+            for cls in value_chain(type(self).__bases__, type(self))
+            for name, param in cls.__dict__.items()
+            if isinstance(param, Parameter)
+        }
+
+    @property
+    def parameters(self) -> list[str]:
+        return list(self.descriptors)
+
+    def to_json(self) -> str:
+        to_json = {
+            name: obj.to_json() if isinstance(obj, Parameter) else obj
+            for name, obj in self.configuration.items()
+        }
+        return json.dumps(to_json, cls=MDANSEEncoder)
+
+    output_configuration = to_json
+
+    def check_status(self) -> bool:
+        try:
+            for param in self.parameters:
+                getattr(self, param)
+        except ConfigError:
+            return False
+
+        return True
+
+    def __str__(self) -> str:
+        out = f"{type(self).__name__}(\n"
+        for param in self.parameters:
+            try:
+                val = getattr(self, param)
+            except ConfigError:
+                val = "Undefined or invalid"
+
+            out += f"  {param} = {val},\n"
+        out += ")"
+        return out
+
+
+class CustomConfig(Parameter, Configurable):
+    """Abstract mixin for classes which contain Descriptors, but are themselves to be configured."""
 
 
 class ConfigureDescriptor(Parameter, Generic[T]):
@@ -57,6 +143,8 @@ class ConfigureDescriptor(Parameter, Generic[T]):
         Other variables with which this is mutually exclusive.
     depends : Container[str]
         Other variables which must be set for this to be set.
+    callback : Callable
+        Custom function to be called post-validation.
     label : str
         GUI label to present to user.
     tooltip : str
@@ -72,7 +160,7 @@ class ConfigureDescriptor(Parameter, Generic[T]):
         exclude: Container[T] = (),
         mutex: Container[str] = (),
         depends: dict[str, str] | None = None,
-        callback: Callable[[CD, T, dict[str, str]], bool] | None = None,
+        callback: Callable[[CD, T, dict[str, str]], T] | None = None,
         label: str = "",
         tooltip: str = "",
         **params,
@@ -131,8 +219,17 @@ class ConfigureDescriptor(Parameter, Generic[T]):
             )
 
         deps = {dep: getattr(owner, key) for dep, key in self.depends.items()}
+        value = self.validate(value, deps)
 
-        setattr(owner, self.private_name, self.validate(value, deps))
+        # Custom
+        if self.callback is not None:
+            value = self.callback(self, value, deps)
+
+        # For grouped config descriptors
+        if hasattr(owner, "validate"):
+            value = owner.validate(self, value)
+
+        setattr(owner, self.private_name, value)
         setattr(owner, self.configured_var, True)
 
     def required_deps(self) -> set[str]:
@@ -154,6 +251,7 @@ class ConfigureDescriptor(Parameter, Generic[T]):
             self._choices = value
             return
         self._choices = set(value)
+        self.last_choices = self._choices
 
     @property
     def exclude(self) -> set[int]:
@@ -183,11 +281,12 @@ class ConfigureDescriptor(Parameter, Generic[T]):
         return not exclude or value not in exclude
 
     @abstractmethod
-    def validate(self, value: T, *_deps) -> T:
+    def validate(self, value: T, deps: dict[str, Any]) -> T:
         """
         Ensure that the passed variable is of the right type.
         """
-        if self.choices and isinstance(self.choices, Enum):
+        # Choices
+        if self.choices and isinstance(self.choices, Enum):  # Enum
             try:
                 value = self.choices(value)
             except ValueError:
@@ -195,19 +294,24 @@ class ConfigureDescriptor(Parameter, Generic[T]):
                     f"Value ({value!r}) not in choices ({', '.join(self.choices)})."
                 )
 
+        elif hasattr(self, "get_choices"):  # Function
+            self.last_choices = self.get_choices(deps)
 
-        if not self.validate_choices(value):
+            if not self.validate_choices(value, self.last_choices):
+                raise ConfigError(
+                    f"Value ({value!r}) not in choices ({', '.join(self.last_choices)})."
+                )
+
+        elif not self.validate_choices(value):  # Set
             raise ConfigError(
                 f"Value ({value!r}) not in choices ({', '.join(self.choices)})."
             )
 
+        # Exclude
         if not self.validate_exclude(value):
             raise ConfigError(
                 f"Value ({value!r}) in excluded values ({', '.join(self.exclude)})."
             )
-
-        if self.callback is not None:
-            self.callback(self, value, *_deps)
 
         return value
 
@@ -251,6 +355,9 @@ class MinMax(ABC, Generic[T]):
     @maximum.setter
     def maximum(self, value: T | None) -> None:
         self._maximum = value if value is not None else np.inf
+
+    def get_ranges(self, value: T, deps: dict[str, Any]):
+        return self.minimum, self.maximum
 
     def validate_range(self, value: T, ranges: tuple[T, T] | None = None) -> None:
         if ranges is not None:

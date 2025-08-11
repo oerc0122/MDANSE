@@ -8,7 +8,8 @@ from MDANSE.Framework.Parsers import TrjFile, XDATCARFile, XYZFile, binary_file_
 DATA_DIR = Path("~/MDANSE/MDANSE/Tests/UnitTests/Data/").expanduser()
 
 V = VASP()
-V.fold = False
+print(V)
+V.fold = True
 V.trajectory_file = DATA_DIR / "XDATCAR_version5"
 V.output_files.path = "./doom_file.mdt"
 V.time_step = 1.0

@@ -20,13 +20,14 @@ from pathlib import Path
 from typing import Any, NamedTuple
 
 import numpy as np
+from ase.io.formats import ioformats
 
 from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import Parameter
 from MDANSE.Framework.Formats import OutputFormats
 from MDANSE.MLogging import LogLevels
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
-from .AbsConfigDesc import ConfigError
+from .AbsConfigDesc import ConfigError, CustomConfig
 from .BaseTypesDescriptor import IntegerConfigDesc, PathConfigDesc
 from .ChoiceConfigDesc import MultipleChoiceConfigDesc, SingleChoiceConfigDesc
 
@@ -46,17 +47,6 @@ class OldTrajectorySettings(NamedTuple):
     loglevel: LogLevels | int | str
 
 
-class LogLevelConfigDesc(SingleChoiceConfigDesc):
-    def __init__(self, **kwargs):
-        super().__init__(choices={level.name for level in LogLevels}, **kwargs)
-
-    def validate(self, value: LogLevels | int | str, *_deps) -> LogLevels:
-        try:
-            value = LogLevels(value)
-        except Exception as err:
-            raise ConfigError("Invalid config level.") from err
-
-
 class OutputFormatConfigDesc(MultipleChoiceConfigDesc):
     def __init__(
         self,
@@ -71,9 +61,13 @@ class OutputFormatConfigDesc(MultipleChoiceConfigDesc):
         )
 
 
-class OutputFileConfigDesc(Parameter):
+class OutputFileConfigDesc(CustomConfig):
     out_format = OutputFormatConfigDesc(("MDAFormat", "TextFormat"))
-    log_level = LogLevelConfigDesc(default=LogLevels.NONE, label="Reporting log level.")
+    log_level = SingleChoiceConfigDesc(
+        choices=LogLevels,
+        default=LogLevels.NONE,
+        label="Reporting log level.",
+    )
     path = PathConfigDesc(mode="w")
 
     def __init__(
@@ -93,9 +87,6 @@ class OutputFileConfigDesc(Parameter):
     @property
     def write_logs(self) -> bool:
         return self.log_level is not None
-
-    def __str__(self) -> str:
-        return f"{type(self).__name__}({self.path=}, {self.out_format=}, {self.log_level=})"
 
     @property
     def configuration(self) -> dict[str, Any]:
@@ -149,9 +140,6 @@ class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
             self.chunk_size = chunk_size
         self.compression = self.compression
 
-    def __str__(self) -> str:
-        return f"{type(self).__name__}({self.path=}, {self.log_level=}, {self.dtype=}, {self.chunk_size=}, {self.compression=})"
-
     @classmethod
     def from_old_tuple(cls, args: OldTrajectorySettings):
         """Construct object from old-style tuple."""
@@ -170,3 +158,12 @@ class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
             "chunk_size": self.chunk_size,
             "compression": self.compression,
         }
+
+
+class ASEOutputFormat(OutputFileConfigDesc):
+    out_format = SingleChoiceConfigDesc(
+        choices=(key for key, val in ioformats if val.can_write)
+    )
+
+    def __init__(self, fmt):
+        self.out_format = fmt

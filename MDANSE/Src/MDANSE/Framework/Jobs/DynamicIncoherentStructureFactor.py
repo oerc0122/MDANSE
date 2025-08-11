@@ -50,57 +50,15 @@ class DynamicIncoherentStructureFactor(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["instrument_resolution"] = (
-        "InstrumentResolutionConfigurator",
-        {"dependencies": {"trajectory": "trajectory", "frames": "frames"}},
-    )
-    settings["q_vectors"] = (
-        "QVectorsConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["projection"] = (
-        "ProjectionConfigurator",
-        {"label": "project coordinates"},
-    )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "default": "b_incoherent",
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            },
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    # trajectory = MDANSETrajectoryFile()
+    # frames = CorrelationFramesConfigDesc(depends={"trajectory": "trajectory"})
+    # resolution = ResolutionConfigDesc()
+    # q_vectors = QVectorsConfigDesc()
+    # projection = ProjectorConfigDesc()
+    # grouping = GroupingConfigDesc()
+    # atom_selection = AtomSelectionConfigDesc(depends={"trajectory": "trajectory"})
+    # atom_grouping = AtomGroupingConfigDesc(depends={"trajectory": "trajectory"})
+    # weights = WeightsConfigDesc(depends={"trajectory": "trajectory", "grouping": "atom_grouping", "selection": "atom_selection"})
 
     def initialize(self):
         """

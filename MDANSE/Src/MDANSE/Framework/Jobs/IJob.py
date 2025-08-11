@@ -39,7 +39,7 @@ from more_itertools import consumer, first_true
 from MDANSE import PLATFORM
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
-from MDANSE.Framework.ConfigDescriptors.Configurable import Configurable
+from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import Configurable
 from MDANSE.Framework.ConfigDescriptors.OutputFileDescriptors import (
     OutputFileConfigDesc,
     OutputTrajectoryConfigDesc,

@@ -92,12 +92,21 @@ class ReorientationalTimeCorrelationFunction(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    frames_window = CorrelationWindow(depends={"frames": "frames"})
+    polynomial_order = IntegerConfigDesc(
+        label="Maximum Legendre polynomial order to be used",
+        default= 2,
+        minimum= 1,
+        maximum= 6,
     )
+    per_axis = BooleanConfigDesc(
+        label="Output contribution per axis."
+    )
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
+
     settings["molecule_and_axis"] = (
         "AxisSelectionConfigurator",
         {
@@ -106,21 +115,6 @@ class ReorientationalTimeCorrelationFunction(IJob):
             "dependencies": {"trajectory": "trajectory"},
         },
     )
-    settings["polynomial_order"] = (
-        "IntegerConfigurator",
-        {
-            "label": "Maximum Legendre polynomial order to be used",
-            "default": 2,
-            "mini": 1,
-            "maxi": 6,
-        },
-    )
-    settings["per_axis"] = (
-        "BooleanConfigurator",
-        {"label": "output contribution per axis", "default": False},
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables."""

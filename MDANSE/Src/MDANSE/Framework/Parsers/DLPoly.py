@@ -31,7 +31,6 @@ from MDANSE.IO.IOUtils import strip_comments
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
-from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 from .Parser import Parser
 
 

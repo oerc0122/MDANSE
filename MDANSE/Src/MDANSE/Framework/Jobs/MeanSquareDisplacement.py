@@ -15,10 +15,18 @@
 #
 from __future__ import annotations
 
-import collections
-
-from MDANSE.Framework.AtomGrouping.grouping import (
-    add_grouped_totals,
+from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomSelection,
+    AtomTransmutation,
+    CorrelationWindow,
+    FramesConfigDesc,
+    GroupingLevel,
+    MDANSETrajectoryFile,
+    OutputFileConfigDesc,
+    ProjectionConfigDesc,
+    RunningModeConfigDesc,
+    Weights,
 )
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
@@ -61,48 +69,25 @@ class MeanSquareDisplacement(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["projection"] = (
-        "ProjectionConfigurator",
-        {"label": "project coordinates"},
-    )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    weights = Weights(
+        default="atomic_weight",
+        depends={
+            "trajectory": "trajectory",
+            "selection": "atom_selection",
+            "transmutation": "atom_transmutation",
         },
     )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    projection = ProjectionConfigDesc(
+        label="Project coordinates",
     )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            }
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
 
     def initialize(self):
         """
@@ -120,7 +105,7 @@ class MeanSquareDisplacement(IJob):
         self._outputData.add(
             "msd/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["duration"],
+            self.frames.time,
             units="ps",
         )
 
@@ -129,7 +114,7 @@ class MeanSquareDisplacement(IJob):
             self._outputData.add(
                 f"msd/{element}",
                 "LineOutputVariable",
-                (self.configuration["frames"]["n_frames"],),
+                (len(self.frames),),
                 axis="msd/axes/time",
                 units="nm2",
                 main_result=True,
@@ -151,17 +136,17 @@ class MeanSquareDisplacement(IJob):
 
         # get selected atom indices sublist
         atom_index = self.trajectory.atom_indices[index]
-        series = self.configuration["trajectory"]["instance"].read_atomic_trajectory(
+        series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.configuration["frames"]["first"],
-            last=self.configuration["frames"]["last"] + 1,
-            step=self.configuration["frames"]["step"],
+            first=self.frames.first_index,
+            last=self.frames.last_index + 1,
+            step=self.frames.step_index,
         )
 
-        series = self.configuration["projection"]["projector"](series)
+        series = self.projection(series)
 
         msd = mean_square_displacement(
-            series, self.configuration["frames"]["n_configs"]
+            series, self.frame_window
         )
 
         return index, msd
@@ -190,7 +175,7 @@ class MeanSquareDisplacement(IJob):
             self._outputData[f"msd/{element}"] /= number
 
         selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.configuration["weights"]["property"]
+            prop=self.weights
         )
         weight_dict = get_weights(
             selected_weights,
@@ -228,8 +213,8 @@ class MeanSquareDisplacement(IJob):
         )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

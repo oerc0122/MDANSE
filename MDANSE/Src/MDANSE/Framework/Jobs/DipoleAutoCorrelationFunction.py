@@ -15,11 +15,18 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 from scipy.signal import correlate
 
+from MDANSE.Framework.ConfigDescriptors import (
+    CorrelationWindow,
+    DynamicSingleChoiceConfigDesc,
+    FramesConfigDesc,
+    MDANSETrajectoryFile,
+    OutputFileConfigDesc,
+    PartialCharge,
+    RunningModeConfigDesc,
+)
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import center_of_mass
 
@@ -42,41 +49,28 @@ class DipoleAutoCorrelationFunction(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    molecule_name = DynamicSingleChoiceConfigDesc(
+        choices="chemical_system._clusters.keys()",
+        depends={"choices": "trajectory"},
+        label="Molecule name",
+        default="",
     )
-    settings["molecule_name"] = (
-        "MoleculeSelectionConfigurator",
-        {
-            "label": "molecule name",
-            "default": "",
-            "dependencies": {"trajectory": "trajectory"},
-        },
+    atom_charges = PartialCharge(
+        depends={"trajectory": "trajectory"},
     )
-    settings["atom_charges"] = (
-        "PartialChargeConfigurator",
-        {
-            "dependencies": {"trajectory": "trajectory"},
-            "default": {},
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
-        self.chemical_system = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system
+        self.chemical_system = self.trajectory.chemical_system
 
-        self.molecules = self.chemical_system._clusters[
-            self.configuration["molecule_name"]["value"]
-        ]
+        self.molecules = self.chemical_system._clusters[self.molecule_name]
 
         self.numberOfSteps = len(self.molecules)
 
@@ -84,14 +78,14 @@ class DipoleAutoCorrelationFunction(IJob):
         self._outputData.add(
             "dacf/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["duration"],
+            self.frames.duration,
             units="ps",
         )
 
         self._outputData.add(
             "dacf/dacf",
             "LineOutputVariable",
-            (self.configuration["frames"]["n_frames"],),
+            (self.frames.n_frames,),
             axis="dacf/axes/time",
             main_result=True,
         )
@@ -111,14 +105,12 @@ class DipoleAutoCorrelationFunction(IJob):
             auto-correlation function for a molecule.
         """
         molecule = self.molecules[index]
-        dipoles = np.zeros(
-            (self.configuration["frames"]["number"], 3), dtype=np.float64
-        )
+        dipoles = np.zeros((self.frames.n_frames, 3), dtype=np.float64)
         for i, frame_index in enumerate(
             range(
-                self.configuration["frames"]["first"],
-                self.configuration["frames"]["last"] + 1,
-                self.configuration["frames"]["step"],
+                self.frames.first_index,
+                self.frames.last_index + 1,
+                self.frames.step_index,
             )
         ):
             configuration = self.trajectory.configuration(frame_index)
@@ -135,14 +127,14 @@ class DipoleAutoCorrelationFunction(IJob):
 
             for idx in molecule:
                 try:
-                    q = self.configuration["atom_charges"]["charges"][idx]
+                    q = self.atom_charges[idx]
                 except KeyError:
                     q = charges[idx]
                 dipoles[i] += q * (
                     contiguous_configuration["coordinates"][idx, :] - com
                 )
 
-        n_configs = self.configuration["frames"]["n_configs"]
+        n_configs = self.frames.n_frames
         mol_dacf = correlate(dipoles, dipoles[:n_configs], mode="valid") / (
             3 * n_configs
         )

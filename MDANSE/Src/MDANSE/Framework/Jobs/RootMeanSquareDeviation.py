@@ -15,12 +15,18 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 
-from MDANSE.Framework.AtomGrouping.grouping import (
-    add_grouped_totals,
+from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomSelection,
+    AtomTransmutation,
+    FramesConfigDesc,
+    GroupingLevel,
+    IntegerConfigDesc,
+    MDANSETrajectoryFile,
+    OutputFileConfigDesc,
+    RunningModeConfigDesc,
 )
 from MDANSE.Framework.Jobs.IJob import IJob
 
@@ -45,48 +51,28 @@ class RootMeanSquareDeviation(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    reference_frame = IntegerConfigDesc(
+        minimum=0,
+        default=0,
     )
-    settings["reference_frame"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
 
     def initialize(self):
         super().initialize()
 
         self.numberOfSteps = len(self.trajectory.atom_indices)
 
-        self._referenceIndex = self.configuration["reference_frame"]["value"]
-
         # Will store the time.
         self._outputData.add(
             "rmsd/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["duration"],
+            self.frames.time,
             units="ps",
         )
 
@@ -95,7 +81,7 @@ class RootMeanSquareDeviation(IJob):
             self._outputData.add(
                 f"rmsd/{element}",
                 "LineOutputVariable",
-                (self.configuration["frames"]["number"],),
+                (len(self.frames),),
                 axis="rmsd/axes/time",
                 units="nm",
                 main_result=True,
@@ -104,7 +90,7 @@ class RootMeanSquareDeviation(IJob):
         self._outputData.add(
             "rmsd/total",
             "LineOutputVariable",
-            (self.configuration["frames"]["number"],),
+            (len(self.frames),),
             axis="rmsd/axes/time",
             units="nm",
             main_result=True,
@@ -124,13 +110,13 @@ class RootMeanSquareDeviation(IJob):
 
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.configuration["frames"]["first"],
-            last=self.configuration["frames"]["last"] + 1,
-            step=self.configuration["frames"]["step"],
+            first=self.frames.first_index,
+            last=self.frames.last_index + 1,
+            step=self.frames.step_index,
         )
 
         # Compute the squared sum of the difference between all the coordinate of atoms i and the reference ones
-        squaredDiff = np.sum((series - series[self._referenceIndex, :]) ** 2, axis=1)
+        squaredDiff = np.sum((series - series[self.reference_frame, :]) ** 2, axis=1)
 
         return index, squaredDiff
 
@@ -178,8 +164,8 @@ class RootMeanSquareDeviation(IJob):
         )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

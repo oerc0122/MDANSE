@@ -16,15 +16,23 @@
 from __future__ import annotations
 
 import multiprocessing
+from warnings import warn
 
 from MDANSE.Framework.ConfigDescriptors import IntegerConfigDesc, SingleChoiceConfigDesc
-from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import Parameter
+from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import ConfigWarning, CustomConfig
 
 
-class RunningModeConfigDesc(Parameter):
+class RunningModeConfigDesc(CustomConfig):
     mode = SingleChoiceConfigDesc(
         choices=("single-core", "multicore", "remote"), default="single-core"
     )
     n_procs = IntegerConfigDesc(
         minimum=1, maximum=multiprocessing.cpu_count(), default=1
     )
+
+    def validate(self, desc, value):
+        if self.mode == "single-core" and self.n_procs > 1:
+            warn(
+                "Requested more than one process for single-core job.",
+                category=ConfigWarning,
+            )

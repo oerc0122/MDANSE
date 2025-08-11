@@ -15,13 +15,22 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 from scipy.signal import correlate
 
-from MDANSE.Framework.AtomGrouping.grouping import (
-    add_grouped_totals,
+from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomSelection,
+    AtomTransmutation,
+    CorrelationWindow,
+    FramesConfigDesc,
+    GroupingLevel,
+    InstrumentResolution,
+    MDANSETrajectoryFile,
+    OutputFileConfigDesc,
+    ProjectionConfigDesc,
+    RunningModeConfigDesc,
+    Weights,
 )
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
@@ -51,53 +60,19 @@ class PositionPowerSpectrum(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    instrument_resolution = InstrumentResolution(
+        depends={"trajectory": "trajectory", "frames": "frames"}
     )
-    settings["instrument_resolution"] = (
-        "InstrumentResolutionConfigurator",
-        {"dependencies": {"trajectory": "trajectory", "frames": "frames"}},
-    )
-    settings["projection"] = (
-        "ProjectionConfigurator",
-        {"label": "project coordinates"},
-    )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "default": "atomic_weight",
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            },
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    projection = ProjectionConfigDesc(label="Project coordinates")
+    weights = Weights()
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
 
     def initialize(self):
         """
@@ -107,10 +82,8 @@ class PositionPowerSpectrum(IJob):
 
         self.numberOfSteps = len(self.trajectory.atom_indices)
 
-        instrResolution = self.configuration["instrument_resolution"]
-
         self.add_ideal_results = (
-            self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
+            self.instrument_resolution.kernel.lower() != "ideal"
         )
 
         self.labels = [
@@ -120,20 +93,20 @@ class PositionPowerSpectrum(IJob):
         self._outputData.add(
             "pps/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["duration"],
+            self.frames.time,
             units="ps",
         )
         self._outputData.add(
             "pacf/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["duration"],
+            self.frames.time,
             units="ps",
         )
 
         self._outputData.add(
             "pps/res/time_window",
             "LineOutputVariable",
-            instrResolution["time_window_positive"],
+            self.instrument_resolution.time_window_positive,
             axis="pps/axes/time",
             units="au",
         )
@@ -141,19 +114,19 @@ class PositionPowerSpectrum(IJob):
         self._outputData.add(
             "pps/axes/omega",
             "LineOutputVariable",
-            instrResolution["omega"],
+            self.instrument_resolution.omega,
             units="rad/ps",
         )
         self._outputData.add(
             "pps/axes/romega",
             "LineOutputVariable",
-            instrResolution["romega"],
+            self.instrument_resolution.romega,
             units="rad/ps",
         )
         self._outputData.add(
             "pps/res/omega_window",
             "LineOutputVariable",
-            instrResolution["omega_window"],
+            self.instrument_resolution.omega_window,
             axis="pps/axes/omega",
             units="au",
         )
@@ -162,14 +135,14 @@ class PositionPowerSpectrum(IJob):
             self._outputData.add(
                 f"pacf/{element}",
                 "LineOutputVariable",
-                (self.configuration["frames"]["n_frames"],),
+                (len(self.frames),),
                 axis="pacf/axes/time",
                 units="nm2",
             )
             self._outputData.add(
                 f"pps/{element}",
                 "LineOutputVariable",
-                (instrResolution["n_romegas"],),
+                (self.instrument_resolution.n_romegas,),
                 axis="pps/axes/romega",
                 units="au",
                 main_result=True,
@@ -179,7 +152,7 @@ class PositionPowerSpectrum(IJob):
                 self._outputData.add(
                     f"pps/ideal/{element}",
                     "LineOutputVariable",
-                    (instrResolution["n_romegas"],),
+                    (self.instrument_resolution.n_romegas,),
                     axis="pps/axes/romega",
                     units="au",
                 )
@@ -187,14 +160,14 @@ class PositionPowerSpectrum(IJob):
         self._outputData.add(
             "pacf/total",
             "LineOutputVariable",
-            (self.configuration["frames"]["n_frames"],),
+            (len(self.frames),),
             axis="pacf/axes/time",
             units="nm2",
         )
         self._outputData.add(
             "pps/total",
             "LineOutputVariable",
-            (instrResolution["n_romegas"],),
+            (self.instrument_resolution.n_romegas,),
             axis="pps/axes/romega",
             units="au",
             main_result=True,
@@ -203,7 +176,7 @@ class PositionPowerSpectrum(IJob):
             self._outputData.add(
                 "pps/ideal/total",
                 "LineOutputVariable",
-                (instrResolution["n_romegas"],),
+                (self.instrument_resolution.n_romegas,),
                 axis="pps/axes/romega",
                 units="au",
             )
@@ -229,16 +202,16 @@ class PositionPowerSpectrum(IJob):
 
         series = trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.configuration["frames"]["first"],
-            last=self.configuration["frames"]["last"] + 1,
-            step=self.configuration["frames"]["step"],
+            first=self.frames.first_index,
+            last=self.frames.last_index + 1,
+            step=self.frames.step_index,
         )
 
         series = series - np.average(series, axis=0)
 
-        series = self.configuration["projection"]["projector"](series)
+        series = self.projection(series)
 
-        n_configs = self.configuration["frames"]["n_configs"]
+        n_configs = self.frame_window
         atomicPACF = correlate(series, series[:n_configs], mode="valid") / (
             3 * n_configs
         )
@@ -267,22 +240,22 @@ class PositionPowerSpectrum(IJob):
             self._outputData[f"pacf/{element}"][:] /= number
             self._outputData[f"pps/{element}"][:] = get_spectrum(
                 self._outputData[f"pacf/{element}"],
-                self.configuration["instrument_resolution"]["time_window"],
-                self.configuration["instrument_resolution"]["time_step"],
+                self.instrument_resolution.time_window,
+                self.instrument_resolution.time_step,
                 fft="rfft",
             )
             if self.add_ideal_results:
                 self._outputData[f"pps/ideal/{element}"][:] = get_spectrum(
                     self._outputData[f"pacf/{element}"],
                     None,
-                    self.configuration["instrument_resolution"]["time_step"],
+                    self.instrument_resolution.time_step,
                     fft="rfft",
                 )
 
         selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.configuration["weights"]["property"]
+            prop=self.weights
         )
-        if self.configuration["weights"]["property"] in ("b_coherent", "b_incoherent"):
+        if self.weights in ("b_coherent", "b_incoherent"):
             for weights in selected_weights, all_weights:
                 for key, value in weights.items():
                     weights[key] = abs(value) ** 2
@@ -359,8 +332,8 @@ class PositionPowerSpectrum(IJob):
             )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

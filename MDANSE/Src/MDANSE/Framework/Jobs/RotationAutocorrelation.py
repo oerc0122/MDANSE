@@ -15,12 +15,19 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 from scipy.signal import correlate
 from scipy.spatial.transform import Rotation
 
+from MDANSE.Framework.ConfigDescriptors import (
+    AtomSelection,
+    CorrelationWindow,
+    DynamicSingleChoiceConfigDesc,
+    FramesConfigDesc,
+    MDANSETrajectoryFile,
+    OutputFileConfigDesc,
+    RunningModeConfigDesc,
+)
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import center_of_mass
 
@@ -44,26 +51,15 @@ class RotationAutocorrelation(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    molecule_name = DynamicSingleChoiceConfigDesc(
+        choices="chemical_system._clusters.keys()", depends={"choices": "trajectory"}
     )
-    settings["molecule"] = (
-        "MoleculeSelectionConfigurator",
-        {
-            "label": "molecule name",
-            "default": "",
-            "dependencies": {"trajectory": "trajectory"},
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables."""

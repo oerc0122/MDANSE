@@ -15,7 +15,14 @@
 #
 from __future__ import annotations
 
-from .AtomMappingDesc import AtomMapping
+from .AtomMappingDesc import (
+    AtomMapping,
+    AtomSelection,
+    AtomTransmutation,
+    GroupingLevel,
+    PartialCharge,
+    PartialChargeMapper,
+)
 from .BaseTypesDescriptor import (
     ArrayConfigDesc,
     BooleanConfigDesc,
@@ -33,30 +40,49 @@ from .ChoiceConfigDesc import (
     MultipleChoiceConfigDesc,
     SingleChoiceConfigDesc,
 )
-from .FramesDescriptors import CorrelationFramesDesc, FramesConfigDesc
+from .FramesDescriptors import CorrelationWindow, FramesConfigDesc, InterpOrder
 from .InputFileDescriptors import MDANSETrajectoryFile
-from .OutputFileDescriptors import OutputFileConfigDesc, OutputTrajectoryConfigDesc
+from .OutputFileDescriptors import (
+    ASEOutputFormat,
+    OutputFileConfigDesc,
+    OutputTrajectoryConfigDesc,
+)
+from .ProjectionDescriptor import ProjectionConfigDesc
+from .RangeDescriptors import RangeCellCutoff
+from .Resolution import InstrumentResolution
 from .RunningModeDescriptor import RunningModeConfigDesc
+from .Weights import Weights
 
 __all__ = [
-    "AtomMapping",
     "ArrayConfigDesc",
+    "AtomMapping",
+    "AtomSelection",
+    "AtomTransmutation",
     "BooleanConfigDesc",
-    "DynamicSingleChoiceConfigDesc",
-    "DynamicMultiChoiceConfigDesc",
-    "FloatConfigDesc",
-    "IntegerConfigDesc",
-    "NumericRangeConfigDesc",
-    "PathConfigDesc",
-    "RangeConfigDesc",
-    "StringConfigDesc",
-    "VectorConfigDesc",
-    "MultipleChoiceConfigDesc",
-    "MDANSETrajectoryFile",
-    "SingleChoiceConfigDesc",
     "CorrelationFramesDesc",
+    "CorrelationWindow",
+    "DynamicMultiChoiceConfigDesc",
+    "DynamicSingleChoiceConfigDesc",
+    "FloatConfigDesc",
     "FramesConfigDesc",
+    "GroupingLevel",
+    "InstrumentResolution",
+    "IntegerConfigDesc",
+    "InterpOrder",
+    "MDANSETrajectoryFile",
+    "MultipleChoiceConfigDesc",
+    "NumericRangeConfigDesc",
     "OutputFileConfigDesc",
     "OutputTrajectoryConfigDesc",
+    "PartialCharge",
+    "PartialChargeMapper",
+    "PathConfigDesc",
+    "ProjectionConfigDesc",
+    "RangeCellCutoff",
+    "RangeConfigDesc",
     "RunningModeConfigDesc",
+    "SingleChoiceConfigDesc",
+    "StringConfigDesc",
+    "VectorConfigDesc",
+    "Weights",
 ]

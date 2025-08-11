@@ -22,7 +22,7 @@ from enum import Enum, auto
 from math import isclose
 from numbers import Number
 from pathlib import Path
-from typing import Optional, SupportsFloat, SupportsInt, Union
+from typing import Any, SupportsFloat, SupportsInt
 
 import numpy as np
 from more_itertools import numeric_range
@@ -89,7 +89,7 @@ class BooleanConfigDesc(ConfigureDescriptor[bool]):
     def __init__(self, default: bool = False, **params):
         super().__init__(default=default, **params)
 
-    def validate(self, value: bool | str, *_) -> bool:
+    def validate(self, value: bool | str, deps: dict[str, Any]) -> bool:
         if isinstance(value, str):
             value = value.lower()
 
@@ -112,7 +112,7 @@ class FloatConfigDesc(MinMax[float], ConfigureDescriptor[float]):
         super().__init__(**params)
         self.non_zero = non_zero
 
-    def validate(self, value: SupportsFloat, *_) -> float:
+    def validate(self, value: SupportsFloat, deps: dict[str, Any]) -> float:
         try:
             value = float(value)
         except ValueError as error:
@@ -120,7 +120,9 @@ class FloatConfigDesc(MinMax[float], ConfigureDescriptor[float]):
 
         super().validate(value)
 
-        self.validate_range(value)
+        ranges = self.get_ranges(self, value, deps: dict[str, Any])
+
+        self.validate_range(value, ranges)
 
         if self.non_zero is not None and isclose(value, 0.0, abs_tol=self.non_zero):
             raise ConfigError(f"Non-null val ({value}) is too close to zero.")
@@ -134,13 +136,15 @@ class IntegerConfigDesc(MinMax[int], ConfigureDescriptor[int]):
     def __init__(self, **params):
         super().__init__(**params)
 
-    def validate(self, value: SupportsInt, *_) -> int:
+    def validate(self, value: SupportsInt, deps: dict[str, Any]) -> int:
         try:
             value = int(value)
         except ValueError as error:
             raise ConfigError(f"Value ({value}) is not a valid integer.") from error
 
-        super().validate(value)
+        ranges = self.get_ranges(self, value, deps: dict[str, Any])
+
+        self.validate_range(value, ranges)
 
         self.validate_range(value)
 
@@ -161,16 +165,20 @@ class DictConfigDesc(ConfigureDescriptor[dict]):
 
         self.fixed = fixed
 
-    def validate(self, value, *_):
-        if isinstance(value, str):
-            value = json.load(value)
-        elif isinstance(value, Sequence):
+    def validate(self, value, deps: dict[str, Any]):
+        if isinstance(value, Sequence):
             value = dict(value)
+
+        try:
+            json_handler(value)
+        except Exception as err:
+            raise ConfigError("Failed to build dict.") from err
 
         if missing := self.choices - value.keys():
             raise ConfigError(f"Required keys ({cjoin(missing)}) are missing.")
         if erroneous := self.exclude & value.keys():
             raise ConfigError(f"Forbidden keys ({cjoin(erroneous)}) are present.")
+
         if self.fixed and (extraneous := value.keys() - self.choices):
             raise ConfigError(
                 f"Extra keys are present ({cjoin(extraneous)}), "
@@ -207,7 +215,7 @@ class StringConfigDesc(ConfigureDescriptor[str]):
             return
         self.regex = re.compile(value)
 
-    def validate(self, value: str, *_) -> float:
+    def validate(self, value: str, deps: dict[str, Any]) -> float:
         try:
             value = str(value)
         except ValueError as error:
@@ -260,7 +268,7 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
         self.extension.setdefault("All files", "*")
         self.directory = directory
 
-    def validate(self, value, *_) -> Path:
+    def validate(self, value, deps: dict[str, Any]) -> Path:
         try:
             value = Path(value).expanduser()
         except TypeError as error:
@@ -285,11 +293,14 @@ class RangeConfigDesc(MinMax[int], ConfigureDescriptor[range]):
 
     def __init__(
         self,
+        *args,
+        include_last: bool = False,
         **params,
     ):
-        super().__init__(**params)
+        super().__init__(*args, **params)
+        self.include_last = include_last
 
-    def validate(self, value, *_) -> range:
+    def validate(self, value: int | Sequence | dict | range, deps: dict[str, Any]) -> range:
         if isinstance(value, int):
             value = range(value)
         elif isinstance(value, Sequence):
@@ -301,8 +312,13 @@ class RangeConfigDesc(MinMax[int], ConfigureDescriptor[range]):
                 f"Do not know how to convert {type(value).__name__} to range"
             )
 
-        self.validate_range(value.start)
-        self.validate_range(value.stop)
+        if self.include_last:
+            value = range(value.start, value.stop + value.step, value.step)
+
+        ranges = self.get_ranges(value, deps: dict[str, Any])
+
+        self.validate_range(value.start, ranges)
+        self.validate_range(value.stop, ranges)
 
         return value
 
@@ -312,10 +328,16 @@ class NumericRangeConfigDesc(MinMax[Number], ConfigureDescriptor[numeric_range])
     This configurator allows a user to input a generalised range.
     """
 
-    def __init__(self, **params):
-        super().__init__(**params)
+    def __init__(
+        self,
+        *args,
+        include_last: bool = False,
+        **params,
+    ):
+        super().__init__(*args, **params)
+        self.include_last = include_last
 
-    def validate(self, value, *_) -> numeric_range:
+    def validate(self, value: float | int | Sequence | dict | range | numeric_range, deps: dict[str, Any]) -> numeric_range:
         if isinstance(value, (float, int)):
             value = numeric_range(value)
         elif isinstance(value, Sequence):
@@ -331,8 +353,13 @@ class NumericRangeConfigDesc(MinMax[Number], ConfigureDescriptor[numeric_range])
 
         assert value is numeric_range
 
-        self.validate_range(value._start)
-        self.validate_range(value._stop)
+        if self.include_last:
+            value = numeric_range(value._start, value._stop + value._step, value._step)
+
+        ranges = self.get_ranges(value, deps: dict[str, Any])
+
+        self.validate_range(value._start, ranges)
+        self.validate_range(value._stop, ranges)
 
         return value
 
@@ -352,11 +379,13 @@ class ArrayConfigDesc(ConfigureDescriptor[np.ndarray]):
         self.non_zero = non_zero
         self.dtype = dtype
 
-    def validate(self, value, *_) -> np.ndarray:
+    def validate(self, value, deps: dict[str, Any]) -> np.ndarray:
         if isinstance(value, Sequence):
             value = np.array(value, dtype=self.dtype)
         elif isinstance(value, str):
             value = np.fromstring(value, dtype=self.dtype)
+
+        value = super().validate(value, deps)
 
         if self.non_zero and (
             (value.ndims == 2 and not np.isclose(np.linalg.det(value), 0.0))
@@ -373,9 +402,19 @@ class VectorConfigDesc(ArrayConfigDesc):
         *,
         length: int = 3,
         shape: None = None,
+        normalise: bool = False,
         **params,
     ):
         if shape is not None:
             raise ConfigError("Cannot pass explicit `shape`, use `length`.")
 
         super().__init__(shape=(length,), **params)
+        self.normalise = normalise
+
+    def validate(self, value, deps: dict[str, Any]) -> np.ndarray:
+        value = super().validate(value, deps)
+
+        if self.normalise:
+            value /= np.linalg.norm(value)
+
+        return value

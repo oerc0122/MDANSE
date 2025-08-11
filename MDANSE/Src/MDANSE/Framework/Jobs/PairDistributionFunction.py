@@ -58,13 +58,13 @@ class PairDistributionFunction(DistanceHistogram):
 
     def finalize(self):
         """Perform the last steps of the analysis and write out results."""
-        npoints = len(self.configuration["r_values"]["mid_points"])
+        npoints = len(self.r_values.mid_points)
 
         for i in ("pdf", "rdf", "tcf"):
             self._outputData.add(
                 f"{i}/axes/r",
                 "LineOutputVariable",
-                self.configuration["r_values"]["mid_points"],
+                self.r_values.mid_points,
                 units="nm",
             )
             for label, _ in self.labels:
@@ -117,15 +117,15 @@ class PairDistributionFunction(DistanceHistogram):
                     units="au",
                 )
 
-        nFrames = self.configuration["frames"]["number"]
+        nFrames = len(self.frames)
 
         self.averageDensity /= nFrames
 
-        densityFactor = 4.0 * np.pi * self.configuration["r_values"]["mid_points"]
+        densityFactor = 4.0 * np.pi * self.r_values.mid_points
 
-        shellSurfaces = densityFactor * self.configuration["r_values"]["mid_points"]
+        shellSurfaces = densityFactor * self.r_values.mid_points
 
-        shellVolumes = shellSurfaces * self.configuration["r_values"]["step"]
+        shellVolumes = shellSurfaces * self.r_values.binning.step
 
         nAtomsPerElement = self.trajectory.get_natoms()
 
@@ -197,7 +197,7 @@ class PairDistributionFunction(DistanceHistogram):
         update_pair_results(self.trajectory, calc_func, self._outputData)
 
         selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.configuration["weights"]["property"]
+            prop=self.weights
         )
         weight_dict = get_weights(
             selected_weights,
@@ -254,8 +254,8 @@ class PairDistributionFunction(DistanceHistogram):
             self._outputData["tcf/total"].scaling_factor = factor
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

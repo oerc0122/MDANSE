@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from functools import cached_property
-from typing import NamedTuple
+from typing import Any, Literal, NamedTuple
 
 from more_itertools import numeric_range
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .AbsConfigDesc import ConfigError, Parameter
+from .AbsConfigDesc import ConfigError, CustomConfig
 from .BaseTypesDescriptor import IntegerConfigDesc, RangeConfigDesc
+from .ChoiceConfigDesc import DynamicSingleChoiceConfigDesc
 
 
 class Frame(NamedTuple):
@@ -51,53 +51,89 @@ class Frames:
         return self.samples.step
 
     @property
-    def time_start(self) -> int:
+    def time_start(self) -> float:
         return self.times[0]
 
     @property
-    def time_stop(self) -> int:
+    def time_stop(self) -> float:
         return self.times[-1]
 
     @property
-    def time_step(self) -> int:
+    def time_step(self) -> float:
         return self.times.step
+
+    @property
+    def duration(self) -> float:
+        return self.time_stop - self.time_start
 
 
 class FramesConfigDesc(RangeConfigDesc):
+    default_tooltip = "Select which frames are to be included."
+    default_label = "Frames to include in correlation."
+
     def required_deps(self) -> set[str]:
         return super().required_deps() | {"trajectory"}
 
-    def validate(self, value: range, deps: dict[str, object]) -> Frames:
-        trajectory = deps["trajectory"]
+    def get_ranges(self, _value: None, deps: dict[str, Any]) -> tuple[int, int]:
+        return (0, len(deps["trajectory"]) + 1)
+
+    def validate(
+        self,
+        value: range | tuple[int, ...] | None | Literal["all"],
+        deps: dict[str, Any],
+    ) -> Frames:
+        trajectory: Trajectory = deps["trajectory"]
         nsteps = len(trajectory)
+
         if value in {"all", None}:
             value = (0, nsteps, 1)
 
-        if isinstance(value, int):
-            value = range(value)
-        elif isinstance(value, Sequence):
-            value = range(*value)
-        elif isinstance(value, dict):
-            value = range(**value)
-        elif not isinstance(value, range):
-            raise ConfigError(
-                f"Do not know how to convert {type(value).__name__} to range"
-            )
-
-        self.validate_range(value.start, (0, nsteps + 1))
-        self.validate_range(value.stop, (0, nsteps + 1))
+        value = super().validate(value, deps)
 
         return Frames(trajectory, value)
 
 
-class CorrelationFramesDesc(FramesConfigDesc, Parameter):
-    frames = FramesConfigDesc(
-        depends={"trajectory": "trajectory"},
-        label="Frames to include in correlation.",
-        tooltip="Select which frames are to be included.",
+class CorrelationWindow(IntegerConfigDesc):
+    default_label="Correlation window"
+    default_tooltip="Number of frames in correlation window."
+
+    def required_deps(self) -> set[str]:
+        return super().required_deps() | {"frames"}
+
+    def get_ranges(self, deps: dict[str, Any]):
+        return (2, len(deps["frames"]))
+
+
+class InterpOrder(DynamicSingleChoiceConfigDesc[int]):
+    default_label = "Velocity interpolation order."
+    default_tooltip = (
+        "Select velocity interpolation order, "
+        "if the file contains velocities use 0 to use those."
     )
-    window = IntegerConfigDesc(
-        minimum=1,
-        label="Frames window",
-        tooltip="Number of frames in correlation window.",
-    )
+
+    base_aliases = {
+        "no interpolation": 0,
+        "1st order": 1,
+        "2nd order": 2,
+        "3rd order": 3,
+        "4th order": 4,
+        "5th order": 5,
+    }
+
+    def __init__(self, *args, aliases: None = None, **kwargs):
+        if aliases is not None:
+            raise ConfigError("Aliases may not be non-None")
+
+        super().__init__(self, *args, aliases=self.base_aliases, **kwargs)
+
+    @property
+    def choices(self) -> list[int]:
+        return sorted(self.last_choices)
+
+    def required_deps(self) -> set[str]:
+        return super().required_deps() | {"trajectory", "frames"}
+
+    def get_choices(self, deps) -> set[int]:
+        maxi = min(6, len(deps["frames"]))
+        mini = 0 if "velocities" in deps["trajectory"].variables() else 1
+        return set(range(mini, maxi))

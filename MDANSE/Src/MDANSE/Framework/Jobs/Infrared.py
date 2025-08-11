@@ -20,6 +20,17 @@ import collections
 import numpy as np
 from scipy.signal import correlate
 
+from MDANSE.Framework.ConfigDescriptors import (
+    CorrelationWindow,
+    DynamicSingleChoiceConfigDesc,
+    FramesConfigDesc,
+    InterpOrder,
+    MDANSETrajectoryFile,
+    OutputFileConfigDesc,
+    PartialCharge,
+    Resolution,
+    RunningModeConfigDesc,
+)
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Mathematics.Signal import differentiate, get_spectrum
@@ -46,69 +57,49 @@ class Infrared(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectoryFile()
+    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    atom_charges = PartialCharge(
+        depends={"trajectory": "trajectory"},
     )
-    settings["instrument_resolution"] = (
-        "InstrumentResolutionConfigurator",
-        {"dependencies": {"trajectory": "trajectory", "frames": "frames"}},
+
+    instrument_resolution = Resolution(
+        depends={"trajectory": "trajectory", "frames": "frames"},
     )
-    settings["derivative_order"] = (
-        "DerivativeOrderConfigurator",
-        {
-            "label": "d/dt dipole numerical derivative",
-            "dependencies": {"frames": "frames"},
-        },
+    derivative_order = InterpOrder(
+        depends={"frames": "frames"}, label="d/dt dipole numerical derivative"
     )
-    settings["molecule_name"] = (
-        "MoleculeSelectionConfigurator",
-        {
-            "label": "molecule name",
-            "default": "",
-            "dependencies": {"trajectory": "trajectory"},
-        },
+    molecule_name = DynamicSingleChoiceConfigDesc(
+        choices="chemical_system._clusters.keys()",
+        depends={"choices": "trajectory"},
+        label="Molecule name",
+        default="",
     )
-    settings["atom_charges"] = (
-        "PartialChargeConfigurator",
-        {
-            "dependencies": {"trajectory": "trajectory"},
-            "default": {},
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    output_files = OutputFileConfigDesc()
+    running_mode = RunningModeConfigDesc()
 
     def initialize(self):
         super().initialize()
 
-        self.chemical_system = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system
+        self.chemical_system = self.trajectory.chemical_system
 
-        self.molecules = self.chemical_system._clusters[
-            self.configuration["molecule_name"]["value"]
-        ]
+        self.molecules = self.chemical_system._clusters[self.molecule_name]
 
         self.numberOfSteps = len(self.molecules)
-        instrResolution = self.configuration["instrument_resolution"]
 
-        self.add_ideal_results = (
-            self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
-        )
+        self.add_ideal_results = self.instrument_resolution.kernel != "ideal"
 
         self._outputData.add(
             "ir/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["duration"],
+            self.frames.duration,
             units="ps",
         )
         self._outputData.add(
             "ir/res/time_window",
             "LineOutputVariable",
-            instrResolution["time_window_positive"],
+            self.instrument_resolution.time_window_positive,
             axis="ir/axes/time",
             units="au",
         )
@@ -116,19 +107,19 @@ class Infrared(IJob):
         self._outputData.add(
             "ir/axes/omega",
             "LineOutputVariable",
-            instrResolution["omega"],
+            self.instrument_resolution.omega,
             units="rad/ps",
         )
         self._outputData.add(
             "ir/axes/romega",
             "LineOutputVariable",
-            instrResolution["romega"],
+            self.instrument_resolution.romega,
             units="rad/ps",
         )
         self._outputData.add(
             "ir/res/omega_window",
             "LineOutputVariable",
-            instrResolution["omega_window"],
+            self.instrument_resolution.omega_window,
             axis="ir/axes/omega",
             units="au",
         )
@@ -136,13 +127,13 @@ class Infrared(IJob):
         self._outputData.add(
             "ddacf/ddacf",
             "LineOutputVariable",
-            (self.configuration["frames"]["n_frames"],),
+            (len(self.frames),),
             axis="ir/axes/time",
         )
         self._outputData.add(
             "ir/ir",
             "LineOutputVariable",
-            (instrResolution["n_romegas"],),
+            (self.instrument_resolution.n_romegas,),
             axis="ir/axes/romega",
             main_result=True,
         )
@@ -150,7 +141,7 @@ class Infrared(IJob):
             self._outputData.add(
                 "ir/ideal",
                 "LineOutputVariable",
-                (instrResolution["n_romegas"],),
+                (self.instrument_resolution.n_romegas,),
                 axis="ir/axes/romega",
             )
 
@@ -169,14 +160,12 @@ class Infrared(IJob):
             auto-correlation function for a molecule.
         """
         molecule = self.molecules[index]
-        ddipole = np.zeros(
-            (self.configuration["frames"]["number"], 3), dtype=np.float64
-        )
+        ddipole = np.zeros((len(self.frames), 3), dtype=np.float64)
         for i, frame_index in enumerate(
             range(
-                self.configuration["frames"]["first"],
-                self.configuration["frames"]["last"] + 1,
-                self.configuration["frames"]["step"],
+                self.frames.index_first,
+                self.frames.index_last + 1,
+                self.frames.index_step,
             )
         ):
             configuration = self.trajectory.configuration(frame_index)
@@ -193,7 +182,7 @@ class Infrared(IJob):
 
             for idx in molecule:
                 try:
-                    q = self.configuration["atom_charges"]["charges"][idx]
+                    q = self.atom_charges[idx]
                 except KeyError:
                     q = charges[idx]
                 ddipole[i] += q * (
@@ -203,11 +192,11 @@ class Infrared(IJob):
         for axis in range(3):
             ddipole[:, axis] = differentiate(
                 ddipole[:, axis],
-                order=self.configuration["derivative_order"]["value"],
-                dt=self.configuration["frames"]["time_step"],
+                order=self.derivative_order,
+                dt=self.frames.time_step,
             )
 
-        n_configs = self.configuration["frames"]["n_configs"]
+        n_configs = self.frames.n_configs
         mol_ddacf = correlate(ddipole, ddipole[:n_configs], mode="valid") / (
             3 * n_configs
         )
@@ -234,21 +223,21 @@ class Infrared(IJob):
         self._outputData["ddacf/ddacf"] /= self.numberOfSteps
         self._outputData["ir/ir"][:] = get_spectrum(
             self._outputData["ddacf/ddacf"],
-            self.configuration["instrument_resolution"]["time_window"],
-            self.configuration["instrument_resolution"]["time_step"],
+            self.instrument_resolution.time_window,
+            self.instrument_resolution.time_step,
             fft="rfft",
         )
         if self.add_ideal_results:
             self._outputData["ir/ideal"][:] = get_spectrum(
                 self._outputData["ddacf/ddacf"],
                 None,
-                self.configuration["instrument_resolution"]["time_step"],
+                self.instrument_resolution.time_step,
                 fft="rfft",
             )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )
