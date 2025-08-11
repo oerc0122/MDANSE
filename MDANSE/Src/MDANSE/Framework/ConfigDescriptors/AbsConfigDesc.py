@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Container, Iterator
+from collections.abc import Callable, Collection, Container, Iterator
+from enum import Enum
 from typing import Generic, TypeVar
 
 import numpy as np
@@ -10,6 +11,7 @@ from MDANSE.Core.Error import Error
 
 SENTINEL = object()
 T = TypeVar("T")
+CD = TypeVar("CD", bound="ConfigureDescriptor")
 
 
 class ConfigError(Error):
@@ -70,6 +72,7 @@ class ConfigureDescriptor(Parameter, Generic[T]):
         exclude: Container[T] = (),
         mutex: Container[str] = (),
         depends: dict[str, str] | None = None,
+        callback: Callable[[CD, T, dict[str, str]], bool] | None = None,
         label: str = "",
         tooltip: str = "",
         **params,
@@ -83,6 +86,7 @@ class ConfigureDescriptor(Parameter, Generic[T]):
         self.mutex = mutex
 
         self.depends: dict[str, str] = depends if depends is not None else {}
+        self.callback = callback
 
         if missing := (self.required_deps() - self.depends.keys()):
             raise ConfigError(f"Required deps ({', '.join(missing)}) missing.")
@@ -142,9 +146,12 @@ class ConfigureDescriptor(Parameter, Generic[T]):
         return self._choices
 
     @choices.setter
-    def choices(self, value: Container[T]) -> None:
+    def choices(self, value: Container[T] | Enum) -> None:
         if value is None:
             self._choices = set()
+            return
+        if isinstance(value, Enum):
+            self._choices = value
             return
         self._choices = set(value)
 
@@ -167,7 +174,7 @@ class ConfigureDescriptor(Parameter, Generic[T]):
             return
         self._exclude = set(value)
 
-    def validate_choices(self, value: T, choices: set[T] | None = None) -> bool:
+    def validate_choices(self, value: T, choices: set[T] | Enum | None = None) -> bool:
         choices = self.choices if choices is None else choices
         return not choices or value in choices
 
@@ -180,6 +187,15 @@ class ConfigureDescriptor(Parameter, Generic[T]):
         """
         Ensure that the passed variable is of the right type.
         """
+        if self.choices and isinstance(self.choices, Enum):
+            try:
+                value = self.choices(value)
+            except ValueError:
+                raise ConfigError(
+                    f"Value ({value!r}) not in choices ({', '.join(self.choices)})."
+                )
+
+
         if not self.validate_choices(value):
             raise ConfigError(
                 f"Value ({value!r}) not in choices ({', '.join(self.choices)})."
@@ -189,6 +205,9 @@ class ConfigureDescriptor(Parameter, Generic[T]):
             raise ConfigError(
                 f"Value ({value!r}) in excluded values ({', '.join(self.exclude)})."
             )
+
+        if self.callback is not None:
+            self.callback(self, value, *_deps)
 
         return value
 
