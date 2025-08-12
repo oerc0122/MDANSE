@@ -50,6 +50,7 @@ def test_temperature(generate_benchmarks, tmp_path, traj_info, interp_order):
         out_file,
         result_file,
         ["temp"],
+        startswith=True,
         compare_axis=True,
     )
 
