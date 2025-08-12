@@ -113,7 +113,7 @@ def test_trajectory_state():
         ("ElasticIncoherentStructureFactor", ["eisf"], "b_incoherent", 1e-10, 1e-7),
         (
             "GaussianDynamicIncoherentStructureFactor",
-            ["gdsf", "msd"],
+            ["gdisf", "msd"],
             "b_incoherent",
             1e-10,
             1e-7,
@@ -169,7 +169,7 @@ def test_rmsf(generate_benchmarks, tmp_path, parameters):
     assert out_file.is_file()
     assert log_file.is_file()
 
-    compare_hdf5(out_file, result_file, "rmsf/rmsf", startswith=True, compare_axis=True)
+    compare_hdf5(out_file, result_file, ["rmsf"], startswith=True, compare_axis=True)
 
 
 def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
@@ -203,7 +203,7 @@ def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
     compare_hdf5(
         out_file,
         result_file,
-        ("ndsf/f(q,t)", "ndsf/s(q,f)"),
+        ["ndsf"],
         startswith=True,
         atol=1e-6,
         compare_axis=True,
@@ -236,7 +236,7 @@ def test_ssfsf(generate_benchmarks, tmp_path, dcsf):
     assert log_file.is_file()
 
     compare_hdf5(
-        out_file, result_file, "ssf/total", startswith=True, atol=1e-6,
+        out_file, result_file, ["ssf"], startswith=True, atol=1e-6,
         compare_axis=True
     )
 

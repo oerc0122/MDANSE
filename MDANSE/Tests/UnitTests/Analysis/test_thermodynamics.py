@@ -49,12 +49,7 @@ def test_temperature(generate_benchmarks, tmp_path, traj_info, interp_order):
     compare_hdf5(
         out_file,
         result_file,
-        (
-            "temp/kinetic_energy",
-            "temp/temperature",
-            "temp/avg_kinetic_energy",
-            "temp/avg_temperature",
-        ),
+        ["temp"],
         compare_axis=True,
     )
 
@@ -98,12 +93,7 @@ def test_density(generate_benchmarks, tmp_path, traj_info, output_format):
         compare_hdf5(
             out_file,
             result_file,
-            (
-                "density/atomic/density",
-                "density/mass/density",
-                "density/atomic/avg_density",
-                "density/mass/avg_density",
-            ),
+            ["density"],
             startswith=True,
             compare_axis=True,
         )

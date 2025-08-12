@@ -115,7 +115,7 @@ def test_dcsf(generate_benchmarks, tmp_path, traj_info, qvector_grid):
     compare_hdf5(
         out_file,
         result_file,
-        ("dcsf/f(q,t)", "dcsf/s(q,f)"),
+        ["dcsf"],
         startswith=True,
         scale_result=True,
         scale_benchmark=True,
@@ -164,7 +164,7 @@ def test_ccf(generate_benchmarks, tmp_path, traj_info, qvector_grid):
     compare_hdf5(
         out_file,
         result_file,
-        ("ccf/J(q,f)", "ccf/j(q,t)"),
+        ["ccf"],
         startswith=True,
         scale_result=True,
         scale_benchmark=True,
@@ -236,7 +236,7 @@ def test_disf(generate_benchmarks, tmp_path, traj_info, qvector_grid):
     compare_hdf5(
         out_file,
         result_file,
-        ("disf/f(q,t)", "disf/s(q,f)"),
+        ["disf"],
         startswith=True,
         scale_result=True,
         scale_benchmark=True,
@@ -283,7 +283,7 @@ def test_eisf(generate_benchmarks, tmp_path, traj_info, qvector_grid):
     compare_hdf5(
         out_file,
         result_file,
-        ("eisf/",),
+        ["eisf"],
         startswith=True,
         scale_result=True,
         scale_benchmark=True,
@@ -331,7 +331,7 @@ def test_gdisf(generate_benchmarks, tmp_path, traj_info):
     compare_hdf5(
         out_file,
         result_file,
-        ("gdisf/f(q,t)", "gdisf/s(q,f)", "msd/msd"),
+        ("gdisf", "msd"),
         startswith=True,
         compare_axis=True,
     )
@@ -369,7 +369,7 @@ def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
     compare_hdf5(
         out_file,
         result_file,
-        ("ndsf/f(q,t)", "ndsf/s(q,f)"),
+        ["ndsf"],
         startswith=True,
         atol=1e-6,
         compare_axis=True,
@@ -403,7 +403,7 @@ def test_ssfsf(generate_benchmarks, tmp_path, dcsf):
     assert text_file.is_file()
 
     compare_hdf5(
-        out_file, result_file, ("ssf/total"), startswith=True, atol=1e-6,
+        out_file, result_file, ["ssf"], startswith=True, atol=1e-6,
         compare_axis=True
     )
 
@@ -447,7 +447,7 @@ def test_sldp(generate_benchmarks, tmp_path, traj_info):
     compare_hdf5(
         out_file,
         result_file,
-        ("sldp/sldp", "dp/number/total"),
+        ("sldp", "dp"),
         startswith=True,
         compare_axis=True,
     )
