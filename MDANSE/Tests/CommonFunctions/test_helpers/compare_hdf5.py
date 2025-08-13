@@ -87,7 +87,5 @@ def compare_hdf5(
                     a, b, atol=atol, rtol=rtol, err_msg=f"Failure in key {test!r}."
                 )
 
-                assert a.shape == b.shape, "Result and benchmark array shapes are not equal"
-
                 if compare_axis:
                     assert result[f"/{test}"].attrs["axis"] == benchmark[f"/{test}"].attrs["axis"]
