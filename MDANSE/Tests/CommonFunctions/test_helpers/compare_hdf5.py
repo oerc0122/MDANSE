@@ -41,7 +41,7 @@ def compare_hdf5(
 
     with h5py.File(result_path) as result, h5py.File(benchmark_path) as benchmark:
         if startswith:
-            keys = [key for key in result.keys() if any(key.startswith(comparison_key) for comparison_key in comparison_keys)]
+            keys = [key for key in result.keys() if key.startswith(tuple(comparison_keys))]
         else:
             keys = comparison_keys
 

@@ -112,7 +112,7 @@ class DensityOfStates(IJob):
 
         instrResolution = self.configuration["instrument_resolution"]
         self.add_ideal_results = (
-            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+            self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
         )
 
         self.labels = [

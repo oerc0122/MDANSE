@@ -164,7 +164,7 @@ class DynamicCoherentStructureFactor(IJob):
 
         self._indicesPerElement = self.trajectory.get_indices()
         self.add_ideal_results = (
-            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+            self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
         )
 
         self.labels = pair_labels(
