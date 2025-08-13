@@ -8,6 +8,7 @@ from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 named_mols = CONV_DIR / "named_molecules.mdt"
+four_molecules = CONV_DIR / "four_molecules.mdt"
 
 
 @pytest.fixture(scope="module")
@@ -49,7 +50,7 @@ def dcsf(tmp_path_factory):
             "GridQVectors",
             {"hrange": [0, 3, 1], "krange": [0, 3, 1], "lrange": [0, 3, 1], "qstep": 1},
         ),
-        "trajectory": named_mols,
+        "trajectory": four_molecules,
         "weights": "b_coherent",
         "grouping_level": "molecule",
     }
@@ -71,7 +72,7 @@ def disf(tmp_path_factory):
             "GridQVectors",
             {"hrange": [0, 3, 1], "krange": [0, 3, 1], "lrange": [0, 3, 1], "qstep": 1},
         ),
-        "trajectory": named_mols,
+        "trajectory": four_molecules,
         "weights": "b_incoherent",
         "grouping_level": "molecule",
     }
@@ -92,6 +93,11 @@ def test_trajectory_state():
     assert 'C' not in uniq
 
 
+@pytest.mark.parametrize(
+    "traj_info",
+    [("", named_mols), ("_four_mols", four_molecules)],
+    ids=lambda x: x[0],
+)
 @pytest.mark.parametrize(
     "job_info",
     [
@@ -121,16 +127,17 @@ def test_trajectory_state():
     ],
     ids=lambda x: x[0],
 )
-def test_analysis(generate_benchmarks, tmp_path, parameters, job_info):
+def test_analysis(generate_benchmarks, tmp_path, parameters, traj_info, job_info):
     job_type, outputs, weights, atol, rtol = job_info
     temp_name = tmp_path / "output"
     log_file = temp_name.with_suffix(".log")
     out_file = temp_name.with_suffix(".mda")
-    result_file = RESULTS_DIR / f"grouping_molecule_{job_type}.mda"
+    result_file = RESULTS_DIR / f"grouping_molecule{traj_info[0]}_{job_type}.mda"
 
     if generate_benchmarks:
         temp_name = result_file.with_suffix("")
 
+    parameters["trajectory"] = traj_info[1]
     parameters["output_files"] = (temp_name, ("MDAFormat",), "INFO")
     parameters["weights"] = weights
 
@@ -148,15 +155,21 @@ def test_analysis(generate_benchmarks, tmp_path, parameters, job_info):
     assert log_file.is_file()
 
 
-def test_rmsf(generate_benchmarks, tmp_path, parameters):
+@pytest.mark.parametrize(
+    "traj_info",
+    [("", named_mols), ("_four_mols", four_molecules)],
+    ids=lambda x: x[0],
+)
+def test_rmsf(generate_benchmarks, tmp_path, parameters, traj_info):
     temp_name = tmp_path / "output"
     out_file = temp_name.with_suffix(".mda")
     log_file = temp_name.with_suffix(".log")
-    result_file = RESULTS_DIR / "grouping_each_molecule_RootMeanSquareFluctuation.mda"
+    result_file = RESULTS_DIR / f"grouping_each_molecule{traj_info[0]}_RootMeanSquareFluctuation.mda"
 
     if generate_benchmarks:
         temp_name = result_file.with_suffix("")
 
+    parameters["trajectory"] = traj_info[1]
     parameters["grouping_level"] = "each molecule"
     parameters["output_files"] = (temp_name, ("MDAFormat",), "INFO")
 
@@ -187,7 +200,7 @@ def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
         "grouping_level": "molecule",
         "disf_input_file": disf,
         "dcsf_input_file": dcsf,
-        "trajectory": named_mols,
+        "trajectory": four_molecules,
         "output_files": (temp_name, ("MDAFormat",), "INFO"),
     }
 
@@ -221,7 +234,7 @@ def test_ssfsf(generate_benchmarks, tmp_path, dcsf):
 
     parameters = {
         "dcsf_input_file": dcsf,
-        "trajectory": named_mols,
+        "trajectory": four_molecules,
         "grouping_level": "molecule",
         "output_files": (temp_name, ("MDAFormat",), "INFO"),
     }
