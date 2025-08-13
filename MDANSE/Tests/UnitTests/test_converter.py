@@ -253,20 +253,21 @@ def _converter_test(
                 "time_unit": "fs",
             },
         ),
-        (
-            "improvedase",
-            "ase.mdt",
-            (),
-            {
-                "trajectory_file": (lammps_lammps, "lammps-dump-text"),
-                "configuration_file": (lammps_config, "lammps-data"),
-                "fold": False,
-                "n_steps": 0,
-                "elements_from_mass": True,
-                "time_step": 50.0,
-                "time_unit": "fs",
-            },
-        ),
+        # improvedase is not enabled
+        # (
+        #     "improvedase",
+        #     "ase.mdt",
+        #     (),
+        #     {
+        #         "trajectory_file": (lammps_lammps, "lammps-dump-text"),
+        #         "configuration_file": (lammps_config, "lammps-data"),
+        #         "fold": False,
+        #         "n_steps": 0,
+        #         "elements_from_mass": True,
+        #         "time_step": 50.0,
+        #         "time_unit": "fs",
+        #     },
+        # ),
         (
             "DL_POLY",
             "dlp_v2.mdt",
@@ -495,6 +496,7 @@ def test_lammps_mdt_conversion_trajectory_format(
     )
 
 
+@pytest.mark.skip(reason="Improved ASE is not enabled.")
 @pytest.mark.parametrize(
     "trajectory",
     (ase_traj, xyz_traj, vasp_xdatcar),

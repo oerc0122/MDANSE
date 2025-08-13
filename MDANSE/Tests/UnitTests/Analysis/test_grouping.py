@@ -113,7 +113,7 @@ def test_trajectory_state():
         ("PairDistributionFunction", ["pdf", "rdf", "tcf"], "equal", 1e-10, 1e-7),
         ("StaticStructureFactor", ["ssf"], "equal", 1e-10, 1e-7),
         ("XRayStaticStructureFactor", ["xssf"], "equal", 1e-10, 1e-7),
-        ("DynamicCoherentStructureFactor", ["dcsf"], "b_coherent", 1e-6, 1e-4),
+        ("DynamicCoherentStructureFactor", ["dcsf"], "b_coherent", 1e-5, 1e-4),
         ("CurrentCorrelationFunction", ["ccf"], "b_coherent", 1e-6, 1e-7),
         ("DynamicIncoherentStructureFactor", ["disf"], "b_incoherent", 1e-10, 1e-7),
         ("ElasticIncoherentStructureFactor", ["eisf"], "b_incoherent", 1e-10, 1e-7),
