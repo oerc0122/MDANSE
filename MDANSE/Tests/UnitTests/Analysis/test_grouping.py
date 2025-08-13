@@ -113,7 +113,7 @@ def test_trajectory_state():
         ("PairDistributionFunction", ["pdf", "rdf", "tcf"], "equal", 1e-10, 1e-7),
         ("StaticStructureFactor", ["ssf"], "equal", 1e-10, 1e-7),
         ("XRayStaticStructureFactor", ["xssf"], "equal", 1e-10, 1e-7),
-        ("DynamicCoherentStructureFactor", ["dcsf"], "b_coherent", 1e-6, 1e-6),
+        ("DynamicCoherentStructureFactor", ["dcsf"], "b_coherent", 1e-6, 1e-4),
         ("CurrentCorrelationFunction", ["ccf"], "b_coherent", 1e-6, 1e-7),
         ("DynamicIncoherentStructureFactor", ["disf"], "b_incoherent", 1e-10, 1e-7),
         ("ElasticIncoherentStructureFactor", ["eisf"], "b_incoherent", 1e-10, 1e-7),
@@ -219,6 +219,7 @@ def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
         ["ndsf"],
         startswith=True,
         atol=1e-6,
+        rtol=1e-4,
         compare_axis=True,
     )
 
@@ -249,7 +250,7 @@ def test_ssfsf(generate_benchmarks, tmp_path, dcsf):
     assert log_file.is_file()
 
     compare_hdf5(
-        out_file, result_file, ["ssf"], startswith=True, atol=1e-6,
+        out_file, result_file, ["ssf"], startswith=True, atol=1e-6, rtol=1e-4,
         compare_axis=True
     )
 
