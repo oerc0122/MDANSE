@@ -15,11 +15,16 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    FrameSelect,
+    InterpOrder,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+)
 from MDANSE.Framework.Units import measure
 from MDANSE.Mathematics.Signal import differentiate
 
@@ -48,21 +53,11 @@ class Temperature(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["interpolation_order"] = (
-        "InterpolationOrderConfigurator",
-        {
-            "label": "velocities",
-            "dependencies": {"trajectory": "trajectory", "frames": "frames"},
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    interpolation_order = InterpOrder(depends={"frames": "frames"}, label="Velocities")
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """
@@ -70,16 +65,14 @@ class Temperature(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.number_of_atoms
+        self.numberOfSteps = self.trajectory.chemical_system.number_of_atoms
 
-        self._nFrames = self.configuration["frames"]["number"]
+        self._nFrames = len(self.frames)
 
         self._outputData.add(
             "temp/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["time"],
+            self.frames.time,
             units="ps",
         )
         self._outputData.add(
@@ -131,28 +124,27 @@ class Temperature(IJob):
 
         trajectory = self.trajectory
 
-        if self.configuration["interpolation_order"]["value"] == 0:
+        if self.interpolation_order == 0:
             series = trajectory.read_configuration_trajectory(
                 index,
-                first=self.configuration["frames"]["first"],
-                last=self.configuration["frames"]["last"] + 1,
-                step=self.configuration["frames"]["step"],
+                first=self.frames.first_index,
+                last=self.frames.last_index + 1,
+                step=self.frames.step_index,
                 variable="velocities",
             )
         else:
             series = trajectory.read_atomic_trajectory(
                 index,
-                first=self.configuration["frames"]["first"],
-                last=self.configuration["frames"]["last"] + 1,
-                step=self.configuration["frames"]["step"],
+                first=self.frames.first_index,
+                last=self.frames.last_index + 1,
+                step=self.frames.step_index,
             )
 
-            order = self.configuration["interpolation_order"]["value"]
             for axis in range(3):
                 series[:, axis] = differentiate(
                     series[:, axis],
-                    order=order,
-                    dt=self.configuration["frames"]["time_step"],
+                    order=self.interpolation_order,
+                    dt=self.frames.time_step,
                 )
 
         kineticEnergy = 0.5 * mass * np.sum(series**2, 1)
@@ -190,8 +182,8 @@ class Temperature(IJob):
         )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

@@ -20,12 +20,17 @@ from collections.abc import Iterator
 
 import numpy as np
 import numpy.typing as npt
+from more_itertools import numeric_range
 
 from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
     update_pair_results,
 )
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
+from MDANSE.Framework.Parameters import (
+    GroupingLevel,
+    NumericRange,
+)
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
@@ -47,65 +52,18 @@ class StaticStructureFactor(DistanceHistogram):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    grouping_level = GroupingLevel(
+        depends={"trajectory": "trajectory"},
     )
-    settings["r_values"] = (
-        "DistHistCutoffConfigurator",
-        {
-            "label": "r values (nm)",
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "dependencies": {"trajectory": "trajectory"},
-        },
+    q_values = NumericRange(
+        minimum=0.0,
+        default=numeric_range(0.0, 500.0, 1.0),
     )
-    settings["q_values"] = (
-        "RangeConfigurator",
-        {"valueType": float, "includeLast": True, "mini": 0.0, "default": (0, 500, 1)},
-    )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "default": "b_coherent",
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            },
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):
-        frame_index = self.configuration["frames"]["value"][0]
-        trajectory = self.configuration.get("trajectory")["instance"]
+        frame_index = self.frames[0].index
 
-        conf = trajectory.configuration(frame_index)
+        conf = self.trajectory.configuration(frame_index)
         try:
             cell_volume = conf.unit_cell.volume
         except Exception:
@@ -125,22 +83,24 @@ class StaticStructureFactor(DistanceHistogram):
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        nq = self.configuration["q_values"]["number"]
+        nq = len(self.q_values)
 
-        nFrames = self.configuration["frames"]["number"]
+        nFrames = len(self.frames)
 
         self.averageDensity /= nFrames
+        r = self.r_values.mid_points
+        dr = self.r_values.binning.step
 
-        densityFactor = 4.0 * np.pi * self.configuration["r_values"]["mid_points"]
+        densityFactor = 4.0 * np.pi * r
 
-        shellSurfaces = densityFactor * self.configuration["r_values"]["mid_points"]
+        shellSurfaces = densityFactor * r
 
-        shellVolumes = shellSurfaces * self.configuration["r_values"]["step"]
+        shellVolumes = shellSurfaces * dr
 
         self._outputData.add(
             "ssf/axes/q",
             "LineOutputVariable",
-            self.configuration["q_values"]["value"],
+            self.q_values,
             units="1/nm",
         )
 
@@ -199,13 +159,10 @@ class StaticStructureFactor(DistanceHistogram):
             )
 
         q = self._outputData["ssf/axes/q"]
-        r = self.configuration["r_values"]["mid_points"]
 
         fact1 = 4.0 * np.pi * self.averageDensity
 
         sincqr = np.sinc(np.outer(q, r) / np.pi)
-
-        dr = self.configuration["r_values"]["step"]
 
         def calc_func(
             label_i: str, label_j: str
@@ -268,9 +225,7 @@ class StaticStructureFactor(DistanceHistogram):
 
         update_pair_results(self.trajectory, calc_func, self._outputData)
 
-        selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.configuration["weights"]["property"]
-        )
+        selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
         weight_dict = get_weights(
             selected_weights,
             all_weights,
@@ -319,8 +274,8 @@ class StaticStructureFactor(DistanceHistogram):
             self._outputData["ssf/total"].scaling_factor = fact
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

@@ -15,7 +15,6 @@
 #
 from __future__ import annotations
 
-import collections
 import copy
 import json
 
@@ -26,6 +25,19 @@ from more_itertools import always_iterable
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Formats.HDFFormat import write_metadata
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    AtomTransmutation,
+    CorrelationWindow,
+    Filter,
+    FrameSelect,
+    InstrumentResolution,
+    MDANSETrajectory,
+    OutputTrajectory,
+    Projection,
+    RunningMode,
+    Weights,
+)
 from MDANSE.Mathematics.Signal import FILTER_MAP, Filter
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
@@ -56,51 +68,19 @@ class TrajectoryFilter(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    instrument_resolution = InstrumentResolution(
+        depends={"trajectory": "trajectory", "frames": "frames"}
     )
-    settings["instrument_resolution"] = (
-        "InstrumentResolutionConfigurator",
-        {"dependencies": {"trajectory": "trajectory", "frames": "frames"}},
-    )
-    settings["projection"] = (
-        "ProjectionConfigurator",
-        {"label": "project coordinates"},
-    )
-    settings["trajectory_filter"] = (
-        "TrajectoryFilterConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "default": "atomic_weight",
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            },
-        },
-    )
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
-            "format": "MDTFormat",
-        },
-    )
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    projection = Projection(label="Project coordinates")
+    trajectory_filter = Filter()
+    weights = Weights()
+    output_files = OutputTrajectory()
+    running_mode = RunningMode()
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables."""
@@ -116,7 +96,7 @@ class TrajectoryFilter(IJob):
 
         # This stores the trajectory (position array) of atoms by x, y, z component, to be filtered
         self.atomic_trajectory_array = np.zeros(
-            (len(self._selected_atoms), 3, len(self.configuration["frames"]["value"]))
+            (len(self._selected_atoms), 3, len(self.frames))
         )
 
     def run_step(self, index):
@@ -136,9 +116,9 @@ class TrajectoryFilter(IJob):
 
         series = trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.configuration["frames"]["first"],
-            last=self.configuration["frames"]["last"] + 1,
-            step=self.configuration["frames"]["step"],
+            first=self.frames.first_index,
+            last=self.frames.last_index + 1,
+            step=self.frames.step_index,
         )
 
         self.atomic_trajectory_array[index] = series.T
@@ -162,22 +142,11 @@ class TrajectoryFilter(IJob):
 
     def finalize(self):
         """Write out the new trajectory."""
-        # Get filter class and instantiate filter object
-        filter_config = json.loads(self.configuration["trajectory_filter"]["value"])
+        filter_params = self.filter.params.copy()
+        filter_params.setdefault("n_steps", len(self.trajectory))
+        filter_params.setdefault("time_step_ps", self.trajectory["md_time_step"])
 
-        filter_class, filter_attributes = (
-            FILTER_MAP[filter_config["filter"]],
-            filter_config["attributes"],
-        )
-
-        filter_attributes.setdefault(
-            "n_steps", self.configuration["trajectory"]["length"]
-        )
-        filter_attributes.setdefault(
-            "time_step_ps", self.configuration["trajectory"]["md_time_step"]
-        )
-
-        filter = filter_class(**filter_attributes)
+        filter = self.filter_type(**filter_params)
 
         trajectories = copy.deepcopy(self.atomic_trajectory_array)
 
@@ -192,7 +161,8 @@ class TrajectoryFilter(IJob):
         )
 
         # Create new chemical system for output trajectory
-        name = self.configuration["output_files"]["file"].stem
+        name = self.output_files.path.stem
+
         if not isinstance(name, str):
             name = "filtered_traj_chemical_system"
         output_chemical_system = ChemicalSystem(name)
@@ -200,18 +170,18 @@ class TrajectoryFilter(IJob):
 
         # Create trajectory writer object
         self._output_trajectory = TrajectoryWriter(
-            self.configuration["output_files"]["file"],
+            self.output_files.path,
             output_chemical_system,
-            filter_attributes["n_steps"],
+            len(self.trajectory),
             None,
-            positions_dtype=self.configuration["output_files"]["dtype"],
-            compression=self.configuration["output_files"]["compression"],
+            positions_dtype=self.output_files.dtype,
+            compression=self.output_files.compression,
         )
 
         # Write trajectory
         write_filtered_trajectory(
-            parent_configuration=self.configuration,
-            nsteps=filter_attributes["n_steps"],
+            parent_configuration=self,
+            nsteps=len(self.trajectory),
             filtered_coordinates=filtered_coords,
             output_trajectory=self._output_trajectory,
         )
@@ -224,7 +194,7 @@ class TrajectoryFilter(IJob):
         self._output_trajectory.close()
 
         # Write the filter metadata to output
-        outputFile = h5py.File(self.configuration["output_files"]["file"], "r+")
+        outputFile = h5py.File(self.output_files.path, "r+")
         outputFile.create_group("metadata/filter").create_dataset(
             "trajectory_filter",
             (1,),
@@ -271,7 +241,7 @@ def apply(filter: Filter, trajectories: np.ndarray, apply_offsets: bool) -> np.n
 
 
 def write_filtered_trajectory(
-    parent_configuration: _Configuration,
+    parent_configuration: TrajectoryFilter,
     nsteps: int,
     filtered_coordinates: np.ndarray,
     output_trajectory: TrajectoryWriter,
@@ -290,8 +260,7 @@ def write_filtered_trajectory(
         Trajectory writer object to write the output trajectory.
 
     """
-    time = parent_configuration["frames"]["time"]
-    dt = time[1] - time[0]
+    dt = parent_configuration.frames.time_step
     for index in range(nsteps):
         frame_coordinates = [
             (x[index], y[index], z[index]) for (x, y, z) in filtered_coordinates
@@ -301,8 +270,8 @@ def write_filtered_trajectory(
         filtered_configuration_coordinates = np.array(frame_coordinates)
 
         filtered_configuration = get_output_configuration(
-            parent=parent_configuration["trajectory"]["instance"].configuration(
-                parent_configuration["frames"]["value"][0],
+            parent=parent_configuration.trajectory.configuration(
+                parent_configuration.frames[0].index,
             ),
             output_chemical_system=output_trajectory.chemical_system,
             output_coordinates=filtered_configuration_coordinates,

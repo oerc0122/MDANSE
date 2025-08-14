@@ -40,8 +40,9 @@ from .ChoiceConfigDesc import (
     MultipleChoice,
     SingleChoice,
 )
-from .FramesDescriptors import CorrelationWindow, FrameSelect, InterpOrder
-from .InputFileDescriptors import MDANSETrajectory
+from .Filter import Filter
+from .FramesDescriptors import CorrelationWindow, Frames, FrameSelect, InterpOrder
+from .InputFileDescriptors import MDANSETrajectory, MDANSEResult
 from .OutputFileDescriptors import OutputFile, OutputTrajectory
 from .ProjectionDescriptor import Projection
 from .RangeDescriptors import RangeCellCutoff
@@ -59,6 +60,8 @@ __all__ = [
     "DynamicMultiChoice",
     "DynamicSingleChoice",
     "Float",
+    "Filter",
+    "Frames",
     "FrameSelect",
     "GroupingLevel",
     "InstrumentResolution",
@@ -80,4 +83,5 @@ __all__ = [
     "String",
     "Vector",
     "Weights",
+    "MDANSEResult",
 ]

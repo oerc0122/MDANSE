@@ -21,7 +21,7 @@ from enum import Enum, auto
 from math import isclose
 from numbers import Number
 from pathlib import Path
-from typing import Any, SupportsFloat, SupportsInt
+from typing import Any, SupportsFloat, SupportsInt, TypeVar
 
 import numpy as np
 from more_itertools import numeric_range
@@ -29,6 +29,9 @@ from more_itertools import numeric_range
 from MDANSE.IO.IOUtils import json_handler
 
 from .AbsConfigDesc import ConfigError, ConfigureDescriptor, MinMax
+
+K = TypeVar("K")
+V = TypeVar("V")
 
 cjoin = ", ".join
 
@@ -152,7 +155,7 @@ class Integer(MinMax[int], ConfigureDescriptor[int]):
         return value
 
 
-class Dict(ConfigureDescriptor[dict]):
+class Dict(ConfigureDescriptor[dict[K, V]]):
     """
     This configurator allows a user to input a dict value.
 
@@ -161,24 +164,41 @@ class Dict(ConfigureDescriptor[dict]):
     `exclude` are keys which *must not* be present in the dict.
     """
 
-    def __init__(self, *, fixed: bool = False, **params):
-        super().__init__(**params)
+    def __init__(self, *, fixed: bool = False, choices: Sequence[K] = (), **params):
+        super().__init__(choices=choices, **params)
 
         self.fixed = fixed
 
-    def validate(self, value, deps: dict[str, Any]):
-        if isinstance(value, Sequence):
-            value = dict(value)
-
-        try:
-            json_handler(value)
-        except Exception as err:
-            raise ConfigError("Failed to build dict.") from err
-
+    def validate_choices(
+        self, value: dict[K, V], choices: set[K] | Enum | None = None
+    ) -> bool:
+        choices = self.choices if choices is None else choices
         if missing := self.choices - value.keys():
             raise ConfigError(f"Required keys ({cjoin(missing)}) are missing.")
-        if erroneous := self.exclude & value.keys():
+        return True
+
+    def validate_exclude(
+        self, value: dict[K, V], exclude: set[K] | None = None
+    ) -> bool:
+        exclude = self.exclude if exclude is None else exclude
+        if erroneous := exclude & value.keys():
             raise ConfigError(f"Forbidden keys ({cjoin(erroneous)}) are present.")
+        return True
+
+    def validate(
+        self,
+        value: Sequence[tuple[K, V]] | dict[K, V] | str | Path,
+        deps: dict[str, Any],
+    ) -> dict[K, V]:
+        if isinstance(value, Sequence):
+            value = dict(value)
+        else:
+            try:
+                value = json_handler(value)
+            except Exception as err:
+                raise ConfigError("Failed to build dict.") from err
+
+        value = super().validate(value, deps)
 
         if self.fixed and (extraneous := value.keys() - self.choices):
             raise ConfigError(

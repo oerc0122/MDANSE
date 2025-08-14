@@ -21,6 +21,16 @@ import numpy as np
 from scipy.spatial import KDTree
 
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    Float,
+    Frames,
+    FrameSelect,
+    Integer,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+)
 from MDANSE.Mathematics.Geometry import generate_sphere_points
 from MDANSE.MolecularDynamics.Configuration import padded_coordinates
 
@@ -120,31 +130,24 @@ class SolventAccessibleSurface(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}, "default": (0, 2, 1)},
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["n_sphere_points"] = ("IntegerConfigurator", {"mini": 1, "default": 1000})
-    settings["probe_radius"] = ("FloatConfigurator", {"mini": 0.0, "default": 0.14})
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    n_sphere_points = Integer(minimum=1, default=1000)
+    probe_radius = Float(minimum=0.0, default=0.14)
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.numberOfSteps = len(self.frames)
 
         # Will store the time.
         self._outputData.add(
             "sas/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["time"],
+            self.frames.time,
             units="ps",
         )
 
@@ -152,7 +155,7 @@ class SolventAccessibleSurface(IJob):
         self._outputData.add(
             "sas/sas",
             "LineOutputVariable",
-            (self.configuration["frames"]["number"],),
+            (len(self.frames),),
             axis="sas/axes/time",
             units="nm2",
             main_result=True,
@@ -160,14 +163,14 @@ class SolventAccessibleSurface(IJob):
 
         # Generate the sphere points that will be used to evaluate the sas per atom.
         self.spherePoints = np.array(
-            generate_sphere_points(self.configuration["n_sphere_points"]["value"]),
+            generate_sphere_points(self.n_sphere_points),
             dtype=np.float64,
         )
 
         # A mapping between the atom indices and covalent_radius radius for the whole universe.
-        self.vdwRadii = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.atom_property("vdw_radius")  # should it be covalent?
+        self.vdwRadii = self.trajectory.chemical_system.atom_property(
+            "vdw_radius"
+        )  # should it be covalent?
 
         self._indices = self.trajectory.atom_indices
 
@@ -180,7 +183,7 @@ class SolventAccessibleSurface(IJob):
         """
 
         # This is the actual index of the frame corresponding to the loop index.
-        frameIndex = self.configuration["frames"]["value"][index]
+        frameIndex = self.frames[index].index
 
         # Fetch the configuration.
         conf = self.trajectory.configuration(frameIndex)
@@ -190,9 +193,7 @@ class SolventAccessibleSurface(IJob):
         unit_cell = conf._unit_cell
 
         if conf.is_periodic:
-            padding_thickness = 1.05 * max(
-                self.configuration["probe_radius"]["value"], np.max(self.vdwRadii)
-            )
+            padding_thickness = 1.05 * max(self.probe_radius, np.max(self.vdwRadii))
             coords, atom_indices = padded_coordinates(
                 conf["coordinates"],
                 unit_cell,
@@ -209,7 +210,7 @@ class SolventAccessibleSurface(IJob):
             self._indices,
             temp_vdw_radii,
             self.spherePoints,
-            self.configuration["probe_radius"]["value"],
+            self.probe_radius,
         )
 
         return index, sas
@@ -233,8 +234,8 @@ class SolventAccessibleSurface(IJob):
 
         # Write the output variables.
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

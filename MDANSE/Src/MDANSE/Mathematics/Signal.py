@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from copy import copy
 from enum import Enum
-from typing import NamedTuple
+from typing import Final, NamedTuple
 
 import numpy as np
 from scipy import fftpack, signal
@@ -1177,7 +1177,7 @@ class Comb(Filter):
         return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
 
 
-FILTERS = (
+FILTERS: Final[tuple[type[Filter], ...]] = (
     Butterworth,
     ChebyshevTypeI,
     ChebyshevTypeII,
@@ -1188,15 +1188,18 @@ FILTERS = (
     Comb,
 )
 
-FILTER_MAP = {filter_class.__name__: filter_class for filter_class in FILTERS}
+FILTER_MAP: Final[dict[str, type[Filter]]] = {
+    filter_class.__name__: filter_class for filter_class in FILTERS
+}
 
 # Default filter type is Butterworth
-DEFAULT_FILTER = Butterworth
+DEFAULT_FILTER: Final[type[Filter]] = Butterworth
+
 # Default simulation time step in picoseconds
-DEFAULT_TIME_STEP = 0.005
+DEFAULT_TIME_STEP: Final[float] = 0.005
 
 # Default number of simulation steps
-DEFAULT_N_STEPS = 320
+DEFAULT_N_STEPS: Final[int] = 320
 
 
 def filter_default_attributes(filter=DEFAULT_FILTER):
