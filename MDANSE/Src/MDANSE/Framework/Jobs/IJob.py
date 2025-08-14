@@ -42,7 +42,6 @@ from MDANSE.Framework.Jobs.JobStatus import JobStates, JobStatus
 from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
 from MDANSE.MLogging import FMT, LOG
 
-
 RUNSCRIPT = """\
 #!{executable}
 
