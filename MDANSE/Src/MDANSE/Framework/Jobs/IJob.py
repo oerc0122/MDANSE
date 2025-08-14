@@ -42,6 +42,35 @@ from MDANSE.Framework.Jobs.JobStatus import JobStates, JobStatus
 from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
 from MDANSE.MLogging import FMT, LOG
 
+RUNSCRIPT = """\
+#!{executable}
+
+########################################################
+# This is an automatically generated MDANSE run script #
+########################################################
+
+{import_line}
+
+########################################################
+# Job parameters                                       #
+########################################################
+
+parameters = {{
+{param_str}
+}}
+
+########################################################
+# Setup and run the analysis                           #
+########################################################
+
+if __name__ == "__main__":
+    {var_name} = {parent}.create("{job_name}")
+    # Progress bars only available if tqdm available.
+    # Install with `cli` optional dependency.
+    {var_name}.run(parameters, status=True, prog_bar=True)
+"""
+
+
 try:
     from tqdm import tqdm
 except ImportError:
@@ -120,6 +149,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
     section = "job"
     key_gen = key_generator(6)
     ancestor = []
+    runscript_import_line = "from MDANSE.Framework.Jobs.IJob import IJob"
 
     @classmethod
     def define_unique_name(cls):
@@ -272,33 +302,16 @@ class IJob(Configurable, metaclass=SubclassFactory):
         )
 
         with open(jobFile, "w") as f:
-            f.write(f"""\
-#!{sys.executable}
-
-########################################################
-# This is an automatically generated MDANSE run script #
-########################################################
-
-from MDANSE.Framework.Jobs.IJob import IJob
-
-########################################################
-# Job parameters                                       #
-########################################################
-
-parameters = {{
-{param_str}
-}}
-
-########################################################
-# Setup and run the analysis                           #
-########################################################
-
-if __name__ == "__main__":
-    {cls.__name__.lower()} = IJob.create({cls.__name__!r})
-    # Progress bars only available if tqdm available.
-    # Install with `cli` optional dependency.
-    {cls.__name__.lower()}.run(parameters, status=True, prog_bar=True)
-""")
+            f.write(
+                RUNSCRIPT.format(
+                    executable=sys.executable,
+                    import_line=cls.runscript_import_line,
+                    param_str=param_str,
+                    parent=cls.runscript_import_line.split(" ")[-1],
+                    var_name=cls.__name__.lower(),
+                    job_name=cls.__name__,
+                )
+            )
 
         os.chmod(jobFile, stat.S_IRWXU)
 
