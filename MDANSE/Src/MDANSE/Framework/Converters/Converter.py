@@ -29,8 +29,10 @@ class Converter(IJob, metaclass=SubclassFactory):
     """Outputs a trajectory in the MDT format."""
 
     category = ("Converters",)
-
     ancestor = ["empty_data"]
+    runscript_import_line = (
+        "from MDANSE.Framework.Converters.Converter import Converter"
+    )
 
     @abstractmethod
     def run_step(self, index):
