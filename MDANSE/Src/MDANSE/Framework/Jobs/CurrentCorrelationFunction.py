@@ -185,7 +185,7 @@ class CurrentCorrelationFunction(IJob):
 
         self._indicesPerElement = self.trajectory.get_indices()
         self.add_ideal_results = (
-            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+            self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
         )
 
         for pair_str, _ in self.labels:

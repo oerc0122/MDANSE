@@ -59,14 +59,14 @@ def parameters():
 @pytest.mark.parametrize(
     "job_info",
     [
-        ("SolventAccessibleSurface", ["sas/sas"]),
-        ("RootMeanSquareDeviation", ["rmsd/total"]),
-        ("RootMeanSquareFluctuation", ["rmsf/rmsf"]),
-        ("Voronoi", ["voronoi/mean_volume", "voronoi/neighbourhood_histogram"]),
-        ("CoordinationNumber", ["cn/cn"]),
-        ("PairDistributionFunction", ["pdf/total", "rdf/total", "tcf/total"]),
-        ("StaticStructureFactor", ["ssf/total"]),
-        ("XRayStaticStructureFactor", ["xssf/total"]),
+        ("SolventAccessibleSurface", ["sas"]),
+        ("RootMeanSquareDeviation", ["rmsd"]),
+        ("RootMeanSquareFluctuation", ["rmsf"]),
+        ("Voronoi", ["voronoi"]),
+        ("CoordinationNumber", ["cn"]),
+        ("PairDistributionFunction", ["pdf", "rdf", "tcf"]),
+        ("StaticStructureFactor", ["ssf"]),
+        ("XRayStaticStructureFactor", ["xssf"]),
     ],
     ids=lambda x: x[0],
 )

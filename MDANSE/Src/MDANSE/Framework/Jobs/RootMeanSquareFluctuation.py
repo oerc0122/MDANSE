@@ -95,7 +95,7 @@ class RootMeanSquareFluctuation(IJob):
         self._outputData.add(
             "rmsf/rmsf",
             "LineOutputVariable",
-            (self.configuration["atom_selection"]["selection_length"],),
+            (self.numberOfSteps,),
             axis="rmsf/axes/indices",
             units="nm",
             main_result=True,

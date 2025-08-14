@@ -121,7 +121,7 @@ class DynamicIncoherentStructureFactor(IJob):
         self._nOmegas = self._instrResolution["n_omegas"]
 
         self.add_ideal_results = (
-            self.configuration["instrument_resolution"]["kernel"] != "ideal"
+            self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
         )
 
         self.labels = [
