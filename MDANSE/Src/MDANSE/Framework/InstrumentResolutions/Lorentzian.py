@@ -35,5 +35,5 @@ class Lorentzian(IInstrumentResolution):
         mu = self._configuration["mu"]["value"]
         sigma = self._configuration["sigma"]["value"]
 
-        self._omegaWindow = (2.0 * sigma) / ((omegas - mu) ** 2 + sigma**2)
-        self._timeWindow = self.apply_fft(self._omegaWindow, dt)
+        self._omega_window = (2.0 * sigma) / ((omegas - mu) ** 2 + sigma**2)
+        self._time_window = self.apply_fft(self._omega_window, dt)

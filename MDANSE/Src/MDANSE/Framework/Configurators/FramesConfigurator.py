@@ -50,8 +50,8 @@ class FramesConfigurator(RangeConfigurator):
 
         self._original_input = value
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
-        n_steps = trajConfig["length"]
+        traj_config = self.configurable[self.dependencies["trajectory"]]
+        n_steps = traj_config["length"]
 
         # if all or None set to default
         if value in ["all", None]:
@@ -86,7 +86,7 @@ class FramesConfigurator(RangeConfigurator):
             return
 
         self._mini = 0
-        self._maxi = trajConfig["length"]
+        self._maxi = traj_config["length"]
 
         RangeConfigurator.configure(self, value)
         if not self.valid:
@@ -94,7 +94,7 @@ class FramesConfigurator(RangeConfigurator):
 
         self["n_frames"] = self["number"]
 
-        self["time"] = trajConfig["md_time_step"] * self["value"]
+        self["time"] = traj_config["md_time_step"] * self["value"]
 
         # case of single frame selected
         try:

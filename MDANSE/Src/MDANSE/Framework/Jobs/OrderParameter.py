@@ -87,13 +87,13 @@ class OrderParameter(IJob):
         {
             "label": "atom indices in molecule",
             "choices": list(range(100)),
-            "nChoices": 2,
+            "n_choices": 2,
             "default": [0, 1],
         },
     )
     settings["reference_direction"] = (
         "VectorConfigurator",
-        {"default": [0, 0, 1], "notNull": True, "normalize": True},
+        {"default": [0, 0, 1], "not_null": True, "normalize": True},
     )
     settings["per_axis"] = (
         "BooleanConfigurator",
@@ -108,76 +108,76 @@ class OrderParameter(IJob):
         """
         super().initialize()
 
-        self._nFrames = self.configuration["frames"]["number"]
-        self._nAxis = self.configuration["axis_selection"]["n_values"]
+        self._n_frames = self.configuration["frames"]["number"]
+        self._n_axis = self.configuration["axis_selection"]["n_values"]
 
-        self.numberOfSteps = self._nAxis
+        self.n_steps = self._n_axis
 
-        self._outputData.add(
+        self._output_data.add(
             "op/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["time"],
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "op/axes/axis_index",
             "LineOutputVariable",
             np.arange(self.configuration["axis_selection"]["n_values"]),
             units="au",
         )
 
-        self._zAxis = Vector([0, 0, 1])
-        refAxis = self.configuration["reference_direction"]["value"]
-        axis = self._zAxis.cross(refAxis)
+        self._z_axis = Vector([0, 0, 1])
+        ref_axis = self.configuration["reference_direction"]["value"]
+        axis = self._z_axis.cross(ref_axis)
 
-        theta = np.arctan2(axis.length(), self._zAxis * refAxis)
+        theta = np.arctan2(axis.length(), self._z_axis * ref_axis)
 
         try:
             self._rotation = Rotation(axis, theta).tensor.array
         except ZeroDivisionError:
-            self._doRotation = False
+            self._do_rotation = False
         else:
-            self._doRotation = True
+            self._do_rotation = True
 
-        self._outputData.add(
+        self._output_data.add(
             "op/p1",
             "LineOutputVariable",
-            (self._nFrames,),
+            (self._n_frames,),
             axis="op/axes/time",
             units="au",
             main_result=True,
         )
-        self._outputData.add(
+        self._output_data.add(
             "op/p2",
             "LineOutputVariable",
-            (self._nFrames,),
+            (self._n_frames,),
             axis="op/axes/time",
             units="au",
             main_result=True,
         )
-        self._outputData.add(
+        self._output_data.add(
             "op/s2",
             "LineOutputVariable",
-            (self._nAxis,),
+            (self._n_axis,),
             axis="op/axes/time",
             units="au",
         )
 
         if self.configuration["per_axis"]["value"]:
-            self._outputData.add(
+            self._output_data.add(
                 "op/p1/per_axis",
                 "SurfaceOutputVariable",
-                (self._nAxis, self._nFrames),
+                (self._n_axis, self._n_frames),
                 axis="op/axes/axis_index|op/axes/time",
                 units="au",
                 main_result=True,
                 partial_result=True,
             )
-            self._outputData.add(
+            self._output_data.add(
                 "op/p2/per_axis",
                 "SurfaceOutputVariable",
-                (self._nAxis, self._nFrames),
+                (self._n_axis, self._n_frames),
                 axis="op/axes/axis_index|op/axes/time",
                 units="au",
                 main_result=True,
@@ -217,16 +217,16 @@ class OrderParameter(IJob):
         diff /= modulus[:, np.newaxis]
 
         # shape (3,n)
-        tDiff = diff.T
+        t_diff = diff.T
 
-        if self._doRotation:
-            diff = np.dot(self._rotation, tDiff)
+        if self._do_rotation:
+            diff = np.dot(self._rotation, t_diff)
 
-        costheta = np.dot(self._zAxis.array, tDiff)
-        sintheta = np.sqrt(np.sum(np.cross(self._zAxis, tDiff, axisb=0) ** 2, 1))
+        costheta = np.dot(self._z_axis.array, t_diff)
+        sintheta = np.sqrt(np.sum(np.cross(self._z_axis, t_diff, axisb=0) ** 2, 1))
 
-        cosphi = tDiff[0, :] / sintheta
-        sinphi = tDiff[1, :] / sintheta
+        cosphi = t_diff[0, :] / sintheta
+        sinphi = t_diff[1, :] / sintheta
 
         tr2 = 3.0 * costheta**2 - 1.0
         cos2phi = 2.0 * cosphi**2 - 1.0
@@ -253,7 +253,7 @@ class OrderParameter(IJob):
             + 3.00
             * (np.sum(cosphi * cossintheta) ** 2 + np.sum(sinphi * cossintheta) ** 2)
             + 0.25 * np.sum(tr2) ** 2
-        ) / self._nFrames**2
+        ) / self._n_frames**2
 
         return index, (p1, p2, s2)
 
@@ -269,23 +269,23 @@ class OrderParameter(IJob):
 
         p1, p2, s2 = x
 
-        self._outputData["op/p1"] += p1
-        self._outputData["op/p2"] += p2
-        self._outputData["op/s2"][index] = s2
+        self._output_data["op/p1"] += p1
+        self._output_data["op/p2"] += p2
+        self._output_data["op/s2"][index] = s2
 
         if self.configuration["per_axis"]["value"]:
-            self._outputData["op/p1/per_axis"][index, :] = p1
-            self._outputData["op/p2/per_axis"][index, :] = p2
+            self._output_data["op/p1/per_axis"][index, :] = p1
+            self._output_data["op/p2/per_axis"][index, :] = p2
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        self._outputData["op/p1"] /= self._nAxis
-        self._outputData["op/p2"] /= self._nAxis
+        self._output_data["op/p1"] /= self._n_axis
+        self._output_data["op/p2"] /= self._n_axis
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

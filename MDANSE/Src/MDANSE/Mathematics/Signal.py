@@ -77,7 +77,7 @@ INTERPOLATION_ORDER[5] = np.array(
 )
 
 
-def correlation(x, y=None, axis=0, sumOverAxis=None, average=None):
+def correlation(x, y=None, axis=0, sum_over_axis=None, average=None):
     """Returns the numerical correlation between two signals.
 
     :param x: the first signal.
@@ -89,8 +89,8 @@ def correlation(x, y=None, axis=0, sumOverAxis=None, average=None):
     :param axis: the axis along which the correlation will be computed.
     :type axis: int
 
-    :param sumOverAxis: if not None, the computed correlations will be sum over a given axis.
-    :type sumOverAxis: int or None
+    :param sum_over_axis: if not None, the computed correlations will be sum over a given axis.
+    :type sum_over_axis: int or None
 
     :param average: if not None, the computed correlations will be averaged over a given axis.
     :type average: int or None
@@ -132,8 +132,8 @@ def correlation(x, y=None, axis=0, sumOverAxis=None, average=None):
 
     corr = corr / norm[s]
 
-    if sumOverAxis is not None:
-        corr = np.sum(corr, axis=sumOverAxis)
+    if sum_over_axis is not None:
+        corr = np.sum(corr, axis=sum_over_axis)
     elif average is not None:
         corr = np.average(corr, axis=average)
 
@@ -171,7 +171,7 @@ def differentiate(a, dt=1.0, order=1):
 
     coefs = INTERPOLATION_ORDER[order]
 
-    # outputSeries is the output resulting from the differentiation
+    # output_series is the output resulting from the differentiation
     ts = np.zeros(a.shape, dtype=np.float64)
 
     fact = 1.0 / dt
@@ -277,7 +277,7 @@ def symmetrize(signal, axis=0):
     return signal
 
 
-def get_spectrum(signal, window=None, timeStep=1.0, axis=0, fft="fft"):
+def get_spectrum(signal, window=None, time_step=1.0, axis=0, fft="fft"):
     signal = symmetrize(signal, axis)
 
     if window is None:
@@ -299,26 +299,26 @@ def get_spectrum(signal, window=None, timeStep=1.0, axis=0, fft="fft"):
     # http://www.mathworks.com/matlabcentral/newsreader/view_thread/285244
 
     if fft == "fft":
-        fftSignal = (
+        fft_signal = (
             0.5
             * np.fft.fftshift(
                 np.fft.fft(np.fft.ifftshift(signal * window[s], axes=axis), axis=axis),
                 axes=axis,
             )
-            * timeStep
+            * time_step
             / np.pi
         )
     elif fft == "rfft":
-        fftSignal = (
+        fft_signal = (
             0.5
             * np.fft.rfft(np.fft.ifftshift(signal * window[s], axes=axis), axis=axis)
-            * timeStep
+            * time_step
             / np.pi
         )
     else:
         raise ValueError("fft variable should be fft or rfft.")
 
-    return fftSignal.real
+    return fft_signal.real
 
 
 # Default filter cutoff frequency
@@ -352,7 +352,7 @@ class Filter(ABC):
     Ry_to_Hz = 3289841960777247.0
     Ry_to_eV = 13.60569193
 
-    # Conversion factor: frequency axis to energies in meV
+    # Conversion factor: frequency axis to energies in me_v
     _freq_to_mev = 1e3 * Ry_to_eV / Ry_to_Hz
 
     # Conversion factor: angular frequency to cyclic frequency
@@ -417,7 +417,7 @@ class Filter(ABC):
 
         """
 
-        return signal.freqs(*transfer_function, worN=range)
+        return signal.freqs(*transfer_function, wor_n=range)
 
     def apply(self, input: np.array) -> np.ndarray:
         """Returns the convolution of the digital designed filter with an input signal.
@@ -517,7 +517,7 @@ class Filter(ABC):
                 freq_range *= self._angular_to_cyclic
         else:
             raise RuntimeError(
-                f"Could not find supplied frequency range around which filter frequency response will be computed. \nPlease set the 'custom_freq_range' attribute on the instance of {type(self)}"
+                f"Could not find supplied frequency range around which filter frequency response will be computed. \n_please set the 'custom_freq_range' attribute on the instance of {type(self)}"
             )
 
         # Compute filter response around frequencies given in range
@@ -770,7 +770,7 @@ class Filter(ABC):
 
     @classmethod
     def freq_to_energy(cls, freq, units):
-        """Returns the energy value (or values) in millielectronvolts (meV), converted from frequency value (or values).
+        """Returns the energy value (or values) in millielectronvolts (me_v), converted from frequency value (or values).
 
         Parameters
         ----------
@@ -796,7 +796,7 @@ class Filter(ABC):
 
     @classmethod
     def energy_to_freq(cls, energy, units):
-        """Returns the frequency value (or values), converted from energy value (or values) in millielectronvolts (meV).
+        """Returns the frequency value (or values), converted from energy value (or values) in millielectronvolts (me_v).
 
         Parameters
         ----------
@@ -1016,7 +1016,7 @@ class Bessel(Filter):
     default_settings = {
         "order": {"description": "The order of the filter", "value": 1},
         "norm": {
-            "description": "Filter normalization results in the following behaviour at cutoff - phase: phase response obtains midpoint - delay: group delay in passband is the reciprocal of cutoff - mag: gain magnitude is -3 dB",
+            "description": "Filter normalization results in the following behaviour at cutoff - phase: phase response obtains midpoint - delay: group delay in passband is the reciprocal of cutoff - mag: gain magnitude is -3 d_b",
             "values": {"phase", "delay", "mag"},
             "value": "phase",
         },
@@ -1103,7 +1103,7 @@ class Notch(Filter):
             Frequency response over a given range of cyclic frequencies.
         """
 
-        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, wor_n=range, fs=self.sample_freq)
 
 
 class Peak(Filter):
@@ -1163,7 +1163,7 @@ class Peak(Filter):
 
         """
 
-        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, wor_n=range, fs=self.sample_freq)
 
 
 class Comb(Filter):
@@ -1237,7 +1237,7 @@ class Comb(Filter):
 
         """
 
-        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, wor_n=range, fs=self.sample_freq)
 
 
 FILTERS = (

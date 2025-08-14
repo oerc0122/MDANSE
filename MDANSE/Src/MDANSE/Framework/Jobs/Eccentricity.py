@@ -61,15 +61,15 @@ class Eccentricity(IJob):
     def initialize(self):
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
-        self._outputData.add(
+        self._output_data.add(
             "ecc/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["time"],
             units="ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "ecc/eccentricity",
             "LineOutputVariable",
             np.zeros((self.configuration["frames"]["number"]), dtype=np.float64),
@@ -79,7 +79,7 @@ class Eccentricity(IJob):
 
         self._atoms = self.trajectory.atom_names
         self._indices = self.trajectory.atom_indices
-        self._selectionMasses = np.array(
+        self._selection_masses = np.array(
             [
                 self.trajectory.get_atom_property(element, "atomic_weight")
                 for element in self.trajectory.selection_getter(self._atoms)
@@ -95,16 +95,16 @@ class Eccentricity(IJob):
         index : int
             The frame index.
         """
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
 
-        conf = self.trajectory.configuration(frameIndex)
+        conf = self.trajectory.configuration(frame_index)
         conf = conf.contiguous_configuration()
         series = conf["coordinates"][self._indices, :]
 
-        com = center_of_mass(series, masses=self._selectionMasses)
+        com = center_of_mass(series, masses=self._selection_masses)
 
         # calculate the inertia moments
-        mass = np.array(self._selectionMasses)
+        mass = np.array(self._selection_masses)
 
         moi = moment_of_inertia(series, com, mass)
         pm1, pm2, pm3 = np.linalg.eigvalsh(moi)
@@ -121,10 +121,10 @@ class Eccentricity(IJob):
         eccentricity : float
             The eccentricity for the selected atom at frame_idx.
         """
-        self._outputData["ecc/eccentricity"][frame_idx] = eccentricity
+        self._output_data["ecc/eccentricity"][frame_idx] = eccentricity
 
     def finalize(self):
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

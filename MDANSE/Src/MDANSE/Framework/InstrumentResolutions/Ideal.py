@@ -30,8 +30,8 @@ class Ideal(IInstrumentResolution):
     settings = collections.OrderedDict()
 
     def set_kernel(self, omegas, dt):
-        nOmegas = len(omegas)
-        self._omegaWindow = np.zeros(nOmegas, dtype=np.float64)
-        self._omegaWindow[int(nOmegas / 2)] = 1.0
+        n_omegas = len(omegas)
+        self._omega_window = np.zeros(n_omegas, dtype=np.float64)
+        self._omega_window[int(n_omegas / 2)] = 1.0
 
-        self._timeWindow = np.ones(nOmegas, dtype=np.float64)
+        self._time_window = np.ones(n_omegas, dtype=np.float64)

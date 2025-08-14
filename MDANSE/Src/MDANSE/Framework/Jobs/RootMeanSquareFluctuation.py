@@ -76,26 +76,26 @@ class RootMeanSquareFluctuation(IJob):
 
         # Will store the indices.
         if not self.group_molecules:
-            self._outputData.add(
+            self._output_data.add(
                 "rmsf/axes/indices",
                 "LineOutputVariable",
                 self.trajectory.atom_indices,
             )
-            self.numberOfSteps = len(self.trajectory.atom_indices)
+            self.n_steps = len(self.trajectory.atom_indices)
         else:
-            self._outputData.add(
+            self._output_data.add(
                 "rmsf/axes/indices",
                 "LineOutputVariable",
                 list(range(len(self.trajectory.group_lookup))),
             )
-            self.numberOfSteps = len(self.trajectory.group_lookup)
+            self.n_steps = len(self.trajectory.group_lookup)
             self.cluster_lookup = list(self.trajectory.group_lookup.values())
 
         # Will store the mean square fluctuation evolution.
-        self._outputData.add(
+        self._output_data.add(
             "rmsf/rmsf",
             "LineOutputVariable",
-            (self.numberOfSteps,),
+            (self.n_steps,),
             axis="rmsf/axes/indices",
             units="nm",
             main_result=True,
@@ -145,7 +145,7 @@ class RootMeanSquareFluctuation(IJob):
             #. x (any): The returned result(s) of run_step
         """
 
-        self._outputData["rmsf/rmsf"][index] = x
+        self._output_data["rmsf/rmsf"][index] = x
 
     def finalize(self):
         """
@@ -153,7 +153,7 @@ class RootMeanSquareFluctuation(IJob):
         """
 
         # Write the output variables.
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

@@ -32,8 +32,8 @@ class ApproximateDispersionQVectors(LatticeQVectors):
         "VectorConfigurator",
         {
             "label": "Q start (nm^-1)",
-            "valueType": float,
-            "notNull": False,
+            "value_type": float,
+            "not_null": False,
             "default": [0, 0, 0],
         },
     )
@@ -41,8 +41,8 @@ class ApproximateDispersionQVectors(LatticeQVectors):
         "VectorConfigurator",
         {
             "label": "Q end (nm^-1)",
-            "valueType": float,
-            "notNull": False,
+            "value_type": float,
+            "not_null": False,
             "default": [1, 0, 0],
         },
     )
@@ -52,22 +52,22 @@ class ApproximateDispersionQVectors(LatticeQVectors):
     )
 
     def _generate(self):
-        qStart = self._configuration["q_start"]["value"]
-        qEnd = self._configuration["q_end"]["value"]
-        qStep = self._configuration["q_step"]["value"]
+        q_start = self._configuration["q_start"]["value"]
+        q_end = self._configuration["q_end"]["value"]
+        q_step = self._configuration["q_step"]["value"]
 
-        d = (qEnd - qStart).length()
+        d = (q_end - q_start).length()
         try:
-            n = (qEnd - qStart).normal()
+            n = (q_end - q_start).normal()
         except ZeroDivisionError:
             self._configuration[
                 "q_end"
             ].error_status = "Zero-length vector cannot be used here"
             return
-        nSteps = int(d / qStep) + 1
+        n_steps = int(d / q_step) + 1
 
         vects = (
-            np.array(qStart)[:, np.newaxis] + np.outer(n, np.arange(0, nSteps)) * qStep
+            np.array(q_start)[:, np.newaxis] + np.outer(n, np.arange(0, n_steps)) * q_step
         )
 
         hkls = self.qvectors_to_hkl(vects, self._unit_cell)
@@ -75,17 +75,17 @@ class ApproximateDispersionQVectors(LatticeQVectors):
         dists = np.sqrt(np.sum(vects**2, axis=0))
         dists = list(zip(range(len(dists)), dists))
         dists.sort(key=operator.itemgetter(1))
-        qGroups = itertools.groupby(dists, key=operator.itemgetter(1))
-        qGroups = collections.OrderedDict(
-            [(k, [item[0] for item in v]) for k, v in qGroups]
+        q_groups = itertools.groupby(dists, key=operator.itemgetter(1))
+        q_groups = collections.OrderedDict(
+            [(k, [item[0] for item in v]) for k, v in q_groups]
         )
 
         if self._status is not None:
-            self._status.start(len(qGroups))
+            self._status.start(len(q_groups))
 
         self._configuration["q_vectors"] = collections.OrderedDict()
 
-        for k, v in qGroups.items():
+        for k, v in q_groups.items():
             self._configuration["q_vectors"][k] = {}
             self._configuration["q_vectors"][k]["q"] = k
             self._configuration["q_vectors"][k]["q_vectors"] = vects[:, v]

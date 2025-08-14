@@ -19,8 +19,8 @@ import collections
 import math
 
 import numpy as np
-from scipy.spatial import Delaunay as scipyDelaunay
-from scipy.spatial import Voronoi as scipyVoronoi
+from scipy.spatial import Delaunay as scipy_delaunay
+from scipy.spatial import Voronoi as scipy_voronoi
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import padded_coordinates
@@ -81,10 +81,10 @@ class Voronoi(IJob):
     def initialize(self):
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "voronoi/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["time"],
@@ -92,7 +92,7 @@ class Voronoi(IJob):
         )
 
         # Will store mean volume for voronoi regions.
-        self.mean_volume = np.zeros(self.numberOfSteps)
+        self.mean_volume = np.zeros(self.n_steps)
 
         self.nb_init_pts = self.configuration["trajectory"][
             "instance"
@@ -125,9 +125,9 @@ class Voronoi(IJob):
         """
 
         # This is the actual index of the frame corresponding to the loop index.
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
 
-        conf = self.trajectory.configuration(frameIndex)
+        conf = self.trajectory.configuration(frame_index)
         unit_cell = conf._unit_cell
 
         if self.configuration["pbc"]["value"]:
@@ -140,7 +140,7 @@ class Voronoi(IJob):
             coords = conf["coordinates"]
 
         # Computing Voronoi Diagram
-        Voronoi = scipyVoronoi(coords)
+        Voronoi = scipy_voronoi(coords)
         vertices_coords = Voronoi.vertices  # Option qhull v p
 
         # Extracting valid Voronoi regions
@@ -187,7 +187,7 @@ class Voronoi(IJob):
                 delaunay_regions_for_each_valid_voronoi_region[vrid] = [ids]
                 continue
             lut = np.array(ids)
-            Delaunay = scipyDelaunay(vertices_coords[ids])
+            Delaunay = scipy_delaunay(vertices_coords[ids])
             delaunay_regions_for_each_valid_voronoi_region[vrid] = [
                 lut[dv] for dv in Delaunay.simplices
             ]
@@ -230,7 +230,7 @@ class Voronoi(IJob):
         for k, v in self.neighbourhood_hist.items():
             self.neighbourhood[k] = v
 
-        self._outputData.add(
+        self._output_data.add(
             "voronoi/mean_volume",
             "LineOutputVariable",
             self.mean_volume,
@@ -238,14 +238,14 @@ class Voronoi(IJob):
             main_result=True,
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "voronoi/neighbourhood_histogram",
             "LineOutputVariable",
             self.neighbourhood,
             units="au",
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

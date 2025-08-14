@@ -60,18 +60,18 @@ def get_weights(
     weights, _ = adjust_weights(
         selected_props, selected_contents, n_atms, dim, conc_exp
     )
-    _, normFactor = adjust_weights(all_props, all_contents, n_atms, dim, conc_exp)
+    _, norm_factor = adjust_weights(all_props, all_contents, n_atms, dim, conc_exp)
 
     normalise = True
     try:
-        len(normFactor)
+        len(norm_factor)
     except TypeError:
-        normalise = abs(normFactor) > 0.0  # if normFactor is 0, all weights are 0 too.
+        normalise = abs(norm_factor) > 0.0  # if norm_factor is 0, all weights are 0 too.
     if normalise:
         for k in weights:
-            weights[k] /= np.float64(normFactor)
+            weights[k] /= np.float64(norm_factor)
 
-    weights["sum"] = normFactor
+    weights["sum"] = norm_factor
 
     return weights
 
@@ -105,12 +105,12 @@ def adjust_weights(
     tuple[dict[Union[str, tuple[str]], float], float]
         The dictionary of weights and a normalisation factor.
     """
-    normFactor = 0.0
+    norm_factor = 0.0
 
     weights = {}
 
-    cartesianProduct = itertools.product(props, repeat=dim)
-    for elements in cartesianProduct:
+    cartesian_product = itertools.product(props, repeat=dim)
+    for elements in cartesian_product:
         atom_conc_product = np.prod([contents[el] / n_atms for el in elements])
         property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
 
@@ -119,9 +119,9 @@ def adjust_weights(
         # factor = (5*5/(100*100))**conc_exp * b_coh(Cu)*b_coh(Cu)
 
         weights[elements] = np.float64(np.copy(factor))
-        normFactor += atom_conc_product * property_product
+        norm_factor += atom_conc_product * property_product
 
-    return weights, normFactor
+    return weights, norm_factor
 
 
 def assign_weights(

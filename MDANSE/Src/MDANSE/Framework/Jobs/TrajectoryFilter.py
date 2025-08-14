@@ -102,7 +102,7 @@ class TrajectoryFilter(IJob):
         """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
         self._atoms = self.trajectory.atom_names
 
@@ -218,15 +218,15 @@ class TrajectoryFilter(IJob):
         self._output_trajectory.close()
 
         # Write the filter metadata to output
-        outputFile = h5py.File(self.configuration["output_files"]["file"], "r+")
-        outputFile.create_group("metadata/filter").create_dataset(
+        output_file = h5py.File(self.configuration["output_files"]["file"], "r+")
+        output_file.create_group("metadata/filter").create_dataset(
             "trajectory_filter",
             (1,),
             data=str(filter),
             dtype=h5py.string_dtype(),
         )
 
-        outputFile.close()
+        output_file.close()
 
         super().finalize()
 

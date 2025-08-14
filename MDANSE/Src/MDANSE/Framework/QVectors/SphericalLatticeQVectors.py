@@ -43,8 +43,8 @@ class SphericalLatticeQVectors(LatticeQVectors):
     settings["shells"] = (
         "RangeConfigurator",
         {
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "default": (0, 5.0, 0.5),
         },
@@ -56,31 +56,31 @@ class SphericalLatticeQVectors(LatticeQVectors):
         if self._configuration["seed"]["value"] != 0:
             np.random.seed(self._configuration["seed"]["value"])
             random.seed(self._configuration["seed"]["value"])
-        qMax = (
+        q_max = (
             self._configuration["shells"]["last"]
             + 0.5 * self._configuration["width"]["value"]
         )
 
-        hklMax = np.ceil(self.qvectors_to_hkl(qMax * np.eye(3), self._unit_cell)) + 1
+        hkl_max = np.ceil(self.qvectors_to_hkl(q_max * np.eye(3), self._unit_cell)) + 1
 
         hkl_vects = np.mgrid[
-            -hklMax[0, 0] : hklMax[0, 0] + 1,
-            -hklMax[1, 1] : hklMax[1, 1] + 1,
-            -hklMax[2, 2] : hklMax[2, 2] + 1,
+            -hkl_max[0, 0] : hkl_max[0, 0] + 1,
+            -hkl_max[1, 1] : hkl_max[1, 1] + 1,
+            -hkl_max[2, 2] : hkl_max[2, 2] + 1,
         ]
 
         hkl_vects = hkl_vects.reshape(
             3,
-            np.prod(2 * np.diag(hklMax) + 1, dtype=int),
+            np.prod(2 * np.diag(hkl_max) + 1, dtype=int),
         )
 
         vects = self.hkl_to_qvectors(hkl_vects, self._unit_cell)
 
         dists2 = np.sum(vects**2, axis=0)
 
-        halfWidth = self._configuration["width"]["value"] / 2
+        half_width = self._configuration["width"]["value"] / 2
 
-        nVectors = self._configuration["n_vectors"]["value"]
+        n_vectors = self._configuration["n_vectors"]["value"]
 
         if self._status is not None:
             self._status.start(self._configuration["shells"]["number"])
@@ -88,20 +88,20 @@ class SphericalLatticeQVectors(LatticeQVectors):
         self._configuration["q_vectors"] = collections.OrderedDict()
 
         for q in self._configuration["shells"]["value"]:
-            qmin = max(0, q - halfWidth)
+            qmin = max(0, q - half_width)
 
             q2low = qmin * qmin
-            q2up = (q + halfWidth) * (q + halfWidth)
+            q2up = (q + half_width) * (q + half_width)
 
             hits = np.where((dists2 >= q2low) & (dists2 <= q2up))[0]
 
-            nHits = len(hits)
+            n_hits = len(hits)
 
-            if nHits != 0:
-                n = min(nHits, nVectors)
+            if n_hits != 0:
+                n = min(n_hits, n_vectors)
 
-                if nHits > nVectors:
-                    hits = random.sample(sorted(hits), nVectors)
+                if n_hits > n_vectors:
+                    hits = random.sample(sorted(hits), n_vectors)
 
                 self._configuration["q_vectors"][q] = {}
                 self._configuration["q_vectors"][q]["q_vectors"] = vects[:, hits]

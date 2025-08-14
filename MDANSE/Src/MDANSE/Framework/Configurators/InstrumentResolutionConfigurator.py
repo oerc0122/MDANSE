@@ -62,16 +62,16 @@ class InstrumentResolutionConfigurator(IConfigurator):
 
         self._original_input = value
 
-        framesCfg = self.configurable[self.dependencies["frames"]]
+        frames_cfg = self.configurable[self.dependencies["frames"]]
 
-        time = framesCfg["time"]
+        time = frames_cfg["time"]
         self["n_frames"] = len(time)
         if len(time) < 2:
-            framesCfg.error_status = "This analysis requires more time steps"
+            frames_cfg.error_status = "This analysis requires more time steps"
             return
 
-        self._timeStep = framesCfg["time"][1] - framesCfg["time"][0]
-        self["time_step"] = self._timeStep
+        self._time_step = frames_cfg["time"][1] - frames_cfg["time"][0]
+        self["time_step"] = self._time_step
 
         # We compute angular frequency AND NOT ORDINARY FREQUENCY ANYMORE
         self["omega"] = (
@@ -96,8 +96,8 @@ class InstrumentResolutionConfigurator(IConfigurator):
         resolution = IInstrumentResolution.create(kernel)
         resolution.setup(parameters)
         resolution.set_kernel(self["omega"], self["time_step"])
-        self["omega_window"] = resolution.omegaWindow
-        self["time_window"] = resolution.timeWindow.real
+        self["omega_window"] = resolution.omega_window
+        self["time_window"] = resolution.time_window.real
         self["time_window_positive"] = np.fft.ifftshift(self["time_window"])[
             : len(time)
         ]

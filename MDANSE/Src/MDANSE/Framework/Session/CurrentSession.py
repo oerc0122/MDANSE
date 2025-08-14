@@ -49,8 +49,8 @@ class CurrentSession:
     def __init__(self, fname=None):
         self.settings_dir = Path("~").expanduser() / ".MDANSE"
         if fname is not None:
-            self.loadSettings(fname)
+            self.load_settings(fname)
 
-    def loadSettings(self, fname=None):
+    def load_settings(self, fname=None):
         if fname is not None:
             json.load(fname)

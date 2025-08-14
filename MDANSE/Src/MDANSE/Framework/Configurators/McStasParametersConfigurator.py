@@ -28,12 +28,12 @@ class McStasParametersConfigurator(IConfigurator):
     This configurator allows to input the McStas instrument parameters that will be used to run a McStas executable file.
     """
 
-    _mcStasTypes = {"double": float, "int": int, "string": str}
+    _mc_stas_types = {"double": float, "int": int, "string": str}
 
     _default = {
-        "beam_wavelength_Angs": 2.0,
+        "beam_wavelength__angs": 2.0,
         "environment_thickness_m": 0.002,
-        "beam_resolution_meV": 0.1,
+        "beam_resolution_me_v": 0.1,
         "container": "INPUT_FILENAME.laz",
         "container_thickness_m": 5e-05,
         "sample_height_m": 0.05,
@@ -75,18 +75,18 @@ class McStasParametersConfigurator(IConfigurator):
 
         self._original_input = value
 
-        instrConfig = self.configurable[self.dependencies["instrument"]]
+        instr_config = self.configurable[self.dependencies["instrument"]]
 
-        exePath = instrConfig["value"]
+        exe_path = instr_config["value"]
 
         s = subprocess.Popen(
-            [exePath, "-h"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            [exe_path, "-h"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
 
         parameters_bytes = s.communicate()[0]
         parameters_string = parameters_bytes.decode(encoding="utf-8")
 
-        instrParameters = dict(
+        instr_parameters = dict(
             [
                 (v[0], [v[1], v[2]])
                 for v in re.findall(
@@ -99,12 +99,12 @@ class McStasParametersConfigurator(IConfigurator):
         val = {}
         parsed = parse_dictionary(value)
         LOG.info(f"Parsed input: {parsed}")
-        LOG.info(f"Received from McStas: {instrParameters}")
+        LOG.info(f"Received from McStas: {instr_parameters}")
         for k, v in list(parsed.items()):
-            if k not in instrParameters:
-                # instrParameters.pop(k)  # how was that supposed to work?
+            if k not in instr_parameters:
+                # instr_parameters.pop(k)  # how was that supposed to work?
                 continue
-            val[k] = self._mcStasTypes[instrParameters[k][0]](v)
+            val[k] = self._mc_stas_types[instr_parameters[k][0]](v)
 
         self["value"] = [f"{k}={v}" for k, v in val.items()]
 

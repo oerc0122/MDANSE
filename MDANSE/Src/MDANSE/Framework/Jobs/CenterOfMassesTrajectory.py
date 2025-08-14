@@ -78,7 +78,7 @@ class CenterOfMassesTrajectory(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
         chemical_system = self.trajectory.chemical_system
 
         self.cluster_composition = {}
@@ -104,7 +104,7 @@ class CenterOfMassesTrajectory(IJob):
         self._output_trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             new_chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
@@ -126,13 +126,13 @@ class CenterOfMassesTrajectory(IJob):
         """
 
         # get the Frame index
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
         chemical_system = self.trajectory.chemical_system
         atom_database = self.trajectory
 
         n_coms = self._output_trajectory.chemical_system.number_of_atoms
 
-        conf = self.trajectory.configuration(frameIndex)
+        conf = self.trajectory.configuration(frame_index)
         conf = conf.contiguous_configuration()
         temp_radii = {
             cluster_name: [] for cluster_name in chemical_system._clusters.keys()

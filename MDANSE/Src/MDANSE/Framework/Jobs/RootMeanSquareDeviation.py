@@ -78,12 +78,12 @@ class RootMeanSquareDeviation(IJob):
     def initialize(self):
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
-        self._referenceIndex = self.configuration["reference_frame"]["value"]
+        self._reference_index = self.configuration["reference_frame"]["value"]
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "rmsd/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
@@ -92,7 +92,7 @@ class RootMeanSquareDeviation(IJob):
 
         # Will initially store the mean square deviation before appling the root
         for element in self.trajectory.unique_names:
-            self._outputData.add(
+            self._output_data.add(
                 f"rmsd/{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["number"],),
@@ -101,7 +101,7 @@ class RootMeanSquareDeviation(IJob):
                 main_result=True,
                 partial_result=True,
             )
-        self._outputData.add(
+        self._output_data.add(
             "rmsd/total",
             "LineOutputVariable",
             (self.configuration["frames"]["number"],),
@@ -130,9 +130,9 @@ class RootMeanSquareDeviation(IJob):
         )
 
         # Compute the squared sum of the difference between all the coordinate of atoms i and the reference ones
-        squaredDiff = np.sum((series - series[self._referenceIndex, :]) ** 2, axis=1)
+        squared_diff = np.sum((series - series[self._reference_index, :]) ** 2, axis=1)
 
-        return index, squaredDiff
+        return index, squared_diff
 
     def combine(self, index, x):
         """
@@ -144,8 +144,8 @@ class RootMeanSquareDeviation(IJob):
 
         element = self._atoms[self.trajectory.atom_indices[index]]
 
-        self._outputData[f"rmsd/{element}"] += x
-        self._outputData["rmsd/total"] += x
+        self._output_data[f"rmsd/{element}"] += x
+        self._output_data["rmsd/total"] += x
 
     def finalize(self):
         """
@@ -155,7 +155,7 @@ class RootMeanSquareDeviation(IJob):
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "rmsd",
             "LineOutputVariable",
             axis="rmsd/axes/time",
@@ -167,17 +167,17 @@ class RootMeanSquareDeviation(IJob):
             partial_result=True,
         )
 
-        nAtomsPerElement = self.trajectory.get_natoms()
-        for element, number in nAtomsPerElement.items():
-            self._outputData[f"rmsd/{element}"][:] = np.sqrt(
-                self._outputData[f"rmsd/{element}"] / number
+        n_atoms_per_element = self.trajectory.get_natoms()
+        for element, number in n_atoms_per_element.items():
+            self._output_data[f"rmsd/{element}"][:] = np.sqrt(
+                self._output_data[f"rmsd/{element}"] / number
             )
 
-        self._outputData["rmsd/total"][:] = np.sqrt(
-            self._outputData["rmsd/total"] / n_atms
+        self._output_data["rmsd/total"][:] = np.sqrt(
+            self._output_data["rmsd/total"] / n_atms
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

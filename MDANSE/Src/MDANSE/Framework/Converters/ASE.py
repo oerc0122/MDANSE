@@ -103,8 +103,8 @@ class ASE(Converter):
     )
 
     UNIT_CONV = {
-        "energy": measure(1.0, "eV").toval("Da nm2 / ps2"),
-        "forces": measure(1.0, "eV/ang").toval("Da nm / ps2"),
+        "energy": measure(1.0, "e_v").toval("Da nm2 / ps2"),
+        "forces": measure(1.0, "e_v/ang").toval("Da nm / ps2"),
         "time": measure(1.0, "fs").toval("ps"),
         "velocities": measure(1.0, "ang/fs").toval("nm/ps"),
         "length": measure(1.0, "ang").toval("nm"),
@@ -116,38 +116,38 @@ class ASE(Converter):
         """
         super().initialize()
 
-        self._isPeriodic = None
+        self._is_periodic = None
         self._backup_cell = None
         self._keep_running = True
         self._initial_masses = None
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
+        self._atomic_aliases = self.configuration["atom_aliases"]["value"]
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.configuration["n_steps"]["value"]
+        self.n_steps = self.configuration["n_steps"]["value"]
 
         self._timestep = float(self.configuration["time_step"]["value"]) * measure(
             1.0, self.configuration["time_unit"]["value"]
         ).toval("ps")
 
-        self.parse_first_step(self._atomicAliases)
-        LOG.info(f"isPeriodic after parse_first_step: {self._isPeriodic}")
+        self.parse_first_step(self._atomic_aliases)
+        LOG.info(f"is_periodic after parse_first_step: {self._is_periodic}")
         self._start = 0
 
-        if self.numberOfSteps < 1:
-            self.numberOfSteps = self._total_number_of_steps
+        if self.n_steps < 1:
+            self.n_steps = self._total_number_of_steps
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
             initial_charges=self._initial_charges,
         )
 
-        LOG.info(f"total steps: {self.numberOfSteps}")
+        LOG.info(f"total steps: {self.n_steps}")
 
     def run_step(self, index):
         """Runs a single step of the job.
@@ -174,15 +174,15 @@ class ASE(Converter):
         assert isinstance(frame, Atoms)
         time = self._timeaxis[index]
 
-        if self._isPeriodic:
-            unitCell = frame.cell.array
-            if np.allclose(unitCell, 0.0):
+        if self._is_periodic:
+            unit_cell = frame.cell.array
+            if np.allclose(unit_cell, 0.0):
                 LOG.warning(f"Using initial unit cell: {self._backup_cell}")
-                unitCell = self._backup_cell * self.units["length"]
+                unit_cell = self._backup_cell * self.units["length"]
             else:
-                LOG.info(f"Unit cell from frame: {unitCell}")
-                unitCell *= self.units["length"]
-            unitCell = UnitCell(unitCell)
+                LOG.info(f"Unit cell from frame: {unit_cell}")
+                unit_cell *= self.units["length"]
+            unit_cell = UnitCell(unit_cell)
 
         coords = frame.get_positions()
         coords *= self.units["length"]
@@ -201,10 +201,10 @@ class ASE(Converter):
                 else (momenta / masses) * self.units["velocities"]
             )
 
-        if self._isPeriodic:
+        if self._is_periodic:
             try:
                 real_conf = PeriodicRealConfiguration(
-                    self._trajectory.chemical_system, coords, unitCell, **variables
+                    self._trajectory.chemical_system, coords, unit_cell, **variables
                 )
             except ValueError:
                 self._keep_running = False
@@ -295,9 +295,9 @@ class ASE(Converter):
         unit_conv = {}
         if "units" in first_frame.info:
             for key, val in first_frame.info["units"].items():
-                if (key, val) == ("momenta", "(eV*u)^0.5"):
+                if (key, val) == ("momenta", "(e_v*u)^0.5"):
                     unit_conv["momenta"] = sqrt(
-                        measure(1.0, "eV Da").toval("Da2 nm2/ps2")
+                        measure(1.0, "e_v Da").toval("Da2 nm2/ps2")
                     )
 
                 if key not in INTERNAL_UNITS:
@@ -309,12 +309,12 @@ class ASE(Converter):
 
         self._timeaxis = self._timestep * np.arange(self._total_number_of_steps)
 
-        if self._isPeriodic is None:
-            self._isPeriodic = np.all(first_frame.get_pbc())
+        if self._is_periodic is None:
+            self._is_periodic = np.all(first_frame.get_pbc())
 
         LOG.info("PBC in first frame = %s", first_frame.get_pbc())
 
-        if self._isPeriodic:
+        if self._is_periodic:
             self._backup_cell = first_frame.cell.array
 
         LOG.info(
@@ -330,7 +330,7 @@ class ASE(Converter):
 
         element_list = first_frame.get_chemical_symbols()
 
-        self._nAtoms = len(element_list)
+        self._n_atoms = len(element_list)
 
         self._chemical_system = ChemicalSystem()
         self._chemical_system.initialise_atoms(element_list)

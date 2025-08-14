@@ -19,4 +19,4 @@ from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
 
 
 class VolumeOutputVariable(IOutputVariable):
-    _nDimensions = 3
+    _n_dimensions = 3

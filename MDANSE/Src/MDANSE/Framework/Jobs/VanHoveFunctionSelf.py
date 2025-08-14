@@ -110,8 +110,8 @@ class VanHoveFunctionSelf(IJob):
         "DistHistCutoffConfigurator",
         {
             "label": "r values (nm)",
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "dependencies": {"trajectory": "trajectory"},
             "max_value": False,
@@ -154,13 +154,13 @@ class VanHoveFunctionSelf(IJob):
         """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
         self.n_configs = self.configuration["frames"]["n_configs"]
         self.n_frames = self.configuration["frames"]["n_frames"]
         self._atoms = self.trajectory.atom_names
 
-        self.selectedElements = self.trajectory.unique_names
-        self.nElements = len(self.selectedElements)
+        self.selected_elements = self.trajectory.unique_names
+        self.n_elements = len(self.selected_elements)
 
         self.n_mid_points = len(self.configuration["r_values"]["mid_points"])
 
@@ -176,19 +176,19 @@ class VanHoveFunctionSelf(IJob):
         if conf.unit_cell.volume < CELL_SIZE_LIMIT:
             raise ValueError(DETAILED_CELL_MESSAGE)
 
-        self._outputData.add(
+        self._output_data.add(
             "vh/axes/r",
             "LineOutputVariable",
             self.configuration["r_values"]["mid_points"],
             units="nm",
         )
-        self._outputData.add(
+        self._output_data.add(
             "vh/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "vh/g(r,t)/total",
             "SurfaceOutputVariable",
             (self.n_mid_points, self.n_frames),
@@ -196,15 +196,15 @@ class VanHoveFunctionSelf(IJob):
             units="au",
             main_result=True,
         )
-        self._outputData.add(
+        self._output_data.add(
             "vh/4_pi_r2_g(r,t)/total",
             "SurfaceOutputVariable",
             (self.n_mid_points, self.n_frames),
             axis="vh/axes/r|vh/axes/time",
             units="au",
         )
-        for element in self.selectedElements:
-            self._outputData.add(
+        for element in self.selected_elements:
+            self._output_data.add(
                 f"vh/g(r,t)/{element}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.n_frames),
@@ -213,7 +213,7 @@ class VanHoveFunctionSelf(IJob):
                 main_result=True,
                 partial_result=True,
             )
-            self._outputData.add(
+            self._output_data.add(
                 f"vh/4_pi_r2_g(r,t)/{element}",
                 "SurfaceOutputVariable",
                 (self.n_mid_points, self.n_frames),
@@ -300,8 +300,8 @@ class VanHoveFunctionSelf(IJob):
 
         """
         element = self._atoms[self.trajectory.atom_indices[index]]
-        self._outputData[f"vh/g(r,t)/{element}"][:] += histogram
-        self._outputData[f"vh/4_pi_r2_g(r,t)/{element}"][:] += histogram
+        self._output_data[f"vh/g(r,t)/{element}"][:] += histogram
+        self._output_data[f"vh/4_pi_r2_g(r,t)/{element}"][:] += histogram
 
     def finalize(self):
         """Apply scaling to the summed up results.
@@ -309,12 +309,12 @@ class VanHoveFunctionSelf(IJob):
         Using the distance histograms calculate, normalize and save the
         self part of the Van Hove function.
         """
-        nAtomsPerElement = self.trajectory.get_natoms()
-        for element, number in nAtomsPerElement.items():
-            self._outputData[f"vh/g(r,t)/{element}"][:] /= (
+        n_atoms_per_element = self.trajectory.get_natoms()
+        for element, number in n_atoms_per_element.items():
+            self._output_data[f"vh/g(r,t)/{element}"][:] /= (
                 self.shell_volumes[:, np.newaxis] * number**2 * self.n_configs
             )
-            self._outputData[f"vh/4_pi_r2_g(r,t)/{element}"][:] /= (
+            self._output_data[f"vh/4_pi_r2_g(r,t)/{element}"][:] /= (
                 number**2 * self.n_configs * self.configuration["r_values"]["step"]
             )
 
@@ -327,31 +327,31 @@ class VanHoveFunctionSelf(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             1,
         )
-        assign_weights(self._outputData, weight_dict, "vh/g(r,t)/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "vh/g(r,t)/%s", self.labels)
         assign_weights(
-            self._outputData, weight_dict, "vh/4_pi_r2_g(r,t)/%s", self.labels
+            self._output_data, weight_dict, "vh/4_pi_r2_g(r,t)/%s", self.labels
         )
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = n_selected / n_total
 
-        self._outputData["vh/g(r,t)/total"][:] = (
-            weighted_sum(self._outputData, "vh/g(r,t)/%s", self.labels) / fact
+        self._output_data["vh/g(r,t)/total"][:] = (
+            weighted_sum(self._output_data, "vh/g(r,t)/%s", self.labels) / fact
         )
-        self._outputData["vh/g(r,t)/total"].scaling_factor = fact
-        self._outputData["vh/4_pi_r2_g(r,t)/total"][:] = (
-            weighted_sum(self._outputData, "vh/4_pi_r2_g(r,t)/%s", self.labels) / fact
+        self._output_data["vh/g(r,t)/total"].scaling_factor = fact
+        self._output_data["vh/4_pi_r2_g(r,t)/total"][:] = (
+            weighted_sum(self._output_data, "vh/4_pi_r2_g(r,t)/%s", self.labels) / fact
         )
-        self._outputData["vh/4_pi_r2_g(r,t)/total"].scaling_factor = fact
+        self._output_data["vh/4_pi_r2_g(r,t)/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "vh/g(r,t)",
             "SurfaceOutputVariable",
             axis="vh/axes/r|vh/axes/time",
@@ -361,14 +361,14 @@ class VanHoveFunctionSelf(IJob):
         )
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "vh/4_pi_r2_g(r,t)",
             "SurfaceOutputVariable",
             axis="vh/axes/r|vh/axes/time",
             units="au",
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

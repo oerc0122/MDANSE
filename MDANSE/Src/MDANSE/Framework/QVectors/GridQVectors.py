@@ -36,15 +36,15 @@ class GridQVectors(LatticeQVectors):
     settings = {}
     settings["hrange"] = (
         "RangeConfigurator",
-        {"valueType": int, "includeLast": True, "default": (0, 8, 1)},
+        {"value_type": int, "include_last": True, "default": (0, 8, 1)},
     )
     settings["krange"] = (
         "RangeConfigurator",
-        {"valueType": int, "includeLast": True, "default": (0, 8, 1)},
+        {"value_type": int, "include_last": True, "default": (0, 8, 1)},
     )
     settings["lrange"] = (
         "RangeConfigurator",
-        {"valueType": int, "includeLast": True, "default": (0, 8, 1)},
+        {"value_type": int, "include_last": True, "default": (0, 8, 1)},
     )
     settings["qstep"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 0.01})
 
@@ -70,10 +70,10 @@ class GridQVectors(LatticeQVectors):
 
         dists = np.sqrt(np.sum(vects**2, axis=0))
 
-        minDist = dists.min()
-        maxDist = dists.max()
+        min_dist = dists.min()
+        max_dist = dists.max()
 
-        bins = np.arange(minDist, maxDist + qstep / 2, qstep)
+        bins = np.arange(min_dist, max_dist + qstep / 2, qstep)
         inds = np.digitize(dists, bins) - 1
 
         dists = enumerate(bins[inds])

@@ -57,19 +57,19 @@ class CroppedTrajectory(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         atoms = self.trajectory.atom_types
         indices = self.trajectory.atom_indices
 
-        self._selectedAtoms = self.trajectory.selection_getter(atoms)
+        self._selected_atoms = self.trajectory.selection_getter(atoms)
         self._selected_indices = indices
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self.trajectory.chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             self._selected_indices,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],

@@ -84,31 +84,31 @@ class AreaPerMolecule(IJob):
         super().initialize()
 
         # This will define the number of steps of the analysis. MUST be defined for all analysis.
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         # Extract the indices corresponding to the axis selection (a=0,b=1,c=2).
         axis_labels = self.configuration["axis"]["value"]
-        self._axisIndexes = self._AXIS_MAP[axis_labels]
+        self._axis_indexes = self._AXIS_MAP[axis_labels]
 
         # The number of molecules that match the input name. Must be > 0.
-        self._nMolecules = len(
+        self._n_molecules = len(
             self.trajectory.chemical_system._clusters[
                 self.configuration["molecule_name"]["value"]
             ]
         )
-        if self._nMolecules == 0:
+        if self._n_molecules == 0:
             raise AreaPerMoleculeError(
                 f"No molecule matches {self.configuration['molecule_name']['value']!r} name."
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "apm/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["time"],
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "apm/area_per_molecule",
             "LineOutputVariable",
             (self.configuration["frames"]["number"],),
@@ -135,8 +135,8 @@ class AreaPerMolecule(IJob):
 
         try:
             unit_cell = configuration.unit_cell._unit_cell
-            normalVect = np.cross(
-                unit_cell[self._axisIndexes[0]], unit_cell[self._axisIndexes[1]]
+            normal_vect = np.cross(
+                unit_cell[self._axis_indexes[0]], unit_cell[self._axis_indexes[1]]
             )
         except Exception:
             raise AreaPerMoleculeError(
@@ -144,7 +144,7 @@ class AreaPerMolecule(IJob):
                 "You can add a box using TrajectoryEditor."
             )
 
-        apm = np.sqrt(np.sum(normalVect**2)) / self._nMolecules
+        apm = np.sqrt(np.sum(normal_vect**2)) / self._n_molecules
 
         return index, apm
 
@@ -153,14 +153,14 @@ class AreaPerMolecule(IJob):
         Update the output each time a step is performed
         """
 
-        self._outputData["apm/area_per_molecule"][index] = x
+        self._output_data["apm/area_per_molecule"][index] = x
 
     def finalize(self):
         """
         Finalize the analysis (close trajectory, write output data ...)
         """
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

@@ -97,7 +97,7 @@ class TrajectoryEditor(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
         self._input_trajectory = self.trajectory
         self._input_chemical_system = self.configuration["trajectory"][
             "instance"
@@ -117,11 +117,11 @@ class TrajectoryEditor(IJob):
         for element, numbers in indices_per_element.items():
             for num in numbers:
                 temp_copy[num] = element
-        self._selectedAtoms = [temp_copy[ind] for ind in indices]
+        self._selected_atoms = [temp_copy[ind] for ind in indices]
         name_list = [self._input_chemical_system.name_list[ind] for ind in indices]
 
         new_chemical_system = ChemicalSystem("Edited system")
-        new_chemical_system.initialise_atoms(self._selectedAtoms, name_list)
+        new_chemical_system.initialise_atoms(self._selected_atoms, name_list)
         if self.configuration["molecule_tolerance"]["use_it"]:
             tolerance = self.configuration["molecule_tolerance"]["value"]
             conn = Connectivity(trajectory=self._input_trajectory, selection=indices)
@@ -168,7 +168,7 @@ class TrajectoryEditor(IJob):
         self._output_trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             new_chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
@@ -186,21 +186,21 @@ class TrajectoryEditor(IJob):
         """
 
         # get the Frame index
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
 
-        conf = self.trajectory.configuration(frameIndex)
+        conf = self.trajectory.configuration(frame_index)
         conf = conf.contiguous_configuration(bring_to_centre=True)
-        charges = self.trajectory.charges(frameIndex)
+        charges = self.trajectory.charges(frame_index)
         coords = conf.coordinates
 
         variables = {}
         if self.trajectory.has_variable("velocities"):
             variables["velocities"] = self.trajectory.variable("velocities")[
-                frameIndex, self._indices, :
+                frame_index, self._indices, :
             ].astype(np.float64)
         if self.trajectory.has_variable("gradients"):
             variables["gradients"] = self.trajectory.variable("gradients")[
-                frameIndex, self._indices, :
+                frame_index, self._indices, :
             ].astype(np.float64)
 
         if conf.is_periodic:

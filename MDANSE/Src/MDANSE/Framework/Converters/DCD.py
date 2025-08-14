@@ -58,7 +58,7 @@ class FortranBinaryFileError(Error):
 
 def get_byte_order(filename):
     # Identity the byte order of the file by trial-and-error
-    byteOrder = None
+    byte_order = None
 
     # The DCD file is opened for reading in binary mode.
     data = open(filename, "rb").read(4)
@@ -67,13 +67,13 @@ def get_byte_order(filename):
     for order in ["<", ">"]:
         reclen = struct.unpack(order + "i", data)[0]
         if reclen == 84:
-            byteOrder = order
+            byte_order = order
             break
 
-        if byteOrder is None:
+        if byte_order is None:
             raise ByteOrderError(f"Invalid byte order. {filename} not a valid DCD file")
 
-    return byteOrder
+    return byte_order
 
 
 class FortranBinaryFile:
@@ -92,7 +92,7 @@ class FortranBinaryFile:
         @type byte_order: string being one '@', '=', '<', '>' or '!'.
         """
         self.file = open(filename, "rb")
-        self.byteOrder = get_byte_order(filename)
+        self.byte_order = get_byte_order(filename)
 
     def __iter__(self):
         return self
@@ -101,10 +101,10 @@ class FortranBinaryFile:
         data = self.file.read(struct.calcsize("i"))
         if not data:
             raise StopIteration
-        reclen = struct.unpack(self.byteOrder + "i", data)[0]
+        reclen = struct.unpack(self.byte_order + "i", data)[0]
         data = self.file.read(reclen)
         reclen2 = struct.unpack(
-            self.byteOrder + "i", self.file.read(struct.calcsize("i"))
+            self.byte_order + "i", self.file.read(struct.calcsize("i"))
         )[0]
         if reclen != reclen2:
             FortranBinaryFileError("Invalid block")
@@ -113,9 +113,9 @@ class FortranBinaryFile:
 
     def skip_record(self):
         data = self.file.read(struct.calcsize("i"))
-        reclen = struct.unpack(self.byteOrder + "i", data)[0]
+        reclen = struct.unpack(self.byte_order + "i", data)[0]
         self.file.seek(reclen, 1)
-        reclen2 = struct.unpack(self.byteOrder + "i", self.file.read(4))[0]
+        reclen2 = struct.unpack(self.byte_order + "i", self.file.read(4))[0]
         assert reclen == reclen2
 
     def get_record(self, fmt, repeat=False):
@@ -133,11 +133,11 @@ class FortranBinaryFile:
         except StopIteration:
             raise EndOfFile()
         if repeat:
-            unit = struct.calcsize(self.byteOrder + fmt)
+            unit = struct.calcsize(self.byte_order + fmt)
             assert len(data) % unit == 0
             fmt = (len(data) / unit) * fmt
         try:
-            return struct.unpack(self.byteOrder + fmt, data)
+            return struct.unpack(self.byte_order + fmt, data)
         except:
             raise
 
@@ -157,14 +157,14 @@ class DCDFile(FortranBinaryFile, dict):
         if data[:4] != b"CORD":
             raise DCDFileError("Unrecognized DCD format")
 
-        temp = struct.unpack(self.byteOrder + "20i", data[4:])
+        temp = struct.unpack(self.byte_order + "20i", data[4:])
 
         self["charmm"] = temp[-1]
 
         if self["charmm"]:
-            temp = struct.unpack(self.byteOrder + "9if10i", data[4:])
+            temp = struct.unpack(self.byte_order + "9if10i", data[4:])
         else:
-            temp = struct.unpack(self.byteOrder + "9id9i", data[4:])
+            temp = struct.unpack(self.byte_order + "9id9i", data[4:])
 
         # Store the number of sets of coordinates
         self["nset"] = self["n_frames"] = temp[0]
@@ -196,12 +196,12 @@ class DCDFile(FortranBinaryFile, dict):
         # Read a block
         data = self.next_record()
 
-        nLines = struct.unpack(self.byteOrder.encode() + b"I", data[0:4])[0]
+        n_lines = struct.unpack(self.byte_order.encode() + b"I", data[0:4])[0]
 
         self["title"] = []
-        for i in range(nLines):
+        for i in range(n_lines):
             temp = struct.unpack(
-                self.byteOrder + "80c", data[4 + 80 * i : 4 + 80 * (i + 1)]
+                self.byte_order + "80c", data[4 + 80 * i : 4 + 80 * (i + 1)]
             )
             self["title"].append(b"".join(temp).strip())
 
@@ -211,7 +211,7 @@ class DCDFile(FortranBinaryFile, dict):
         data = self.next_record()
 
         # Read the number of atoms.
-        self["natoms"] = struct.unpack(self.byteOrder.encode() + b"I", data)[0]
+        self["natoms"] = struct.unpack(self.byte_order.encode() + b"I", data)[0]
 
     def read_step(self):
         """
@@ -219,23 +219,23 @@ class DCDFile(FortranBinaryFile, dict):
         """
 
         if self["has_pbc_data"]:
-            unitCell = np.array(self.get_record("6d"), dtype=np.float64)
-            unitCell = unitCell[[0, 2, 5, 1, 3, 4]]
+            unit_cell = np.array(self.get_record("6d"), dtype=np.float64)
+            unit_cell = unit_cell[[0, 2, 5, 1, 3, 4]]
             # The unit cell is converted from ang to nm
-            unitCell[0:3] *= measure(1.0, "ang").toval("nm")
+            unit_cell[0:3] *= measure(1.0, "ang").toval("nm")
             # This file was generated by CHARMM, or by NAMD > 2.5, with the angle
             # cosines of the periodic cell angles written to the DCD file.
             # This formulation improves rounding behavior for orthogonal cells
             # so that the angles end up at precisely 90 degrees, unlike acos().
             # See https://github.com/MDAnalysis/mdanalysis/wiki/FileFormats for info
-            if np.all(abs(unitCell[3:]) <= 1):
-                unitCell[3:] = PI_2 - np.arcsin(unitCell[3:])
+            if np.all(abs(unit_cell[3:]) <= 1):
+                unit_cell[3:] = PI_2 - np.arcsin(unit_cell[3:])
             else:
                 # assume the angles are stored in degrees (NAMD <= 2.5)
-                unitCell[3:] = np.deg2rad(unitCell[3:])
+                unit_cell[3:] = np.deg2rad(unit_cell[3:])
 
         else:
-            unitCell = None
+            unit_cell = None
 
         fmt = f"{self['natoms']}f"
         config = np.empty((self["natoms"], 3), dtype=np.float64)
@@ -247,7 +247,7 @@ class DCDFile(FortranBinaryFile, dict):
         if self["has_4d"]:
             self.skip_record()
 
-        return unitCell, config
+        return unit_cell, config
 
     def skip_step(self):
         """Skips a frame of the DCD file."""
@@ -319,7 +319,7 @@ class DCD(Converter):
         )
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.configuration["dcd_file"]["instance"]["n_frames"]
+        self.n_steps = self.configuration["dcd_file"]["instance"]["n_frames"]
 
         # Create all chemical entities from the PDB file.
         pdb_reader = MinimalPDBReader(self.configuration["pdb_file"]["filename"])
@@ -329,7 +329,7 @@ class DCD(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],

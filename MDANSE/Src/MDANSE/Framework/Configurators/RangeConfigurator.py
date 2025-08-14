@@ -33,10 +33,10 @@ class RangeConfigurator(IConfigurator):
     def __init__(
         self,
         name,
-        valueType=int,
-        includeLast=False,
+        value_type=int,
+        include_last=False,
         sort=False,
-        toList=False,
+        to_list=False,
         mini=None,
         maxi=None,
         **kwargs,
@@ -46,14 +46,14 @@ class RangeConfigurator(IConfigurator):
 
         :param name: the name of the configurator as it will appear in the configuration.
         :type name: str
-        :param valueType: the numeric type for the range.
-        :type valueType: int or float
-        :param includeLast: if True the last value of the interval will be included (closed interval) otherwise excluded (opened interval).
-        :type includeLast: bool
+        :param value_type: the numeric type for the range.
+        :type value_type: int or float
+        :param include_last: if True the last value of the interval will be included (closed interval) otherwise excluded (opened interval).
+        :type include_last: bool
         :param sort: if True, the values generated will be sorted in increasing order.
         :type bool: if True, the values generated will be converted from a NumPy array to a python list.
-        :param toList:
-        :type toList: bool
+        :param to_list:
+        :type to_list: bool
         :param mini: if not None, all values generated below mini will be discarded.
         :type mini: int, float or None
         :param maxi: if not None, all values generated over maxi will be discarded.
@@ -62,13 +62,13 @@ class RangeConfigurator(IConfigurator):
 
         IConfigurator.__init__(self, name, **kwargs)
 
-        self.valueType = valueType
+        self.value_type = value_type
 
-        self.includeLast = includeLast
+        self.include_last = include_last
 
         self.sort = sort
 
-        self.toList = toList
+        self.to_list = to_list
 
         self.mini = mini
 
@@ -90,18 +90,18 @@ class RangeConfigurator(IConfigurator):
             self.error_status = "Step of a range cannot be 0"
             return
 
-        if self.includeLast:
+        if self.include_last:
             last += step * 0.01  # less likely to overstep the upper limit
 
         value = np.arange(first, last, step)
         # we add additional check if the points are all within limits
         value = value[np.where(value >= first)]
-        if self.includeLast:
+        if self.include_last:
             value = value[np.where(value <= last)]
         else:
             value = value[np.where(value < last)]
         # end of the range check
-        value = value.astype(self.valueType)
+        value = value.astype(self.value_type)
 
         if self.mini is not None:
             value = value[value >= self.mini]
@@ -116,7 +116,7 @@ class RangeConfigurator(IConfigurator):
         if self.sort:
             value = np.sort(value)
 
-        if self.toList:
+        if self.to_list:
             value = value.tolist()
 
         self["value"] = value

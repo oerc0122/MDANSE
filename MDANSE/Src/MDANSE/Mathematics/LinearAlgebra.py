@@ -201,7 +201,7 @@ class Vector:
             self.array[0] * other.array[1] - self.array[1] * other.array[0],
         )
 
-    def asTensor(self):
+    def as_tensor(self):
         """
         @returns: an equivalent rank-1 tensor object
         @rtype: L{Scientific.Geometry.Tensor}
@@ -282,7 +282,7 @@ class Quaternion:
 
     def __mul__(self, other):
         if is_quaternion(other):
-            return Quaternion(np.dot(self.asMatrix(), other.asMatrix())[:, 0])
+            return Quaternion(np.dot(self.as_matrix(), other.as_matrix())[:, 0])
         else:
             return Quaternion(self.array * other)
 
@@ -335,10 +335,10 @@ class Quaternion:
         @returns: the inverse
         @rtype: L{Quaternion}
         """
-        inverse = np.linalg.inv(self.asMatrix())
+        inverse = np.linalg.inv(self.as_matrix())
         return Quaternion(inverse[:, 0])
 
-    def asMatrix(self):
+    def as_matrix(self):
         """
         @returns: a 4x4 matrix representation
         @rtype: C{Numeric.array}
@@ -363,7 +363,7 @@ class Quaternion:
     _matrix[3, 2, 1] = 1
     _matrix[3, 3, 0] = 1
 
-    def asRotation(self):
+    def as_rotation(self):
         """
         @returns: the corresponding rotation matrix
         @rtype: L{Scientific.Geometry.Transformation.Rotation}
@@ -412,7 +412,7 @@ class Tensor:
      -  't1+t2'        (addition)
      -  't1-t2'        (subtraction)
      -  't1*t2'        (tensorial (outer) product)
-     -  't1*v'         (contraction with a vector, same as t1.dot(v.asTensor()))
+     -  't1*v'         (contraction with a vector, same as t1.dot(v.as_tensor()))
      -  's*t1', 't1*s' (multiplication with a scalar)
      -  't1/s'         (division by a scalar)
 
@@ -510,7 +510,7 @@ class Tensor:
     def __hash__(self) -> int:
         return hash(tuple(tuple(row) for row in self.array))
 
-    def asVector(self):
+    def as_vector(self):
         """
         @returns: an equivalent vector object
         @rtype: L{Scientific.Geometry.Vector}
@@ -559,7 +559,7 @@ class Tensor:
         """
         return Tensor(np.transpose(self.array))
 
-    def symmetricalPart(self):
+    def symmetrical_part(self):
         """
         @returns: the symmetrical part of the tensor
         @rtype: L{Tensor}
@@ -572,7 +572,7 @@ class Tensor:
         else:
             raise ValueError("Not yet implemented")
 
-    def asymmetricalPart(self):
+    def asymmetrical_part(self):
         """
         @returns: the asymmetrical part of the tensor
         @rtype: L{Tensor}
@@ -656,7 +656,7 @@ ey = Vector(0.0, 1.0, 0.0)
 
 ez = Vector(0.0, 0.0, 1.0)
 
-nullVector = Vector(0.0, 0.0, 0.0)
+null_vector = Vector(0.0, 0.0, 0.0)
 
 delta = Tensor([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 

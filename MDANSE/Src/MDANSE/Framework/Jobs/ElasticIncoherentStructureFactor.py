@@ -103,17 +103,17 @@ class ElasticIncoherentStructureFactor(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
-        self._nQShells = self.configuration["q_vectors"]["n_shells"]
+        self._n_q_shells = self.configuration["q_vectors"]["n_shells"]
 
-        self._nFrames = self.configuration["frames"]["number"]
+        self._n_frames = self.configuration["frames"]["number"]
 
         self.labels = [
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
 
-        self._outputData.add(
+        self._output_data.add(
             "eisf/axes/q",
             "LineOutputVariable",
             self.configuration["q_vectors"]["shells"],
@@ -121,20 +121,20 @@ class ElasticIncoherentStructureFactor(IJob):
         )
 
         for element in self.trajectory.unique_names:
-            self._outputData.add(
+            self._output_data.add(
                 f"eisf/{element}",
                 "LineOutputVariable",
-                (self._nQShells,),
+                (self._n_q_shells,),
                 axis="eisf/axes/q",
                 units="au",
                 main_result=True,
                 partial_result=True,
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "eisf/total",
             "LineOutputVariable",
-            (self._nQShells,),
+            (self._n_q_shells,),
             axis="eisf/axes/q",
             units="au",
             main_result=True,
@@ -150,7 +150,7 @@ class ElasticIncoherentStructureFactor(IJob):
             #. index (int): The index of the step.
         :Returns:
             #. index (int): The index of the step.
-            #. atomicEISF (np.array): The atomic elastic incoherent structure factor
+            #. atomic_e_i_s_f (np.array): The atomic elastic incoherent structure factor
         """
 
         # get atom index
@@ -165,20 +165,20 @@ class ElasticIncoherentStructureFactor(IJob):
 
         series = self.configuration["projection"]["projector"](series)
 
-        atomicEISF = np.zeros((self._nQShells,), dtype=np.float64)
+        atomic_e_i_s_f = np.zeros((self._n_q_shells,), dtype=np.float64)
 
         for i, q in enumerate(self.configuration["q_vectors"]["shells"]):
             if q not in self.configuration["q_vectors"]["value"]:
                 continue
 
-            qVectors = self.configuration["q_vectors"]["value"][q]["q_vectors"]
+            q_vectors = self.configuration["q_vectors"]["value"][q]["q_vectors"]
 
-            a = np.average(np.exp(1j * np.dot(series, qVectors)), axis=0)
+            a = np.average(np.exp(1j * np.dot(series, q_vectors)), axis=0)
             a = np.abs(a) ** 2
 
-            atomicEISF[i] = np.average(a)
+            atomic_e_i_s_f[i] = np.average(a)
 
-        return index, atomicEISF
+        return index, atomic_e_i_s_f
 
     def combine(self, index, x):
         """
@@ -191,7 +191,7 @@ class ElasticIncoherentStructureFactor(IJob):
         # The symbol of the atom.
         element = self._atoms[self.trajectory.atom_indices[index]]
 
-        self._outputData[f"eisf/{element}"] += x
+        self._output_data[f"eisf/{element}"] += x
 
     def finalize(self):
         """
@@ -199,12 +199,12 @@ class ElasticIncoherentStructureFactor(IJob):
         """
 
         self.configuration["q_vectors"]["generator"].write_vectors_to_file(
-            self._outputData
+            self._output_data
         )
 
-        nAtomsPerElement = self.trajectory.get_natoms()
-        for element, number in nAtomsPerElement.items():
-            self._outputData[f"eisf/{element}"][:] /= number
+        n_atoms_per_element = self.trajectory.get_natoms()
+        for element, number in n_atoms_per_element.items():
+            self._output_data[f"eisf/{element}"][:] /= number
 
         selected_weights, all_weights = self.trajectory.get_weights(
             prop=self.configuration["weights"]["property"]
@@ -215,24 +215,24 @@ class ElasticIncoherentStructureFactor(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             1,
         )
-        assign_weights(self._outputData, weight_dict, "eisf/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "eisf/%s", self.labels)
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = n_selected / n_total
 
-        self._outputData["eisf/total"][:] = (
-            weighted_sum(self._outputData, "eisf/%s", self.labels) / fact
+        self._output_data["eisf/total"][:] = (
+            weighted_sum(self._output_data, "eisf/%s", self.labels) / fact
         )
-        self._outputData["eisf/total"].scaling_factor = fact
+        self._output_data["eisf/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "eisf",
             "LineOutputVariable",
             axis="eisf/axes/q",
@@ -241,7 +241,7 @@ class ElasticIncoherentStructureFactor(IJob):
             partial_result=True,
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

@@ -68,16 +68,16 @@ class MolecularTrace(IJob):
     def initialize(self):
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         # Generate the grids that will be used to quantify the presence of atoms in an area.
         self.resolution = self.configuration["spatial_resolution"]["value"]
 
         maxx, maxy, maxz = 0, 0, 0
         minx, miny, minz = 10**9, 10**9, 10**9
-        for i in range(self.numberOfSteps):
-            frameIndex = self.configuration["frames"]["value"][i]
-            conf = self.trajectory.configuration(frameIndex)
+        for i in range(self.n_steps):
+            frame_index = self.configuration["frames"]["value"][i]
+            conf = self.trajectory.configuration(frame_index)
             conf = conf.continuous_configuration()
             coords = conf["coordinates"]
 
@@ -102,11 +102,11 @@ class MolecularTrace(IJob):
         dimz = maxz - minz
 
         self.min = np.array([minx, miny, minz], dtype=np.float64)
-        self._outputData.add("origin", "LineOutputVariable", self.min, units="nm")
+        self._output_data.add("origin", "LineOutputVariable", self.min, units="nm")
 
         self.gdim = np.ceil(np.array([dimx, dimy, dimz]) / self.resolution).astype(int)
         spacing = self.configuration["spatial_resolution"]["value"]
-        self._outputData.add(
+        self._output_data.add(
             "spacing",
             "LineOutputVariable",
             np.array([spacing, spacing, spacing]),
@@ -116,14 +116,14 @@ class MolecularTrace(IJob):
 
         labels = ["x_position", "y_position", "z_position"]
         for naxis in range(3):
-            self._outputData.add(
+            self._output_data.add(
                 labels[naxis],
                 "LineOutputVariable",
                 np.arange(0, self.gdim[naxis], 1) * self.resolution + self.min[naxis],
                 units="nm",
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "molecular_trace",
             "VolumeOutputVariable",
             tuple(np.ceil(np.array([dimx, dimy, dimz]) / self.resolution).astype(int)),
@@ -142,9 +142,9 @@ class MolecularTrace(IJob):
         """
 
         # This is the actual index of the frame corresponding to the loop index.
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
 
-        conf = self.trajectory.configuration(frameIndex)
+        conf = self.trajectory.configuration(frame_index)
         conf = conf.continuous_configuration()
 
         grid = np.zeros(self.gdim, dtype=np.int32)
@@ -176,10 +176,10 @@ class MolecularTrace(IJob):
         Finalize the job.
         """
 
-        self._outputData["molecular_trace"][:] = self.grid
+        self._output_data["molecular_trace"][:] = self.grid
 
         # Write the output variables.
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

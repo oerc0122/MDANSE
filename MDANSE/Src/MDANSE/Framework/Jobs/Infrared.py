@@ -92,65 +92,65 @@ class Infrared(IJob):
             self.configuration["molecule_name"]["value"]
         ]
 
-        self.numberOfSteps = len(self.molecules)
-        instrResolution = self.configuration["instrument_resolution"]
+        self.n_steps = len(self.molecules)
+        instr_resolution = self.configuration["instrument_resolution"]
 
         self.add_ideal_results = (
             self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "ir/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "ir/res/time_window",
             "LineOutputVariable",
-            instrResolution["time_window_positive"],
+            instr_resolution["time_window_positive"],
             axis="ir/axes/time",
             units="au",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "ir/axes/omega",
             "LineOutputVariable",
-            instrResolution["omega"],
+            instr_resolution["omega"],
             units="rad/ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "ir/axes/romega",
             "LineOutputVariable",
-            instrResolution["romega"],
+            instr_resolution["romega"],
             units="rad/ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "ir/res/omega_window",
             "LineOutputVariable",
-            instrResolution["omega_window"],
+            instr_resolution["omega_window"],
             axis="ir/axes/omega",
             units="au",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "ddacf/ddacf",
             "LineOutputVariable",
             (self.configuration["frames"]["n_frames"],),
             axis="ir/axes/time",
         )
-        self._outputData.add(
+        self._output_data.add(
             "ir/ir",
             "LineOutputVariable",
-            (instrResolution["n_romegas"],),
+            (instr_resolution["n_romegas"],),
             axis="ir/axes/romega",
             main_result=True,
         )
         if self.add_ideal_results:
-            self._outputData.add(
+            self._output_data.add(
                 "ir/ideal",
                 "LineOutputVariable",
-                (instrResolution["n_romegas"],),
+                (instr_resolution["n_romegas"],),
                 axis="ir/axes/romega",
             )
 
@@ -224,29 +224,29 @@ class Infrared(IJob):
         x : np.ndarray
             d/dt dipole auto-correlation function for a molecule
         """
-        self._outputData["ddacf/ddacf"] += x
+        self._output_data["ddacf/ddacf"] += x
 
     def finalize(self):
         """Average the d/dt dipole auto-correlation function over the
         number of molecules in the trajectory, fourier transform to
         get the IR spectrum and save the results.
         """
-        self._outputData["ddacf/ddacf"] /= self.numberOfSteps
-        self._outputData["ir/ir"][:] = get_spectrum(
-            self._outputData["ddacf/ddacf"],
+        self._output_data["ddacf/ddacf"] /= self.n_steps
+        self._output_data["ir/ir"][:] = get_spectrum(
+            self._output_data["ddacf/ddacf"],
             self.configuration["instrument_resolution"]["time_window"],
             self.configuration["instrument_resolution"]["time_step"],
             fft="rfft",
         )
         if self.add_ideal_results:
-            self._outputData["ir/ideal"][:] = get_spectrum(
-                self._outputData["ddacf/ddacf"],
+            self._output_data["ir/ideal"][:] = get_spectrum(
+                self._output_data["ddacf/ddacf"],
                 None,
                 self.configuration["instrument_resolution"]["time_step"],
                 fft="rfft",
             )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

@@ -27,19 +27,19 @@ class VectorConfigurator(IConfigurator):
     _default = [1.0, 0.0, 0.0]
 
     def __init__(
-        self, name, valueType=int, normalize=False, notNull=False, dimension=3, **kwargs
+        self, name, value_type=int, normalize=False, not_null=False, dimension=3, **kwargs
     ):
         """
         Initializes the configurator.
 
         :param name: the name of the configurator as it will appear in the configuration.
         :type name: str
-        :param valueType: the numeric type for the vector.
-        :type valueType: int or float
+        :param value_type: the numeric type for the vector.
+        :type value_type: int or float
         :param normalize: if True the vector will be normalized.
         :type normalize: bool
-        :param notNull: if True, the vector must be non-null.
-        :type notNull: bool
+        :param not_null: if True, the vector must be non-null.
+        :type not_null: bool
         :param dimension: the dimension of the vector.
         :type dimension: int
         """
@@ -47,11 +47,11 @@ class VectorConfigurator(IConfigurator):
         # The base class constructor.
         IConfigurator.__init__(self, name, **kwargs)
 
-        self.valueType = valueType
+        self.value_type = value_type
 
         self.normalize = normalize
 
-        self.notNull = notNull
+        self.not_null = not_null
 
         self.dimension = dimension
 
@@ -75,12 +75,12 @@ class VectorConfigurator(IConfigurator):
             self.error_status = "Invalid dimension"
             return
 
-        vector = Vector(np.array(value, dtype=self.valueType))
+        vector = Vector(np.array(value, dtype=self.value_type))
 
         if self.normalize:
             vector = vector.normal()
 
-        if self.notNull:
+        if self.not_null:
             if vector.length() == 0.0:
                 self.error_status = "The vector is null"
                 return

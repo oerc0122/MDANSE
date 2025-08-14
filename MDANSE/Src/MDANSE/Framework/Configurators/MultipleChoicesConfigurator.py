@@ -26,7 +26,7 @@ class MultipleChoicesConfigurator(IConfigurator):
 
     _default = []
 
-    def __init__(self, name, choices=None, nChoices=None, **kwargs):
+    def __init__(self, name, choices=None, n_choices=None, **kwargs):
         """
         Initializes the configurator.
 
@@ -34,15 +34,15 @@ class MultipleChoicesConfigurator(IConfigurator):
         :type name: str
         :param choices: the list of values allowed for selection.
         :type choices: list
-        :param nChoices: the maximum number of values that can be selected or None if there is no restriction on this number.
-        :type nChoices: int or None
+        :param n_choices: the maximum number of values that can be selected or None if there is no restriction on this number.
+        :type n_choices: int or None
         """
 
         IConfigurator.__init__(self, name, **kwargs)
 
         self.choices = choices
 
-        self.nChoices = nChoices
+        self.n_choices = n_choices
 
     def configure(self, value):
         """
@@ -58,8 +58,8 @@ class MultipleChoicesConfigurator(IConfigurator):
 
         self._original_input = value
 
-        if self.nChoices is not None:
-            if len(value) != self.nChoices:
+        if self.n_choices is not None:
+            if len(value) != self.n_choices:
                 self.error_status = "invalid number of choices."
                 return
 

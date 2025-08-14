@@ -92,14 +92,14 @@ class PositionAutoCorrelationFunction(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
         self.labels = [
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "pacf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
@@ -108,7 +108,7 @@ class PositionAutoCorrelationFunction(IJob):
 
         # Will store the mean square displacement evolution.
         for element in self.trajectory.unique_names:
-            self._outputData.add(
+            self._output_data.add(
                 f"pacf/{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["n_frames"],),
@@ -128,7 +128,7 @@ class PositionAutoCorrelationFunction(IJob):
             #. index (int): The index of the step.
         :Returns:
             #. index (int): The index of the step.
-            #. atomicPACF (np.array): The calculated position auto-correlation function for atom index
+            #. atomic_p_a_c_f (np.array): The calculated position auto-correlation function for atom index
         """
 
         # get atom index
@@ -145,10 +145,10 @@ class PositionAutoCorrelationFunction(IJob):
         series = self.configuration["projection"]["projector"](series)
 
         n_configs = self.configuration["frames"]["n_configs"]
-        atomicPACF = correlate(series, series[:n_configs], mode="valid") / (
+        atomic_p_a_c_f = correlate(series, series[:n_configs], mode="valid") / (
             3 * n_configs
         )
-        return index, atomicPACF.T[0]
+        return index, atomic_p_a_c_f.T[0]
 
     def combine(self, index, x):
         """
@@ -162,17 +162,17 @@ class PositionAutoCorrelationFunction(IJob):
         element = self._atoms[self.trajectory.atom_indices[index]]
 
         # The MSD for element |symbol| is updated.
-        self._outputData[f"pacf/{element}"] += x
+        self._output_data[f"pacf/{element}"] += x
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        nAtomsPerElement = self.trajectory.get_natoms()
+        n_atoms_per_element = self.trajectory.get_natoms()
 
-        for element, number in list(nAtomsPerElement.items()):
-            self._outputData[f"pacf/{element}"] /= number
+        for element, number in list(n_atoms_per_element.items()):
+            self._output_data[f"pacf/{element}"] /= number
 
         selected_weights, all_weights = self.trajectory.get_weights(
             prop=self.configuration["weights"]["property"]
@@ -184,30 +184,30 @@ class PositionAutoCorrelationFunction(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             1,
         )
-        assign_weights(self._outputData, weight_dict, "pacf/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "pacf/%s", self.labels)
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = n_selected / n_total
 
-        pacfTotal = weighted_sum(self._outputData, "pacf/%s", self.labels) / fact
-        self._outputData.add(
+        pacf_total = weighted_sum(self._output_data, "pacf/%s", self.labels) / fact
+        self._output_data.add(
             "pacf/total",
             "LineOutputVariable",
-            pacfTotal,
+            pacf_total,
             axis="pacf/axes/time",
             units="nm2",
             main_result=True,
         )
-        self._outputData["pacf/total"].scaling_factor = fact
+        self._output_data["pacf/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "pacf",
             "LineOutputVariable",
             axis="pacf/axes/time",
@@ -216,7 +216,7 @@ class PositionAutoCorrelationFunction(IJob):
             partial_result=True,
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

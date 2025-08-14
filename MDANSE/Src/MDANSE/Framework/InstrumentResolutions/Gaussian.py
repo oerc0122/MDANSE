@@ -35,7 +35,7 @@ class Gaussian(IInstrumentResolution):
         mu = self._configuration["mu"]["value"]
         sigma = self._configuration["sigma"]["value"]
 
-        self._omegaWindow = (np.sqrt(2.0 * np.pi) / sigma) * np.exp(
+        self._omega_window = (np.sqrt(2.0 * np.pi) / sigma) * np.exp(
             -0.5 * ((omegas - mu) / sigma) ** 2
         )
-        self._timeWindow = self.apply_fft(self._omegaWindow, dt)
+        self._time_window = self.apply_fft(self._omega_window, dt)

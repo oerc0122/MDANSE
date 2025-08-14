@@ -57,15 +57,15 @@ class StaticStructureFactor(DistanceHistogram):
         "DistHistCutoffConfigurator",
         {
             "label": "r values (nm)",
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "dependencies": {"trajectory": "trajectory"},
         },
     )
     settings["q_values"] = (
         "RangeConfigurator",
-        {"valueType": float, "includeLast": True, "mini": 0.0, "default": (0, 500, 1)},
+        {"value_type": float, "include_last": True, "mini": 0.0, "default": (0, 500, 1)},
     )
     settings["grouping_level"] = (
         "GroupingLevelConfigurator",
@@ -127,27 +127,27 @@ class StaticStructureFactor(DistanceHistogram):
 
         nq = self.configuration["q_values"]["number"]
 
-        nFrames = self.configuration["frames"]["number"]
+        n_frames = self.configuration["frames"]["number"]
 
-        self.averageDensity /= nFrames
+        self.average_density /= n_frames
 
-        densityFactor = 4.0 * np.pi * self.configuration["r_values"]["mid_points"]
+        density_factor = 4.0 * np.pi * self.configuration["r_values"]["mid_points"]
 
-        shellSurfaces = densityFactor * self.configuration["r_values"]["mid_points"]
+        shell_surfaces = density_factor * self.configuration["r_values"]["mid_points"]
 
-        shellVolumes = shellSurfaces * self.configuration["r_values"]["step"]
+        shell_volumes = shell_surfaces * self.configuration["r_values"]["step"]
 
-        self._outputData.add(
+        self._output_data.add(
             "ssf/axes/q",
             "LineOutputVariable",
             self.configuration["q_values"]["value"],
             units="1/nm",
         )
 
-        nAtomsPerElement = self.trajectory.get_natoms()
+        n_atoms_per_element = self.trajectory.get_natoms()
 
         for label, _ in self.labels:
-            self._outputData.add(
+            self._output_data.add(
                 f"ssf/{label}",
                 "LineOutputVariable",
                 (nq,),
@@ -158,7 +158,7 @@ class StaticStructureFactor(DistanceHistogram):
             )
         if self.intra:
             for label, _ in self.labels_intra:
-                self._outputData.add(
+                self._output_data.add(
                     f"ssf/intra/{label}",
                     "LineOutputVariable",
                     (nq,),
@@ -166,7 +166,7 @@ class StaticStructureFactor(DistanceHistogram):
                     units="au",
                 )
             for label, _ in self.labels:
-                self._outputData.add(
+                self._output_data.add(
                     f"ssf/inter/{label}",
                     "LineOutputVariable",
                     (nq,),
@@ -174,7 +174,7 @@ class StaticStructureFactor(DistanceHistogram):
                     units="au",
                 )
 
-        self._outputData.add(
+        self._output_data.add(
             "ssf/total",
             "LineOutputVariable",
             (nq,),
@@ -183,14 +183,14 @@ class StaticStructureFactor(DistanceHistogram):
             main_result=True,
         )
         if self.intra:
-            self._outputData.add(
+            self._output_data.add(
                 "ssf/intra/total",
                 "LineOutputVariable",
                 (nq,),
                 axis="ssf/axes/q",
                 units="au",
             )
-            self._outputData.add(
+            self._output_data.add(
                 "ssf/inter/total",
                 "LineOutputVariable",
                 (nq,),
@@ -198,10 +198,10 @@ class StaticStructureFactor(DistanceHistogram):
                 units="au",
             )
 
-        q = self._outputData["ssf/axes/q"]
+        q = self._output_data["ssf/axes/q"]
         r = self.configuration["r_values"]["mid_points"]
 
-        fact1 = 4.0 * np.pi * self.averageDensity
+        fact1 = 4.0 * np.pi * self.average_density
 
         sincqr = np.sinc(np.outer(q, r) / np.pi)
 
@@ -228,11 +228,11 @@ class StaticStructureFactor(DistanceHistogram):
             results : npt.NDArray
                 The results.
             """
-            ni = nAtomsPerElement[label_i]
-            nj = nAtomsPerElement[label_j]
+            ni = n_atoms_per_element[label_i]
+            nj = n_atoms_per_element[label_j]
 
-            idi = self.selectedElements.index(label_i)
-            idj = self.selectedElements.index(label_j)
+            idi = self.selected_elements.index(label_i)
+            idj = self.selected_elements.index(label_j)
 
             if label_i == label_j:
                 nij = ni**2 / 2.0
@@ -242,31 +242,31 @@ class StaticStructureFactor(DistanceHistogram):
                     self.h_intra[idi, idj] += self.h_intra[idj, idi]
                 self.h_total[idi, idj] += self.h_total[idj, idi]
 
-            fact = 2 * nij * nFrames * shellVolumes
+            fact = 2 * nij * n_frames * shell_volumes
 
-            pdfTotal = self.h_total[idi, idj, :] / fact
+            pdf_total = self.h_total[idi, idj, :] / fact
             yield (
                 "ssf",
                 False,
-                1.0 + fact1 * np.sum((r**2) * (pdfTotal - 1.0) * sincqr, axis=1) * dr,
+                1.0 + fact1 * np.sum((r**2) * (pdf_total - 1.0) * sincqr, axis=1) * dr,
             )
 
             if self.intra:
-                pdfIntra = self.h_intra[idi, idj, :] / fact
-                pdfInter = pdfTotal - pdfIntra
+                pdf_intra = self.h_intra[idi, idj, :] / fact
+                pdf_inter = pdf_total - pdf_intra
                 yield (
                     "ssf/inter",
                     False,
                     1.0
-                    + fact1 * np.sum((r**2) * (pdfInter - 1.0) * sincqr, axis=1) * dr,
+                    + fact1 * np.sum((r**2) * (pdf_inter - 1.0) * sincqr, axis=1) * dr,
                 )
                 yield (
                     "ssf/intra",
                     True,
-                    fact1 * np.sum((r**2) * pdfIntra * sincqr, axis=1) * dr,
+                    fact1 * np.sum((r**2) * pdf_intra * sincqr, axis=1) * dr,
                 )
 
-        update_pair_results(self.trajectory, calc_func, self._outputData)
+        update_pair_results(self.trajectory, calc_func, self._output_data)
 
         selected_weights, all_weights = self.trajectory.get_weights(
             prop=self.configuration["weights"]["property"]
@@ -274,34 +274,34 @@ class StaticStructureFactor(DistanceHistogram):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             2,
         )
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = (n_selected / n_total) ** 2
 
         if self.intra:
             assign_weights(
-                self._outputData, weight_dict, "ssf/intra/%s", self.labels_intra
+                self._output_data, weight_dict, "ssf/intra/%s", self.labels_intra
             )
-            assign_weights(self._outputData, weight_dict, "ssf/inter/%s", self.labels)
-            assign_weights(self._outputData, weight_dict, "ssf/%s", self.labels)
-            ssfIntra = weighted_sum(self._outputData, "ssf/intra/%s", self.labels_intra)
-            self._outputData["ssf/intra/total"][:] = ssfIntra / fact
-            ssfInter = weighted_sum(self._outputData, "ssf/inter/%s", self.labels)
-            self._outputData["ssf/inter/total"][:] = ssfInter / fact
-            self._outputData["ssf/total"][:] = (ssfIntra + ssfInter) / fact
-            self._outputData["ssf/intra/total"].scaling_factor = fact
-            self._outputData["ssf/inter/total"].scaling_factor = fact
-            self._outputData["ssf/total"].scaling_factor = fact
+            assign_weights(self._output_data, weight_dict, "ssf/inter/%s", self.labels)
+            assign_weights(self._output_data, weight_dict, "ssf/%s", self.labels)
+            ssf_intra = weighted_sum(self._output_data, "ssf/intra/%s", self.labels_intra)
+            self._output_data["ssf/intra/total"][:] = ssf_intra / fact
+            ssf_inter = weighted_sum(self._output_data, "ssf/inter/%s", self.labels)
+            self._output_data["ssf/inter/total"][:] = ssf_inter / fact
+            self._output_data["ssf/total"][:] = (ssf_intra + ssf_inter) / fact
+            self._output_data["ssf/intra/total"].scaling_factor = fact
+            self._output_data["ssf/inter/total"].scaling_factor = fact
+            self._output_data["ssf/total"].scaling_factor = fact
 
             for i in ("/intra", "/inter", ""):
                 add_grouped_totals(
                     self.trajectory,
-                    self._outputData,
+                    self._output_data,
                     f"ssf{i}",
                     "LineOutputVariable",
                     dim=2,
@@ -312,13 +312,13 @@ class StaticStructureFactor(DistanceHistogram):
                     partial_result=i == "",
                 )
         else:
-            assign_weights(self._outputData, weight_dict, "ssf/%s", self.labels)
-            self._outputData["ssf/total"][:] = (
-                weighted_sum(self._outputData, "ssf/%s", self.labels) / fact
+            assign_weights(self._output_data, weight_dict, "ssf/%s", self.labels)
+            self._output_data["ssf/total"][:] = (
+                weighted_sum(self._output_data, "ssf/%s", self.labels) / fact
             )
-            self._outputData["ssf/total"].scaling_factor = fact
+            self._output_data["ssf/total"].scaling_factor = fact
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

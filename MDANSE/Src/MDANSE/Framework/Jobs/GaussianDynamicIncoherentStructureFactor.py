@@ -55,7 +55,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
     )
     settings["q_shells"] = (
         "RangeConfigurator",
-        {"valueType": float, "includeLast": True, "mini": 0.0},
+        {"value_type": float, "include_last": True, "mini": 0.0},
     )
     settings["instrument_resolution"] = (
         "InstrumentResolutionConfigurator",
@@ -105,17 +105,17 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
-        self._nQShells = self.configuration["q_shells"]["number"]
+        self._n_q_shells = self.configuration["q_shells"]["number"]
 
-        self._nFrames = self.configuration["frames"]["n_frames"]
+        self._n_frames = self.configuration["frames"]["n_frames"]
 
-        self._instrResolution = self.configuration["instrument_resolution"]
+        self._instr_resolution = self.configuration["instrument_resolution"]
 
-        self._nOmegas = self._instrResolution["n_omegas"]
+        self._n_omegas = self._instr_resolution["n_omegas"]
 
-        self._kSquare = self.configuration["q_shells"]["value"] ** 2
+        self._k_square = self.configuration["q_shells"]["value"] ** 2
 
         self.add_ideal_results = (
             self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
@@ -125,104 +125,104 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
 
-        self._outputData.add(
+        self._output_data.add(
             "gdisf/axes/q",
             "LineOutputVariable",
             self.configuration["q_shells"]["value"],
             units="1/nm",
         )
 
-        self._outputData.add(
-            "gdisf/axes/q2", "LineOutputVariable", self._kSquare, units="1/nm2"
+        self._output_data.add(
+            "gdisf/axes/q2", "LineOutputVariable", self._k_square, units="1/nm2"
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "gdisf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "gdisf/res/time_window",
             "LineOutputVariable",
-            self._instrResolution["time_window"],
+            self._instr_resolution["time_window"],
             units="au",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "gdisf/axes/omega",
             "LineOutputVariable",
             self.configuration["instrument_resolution"]["omega"],
             units="rad/ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "gdisf/res/omega_window",
             "LineOutputVariable",
-            self._instrResolution["omega_window"],
+            self._instr_resolution["omega_window"],
             axis="gdisf/axes/omega",
             units="au",
         )
 
         for element in self.trajectory.unique_names:
-            self._outputData.add(
+            self._output_data.add(
                 f"gdisf/f(q,t)/{element}",
                 "SurfaceOutputVariable",
-                (self._nQShells, self._nFrames),
+                (self._n_q_shells, self._n_frames),
                 axis="gdisf/axes/q|gdisf/axes/time",
                 units="au",
             )
-            self._outputData.add(
+            self._output_data.add(
                 f"gdisf/s(q,f)/{element}",
                 "SurfaceOutputVariable",
-                (self._nQShells, self._nOmegas),
+                (self._n_q_shells, self._n_omegas),
                 axis="gdisf/axes/q|gdisf/axes/omega",
                 units="au",
                 main_result=True,
                 partial_result=True,
             )
-            self._outputData.add(
+            self._output_data.add(
                 f"msd/{element}",
                 "LineOutputVariable",
-                (self._nFrames,),
+                (self._n_frames,),
                 axis="gdisf/axes/time",
                 units="nm2",
             )
             if self.add_ideal_results:
-                self._outputData.add(
+                self._output_data.add(
                     f"gdisf/s(q,f)/ideal/{element}",
                     "SurfaceOutputVariable",
-                    (self._nQShells, self._nOmegas),
+                    (self._n_q_shells, self._n_omegas),
                     axis="gdisf/axes/q|gdisf/axes/omega",
                     units="au",
                 )
 
-        self._outputData.add(
+        self._output_data.add(
             "gdisf/f(q,t)/total",
             "SurfaceOutputVariable",
-            (self._nQShells, self._nFrames),
+            (self._n_q_shells, self._n_frames),
             axis="gdisf/axes/q|gdisf/axes/time",
             units="au",
         )
-        self._outputData.add(
+        self._output_data.add(
             "gdisf/s(q,f)/total",
             "SurfaceOutputVariable",
-            (self._nQShells, self._nOmegas),
+            (self._n_q_shells, self._n_omegas),
             axis="gdisf/axes/q|gdisf/axes/omega",
             units="au",
             main_result=True,
         )
-        self._outputData.add(
+        self._output_data.add(
             "msd/total",
             "LineOutputVariable",
-            (self._nFrames,),
+            (self._n_frames,),
             axis="gdisf/axes/time",
             units="nm2",
         )
         if self.add_ideal_results:
-            self._outputData.add(
+            self._output_data.add(
                 "gdisf/s(q,f)/ideal/total",
                 "SurfaceOutputVariable",
-                (self._nQShells, self._nOmegas),
+                (self._n_q_shells, self._n_omegas),
                 axis="gdisf/axes/q|gdisf/axes/omega",
                 units="au",
             )
@@ -256,17 +256,17 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         series = self.configuration["projection"]["projector"](series)
 
-        atomicSF = np.zeros((self._nQShells, self._nFrames), dtype=np.float64)
+        atomic_s_f = np.zeros((self._n_q_shells, self._n_frames), dtype=np.float64)
 
         msd = mean_square_displacement(
             series, self.configuration["frames"]["n_configs"]
         )
 
-        for i, q2 in enumerate(self._kSquare):
+        for i, q2 in enumerate(self._k_square):
             gaussian = np.exp(-msd * q2 / 6.0)
-            atomicSF[i, :] += gaussian
+            atomic_s_f[i, :] += gaussian
 
-        return index, (atomicSF, msd)
+        return index, (atomic_s_f, msd)
 
     def combine(self, index: int, x: tuple[np.ndarray, np.ndarray]):
         """Add the results to the output files.
@@ -279,27 +279,27 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             A tuple of the GDISF and MSD of an atom.
         """
         element = self._atoms[self.trajectory.atom_indices[index]]
-        atomicSF, msd = x
-        self._outputData[f"gdisf/f(q,t)/{element}"] += atomicSF
-        self._outputData[f"msd/{element}"] += msd
+        atomic_s_f, msd = x
+        self._output_data[f"gdisf/f(q,t)/{element}"] += atomic_s_f
+        self._output_data[f"msd/{element}"] += msd
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...)
         """
-        nAtomsPerElement = self.trajectory.get_natoms()
-        for element, number in nAtomsPerElement.items():
-            self._outputData[f"gdisf/f(q,t)/{element}"][:] /= number
-            self._outputData[f"gdisf/s(q,f)/{element}"][:] = get_spectrum(
-                self._outputData[f"gdisf/f(q,t)/{element}"],
+        n_atoms_per_element = self.trajectory.get_natoms()
+        for element, number in n_atoms_per_element.items():
+            self._output_data[f"gdisf/f(q,t)/{element}"][:] /= number
+            self._output_data[f"gdisf/s(q,f)/{element}"][:] = get_spectrum(
+                self._output_data[f"gdisf/f(q,t)/{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
-            self._outputData[f"msd/{element}"][:] /= number
+            self._output_data[f"msd/{element}"][:] /= number
             if self.add_ideal_results:
-                self._outputData[f"gdisf/s(q,f)/ideal/{element}"][:] = get_spectrum(
-                    self._outputData[f"gdisf/f(q,t)/{element}"],
+                self._output_data[f"gdisf/s(q,f)/ideal/{element}"][:] = get_spectrum(
+                    self._output_data[f"gdisf/f(q,t)/{element}"],
                     None,
                     self.configuration["instrument_resolution"]["time_step"],
                     axis=1,
@@ -314,33 +314,33 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             1,
         )
-        assign_weights(self._outputData, weight_dict, "gdisf/f(q,t)/%s", self.labels)
-        assign_weights(self._outputData, weight_dict, "gdisf/s(q,f)/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "gdisf/f(q,t)/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "gdisf/s(q,f)/%s", self.labels)
         if self.add_ideal_results:
             assign_weights(
-                self._outputData, weight_dict, "gdisf/s(q,f)/ideal/%s", self.labels
+                self._output_data, weight_dict, "gdisf/s(q,f)/ideal/%s", self.labels
             )
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = n_selected / n_total
 
-        self._outputData["gdisf/f(q,t)/total"][:] = (
-            weighted_sum(self._outputData, "gdisf/f(q,t)/%s", self.labels)
+        self._output_data["gdisf/f(q,t)/total"][:] = (
+            weighted_sum(self._output_data, "gdisf/f(q,t)/%s", self.labels)
         ) / fact
-        self._outputData["gdisf/s(q,f)/total"][:] = (
-            weighted_sum(self._outputData, "gdisf/s(q,f)/%s", self.labels)
+        self._output_data["gdisf/s(q,f)/total"][:] = (
+            weighted_sum(self._output_data, "gdisf/s(q,f)/%s", self.labels)
         ) / fact
-        self._outputData["gdisf/f(q,t)/total"].scaling_factor = fact
-        self._outputData["gdisf/s(q,f)/total"].scaling_factor = fact
+        self._output_data["gdisf/f(q,t)/total"].scaling_factor = fact
+        self._output_data["gdisf/s(q,f)/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "gdisf/f(q,t)",
             "SurfaceOutputVariable",
             axis="gdisf/axes/q|gdisf/axes/time",
@@ -348,7 +348,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         )
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "gdisf/s(q,f)",
             "SurfaceOutputVariable",
             axis="gdisf/axes/q|gdisf/axes/omega",
@@ -358,15 +358,15 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         )
 
         if self.add_ideal_results:
-            self._outputData["gdisf/s(q,f)/ideal/total"][:] = (
-                weighted_sum(self._outputData, "gdisf/s(q,f)/ideal/%s", self.labels)
+            self._output_data["gdisf/s(q,f)/ideal/total"][:] = (
+                weighted_sum(self._output_data, "gdisf/s(q,f)/ideal/%s", self.labels)
                 / fact
             )
-            self._outputData["gdisf/s(q,f)/ideal/total"].scaling_factor = fact
+            self._output_data["gdisf/s(q,f)/ideal/total"].scaling_factor = fact
 
             add_grouped_totals(
                 self.trajectory,
-                self._outputData,
+                self._output_data,
                 "gdisf/s(q,f)/ideal",
                 "SurfaceOutputVariable",
                 axis="gdisf/axes/q|gdisf/axes/omega",
@@ -379,28 +379,28 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             1,
         )
 
-        assign_weights(self._outputData, weight_dict, "msd/%s", self.labels)
-        self._outputData["msd/total"][:] = (
-            weighted_sum(self._outputData, "msd/%s", self.labels) / fact
+        assign_weights(self._output_data, weight_dict, "msd/%s", self.labels)
+        self._output_data["msd/total"][:] = (
+            weighted_sum(self._output_data, "msd/%s", self.labels) / fact
         )
 
-        self._outputData["msd/total"].scaling_factor = fact
+        self._output_data["msd/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "msd",
             "LineOutputVariable",
             axis="gdisf/axes/time",
             units="nm2",
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

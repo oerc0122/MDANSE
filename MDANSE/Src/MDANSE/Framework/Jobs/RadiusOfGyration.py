@@ -61,17 +61,17 @@ class RadiusOfGyration(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "rog/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["time"],
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "rog/rog",
             "LineOutputVariable",
             (self.configuration["frames"]["number"],),
@@ -102,9 +102,9 @@ class RadiusOfGyration(IJob):
         """
 
         # get the Frame index
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
 
-        conf = self.trajectory.configuration(frameIndex)
+        conf = self.trajectory.configuration(frame_index)
 
         rog = radius_of_gyration(
             conf["coordinates"][self._indices, :],
@@ -122,14 +122,14 @@ class RadiusOfGyration(IJob):
             #. x (any): The returned result(s) of run_step
         """
 
-        self._outputData["rog/rog"][index] = x
+        self._output_data["rog/rog"][index] = x
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
         # Write the output variables.
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

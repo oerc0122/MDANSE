@@ -56,9 +56,9 @@ class Density(IJob):
     def initialize(self):
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
-        self._n_frames = self.numberOfSteps
+        self._n_frames = self.n_steps
 
         self._n_atoms = self.configuration["trajectory"][
             "instance"
@@ -69,14 +69,14 @@ class Density(IJob):
         ].chemical_system.atom_list
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "density/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["time"],
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "density/mass/density",
             "LineOutputVariable",
             (self._n_frames,),
@@ -84,7 +84,7 @@ class Density(IJob):
             units="g/cm3",
             main_result=True,
         )
-        self._outputData.add(
+        self._output_data.add(
             "density/mass/avg_density",
             "LineOutputVariable",
             (self._n_frames,),
@@ -93,14 +93,14 @@ class Density(IJob):
             main_result=True,
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "density/atomic/density",
             "LineOutputVariable",
             (self._n_frames,),
             axis="density/axes/time",
             units="1/cm3",
         )
-        self._outputData.add(
+        self._output_data.add(
             "density/atomic/avg_density",
             "LineOutputVariable",
             (self._n_frames,),
@@ -158,24 +158,24 @@ class Density(IJob):
         @type x: any.
         """
 
-        self._outputData["density/atomic/density"][index] = x[0]
+        self._output_data["density/atomic/density"][index] = x[0]
 
-        self._outputData["density/mass/density"][index] = x[1]
+        self._output_data["density/mass/density"][index] = x[1]
 
     def finalize(self):
         """
         Finalize the job.
         """
 
-        norm = np.arange(1, self._outputData["density/atomic/density"].shape[0] + 1)
-        self._outputData["density/atomic/avg_density"][:] = (
-            np.cumsum(self._outputData["density/atomic/density"]) / norm
+        norm = np.arange(1, self._output_data["density/atomic/density"].shape[0] + 1)
+        self._output_data["density/atomic/avg_density"][:] = (
+            np.cumsum(self._output_data["density/atomic/density"]) / norm
         )
-        self._outputData["density/mass/avg_density"][:] = (
-            np.cumsum(self._outputData["density/mass/density"]) / norm
+        self._output_data["density/mass/avg_density"][:] = (
+            np.cumsum(self._output_data["density/mass/density"]) / norm
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

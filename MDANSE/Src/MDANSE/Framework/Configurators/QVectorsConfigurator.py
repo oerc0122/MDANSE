@@ -58,7 +58,7 @@ class QVectorsConfigurator(IConfigurator):
 
         self._original_input = value
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
+        traj_config = self.configurable[self.dependencies["trajectory"]]
         self.error_status = "NONE"
         try:
             if not isinstance(value, tuple):
@@ -71,7 +71,7 @@ class QVectorsConfigurator(IConfigurator):
 
             generator = IQVectors.create(
                 generator_name,
-                trajConfig["instance"].configuration(0),
+                traj_config["instance"].configuration(0),
             )
             try:
                 generator.setup(parameters)

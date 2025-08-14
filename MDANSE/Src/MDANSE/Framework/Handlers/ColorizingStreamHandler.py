@@ -98,7 +98,7 @@ class ColorizingStreamHandler(IHandler, logging.StreamHandler):
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception:
-            self.handleError(record)
+            self.handle_error(record)
 
     if os.name != "nt":
 

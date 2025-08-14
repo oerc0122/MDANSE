@@ -60,8 +60,8 @@ class HistoryFile(dict):
 
         timeline = self["instance"].readline()
         toks = timeline.split()
-        self._timeStep = float(toks[5])
-        self._firstStep = int(toks[1])
+        self._time_step = float(toks[5])
+        self._first_step = int(toks[1])
 
         self["instance"].seek(0)
 
@@ -73,9 +73,9 @@ class HistoryFile(dict):
 
     def read_step(self, step: int):
         headerline = self["instance"].readline()
-        currentStep = int(headerline.split()[1])
+        current_step = int(headerline.split()[1])
 
-        timeStep = (currentStep - self._firstStep) * self._timeStep
+        time_step = (current_step - self._first_step) * self._time_step
         lines_per_atom = 2 + self["keytrj"]
 
         if self["imcon"]:
@@ -110,7 +110,7 @@ class HistoryFile(dict):
         if "gradients" in data:
             data["gradients"] *= self._grad_conversion
 
-        return timeStep, cell, data, charges
+        return time_step, cell, data, charges
 
     def close(self):
         self["instance"].close()
@@ -166,26 +166,26 @@ class DL_POLY(Converter):
         """
         super().initialize()
 
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
-        self._fieldFile = self.configuration["field_file"]
-        self._historyFile = HistoryFile(self.configuration["history_file"]["filename"])
+        self._atomic_aliases = self.configuration["atom_aliases"]["value"]
+        self._field_file = self.configuration["field_file"]
+        self._history_file = HistoryFile(self.configuration["history_file"]["filename"])
 
         # The number of steps of the analysis.
-        self.numberOfSteps = int(self._historyFile["n_frames"])
+        self.n_steps = int(self._history_file["n_frames"])
         self._chemical_system = ChemicalSystem()
 
-        self._fieldFile.build_chemical_system(
-            self._chemical_system, self._atomicAliases
+        self._field_file.build_chemical_system(
+            self._chemical_system, self._atomic_aliases
         )
 
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
-            initial_charges=self._fieldFile.get_atom_charges(),
+            initial_charges=self._field_file.get_atom_charges(),
         )
 
     def run_step(self, index: int) -> tuple[int, None]:
@@ -207,13 +207,13 @@ class DL_POLY(Converter):
             Index.
         """
         # The x, y and z values of the current frame.
-        time, unitCell, config, charge = self._historyFile.read_step(index)
+        time, unit_cell, config, charge = self._history_file.read_step(index)
 
-        unitCell = UnitCell(unitCell)
+        unit_cell = UnitCell(unit_cell)
 
-        if self._historyFile["imcon"]:
+        if self._history_file["imcon"]:
             conf = PeriodicRealConfiguration(
-                self._trajectory.chemical_system, config["positions"], unitCell
+                self._trajectory.chemical_system, config["positions"], unit_cell
             )
         else:
             conf = RealConfiguration(
@@ -261,7 +261,7 @@ class DL_POLY(Converter):
         Finalize the job.
         """
 
-        self._historyFile.close()
+        self._history_file.close()
 
         # Close the output trajectory.
         self._trajectory.write_standard_atom_database()

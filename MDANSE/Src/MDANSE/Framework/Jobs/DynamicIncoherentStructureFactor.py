@@ -108,17 +108,17 @@ class DynamicIncoherentStructureFactor(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
-        self._nQShells = self.configuration["q_vectors"]["n_shells"]
+        self._n_q_shells = self.configuration["q_vectors"]["n_shells"]
 
-        self._nFrames = self.configuration["frames"]["n_frames"]
+        self._n_frames = self.configuration["frames"]["n_frames"]
 
-        self._instrResolution = self.configuration["instrument_resolution"]
+        self._instr_resolution = self.configuration["instrument_resolution"]
 
         self._atoms = self.trajectory.atom_names
 
-        self._nOmegas = self._instrResolution["n_omegas"]
+        self._n_omegas = self._instr_resolution["n_omegas"]
 
         self.add_ideal_results = (
             self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
@@ -128,86 +128,86 @@ class DynamicIncoherentStructureFactor(IJob):
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
 
-        self._outputData.add(
+        self._output_data.add(
             "disf/axes/q",
             "LineOutputVariable",
             self.configuration["q_vectors"]["shells"],
             units="1/nm",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "disf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "disf/res/time_window",
             "LineOutputVariable",
-            self._instrResolution["time_window"],
+            self._instr_resolution["time_window"],
             units="au",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "disf/axes/omega",
             "LineOutputVariable",
-            self._instrResolution["omega"],
+            self._instr_resolution["omega"],
             units="rad/ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "disf/res/omega_window",
             "LineOutputVariable",
-            self._instrResolution["omega_window"],
+            self._instr_resolution["omega_window"],
             axis="disf/axes/omega",
             units="au",
         )
 
         for element in self.trajectory.unique_names:
-            self._outputData.add(
+            self._output_data.add(
                 f"disf/f(q,t)/{element}",
                 "SurfaceOutputVariable",
-                (self._nQShells, self._nFrames),
+                (self._n_q_shells, self._n_frames),
                 axis="disf/axes/q|disf/axes/time",
                 units="au",
             )
-            self._outputData.add(
+            self._output_data.add(
                 f"disf/s(q,f)/{element}",
                 "SurfaceOutputVariable",
-                (self._nQShells, self._nOmegas),
+                (self._n_q_shells, self._n_omegas),
                 axis="disf/axes/q|disf/axes/omega",
                 units="au",
                 main_result=True,
                 partial_result=True,
             )
             if self.add_ideal_results:
-                self._outputData.add(
+                self._output_data.add(
                     f"disf/s(q,f)/ideal/{element}",
                     "SurfaceOutputVariable",
-                    (self._nQShells, self._nOmegas),
+                    (self._n_q_shells, self._n_omegas),
                     axis="disf/axes/q|disf/axes/omega",
                     units="au",
                 )
 
-        self._outputData.add(
+        self._output_data.add(
             "disf/f(q,t)/total",
             "SurfaceOutputVariable",
-            (self._nQShells, self._nFrames),
+            (self._n_q_shells, self._n_frames),
             axis="disf/axes/q|disf/axes/time",
             units="au",
         )
-        self._outputData.add(
+        self._output_data.add(
             "disf/s(q,f)/total",
             "SurfaceOutputVariable",
-            (self._nQShells, self._nOmegas),
+            (self._n_q_shells, self._n_omegas),
             axis="disf/axes/q|disf/axes/omega",
             units="au",
             main_result=True,
         )
         if self.add_ideal_results:
-            self._outputData.add(
+            self._output_data.add(
                 "disf/s(q,f)/ideal/total",
                 "SurfaceOutputVariable",
-                (self._nQShells, self._nOmegas),
+                (self._n_q_shells, self._n_omegas),
                 axis="disf/axes/q|disf/axes/omega",
                 units="au",
             )
@@ -220,7 +220,7 @@ class DynamicIncoherentStructureFactor(IJob):
             #. index (int): The index of the step.
         :Returns:
             #. index (int): The index of the step.
-            #. atomicSF (np.array): The atomic structure factor
+            #. atomic_s_f (np.array): The atomic structure factor
         """
 
         atom_index = self.trajectory.atom_indices[index]
@@ -236,13 +236,13 @@ class DynamicIncoherentStructureFactor(IJob):
 
         disf_per_q_shell = collections.OrderedDict()
         for q in self.configuration["q_vectors"]["shells"]:
-            disf_per_q_shell[q] = np.zeros((self._nFrames,), dtype=np.float64)
+            disf_per_q_shell[q] = np.zeros((self._n_frames,), dtype=np.float64)
 
         n_configs = self.configuration["frames"]["n_configs"]
         for q in self.configuration["q_vectors"]["shells"]:
-            qVectors = self.configuration["q_vectors"]["value"][q]["q_vectors"]
+            q_vectors = self.configuration["q_vectors"]["value"][q]["q_vectors"]
 
-            rho = np.exp(1j * np.dot(series, qVectors))
+            rho = np.exp(1j * np.dot(series, q_vectors))
             res = correlate(rho, rho[:n_configs], mode="valid").T[0] / (
                 n_configs * rho.shape[1]
             )
@@ -261,17 +261,17 @@ class DynamicIncoherentStructureFactor(IJob):
 
         element = self._atoms[self.trajectory.atom_indices[index]]
         for i, v in enumerate(disf_per_q_shell.values()):
-            self._outputData[f"disf/f(q,t)/{element}"][i, :] += v
+            self._output_data[f"disf/f(q,t)/{element}"][i, :] += v
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...)
         """
         self.configuration["q_vectors"]["generator"].write_vectors_to_file(
-            self._outputData
+            self._output_data
         )
 
-        nAtomsPerElement = self.trajectory.get_natoms()
+        n_atoms_per_element = self.trajectory.get_natoms()
 
         selected_weights, all_weights = self.trajectory.get_weights(
             prop=self.configuration["weights"]["property"]
@@ -282,50 +282,50 @@ class DynamicIncoherentStructureFactor(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             1,
         )
-        assign_weights(self._outputData, weight_dict, "disf/f(q,t)/%s", self.labels)
-        assign_weights(self._outputData, weight_dict, "disf/s(q,f)/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "disf/f(q,t)/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "disf/s(q,f)/%s", self.labels)
         if self.add_ideal_results:
             assign_weights(
-                self._outputData, weight_dict, "disf/s(q,f)/ideal/%s", self.labels
+                self._output_data, weight_dict, "disf/s(q,f)/ideal/%s", self.labels
             )
-        for element, number in list(nAtomsPerElement.items()):
+        for element, number in list(n_atoms_per_element.items()):
             extra_scaling = 1.0 / number
-            self._outputData[f"disf/f(q,t)/{element}"] *= extra_scaling
-            self._outputData[f"disf/s(q,f)/{element}"][:] = get_spectrum(
-                self._outputData[f"disf/f(q,t)/{element}"],
+            self._output_data[f"disf/f(q,t)/{element}"] *= extra_scaling
+            self._output_data[f"disf/s(q,f)/{element}"][:] = get_spectrum(
+                self._output_data[f"disf/f(q,t)/{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 axis=1,
             )
             if self.add_ideal_results:
-                self._outputData[f"disf/s(q,f)/ideal/{element}"][:] = get_spectrum(
-                    self._outputData[f"disf/f(q,t)/{element}"],
+                self._output_data[f"disf/s(q,f)/ideal/{element}"][:] = get_spectrum(
+                    self._output_data[f"disf/f(q,t)/{element}"],
                     None,
                     self.configuration["instrument_resolution"]["time_step"],
                     axis=1,
                 )
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = len(self.trajectory.atom_types)
         fact = n_selected / n_total
 
-        self._outputData["disf/f(q,t)/total"][:] = (
-            weighted_sum(self._outputData, "disf/f(q,t)/%s", self.labels) / fact
+        self._output_data["disf/f(q,t)/total"][:] = (
+            weighted_sum(self._output_data, "disf/f(q,t)/%s", self.labels) / fact
         )
-        self._outputData["disf/f(q,t)/total"].scaling_factor = fact
+        self._output_data["disf/f(q,t)/total"].scaling_factor = fact
 
-        self._outputData["disf/s(q,f)/total"][:] = (
-            weighted_sum(self._outputData, "disf/s(q,f)/%s", self.labels) / fact
+        self._output_data["disf/s(q,f)/total"][:] = (
+            weighted_sum(self._output_data, "disf/s(q,f)/%s", self.labels) / fact
         )
-        self._outputData["disf/s(q,f)/total"].scaling_factor = fact
+        self._output_data["disf/s(q,f)/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "disf/f(q,t)",
             "SurfaceOutputVariable",
             axis="disf/axes/q|disf/axes/time",
@@ -333,7 +333,7 @@ class DynamicIncoherentStructureFactor(IJob):
         )
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "disf/s(q,f)",
             "SurfaceOutputVariable",
             axis="disf/axes/q|disf/axes/omega",
@@ -343,22 +343,22 @@ class DynamicIncoherentStructureFactor(IJob):
         )
 
         if self.add_ideal_results:
-            self._outputData["disf/s(q,f)/ideal/total"][:] = (
-                weighted_sum(self._outputData, "disf/s(q,f)/ideal/%s", self.labels)
+            self._output_data["disf/s(q,f)/ideal/total"][:] = (
+                weighted_sum(self._output_data, "disf/s(q,f)/ideal/%s", self.labels)
                 / fact
             )
-            self._outputData["disf/s(q,f)/ideal/total"].scaling_factor = fact
+            self._output_data["disf/s(q,f)/ideal/total"].scaling_factor = fact
 
             add_grouped_totals(
                 self.trajectory,
-                self._outputData,
+                self._output_data,
                 "disf/s(q,f)/ideal",
                 "SurfaceOutputVariable",
                 axis="disf/axes/q|disf/axes/omega",
                 units="au",
             )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

@@ -124,12 +124,12 @@ class JobError(Error):
 
 @consumer
 def key_generator(
-    keySize: int, chars: Sequence[str] = string.ascii_lowercase + string.digits
+    key_size: int, chars: Sequence[str] = string.ascii_lowercase + string.digits
 ):
     prefix = ""
 
     while True:
-        key = "".join(random.choices(chars, k=keySize))
+        key = "".join(random.choices(chars, k=key_size))
         if prefix:
             key = f"{prefix}_{key}"
 
@@ -160,11 +160,11 @@ class IJob(Configurable, metaclass=SubclassFactory):
         cls.key_gen.send(f"{PLATFORM.username()[:4]}_{PLATFORM.pid():d}")
 
         # The list of the registered jobs.
-        registeredJobs = {
+        registered_jobs = {
             f.name for f in PLATFORM.temporary_files_directory().glob("*")
         }
 
-        name = first_true(cls.key_gen, pred=lambda x: x not in registeredJobs)
+        name = first_true(cls.key_gen, pred=lambda x: x not in registered_jobs)
 
         return name
 
@@ -175,7 +175,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
         Configurable.__init__(self, trajectory_input=trajectory_input)
 
-        self._outputData = OutputData()
+        self._output_data = OutputData()
 
         self._status_constructor = JobStatus
 
@@ -186,8 +186,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
         self._log_filename = None
         self._in_memory_result = None
 
-        self.inputQueue = Queue()
-        self.outputQueue = Queue()
+        self.input_queue = Queue()
+        self.output_queue = Queue()
         self.log_queue = Queue()
 
     def __getstate__(self):
@@ -206,7 +206,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
     def finalize(self):
         if self._log_filename is not None:
             self.remove_log_file_handler()
-        self._in_memory_result = getattr(self._outputData, "data_object", None)
+        self._in_memory_result = getattr(self._output_data, "data_object", None)
 
     @property
     def results(self):
@@ -234,7 +234,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 )
             else:
                 valid_indices = selection["flatten_indices"]
-                self._outputData.add(
+                self._output_data.add(
                     "selected_atoms",
                     "LineOutputVariable",
                     [index in valid_indices for index in range(array_length)],
@@ -277,13 +277,13 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
     @classmethod
     def save(
-        cls, jobFile: Path | str, parameters: dict[str, Any] | None = None
+        cls, job_file: Path | str, parameters: dict[str, Any] | None = None
     ) -> None:
         """Save a job file for a given job.
 
         Parameters
         ----------
-        jobFile : Path
+        job_file : Path
             The name of the output job file.
         parameters : Optional[dict[str, Any]]
             If not None, the parameters with which the job file will be built.
@@ -301,7 +301,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
             for k, (v, label) in parameters.items()
         )
 
-        with open(jobFile, "w") as f:
+        with open(job_file, "w") as f:
             f.write(
                 RUNSCRIPT.format(
                     executable=sys.executable,
@@ -313,7 +313,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 )
             )
 
-        os.chmod(jobFile, stat.S_IRWXU)
+        os.chmod(job_file, stat.S_IRWXU)
 
     def combine(self):
         if self._status is not None:
@@ -327,7 +327,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
         for log_queue in log_queues:
             queue_handler = QueueHandler(log_queue)
             queue_handlers.append(queue_handler)
-            LOG.addHandler(queue_handler)
+            LOG.add_handler(queue_handler)
 
         while True:
             try:
@@ -344,17 +344,17 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 outputs.put(output)
 
         for queue_handler in queue_handlers:
-            LOG.removeHandler(queue_handler)
+            LOG.remove_handler(queue_handler)
 
         return True
 
     def _run_singlecore(self, *, prog: bool = False):
-        LOG.info(f"Single-core run: expects {self.numberOfSteps} steps")
+        LOG.info(f"Single-core run: expects {self.n_steps} steps")
 
-        steps = range(self.numberOfSteps)
+        steps = range(self.n_steps)
         if prog:
             steps = tqdm(
-                steps, unit="steps", total=self.numberOfSteps, desc=type(self).__name__
+                steps, unit="steps", total=self.n_steps, desc=type(self).__name__
             )
 
         for index in steps:
@@ -373,8 +373,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
         if hasattr(self._status, "_queue_0"):
             self._status._queue_0.put("started")
 
-        inputQueue = self.inputQueue
-        outputQueue = self.outputQueue
+        input_queue = self.input_queue
+        output_queue = self.output_queue
         log_queue = self.log_queue
 
         log_queues = [log_queue]
@@ -390,33 +390,33 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
         self._processes = []
 
-        for i in range(self.numberOfSteps):
-            inputQueue.put(i)
+        for i in range(self.n_steps):
+            input_queue.put(i)
 
         for i in range(self.configuration["running_mode"]["slots"]):
             self._run_multicore_check_terminate(listener)
             p = multiprocessing.Process(
                 target=self.process_tasks_queue,
-                args=(inputQueue, outputQueue, log_queues),
+                args=(input_queue, output_queue, log_queues),
             )
             self._processes.append(p)
             p.daemon = False
             p.start()
 
-        steps = range(self.numberOfSteps + 1)
+        steps = range(self.n_steps + 1)
         if prog:
             steps = tqdm(
-                steps, total=self.numberOfSteps, unit="steps", desc=type(self).__name__
+                steps, total=self.n_steps, unit="steps", desc=type(self).__name__
             )
         steps = iter(steps)
 
         n_results = next(steps)
-        while n_results != self.numberOfSteps:
+        while n_results != self.n_steps:
             self._run_multicore_check_terminate(listener)
             if self._status is not None:
                 self._status.fixed_status(n_results)
             try:
-                index, result = outputQueue.get_nowait()
+                index, result = output_queue.get_nowait()
             except queue.Empty:
                 time.sleep(0.1)
                 continue
@@ -498,10 +498,10 @@ class IJob(Configurable, metaclass=SubclassFactory):
             self.check_status()
 
             if self._status is not None:
-                self._status.start(self.numberOfSteps)
+                self._status.start(self.n_steps)
                 self._status.state.info = str(self)
 
-            if getattr(self, "numberOfSteps", 0) <= 0:
+            if getattr(self, "n_steps", 0) <= 0:
                 raise JobError(self, f"Invalid number of steps for job {self._name}")
 
             if "running_mode" in self.configuration:
@@ -531,11 +531,11 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 f"A job with {shortname!r} name is already stored in the registry"
             )
 
-        templateFile = PLATFORM.macros_directory() / f"{classname}.py"
+        template_file = PLATFORM.macros_directory() / f"{classname}.py"
 
         try:
             label = "label of the class"
-            with templateFile.open("w") as f:
+            with template_file.open("w") as f:
                 f.write(
                     f'''import collections
 
@@ -566,10 +566,10 @@ class {classname}(IJob):
 
         # Compulsory. You must enter the number of steps of your job.
         # Here for example the number of selected frames
-        self.numberOfSteps = self.configuration['frames']['number']
+        self.n_steps = self.configuration['frames']['number']
 
         # Create an output data for the selected frames.
-        self._outputData.add("x/axes/time", "LineOutputVariable", self.configuration['frames']['time'], units='ps')
+        self._output_data.add("x/axes/time", "LineOutputVariable", self.configuration['frames']['time'], units='ps')
 
 
     def run_step(self, index):
@@ -591,7 +591,7 @@ class {classname}(IJob):
         """
 
         # The output data are written
-        self._outputData.write(self.configuration['output_files']['root'], self.configuration['output_files']['formats'], str(self),
+        self._output_data.write(self.configuration['output_files']['root'], self.configuration['output_files']['formats'], str(self),
             self.output_configuration())
 
         # The trajectory is closed
@@ -602,7 +602,7 @@ class {classname}(IJob):
 
         except OSError:
             return None
-        return templateFile
+        return template_file
 
     def add_log_file_handler(self, filename: str, level: str) -> None:
         """Adds a file handle which is used to write the jobs logs.
@@ -621,9 +621,9 @@ class {classname}(IJob):
         # tracking the fh by storing it in this object causes issues
         # with multiprocessing jobs
         fh.set_name(filename)
-        fh.setFormatter(FMT)
-        fh.setLevel(level)
-        LOG.addHandler(fh)
+        fh.set_formatter(FMT)
+        fh.set_level(level)
+        LOG.add_handler(fh)
         LOG.debug(f"Log handler added for filename {filename}")
 
     def remove_log_file_handler(self) -> None:
@@ -632,4 +632,4 @@ class {classname}(IJob):
         for handler in LOG.handlers:
             if handler.name == self._log_filename:
                 handler.close()
-                LOG.removeHandler(handler)
+                LOG.remove_handler(handler)

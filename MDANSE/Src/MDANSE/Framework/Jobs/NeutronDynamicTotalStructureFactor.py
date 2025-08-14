@@ -111,7 +111,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = 1
+        self.n_steps = 1
 
         self.pair_labels = pair_labels(
             self.trajectory,
@@ -125,7 +125,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "Inconsistent times between dcsf and disf input files"
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/axes/time", "LineOutputVariable", dcsf_time, units="ps"
         )
 
@@ -139,7 +139,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "Inconsistent time windows between dcsf and disf input files"
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/axes/time_window", "LineOutputVariable", dcsf_time_window, units="au"
         )
 
@@ -151,7 +151,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "Inconsistent q values between dcsf and disf input files"
             )
 
-        self._outputData.add("ndsf/axes/q", "LineOutputVariable", dcsf_q, units="1/nm")
+        self._output_data.add("ndsf/axes/q", "LineOutputVariable", dcsf_q, units="1/nm")
 
         # Check omega consistency
         dcsf_omega, disf_omega = self._get_data_from_files("axes/omega")
@@ -161,7 +161,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "Inconsistent omegas between dcsf and disf input files"
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/axes/omega", "LineOutputVariable", dcsf_omega, units="rad/ps"
         )
 
@@ -175,7 +175,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 "Inconsistent omega windows between dcsf and disf input files"
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/axes/omega_window", "LineOutputVariable", dcsf_omega, units="au"
         )
 
@@ -237,14 +237,14 @@ class NeutronDynamicTotalStructureFactor(IJob):
             sqf = self.configuration["disf_input_file"]["instance"][
                 f"disf/s(q,f)/{element}"
             ]
-            self._outputData.add(
+            self._output_data.add(
                 f"ndsf/f(q,t)_inc/{element}",
                 "SurfaceOutputVariable",
                 fqt,
                 axis="ndsf/axes/q|ndsf/axes/time",
                 units="au",
             )
-            self._outputData.add(
+            self._output_data.add(
                 f"ndsf/s(q,f)_inc/{element}",
                 "SurfaceOutputVariable",
                 sqf,
@@ -259,14 +259,14 @@ class NeutronDynamicTotalStructureFactor(IJob):
             sqf = self.configuration["dcsf_input_file"]["instance"][
                 f"dcsf/s(q,f)/{pair_str}"
             ]
-            self._outputData.add(
+            self._output_data.add(
                 f"ndsf/f(q,t)_coh/{pair_str}",
                 "SurfaceOutputVariable",
                 fqt,
                 axis="ndsf/axes/q|ndsf/axes/time",
                 units="au",
             )
-            self._outputData.add(
+            self._output_data.add(
                 f"ndsf/s(q,f)_coh/{pair_str}",
                 "SurfaceOutputVariable",
                 sqf,
@@ -274,54 +274,54 @@ class NeutronDynamicTotalStructureFactor(IJob):
                 units="nm2/ps",
             )
 
-        nQValues = len(dcsf_q)
-        nTimes = len(dcsf_time)
-        nOmegas = len(dcsf_omega)
+        n_q_values = len(dcsf_q)
+        n_times = len(dcsf_time)
+        n_omegas = len(dcsf_omega)
 
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/f(q,t)_coh/total",
             "SurfaceOutputVariable",
-            (nQValues, nTimes),
+            (n_q_values, n_times),
             axis="ndsf/axes/q|ndsf/axes/time",
             units="au",
         )
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/f(q,t)_inc/total",
             "SurfaceOutputVariable",
-            (nQValues, nTimes),
+            (n_q_values, n_times),
             axis="ndsf/axes/q|ndsf/axes/time",
             units="au",
         )
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/f(q,t)/total",
             "SurfaceOutputVariable",
-            (nQValues, nTimes),
+            (n_q_values, n_times),
             axis="ndsf/axes/q|ndsf/axes/time",
             units="au",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/s(q,f)_coh/total",
             "SurfaceOutputVariable",
-            (nQValues, nOmegas),
+            (n_q_values, n_omegas),
             axis="ndsf/axes/q|ndsf/axes/omega",
             units="nm2/ps",
             main_result=True,
             partial_result=True,
         )
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/s(q,f)_inc/total",
             "SurfaceOutputVariable",
-            (nQValues, nOmegas),
+            (n_q_values, n_omegas),
             axis="ndsf/axes/q|ndsf/axes/omega",
             units="nm2/ps",
             main_result=True,
             partial_result=True,
         )
-        self._outputData.add(
+        self._output_data.add(
             "ndsf/s(q,f)/total",
             "SurfaceOutputVariable",
-            (nQValues, nOmegas),
+            (n_q_values, n_omegas),
             axis="ndsf/axes/q|ndsf/axes/omega",
             units="nm2/ps",
             main_result=True,
@@ -367,8 +367,8 @@ class NeutronDynamicTotalStructureFactor(IJob):
         Finalizes the calculations (e.g. averaging the total term, output files creations ...)
         """
 
-        nAtomsPerElement = self.trajectory.get_natoms()
-        n_selected = sum(nAtomsPerElement.values())
+        n_atoms_per_element = self.trajectory.get_natoms()
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = n_selected / n_total
 
@@ -380,57 +380,57 @@ class NeutronDynamicTotalStructureFactor(IJob):
             bi = self.trajectory.get_atom_property(ele_i, "b_coherent")
             bj = self.trajectory.get_atom_property(ele_j, "b_coherent")
             sqrt_cij = sqrt(
-                nAtomsPerElement[label_i] * nAtomsPerElement[label_j] * norm_natoms**2
+                n_atoms_per_element[label_i] * n_atoms_per_element[label_j] * norm_natoms**2
             )
             pre_fac = 1 if label_i == label_j else 2
-            self._outputData[f"ndsf/f(q,t)_coh/{pair_str}"].scaling_factor *= (
+            self._output_data[f"ndsf/f(q,t)_coh/{pair_str}"].scaling_factor *= (
                 pre_fac * bi * bj * sqrt_cij
             )
-            self._outputData[f"ndsf/s(q,f)_coh/{pair_str}"].scaling_factor *= (
+            self._output_data[f"ndsf/s(q,f)_coh/{pair_str}"].scaling_factor *= (
                 pre_fac * bi * bj * sqrt_cij
             )
 
-            self._outputData["ndsf/f(q,t)_coh/total"][:] += (
-                self._outputData[f"ndsf/f(q,t)_coh/{pair_str}"][:]
-                * self._outputData[f"ndsf/f(q,t)_coh/{pair_str}"].scaling_factor
+            self._output_data["ndsf/f(q,t)_coh/total"][:] += (
+                self._output_data[f"ndsf/f(q,t)_coh/{pair_str}"][:]
+                * self._output_data[f"ndsf/f(q,t)_coh/{pair_str}"].scaling_factor
                 / fact
             )
-            self._outputData["ndsf/s(q,f)_coh/total"][:] += (
-                self._outputData[f"ndsf/s(q,f)_coh/{pair_str}"][:]
-                * self._outputData[f"ndsf/s(q,f)_coh/{pair_str}"].scaling_factor
+            self._output_data["ndsf/s(q,f)_coh/total"][:] += (
+                self._output_data[f"ndsf/s(q,f)_coh/{pair_str}"][:]
+                * self._output_data[f"ndsf/s(q,f)_coh/{pair_str}"].scaling_factor
                 / fact
             )
 
-        self._outputData["ndsf/f(q,t)_coh/total"].scaling_factor = fact
-        self._outputData["ndsf/s(q,f)_coh/total"].scaling_factor = fact
+        self._output_data["ndsf/f(q,t)_coh/total"].scaling_factor = fact
+        self._output_data["ndsf/s(q,f)_coh/total"].scaling_factor = fact
 
         # Compute incoherent functions and structure factor
-        for label, number in nAtomsPerElement.items():
+        for label, number in n_atoms_per_element.items():
             ele_i = self.trajectory.element_from_label[label]
             bi = self.trajectory.get_atom_property(ele_i, "b_incoherent")
-            self._outputData[f"ndsf/f(q,t)_inc/{label}"].scaling_factor *= (
+            self._output_data[f"ndsf/f(q,t)_inc/{label}"].scaling_factor *= (
                 bi**2 * number * norm_natoms
             )
-            self._outputData[f"ndsf/s(q,f)_inc/{label}"].scaling_factor *= (
+            self._output_data[f"ndsf/s(q,f)_inc/{label}"].scaling_factor *= (
                 bi**2 * number * norm_natoms
             )
-            self._outputData["ndsf/f(q,t)_inc/total"][:] += (
-                self._outputData[f"ndsf/f(q,t)_inc/{label}"][:]
-                * self._outputData[f"ndsf/f(q,t)_inc/{label}"].scaling_factor
+            self._output_data["ndsf/f(q,t)_inc/total"][:] += (
+                self._output_data[f"ndsf/f(q,t)_inc/{label}"][:]
+                * self._output_data[f"ndsf/f(q,t)_inc/{label}"].scaling_factor
                 / fact
             )
-            self._outputData["ndsf/s(q,f)_inc/total"][:] += (
-                self._outputData[f"ndsf/s(q,f)_inc/{label}"][:]
-                * self._outputData[f"ndsf/s(q,f)_inc/{label}"].scaling_factor
+            self._output_data["ndsf/s(q,f)_inc/total"][:] += (
+                self._output_data[f"ndsf/s(q,f)_inc/{label}"][:]
+                * self._output_data[f"ndsf/s(q,f)_inc/{label}"].scaling_factor
                 / fact
             )
 
-        self._outputData["ndsf/f(q,t)_inc/total"].scaling_factor = fact
-        self._outputData["ndsf/s(q,f)_inc/total"].scaling_factor = fact
+        self._output_data["ndsf/f(q,t)_inc/total"].scaling_factor = fact
+        self._output_data["ndsf/s(q,f)_inc/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "ndsf/f(q,t)_inc",
             "SurfaceOutputVariable",
             axis="ndsf/axes/q|ndsf/axes/time",
@@ -438,7 +438,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
         )
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "ndsf/f(q,t)_coh",
             "SurfaceOutputVariable",
             dim=2,
@@ -448,7 +448,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
         )
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "ndsf/s(q,f)_inc",
             "SurfaceOutputVariable",
             axis="ndsf/axes/q|ndsf/axes/omega",
@@ -458,7 +458,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
         )
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "ndsf/s(q,f)_coh",
             "SurfaceOutputVariable",
             dim=2,
@@ -470,18 +470,18 @@ class NeutronDynamicTotalStructureFactor(IJob):
         )
 
         # Compute total F(Q,t) = inc + coh
-        self._outputData["ndsf/f(q,t)/total"][:] = (
-            self._outputData["ndsf/f(q,t)_coh/total"][:]
-            + self._outputData["ndsf/f(q,t)_inc/total"][:]
+        self._output_data["ndsf/f(q,t)/total"][:] = (
+            self._output_data["ndsf/f(q,t)_coh/total"][:]
+            + self._output_data["ndsf/f(q,t)_inc/total"][:]
         )
-        self._outputData["ndsf/s(q,f)/total"][:] = (
-            self._outputData["ndsf/s(q,f)_coh/total"][:]
-            + self._outputData["ndsf/s(q,f)_inc/total"][:]
+        self._output_data["ndsf/s(q,f)/total"][:] = (
+            self._output_data["ndsf/s(q,f)_coh/total"][:]
+            + self._output_data["ndsf/s(q,f)_inc/total"][:]
         )
-        self._outputData["ndsf/f(q,t)/total"].scaling_factor = fact
-        self._outputData["ndsf/s(q,f)/total"].scaling_factor = fact
+        self._output_data["ndsf/f(q,t)/total"].scaling_factor = fact
+        self._output_data["ndsf/s(q,f)/total"].scaling_factor = fact
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

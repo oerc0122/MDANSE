@@ -36,16 +36,16 @@ class PseudoVoigt(IInstrumentResolution):
 
     def set_kernel(self, omegas, dt):
         eta = self._configuration["eta"]["value"]
-        muL = self._configuration["mu_lorentzian"]["value"]
-        sigmaL = self._configuration["sigma_lorentzian"]["value"]
-        muG = self._configuration["mu_gaussian"]["value"]
-        sigmaG = self._configuration["sigma_gaussian"]["value"]
+        mu_l = self._configuration["mu_lorentzian"]["value"]
+        sigma_l = self._configuration["sigma_lorentzian"]["value"]
+        mu_g = self._configuration["mu_gaussian"]["value"]
+        sigma_g = self._configuration["sigma_gaussian"]["value"]
 
-        gaussian = (np.sqrt(2.0 * np.pi) / sigmaG) * np.exp(
-            -0.5 * ((omegas - muG) / sigmaG) ** 2
+        gaussian = (np.sqrt(2.0 * np.pi) / sigma_g) * np.exp(
+            -0.5 * ((omegas - mu_g) / sigma_g) ** 2
         )
 
-        lorentzian = (2.0 * sigmaL) / ((omegas - muL) ** 2 + sigmaL**2)
+        lorentzian = (2.0 * sigma_l) / ((omegas - mu_l) ** 2 + sigma_l**2)
 
-        self._omegaWindow = eta * lorentzian + (1.0 - eta) * gaussian
-        self._timeWindow = self.apply_fft(self._omegaWindow, dt)
+        self._omega_window = eta * lorentzian + (1.0 - eta) * gaussian
+        self._time_window = self.apply_fft(self._omega_window, dt)

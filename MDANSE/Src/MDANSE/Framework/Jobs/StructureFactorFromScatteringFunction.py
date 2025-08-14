@@ -78,23 +78,23 @@ class StructureFactorFromScatteringFunction(IJob):
         super().initialize()
 
         # The number of steps is set to 1 as everything is performed in the finalize method
-        self.numberOfSteps = 1
+        self.n_steps = 1
 
-        inputFile = self.configuration["dcsf_input_file"]["instance"]
+        input_file = self.configuration["dcsf_input_file"]["instance"]
 
-        self._outputData.add(
+        self._output_data.add(
             "ssf/axes/q",
             "LineOutputVariable",
-            inputFile["dcsf/axes/q"][:],
+            input_file["dcsf/axes/q"][:],
             units="1/nm",
         )
-        nq = len(inputFile["dcsf/axes/q"][:])
+        nq = len(input_file["dcsf/axes/q"][:])
         self.labels = pair_labels(
             self.trajectory,
         )
 
         for pair_str, _ in self.labels:
-            self._outputData.add(
+            self._output_data.add(
                 f"ssf/{pair_str}",
                 "LineOutputVariable",
                 (nq,),
@@ -104,7 +104,7 @@ class StructureFactorFromScatteringFunction(IJob):
                 partial_result=True,
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "ssf/total",
             "LineOutputVariable",
             (nq,),
@@ -138,8 +138,8 @@ class StructureFactorFromScatteringFunction(IJob):
         """Calculate the static structure factor from the intermediate
         scattering function.
         """
-        nAtomsPerElement = self.trajectory.get_natoms()
-        n_selected = sum(nAtomsPerElement.values())
+        n_atoms_per_element = self.trajectory.get_natoms()
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = (n_selected / n_total) ** 2
         norm_natoms = 1.0 / n_total
@@ -149,27 +149,27 @@ class StructureFactorFromScatteringFunction(IJob):
                 f"dcsf/f(q,t)/{pair_str}"
             ]
             sqrt_cij = sqrt(
-                nAtomsPerElement[label_i] * nAtomsPerElement[label_j] * norm_natoms**2
+                n_atoms_per_element[label_i] * n_atoms_per_element[label_j] * norm_natoms**2
             )
             delta_ij = 1 if label_i == label_j else 0
-            self._outputData[f"ssf/{pair_str}"][:] = (
+            self._output_data[f"ssf/{pair_str}"][:] = (
                 1 + (fqt[:, 0] - delta_ij) / sqrt_cij
             )
-            self._outputData[f"ssf/{pair_str}"].scaling_factor = (
+            self._output_data[f"ssf/{pair_str}"].scaling_factor = (
                 fqt.attrs["scaling_factor"] * sqrt_cij
             )
 
-            self._outputData["ssf/total"][:] += (
-                self._outputData[f"ssf/{pair_str}"][:]
-                * self._outputData[f"ssf/{pair_str}"].scaling_factor
+            self._output_data["ssf/total"][:] += (
+                self._output_data[f"ssf/{pair_str}"][:]
+                * self._output_data[f"ssf/{pair_str}"].scaling_factor
                 / fact
             )
 
-        self._outputData["ssf/total"].scaling_factor = fact
+        self._output_data["ssf/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "ssf",
             "LineOutputVariable",
             dim=2,
@@ -179,7 +179,7 @@ class StructureFactorFromScatteringFunction(IJob):
             partial_result=True,
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

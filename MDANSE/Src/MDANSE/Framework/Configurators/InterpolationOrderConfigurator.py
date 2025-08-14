@@ -68,8 +68,8 @@ class InterpolationOrderConfigurator(IntegerConfigurator):
 
         IntegerConfigurator.configure(self, value)
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
-        traj_has_velocities = trajConfig["instance"].has_variable("velocities")
+        traj_config = self.configurable[self.dependencies["trajectory"]]
+        traj_has_velocities = traj_config["instance"].has_variable("velocities")
 
         if value == 0:
             if not traj_has_velocities:

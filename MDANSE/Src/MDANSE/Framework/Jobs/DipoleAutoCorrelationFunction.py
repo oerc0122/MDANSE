@@ -78,17 +78,17 @@ class DipoleAutoCorrelationFunction(IJob):
             self.configuration["molecule_name"]["value"]
         ]
 
-        self.numberOfSteps = len(self.molecules)
+        self.n_steps = len(self.molecules)
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "dacf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "dacf/dacf",
             "LineOutputVariable",
             (self.configuration["frames"]["n_frames"],),
@@ -150,15 +150,15 @@ class DipoleAutoCorrelationFunction(IJob):
 
     def combine(self, index, x):
         """Combines returned results of run_step."""
-        self._outputData["dacf/dacf"] += x
+        self._output_data["dacf/dacf"] += x
 
     def finalize(self):
         """Finalizes the calculations (e.g. averaging the total term,
         output files creations ...).
         """
-        self._outputData["dacf/dacf"] /= self.numberOfSteps
+        self._output_data["dacf/dacf"] /= self.n_steps
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

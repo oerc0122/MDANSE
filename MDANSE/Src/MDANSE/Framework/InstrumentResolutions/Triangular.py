@@ -37,6 +37,6 @@ class Triangular(IInstrumentResolution):
 
         val = np.abs(omegas - mu) - sigma
 
-        self._omegaWindow = 2.0 * np.pi * np.where(val >= 0, 0.0, -val / sigma**2)
+        self._omega_window = 2.0 * np.pi * np.where(val >= 0, 0.0, -val / sigma**2)
 
-        self._timeWindow = self.apply_fft(self._omegaWindow, dt)
+        self._time_window = self.apply_fft(self._omega_window, dt)

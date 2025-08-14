@@ -134,7 +134,7 @@ class ReorientationalTimeCorrelationFunction(IJob):
         self.inner_index2 = self.configuration["molecule_and_axis"]["index2"]
 
         self.legendre_order = self.configuration["polynomial_order"]["value"]
-        self.numberOfSteps = len(self.molecules)
+        self.n_steps = len(self.molecules)
 
         self.masses = np.array(
             self.trajectory.chemical_system.atom_property(
@@ -142,14 +142,14 @@ class ReorientationalTimeCorrelationFunction(IJob):
             ),
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "rtcf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "rtcf/axes/axis_index",
             "LineOutputVariable",
             np.arange(
@@ -163,7 +163,7 @@ class ReorientationalTimeCorrelationFunction(IJob):
         )
 
         for l_order in range(1, self.legendre_order + 1):
-            self._outputData.add(
+            self._output_data.add(
                 f"rtcf/l={l_order}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["n_frames"],),
@@ -173,7 +173,7 @@ class ReorientationalTimeCorrelationFunction(IJob):
             )
 
             if self.configuration["per_axis"]["value"]:
-                self._outputData.add(
+                self._output_data.add(
                     f"rtcf/per_axis/l={l_order}",
                     "SurfaceOutputVariable",
                     (
@@ -271,23 +271,23 @@ class ReorientationalTimeCorrelationFunction(IJob):
 
         """
         for l_order in self.legendre_orders:
-            self._outputData[f"rtcf/l={l_order}"] += x[l_order - 1]
+            self._output_data[f"rtcf/l={l_order}"] += x[l_order - 1]
 
             if self.configuration["per_axis"]["value"]:
-                self._outputData[f"rtcf/per_axis/l={l_order}"][index, :] = x[
+                self._output_data[f"rtcf/per_axis/l={l_order}"][index, :] = x[
                     l_order - 1
                 ]
 
     def finalize(self):
         """Normalise and write out the results."""
         for l_order in self.legendre_orders:
-            self._outputData[f"rtcf/l={l_order}"] /= self.configuration["trajectory"][
+            self._output_data[f"rtcf/l={l_order}"] /= self.configuration["trajectory"][
                 "instance"
             ].chemical_system.number_of_molecules(
                 self.configuration["molecule_and_axis"]["value"],
             )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

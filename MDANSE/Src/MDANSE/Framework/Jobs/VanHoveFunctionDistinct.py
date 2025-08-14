@@ -360,8 +360,8 @@ class VanHoveFunctionDistinct(IJob):
         "DistHistCutoffConfigurator",
         {
             "label": "r values (nm)",
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "dependencies": {"trajectory": "trajectory"},
         },
@@ -403,7 +403,7 @@ class VanHoveFunctionDistinct(IJob):
         """Get the input parameters from the job input parsers."""
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["n_frames"]
+        self.n_steps = self.configuration["frames"]["n_frames"]
         self.n_configs = self.configuration["frames"]["n_configs"]
         if self.configuration["trajectory"][
             "instance"
@@ -415,10 +415,10 @@ class VanHoveFunctionDistinct(IJob):
             self.indices_intra = None
         self.intra = self.indices_intra is not None
 
-        self.selectedElements = list(self.trajectory.unique_names)
-        self.nElements = len(self.selectedElements)
-        self._elementsPairs = sorted(
-            it.combinations_with_replacement(self.selectedElements, 2),
+        self.selected_elements = list(self.trajectory.unique_names)
+        self.n_elements = len(self.selected_elements)
+        self._elements_pairs = sorted(
+            it.combinations_with_replacement(self.selected_elements, 2),
         )
         self.labels = pair_labels(
             self.trajectory,
@@ -435,13 +435,13 @@ class VanHoveFunctionDistinct(IJob):
         if conf.unit_cell.volume < CELL_SIZE_LIMIT:
             raise ValueError(DETAILED_CELL_MESSAGE)
 
-        self._outputData.add(
+        self._output_data.add(
             "vh/axes/r",
             "LineOutputVariable",
             self.configuration["r_values"]["mid_points"],
             units="nm",
         )
-        self._outputData.add(
+        self._output_data.add(
             "vh/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
@@ -449,59 +449,59 @@ class VanHoveFunctionDistinct(IJob):
         )
 
         for label, _ in self.labels:
-            self._outputData.add(
+            self._output_data.add(
                 f"vh/g(r,t)/{label}",
                 "SurfaceOutputVariable",
-                (self.n_mid_points, self.numberOfSteps),
+                (self.n_mid_points, self.n_steps),
                 axis="vh/axes/r|vh/axes/time",
                 units="au",
                 main_result=True,
                 partial_result=True,
             )
-        self._outputData.add(
+        self._output_data.add(
             "vh/g(r,t)/total",
             "SurfaceOutputVariable",
-            (self.n_mid_points, self.numberOfSteps),
+            (self.n_mid_points, self.n_steps),
             axis="vh/axes/r|vh/axes/time",
             units="au",
             main_result=True,
         )
         if self.intra:
             for label, _ in self.labels_intra:
-                self._outputData.add(
+                self._output_data.add(
                     f"vh/g(r,t)/intra/{label}",
                     "SurfaceOutputVariable",
-                    (self.n_mid_points, self.numberOfSteps),
+                    (self.n_mid_points, self.n_steps),
                     axis="vh/axes/r|vh/axes/time",
                     units="au",
                 )
             for label, _ in self.labels:
-                self._outputData.add(
+                self._output_data.add(
                     f"vh/g(r,t)/inter/{label}",
                     "SurfaceOutputVariable",
-                    (self.n_mid_points, self.numberOfSteps),
+                    (self.n_mid_points, self.n_steps),
                     axis="vh/axes/r|vh/axes/time",
                     units="au",
                 )
-            self._outputData.add(
+            self._output_data.add(
                 "vh/g(r,t)/intra/total",
                 "SurfaceOutputVariable",
-                (self.n_mid_points, self.numberOfSteps),
+                (self.n_mid_points, self.n_steps),
                 axis="vh/axes/r|vh/axes/time",
                 units="au",
             )
-            self._outputData.add(
+            self._output_data.add(
                 "vh/g(r,t)/inter/total",
                 "SurfaceOutputVariable",
-                (self.n_mid_points, self.numberOfSteps),
+                (self.n_mid_points, self.n_steps),
                 axis="vh/axes/r|vh/axes/time",
                 units="au",
             )
 
         self._indices = self.trajectory.atom_indices
-        self.indexToSymbol = np.array(
+        self.index_to_symbol = np.array(
             [
-                self.selectedElements.index(name)
+                self.selected_elements.index(name)
                 for name in self.trajectory.selection_getter(self.trajectory.atom_names)
             ],
             dtype=np.int32,
@@ -528,10 +528,10 @@ class VanHoveFunctionDistinct(IJob):
         self.shell_volumes = (4 / 3) * np.pi * np.array(self.shell_volumes)
 
         self.h_intra = np.zeros(
-            (self.nElements, self.nElements, self.n_mid_points, self.numberOfSteps),
+            (self.n_elements, self.n_elements, self.n_mid_points, self.n_steps),
         )
         self.h_total = np.zeros(
-            (self.nElements, self.nElements, self.n_mid_points, self.numberOfSteps),
+            (self.n_elements, self.n_elements, self.n_mid_points, self.n_steps),
         )
 
     def run_step(
@@ -554,8 +554,8 @@ class VanHoveFunctionDistinct(IJob):
             A tuple containing the time difference and a tuple of the
             total and intramolecular distance histograms.
         """
-        bins_intra = np.zeros((self.nElements, self.nElements, self.n_mid_points))
-        bins_total = np.zeros((self.nElements, self.nElements, self.n_mid_points))
+        bins_intra = np.zeros((self.n_elements, self.n_elements, self.n_mid_points))
+        bins_total = np.zeros((self.n_elements, self.n_elements, self.n_mid_points))
 
         # average the distance histograms at the input time
         # difference over a number of configuration
@@ -583,7 +583,7 @@ class VanHoveFunctionDistinct(IJob):
                 intra, total = van_hove_distinct(
                     direct_cell,
                     self.indices_intra,
-                    self.indexToSymbol,
+                    self.index_to_symbol,
                     intra,
                     total,
                     frac_coords_t0,
@@ -597,7 +597,7 @@ class VanHoveFunctionDistinct(IJob):
                 intra, total = van_hove_distinct_all_inter(
                     direct_cell,
                     self.indices_intra,
-                    self.indexToSymbol,
+                    self.index_to_symbol,
                     intra,
                     total,
                     frac_coords_t0,
@@ -666,8 +666,8 @@ class VanHoveFunctionDistinct(IJob):
             ni = n_atms[label_i]
             nj = n_atms[label_j]
 
-            idi = self.selectedElements.index(label_i)
-            idj = self.selectedElements.index(label_j)
+            idi = self.selected_elements.index(label_i)
+            idj = self.selected_elements.index(label_j)
 
             if label_i == label_j:
                 nij = ni**2 / 2.0
@@ -688,9 +688,9 @@ class VanHoveFunctionDistinct(IJob):
                 yield "vh/g(r,t)/inter", False, van_hove_inter
                 yield "vh/g(r,t)/intra", True, van_hove_intra
 
-        update_pair_results(self.trajectory, calc_func, self._outputData)
+        update_pair_results(self.trajectory, calc_func, self._output_data)
 
-        nAtomsPerElement = self.trajectory.get_natoms()
+        n_atoms_per_element = self.trajectory.get_natoms()
 
         selected_weights, all_weights = self.trajectory.get_weights(
             prop=self.configuration["weights"]["property"]
@@ -698,12 +698,12 @@ class VanHoveFunctionDistinct(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             2,
         )
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = (n_selected / n_total) ** 2
 
@@ -714,14 +714,14 @@ class VanHoveFunctionDistinct(IJob):
                 else:
                     labels = self.labels
                 assign_weights(
-                    self._outputData, weight_dict, f"vh/g(r,t){i}/%s", labels
+                    self._output_data, weight_dict, f"vh/g(r,t){i}/%s", labels
                 )
-                vhs = weighted_sum(self._outputData, f"vh/g(r,t){i}/%s", labels)
-                self._outputData[f"vh/g(r,t){i}/total"][...] = vhs / fact
-                self._outputData[f"vh/g(r,t){i}/total"].scaling_factor = fact
+                vhs = weighted_sum(self._output_data, f"vh/g(r,t){i}/%s", labels)
+                self._output_data[f"vh/g(r,t){i}/total"][...] = vhs / fact
+                self._output_data[f"vh/g(r,t){i}/total"].scaling_factor = fact
                 add_grouped_totals(
                     self.trajectory,
-                    self._outputData,
+                    self._output_data,
                     f"vh/g(r,t){i}",
                     "SurfaceOutputVariable",
                     dim=2,
@@ -732,12 +732,12 @@ class VanHoveFunctionDistinct(IJob):
                     partial_result=i == "",
                 )
         else:
-            assign_weights(self._outputData, weight_dict, "vh/g(r,t)/%s", self.labels)
-            vhs = weighted_sum(self._outputData, "vh/g(r,t)/%s", self.labels)
-            self._outputData["vh/g(r,t)/total"][...] = vhs / fact
-            self._outputData["vh/g(r,t)/total"].scaling_factor = fact
+            assign_weights(self._output_data, weight_dict, "vh/g(r,t)/%s", self.labels)
+            vhs = weighted_sum(self._output_data, "vh/g(r,t)/%s", self.labels)
+            self._output_data["vh/g(r,t)/total"][...] = vhs / fact
+            self._output_data["vh/g(r,t)/total"].scaling_factor = fact
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

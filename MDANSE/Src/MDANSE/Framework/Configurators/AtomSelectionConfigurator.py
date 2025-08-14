@@ -52,7 +52,7 @@ class AtomSelectionConfigurator(IConfigurator):
 
         self._original_input = value
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
+        traj_config = self.configurable[self.dependencies["trajectory"]]
         self.selector = ReusableSelection()
 
         if value is None:
@@ -71,7 +71,7 @@ class AtomSelectionConfigurator(IConfigurator):
         self["value"] = value
 
         self.selector.load_from_json(value)
-        indices = self.selector.select_in_trajectory(trajConfig["instance"])
+        indices = self.selector.select_in_trajectory(traj_config["instance"])
 
         self["flatten_indices"] = sorted(indices)
         self["selection_length"] = len(self["flatten_indices"])

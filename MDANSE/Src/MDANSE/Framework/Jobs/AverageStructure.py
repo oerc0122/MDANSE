@@ -83,7 +83,7 @@ class AverageStructure(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.trajectory.get_total_natoms()
+        self.n_steps = self.trajectory.get_total_natoms()
 
         self._atoms = self.trajectory.atom_names
 

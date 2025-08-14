@@ -127,26 +127,26 @@ class RigidBodyTrajectory(IJob):
                 AtomCluster("", [atoms[idx] for idx in indices], parentless=True)
             )
 
-        self.numberOfSteps = len(self._groups)
+        self.n_steps = len(self._groups)
 
-        self.referenceFrame = self.configuration["reference"]["value"]
+        self.reference_frame = self.configuration["reference"]["value"]
 
         trajectory = self.trajectory
 
-        coords = trajectory.coordinates(self.referenceFrame)
-        unitCell = trajectory.unit_cell(self.referenceFrame)
+        coords = trajectory.coordinates(self.reference_frame)
+        unit_cell = trajectory.unit_cell(self.reference_frame)
 
-        selectedAtoms = []
+        selected_atoms = []
         for indices in self.configuration["atom_selection"]["indices"]:
             for idx in indices:
-                selectedAtoms.append(atoms[idx])
+                selected_atoms.append(atoms[idx])
 
         # Create trajectory
         self._output_trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             trajectory.chemical_system,
             self.configuration["frames"]["number"],
-            selectedAtoms,
+            selected_atoms,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
@@ -155,7 +155,7 @@ class RigidBodyTrajectory(IJob):
         self._group_atoms = [group.atom_list for group in self._groups]
 
         conf = RealConfiguration(
-            self._output_trajectory.chemical_system, coords, unitCell
+            self._output_trajectory.chemical_system, coords, unit_cell
         )
 
         self._reference_configuration = conf.continuous_configuration()
@@ -207,13 +207,13 @@ class RigidBodyTrajectory(IJob):
                 center_of_mass = group_coms[group_id]
 
                 # The rotation matrix corresponding to the selected frame in the RBT.
-                transfo = Quaternion(self._quaternions[group_id, i, :]).asRotation()
+                transfo = Quaternion(self._quaternions[group_id, i, :]).as_rotation()
 
                 if self.configuration["remove_translation"]["value"]:
                     # The transformation matrix corresponding to the selected frame in the RBT.
                     transfo = Translation(Vector(*center_of_mass)) * transfo
 
-                # Compose with the CMS translation if the removeTranslation flag is set off.
+                # Compose with the CMS translation if the remove_translation flag is set off.
                 else:
                     # The transformation matrix corresponding to the selected frame in the RBT.
                     transfo = Translation(Vector(self._coms[group_id, i, :])) * transfo
@@ -236,34 +236,34 @@ class RigidBodyTrajectory(IJob):
                 units={"time": "ps", "unit_cell": "nm", "coordinates": "nm"},
             )
 
-        outputFile = h5py.File(self.configuration["output_files"]["file"], "r+")
+        output_file = h5py.File(self.configuration["output_files"]["file"], "r+")
 
         n_groups = self.configuration["atom_selection"]["selection_length"]
         n_frames = self.configuration["frames"]["number"]
 
-        quaternions = outputFile.create_dataset(
+        quaternions = output_file.create_dataset(
             "quaternions", shape=(n_groups, n_frames, 4), dtype=np.float64
         )
 
-        coms = outputFile.create_dataset(
+        coms = output_file.create_dataset(
             "coms", shape=(n_groups, n_frames, 3), dtype=np.float64
         )
 
-        fits = outputFile.create_dataset(
+        fits = output_file.create_dataset(
             "fits", shape=(n_groups, n_frames), dtype=np.float64
         )
 
-        outputFile.attrs["info"] = str(self)
+        output_file.attrs["info"] = str(self)
 
         # Loop over the groups.
         for comp in range(self.configuration["atom_selection"]["selection_length"]):
-            aIndexes = self.configuration["atom_selection"]["indices"][comp]
+            a_indexes = self.configuration["atom_selection"]["indices"][comp]
 
-            outputFile.attrs["info"] += f"Group {comp}: {list(aIndexes)}\n"
+            output_file.attrs["info"] += f"Group {comp}: {list(a_indexes)}\n"
 
             quaternions[comp, :, :] = self._quaternions[comp, :, :]
             coms[comp, :, :] = self._coms[comp, :, :]
             fits[comp, :] = self._fits[comp, :]
 
-        outputFile.close()
+        output_file.close()
         super().finalize()

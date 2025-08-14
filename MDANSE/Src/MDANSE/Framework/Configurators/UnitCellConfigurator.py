@@ -36,12 +36,12 @@ class UnitCellConfigurator(IConfigurator):
 
         :param name: the name of the configurator as it will appear in the configuration.
         :type name: str
-        :param valueType: the numeric type for the vector.
-        :type valueType: int or float
+        :param value_type: the numeric type for the vector.
+        :type value_type: int or float
         :param normalize: if True the vector will be normalized.
         :type normalize: bool
-        :param notNull: if True, the vector must be non-null.
-        :type notNull: bool
+        :param not_null: if True, the vector must be non-null.
+        :type not_null: bool
         :param dimension: the dimension of the vector.
         :type dimension: int
         """

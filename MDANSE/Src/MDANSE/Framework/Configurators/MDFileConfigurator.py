@@ -29,7 +29,7 @@ from MDANSE.MolecularDynamics.UnitCell import UnitCell
 from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 HBAR = measure(1.05457182e-34, "kg m2 / s").toval("Da nm2 / ps")
-HARTREE = measure(27.2113845, "eV").toval("Da nm2 / ps2")
+HARTREE = measure(27.2113845, "e_v").toval("Da nm2 / ps2")
 BOHR = measure(5.29177210903e-11, "m").toval("nm")
 
 
@@ -62,54 +62,54 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
                     "length could not be determined."
                 )
 
-        self._headerSize = self["instance"].tell()  # Record the length of the header
+        self._header_size = self["instance"].tell()  # Record the length of the header
 
         # Prepare a variable storing information about a non-specific frame.
-        self._frameInfo = {"time_step": [0], "cell_data": [], "data": []}
+        self._frame_info = {"time_step": [0], "cell_data": [], "data": []}
 
         self["instance"].readline()  # Skip the line storing time information.
         # Save the length of the line storing time information
-        self._frameInfo["time_step"].append(self["instance"].tell() - self._headerSize)
+        self._frame_info["time_step"].append(self["instance"].tell() - self._header_size)
 
         while True:
-            prevPos = self["instance"].tell()
+            prev_pos = self["instance"].tell()
 
             line = self["instance"].readline().decode("UTF-8").strip()
 
             # If the properties of the cell data have not been determined yet and the current line documents cell data
-            if not self._frameInfo["cell_data"] and re.match(".*<-- h$", line):
+            if not self._frame_info["cell_data"] and re.match(".*<-- h$", line):
                 # Save how far (in character number) the cell data is from the start of the frame
-                self._frameInfo["cell_data"].append(prevPos - self._headerSize)
+                self._frame_info["cell_data"].append(prev_pos - self._header_size)
                 # Skip the next two lines since cell data is always three lines long
                 self["instance"].readline()
                 self["instance"].readline()
                 # Save the length of the cell data
-                self._frameInfo["cell_data"].append(
+                self._frame_info["cell_data"].append(
                     self["instance"].tell()
-                    - self._frameInfo["cell_data"][0]
-                    - self._headerSize
+                    - self._frame_info["cell_data"][0]
+                    - self._header_size
                 )
 
             # If the properties of the positional data have not been stored yet and the line stores this data
-            elif not self._frameInfo["data"] and re.match(".*<-- R$", line):
+            elif not self._frame_info["data"] and re.match(".*<-- R$", line):
                 # Save how far (in character number) the positional data is from the start of the frame
-                self._frameInfo["data"].append(prevPos - self._headerSize)
+                self._frame_info["data"].append(prev_pos - self._header_size)
 
             if not line:
                 # Save the length of a frame minus one line of ionic data
-                self._frameInfo["data"].append(
-                    prevPos - self._frameInfo["data"][0] - self._headerSize
+                self._frame_info["data"].append(
+                    prev_pos - self._frame_info["data"][0] - self._header_size
                 )
                 break
 
         # Save the length of the frame, including a blank line
-        self._frameSize = self["instance"].tell() - self._headerSize
+        self._frame_size = self["instance"].tell() - self._header_size
 
         # Read the whole ionic data block (positions, velocities, and forces) of the first frame
-        self["instance"].seek(self._headerSize + self._frameInfo["data"][0])
+        self["instance"].seek(self._header_size + self._frame_info["data"][0])
         frame = (
             self["instance"]
-            .read(self._frameInfo["data"][1])
+            .read(self._frame_info["data"][1])
             .decode("UTF-8")
             .splitlines()
         )
@@ -128,8 +128,8 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
         self["instance"].seek(0, 2)
         # Save the number of frames
         self["n_frames"] = (
-            self["instance"].tell() - self._headerSize
-        ) // self._frameSize
+            self["instance"].tell() - self._header_size
+        ) // self._frame_size
         self["instance"].seek(0)  # Move file handle to the beginning of the file
 
     def read_step(self, step):
@@ -144,41 +144,41 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
         """
 
         start = (
-            self._headerSize + step * self._frameSize
+            self._header_size + step * self._frame_size
         )  # Determine where the step-th frame starts in the file
 
         # Move file handle to the starts of the line storing the information about time
-        self["instance"].seek(start + self._frameInfo["time_step"][0])
+        self["instance"].seek(start + self._frame_info["time_step"][0])
 
         # Read the time stored in the line and convert its units
-        timeStep = float(
-            self["instance"].read(self._frameInfo["time_step"][1]).decode("UTF-8")
+        time_step = float(
+            self["instance"].read(self._frame_info["time_step"][1]).decode("UTF-8")
         )
-        timeStep *= HBAR / HARTREE
+        time_step *= HBAR / HARTREE
 
         # Read and process the cell data
         self["instance"].seek(
-            start + self._frameInfo["cell_data"][0]
+            start + self._frame_info["cell_data"][0]
         )  # Move to the start of cell data
-        unitCell = (
+        unit_cell = (
             self["instance"]
-            .read(self._frameInfo["cell_data"][1])
+            .read(self._frame_info["cell_data"][1])
             .decode("UTF-8")
             .splitlines()
         )  # Read the cell data by line
         # Generate an array of three vectors where each vector is constructed from its components stored in each line
-        unitCell = np.array(
-            [[float(bb) for bb in b.strip().split()[:3]] for b in unitCell]
+        unit_cell = np.array(
+            [[float(bb) for bb in b.strip().split()[:3]] for b in unit_cell]
         )
-        unitCell *= BOHR
-        unitCell = UnitCell(unitCell)
+        unit_cell *= BOHR
+        unit_cell = UnitCell(unit_cell)
 
         self["instance"].seek(
-            start + self._frameInfo["data"][0]
+            start + self._frame_info["data"][0]
         )  # Move to the start of positional data
         # Create an array composed of the data points in each line of the positional data
         config = np.array(
-            self["instance"].read(self._frameInfo["data"][1]).decode("UTF-8").split(),
+            self["instance"].read(self._frame_info["data"][1]).decode("UTF-8").split(),
             dtype=str,
         )
         config = np.reshape(
@@ -191,7 +191,7 @@ class MDFileConfigurator(FileWithAtomDataConfigurator):
         config[self["n_atoms"] : 2 * self["n_atoms"], :] *= BOHR * HARTREE / HBAR
         config[2 * self["n_atoms"] : 3 * self["n_atoms"], :] *= HARTREE / BOHR
 
-        return timeStep, unitCell, config
+        return time_step, unit_cell, config
 
     def close(self):
         """Closes the file."""

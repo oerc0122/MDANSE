@@ -56,9 +56,9 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
         except ValueError:
             raise XYZFileError(f"Could not read the number of atoms in {filename} file")
 
-        self._nAtomsLineSize = self["instance"].tell()
+        self._n_atoms_line_size = self["instance"].tell()
         self["instance"].readline()
-        self._headerSize = self["instance"].tell()
+        self._header_size = self["instance"].tell()
         self["atoms"] = []
         for _ in range(self["n_atoms"]):
             line = self["instance"].readline()
@@ -67,18 +67,18 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
             self._frame_lines += 1
 
         # The frame size define the total size of a frame (number of atoms header + time info line + coordinates block)
-        self._frameSize = self["instance"].tell()
-        self._coordinatesSize = self._frameSize - self._headerSize
+        self._frame_size = self["instance"].tell()
+        self._coordinates_size = self._frame_size - self._header_size
 
         # Compute the frame number
         self["instance"].seek(0, 2)  # go to the end of file
-        self["n_frames"] = self["instance"].tell() // self._frameSize
+        self["n_frames"] = self["instance"].tell() // self._frame_size
 
         # If the trajectory has more than one step, compute the time step as the difference between the second and the first time step
         if self["n_frames"] > 1:
-            firstTimeStep = self.fetch_time_step(0)
-            secondTimeStep = self.fetch_time_step(1)
-            self["time_step"] = secondTimeStep - firstTimeStep
+            first_time_step = self.fetch_time_step(0)
+            second_time_step = self.fetch_time_step(1)
+            self["time_step"] = second_time_step - first_time_step
         else:
             self["time_step"] = self.fetch_time_step(0)
 
@@ -98,19 +98,19 @@ class XYZFileConfigurator(FileWithAtomDataConfigurator):
         Returns:
             float -- the time stamp of the frame
         """
-        self["instance"].seek(step * self._frameSize + self._nAtomsLineSize)
-        timeLine = self["instance"].readline().strip()
-        matches = re.findall("^i =.*, time =(.*), E =.*$", timeLine)
+        self["instance"].seek(step * self._frame_size + self._n_atoms_line_size)
+        time_line = self["instance"].readline().strip()
+        matches = re.findall("^i =.*, time =(.*), E =.*$", time_line)
         if len(matches) != 1:
             raise XYZFileError("Could not fetch the time step from XYZ file")
         try:
-            timeStep = float(matches[0])
+            time_step = float(matches[0])
         except ValueError:
             raise XYZFileError(
                 "Could not cast the timestep to a floating point number."
             )
         else:
-            return timeStep
+            return time_step
 
     def read_step(self, step: int):
         """Reads and returns an array of atom coordinates the nth

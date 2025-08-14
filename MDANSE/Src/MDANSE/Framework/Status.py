@@ -26,16 +26,16 @@ class Status(metaclass=abc.ABCMeta):
     """
 
     def __init__(self):
-        self._updateStep = 1
+        self._update_step = 1
 
-        self._currentStep = 0
-        self._nSteps = None
+        self._current_step = 0
+        self._n_steps = None
         self._finished = False
         self._stopped = False
-        self._startTime = time.time()
-        self._deltas = [self._startTime, self._startTime + 1.0]
-        self._elapsedTime = "N/A"
-        self._lastRefresh = self._startTime
+        self._start_time = time.time()
+        self._deltas = [self._start_time, self._start_time + 1.0]
+        self._elapsed_time = "N/A"
+        self._last_refresh = self._start_time
 
     @abc.abstractmethod
     def finish_status(self):
@@ -58,11 +58,11 @@ class Status(metaclass=abc.ABCMeta):
         pass
 
     @property
-    def currentStep(self):
-        return self._currentStep
+    def current_step(self):
+        return self._current_step
 
     @property
-    def elapsedTime(self):
+    def elapsed_time(self):
         return str(self._deltas[1] - self._deltas[0])
 
     def finish(self):
@@ -71,13 +71,13 @@ class Status(metaclass=abc.ABCMeta):
         self.finish_status()
 
     def get_current_step(self):
-        return self._currentStep
+        return self._current_step
 
     def get_elapsed_time(self):
-        return self.elapsedTime
+        return self.elapsed_time
 
     def get_number_of_steps(self):
-        return self._nSteps
+        return self._n_steps
 
     def is_finished(self):
         return self._finished
@@ -89,17 +89,17 @@ class Status(metaclass=abc.ABCMeta):
         return self._stopped
 
     @property
-    def nSteps(self):
-        return self._nSteps
+    def n_steps(self):
+        return self._n_steps
 
-    def start(self, nSteps, rate=None):
-        if self._nSteps is not None:
+    def start(self, n_steps, rate=None):
+        if self._n_steps is not None:
             return
 
-        self._nSteps = nSteps
+        self._n_steps = n_steps
 
         if rate is not None:
-            self._updateStep = max(0, int(rate * nSteps))
+            self._update_step = max(0, int(rate * n_steps))
 
         self.start_status()
 
@@ -108,16 +108,16 @@ class Status(metaclass=abc.ABCMeta):
         self.stop_status()
 
     def update(self, force=False):
-        if self._updateStep == 0:
+        if self._update_step == 0:
             return
 
-        self._currentStep += 1
+        self._current_step += 1
 
-        lastUpdate = time.time()
+        last_update = time.time()
 
-        self._deltas[1] = lastUpdate
+        self._deltas[1] = last_update
 
-        if force or ((lastUpdate - self._lastRefresh) > 5):
-            self._lastRefresh = lastUpdate
+        if force or ((last_update - self._last_refresh) > 5):
+            self._last_refresh = last_update
 
         self.update_status()

@@ -31,11 +31,11 @@ class OutputVariableError(Error):
 
 
 class OutputData(collections.OrderedDict):
-    def add(self, dataName, dataType, data, **kwargs):
+    def add(self, data_name, data_type, data, **kwargs):
         collections.OrderedDict.__setitem__(
             self,
-            dataName,
-            IOutputVariable.create(dataType, data, dataName, **kwargs),
+            data_name,
+            IOutputVariable.create(data_type, data, data_name, **kwargs),
         )
 
     def write(self, basename, formats, header=None, inputs=None):
@@ -99,12 +99,12 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
         elif axis is None:
             axis = ["index"] * value.ndim
 
-        if value.ndim != cls._nDimensions:
+        if value.ndim != cls._n_dimensions:
             raise OutputVariableError(
                 f"Invalid number of dimensions ({value.ndim}) for an output variable of type {cls.__name__!r}"
             )
 
-        if len(axis) != cls._nDimensions:
+        if len(axis) != cls._n_dimensions:
             raise OutputVariableError(
                 f"Invalid number of dimensions ({len(axis)}) for an axis label of type {cls.__name__!r}"
             )

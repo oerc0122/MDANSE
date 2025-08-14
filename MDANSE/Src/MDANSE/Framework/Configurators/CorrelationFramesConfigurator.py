@@ -40,8 +40,8 @@ class CorrelationFramesConfigurator(FramesConfigurator):
         if not self.update_needed(value):
             return
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
-        n_steps = trajConfig["length"]
+        traj_config = self.configurable[self.dependencies["trajectory"]]
+        n_steps = traj_config["length"]
 
         # if all or None set to default
         if value in ["all", None]:

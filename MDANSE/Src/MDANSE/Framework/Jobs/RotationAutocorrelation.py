@@ -79,7 +79,7 @@ class RotationAutocorrelation(IJob):
             mol for mol in molecules if self._indices.issuperset(mol)
         ]
 
-        self.numberOfSteps = len(self.valid_molecules)
+        self.n_steps = len(self.valid_molecules)
 
         self.masses = np.array(
             self.trajectory.chemical_system.atom_property(
@@ -87,21 +87,21 @@ class RotationAutocorrelation(IJob):
             ),
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "frame",
             "LineOutputVariable",
             np.arange(self.configuration["frames"]["number"]),
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "axis_index",
             "LineOutputVariable",
             np.arange(
@@ -115,14 +115,14 @@ class RotationAutocorrelation(IJob):
         )
 
         for axis in "xyz":
-            self._outputData.add(
+            self._output_data.add(
                 f"rotation_around_{axis}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["number"],),
                 axis="frame",
                 units="au",
             )
-            self._outputData.add(
+            self._output_data.add(
                 f"{axis}_rotation_ac",
                 "LineOutputVariable",
                 (self.configuration["frames"]["n_frames"],),
@@ -192,17 +192,17 @@ class RotationAutocorrelation(IJob):
 
         """
         for ax_ind, axis in enumerate(["x", "y", "z"]):
-            self._outputData[f"{axis}_rotation_ac"] += x[0][ax_ind]
-            self._outputData[f"rotation_around_{axis}"] += x[1][:, ax_ind]
+            self._output_data[f"{axis}_rotation_ac"] += x[0][ax_ind]
+            self._output_data[f"rotation_around_{axis}"] += x[1][:, ax_ind]
 
     def finalize(self):
         """Normalise and write out the results."""
 
         for ax_ind, axis in enumerate(["x", "y", "z"]):
-            self._outputData[f"{axis}_rotation_ac"] /= self.numberOfSteps
-            self._outputData[f"rotation_around_{axis}"] /= self.numberOfSteps
+            self._output_data[f"{axis}_rotation_ac"] /= self.n_steps
+            self._output_data[f"rotation_around_{axis}"] /= self.n_steps
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

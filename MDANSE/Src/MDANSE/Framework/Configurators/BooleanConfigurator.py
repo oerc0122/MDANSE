@@ -28,7 +28,7 @@ class BooleanConfigurator(IConfigurator):
 
     _default = False
 
-    _shortCuts = {
+    _short_cuts = {
         True: True,
         "true": True,
         "yes": True,
@@ -57,8 +57,8 @@ class BooleanConfigurator(IConfigurator):
 
         self._original_input = value
 
-        if value not in self._shortCuts:
+        if value not in self._short_cuts:
             self.error_status = "Input is not recognised as a true/false value"
         else:
             self.error_status = "OK"
-            self["value"] = self._shortCuts[value]
+            self["value"] = self._short_cuts[value]

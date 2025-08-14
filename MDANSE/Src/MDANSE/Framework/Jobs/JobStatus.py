@@ -90,7 +90,7 @@ class JobStatus(Status):
         pass
 
     def start_status(self):
-        self._state.n_steps = self.nSteps
+        self._state.n_steps = self.n_steps
 
         self.save_status()
 
@@ -101,10 +101,10 @@ class JobStatus(Status):
         pass
 
     def update_status(self):
-        self._state.elapsed = self.elapsedTime
-        self._state.current_step = self.currentStep
-        if self._nSteps is not None:
-            self._state.progress = 100 * self.currentStep / self.nSteps
+        self._state.elapsed = self.elapsed_time
+        self._state.current_step = self.current_step
+        if self._n_steps is not None:
+            self._state.progress = 100 * self.current_step / self.n_steps
         else:
             self._state.progress = 0
         try:

@@ -51,7 +51,7 @@ _PREFIXES = {
 
 unit_lookup = {
     "rad/ps": "energy",
-    "meV": "energy",
+    "me_v": "energy",
     "1/cm": "energy",
     "THz": "energy",
     "J_per_mole": "energy",

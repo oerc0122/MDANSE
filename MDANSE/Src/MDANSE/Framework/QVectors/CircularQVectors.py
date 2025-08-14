@@ -35,8 +35,8 @@ class CircularQVectors(IQVectors):
     settings["shells"] = (
         "RangeConfigurator",
         {
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "default": (0.0, 5.0, 0.5),
         },
@@ -45,11 +45,11 @@ class CircularQVectors(IQVectors):
     settings["width"] = ("FloatConfigurator", {"mini": 0.0, "default": 1.0})
     settings["axis_1"] = (
         "VectorConfigurator",
-        {"normalize": True, "notNull": True, "default": [1, 0, 0], "valueType": float},
+        {"normalize": True, "not_null": True, "default": [1, 0, 0], "value_type": float},
     )
     settings["axis_2"] = (
         "VectorConfigurator",
-        {"normalize": True, "notNull": True, "default": [0, 1, 0], "valueType": float},
+        {"normalize": True, "not_null": True, "default": [0, 1, 0], "value_type": float},
     )
 
     def _generate(self):
@@ -64,7 +64,7 @@ class CircularQVectors(IQVectors):
 
         width = self._configuration["width"]["value"]
 
-        nVectors = self._configuration["n_vectors"]["value"]
+        n_vectors = self._configuration["n_vectors"]["value"]
 
         if self._status is not None:
             self._status.start(self._configuration["shells"]["number"])
@@ -73,13 +73,13 @@ class CircularQVectors(IQVectors):
 
         for q in self._configuration["shells"]["value"]:
             fact = q * np.sign(
-                np.random.uniform(-0.5, 0.5, nVectors)
-            ) + width * np.random.uniform(-0.5, 0.5, nVectors)
-            v = random_points_on_circle(axis, radius=1.0, nPoints=nVectors)
+                np.random.uniform(-0.5, 0.5, n_vectors)
+            ) + width * np.random.uniform(-0.5, 0.5, n_vectors)
+            v = random_points_on_circle(axis, radius=1.0, n_points=n_vectors)
 
             self._configuration["q_vectors"][q] = {}
             self._configuration["q_vectors"][q]["q_vectors"] = fact * v
-            self._configuration["q_vectors"][q]["n_q_vectors"] = nVectors
+            self._configuration["q_vectors"][q]["n_q_vectors"] = n_vectors
             self._configuration["q_vectors"][q]["q"] = q
             self._configuration["q_vectors"][q]["hkls"] = None
 

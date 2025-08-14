@@ -77,14 +77,14 @@ class GeneralAutoCorrelationFunction(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
         self.labels = [
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "gacf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
@@ -93,7 +93,7 @@ class GeneralAutoCorrelationFunction(IJob):
 
         # Will store the mean square displacement evolution.
         for element in self.trajectory.unique_names:
-            self._outputData.add(
+            self._output_data.add(
                 f"gacf/{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["number"],),
@@ -103,7 +103,7 @@ class GeneralAutoCorrelationFunction(IJob):
                 partial_result=True,
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "gacf/total",
             "LineOutputVariable",
             (self.configuration["frames"]["number"],),
@@ -120,7 +120,7 @@ class GeneralAutoCorrelationFunction(IJob):
             #. index (int): the index of the step.
         :Returns:
             #. index (int): the index of the step.
-            #. atomicGACF (np.array): the calculated auto-correlation function for the index
+            #. atomic_g_a_c_f (np.array): the calculated auto-correlation function for the index
         """
 
         atom_index = self.trajectory.atom_indices[index]
@@ -135,9 +135,9 @@ class GeneralAutoCorrelationFunction(IJob):
             variable=self.configuration["trajectory_variable"]["value"],
         )
 
-        atomicGACF = correlation(series, axis=0, average=1)
+        atomic_g_a_c_f = correlation(series, axis=0, average=1)
 
-        return index, atomicGACF
+        return index, atomic_g_a_c_f
 
     def combine(self, index, x):
         """
@@ -149,28 +149,28 @@ class GeneralAutoCorrelationFunction(IJob):
 
         element = self._atoms[self.trajectory.atom_indices[index]]
 
-        self._outputData[f"gacf/{element}"] += x
+        self._output_data[f"gacf/{element}"] += x
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        nAtomsPerElement = self.trajectory.get_natoms()
+        n_atoms_per_element = self.trajectory.get_natoms()
 
-        for element, number in nAtomsPerElement.items():
-            self._outputData[f"gacf/{element}"] /= number
+        for element, number in n_atoms_per_element.items():
+            self._output_data[f"gacf/{element}"] /= number
 
         weights = self.trajectory.get_weights(
             prop=self.configuration["weights"]["property"]
         )
-        weight_dict = get_weights(weights, nAtomsPerElement, 1)
-        assign_weights(self._outputData, weight_dict, "gacf/%s", self.labels)
-        gacfTotal = weighted_sum(self._outputData, "gacf/%s", self.labels)
+        weight_dict = get_weights(weights, n_atoms_per_element, 1)
+        assign_weights(self._output_data, weight_dict, "gacf/%s", self.labels)
+        gacf_total = weighted_sum(self._output_data, "gacf/%s", self.labels)
 
-        self._outputData["gacf/total"][:] = gacfTotal
+        self._output_data["gacf/total"][:] = gacf_total
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

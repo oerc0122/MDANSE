@@ -28,7 +28,7 @@ from MDANSE.MolecularDynamics.Configuration import padded_coordinates
 def solvent_accessible_surface(
     coords: np.ndarray,
     indexes: list[int],
-    vdwRadii: np.ndarray,
+    vdw_radii: np.ndarray,
     sphere_points: np.ndarray,
     probe_radius_value: float,
 ):
@@ -36,12 +36,12 @@ def solvent_accessible_surface(
 
     sas = 0.0
     tree = KDTree(coords)
-    max_dist = np.max(vdwRadii) + probe_radius_value
-    min_dist = np.min(vdwRadii) + probe_radius_value
+    max_dist = np.max(vdw_radii) + probe_radius_value
+    min_dist = np.min(vdw_radii) + probe_radius_value
     sphere_indices = set(range(len(sphere_points)))
     for idx in indexes:
         sphere_tree = KDTree(
-            coords[idx] + sphere_points * (vdwRadii[idx] + probe_radius_value)
+            coords[idx] + sphere_points * (vdw_radii[idx] + probe_radius_value)
         )
         distance_dict = sphere_tree.sparse_distance_matrix(tree, max_distance=max_dist)
         pair_array = np.array([pair for pair in distance_dict.keys()])
@@ -60,7 +60,7 @@ def solvent_accessible_surface(
                 [line for line in combined_array if line[0] in uncertain]
             )
             neighbour_radii = np.array(
-                [vdwRadii[int(line[1])] for line in uncertain_lines]
+                [vdw_radii[int(line[1])] for line in uncertain_lines]
             )
             confirmed = set(
                 uncertain_lines[:, 0][
@@ -75,7 +75,7 @@ def solvent_accessible_surface(
             / len(sphere_points)
             * 4
             * np.pi
-            * (vdwRadii[idx] + probe_radius_value) ** 2
+            * (vdw_radii[idx] + probe_radius_value) ** 2
         )
     return sas
 
@@ -138,10 +138,10 @@ class SolventAccessibleSurface(IJob):
     def initialize(self):
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "sas/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["time"],
@@ -149,7 +149,7 @@ class SolventAccessibleSurface(IJob):
         )
 
         # Will store the solvent accessible surface.
-        self._outputData.add(
+        self._output_data.add(
             "sas/sas",
             "LineOutputVariable",
             (self.configuration["frames"]["number"],),
@@ -159,13 +159,13 @@ class SolventAccessibleSurface(IJob):
         )
 
         # Generate the sphere points that will be used to evaluate the sas per atom.
-        self.spherePoints = np.array(
+        self.sphere_points = np.array(
             generate_sphere_points(self.configuration["n_sphere_points"]["value"]),
             dtype=np.float64,
         )
 
         # A mapping between the atom indices and covalent_radius radius for the whole universe.
-        self.vdwRadii = self.configuration["trajectory"][
+        self.vdw_radii = self.configuration["trajectory"][
             "instance"
         ].chemical_system.atom_property("vdw_radius")  # should it be covalent?
 
@@ -180,10 +180,10 @@ class SolventAccessibleSurface(IJob):
         """
 
         # This is the actual index of the frame corresponding to the loop index.
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
 
         # Fetch the configuration.
-        conf = self.trajectory.configuration(frameIndex)
+        conf = self.trajectory.configuration(frame_index)
 
         # The configuration is made continuous.
         conf = conf.continuous_configuration()
@@ -191,24 +191,24 @@ class SolventAccessibleSurface(IJob):
 
         if conf.is_periodic:
             padding_thickness = 1.05 * max(
-                self.configuration["probe_radius"]["value"], np.max(self.vdwRadii)
+                self.configuration["probe_radius"]["value"], np.max(self.vdw_radii)
             )
             coords, atom_indices = padded_coordinates(
                 conf["coordinates"],
                 unit_cell,
                 padding_thickness,
             )
-            temp_vdw_radii = [self.vdwRadii[atom_index] for atom_index in atom_indices]
+            temp_vdw_radii = [self.vdw_radii[atom_index] for atom_index in atom_indices]
         else:
             coords = conf["coordinates"]
-            temp_vdw_radii = self.vdwRadii
+            temp_vdw_radii = self.vdw_radii
 
         # Loop over the indices of the selected atoms for the sas calculation.
         sas = solvent_accessible_surface(
             coords,
             self._indices,
             temp_vdw_radii,
-            self.spherePoints,
+            self.sphere_points,
             self.configuration["probe_radius"]["value"],
         )
 
@@ -224,7 +224,7 @@ class SolventAccessibleSurface(IJob):
         """
 
         # The SAS is updated with the value obtained for frame |index|.
-        self._outputData["sas/sas"][index] = x
+        self._output_data["sas/sas"][index] = x
 
     def finalize(self):
         """
@@ -232,7 +232,7 @@ class SolventAccessibleSurface(IJob):
         """
 
         # Write the output variables.
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

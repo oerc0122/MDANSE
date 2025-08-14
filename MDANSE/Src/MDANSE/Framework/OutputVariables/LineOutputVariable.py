@@ -19,4 +19,4 @@ from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
 
 
 class LineOutputVariable(IOutputVariable):
-    _nDimensions = 1
+    _n_dimensions = 1

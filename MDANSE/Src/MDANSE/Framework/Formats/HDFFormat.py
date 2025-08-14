@@ -178,22 +178,22 @@ class HDFFormat(IFormat):
         string_dt = h5py.special_dtype(vlen=str)
 
         if in_memory:
-            outputFile = h5py.File.in_memory()
+            output_file = h5py.File.in_memory()
 
         else:
             filename = Path(filename).with_suffix(extension)
 
             # The HDF output file is opened for writing.
             PLATFORM.create_directory(filename.parent)
-            outputFile = h5py.File(filename, "w")
+            output_file = h5py.File(filename, "w")
 
         if header:
             # This is to avoid any segmentation fault when writing the HDF header field
             header = str(header)
 
-            outputFile.attrs["header"] = header
+            output_file.attrs["header"] = header
 
-        meta = outputFile.create_group("metadata")
+        meta = output_file.create_group("metadata")
         if run_instance is not None:
             meta.create_dataset(
                 "task_name",
@@ -218,9 +218,9 @@ class HDFFormat(IFormat):
 
         for var in data.values():
             # h5py.File.create_dataset natively supports `create_data("a/b/c", ...)` and will create parents.
-            varName = str(var.varname).strip()
+            var_name = str(var.varname).strip()
 
-            dset = outputFile.create_dataset(varName, data=var, shape=var.shape)
+            dset = output_file.create_dataset(var_name, data=var, shape=var.shape)
 
             # All the attributes stored in the OutputVariable instance are written to the HDF file.
             for k, v in vars(var).items():
@@ -228,6 +228,6 @@ class HDFFormat(IFormat):
 
         # The HDF file is closed.
         if in_memory:
-            return outputFile
-        outputFile.close()
+            return output_file
+        output_file.close()
         return None

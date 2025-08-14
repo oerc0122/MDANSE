@@ -58,8 +58,8 @@ class DistanceHistogram(IJob):
         "DistHistCutoffConfigurator",
         {
             "label": "r values (nm)",
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "dependencies": {"trajectory": "trajectory"},
         },
@@ -101,7 +101,7 @@ class DistanceHistogram(IJob):
         """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         self._indices = np.array(self.trajectory.atom_indices, dtype=np.int32)
 
@@ -112,28 +112,28 @@ class DistanceHistogram(IJob):
         else:
             self.indices_intra = None
         self.intra = self.indices_intra is not None
-        self.selectedElements = sorted(self.trajectory.unique_names)
+        self.selected_elements = sorted(self.trajectory.unique_names)
         if self.indices_intra is not None and len(self.indices_intra) > len(
             self._indices
         ):
             self.indices_intra = self.indices_intra[self._indices]
 
-        self.indexToSymbol = np.array(
+        self.index_to_symbol = np.array(
             [
-                self.selectedElements.index(name)
+                self.selected_elements.index(name)
                 for name in self.trajectory.selection_getter(self.trajectory.atom_names)
             ],
             dtype=np.int32,
         )
 
-        nElements = len(self.selectedElements)
+        n_elements = len(self.selected_elements)
 
         # The histogram of the intramolecular distances.
         if self.intra:
             self.h_intra = np.zeros(
                 (
-                    nElements,
-                    nElements,
+                    n_elements,
+                    n_elements,
                     len(self.configuration["r_values"]["mid_points"]),
                 ),
                 dtype=np.float64,
@@ -143,15 +143,15 @@ class DistanceHistogram(IJob):
 
         # The histogram of the intermolecular distances.
         self.h_total = np.zeros(
-            (nElements, nElements, len(self.configuration["r_values"]["mid_points"])),
+            (n_elements, n_elements, len(self.configuration["r_values"]["mid_points"])),
             dtype=np.float64,
         )
 
-        self.averageDensity = 0.0
+        self.average_density = 0.0
 
-        self._nAtomsPerElement = self.trajectory.get_natoms()
+        self._n_atoms_per_element = self.trajectory.get_natoms()
         self._concentrations = {}
-        for k in list(self._nAtomsPerElement.keys()):
+        for k in list(self._n_atoms_per_element.keys()):
             self._concentrations[k] = 0.0
 
         self.labels = pair_labels(
@@ -191,40 +191,40 @@ class DistanceHistogram(IJob):
         frac_coords = coords @ conf.unit_cell.inverse
 
         if self.intra:
-            hIntraTemp = np.zeros(self.h_intra.shape, dtype=np.float64)
-            hTotalTemp = np.zeros(self.h_total.shape, dtype=np.float64)
+            h_intra_temp = np.zeros(self.h_intra.shape, dtype=np.float64)
+            h_total_temp = np.zeros(self.h_total.shape, dtype=np.float64)
 
             van_hove_distinct(
                 direct_cell,
                 self.indices_intra,
-                self.indexToSymbol,
-                hIntraTemp,
-                hTotalTemp,
+                self.index_to_symbol,
+                h_intra_temp,
+                h_total_temp,
                 frac_coords,
                 frac_coords,
                 self.configuration["r_values"]["first"],
                 self.configuration["r_values"]["step"],
             )
 
-            np.multiply(hIntraTemp, cell_volume, hIntraTemp)
-            np.multiply(hTotalTemp, cell_volume, hTotalTemp)
+            np.multiply(h_intra_temp, cell_volume, h_intra_temp)
+            np.multiply(h_total_temp, cell_volume, h_total_temp)
         else:
-            hTotalTemp = np.zeros(self.h_total.shape, dtype=np.float64)
-            hIntraTemp = None
+            h_total_temp = np.zeros(self.h_total.shape, dtype=np.float64)
+            h_intra_temp = None
             van_hove_distinct_all_inter(
                 direct_cell,
                 self.indices_intra,
-                self.indexToSymbol,
+                self.index_to_symbol,
                 None,
-                hTotalTemp,
+                h_total_temp,
                 frac_coords,
                 frac_coords,
                 self.configuration["r_values"]["first"],
                 self.configuration["r_values"]["step"],
             )
-            np.multiply(hTotalTemp, cell_volume, hTotalTemp)
+            np.multiply(h_total_temp, cell_volume, h_total_temp)
 
-        return index, (cell_volume, hIntraTemp, hTotalTemp)
+        return index, (cell_volume, h_intra_temp, h_total_temp)
 
     def combine(self, _index, x):
         """Add the results of run_step to the output arrays.
@@ -237,11 +237,11 @@ class DistanceHistogram(IJob):
             output of the run_step method
 
         """
-        nAtoms = self.configuration["trajectory"][
+        n_atoms = self.configuration["trajectory"][
             "instance"
         ].chemical_system.number_of_atoms
 
-        self.averageDensity += nAtoms / x[0]
+        self.average_density += n_atoms / x[0]
 
         # The temporary distance histograms are normalized by the volume.
         # This is done for each step because the
@@ -252,5 +252,5 @@ class DistanceHistogram(IJob):
             self.h_intra += x[1]
         self.h_total += x[2]
 
-        for k, v in list(self._nAtomsPerElement.items()):
-            self._concentrations[k] += float(v) / nAtoms
+        for k, v in list(self._n_atoms_per_element.items()):
+            self._concentrations[k] += float(v) / n_atoms

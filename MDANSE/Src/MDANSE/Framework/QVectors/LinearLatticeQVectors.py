@@ -45,8 +45,8 @@ class LinearLatticeQVectors(LatticeQVectors):
     settings["shells"] = (
         "RangeConfigurator",
         {
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "default": (0, 5.0, 0.5),
         },
@@ -55,7 +55,7 @@ class LinearLatticeQVectors(LatticeQVectors):
     settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
     settings["axis"] = (
         "VectorConfigurator",
-        {"normalize": False, "notNull": True, "valueType": int, "default": [1, 0, 0]},
+        {"normalize": False, "not_null": True, "value_type": int, "default": [1, 0, 0]},
     )
 
     def _generate(self):
@@ -64,26 +64,26 @@ class LinearLatticeQVectors(LatticeQVectors):
             random.seed(self._configuration["seed"]["value"])
 
         # The Q vector corresponding to the input hkl.
-        qVect = self.hkl_to_qvectors(
+        q_vect = self.hkl_to_qvectors(
             self._configuration["axis"]["vector"], self._unit_cell
         )
 
-        qMax = (
+        q_max = (
             self._configuration["shells"]["last"]
             + 0.5 * self._configuration["width"]["value"]
         )
 
-        uMax = np.ceil(qMax / Vector(qVect).length()) + 1
+        u_max = np.ceil(q_max / Vector(q_vect).length()) + 1
 
-        idxs = np.mgrid[-uMax : uMax + 1]
+        idxs = np.mgrid[-u_max : u_max + 1]
 
-        vects = np.dot(qVect[:, np.newaxis], idxs[np.newaxis, :])
+        vects = np.dot(q_vect[:, np.newaxis], idxs[np.newaxis, :])
 
         dists2 = np.sum(vects**2, axis=0)
 
-        halfWidth = self._configuration["width"]["value"] / 2
+        half_width = self._configuration["width"]["value"] / 2
 
-        nVectors = self._configuration["n_vectors"]["value"]
+        n_vectors = self._configuration["n_vectors"]["value"]
 
         if self._status is not None:
             self._status.start(self._configuration["shells"]["number"])
@@ -91,20 +91,20 @@ class LinearLatticeQVectors(LatticeQVectors):
         self._configuration["q_vectors"] = collections.OrderedDict()
 
         for q in self._configuration["shells"]["value"]:
-            qmin = max(0, q - halfWidth)
+            qmin = max(0, q - half_width)
 
             q2low = qmin * qmin
-            q2up = (q + halfWidth) * (q + halfWidth)
+            q2up = (q + half_width) * (q + half_width)
 
             hits = np.where((dists2 >= q2low) & (dists2 <= q2up))[0]
 
-            nHits = len(hits)
+            n_hits = len(hits)
 
-            if nHits != 0:
-                n = min(nHits, nVectors)
+            if n_hits != 0:
+                n = min(n_hits, n_vectors)
 
-                if nHits > nVectors:
-                    hits = random.sample(hits, nVectors)
+                if n_hits > n_vectors:
+                    hits = random.sample(hits, n_vectors)
 
                 self._configuration["q_vectors"][q] = {}
                 self._configuration["q_vectors"][q]["q_vectors"] = vects[:, hits]

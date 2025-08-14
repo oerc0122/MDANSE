@@ -35,10 +35,10 @@ class Square(IInstrumentResolution):
         mu = self._configuration["mu"]["value"]
         sigma = self._configuration["sigma"]["value"]
 
-        self._omegaWindow = (
+        self._omega_window = (
             2.0
             * np.pi
             * np.where((np.abs(omegas - mu) - sigma) > 0, 0.0, 1.0 / (2.0 * sigma))
         )
 
-        self._timeWindow = self.apply_fft(self._omegaWindow, dt)
+        self._time_window = self.apply_fft(self._omega_window, dt)

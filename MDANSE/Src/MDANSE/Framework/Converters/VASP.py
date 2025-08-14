@@ -98,21 +98,21 @@ class VASP(Converter):
         """
         super().initialize()
 
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
+        self._atomic_aliases = self.configuration["atom_aliases"]["value"]
 
-        self._xdatcarFile = self.configuration["xdatcar_file"]
+        self._xdatcar_file = self.configuration["xdatcar_file"]
 
         # The number of steps of the analysis.
-        self.numberOfSteps = int(self._xdatcarFile["n_frames"])
+        self.n_steps = int(self._xdatcar_file["n_frames"])
 
         self._chemical_system = ChemicalSystem()
         element_list = []
 
         for symbol, number in zip(
-            self._xdatcarFile["atoms"], self._xdatcarFile["atom_numbers"]
+            self._xdatcar_file["atoms"], self._xdatcar_file["atom_numbers"]
         ):
             for i in range(number):
-                element = get_element_from_mapping(self._atomicAliases, symbol)
+                element = get_element_from_mapping(self._atomic_aliases, symbol)
                 element_list.append(element)
         self._chemical_system.initialise_atoms(element_list)
 
@@ -120,7 +120,7 @@ class VASP(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
@@ -136,12 +136,12 @@ class VASP(Converter):
         """
 
         # Read the current step in the xdatcar file.
-        coords = self._xdatcarFile.read_step(index)
+        coords = self._xdatcar_file.read_step(index)
 
-        unitCell = UnitCell(self._xdatcarFile["cell_shape"])
+        unit_cell = UnitCell(self._xdatcar_file["cell_shape"])
 
         conf = PeriodicBoxConfiguration(
-            self._trajectory.chemical_system, coords, unitCell
+            self._trajectory.chemical_system, coords, unit_cell
         )
 
         # The coordinates in VASP are in box format. Convert them into real coordinates.
@@ -153,7 +153,7 @@ class VASP(Converter):
 
         # Compute the actual time
         time = (
-            self._xdatcarFile["step_number"]
+            self._xdatcar_file["step_number"]
             * self.configuration["time_step"]["value"]
             * measure(1.0, "fs").toval("ps")
         )
@@ -183,7 +183,7 @@ class VASP(Converter):
         Finalize the job.
         """
 
-        self._xdatcarFile.close()
+        self._xdatcar_file.close()
 
         # Close the output trajectory.
         self._trajectory.write_standard_atom_database()

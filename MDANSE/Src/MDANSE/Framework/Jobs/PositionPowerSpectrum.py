@@ -105,9 +105,9 @@ class PositionPowerSpectrum(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
-        instrResolution = self.configuration["instrument_resolution"]
+        instr_resolution = self.configuration["instrument_resolution"]
 
         self.add_ideal_results = (
             self.configuration["instrument_resolution"]["kernel"].lower() != "ideal"
@@ -117,93 +117,93 @@ class PositionPowerSpectrum(IJob):
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
 
-        self._outputData.add(
+        self._output_data.add(
             "pps/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "pacf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
             units="ps",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "pps/res/time_window",
             "LineOutputVariable",
-            instrResolution["time_window_positive"],
+            instr_resolution["time_window_positive"],
             axis="pps/axes/time",
             units="au",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "pps/axes/omega",
             "LineOutputVariable",
-            instrResolution["omega"],
+            instr_resolution["omega"],
             units="rad/ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "pps/axes/romega",
             "LineOutputVariable",
-            instrResolution["romega"],
+            instr_resolution["romega"],
             units="rad/ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "pps/res/omega_window",
             "LineOutputVariable",
-            instrResolution["omega_window"],
+            instr_resolution["omega_window"],
             axis="pps/axes/omega",
             units="au",
         )
 
         for element in self.trajectory.unique_names:
-            self._outputData.add(
+            self._output_data.add(
                 f"pacf/{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["n_frames"],),
                 axis="pacf/axes/time",
                 units="nm2",
             )
-            self._outputData.add(
+            self._output_data.add(
                 f"pps/{element}",
                 "LineOutputVariable",
-                (instrResolution["n_romegas"],),
+                (instr_resolution["n_romegas"],),
                 axis="pps/axes/romega",
                 units="au",
                 main_result=True,
                 partial_result=True,
             )
             if self.add_ideal_results:
-                self._outputData.add(
+                self._output_data.add(
                     f"pps/ideal/{element}",
                     "LineOutputVariable",
-                    (instrResolution["n_romegas"],),
+                    (instr_resolution["n_romegas"],),
                     axis="pps/axes/romega",
                     units="au",
                 )
 
-        self._outputData.add(
+        self._output_data.add(
             "pacf/total",
             "LineOutputVariable",
             (self.configuration["frames"]["n_frames"],),
             axis="pacf/axes/time",
             units="nm2",
         )
-        self._outputData.add(
+        self._output_data.add(
             "pps/total",
             "LineOutputVariable",
-            (instrResolution["n_romegas"],),
+            (instr_resolution["n_romegas"],),
             axis="pps/axes/romega",
             units="au",
             main_result=True,
         )
         if self.add_ideal_results:
-            self._outputData.add(
+            self._output_data.add(
                 "pps/ideal/total",
                 "LineOutputVariable",
-                (instrResolution["n_romegas"],),
+                (instr_resolution["n_romegas"],),
                 axis="pps/axes/romega",
                 units="au",
             )
@@ -218,8 +218,8 @@ class PositionPowerSpectrum(IJob):
             #. index (int): The index of the step.
         :Returns:
             #. index (int): The index of the step.
-            #. atomicES (np.array): The calculated energy spectrum for atom of index=index
-            #. atomicPACF (np.array): The calculated position auto-correlation function for atom of index=index
+            #. atomic_e_s (np.array): The calculated energy spectrum for atom of index=index
+            #. atomic_p_a_c_f (np.array): The calculated position auto-correlation function for atom of index=index
         """
         LOG.debug(f"Running step: {index}")
         trajectory = self.trajectory
@@ -239,10 +239,10 @@ class PositionPowerSpectrum(IJob):
         series = self.configuration["projection"]["projector"](series)
 
         n_configs = self.configuration["frames"]["n_configs"]
-        atomicPACF = correlate(series, series[:n_configs], mode="valid") / (
+        atomic_p_a_c_f = correlate(series, series[:n_configs], mode="valid") / (
             3 * n_configs
         )
-        return index, atomicPACF.T[0]
+        return index, atomic_p_a_c_f.T[0]
 
     def combine(self, index, x):
         """
@@ -255,25 +255,25 @@ class PositionPowerSpectrum(IJob):
         # The symbol of the atom.
         element = self._atoms[self.trajectory.atom_indices[index]]
 
-        self._outputData[f"pacf/{element}"] += x
+        self._output_data[f"pacf/{element}"] += x
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        nAtomsPerElement = self.trajectory.get_natoms()
-        for element, number in nAtomsPerElement.items():
-            self._outputData[f"pacf/{element}"][:] /= number
-            self._outputData[f"pps/{element}"][:] = get_spectrum(
-                self._outputData[f"pacf/{element}"],
+        n_atoms_per_element = self.trajectory.get_natoms()
+        for element, number in n_atoms_per_element.items():
+            self._output_data[f"pacf/{element}"][:] /= number
+            self._output_data[f"pps/{element}"][:] = get_spectrum(
+                self._output_data[f"pacf/{element}"],
                 self.configuration["instrument_resolution"]["time_window"],
                 self.configuration["instrument_resolution"]["time_step"],
                 fft="rfft",
             )
             if self.add_ideal_results:
-                self._outputData[f"pps/ideal/{element}"][:] = get_spectrum(
-                    self._outputData[f"pacf/{element}"],
+                self._output_data[f"pps/ideal/{element}"][:] = get_spectrum(
+                    self._output_data[f"pacf/{element}"],
                     None,
                     self.configuration["instrument_resolution"]["time_step"],
                     fft="rfft",
@@ -289,41 +289,41 @@ class PositionPowerSpectrum(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             1,
         )
-        assign_weights(self._outputData, weight_dict, "pacf/%s", self.labels)
-        assign_weights(self._outputData, weight_dict, "pps/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "pacf/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "pps/%s", self.labels)
         if self.add_ideal_results:
-            assign_weights(self._outputData, weight_dict, "pps/ideal/%s", self.labels)
+            assign_weights(self._output_data, weight_dict, "pps/ideal/%s", self.labels)
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = n_selected / n_total
 
-        self._outputData["pacf/total"][:] = (
+        self._output_data["pacf/total"][:] = (
             weighted_sum(
-                self._outputData,
+                self._output_data,
                 "pacf/%s",
                 self.labels,
             )
             / fact
         )
-        self._outputData["pacf/total"].scaling_factor = fact
-        self._outputData["pps/total"][:] = (
+        self._output_data["pacf/total"].scaling_factor = fact
+        self._output_data["pps/total"][:] = (
             weighted_sum(
-                self._outputData,
+                self._output_data,
                 "pps/%s",
                 self.labels,
             )
             / fact
         )
-        self._outputData["pps/total"].scaling_factor = fact
+        self._output_data["pps/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "pacf",
             "LineOutputVariable",
             axis="pacf/axes/time",
@@ -331,7 +331,7 @@ class PositionPowerSpectrum(IJob):
         )
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "pps",
             "LineOutputVariable",
             axis="pps/axes/romega",
@@ -340,25 +340,25 @@ class PositionPowerSpectrum(IJob):
             partial_result=True,
         )
         if self.add_ideal_results:
-            self._outputData["pps/ideal/total"][:] = (
+            self._output_data["pps/ideal/total"][:] = (
                 weighted_sum(
-                    self._outputData,
+                    self._output_data,
                     "pps/ideal/%s",
                     self.labels,
                 )
                 / fact
             )
-            self._outputData["pps/ideal/total"].scaling_factor = fact
+            self._output_data["pps/ideal/total"].scaling_factor = fact
             add_grouped_totals(
                 self.trajectory,
-                self._outputData,
+                self._output_data,
                 "pps/ideal",
                 "LineOutputVariable",
                 axis="pps/axes/romega",
                 units="au",
             )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

@@ -224,9 +224,9 @@ class CommandLineParser(optparse.OptionParser):
         @type parser: instance of MDANSEOptionParser
         """
 
-        trajName = parser.rargs[0]
-        inputTraj = Trajectory(trajName)
-        LOG.info(str(inputTraj))
+        traj_name = parser.rargs[0]
+        input_traj = Trajectory(traj_name)
+        LOG.info(str(input_traj))
 
     def error(self, msg):
         """Called when an error occured in the command line.
@@ -253,8 +253,8 @@ class CommandLineParser(optparse.OptionParser):
 
         if len(parser.rargs) == 0:
             LOG.info("Registered jobs:")
-            for interfaceName in IJob.indirect_subclasses():
-                LOG.info("\t- %s", interfaceName)
+            for interface_name in IJob.indirect_subclasses():
+                LOG.info("\t- %s", interface_name)
         elif len(parser.rargs) == 1:
             val = parser.rargs[0]
             LOG.info(IJob.create(val).info())

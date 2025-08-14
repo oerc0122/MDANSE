@@ -117,7 +117,7 @@ class Gromacs(Converter):
             )
 
         # The number of steps of the analysis.
-        self.numberOfSteps = len(self._xdr_file)
+        self.n_steps = len(self._xdr_file)
 
         # Create all chemical entities from the PDB file.
         pdb_reader = MinimalPDBReader(self.configuration["pdb_file"]["filename"])
@@ -127,7 +127,7 @@ class Gromacs(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],

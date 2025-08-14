@@ -58,7 +58,7 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         return self._chemical_system._clusters
 
     @property
-    def chemicalSystem(self):
+    def chemical_system(self):
         return self._chemical_system
 
     def parse(self):
@@ -85,16 +85,16 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
 
         self._atoms = collections.OrderedDict()
 
-        atomsMapping = {}
+        atoms_mapping = {}
 
         comp = 0
         for node in ROOT.iter("Atom3d"):
             idx = int(node.attrib["ID"])
 
-            imageOf = node.attrib.get("ImageOf", None)
+            image_of = node.attrib.get("ImageOf", None)
 
-            if imageOf is None:
-                atomsMapping[idx] = idx
+            if image_of is None:
+                atoms_mapping[idx] = idx
 
                 info = {}
                 info["index"] = comp
@@ -122,24 +122,24 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
                 comp += 1
 
             else:
-                atomsMapping[idx] = int(imageOf)
+                atoms_mapping[idx] = int(image_of)
 
-        self._nAtoms = len(self._atoms)
+        self._n_atoms = len(self._atoms)
 
-        bondsMapping = {}
+        bonds_mapping = {}
         self._bonds = []
 
         comp = 0
         for node in ROOT.iter("Bond"):
             idx = int(node.attrib["ID"])
 
-            imageOf = node.attrib.get("ImageOf", None)
+            image_of = node.attrib.get("ImageOf", None)
 
-            if imageOf is None:
-                bondsMapping[idx] = [
-                    atomsMapping[int(v)] for v in node.attrib["Connects"].split(",")
+            if image_of is None:
+                bonds_mapping[idx] = [
+                    atoms_mapping[int(v)] for v in node.attrib["Connects"].split(",")
                 ]
-                idx1, idx2 = bondsMapping[idx]
+                idx1, idx2 = bonds_mapping[idx]
                 self._bonds.append(
                     (self._atoms[idx1]["index"], self._atoms[idx2]["index"])
                 )
@@ -165,10 +165,10 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         self._chemical_system.find_clusters_from_bonds()
 
         if self.pbc:
-            boxConf = PeriodicBoxConfiguration(
+            box_conf = PeriodicBoxConfiguration(
                 self._chemical_system, coordinates, self.cell
             )
-            real_conf = boxConf.to_real_configuration()
+            real_conf = box_conf.to_real_configuration()
         else:
             coordinates *= measure(1.0, "ang").toval("nm")
             real_conf = RealConfiguration(

@@ -37,13 +37,13 @@ class TrjFile(dict):
         trjfile = self["instance"]
 
         rec = "!4x"
-        recSize = struct.calcsize(rec)
-        trjfile.read(recSize)
+        rec_size = struct.calcsize(rec)
+        trjfile.read(rec_size)
 
         # Record 1
         rec = "!4s20i8x"
-        recSize = struct.calcsize(rec)
-        DATA = struct.unpack(rec, trjfile.read(recSize))
+        rec_size = struct.calcsize(rec)
+        DATA = struct.unpack(rec, trjfile.read(rec_size))
         VERSION = DATA[1]
         if VERSION < 2010:
             self._fp = "f"
@@ -52,66 +52,66 @@ class TrjFile(dict):
 
         # Diff with doc --> NTRJTI and TRJTIC not in doc
         rec = "!i"
-        recSize = struct.calcsize(rec)
-        (NTRJTI,) = struct.unpack(rec, trjfile.read(recSize))
+        rec_size = struct.calcsize(rec)
+        (NTRJTI,) = struct.unpack(rec, trjfile.read(rec_size))
         rec = f"!{80 * NTRJTI}s8x"
-        recSize = struct.calcsize(rec)
-        self["title"] = struct.unpack(rec, trjfile.read(recSize))
+        rec_size = struct.calcsize(rec)
+        self["title"] = struct.unpack(rec, trjfile.read(rec_size))
         self["title"] = "\n".join([t.decode("utf-8") for t in self["title"]])
 
         # Record 2
         rec = "!i"
-        recSize = struct.calcsize(rec)
-        NEEXTI = struct.unpack(rec, trjfile.read(recSize))[0]
+        rec_size = struct.calcsize(rec)
+        NEEXTI = struct.unpack(rec, trjfile.read(rec_size))[0]
         rec = f"!{80 * NEEXTI}s8x"
-        recSize = struct.calcsize(rec)
-        trjfile.read(recSize)
+        rec_size = struct.calcsize(rec)
+        trjfile.read(rec_size)
 
         # Record 3
         rec = "!8i8x"
-        recSize = struct.calcsize(rec)
+        rec_size = struct.calcsize(rec)
         PERTYPE, _, LCANON, DEFCEL, _, _, LNPECAN, LTMPDAMP = struct.unpack(
-            rec, trjfile.read(recSize)
+            rec, trjfile.read(rec_size)
         )
         self["pertype"] = PERTYPE
         self["defcel"] = DEFCEL
 
         # Record 4
         rec = "!i"
-        recSize = struct.calcsize(rec)
-        NFLUSD = struct.unpack(rec, trjfile.read(recSize))[0]
+        rec_size = struct.calcsize(rec)
+        NFLUSD = struct.unpack(rec, trjfile.read(rec_size))[0]
 
         rec = f"!{NFLUSD}i{NFLUSD}i{8 * NFLUSD}s8x"
-        recSize = struct.calcsize(rec)
-        trjfile.read(recSize)
+        rec_size = struct.calcsize(rec)
+        trjfile.read(rec_size)
 
         rec = "!i"
-        recSize = struct.calcsize(rec)
-        self["totmov"] = struct.unpack(rec, trjfile.read(recSize))[0]
+        rec_size = struct.calcsize(rec)
+        self["totmov"] = struct.unpack(rec, trjfile.read(rec_size))[0]
 
         rec = f"!{self['totmov']}i8x"
-        recSize = struct.calcsize(rec)
+        rec_size = struct.calcsize(rec)
         self["mvofst"] = (
-            np.array(struct.unpack(rec, trjfile.read(recSize)), dtype=np.int32) - 1
+            np.array(struct.unpack(rec, trjfile.read(rec_size)), dtype=np.int32) - 1
         )
 
         # Record 4a
         rec = "!i"
-        recSize = struct.calcsize(rec)
-        (LEEXTI,) = struct.unpack(rec, trjfile.read(recSize))
+        rec_size = struct.calcsize(rec)
+        (LEEXTI,) = struct.unpack(rec, trjfile.read(rec_size))
         rec = f"!{LEEXTI}s8x"
-        recSize = struct.calcsize(rec)
-        trjfile.read(recSize)
+        rec_size = struct.calcsize(rec)
+        trjfile.read(rec_size)
 
         # Record 4b
         rec = "!i"
-        recSize = struct.calcsize(rec)
-        (LPARTI,) = struct.unpack(rec, trjfile.read(recSize))
+        rec_size = struct.calcsize(rec)
+        (LPARTI,) = struct.unpack(rec, trjfile.read(rec_size))
         rec = f"!{LPARTI}s8x"
-        recSize = struct.calcsize(rec)
-        trjfile.read(recSize)
+        rec_size = struct.calcsize(rec)
+        trjfile.read(rec_size)
 
-        self._headerSize = trjfile.tell()
+        self._header_size = trjfile.tell()
 
         # Frame record 1
         if VERSION == 2000:
@@ -121,8 +121,8 @@ class TrjFile(dict):
         else:
             rec1 = f"!{self._fp}i58{self._fp}6i8x"
 
-        recSize = struct.calcsize(rec1)
-        DATA = struct.unpack(rec1, trjfile.read(recSize))
+        rec_size = struct.calcsize(rec1)
+        DATA = struct.unpack(rec1, trjfile.read(rec_size))
 
         if VERSION < 2010:
             self["velocities_written"] = DATA[-3]
@@ -133,41 +133,41 @@ class TrjFile(dict):
 
         # Frame record 2
         rec = f"!12{self._fp}8x"
-        recSize = struct.calcsize(rec)
-        trjfile.read(recSize)
+        rec_size = struct.calcsize(rec)
+        trjfile.read(rec_size)
 
         # Frame record 3
         if LCANON:
             rec = f"!4{self._fp}8x"
-            recSize = struct.calcsize(rec)
-            trjfile.read(recSize)
+            rec_size = struct.calcsize(rec)
+            trjfile.read(rec_size)
 
         if PERTYPE > 0:
             # Frame record 4
-            self._defCellRecPos = trjfile.tell() - self._headerSize
-            self._defCellRec = f"!22{self._fp}8x"
-            self._defCellRecSize = struct.calcsize(self._defCellRec)
-            trjfile.read(self._defCellRecSize)
+            self._def_cell_rec_pos = trjfile.tell() - self._header_size
+            self._def_cell_rec = f"!22{self._fp}8x"
+            self._def_cell_rec_size = struct.calcsize(self._def_cell_rec)
+            trjfile.read(self._def_cell_rec_size)
 
         if PERTYPE > 0:
             # Frame record 5
             rec = f"!i14{self._fp}8x"
-            recSize = struct.calcsize(rec)
-            trjfile.read(recSize)
+            rec_size = struct.calcsize(rec)
+            trjfile.read(rec_size)
 
         if LNPECAN:
             # Frame record 6
             rec = f"!3{self._fp}8x"
-            recSize = struct.calcsize(rec)
-            trjfile.read(recSize)
+            rec_size = struct.calcsize(rec)
+            trjfile.read(rec_size)
 
         if LTMPDAMP:
             # Frame record 7
             rec = f"!{self._fp}8x"
-            recSize = struct.calcsize(rec)
-            trjfile.read(recSize)
+            rec_size = struct.calcsize(rec)
+            trjfile.read(rec_size)
 
-        self._configRecPos = trjfile.tell() - self._headerSize
+        self._config_rec_pos = trjfile.tell() - self._header_size
 
         rec_count = 3
 
@@ -176,51 +176,51 @@ class TrjFile(dict):
         if self["gradients_written"]:
             rec_count += 3
 
-        self._configRec = "!" + (f"{self['totmov']}{self._fp}8x" * rec_count)
+        self._config_rec = "!" + (f"{self['totmov']}{self._fp}8x" * rec_count)
 
-        self._configRecSize = struct.calcsize(self._configRec)
-        trjfile.read(self._configRecSize)
+        self._config_rec_size = struct.calcsize(self._config_rec)
+        trjfile.read(self._config_rec_size)
 
-        self._frameSize = trjfile.tell() - self._headerSize
+        self._frame_size = trjfile.tell() - self._header_size
 
         trjfile.seek(0, 2)
 
-        self["n_frames"] = (trjfile.tell() - self._headerSize) // self._frameSize
+        self["n_frames"] = (trjfile.tell() - self._header_size) // self._frame_size
 
     def read_step(self, index):
         """ """
 
         trjfile = self["instance"]
 
-        pos = self._headerSize + index * self._frameSize
+        pos = self._header_size + index * self._frame_size
 
         trjfile.seek(pos, 0)
 
         rec = f"!{self._fp}"
-        recSize = struct.calcsize(rec)
-        (timeStep,) = struct.unpack(rec, trjfile.read(recSize))
+        rec_size = struct.calcsize(rec)
+        (time_step,) = struct.unpack(rec, trjfile.read(rec_size))
 
         if self["defcel"]:
-            trjfile.seek(pos + self._defCellRecPos, 0)
+            trjfile.seek(pos + self._def_cell_rec_pos, 0)
             cell = np.zeros((3, 3), dtype=np.float64)
             # ax,by,cz,bz,az,ay
-            cellData = np.array(
-                struct.unpack(self._defCellRec, trjfile.read(self._defCellRecSize)),
+            cell_data = np.array(
+                struct.unpack(self._def_cell_rec, trjfile.read(self._def_cell_rec_size)),
                 dtype=np.float64,
             )[2:8] * measure(1.0, "ang").toval("nm")
-            cell[0, 0] = cellData[0]
-            cell[1, 1] = cellData[1]
-            cell[2, 2] = cellData[2]
-            cell[1, 2] = cellData[3]
-            cell[0, 2] = cellData[4]
-            cell[0, 1] = cellData[5]
+            cell[0, 0] = cell_data[0]
+            cell[1, 1] = cell_data[1]
+            cell[2, 2] = cell_data[2]
+            cell[1, 2] = cell_data[3]
+            cell[0, 2] = cell_data[4]
+            cell[0, 1] = cell_data[5]
 
         else:
             cell = None
 
-        trjfile.seek(pos + self._configRecPos, 0)
+        trjfile.seek(pos + self._config_rec_pos, 0)
 
-        config = struct.unpack(self._configRec, trjfile.read(self._configRecSize))
+        config = struct.unpack(self._config_rec, trjfile.read(self._config_rec_size))
 
         rows = 1 + self["velocities_written"] + self["gradients_written"]
 
@@ -237,7 +237,7 @@ class TrjFile(dict):
         else:
             gradients = None
 
-        return timeStep, cell, xyz, vel, gradients
+        return time_step, cell, xyz, vel, gradients
 
     def close(self):
         self["instance"].close()
@@ -292,18 +292,18 @@ class Forcite(Converter):
         """
         super().initialize()
 
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
+        self._atomic_aliases = self.configuration["atom_aliases"]["value"]
 
         self._xtdfile = self.configuration["xtd_file"]
 
-        self._xtdfile.build_chemical_system(self._atomicAliases)
+        self._xtdfile.build_chemical_system(self._atomic_aliases)
 
-        self._chemical_system = self._xtdfile.chemicalSystem
+        self._chemical_system = self._xtdfile.chemical_system
 
         self._trjfile = TrjFile(self.configuration["trj_file"]["filename"])
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self._trjfile["n_frames"]
+        self.n_steps = self._trjfile["n_frames"]
 
         if self._trjfile["velocities_written"]:
             self._velocities = np.zeros(
@@ -323,7 +323,7 @@ class Forcite(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
@@ -344,8 +344,8 @@ class Forcite(Converter):
 
         # If the universe is periodic set its shape with the current dimensions of the unit cell.
         conf = self._xtdfile._configuration
-        movableAtoms = self._trjfile["mvofst"]
-        conf["coordinates"][movableAtoms, :] = xyz
+        movable_atoms = self._trjfile["mvofst"]
+        conf["coordinates"][movable_atoms, :] = xyz
         if conf.is_periodic:
             if self._trjfile["defcel"]:
                 conf.unit_cell = cell
@@ -353,11 +353,11 @@ class Forcite(Converter):
                 conf.fold_coordinates()
 
         if self._velocities is not None:
-            self._velocities[movableAtoms, :] = velocities
+            self._velocities[movable_atoms, :] = velocities
             conf["velocities"] = self._velocities
 
         if self._gradients is not None:
-            self._gradients[movableAtoms, :] = gradients
+            self._gradients[movable_atoms, :] = gradients
             conf["gradients"] = self._gradients
 
         self._trajectory.dump_configuration(

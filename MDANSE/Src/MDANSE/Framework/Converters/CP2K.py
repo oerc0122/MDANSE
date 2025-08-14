@@ -175,54 +175,54 @@ class CP2K(Converter):
         """
         super().initialize()
 
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
-        self._xyzFile = self.configuration["pos_file"]
+        self._atomic_aliases = self.configuration["atom_aliases"]["value"]
+        self._xyz_file = self.configuration["pos_file"]
 
         if self.configuration["vel_file"]["value"]:
-            self._velFile = self.configuration["vel_file"]
-            if abs(self._xyzFile["time_step"] - self._velFile["time_step"]) > 1.0e-09:
+            self._vel_file = self.configuration["vel_file"]
+            if abs(self._xyz_file["time_step"] - self._vel_file["time_step"]) > 1.0e-09:
                 raise CP2KConverterError(
                     "Inconsistent time step between pos and vel files"
                 )
 
-            if self._xyzFile["n_frames"] != self._velFile["n_frames"]:
+            if self._xyz_file["n_frames"] != self._vel_file["n_frames"]:
                 raise CP2KConverterError(
                     "Inconsistent number of frames between pos and vel files"
                 )
 
         if self.configuration["force_file"]["value"]:
-            self._forceFile = self.configuration["force_file"]
-            if abs(self._xyzFile["time_step"] - self._forceFile["time_step"]) > 1.0e-09:
+            self._force_file = self.configuration["force_file"]
+            if abs(self._xyz_file["time_step"] - self._force_file["time_step"]) > 1.0e-09:
                 raise CP2KConverterError(
                     "Inconsistent time step between pos and force files"
                 )
 
-            if self._xyzFile["n_frames"] != self._forceFile["n_frames"]:
+            if self._xyz_file["n_frames"] != self._force_file["n_frames"]:
                 raise CP2KConverterError(
                     "Inconsistent number of frames between pos and force files"
                 )
 
-        self._cellFile = CellFile(self.configuration["cell_file"]["filename"])
+        self._cell_file = CellFile(self.configuration["cell_file"]["filename"])
 
-        if abs(self._cellFile["time_step"] - self._xyzFile["time_step"]) > 1.0e-09:
-            LOG.error(f"{self._cellFile['time_step']}, {self._xyzFile['time_step']}")
+        if abs(self._cell_file["time_step"] - self._xyz_file["time_step"]) > 1.0e-09:
+            LOG.error(f"{self._cell_file['time_step']}, {self._xyz_file['time_step']}")
             raise CP2KConverterError(
                 "Inconsistent time step between pos and cell files"
             )
 
-        if self._cellFile["n_frames"] != self._xyzFile["n_frames"]:
+        if self._cell_file["n_frames"] != self._xyz_file["n_frames"]:
             raise CP2KConverterError(
                 "Inconsistent number of frames between pos and cell files"
             )
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self._xyzFile["n_frames"]
+        self.n_steps = self._xyz_file["n_frames"]
 
         self._chemical_system = ChemicalSystem()
         element_list = []
 
-        for _, symbol in enumerate(self._xyzFile["atoms"]):
-            element = get_element_from_mapping(self._atomicAliases, symbol)
+        for _, symbol in enumerate(self._xyz_file["atoms"]):
+            element = get_element_from_mapping(self._atomic_aliases, symbol)
             element_list.append(element)
 
         self._chemical_system.initialise_atoms(element_list)
@@ -230,7 +230,7 @@ class CP2K(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
@@ -252,19 +252,19 @@ class CP2K(Converter):
         """
 
         # Read the current coordinates in the XYZ file.
-        coords = self._xyzFile.read_step(index) * measure(1.0, iunit="ang").toval("nm")
+        coords = self._xyz_file.read_step(index) * measure(1.0, iunit="ang").toval("nm")
 
         unitcell = UnitCell(
-            self._cellFile.read_step(index) * measure(1.0, iunit="ang").toval("nm")
+            self._cell_file.read_step(index) * measure(1.0, iunit="ang").toval("nm")
         )
 
         variables = {}
         if self.configuration["vel_file"]["value"]:
-            variables["velocities"] = self._velFile.read_step(index) * measure(
+            variables["velocities"] = self._vel_file.read_step(index) * measure(
                 1.0, iunit="ang/fs"
             ).toval("nm/ps")
         if self.configuration["force_file"]["value"]:
-            variables["forces"] = self._forceFile.read_step(index) * measure(
+            variables["forces"] = self._force_file.read_step(index) * measure(
                 1.0, iunit="Da ang / fs2"
             ).toval("Da nm / ps2")
 
@@ -275,7 +275,7 @@ class CP2K(Converter):
         if self._configuration["fold"]["value"]:
             real_conf.fold_coordinates()
 
-        time = index * self._xyzFile["time_step"] * measure(1.0, iunit="fs").toval("ps")
+        time = index * self._xyz_file["time_step"] * measure(1.0, iunit="fs").toval("ps")
 
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(
@@ -309,15 +309,15 @@ class CP2K(Converter):
         superclass finalize method.
         """
 
-        self._xyzFile.close()
+        self._xyz_file.close()
 
         if self.configuration["vel_file"]["value"]:
-            self._velFile.close()
+            self._vel_file.close()
 
         if self.configuration["force_file"]["value"]:
-            self._forceFile.close()
+            self._force_file.close()
 
-        self._cellFile.close()
+        self._cell_file.close()
 
         # Close the output trajectory.
         self._trajectory.write_standard_atom_database()

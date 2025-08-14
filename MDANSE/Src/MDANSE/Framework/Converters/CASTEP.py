@@ -26,7 +26,7 @@ from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 HBAR = measure(1.05457182e-34, "kg m2 / s").toval("Da nm2 / ps")
-HARTREE = measure(27.2113845, "eV").toval("Da nm2 / ps2")
+HARTREE = measure(27.2113845, "e_v").toval("Da nm2 / ps2")
 BOHR = measure(5.29177210903e-11, "m").toval("nm")
 
 
@@ -75,22 +75,22 @@ class CASTEP(Converter):
         """
         super().initialize()
 
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
+        self._atomic_aliases = self.configuration["atom_aliases"]["value"]
 
         # Create a representation of md file
-        self._castepFile = self.configuration["castep_file"]
+        self._castep_file = self.configuration["castep_file"]
 
         # Save the number of steps
-        self.numberOfSteps = self._castepFile["n_frames"]
+        self.n_steps = self._castep_file["n_frames"]
 
         # Create a bound universe
         self._chemical_system = ChemicalSystem()
 
         element_list = []
         # Populate the universe with atoms based on how many of each atom is in the read trajectory
-        for symbol, number in self._castepFile["atoms"]:
+        for symbol, number in self._castep_file["atoms"]:
             for _ in range(number):
-                element = get_element_from_mapping(self._atomicAliases, symbol)
+                element = get_element_from_mapping(self._atomic_aliases, symbol)
                 element_list.append(element)
 
         self._chemical_system.initialise_atoms(element_list)
@@ -99,7 +99,7 @@ class CASTEP(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
@@ -118,15 +118,15 @@ class CASTEP(Converter):
         """
 
         # Retrieve the number of atoms
-        nAtoms = self._castepFile["n_atoms"]
+        n_atoms = self._castep_file["n_atoms"]
 
         # Read the informatino in the frame
-        time_step, unit_cell, config = self._castepFile.read_step(index)
+        time_step, unit_cell, config = self._castep_file.read_step(index)
 
-        coords = config[0:nAtoms, :]
+        coords = config[0:n_atoms, :]
         variables = {}
-        variables["velocities"] = config[nAtoms : 2 * nAtoms, :]
-        variables["gradients"] = config[2 * nAtoms : 3 * nAtoms, :]
+        variables["velocities"] = config[n_atoms : 2 * n_atoms, :]
+        variables["gradients"] = config[2 * n_atoms : 3 * n_atoms, :]
 
         conf = PeriodicRealConfiguration(
             self._trajectory.chemical_system, coords, unit_cell, **variables
@@ -165,7 +165,7 @@ class CASTEP(Converter):
         Finalize the job.
         """
 
-        self._castepFile.close()  # Close the .md file.
+        self._castep_file.close()  # Close the .md file.
 
         # Close the output trajectory.
         self._trajectory.write_standard_atom_database()

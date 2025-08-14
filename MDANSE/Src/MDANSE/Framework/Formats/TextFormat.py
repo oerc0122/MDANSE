@@ -76,10 +76,10 @@ class TextFormat(IFormat):
 
         if header:
             real_buffer = io.BytesIO()
-            tempStr = codecs.getwriter("utf-8")(real_buffer)
+            temp_str = codecs.getwriter("utf-8")(real_buffer)
             for line in header:
-                tempStr.write(str(line))
-            tempStr.write("\n\n")
+                temp_str.write(str(line))
+            temp_str.write("\n\n")
             real_buffer.seek(0)
             info = tarfile.TarInfo(name="jobinfo.txt")
             info.size = length_stringio(real_buffer)
@@ -89,12 +89,12 @@ class TextFormat(IFormat):
         if run_instance is not None:
             inputs = run_instance.output_configuration()
             real_buffer = io.BytesIO()
-            tempStr = codecs.getwriter("utf-8")(real_buffer)
-            tempStr.write(f"run type: {run_instance.__class__.__name__}\n")
-            tempStr.write(f"MDANSE version: {metadata.version('MDANSE')}\n")
+            temp_str = codecs.getwriter("utf-8")(real_buffer)
+            temp_str.write(f"run type: {run_instance.__class__.__name__}\n")
+            temp_str.write(f"MDANSE version: {metadata.version('MDANSE')}\n")
             for key, value in inputs.items():
-                tempStr.write(f"parameters[{str(key)}] = {str(value)}\n")
-            tempStr.write("\n\n")
+                temp_str.write(f"parameters[{str(key)}] = {str(value)}\n")
+            temp_str.write("\n\n")
             real_buffer.seek(0)
             info = tarfile.TarInfo(name="job_parameters.txt")
             info.size = length_stringio(real_buffer)
@@ -103,10 +103,10 @@ class TextFormat(IFormat):
 
         for var in list(data.values()):
             real_buffer = io.BytesIO()
-            tempStr = codecs.getwriter("utf-8")(real_buffer)
-            tempStr.write(var.info())
-            tempStr.write("\n\n")
-            cls.write_data(tempStr, var, data)
+            temp_str = codecs.getwriter("utf-8")(real_buffer)
+            temp_str.write(var.info())
+            temp_str.write("\n\n")
+            cls.write_data(temp_str, var, data)
             real_buffer.seek(0)
 
             info = tarfile.TarInfo(name=f"{var.varname}{cls.extensions[0]}")
@@ -117,7 +117,7 @@ class TextFormat(IFormat):
         tf.close()
 
     @classmethod
-    def write_data(cls, fileobject, data, allData):
+    def write_data(cls, fileobject, data, all_data):
         """
         Write an Framework.OutputVariables.IOutputVariable into a file-like object
 
@@ -125,8 +125,8 @@ class TextFormat(IFormat):
         :type fileobject: python file-like object
         :param data: the output variable to write (subclass of NumPy array).
         :type data: Framework.OutputVariables.IOutputVariable
-        :param allData: the complete set of output variables
-        :type allData: dict of Framework.OutputVariables.IOutputVariable
+        :param all_data: the complete set of output variables
+        :type all_data: dict of Framework.OutputVariables.IOutputVariable
 
         :attention: this is a recursive method.
         """
@@ -135,49 +135,49 @@ class TextFormat(IFormat):
             fileobject.write("Can not write Text output for data of dimensionality > 2")
 
         elif data.ndim == 2:
-            xData, yData = data.axis.split("|")
+            x_data, y_data = data.axis.split("|")
 
-            if xData == "index":
-                xValues = np.arange(data.shape[0])
-                fileobject.write(f"# 1st column: {xData} (au)\n")
+            if x_data == "index":
+                x_values = np.arange(data.shape[0])
+                fileobject.write(f"# 1st column: {x_data} (au)\n")
             else:
-                xValues = allData[xData]
-                fileobject.write(f"# 1st column: {xValues.varname} ({xValues.units})\n")
+                x_values = all_data[x_data]
+                fileobject.write(f"# 1st column: {x_values.varname} ({x_values.units})\n")
 
-            if yData == "index":
-                yValues = np.arange(data.shape[1])
-                fileobject.write(f"# 1st row: {yData} (au)\n\n")
+            if y_data == "index":
+                y_values = np.arange(data.shape[1])
+                fileobject.write(f"# 1st row: {y_data} (au)\n\n")
             else:
-                yValues = allData[yData]
-                fileobject.write(f"# 1st row: {yValues.varname} ({yValues.units})\n\n")
+                y_values = all_data[y_data]
+                fileobject.write(f"# 1st row: {y_values.varname} ({y_values.units})\n\n")
 
             if np.allclose(np.imag(data), 0.0):
-                zData = np.zeros(
+                z_data = np.zeros(
                     (data.shape[0] + 1, data.shape[1] + 1), dtype=np.float64
                 )
                 data = np.real(data)
             else:
-                zData = np.zeros(
+                z_data = np.zeros(
                     (data.shape[0] + 1, data.shape[1] + 1), dtype=np.complex128
                 )
-            zData[1:, 0] = xValues
-            zData[0, 1:] = yValues
-            zData[1:, 1:] = data
+            z_data[1:, 0] = x_values
+            z_data[0, 1:] = y_values
+            z_data[1:, 1:] = data
 
-            np.savetxt(fileobject, zData)
+            np.savetxt(fileobject, z_data)
             fileobject.write("\n")
 
         else:
-            xData = data.axis.split("|")[0]
+            x_data = data.axis.split("|")[0]
 
-            if xData == "index":
-                xValues = np.arange(data.size)
-                fileobject.write(f"# 1st column: {xData} (au)\n")
+            if x_data == "index":
+                x_values = np.arange(data.size)
+                fileobject.write(f"# 1st column: {x_data} (au)\n")
             else:
-                xValues = allData[xData]
-                fileobject.write(f"# 1st column: {xValues.varname} ({xValues.units})\n")
+                x_values = all_data[x_data]
+                fileobject.write(f"# 1st column: {x_values.varname} ({x_values.units})\n")
 
             fileobject.write(f"# 2nd column: {data.varname} ({data.units})\n\n")
 
-            np.savetxt(fileobject, np.column_stack([xValues, data]))
+            np.savetxt(fileobject, np.column_stack([x_values, data]))
             fileobject.write("\n")

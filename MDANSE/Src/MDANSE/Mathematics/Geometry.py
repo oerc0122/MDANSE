@@ -153,11 +153,11 @@ def generate_sphere_points(n: int) -> np.ndarray:
     return points
 
 
-def random_points_on_sphere(radius=1.0, nPoints=100):
-    points = np.zeros((3, nPoints), dtype=np.float64)
+def random_points_on_sphere(radius=1.0, n_points=100):
+    points = np.zeros((3, n_points), dtype=np.float64)
 
-    theta = 2.0 * np.pi * np.random.uniform(nPoints)
-    u = np.random.uniform(-1.0, 1.0, nPoints)
+    theta = 2.0 * np.pi * np.random.uniform(n_points)
+    u = np.random.uniform(-1.0, 1.0, n_points)
     points[0, :] = radius * np.sqrt(1 - u**2) * np.cos(theta)
     points[1, :] = radius * np.sqrt(1 - u**2) * np.sin(theta)
     points[2, :] = radius * u
@@ -165,11 +165,11 @@ def random_points_on_sphere(radius=1.0, nPoints=100):
     return points
 
 
-def random_points_on_disk(axis, radius=1.0, nPoints=100):
+def random_points_on_disk(axis, radius=1.0, n_points=100):
     axis = Vector(axis).normal().array
 
-    points = np.random.uniform(-radius, radius, 3 * nPoints)
-    points = points.reshape((3, nPoints))
+    points = np.random.uniform(-radius, radius, 3 * n_points)
+    points = points.reshape((3, n_points))
 
     proj = np.dot(axis, points)
     proj = np.dot(axis[:, np.newaxis], proj[np.newaxis, :])
@@ -179,11 +179,11 @@ def random_points_on_disk(axis, radius=1.0, nPoints=100):
     return points
 
 
-def random_points_on_circle(axis, radius=1.0, nPoints=100):
+def random_points_on_circle(axis, radius=1.0, n_points=100):
     axis = Vector(axis).normal().array
 
-    points = np.random.uniform(-radius, radius, 3 * nPoints)
-    points = points.reshape((3, nPoints))
+    points = np.random.uniform(-radius, radius, 3 * n_points)
+    points = points.reshape((3, n_points))
 
     proj = np.dot(axis, points)
     proj = np.dot(axis[:, np.newaxis], proj[np.newaxis, :])

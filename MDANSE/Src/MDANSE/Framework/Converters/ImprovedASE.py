@@ -113,12 +113,12 @@ class ImprovedASE(Converter):
         super().initialize()
 
         self._chemical_system = None
-        self._fractionalCoordinates = None
-        self._nAtoms = None
+        self._fractional_coordinates = None
+        self._n_atoms = None
         self._masses = None
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.configuration["n_steps"]["value"]
+        self.n_steps = self.configuration["n_steps"]["value"]
 
         self._timestep = float(self.configuration["time_step"]["value"]) * measure(
             1.0, self.configuration["time_unit"]["value"]
@@ -127,20 +127,20 @@ class ImprovedASE(Converter):
         self.parse_first_step()
         self._start = 0
 
-        if self.numberOfSteps < 1:
-            self.numberOfSteps = self._total_number_of_steps
+        if self.n_steps < 1:
+            self.n_steps = self._total_number_of_steps
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
         )
 
-        LOG.info(f"total steps: {self.numberOfSteps}")
+        LOG.info(f"total steps: {self.n_steps}")
 
     def run_step(self, index):
         """Runs a single step of the job.
@@ -161,22 +161,22 @@ class ImprovedASE(Converter):
             )
         time = self._timeaxis[index]
 
-        unitCell = frame.cell.array
+        unit_cell = frame.cell.array
 
-        unitCell *= measure(1.0, "ang").toval("nm")
-        unitCell = UnitCell(unitCell)
+        unit_cell *= measure(1.0, "ang").toval("nm")
+        unit_cell = UnitCell(unit_cell)
 
         coords = frame.get_positions()
         coords *= measure(1.0, "ang").toval("nm")
 
-        if self._fractionalCoordinates:
+        if self._fractional_coordinates:
             conf = PeriodicBoxConfiguration(
-                self._trajectory.chemical_system, coords, unitCell
+                self._trajectory.chemical_system, coords, unit_cell
             )
             real_conf = conf.to_real_configuration()
         else:
             real_conf = PeriodicRealConfiguration(
-                self._trajectory.chemical_system, coords, unitCell
+                self._trajectory.chemical_system, coords, unit_cell
             )
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(
@@ -217,9 +217,9 @@ class ImprovedASE(Converter):
     def extract_initial_information(self, ase_object):
         element_list = None
 
-        if self._fractionalCoordinates is None:
+        if self._fractional_coordinates is None:
             try:
-                self._fractionalCoordinates = np.all(ase_object.get_pbc())
+                self._fractional_coordinates = np.all(ase_object.get_pbc())
             except Exception:
                 pass
 
@@ -243,8 +243,8 @@ class ImprovedASE(Converter):
         if element_list is None:
             return
         else:
-            if self._nAtoms is None:
-                self._nAtoms = len(element_list)
+            if self._n_atoms is None:
+                self._n_atoms = len(element_list)
             if self._chemical_system is None:
                 self._chemical_system = ChemicalSystem()
 

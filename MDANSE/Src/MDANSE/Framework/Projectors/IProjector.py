@@ -27,7 +27,7 @@ class IProjector(metaclass=SubclassFactory):
     def __init__(self):
         self._axis = None
 
-        self._projectionMatrix = None
+        self._projection_matrix = None
 
     def __call__(self, value):
         raise NotImplementedError

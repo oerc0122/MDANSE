@@ -32,7 +32,7 @@ from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
 
 MCSTAS_UNITS_LUT = {
-    "rad/ps": measure(1, "rad/ps", equivalent=True).toval("meV"),
+    "rad/ps": measure(1, "rad/ps", equivalent=True).toval("me_v"),
     "nm2/ps": measure(1, "nm2/ps", equivalent=True).toval("b/ps"),
     "nm2": measure(1, "nm2").toval("b"),
     "1/nm": measure(1, "1/nm").toval("1/ang"),
@@ -134,57 +134,57 @@ class McStasVirtualInstrument(IJob):
         super().initialize()
 
         # The number of steps is set to 1 as the job is defined as single McStas run.
-        self.numberOfSteps = 1
+        self.n_steps = 1
 
         symbols = self.trajectory.chemical_system.atom_list
 
         # Compute some parameters used for a proper McStas run
-        self._mcStasPhysicalParameters = {"density": 0.0}
-        self._mcStasPhysicalParameters["V_rho"] = 0.0
-        self._mcStasPhysicalParameters["weight"] = sum(
+        self._mc_stas_physical_parameters = {"density": 0.0}
+        self._mc_stas_physical_parameters["V_rho"] = 0.0
+        self._mc_stas_physical_parameters["weight"] = sum(
             self.trajectory.get_atom_property(s, "atomic_weight") for s in symbols
         )
-        self._mcStasPhysicalParameters["sigma_abs"] = (
+        self._mc_stas_physical_parameters["sigma_abs"] = (
             np.mean(
                 [self.trajectory.get_atom_property(s, "xs_absorption") for s in symbols]
             )
             * MCSTAS_UNITS_LUT["nm2"]
         )
-        self._mcStasPhysicalParameters["sigma_coh"] = (
+        self._mc_stas_physical_parameters["sigma_coh"] = (
             np.mean(
                 [self.trajectory.get_atom_property(s, "xs_coherent") for s in symbols]
             )
             * MCSTAS_UNITS_LUT["nm2"]
         )
-        self._mcStasPhysicalParameters["sigma_inc"] = (
+        self._mc_stas_physical_parameters["sigma_inc"] = (
             np.mean(
                 [self.trajectory.get_atom_property(s, "xs_incoherent") for s in symbols]
             )
             * MCSTAS_UNITS_LUT["nm2"]
         )
-        for frameIndex in self.configuration["frames"]["value"]:
-            configuration = self.trajectory.configuration(frameIndex)
-            cellVolume = configuration._unit_cell.volume
-            self._mcStasPhysicalParameters["density"] += (
-                self._mcStasPhysicalParameters["weight"] / cellVolume
+        for frame_index in self.configuration["frames"]["value"]:
+            configuration = self.trajectory.configuration(frame_index)
+            cell_volume = configuration._unit_cell.volume
+            self._mc_stas_physical_parameters["density"] += (
+                self._mc_stas_physical_parameters["weight"] / cell_volume
             )
-            self._mcStasPhysicalParameters["V_rho"] += (
+            self._mc_stas_physical_parameters["V_rho"] += (
                 self.configuration["trajectory"][
                     "instance"
                 ].chemical_system.number_of_atoms
-                / cellVolume
+                / cell_volume
             )
-        self._mcStasPhysicalParameters["density"] /= self.configuration["frames"][
+        self._mc_stas_physical_parameters["density"] /= self.configuration["frames"][
             "n_frames"
         ]
-        self._mcStasPhysicalParameters["V_rho"] /= self.configuration["frames"][
+        self._mc_stas_physical_parameters["V_rho"] /= self.configuration["frames"][
             "n_frames"
         ]
         # The density is converty in g/cm3
-        self._mcStasPhysicalParameters["density"] /= NAVOGADRO / measure(
+        self._mc_stas_physical_parameters["density"] /= NAVOGADRO / measure(
             1.0, "cm3"
         ).toval("nm3")
-        self._mcStasPhysicalParameters["V_rho"] *= measure(1.0, "1/nm3").toval("1/ang3")
+        self._mc_stas_physical_parameters["V_rho"] *= measure(1.0, "1/nm3").toval("1/ang3")
 
     def run_step(self, index):
         """
@@ -197,8 +197,8 @@ class McStasVirtualInstrument(IJob):
         """
 
         sqw = ["sample_coh", "sample_inc"]
-        sqwInput = ""
-        self.outFile = {}
+        sqw_input = ""
+        self.out_file = {}
         for typ in sqw:
             fout = tempfile.NamedTemporaryFile(mode="w", delete=False)
             # for debugging, we use a real file here:
@@ -210,7 +210,7 @@ class McStasVirtualInstrument(IJob):
             # )
 
             fout.write("# Physical parameters:\n")
-            for k, v in list(self._mcStasPhysicalParameters.items()):
+            for k, v in list(self._mc_stas_physical_parameters.items()):
                 fout.write(f"# {k} {v} \n")
 
             fout.write(f"# Temperature {self.configuration['temperature']['value']} \n")
@@ -233,33 +233,33 @@ class McStasVirtualInstrument(IJob):
                 np.savetxt(fout, np.atleast_2d(data), delimiter=" ", newline="\n")
 
             fout.close()
-            self.outFile[typ] = fout.name
-            # self.outFile[typ] = (
+            self.out_file[typ] = fout.name
+            # self.out_file[typ] = (
             #     "/Users/maciej.bartkowiak/an_example/mcstas/Persistent_file_for_"
             #     + typ
             #     + ".sqw"
             # )
-            sqwInput += f"{typ}={fout.name} "
+            sqw_input += f"{typ}={fout.name} "
 
         # sys.exit(0)
 
         trace = ""
         if self.configuration["display"]["value"]:
             trace = " --trace "
-        execPath = self.configuration["instrument"]["value"]
+        exec_path = self.configuration["instrument"]["value"]
         options = self.configuration["options"]["value"]
         parameters = self.configuration["parameters"]["value"]
 
-        cmdLine = [execPath]
-        cmdLine.extend(options)
-        cmdLine.append(sqwInput)
-        cmdLine.append(trace)
-        cmdLine.extend(parameters)
+        cmd_line = [exec_path]
+        cmd_line.extend(options)
+        cmd_line.append(sqw_input)
+        cmd_line.append(trace)
+        cmd_line.extend(parameters)
 
-        LOG.info(" ".join(cmdLine))
+        LOG.info(" ".join(cmd_line))
 
         s = subprocess.Popen(
-            " ".join(cmdLine),
+            " ".join(cmd_line),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             shell=True,
@@ -291,13 +291,13 @@ class McStasVirtualInstrument(IJob):
         """
 
         # Rename and move to the result dir the SQW file input
-        for typ, fname in self.outFile.items():
+        for typ, fname in self.out_file.items():
             shutil.move(fname, self.mcstas_output_dir / f"{typ}.sqw")
 
         # Convert McStas output files into NetCDF format
         self.convert(self.configuration["options"]["mcstas_output_directory"])
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),
@@ -324,7 +324,7 @@ class McStasVirtualInstrument(IJob):
 
     def convert(self, sim_dir: Path | str):
         """
-        Convert McStas data set to netCDF File Format
+        Convert McStas data set to net_c_d_f File Format
         """
 
         sim_dir = Path(sim_dir)
@@ -338,10 +338,10 @@ class McStasVirtualInstrument(IJob):
         if not sim_file:
             raise Exception(f"Dataset {sim_file} does not exist!")
 
-        isBegin = partial(_startswith, "begin")
-        isCompFilename = partial(_startswith, "filename:")
+        is_begin = partial(_startswith, "begin")
+        is_comp_filename = partial(_startswith, "filename:")
         # First, determine if this is single or overview plot...
-        SimFile = list(filter(isBegin, open(sim_file).readlines()))
+        SimFile = list(filter(is_begin, open(sim_file).readlines()))
         Datfile = 0
         if SimFile == []:
             FS = self.read_monitor(sim_file)
@@ -352,16 +352,16 @@ class McStasVirtualInstrument(IJob):
                 Datfile = 1
 
         # Get filenames from the sim file
-        MonFiles = list(filter(isCompFilename, open(sim_file).readlines()))
+        MonFiles = list(filter(is_comp_filename, open(sim_file).readlines()))
         L = len(MonFiles)
         FSlist = []
         # Scan or overview?
         if L == 0:
             """Scan view"""
             if Datfile == 0:
-                isFilename = partial(_startswith, "filename")
+                is_filename = partial(_startswith, "filename")
 
-                Scanfile = list(filter(isFilename, open(sim_file).readlines()))
+                Scanfile = list(filter(is_filename, open(sim_file).readlines()))
                 Scanfile = Scanfile[0].split(": ")
                 Scanfile = sim_dir / Scanfile[1].strip()
                 # Proceed to load scan datafile
@@ -400,16 +400,16 @@ class McStasVirtualInstrument(IJob):
             y = FileStruct["data"][:, 1]
 
             Title = self.unique(
-                self.treat_str_var(FileStruct["component"]), self._outputData
+                self.treat_str_var(FileStruct["component"]), self._output_data
             )
             xlabel = self.unique(
-                self.treat_str_var(FileStruct["xlabel"]), self._outputData, x
+                self.treat_str_var(FileStruct["xlabel"]), self._output_data, x
             )
 
-            self._outputData[xlabel] = IOutputVariable.create(
+            self._output_data[xlabel] = IOutputVariable.create(
                 "LineOutputVariable", x, xlabel, units="au"
             )
-            self._outputData[Title] = IOutputVariable.create(
+            self._output_data[Title] = IOutputVariable.create(
                 "LineOutputVariable", y, Title, axis=str(xlabel), units="au"
             )
 
@@ -430,18 +430,18 @@ class McStasVirtualInstrument(IJob):
             y = np.linspace(Ymin, Ymax, mysize[0])
 
             title = self.unique(
-                self.treat_str_var(FileStruct["component"]), self._outputData
+                self.treat_str_var(FileStruct["component"]), self._output_data
             )
             xlabel = self.unique(
-                self.treat_str_var(FileStruct["xlabel"]), self._outputData, x
+                self.treat_str_var(FileStruct["xlabel"]), self._output_data, x
             )
             ylabel = self.unique(
-                self.treat_str_var(FileStruct["ylabel"]), self._outputData, y
+                self.treat_str_var(FileStruct["ylabel"]), self._output_data, y
             )
 
-            self._outputData.add(xlabel, "LineOutputVariable", x, units="au")
-            self._outputData.add(ylabel, "LineOutputVariable", y, units="au")
-            self._outputData.add(
+            self._output_data.add(xlabel, "LineOutputVariable", x, units="au")
+            self._output_data.add(ylabel, "LineOutputVariable", y, units="au")
+            self._output_data.add(
                 title,
                 "SurfaceOutputVariable",
                 data,
@@ -453,26 +453,26 @@ class McStasVirtualInstrument(IJob):
 
         return FileStruct
 
-    def read_monitor(self, simFile):
+    def read_monitor(self, sim_file):
         """
         Read a monitor file (McCode format).
 
-        :param simFile: the path for the monitor file.
-        :type simFile: str
+        :param sim_file: the path for the monitor file.
+        :type sim_file: str
 
         :return: a dictionary built from the evaluation of McStas monitor file header that will contains the data and metadata about the monitor.
         :rtype: dict
         """
 
         # Read header
-        isHeader = partial(_startswith, "#")
-        f = open(simFile)
+        is_header = partial(_startswith, "#")
+        f = open(sim_file)
         Lines = f.readlines()
-        Header = list(filter(isHeader, Lines))
+        Header = list(filter(is_header, Lines))
         f.close()
 
         # Traverse header and define corresponding 'struct'
-        strStruct = "{"
+        str_struct = "{"
         for j in range(0, len(Header)):
             # Field name and data
             Line = Header[j]
@@ -481,15 +481,15 @@ class McStasVirtualInstrument(IJob):
             Field = Line[0]
             Value = ""
             Value = "".join(":".join(Line[1 : len(Line)]).split("'"))
-            strStruct = strStruct + "'" + Field + "':'" + Value + "'"
+            str_struct = str_struct + "'" + Field + "':'" + Value + "'"
             if j < len(Header) - 1:
-                strStruct += ","
-        strStruct = strStruct + "}"
-        Filestruct = eval(strStruct)
+                str_struct += ","
+        str_struct = str_struct + "}"
+        Filestruct = eval(str_struct)
         # Add the data block
 
         data = []
-        with open(simFile, encoding="utf-8") as file:
+        with open(sim_file, encoding="utf-8") as file:
             lines = file.readlines()
 
         header = True
@@ -505,7 +505,7 @@ class McStasVirtualInstrument(IJob):
                 data.append(line)
 
         Filestruct["data"] = np.genfromtxt(io.StringIO(" ".join(data)))
-        Filestruct["fullpath"] = simFile
+        Filestruct["fullpath"] = sim_file
 
         return Filestruct
 

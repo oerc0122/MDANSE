@@ -34,7 +34,7 @@ from MDANSE.Mathematics.LinearAlgebra import (
     ez,
     is_tensor,
     is_vector,
-    nullVector,
+    null_vector,
 )
 
 
@@ -99,7 +99,7 @@ class RigidBodyTransformation(Transformation):
         """
         pass
 
-    def screwMotion(self):
+    def screw_motion(self):
         """
         @returns: the four parameters
                   (reference, direction, angle, distance)
@@ -131,7 +131,7 @@ class Translation(RigidBodyTransformation):
 
     is_translation = 1
 
-    def asLinearTransformation(self):
+    def as_linear_transformation(self):
         return LinearTransformation(delta, self.vector)
 
     def __mul__(self, other):
@@ -142,7 +142,7 @@ class Translation(RigidBodyTransformation):
         elif hasattr(other, "is_rotation_translation"):
             return RotationTranslation(other.tensor, other.vector + self.vector)
         else:
-            return self.asLinearTransformation() * other.asLinearTransformation()
+            return self.as_linear_transformation() * other.as_linear_transformation()
 
     def __call__(self, vector):
         return self.vector + vector
@@ -162,7 +162,7 @@ class Translation(RigidBodyTransformation):
     def inverse(self):
         return Translation(-self.vector)
 
-    def screwMotion(self):
+    def screw_motion(self):
         length = self.vector.length()
         if length == 0.0:
             return Vector(0.0, 0.0, 0.0), Vector(0.0, 0.0, 1.0), 0.0, 0.0
@@ -206,8 +206,8 @@ class Rotation(RigidBodyTransformation):
 
     is_rotation = 1
 
-    def asLinearTransformation(self):
-        return LinearTransformation(self.tensor, nullVector)
+    def as_linear_transformation(self):
+        return LinearTransformation(self.tensor, null_vector)
 
     def __mul__(self, other):
         if hasattr(other, "is_rotation"):
@@ -219,7 +219,7 @@ class Rotation(RigidBodyTransformation):
                 self.tensor.dot(other.tensor), self.tensor * other.vector
             )
         else:
-            return self.asLinearTransformation() * other.asLinearTransformation()
+            return self.as_linear_transformation() * other.as_linear_transformation()
 
     def __call__(self, other):
         if is_vector(other):
@@ -232,31 +232,31 @@ class Rotation(RigidBodyTransformation):
         else:
             raise ValueError("incompatible object")
 
-    def axisAndAngle(self):
+    def axis_and_angle(self):
         """
         @returns: the axis (a normalized vector) and angle (in radians).
                   The angle is in the interval (-pi, pi]
         @rtype: (L{Scientific.Geometry.Vector}, C{float})
         """
 
-        asym = -self.tensor.asymmetricalPart()
+        asym = -self.tensor.asymmetrical_part()
         axis = Vector(asym[1, 2], asym[2, 0], asym[0, 1])
         sine = axis.length()
         if abs(sine) > 1.0e-10:
             axis = axis / sine
-            projector = axis.dyadicProduct(axis)
+            projector = axis.dyadic_product(axis)
             cosine = (self.tensor - projector).trace() / (3.0 - axis * axis)
-            angle = angleFromSineAndCosine(sine, cosine)
+            angle = angle_from_sine_and_cosine(sine, cosine)
         else:
             t = 0.5 * (self.tensor + delta)
             i = np.argmax(t.diagonal().array)
-            axis = (t[i] / np.sqrt(t[i, i])).asVector()
+            axis = (t[i] / np.sqrt(t[i, i])).as_vector()
             angle = 0.0
             if t.trace() < 2.0:
                 angle = np.pi
         return axis, angle
 
-    def threeAngles(self, e1, e2, e3, tolerance=1e-7):
+    def three_angles(self, e1, e2, e3, tolerance=1e-7):
         """
         Find three angles a1, a2, a3 such that
         Rotation(a1*e1)*Rotation(a2*e2)*Rotation(a3*e3)
@@ -314,7 +314,7 @@ class Rotation(RigidBodyTransformation):
                 f"FAILURE 2 malformed rotation Tensor (non orthogonal?) {_c / _norm:.8f}"
             )
         # if _c/_norm > 1: raise ValueError('Step1: No solution')
-        _th = angleFromSineAndCosine(_b / _norm, _a / _norm)
+        _th = angle_from_sine_and_cosine(_b / _norm, _a / _norm)
         _xmth = np.arccos(_c / _norm)
 
         # a2a and a2b are the two possible solutions to the equation.
@@ -336,7 +336,7 @@ class Rotation(RigidBodyTransformation):
             else:
                 cosa1 = (v1 * w1) / norm
                 sina1 = v1 * (w1.cross(e1)) / norm
-                a1 = mod_angle(angleFromSineAndCosine(sina1, cosa1), 2 * np.pi)
+                a1 = mod_angle(angle_from_sine_and_cosine(sina1, cosa1), 2 * np.pi)
 
             R3 = Rotation(e2, -1 * a2) * Rotation(e1, -1 * a1) * self
             # u = normalized test vector perpendicular to e3
@@ -346,7 +346,7 @@ class Rotation(RigidBodyTransformation):
             u = (e2.cross(e3)).normal()
             cosa3 = u * R3(u)
             sina3 = u * (R3(u).cross(e3))
-            a3 = mod_angle(angleFromSineAndCosine(sina3, cosa3), 2 * np.pi)
+            a3 = mod_angle(angle_from_sine_and_cosine(sina3, cosa3), 2 * np.pi)
 
             solutions.append(np.array([a1, a2, a3]))
 
@@ -355,12 +355,12 @@ class Rotation(RigidBodyTransformation):
             solutions = [solutions[1], solutions[0]]
         return solutions
 
-    def asQuaternion(self):
+    def as_quaternion(self):
         """
         @returns: a quaternion representing the same rotation
         @rtype: L{Scientific.Geometry.Quaternion.Quaternion}
         """
-        axis, angle = self.axisAndAngle()
+        axis, angle = self.axis_and_angle()
         sin_angle_2 = np.sin(0.5 * angle)
         cos_angle_2 = np.cos(0.5 * angle)
         return Quaternion(
@@ -379,8 +379,8 @@ class Rotation(RigidBodyTransformation):
     def inverse(self):
         return Rotation(self.tensor.transpose())
 
-    def screwMotion(self):
-        axis, angle = self.axisAndAngle()
+    def screw_motion(self):
+        axis, angle = self.axis_and_angle()
         return Vector(0.0, 0.0, 0.0), axis, angle, 0.0
 
 
@@ -401,7 +401,7 @@ class RotationTranslation(RigidBodyTransformation):
 
     is_rotation_translation = 1
 
-    def asLinearTransformation(self):
+    def as_linear_transformation(self):
         return LinearTransformation(self.tensor, self.vector)
 
     def __mul__(self, other):
@@ -416,7 +416,7 @@ class RotationTranslation(RigidBodyTransformation):
                 self.tensor.dot(other.tensor), self.tensor * other.vector + self.vector
             )
         else:
-            return self.asLinearTransformation() * other.asLinearTransformation()
+            return self.as_linear_transformation() * other.as_linear_transformation()
 
     def __call__(self, vector):
         return self.tensor * vector + self.vector
@@ -430,8 +430,8 @@ class RotationTranslation(RigidBodyTransformation):
     def inverse(self):
         return Rotation(self.tensor.transpose()) * Translation(-self.vector)
 
-    def screwMotion(self):
-        axis, angle = self.rotation().axisAndAngle()
+    def screw_motion(self):
+        axis, angle = self.rotation().axis_and_angle()
         d = self.vector * axis
         if d < 0.0:
             d = -d
@@ -465,8 +465,8 @@ class Scaling(Transformation):
 
     is_scaling = 1
 
-    def asLinearTransformation(self):
-        return LinearTransformation(self.scale_factor * delta, nullVector)
+    def as_linear_transformation(self):
+        return LinearTransformation(self.scale_factor * delta, null_vector)
 
     def __call__(self, vector):
         return self.scale_factor * vector
@@ -475,7 +475,7 @@ class Scaling(Transformation):
         if hasattr(other, "is_scaling"):
             return Scaling(self.scale_factor * other.scale_factor)
         else:
-            return self.asLinearTransformation() * other.asLinearTransformation()
+            return self.as_linear_transformation() * other.as_linear_transformation()
 
     def inverse(self):
         return Scaling(1.0 / self.scale_factor)
@@ -510,11 +510,11 @@ class Shear(Transformation):
                 [args[0].array, args[1].array, args[2].array]
             ).transpose()
 
-    def asLinearTransformation(self):
-        return LinearTransformation(self.tensor, nullVector)
+    def as_linear_transformation(self):
+        return LinearTransformation(self.tensor, null_vector)
 
     def __mul__(self, other):
-        return self.asLinearTransformation() * other
+        return self.as_linear_transformation() * other
 
     def __call__(self, vector):
         return self.tensor * vector
@@ -538,11 +538,11 @@ class LinearTransformation(Transformation):
         self.tensor = tensor
         self.vector = vector
 
-    def asLinearTransformation(self):
+    def as_linear_transformation(self):
         return self
 
     def __mul__(self, other):
-        other = other.asLinearTransformation()
+        other = other.as_linear_transformation()
         return LinearTransformation(
             self.tensor.dot(other.tensor), self.tensor * other.vector + self.vector
         )
@@ -557,7 +557,7 @@ class LinearTransformation(Transformation):
 # Utility functions
 
 
-def angleFromSineAndCosine(y, x):
+def angle_from_sine_and_cosine(y, x):
     return atan2(y, x)
 
 

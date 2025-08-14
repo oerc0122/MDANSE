@@ -41,8 +41,8 @@ class CircularLatticeQVectors(LatticeQVectors):
     settings["shells"] = (
         "RangeConfigurator",
         {
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "default": (0.0, 5.0, 0.5),
         },
@@ -51,11 +51,11 @@ class CircularLatticeQVectors(LatticeQVectors):
     settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
     settings["axis_1"] = (
         "VectorConfigurator",
-        {"normalize": False, "notNull": True, "valueType": int, "default": [1, 0, 0]},
+        {"normalize": False, "not_null": True, "value_type": int, "default": [1, 0, 0]},
     )
     settings["axis_2"] = (
         "VectorConfigurator",
-        {"normalize": False, "notNull": True, "valueType": int, "default": [0, 1, 0]},
+        {"normalize": False, "not_null": True, "value_type": int, "default": [0, 1, 0]},
     )
 
     def _generate(self):
@@ -70,28 +70,28 @@ class CircularLatticeQVectors(LatticeQVectors):
             ]
         )
 
-        qVects = self.hkl_to_qvectors(hkls, self._unit_cell)
+        q_vects = self.hkl_to_qvectors(hkls, self._unit_cell)
 
-        qMax = (
+        q_max = (
             self._configuration["shells"]["last"]
             + 0.5 * self._configuration["width"]["value"]
         )
 
-        uvMax = np.ceil([qMax / Vector(v).length() for v in qVects.T]) + 1
-        # Enforce integers in uvMax
-        uvMax = uvMax.astype(np.int64)
+        uv_max = np.ceil([q_max / Vector(v).length() for v in q_vects.T]) + 1
+        # Enforce integers in uv_max
+        uv_max = uv_max.astype(np.int64)
 
-        idxs = np.mgrid[-uvMax[0] : uvMax[0] + 1, -uvMax[1] : uvMax[1] + 1]
+        idxs = np.mgrid[-uv_max[0] : uv_max[0] + 1, -uv_max[1] : uv_max[1] + 1]
 
-        idxs = idxs.reshape(2, (2 * uvMax[0] + 1) * (2 * uvMax[1] + 1))
+        idxs = idxs.reshape(2, (2 * uv_max[0] + 1) * (2 * uv_max[1] + 1))
 
-        vects = np.dot(qVects, idxs)
+        vects = np.dot(q_vects, idxs)
 
         dists2 = np.sum(vects**2, axis=0)
 
-        halfWidth = self._configuration["width"]["value"] / 2
+        half_width = self._configuration["width"]["value"] / 2
 
-        nVectors = self._configuration["n_vectors"]["value"]
+        n_vectors = self._configuration["n_vectors"]["value"]
 
         if self._status is not None:
             self._status.start(self._configuration["shells"]["number"])
@@ -99,20 +99,20 @@ class CircularLatticeQVectors(LatticeQVectors):
         self._configuration["q_vectors"] = collections.OrderedDict()
 
         for q in self._configuration["shells"]["value"]:
-            qmin = max(0, q - halfWidth)
+            qmin = max(0, q - half_width)
 
             q2low = qmin * qmin
-            q2up = (q + halfWidth) * (q + halfWidth)
+            q2up = (q + half_width) * (q + half_width)
 
             hits = np.where((dists2 >= q2low) & (dists2 <= q2up))[0]
 
-            nHits = len(hits)
+            n_hits = len(hits)
 
-            if nHits != 0:
-                n = min(nHits, nVectors)
+            if n_hits != 0:
+                n = min(n_hits, n_vectors)
 
-                if nHits > nVectors:
-                    hits = random.sample(hits, nVectors)
+                if n_hits > n_vectors:
+                    hits = random.sample(hits, n_vectors)
 
                 self._configuration["q_vectors"][q] = {}
                 self._configuration["q_vectors"][q]["q_vectors"] = vects[:, hits]

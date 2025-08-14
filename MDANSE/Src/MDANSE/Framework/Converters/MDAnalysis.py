@@ -125,7 +125,7 @@ class MDAnalysis(Converter):
                 topology_format=self.configuration["topology_file"]["format"],
             )
 
-        self.numberOfSteps = len(self.u.trajectory)
+        self.n_steps = len(self.u.trajectory)
 
         self._chemical_system = ChemicalSystem()
         element_list = []
@@ -181,7 +181,7 @@ class MDAnalysis(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             **kwargs,
         )
         super().initialize()
@@ -230,7 +230,7 @@ class MDAnalysis(Converter):
 
             if hasattr(self.u.trajectory.ts, "forces"):
                 conf["gradients"] = self.u.trajectory.ts.forces * measure(
-                    1.0, "kJ/mol ang", equivalent=True
+                    1.0, "k_j/mol ang", equivalent=True
                 ).toval("Da nm/ps2")
 
         if float(self.configuration["time_step"]["value"]) == 0.0:

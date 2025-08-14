@@ -80,7 +80,7 @@ class GlobalMotionFilteredTrajectory(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         # The collection of atoms corresponding to the atoms selected for output.
         atoms = self.trajectory.atom_types
@@ -94,7 +94,7 @@ class GlobalMotionFilteredTrajectory(IJob):
         self._output_trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self.trajectory.chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             self._selected_atoms.atom_list,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
@@ -118,11 +118,11 @@ class GlobalMotionFilteredTrajectory(IJob):
         """
 
         # get the Frame index
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
 
         trajectory = self.trajectory
 
-        current_configuration = trajectory.configuration(frameIndex)
+        current_configuration = trajectory.configuration(frame_index)
         current_configuration = current_configuration.continuous_configuration()
         variables = copy.deepcopy(current_configuration.variables)
         coords = variables.pop("coordinates")
@@ -131,7 +131,7 @@ class GlobalMotionFilteredTrajectory(IJob):
         )
 
         # Case of the first frame.
-        if frameIndex == self.configuration["frames"]["first"]:
+        if frame_index == self.configuration["frames"]["first"]:
             # A a linear transformation that shifts the center of mass of the reference atoms to the coordinate origin
             # and makes its principal axes of inertia parallel to the three coordinate axes is computed.
             transfo = self._reference_atoms.normalizing_transformation(
@@ -192,9 +192,9 @@ class GlobalMotionFilteredTrajectory(IJob):
         # The output trajectory is closed.
         self._output_trajectory.close()
 
-        outputFile = h5py.File(self.configuration["output_files"]["file"], "r+")
+        output_file = h5py.File(self.configuration["output_files"]["file"], "r+")
 
-        outputFile.create_dataset("rms", data=self._rms, dtype=np.float64)
+        output_file.create_dataset("rms", data=self._rms, dtype=np.float64)
 
-        outputFile.close()
+        output_file.close()
         super().finalize()

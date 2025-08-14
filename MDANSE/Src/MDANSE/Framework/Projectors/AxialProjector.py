@@ -35,10 +35,10 @@ class AxialProjector(IProjector):
         except ZeroDivisionError:
             raise ProjectorError("The axis vector can not be the null vector")
 
-        self._projectionMatrix = np.outer(self._axis, self._axis)
+        self._projection_matrix = np.outer(self._axis, self._axis)
 
     def __call__(self, value):
         try:
-            return np.dot(value, self._projectionMatrix.T)
+            return np.dot(value, self._projection_matrix.T)
         except (TypeError, ValueError):
             raise ProjectorError("Invalid data to apply projection on")

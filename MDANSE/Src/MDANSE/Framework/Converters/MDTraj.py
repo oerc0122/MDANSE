@@ -119,7 +119,7 @@ class MDTraj(Converter):
                 ]["value"],
             )
 
-        self.numberOfSteps = self.traj.n_frames
+        self.n_steps = self.traj.n_frames
         mdtraj_to_mdanse = {}
 
         self._chemical_system = ChemicalSystem()
@@ -159,7 +159,7 @@ class MDTraj(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             **kwargs,
         )
         super().initialize()
@@ -201,7 +201,7 @@ class MDTraj(Converter):
         #  they change their minds then we should update our code to
         #  support this.
 
-        if self.numberOfSteps == 1:
+        if self.n_steps == 1:
             time = 0
         elif isclose(float(self.configuration["time_step"]["value"]), 0.0):
             time = index * self.traj.timestep

@@ -57,20 +57,20 @@ class UnfoldedTrajectory(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         atoms = self.trajectory.atom_types
 
         # The collection of atoms corresponding to the atoms selected for output.
         indices = self.trajectory.atom_indices
-        self._selectedAtoms = [atoms[ind] for ind in indices]
+        self._selected_atoms = [atoms[ind] for ind in indices]
         self._selection_indices = indices
 
         # The output trajectory is opened for writing.
-        self._outputTraj = TrajectoryWriter(
+        self._output_traj = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self.trajectory.chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             self._selection_indices,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
@@ -90,22 +90,22 @@ class UnfoldedTrajectory(IJob):
         """
 
         # get the Frame index
-        frameIndex = self.configuration["frames"]["value"][index]
+        frame_index = self.configuration["frames"]["value"][index]
 
-        conf = self.trajectory.configuration(frameIndex)
+        conf = self.trajectory.configuration(frame_index)
 
         conf = conf.continuous_configuration()
 
-        cloned_conf = conf.clone(self._outputTraj.chemical_system)
+        cloned_conf = conf.clone(self._output_traj.chemical_system)
 
         # The time corresponding to the running index.
         time = self.configuration["frames"]["time"][index]
 
         charge = self.trajectory.charges(index)[self._selection_indices]
         # Write the step.
-        self._outputTraj.dump_configuration(cloned_conf, time)
+        self._output_traj.dump_configuration(cloned_conf, time)
 
-        self._outputTraj.write_charges(charge, index)
+        self._output_traj.write_charges(charge, index)
 
         return index, None
 
@@ -126,5 +126,5 @@ class UnfoldedTrajectory(IJob):
         self.trajectory.close()
 
         # The output trajectory is closed.
-        self._outputTraj.close()
+        self._output_traj.close()
         super().finalize()

@@ -143,7 +143,7 @@ class AtomTransmutationConfigurator(IConfigurator):
         system = traj_config["instance"].chemical_system
         idxs = range(system.total_number_of_atoms)
 
-        self._nTransmutedAtoms = 0
+        self._n_transmuted_atoms = 0
 
         try:
             value = {int(idx): element for idx, element in value.items()}

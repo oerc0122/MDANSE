@@ -187,10 +187,10 @@ class Configurable:
         for key, value in self._configuration.items():
             parameters.setdefault(key, value.default)
 
-        toBeConfigured = set(self._configuration.keys())
+        to_be_configured = set(self._configuration.keys())
         configured = set()
 
-        while toBeConfigured != configured:
+        while to_be_configured != configured:
             progress = False
 
             for name, conf in self._configuration.items():

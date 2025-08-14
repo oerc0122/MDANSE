@@ -38,8 +38,8 @@ class SphericalQVectors(IQVectors):
     settings["shells"] = (
         "RangeConfigurator",
         {
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "default": (0, 5.0, 0.5),
         },
@@ -53,7 +53,7 @@ class SphericalQVectors(IQVectors):
 
         width = self._configuration["width"]["value"]
 
-        nVectors = self._configuration["n_vectors"]["value"]
+        n_vectors = self._configuration["n_vectors"]["value"]
 
         self._configuration["q_vectors"] = collections.OrderedDict()
 
@@ -62,14 +62,14 @@ class SphericalQVectors(IQVectors):
 
         for q in self._configuration["shells"]["value"]:
             fact = q * np.sign(
-                np.random.uniform(-0.5, 0.5, nVectors)
-            ) + width * np.random.uniform(-0.5, 0.5, nVectors)
+                np.random.uniform(-0.5, 0.5, n_vectors)
+            ) + width * np.random.uniform(-0.5, 0.5, n_vectors)
 
-            v = random_points_on_sphere(radius=1.0, nPoints=nVectors)
+            v = random_points_on_sphere(radius=1.0, n_points=n_vectors)
 
             self._configuration["q_vectors"][q] = {}
             self._configuration["q_vectors"][q]["q_vectors"] = fact * v
-            self._configuration["q_vectors"][q]["n_q_vectors"] = nVectors
+            self._configuration["q_vectors"][q]["n_q_vectors"] = n_vectors
             self._configuration["q_vectors"][q]["q"] = q
             self._configuration["q_vectors"][q]["hkls"] = None
 

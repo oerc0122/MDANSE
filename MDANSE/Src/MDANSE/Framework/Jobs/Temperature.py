@@ -70,44 +70,44 @@ class Temperature(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["trajectory"][
+        self.n_steps = self.configuration["trajectory"][
             "instance"
         ].chemical_system.number_of_atoms
 
-        self._nFrames = self.configuration["frames"]["number"]
+        self._n_frames = self.configuration["frames"]["number"]
 
-        self._outputData.add(
+        self._output_data.add(
             "temp/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["time"],
             units="ps",
         )
-        self._outputData.add(
+        self._output_data.add(
             "temp/kinetic_energy",
             "LineOutputVariable",
-            (self._nFrames,),
+            (self._n_frames,),
             axis="temp/axes/time",
-            units="kJ_per_mole",
+            units="k_j_per_mole",
         )
-        self._outputData.add(
+        self._output_data.add(
             "temp/avg_kinetic_energy",
             "LineOutputVariable",
-            (self._nFrames,),
+            (self._n_frames,),
             axis="temp/axes/time",
-            units="kJ_per_mole",
+            units="k_j_per_mole",
         )
-        self._outputData.add(
+        self._output_data.add(
             "temp/temperature",
             "LineOutputVariable",
-            (self._nFrames,),
+            (self._n_frames,),
             axis="temp/axes/time",
             units="K",
             main_result=True,
         )
-        self._outputData.add(
+        self._output_data.add(
             "temp/avg_temperature",
             "LineOutputVariable",
-            (self._nFrames,),
+            (self._n_frames,),
             axis="temp/axes/time",
             units="K",
         )
@@ -122,7 +122,7 @@ class Temperature(IJob):
             #. index (int): The index of the step.
         :Returns:
             #. index (int): The index of the step.
-            #. kineticEnergy (np.array): The calculated kinetic energy
+            #. kinetic_energy (np.array): The calculated kinetic energy
         """
 
         symbol = self._atoms[index]
@@ -155,9 +155,9 @@ class Temperature(IJob):
                     dt=self.configuration["frames"]["time_step"],
                 )
 
-        kineticEnergy = 0.5 * mass * np.sum(series**2, 1)
+        kinetic_energy = 0.5 * mass * np.sum(series**2, 1)
 
-        return index, kineticEnergy
+        return index, kinetic_energy
 
     def combine(self, index, x):
         """
@@ -167,29 +167,29 @@ class Temperature(IJob):
             #. x (any): The returned result(s) of run_step
         """
 
-        self._outputData["temp/kinetic_energy"] += x
+        self._output_data["temp/kinetic_energy"] += x
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        nAtoms = len(self._atoms)
-        self._outputData["temp/kinetic_energy"] /= nAtoms - 1
+        n_atoms = len(self._atoms)
+        self._output_data["temp/kinetic_energy"] /= n_atoms - 1
 
-        norm = np.arange(1, self._outputData["temp/kinetic_energy"].shape[0] + 1)
-        self._outputData["temp/avg_kinetic_energy"][:] = (
-            np.cumsum(self._outputData["temp/kinetic_energy"]) / norm
+        norm = np.arange(1, self._output_data["temp/kinetic_energy"].shape[0] + 1)
+        self._output_data["temp/avg_kinetic_energy"][:] = (
+            np.cumsum(self._output_data["temp/kinetic_energy"]) / norm
         )
 
-        self._outputData["temp/temperature"][:] = (
-            2.0 * self._outputData["temp/kinetic_energy"] / (3.0 * KB)
+        self._output_data["temp/temperature"][:] = (
+            2.0 * self._output_data["temp/kinetic_energy"] / (3.0 * KB)
         )
-        self._outputData["temp/avg_temperature"][:] = (
-            2.0 * self._outputData["temp/avg_kinetic_energy"] / (3.0 * KB)
+        self._output_data["temp/avg_temperature"][:] = (
+            2.0 * self._output_data["temp/avg_kinetic_energy"] / (3.0 * KB)
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

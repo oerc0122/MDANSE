@@ -28,11 +28,11 @@ class DispersionLatticeQVectors(LatticeQVectors):
     settings = collections.OrderedDict()
     settings["start"] = (
         "VectorConfigurator",
-        {"valueType": int, "notNull": False, "default": [0, 0, 0]},
+        {"value_type": int, "not_null": False, "default": [0, 0, 0]},
     )
     settings["direction"] = (
         "VectorConfigurator",
-        {"valueType": int, "notNull": True, "default": [1, 0, 0]},
+        {"value_type": int, "not_null": True, "default": [1, 0, 0]},
     )
     settings["n_steps"] = (
         "IntegerConfigurator",

@@ -28,7 +28,7 @@ class RunningModeConfigurator(IConfigurator):
     running the analysis.
     """
 
-    availablesModes = ["single-core", "multicore"]
+    availables_modes = ["single-core", "multicore"]
 
     _default = ("single-core", 1)
 
@@ -50,7 +50,7 @@ class RunningModeConfigurator(IConfigurator):
         else:
             mode = value[0].lower()
 
-        if mode not in self.availablesModes:
+        if mode not in self.availables_modes:
             self.error_status = f"{mode} is not a valid running mode."
             return
 
@@ -59,11 +59,11 @@ class RunningModeConfigurator(IConfigurator):
 
         else:
             slots = int(value[1])
-            maxSlots = multiprocessing.cpu_count()
+            max_slots = multiprocessing.cpu_count()
 
             if slots < 0:
-                slots = min(abs(slots), maxSlots)
-            elif slots == 0 or slots > maxSlots:
+                slots = min(abs(slots), max_slots)
+            elif slots == 0 or slots > max_slots:
                 self.error_status = "invalid number of allocated slots."
                 return
 

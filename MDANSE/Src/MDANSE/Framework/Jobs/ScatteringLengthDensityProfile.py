@@ -85,7 +85,7 @@ class ScatteringLengthDensityProfile(IJob):
         super().initialize()
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.n_steps = self.configuration["frames"]["number"]
 
         self._dr = self.configuration["dr"]["value"]
 
@@ -104,7 +104,7 @@ class ScatteringLengthDensityProfile(IJob):
         axis_length = np.sqrt(np.sum(axis**2))
         self._n_bins = int(axis_length / self._dr) + 1
 
-        self._outputData.add(
+        self._output_data.add(
             "dp/axes/r", "LineOutputVariable", (self._n_bins,), units="nm"
         )
 
@@ -117,7 +117,7 @@ class ScatteringLengthDensityProfile(IJob):
         }
 
         for element in self._elements:
-            self._outputData.add(
+            self._output_data.add(
                 f"dp/number/{element}",
                 "LineOutputVariable",
                 (self._n_bins,),
@@ -125,7 +125,7 @@ class ScatteringLengthDensityProfile(IJob):
                 units="1 / ang3",
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "dp/number/total",
             "LineOutputVariable",
             (self._n_bins,),
@@ -133,7 +133,7 @@ class ScatteringLengthDensityProfile(IJob):
             units="1 / ang3",
         )
 
-        self._outputData.add(
+        self._output_data.add(
             "sldp/sldp",
             "LineOutputVariable",
             (self._n_bins,),
@@ -200,9 +200,9 @@ class ScatteringLengthDensityProfile(IJob):
         slice_volume, density_profile = data
 
         for element, hist in density_profile.items():
-            self._outputData[f"dp/number/{element}"] += hist / slice_volume
+            self._output_data[f"dp/number/{element}"] += hist / slice_volume
             slen_coh = self.scattering_lengths[element]
-            self._outputData["sldp/sldp"] += slen_coh * hist / slice_volume
+            self._output_data["sldp/sldp"] += slen_coh * hist / slice_volume
 
     def finalize(self) -> None:
         """
@@ -212,8 +212,8 @@ class ScatteringLengthDensityProfile(IJob):
         n_atoms_per_element = self.trajectory.get_natoms()
 
         for element in n_atoms_per_element:
-            self._outputData[f"dp/number/{element}"] /= self.numberOfSteps
-            self._outputData["dp/number/total"] += self._outputData[
+            self._output_data[f"dp/number/{element}"] /= self.n_steps
+            self._output_data["dp/number/total"] += self._output_data[
                 f"dp/number/{element}"
             ]
 
@@ -224,15 +224,15 @@ class ScatteringLengthDensityProfile(IJob):
         self._indices_per_element
 
         for dset in ["dp/number/total", "sldp/sldp"]:
-            self._outputData[dset] /= fact
-            self._outputData[dset].scaling_factor = fact
+            self._output_data[dset] /= fact
+            self._output_data[dset].scaling_factor = fact
 
-        r_values = np.linspace(0, self._extent / self.numberOfSteps, self._n_bins + 1)
-        self._outputData["dp/axes/r"][:] = (r_values[1:] + r_values[:-1]) / 2
+        r_values = np.linspace(0, self._extent / self.n_steps, self._n_bins + 1)
+        self._output_data["dp/axes/r"][:] = (r_values[1:] + r_values[:-1]) / 2
 
-        self._outputData["sldp/sldp"] *= 1e6 / self.numberOfSteps
+        self._output_data["sldp/sldp"] *= 1e6 / self.n_steps
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

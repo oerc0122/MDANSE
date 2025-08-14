@@ -101,14 +101,14 @@ class VelocityAutoCorrelationFunction(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.atom_indices)
+        self.n_steps = len(self.trajectory.atom_indices)
 
         self.labels = [
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
 
         # Will store the time.
-        self._outputData.add(
+        self._output_data.add(
             "vacf/axes/time",
             "LineOutputVariable",
             self.configuration["frames"]["duration"],
@@ -116,7 +116,7 @@ class VelocityAutoCorrelationFunction(IJob):
         )
 
         for element in self.trajectory.unique_names:
-            self._outputData.add(
+            self._output_data.add(
                 f"vacf/{element}",
                 "LineOutputVariable",
                 (self.configuration["frames"]["n_frames"],),
@@ -126,7 +126,7 @@ class VelocityAutoCorrelationFunction(IJob):
                 partial_result=True,
             )
 
-        self._outputData.add(
+        self._output_data.add(
             "vacf/total",
             "LineOutputVariable",
             (self.configuration["frames"]["n_frames"],),
@@ -145,8 +145,8 @@ class VelocityAutoCorrelationFunction(IJob):
             #. index (int): The index of the step.
         :Returns:
             #. index (int): The index of the step.
-            #. atomicDOS (np.array): The calculated density of state for atom of index=index
-            #. atomicVACF (np.array): The calculated velocity auto-correlation function for atom of index=index
+            #. atomic_d_o_s (np.array): The calculated density of state for atom of index=index
+            #. atomic_v_a_c_f (np.array): The calculated velocity auto-correlation function for atom of index=index
         """
 
         trajectory = self.trajectory
@@ -181,10 +181,10 @@ class VelocityAutoCorrelationFunction(IJob):
         series = self.configuration["projection"]["projector"](series)
 
         n_configs = self.configuration["frames"]["n_configs"]
-        atomicVACF = correlate(series, series[:n_configs], mode="valid") / (
+        atomic_v_a_c_f = correlate(series, series[:n_configs], mode="valid") / (
             3 * n_configs
         )
-        return index, atomicVACF.T[0]
+        return index, atomic_v_a_c_f.T[0]
 
     def combine(self, index, x):
         """
@@ -197,16 +197,16 @@ class VelocityAutoCorrelationFunction(IJob):
         # The symbol of the atom.
         element = self._atoms[self.trajectory.atom_indices[index]]
 
-        self._outputData[f"vacf/{element}"] += x
+        self._output_data[f"vacf/{element}"] += x
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        nAtomsPerElement = self.trajectory.get_natoms()
-        for element, number in nAtomsPerElement.items():
-            self._outputData[f"vacf/{element}"] /= number
+        n_atoms_per_element = self.trajectory.get_natoms()
+        for element, number in n_atoms_per_element.items():
+            self._output_data[f"vacf/{element}"] /= number
 
         selected_weights, all_weights = self.trajectory.get_weights(
             prop=self.configuration["weights"]["property"]
@@ -218,23 +218,23 @@ class VelocityAutoCorrelationFunction(IJob):
         weight_dict = get_weights(
             selected_weights,
             all_weights,
-            nAtomsPerElement,
+            n_atoms_per_element,
             self.trajectory.get_all_natoms(),
             1,
         )
-        assign_weights(self._outputData, weight_dict, "vacf/%s", self.labels)
+        assign_weights(self._output_data, weight_dict, "vacf/%s", self.labels)
 
-        n_selected = sum(nAtomsPerElement.values())
+        n_selected = sum(n_atoms_per_element.values())
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = n_selected / n_total
 
-        vacfTotal = weighted_sum(self._outputData, "vacf/%s", self.labels)
-        self._outputData["vacf/total"][:] = vacfTotal / fact
-        self._outputData["vacf/total"].scaling_factor = fact
+        vacf_total = weighted_sum(self._output_data, "vacf/%s", self.labels)
+        self._output_data["vacf/total"][:] = vacf_total / fact
+        self._output_data["vacf/total"].scaling_factor = fact
 
         add_grouped_totals(
             self.trajectory,
-            self._outputData,
+            self._output_data,
             "vacf",
             "LineOutputVariable",
             axis="vacf/axes/time",
@@ -243,7 +243,7 @@ class VelocityAutoCorrelationFunction(IJob):
             partial_result=True,
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),

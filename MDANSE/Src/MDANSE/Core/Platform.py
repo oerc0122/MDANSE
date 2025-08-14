@@ -131,11 +131,11 @@ class Platform(metaclass=abc.ABCMeta):
         basepath = self.package_directory().parent
 
         try:
-            relativePath = path.relative_to(basepath)
+            relative_path = path.relative_to(basepath)
         except ValueError:
             return None
 
-        return ".".join(relativePath.with_suffix("").parts)
+        return ".".join(relative_path.with_suffix("").parts)
 
     def change_directory(self, directory: Path | str) -> None:
         """
@@ -510,47 +510,47 @@ class PlatformWin(Platform):
         PROCESS_VM_READ = 0x0010
 
         parr = DWORD * 1024
-        aProcesses = parr()
-        cbNeeded = DWORD(0)
-        hModule = DWORD()
+        a_processes = parr()
+        cb_needed = DWORD(0)
+        h_module = DWORD()
 
         processes = {}
 
         # Call Enumprocesses to get hold of process id's
         ctypes.windll.psapi.EnumProcesses(
-            ctypes.byref(aProcesses), ctypes.sizeof(aProcesses), ctypes.byref(cbNeeded)
+            ctypes.byref(a_processes), ctypes.sizeof(a_processes), ctypes.byref(cb_needed)
         )
 
         # Number of processes returned
-        nReturned = cbNeeded.value // ctypes.sizeof(ctypes.c_ulong())
+        n_returned = cb_needed.value // ctypes.sizeof(ctypes.c_ulong())
 
-        pidProcess = list(aProcesses)[:nReturned]
+        pid_process = list(a_processes)[:n_returned]
 
-        for pid in pidProcess:
+        for pid in pid_process:
             # Get handle to the process based on PID
-            hProcess = ctypes.windll.kernel32.OpenProcess(
+            h_process = ctypes.windll.kernel32.OpenProcess(
                 PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid
             )
 
-            if hProcess:
+            if h_process:
                 ctypes.windll.psapi.EnumProcessModules(
-                    hProcess,
-                    ctypes.byref(hModule),
-                    ctypes.sizeof(hModule),
-                    ctypes.byref(cbNeeded),
+                    h_process,
+                    ctypes.byref(h_module),
+                    ctypes.sizeof(h_module),
+                    ctypes.byref(cb_needed),
                 )
 
                 try:
-                    creationTime = self.get_process_creation_time(hProcess)
-                    creationTime = datetime.datetime.strftime(
-                        datetime.datetime.fromtimestamp(creationTime),
+                    creation_time = self.get_process_creation_time(h_process)
+                    creation_time = datetime.datetime.strftime(
+                        datetime.datetime.fromtimestamp(creation_time),
                         "%d-%m-%Y %H:%M:%S",
                     )
-                    processes[int(pid)] = creationTime
+                    processes[int(pid)] = creation_time
                 except ValueError:
                     continue
 
-                ctypes.windll.kernel32.CloseHandle(hProcess)
+                ctypes.windll.kernel32.CloseHandle(h_process)
 
         return processes
 

@@ -59,7 +59,7 @@ LAMMPS_UNITS = {
         "charge_conv": 1.0,
     },
     "metal": {
-        "energy": "eV",
+        "energy": "e_v",
         "time": "ps",
         "length": "ang",
         "velocity": "ang/ps",
@@ -401,7 +401,7 @@ class LAMMPScustom(LAMMPSReader):
 
             elif line.startswith("ITEM: NUMBER OF ATOMS"):
                 _, n_atoms = next(file)
-                self._nAtoms = int(n_atoms)
+                self._n_atoms = int(n_atoms)
 
             elif line.startswith("ITEM: ATOMS"):
                 self.keywords = dict(zip(line.split()[2:], count()))
@@ -412,8 +412,8 @@ class LAMMPScustom(LAMMPSReader):
                 for i in ("", "u", "s", "su"):
                     if all(f"{dim}{i}" in self.keywords for dim in DIMS):
                         self.keywords["pos"] = tuple(f"{dim}{i}" for dim in DIMS)
-                        self._fractionalCoordinates = "s" in i
-                        self._unwrappedCoordinates = "u" in i
+                        self._fractional_coordinates = "s" in i
+                        self._unwrapped_coordinates = "u" in i
                         break
                 else:
                     raise LAMMPSTrajectoryFileError(
@@ -424,17 +424,17 @@ class LAMMPScustom(LAMMPSReader):
                     if all(f"{key}{dim}" in self.keywords for dim in DIMS):
                         self.keywords[key] = tuple(f"{key}{dim}" for dim in DIMS)
 
-                self._rankToName = {}
+                self._rank_to_name = {}
                 element_list = []
                 name_list = []
                 index_list = []
 
                 self._item_location["ATOMS"] = (
                     curr_line + 1,
-                    curr_line + self._nAtoms + 1,
+                    curr_line + self._n_atoms + 1,
                 )
 
-                for i, (_, atom_line) in enumerate(take(self._nAtoms, file)):
+                for i, (_, atom_line) in enumerate(take(self._n_atoms, file)):
                     temp = {
                         key: self._type_map[key](val)
                         for key, val in zip(self.keywords, atom_line.split())
@@ -456,7 +456,7 @@ class LAMMPScustom(LAMMPSReader):
 
                     name = f"{label}_{idx:d}"
                     temp_index = temp.get("index", i)
-                    self._rankToName[temp_index] = name
+                    self._rank_to_name[temp_index] = name
 
                     element = get_element_from_mapping(aliases, label, mass=mass)
 
@@ -471,7 +471,7 @@ class LAMMPScustom(LAMMPSReader):
 
                 self._add_bonds(config, chemical_system)
 
-                self._last = curr_line + self._nAtoms + 1
+                self._last = curr_line + self._n_atoms + 1
 
                 break
 
@@ -541,7 +541,7 @@ class LAMMPScustom(LAMMPSReader):
                 self._trajectory.chemical_system.number_of_atoms, dtype=np.float64
             )
 
-        for i, line in enumerate(take(self._nAtoms, file), 1):
+        for i, line in enumerate(take(self._n_atoms, file), 1):
             temp = {
                 key: self._type_map[key](val)
                 for key, val in zip(self.keywords, line.split())
@@ -567,15 +567,15 @@ class LAMMPScustom(LAMMPSReader):
             if "q" in temp:
                 charges[idx] = self._type_map["q"](temp["q"])
 
-            if not self._unwrappedCoordinates and self._image:
-                if self._fractionalCoordinates:
+            if not self._unwrapped_coordinates and self._image:
+                if self._fractional_coordinates:
                     for ind, dim in enumerate(DIMS):
                         coords[idx, ind] += temp.get(f"i{dim}", 0)
                 else:
                     for ind, dim, vec in zip(count(), DIMS, unit_cell.direct):
                         coords[idx, ind] += temp.get(f"i{dim}", 0.0) * vec
 
-        if self._fractionalCoordinates:
+        if self._fractional_coordinates:
             # MDANSE origin is always 0,0,0
             origin *= len_conv
             origin_recip = np.matmul(origin, unit_cell.inverse)
@@ -705,43 +705,43 @@ class LAMMPSxyz(LAMMPSReader):
         """
         _, atom_types, positions = self.read_step()
 
-        self._nAtoms = len(atom_types)
+        self._n_atoms = len(atom_types)
 
-        self._fractionalCoordinates = False
+        self._fractional_coordinates = False
         unit_cell = config["unit_cell"]
 
         span = np.max(positions, axis=0) - np.min(positions, axis=0)
         cellspan = np.linalg.norm(unit_cell, axis=1)
 
         if np.allclose(cellspan, [0, 0, 0]):
-            self._fractionalCoordinates = False
+            self._fractional_coordinates = False
             full_cell = None
 
         elif np.allclose(span, [1.0, 1.0, 1.0], rtol=0.1, atol=0.1):
-            self._fractionalCoordinates = not np.allclose(
+            self._fractional_coordinates = not np.allclose(
                 cellspan, [1.0, 1.0, 1.0], rtol=0.1, atol=0.1
             )
             full_cell = unit_cell * measure(1.0, self.units["length"]).toval("nm")
 
         else:
-            self._fractionalCoordinates = False
+            self._fractional_coordinates = False
             multiplicity = np.round(np.abs(span / cellspan)).astype(int)
             full_cell = unit_cell * multiplicity.reshape((3, 1))
             full_cell *= measure(1.0, self.units["length"]).toval("nm")
 
         self._full_cell = full_cell
 
-        self._rankToName = {}
+        self._rank_to_name = {}
         element_list = []
         name_list = []
         chemical_system = ChemicalSystem()
 
-        for idx in range(self._nAtoms):
+        for idx in range(self._n_atoms):
             atom_type = atom_types[idx]
             label = config["elements"][atom_type]
             mass = config["mass"][atom_type - 1]
             name = f"{label}_{idx:d}"
-            self._rankToName[idx] = name
+            self._rank_to_name[idx] = name
 
             element_list.append(get_element_from_mapping(aliases, label, mass=mass))
             name_list.append(str(atom_type + 1))
@@ -780,7 +780,7 @@ class LAMMPSxyz(LAMMPSReader):
         unit_cell = UnitCell(self._full_cell)
         time = timestep * self._timestep * measure(1.0, self.units["time"]).toval("ps")
 
-        if self._fractionalCoordinates:
+        if self._fractional_coordinates:
             conf = PeriodicBoxConfiguration(
                 self._trajectory.chemical_system, positions, unit_cell
             )
@@ -865,12 +865,12 @@ class LAMMPSh5md(LAMMPSReader):
         except KeyError:
             atom_types = config["atom_types"]
 
-        self._nAtoms = len(self._file["/particles/all/position/value"][0])
+        self._n_atoms = len(self._file["/particles/all/position/value"][0])
 
-        if len(atom_types) < self._nAtoms:
-            atom_types = int(round(self._nAtoms / len(atom_types))) * list(atom_types)
+        if len(atom_types) < self._n_atoms:
+            atom_types = int(round(self._n_atoms / len(atom_types))) * list(atom_types)
 
-        self._fractionalCoordinates = False
+        self._fractional_coordinates = False
         cell_edges = self._file["/particles/all/box/edges/value"][0]
 
         self._full_cell = np.diag(cell_edges)
@@ -881,17 +881,17 @@ class LAMMPSh5md(LAMMPSReader):
         except Exception:
             pass
 
-        self._rankToName = {}
+        self._rank_to_name = {}
         chemical_system = ChemicalSystem()
         element_list = []
         name_list = []
 
-        for idx in range(self._nAtoms):
+        for idx in range(self._n_atoms):
             atom_type = atom_types[idx]
             label = config["elements"][atom_type]
             mass = config["mass"][atom_type - 1]
             name = f"{label}_{idx:d}"
-            self._rankToName[idx] = name
+            self._rank_to_name[idx] = name
 
             element_list.append(get_element_from_mapping(aliases, label, mass=mass))
             name_list.append(str(atom_type + 1))
@@ -927,7 +927,7 @@ class LAMMPSh5md(LAMMPSReader):
         unit_cell = UnitCell(self._full_cell)
         time = timestep * self._timestep * measure(1.0, self.units["time"]).toval("ps")
 
-        if self._fractionalCoordinates:
+        if self._fractional_coordinates:
             conf = PeriodicBoxConfiguration(
                 self._trajectory.chemical_system, positions, unit_cell
             )
@@ -1096,35 +1096,35 @@ class LAMMPS(Converter):
         """
         super().initialize()
 
-        self._atomicAliases = self.configuration["atom_aliases"]["value"]
+        self._atomic_aliases = self.configuration["atom_aliases"]["value"]
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.configuration["n_steps"]["value"]
+        self.n_steps = self.configuration["n_steps"]["value"]
 
-        self._lammpsConfig = self.configuration["config_file"]
+        self._lammps_config = self.configuration["config_file"]
 
         self._lammps_units = self.configuration["lammps_units"]["value"]
         self._atom_type = self.configuration["atom_type"]["value"]
 
         if self._lammps_units == "From config":
-            if "units" not in self._lammpsConfig:
+            if "units" not in self._lammps_config:
                 raise KeyError("Units not found in lammps config")
-            self._lammps_units = self._lammpsConfig["units"]
+            self._lammps_units = self._lammps_config["units"]
 
         self._lammps_format = self.configuration["trajectory_format"]["value"]
 
         self._reader = self.create_reader(self._lammps_format)
 
         self._reader.set_units(self._lammps_units)
-        self._chemical_system = self.parse_first_step(self._atomicAliases)
+        self._chemical_system = self.parse_first_step(self._atomic_aliases)
         self._chemical_system.find_clusters_from_bonds()
 
-        if self.numberOfSteps == 0:
-            self.numberOfSteps = self._reader.get_time_steps(
+        if self.n_steps == 0:
+            self.n_steps = self._reader.get_time_steps(
                 self.configuration["trajectory_file"]["value"]
             )
 
-        charges_single_cell = self._lammpsConfig["charges"]
+        charges_single_cell = self._lammps_config["charges"]
         charges_single_cell *= self._reader.units["charge_conv"]
 
         # Assume replicate
@@ -1139,7 +1139,7 @@ class LAMMPS(Converter):
         self._trajectory = TrajectoryWriter(
             self.configuration["output_files"]["file"],
             self._chemical_system,
-            self.numberOfSteps,
+            self.n_steps,
             positions_dtype=self.configuration["output_files"]["dtype"],
             chunking_limit=self.configuration["output_files"]["chunk_size"],
             compression=self.configuration["output_files"]["compression"],
@@ -1237,6 +1237,6 @@ class LAMMPS(Converter):
         """
 
         self._reader.open_file(self.configuration["trajectory_file"]["value"])
-        chemical_system = self._reader.parse_first_step(aliases, self._lammpsConfig)
+        chemical_system = self._reader.parse_first_step(aliases, self._lammps_config)
         self._reader.close()
         return chemical_system

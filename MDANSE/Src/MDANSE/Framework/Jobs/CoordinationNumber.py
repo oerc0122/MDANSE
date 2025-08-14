@@ -62,8 +62,8 @@ class CoordinationNumber(DistanceHistogram):
         "DistHistCutoffConfigurator",
         {
             "label": "r values (nm)",
-            "valueType": float,
-            "includeLast": True,
+            "value_type": float,
+            "include_last": True,
             "mini": 0.0,
             "dependencies": {"trajectory": "trajectory"},
         },
@@ -98,7 +98,7 @@ class CoordinationNumber(DistanceHistogram):
 
         npoints = len(self.configuration["r_values"]["mid_points"])
 
-        self._outputData.add(
+        self._output_data.add(
             "cn/axes/r",
             "LineOutputVariable",
             self.configuration["r_values"]["mid_points"],
@@ -109,7 +109,7 @@ class CoordinationNumber(DistanceHistogram):
         self.labels_intra = pair_labels(self.trajectory, intra=True, all_pairs=True)
 
         for label, _ in self.labels:
-            self._outputData.add(
+            self._output_data.add(
                 f"cn/{label}",
                 "LineOutputVariable",
                 (npoints,),
@@ -119,7 +119,7 @@ class CoordinationNumber(DistanceHistogram):
             )
         if self.intra:
             for label, _ in self.labels_intra:
-                self._outputData.add(
+                self._output_data.add(
                     f"cn/intra/{label}",
                     "LineOutputVariable",
                     (npoints,),
@@ -127,7 +127,7 @@ class CoordinationNumber(DistanceHistogram):
                     units="au",
                 )
             for label, _ in self.labels:
-                self._outputData.add(
+                self._output_data.add(
                     f"cn/inter/{label}",
                     "LineOutputVariable",
                     (npoints,),
@@ -135,27 +135,27 @@ class CoordinationNumber(DistanceHistogram):
                     units="au",
                 )
 
-        nFrames = self.configuration["frames"]["number"]
+        n_frames = self.configuration["frames"]["number"]
 
-        densityFactor = 4.0 * np.pi * self.configuration["r_values"]["mid_points"]
+        density_factor = 4.0 * np.pi * self.configuration["r_values"]["mid_points"]
 
-        shellSurfaces = densityFactor * self.configuration["r_values"]["mid_points"]
+        shell_surfaces = density_factor * self.configuration["r_values"]["mid_points"]
 
-        shellVolumes = shellSurfaces * self.configuration["r_values"]["step"]
+        shell_volumes = shell_surfaces * self.configuration["r_values"]["step"]
 
-        self.averageDensity *= 4.0 * np.pi / nFrames
+        self.average_density *= 4.0 * np.pi / n_frames
 
         r2 = self.configuration["r_values"]["mid_points"] ** 2
         dr = self.configuration["r_values"]["step"]
 
         for k in self._concentrations:
-            self._concentrations[k] /= nFrames
+            self._concentrations[k] /= n_frames
 
-        nAtomsPerElement = self.trajectory.get_natoms()
+        n_atoms_per_element = self.trajectory.get_natoms()
 
         # symmetrize the data
         for (idi, i), (idj, j) in it.combinations_with_replacement(
-            enumerate(self.selectedElements), 2
+            enumerate(self.selected_elements), 2
         ):
             if i == j:
                 continue
@@ -188,37 +188,37 @@ class CoordinationNumber(DistanceHistogram):
             results : npt.NDArray
                 The results.
             """
-            ni = nAtomsPerElement[label_i]
-            nj = nAtomsPerElement[label_j]
+            ni = n_atoms_per_element[label_i]
+            nj = n_atoms_per_element[label_j]
 
-            idi = self.selectedElements.index(label_i)
-            idj = self.selectedElements.index(label_j)
+            idi = self.selected_elements.index(label_i)
+            idj = self.selected_elements.index(label_j)
 
             if label_i == label_j:
                 nij = ni**2 / 2.0
             else:
                 nij = ni * nj
 
-            fact = 2 * nij * nFrames * shellVolumes
+            fact = 2 * nij * n_frames * shell_volumes
 
-            rho_j = self.averageDensity * self._concentrations[label_j]
+            rho_j = self.average_density * self._concentrations[label_j]
 
             self.h_total[idi, idj, :] /= fact
-            cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
-            yield "cn", False, rho_j * cnTotal
+            cn_total = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
+            yield "cn", False, rho_j * cn_total
 
             if self.intra:
                 self.h_intra[idi, idj, :] /= fact
-                cnIntra = np.add.accumulate(self.h_intra[idi, idj, :] * r2) * dr
-                cnInter = cnTotal - cnIntra
-                yield "cn/inter", False, rho_j * cnInter
-                yield "cn/intra", True, rho_j * cnIntra
+                cn_intra = np.add.accumulate(self.h_intra[idi, idj, :] * r2) * dr
+                cn_inter = cn_total - cn_intra
+                yield "cn/inter", False, rho_j * cn_inter
+                yield "cn/intra", True, rho_j * cn_intra
 
         update_pair_results(
-            self.trajectory, calc_func, self._outputData, all_pairs=True
+            self.trajectory, calc_func, self._output_data, all_pairs=True
         )
 
-        self._outputData.write(
+        self._output_data.write(
             self.configuration["output_files"]["root"],
             self.configuration["output_files"]["formats"],
             str(self),
