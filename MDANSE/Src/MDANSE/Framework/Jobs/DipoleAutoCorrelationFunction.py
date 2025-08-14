@@ -18,16 +18,16 @@ from __future__ import annotations
 import numpy as np
 from scipy.signal import correlate
 
-from MDANSE.Framework.ConfigDescriptors import (
-    CorrelationWindow,
-    DynamicSingleChoiceConfigDesc,
-    FramesConfigDesc,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    PartialCharge,
-    RunningModeConfigDesc,
-)
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    CorrelationWindow,
+    DynamicSingleChoice,
+    FrameSelect,
+    MDANSETrajectory,
+    OutputFile,
+    PartialCharge,
+    RunningMode,
+)
 from MDANSE.Mathematics.Geometry import center_of_mass
 
 
@@ -49,10 +49,10 @@ class DipoleAutoCorrelationFunction(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
-    molecule_name = DynamicSingleChoiceConfigDesc(
+    molecule_name = DynamicSingleChoice(
         choices="chemical_system._clusters.keys()",
         depends={"choices": "trajectory"},
         label="Molecule name",
@@ -61,8 +61,8 @@ class DipoleAutoCorrelationFunction(IJob):
     atom_charges = PartialCharge(
         depends={"trajectory": "trajectory"},
     )
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables."""

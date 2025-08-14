@@ -26,18 +26,18 @@ from MDANSE.Framework.AtomGrouping.grouping import (
     pair_labels,
     update_pair_results,
 )
-from MDANSE.Framework.ConfigDescriptors import (
+from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
+from MDANSE.Framework.Parameters import (
     AtomSelection,
     AtomTransmutation,
-    FramesConfigDesc,
+    FrameSelect,
     GroupingLevel,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
+    MDANSETrajectory,
+    OutputFile,
     RangeCellCutoff,
-    RunningModeConfigDesc,
+    RunningMode,
     Weights,
 )
-from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
 
 
 class CoordinationNumber(DistanceHistogram):
@@ -63,8 +63,8 @@ class CoordinationNumber(DistanceHistogram):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmustation = AtomTransmutation(depends={"trajectory": "trajectory"})
@@ -81,8 +81,8 @@ class CoordinationNumber(DistanceHistogram):
         minimum=0.0,
         dependencies={"trajectory": "trajectory"},
     )
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def finalize(self):
         """

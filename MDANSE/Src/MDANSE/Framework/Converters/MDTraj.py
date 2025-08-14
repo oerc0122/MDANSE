@@ -22,15 +22,15 @@ import mdtraj as md
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    FloatConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-    SingleChoiceConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    Float,
+    OutputTrajectory,
+    PathParam,
+    SingleChoice,
+)
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
@@ -50,17 +50,17 @@ class MDTraj(Converter):
     category = ("Converters", "General")
     label = "MDTraj"
 
-    topology_file = PathConfigDesc(
+    topology_file = PathParam(
         mode="r",
         label="Topology file",
     )
-    topology_format = SingleChoiceConfigDesc(choices=())
-    coordinate_files = PathConfigDesc(
+    topology_format = SingleChoice(choices=())
+    coordinate_files = PathParam(
         mode="r",
         label="Coordinate file",
     )
-    coordinate_format = SingleChoiceConfigDesc(choices=())
-    time_step = FloatConfigDesc(
+    coordinate_format = SingleChoice(choices=())
+    time_step = Float(
         label="Time step",
         default=1.0,
         minimum=1e-9,
@@ -70,9 +70,9 @@ class MDTraj(Converter):
         label="Atom mapping",
         default={},
     )
-    discard_overlapping_frames = BooleanConfigDesc(label="Discard overlapping frames")
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    discard_overlapping_frames = Boolean(label="Discard overlapping frames")
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """Load the trajectory using MDTraj and create the

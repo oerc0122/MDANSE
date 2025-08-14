@@ -32,16 +32,16 @@ from numpy.typing import NDArray
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    FloatConfigDesc,
-    IntegerConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-    SingleChoiceConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    Float,
+    Integer,
+    OutputTrajectory,
+    PathParam,
+    SingleChoice,
+)
 from MDANSE.Framework.Parsers import (
     LAMMPSConfigFile,
     LAMMPScustom,
@@ -225,13 +225,13 @@ class LAMMPS(Converter):
         "h5md": LAMMPSh5md,
     }
 
-    config_file = PathConfigDesc(
+    config_file = PathParam(
         mode="r",
         label="LAMMPS configuration file.",
         extensions={"LAMMPS config": "*.config"},
         default="INPUT_FILENAME.config",
     )
-    trajectory_file = PathConfigDesc(
+    trajectory_file = PathParam(
         mode="r",
         label="LAMMPS trajectory file.",
         extensions={
@@ -242,12 +242,12 @@ class LAMMPS(Converter):
         },
         default="INPUT_FILENAME.lammps",
     )
-    trajectory_format = SingleChoiceConfigDesc(
+    trajectory_format = SingleChoice(
         label="LAMMPS trajectory format",
         choices=("custom", "xyz", "h5md"),
         default="custom",
     )
-    lammps_units = SingleChoiceConfigDesc(
+    lammps_units = SingleChoice(
         label="LAMMPS unit system",
         default="real",
         choices=(
@@ -261,7 +261,7 @@ class LAMMPS(Converter):
             "nano",
         ),
     )
-    atom_type = SingleChoiceConfigDesc(
+    atom_type = SingleChoice(
         label="LAMMPS atom type",
         choices=[
             "From config",
@@ -296,12 +296,12 @@ class LAMMPS(Converter):
         ],
         default="From config",
     )
-    time_step = FloatConfigDesc(
+    time_step = Float(
         label="Time step (lammps units, depends on unit system)",
         default=1.0,
         minimum=1e-9,
     )
-    n_steps = IntegerConfigDesc(
+    n_steps = Integer(
         label="Number of time steps (0 for automatic detection)",
         default=0,
         minimum=0,
@@ -311,8 +311,8 @@ class LAMMPS(Converter):
         label="Atom mapping",
         default={},
     )
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """

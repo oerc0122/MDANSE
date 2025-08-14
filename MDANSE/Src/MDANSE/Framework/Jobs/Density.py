@@ -17,13 +17,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from MDANSE.Framework.ConfigDescriptors import (
-    FramesConfigDesc,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    RunningModeConfigDesc,
-)
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    FrameSelect,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+)
 from MDANSE.Framework.Units import measure
 
 NAVOGADRO = 6.02214129e23
@@ -48,10 +48,10 @@ class Density(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         super().initialize()

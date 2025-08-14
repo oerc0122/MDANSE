@@ -25,7 +25,7 @@ from .AbsConfigDesc import ConfigError, ConfigureDescriptor, MultipleValues
 T = TypeVar("T")
 
 
-class ChoiceConfigDesc(ConfigureDescriptor):
+class Choice(ConfigureDescriptor):
     """
     Select an option from a multiple choice set.
     """
@@ -64,7 +64,7 @@ class ChoiceConfigDesc(ConfigureDescriptor):
         self._n_choices = int(value)
 
 
-class MultipleChoiceConfigDesc(MultipleValues, ChoiceConfigDesc):
+class MultipleChoice(MultipleValues, Choice):
     def __init__(self, choices: Container[T], n_choices: int | None, **params):
         super().__init__(choices=choices, n_choices=n_choices, **params)
 
@@ -78,7 +78,7 @@ class MultipleChoiceConfigDesc(MultipleValues, ChoiceConfigDesc):
         return values
 
 
-class SingleChoiceConfigDesc(ChoiceConfigDesc):
+class SingleChoice(Choice):
     def __init__(self, choices: Container[T], **params):
         super().__init__(choices=choices, n_choices=1, **params)
 
@@ -87,7 +87,7 @@ class SingleChoiceConfigDesc(ChoiceConfigDesc):
         return super().validate(value)
 
 
-class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
+class DynamicSingleChoice(SingleChoice):
     def __init__(self, choices: str, depends: dict[str, str], **params):
         super().__init__(choices=choices, depends=depends, **params)
         self.last_choices = set()
@@ -111,5 +111,5 @@ class DynamicSingleChoiceConfigDesc(SingleChoiceConfigDesc):
         return choices
 
 
-class DynamicMultiChoiceConfigDesc(MultipleValues, DynamicSingleChoiceConfigDesc):
+class DynamicMultiChoice(MultipleValues, DynamicSingleChoice):
     pass

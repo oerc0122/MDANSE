@@ -15,13 +15,20 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 from scipy.signal import correlate
 from scipy.special import legendre
 
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    Boolean,
+    CorrelationWindow,
+    FrameSelect,
+    Integer,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+)
 from MDANSE.Mathematics.Geometry import center_of_mass, moment_of_inertia
 
 
@@ -92,20 +99,18 @@ class ReorientationalTimeCorrelationFunction(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     frames_window = CorrelationWindow(depends={"frames": "frames"})
-    polynomial_order = IntegerConfigDesc(
+    polynomial_order = Integer(
         label="Maximum Legendre polynomial order to be used",
-        default= 2,
-        minimum= 1,
-        maximum= 6,
+        default=2,
+        minimum=1,
+        maximum=6,
     )
-    per_axis = BooleanConfigDesc(
-        label="Output contribution per axis."
-    )
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    per_axis = Boolean(label="Output contribution per axis.")
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     settings["molecule_and_axis"] = (
         "AxisSelectionConfigurator",

@@ -22,15 +22,15 @@ from more_itertools import first, first_true
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    FloatConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-    SingleChoiceConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    Float,
+    OutputTrajectory,
+    PathParam,
+    SingleChoice,
+)
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -56,17 +56,17 @@ class MDAnalysis(Converter):
     category = ("Converters", "General")
     label = "MDAnalysis"
 
-    topology_file = PathConfigDesc(
+    topology_file = PathParam(
         mode="r",
         label="Topology file",
     )
-    topology_format = SingleChoiceConfigDesc(choices=())
-    coordinate_file = PathConfigDesc(
+    topology_format = SingleChoice(choices=())
+    coordinate_file = PathParam(
         mode="r",
         label="Coordinate file",
     )
-    coordinate_format = SingleChoiceConfigDesc(choices=())
-    time_step = FloatConfigDesc(
+    coordinate_format = SingleChoice(choices=())
+    time_step = Float(
         label="Time step",
         default=1.0,
         minimum=1e-9,
@@ -76,9 +76,9 @@ class MDAnalysis(Converter):
         label="Atom mapping",
         default={},
     )
-    continuous = BooleanConfigDesc(label="Continuous frame stitching")
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    continuous = Boolean(label="Continuous frame stitching")
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """Load the trajectory using MDAnalysis and create the

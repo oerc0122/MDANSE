@@ -18,17 +18,17 @@ from __future__ import annotations
 import numpy as np
 
 from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
-from MDANSE.Framework.ConfigDescriptors import (
+from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
     AtomSelection,
     AtomTransmutation,
-    FramesConfigDesc,
+    FrameSelect,
     GroupingLevel,
-    IntegerConfigDesc,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    RunningModeConfigDesc,
+    Integer,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 
 
 class RootMeanSquareDeviation(IJob):
@@ -51,17 +51,17 @@ class RootMeanSquareDeviation(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
-    reference_frame = IntegerConfigDesc(
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    reference_frame = Integer(
         minimum=0,
         default=0,
     )
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         super().initialize()

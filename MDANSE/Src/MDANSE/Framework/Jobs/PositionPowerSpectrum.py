@@ -19,20 +19,20 @@ import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
-from MDANSE.Framework.ConfigDescriptors import (
+from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
     AtomSelection,
     AtomTransmutation,
     CorrelationWindow,
-    FramesConfigDesc,
+    FrameSelect,
     GroupingLevel,
     InstrumentResolution,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    ProjectionConfigDesc,
-    RunningModeConfigDesc,
+    MDANSETrajectory,
+    OutputFile,
+    Projection,
+    RunningMode,
     Weights,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MLogging import LOG
@@ -60,8 +60,8 @@ class PositionPowerSpectrum(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
@@ -69,10 +69,10 @@ class PositionPowerSpectrum(IJob):
     instrument_resolution = InstrumentResolution(
         depends={"trajectory": "trajectory", "frames": "frames"}
     )
-    projection = ProjectionConfigDesc(label="Project coordinates")
+    projection = Projection(label="Project coordinates")
     weights = Weights()
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """
@@ -82,9 +82,7 @@ class PositionPowerSpectrum(IJob):
 
         self.numberOfSteps = len(self.trajectory.atom_indices)
 
-        self.add_ideal_results = (
-            self.instrument_resolution.kernel.lower() != "ideal"
-        )
+        self.add_ideal_results = self.instrument_resolution.kernel.lower() != "ideal"
 
         self.labels = [
             (element, (element,)) for element in self.trajectory.get_natoms()
@@ -252,9 +250,7 @@ class PositionPowerSpectrum(IJob):
                     fft="rfft",
                 )
 
-        selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.weights
-        )
+        selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
         if self.weights in ("b_coherent", "b_incoherent"):
             for weights in selected_weights, all_weights:
                 for key, value in weights.items():

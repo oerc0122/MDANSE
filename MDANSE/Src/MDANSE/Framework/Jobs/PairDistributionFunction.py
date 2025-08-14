@@ -196,9 +196,7 @@ class PairDistributionFunction(DistanceHistogram):
 
         update_pair_results(self.trajectory, calc_func, self._outputData)
 
-        selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.weights
-        )
+        selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
         weight_dict = get_weights(
             selected_weights,
             all_weights,

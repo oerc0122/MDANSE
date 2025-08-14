@@ -24,13 +24,13 @@ from more_itertools import all_equal
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    OutputTrajectory,
+    PathParam,
+)
 from MDANSE.Framework.Parsers import CP2KCellFile, XYZFile
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
@@ -64,29 +64,29 @@ class CP2K(Converter):
         "time": measure(1.0, iunit="fs").toval("ps"),
     }
 
-    pos_file = PathConfigDesc("r", extensions={"XYZ file": ".xyz"}, label="Positions file (XYZ)")
-    vel_file = PathConfigDesc(
+    pos_file = PathParam(
+        "r", extensions={"XYZ file": ".xyz"}, label="Positions file (XYZ)"
+    )
+    vel_file = PathParam(
         "r",
         extensions={"XYZ file": ".xyz"},
         optional=True,
         default=None,
         label="Velocity file (XYZ, optional)",
     )
-    force_file = PathConfigDesc(
+    force_file = PathParam(
         "r",
         extensions={"XYZ file": ".xyz"},
         optional=True,
         default=None,
         label="Force file (XYZ, optional)",
     )
-    cell_file = PathConfigDesc(
+    cell_file = PathParam(
         "r", extensions={"CP2K cell file": ".cell"}, label="CP2K unit cell file (.cell)"
     )
     atom_aliases = AtomMapping(depends={"trajectory": "pos_file"})
-    fold = BooleanConfigDesc(default=False, label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc(
-        label="MDANSE trajectory (filename, format)"
-    )
+    fold = Boolean(default=False, label="Fold coordinates into box")
+    output_files = OutputTrajectory(label="MDANSE trajectory (filename, format)")
 
     def initialize(self):
         """

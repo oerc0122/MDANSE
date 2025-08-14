@@ -256,8 +256,7 @@ class FieldFile:
             array of floats, one value per atom
         """
         charge_groups = [
-            np.repeat(molecule.charges, molecule.n_mols)
-            for molecule in self.molecules
+            np.repeat(molecule.charges, molecule.n_mols) for molecule in self.molecules
         ]
 
         return np.concatenate(charge_groups)

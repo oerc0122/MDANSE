@@ -24,65 +24,60 @@ from .AtomMappingDesc import (
     PartialChargeMapper,
 )
 from .BaseTypesDescriptor import (
-    ArrayConfigDesc,
-    BooleanConfigDesc,
-    FloatConfigDesc,
-    IntegerConfigDesc,
-    NumericRangeConfigDesc,
-    PathConfigDesc,
-    RangeConfigDesc,
-    StringConfigDesc,
-    VectorConfigDesc,
+    Array,
+    Boolean,
+    Float,
+    Integer,
+    NumericRange,
+    PathParam,
+    Range,
+    String,
+    Vector,
 )
 from .ChoiceConfigDesc import (
-    DynamicMultiChoiceConfigDesc,
-    DynamicSingleChoiceConfigDesc,
-    MultipleChoiceConfigDesc,
-    SingleChoiceConfigDesc,
+    DynamicMultiChoice,
+    DynamicSingleChoice,
+    MultipleChoice,
+    SingleChoice,
 )
-from .FramesDescriptors import CorrelationWindow, FramesConfigDesc, InterpOrder
-from .InputFileDescriptors import MDANSETrajectoryFile
-from .OutputFileDescriptors import (
-    ASEOutputFormat,
-    OutputFileConfigDesc,
-    OutputTrajectoryConfigDesc,
-)
-from .ProjectionDescriptor import ProjectionConfigDesc
+from .FramesDescriptors import CorrelationWindow, FrameSelect, InterpOrder
+from .InputFileDescriptors import MDANSETrajectory
+from .OutputFileDescriptors import OutputFile, OutputTrajectory
+from .ProjectionDescriptor import Projection
 from .RangeDescriptors import RangeCellCutoff
 from .Resolution import InstrumentResolution
-from .RunningModeDescriptor import RunningModeConfigDesc
+from .RunningModeDescriptor import RunningMode
 from .Weights import Weights
 
 __all__ = [
-    "ArrayConfigDesc",
+    "Array",
     "AtomMapping",
     "AtomSelection",
     "AtomTransmutation",
-    "BooleanConfigDesc",
-    "CorrelationFramesDesc",
+    "Boolean",
     "CorrelationWindow",
-    "DynamicMultiChoiceConfigDesc",
-    "DynamicSingleChoiceConfigDesc",
-    "FloatConfigDesc",
-    "FramesConfigDesc",
+    "DynamicMultiChoice",
+    "DynamicSingleChoice",
+    "Float",
+    "FrameSelect",
     "GroupingLevel",
     "InstrumentResolution",
-    "IntegerConfigDesc",
+    "Integer",
     "InterpOrder",
-    "MDANSETrajectoryFile",
-    "MultipleChoiceConfigDesc",
-    "NumericRangeConfigDesc",
-    "OutputFileConfigDesc",
-    "OutputTrajectoryConfigDesc",
+    "MDANSETrajectory",
+    "MultipleChoice",
+    "NumericRange",
+    "OutputFile",
+    "OutputTrajectory",
     "PartialCharge",
     "PartialChargeMapper",
-    "PathConfigDesc",
-    "ProjectionConfigDesc",
+    "PathParam",
+    "Projection",
     "RangeCellCutoff",
-    "RangeConfigDesc",
-    "RunningModeConfigDesc",
-    "SingleChoiceConfigDesc",
-    "StringConfigDesc",
-    "VectorConfigDesc",
+    "Range",
+    "RunningMode",
+    "SingleChoice",
+    "String",
+    "Vector",
     "Weights",
 ]

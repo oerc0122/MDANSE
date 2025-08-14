@@ -18,13 +18,8 @@ from __future__ import annotations
 import numpy as np
 from more_itertools import ilen
 
-from MDANSE.Framework.ConfigDescriptors import (
-    BooleanConfigDesc,
-    FloatConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import Boolean, Float, OutputTrajectory, PathParam
 from MDANSE.Framework.Parsers.DCDFile import DCDFile
 from MDANSE.IO.MinimalPDBReader import MinimalPDBReader
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
@@ -36,19 +31,19 @@ class DCD(Converter):
 
     label = "DCD"
 
-    pdb_file = PathConfigDesc(
+    pdb_file = PathParam(
         mode="r",
         extensions={"PDB files": "*.pdb"},
         label="Input PDB file",
     )
-    dcd_file = PathConfigDesc(
+    dcd_file = PathParam(
         mode="r",
         extensions={"DCD files": "*.dcd"},
         label="Input PDB file",
     )
-    time_step = FloatConfigDesc(default=1.0, minimum=1e-9, label="Time step (ps)")
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    time_step = Float(default=1.0, minimum=1e-9, label="Time step (ps)")
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """

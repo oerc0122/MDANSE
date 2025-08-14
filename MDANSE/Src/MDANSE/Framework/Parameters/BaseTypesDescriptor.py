@@ -15,9 +15,8 @@
 #
 from __future__ import annotations
 
-import json
 import re
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from enum import Enum, auto
 from math import isclose
 from numbers import Number
@@ -27,20 +26,22 @@ from typing import Any, SupportsFloat, SupportsInt
 import numpy as np
 from more_itertools import numeric_range
 
+from MDANSE.IO.IOUtils import json_handler
+
 from .AbsConfigDesc import ConfigError, ConfigureDescriptor, MinMax
 
 cjoin = ", ".join
 
 __all__ = [
-    "BooleanConfigDesc",
-    "FloatConfigDesc",
-    "IntegerConfigDesc",
-    "StringConfigDesc",
-    "PathConfigDesc",
-    "RangeConfigDesc",
-    "NumericRangeConfigDesc",
-    "ArrayConfigDesc",
-    "VectorConfigDesc",
+    "Boolean",
+    "Float",
+    "Integer",
+    "String",
+    "PathParam",
+    "Range",
+    "NumericRange",
+    "Array",
+    "Vector",
 ]
 
 
@@ -65,7 +66,7 @@ class StrCases(Enum):
         return NotImplemented
 
 
-class BooleanConfigDesc(ConfigureDescriptor[bool]):
+class Boolean(ConfigureDescriptor[bool]):
     """
     This Configurator allows to input a Boolean Value (True or False).
 
@@ -99,7 +100,7 @@ class BooleanConfigDesc(ConfigureDescriptor[bool]):
         return self._alias[value]
 
 
-class FloatConfigDesc(MinMax[float], ConfigureDescriptor[float]):
+class Float(MinMax[float], ConfigureDescriptor[float]):
     """
     This configurator allows to input a float value.
     """
@@ -120,7 +121,7 @@ class FloatConfigDesc(MinMax[float], ConfigureDescriptor[float]):
 
         super().validate(value)
 
-        ranges = self.get_ranges(self, value, deps: dict[str, Any])
+        ranges = self.get_ranges(self, value, deps)
 
         self.validate_range(value, ranges)
 
@@ -130,7 +131,7 @@ class FloatConfigDesc(MinMax[float], ConfigureDescriptor[float]):
         return value
 
 
-class IntegerConfigDesc(MinMax[int], ConfigureDescriptor[int]):
+class Integer(MinMax[int], ConfigureDescriptor[int]):
     """Configurator takes an integer input."""
 
     def __init__(self, **params):
@@ -142,7 +143,7 @@ class IntegerConfigDesc(MinMax[int], ConfigureDescriptor[int]):
         except ValueError as error:
             raise ConfigError(f"Value ({value}) is not a valid integer.") from error
 
-        ranges = self.get_ranges(self, value, deps: dict[str, Any])
+        ranges = self.get_ranges(self, value, deps)
 
         self.validate_range(value, ranges)
 
@@ -151,7 +152,7 @@ class IntegerConfigDesc(MinMax[int], ConfigureDescriptor[int]):
         return value
 
 
-class DictConfigDesc(ConfigureDescriptor[dict]):
+class Dict(ConfigureDescriptor[dict]):
     """
     This configurator allows a user to input a dict value.
 
@@ -188,7 +189,7 @@ class DictConfigDesc(ConfigureDescriptor[dict]):
         return value
 
 
-class StringConfigDesc(ConfigureDescriptor[str]):
+class String(ConfigureDescriptor[str]):
     """
     This configurator allows to input a string value.
     """
@@ -233,7 +234,7 @@ class StringConfigDesc(ConfigureDescriptor[str]):
         return value
 
 
-class PathConfigDesc(ConfigureDescriptor[Path]):
+class PathParam(ConfigureDescriptor[Path]):
     """
     This configurator allows to input a path value.
     """
@@ -286,7 +287,7 @@ class PathConfigDesc(ConfigureDescriptor[Path]):
         return value
 
 
-class RangeConfigDesc(MinMax[int], ConfigureDescriptor[range]):
+class Range(MinMax[int], ConfigureDescriptor[range]):
     """
     This configurator allows a user to input a range value.
     """
@@ -300,7 +301,9 @@ class RangeConfigDesc(MinMax[int], ConfigureDescriptor[range]):
         super().__init__(*args, **params)
         self.include_last = include_last
 
-    def validate(self, value: int | Sequence | dict | range, deps: dict[str, Any]) -> range:
+    def validate(
+        self, value: int | Sequence | dict | range, deps: dict[str, Any]
+    ) -> range:
         if isinstance(value, int):
             value = range(value)
         elif isinstance(value, Sequence):
@@ -315,7 +318,7 @@ class RangeConfigDesc(MinMax[int], ConfigureDescriptor[range]):
         if self.include_last:
             value = range(value.start, value.stop + value.step, value.step)
 
-        ranges = self.get_ranges(value, deps: dict[str, Any])
+        ranges = self.get_ranges(value, deps)
 
         self.validate_range(value.start, ranges)
         self.validate_range(value.stop, ranges)
@@ -323,7 +326,7 @@ class RangeConfigDesc(MinMax[int], ConfigureDescriptor[range]):
         return value
 
 
-class NumericRangeConfigDesc(MinMax[Number], ConfigureDescriptor[numeric_range]):
+class NumericRange(MinMax[Number], ConfigureDescriptor[numeric_range]):
     """
     This configurator allows a user to input a generalised range.
     """
@@ -337,7 +340,11 @@ class NumericRangeConfigDesc(MinMax[Number], ConfigureDescriptor[numeric_range])
         super().__init__(*args, **params)
         self.include_last = include_last
 
-    def validate(self, value: float | int | Sequence | dict | range | numeric_range, deps: dict[str, Any]) -> numeric_range:
+    def validate(
+        self,
+        value: float | int | Sequence | dict | range | numeric_range,
+        deps: dict[str, Any],
+    ) -> numeric_range:
         if isinstance(value, (float, int)):
             value = numeric_range(value)
         elif isinstance(value, Sequence):
@@ -356,7 +363,7 @@ class NumericRangeConfigDesc(MinMax[Number], ConfigureDescriptor[numeric_range])
         if self.include_last:
             value = numeric_range(value._start, value._stop + value._step, value._step)
 
-        ranges = self.get_ranges(value, deps: dict[str, Any])
+        ranges = self.get_ranges(value, deps)
 
         self.validate_range(value._start, ranges)
         self.validate_range(value._stop, ranges)
@@ -364,7 +371,7 @@ class NumericRangeConfigDesc(MinMax[Number], ConfigureDescriptor[numeric_range])
         return value
 
 
-class ArrayConfigDesc(ConfigureDescriptor[np.ndarray]):
+class Array(ConfigureDescriptor[np.ndarray]):
     def __init__(
         self,
         *,
@@ -396,7 +403,7 @@ class ArrayConfigDesc(ConfigureDescriptor[np.ndarray]):
         return value
 
 
-class VectorConfigDesc(ArrayConfigDesc):
+class Vector(Array):
     def __init__(
         self,
         *,

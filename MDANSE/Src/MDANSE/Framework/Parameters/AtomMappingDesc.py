@@ -32,7 +32,7 @@ from MDANSE.IO.IOUtils import json_handler
 from MDANSE.MLogging import LOG
 
 from .AbsConfigDesc import ConfigError, ConfigureDescriptor
-from .ChoiceConfigDesc import SingleChoiceConfigDesc
+from .ChoiceConfigDesc import SingleChoice
 
 if TYPE_CHECKING:
     from MDANSE.MolecularDynamics.Trajectory import Trajectory
@@ -145,7 +145,6 @@ class AtomSelection(ConfigureDescriptor[list[int]]):
     def validate(
         self, selection_string: dict | str | Path, deps: dict[str, Trajectory]
     ) -> list[int]:
-
         file_info = deps["trajectory"]
 
         selector = ReusableSelection()
@@ -281,8 +280,7 @@ class PartialChargeMapper(Mapper):
         return json.dumps(self.get_grouped_setting())
 
 
-class GroupingLevel(SingleChoiceConfigDesc[str]):
-
+class GroupingLevel(SingleChoice[str]):
     base_aliases = {
         "each atom": "atom",
         "each molecule": "molecule",
@@ -300,7 +298,13 @@ class GroupingLevel(SingleChoiceConfigDesc[str]):
 
         aliases = kwargs.pop("aliases", {}) | self.base_aliases
 
-        super().__init__(*args, choices=("atom", "molecule"), default=default, aliases=aliases, **kwargs)
+        super().__init__(
+            *args,
+            choices=("atom", "molecule"),
+            default=default,
+            aliases=aliases,
+            **kwargs,
+        )
 
     def required_deps(self) -> set[str]:
         return super().required_deps() | {"trajectory"}

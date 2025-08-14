@@ -22,14 +22,14 @@ from typing import Any, NamedTuple
 import numpy as np
 from ase.io.formats import ioformats
 
-from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import Parameter
 from MDANSE.Framework.Formats import OutputFormats
+from MDANSE.Framework.Parameters.AbsConfigDesc import Parameter
 from MDANSE.MLogging import LogLevels
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesDescriptor import IntegerConfigDesc, PathConfigDesc
-from .ChoiceConfigDesc import MultipleChoiceConfigDesc, SingleChoiceConfigDesc
+from .BaseTypesDescriptor import Integer, PathParam
+from .ChoiceConfigDesc import MultipleChoice, SingleChoice
 
 
 class OldOutputSettings(NamedTuple):
@@ -47,7 +47,7 @@ class OldTrajectorySettings(NamedTuple):
     loglevel: LogLevels | int | str
 
 
-class OutputFormatConfigDesc(MultipleChoiceConfigDesc):
+class OutputFormat(MultipleChoice):
     def __init__(
         self,
         allowed_formats: Iterable[OutputFormats | str | int],
@@ -61,14 +61,14 @@ class OutputFormatConfigDesc(MultipleChoiceConfigDesc):
         )
 
 
-class OutputFileConfigDesc(CustomConfig):
-    out_format = OutputFormatConfigDesc(("MDAFormat", "TextFormat"))
-    log_level = SingleChoiceConfigDesc(
+class OutputFile(CustomConfig):
+    out_format = OutputFormat(("MDAFormat", "TextFormat"))
+    log_level = SingleChoice(
         choices=LogLevels,
         default=LogLevels.NONE,
         label="Reporting log level.",
     )
-    path = PathConfigDesc(mode="w")
+    path = PathParam(mode="w")
 
     def __init__(
         self,
@@ -103,15 +103,15 @@ class OutputFileConfigDesc(CustomConfig):
         return out
 
 
-class OutputFilePlusMemConfigDesc(OutputFileConfigDesc):
-    out_format = OutputFormatConfigDesc(("MDAFormat", "TextFormat", "FileInMemory"))
+class OutputFilePlusMem(OutputFile):
+    out_format = OutputFormat(("MDAFormat", "TextFormat", "FileInMemory"))
 
 
-class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
-    out_format = OutputFormatConfigDesc(
+class OutputTrajectory(OutputFile):
+    out_format = OutputFormat(
         ("MDTFormat",),
     )
-    dtype = SingleChoiceConfigDesc(
+    dtype = SingleChoice(
         choices=(np.float16, np.float32, np.float64),
         default=np.float64,
         aliases=(
@@ -120,8 +120,8 @@ class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
             | dict.fromkeys(("16", "float16", "half", 16), np.float16)
         ),
     )
-    chunk_size = IntegerConfigDesc(minimum=32, maximum=65536, default=128)
-    compression = SingleChoiceConfigDesc(
+    chunk_size = Integer(minimum=32, maximum=65536, default=128)
+    compression = SingleChoice(
         choices=("none", *TrajectoryWriter.allowed_compression), default="none"
     )
 
@@ -160,10 +160,8 @@ class OutputTrajectoryConfigDesc(OutputFileConfigDesc):
         }
 
 
-class ASEOutputFormat(OutputFileConfigDesc):
-    out_format = SingleChoiceConfigDesc(
-        choices=(key for key, val in ioformats if val.can_write)
-    )
+class ASEOutputFormat(OutputFile):
+    out_format = SingleChoice(choices=(key for key, val in ioformats if val.can_write))
 
     def __init__(self, fmt):
         self.out_format = fmt

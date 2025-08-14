@@ -17,14 +17,13 @@ from __future__ import annotations
 
 import collections
 
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-)
 from MDANSE.Framework.Converters.Forcite import Forcite
-from MDANSE.Framework.Parsers import TrjFile, XTDFile
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    OutputTrajectory,
+    PathParam,
+)
 
 
 class DFTB(Forcite):
@@ -32,12 +31,12 @@ class DFTB(Forcite):
 
     label = "DFTB"
 
-    xtd_file = PathConfigDesc(
+    xtd_file = PathParam(
         mode="r",
         extensions={"XTD file": ".xtd"},
         label="The XTD file.",
     )
-    trj_file = PathConfigDesc(
+    trj_file = PathParam(
         mode="r",
         extensions={"TRJ file": ".trj"},
         label="The TRJ file.",
@@ -47,6 +46,6 @@ class DFTB(Forcite):
         label="Atom mapping",
         default={},
     )
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
     settings = collections.OrderedDict()

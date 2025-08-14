@@ -8,8 +8,8 @@ from more_itertools import numeric_range
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesDescriptor import IntegerConfigDesc, RangeConfigDesc
-from .ChoiceConfigDesc import DynamicSingleChoiceConfigDesc
+from .BaseTypesDescriptor import Integer, Range
+from .ChoiceConfigDesc import DynamicSingleChoice
 
 
 class Frame(NamedTuple):
@@ -67,7 +67,7 @@ class Frames:
         return self.time_stop - self.time_start
 
 
-class FramesConfigDesc(RangeConfigDesc):
+class FrameSelect(Range):
     default_tooltip = "Select which frames are to be included."
     default_label = "Frames to include in correlation."
 
@@ -93,9 +93,9 @@ class FramesConfigDesc(RangeConfigDesc):
         return Frames(trajectory, value)
 
 
-class CorrelationWindow(IntegerConfigDesc):
-    default_label="Correlation window"
-    default_tooltip="Number of frames in correlation window."
+class CorrelationWindow(Integer):
+    default_label = "Correlation window"
+    default_tooltip = "Number of frames in correlation window."
 
     def required_deps(self) -> set[str]:
         return super().required_deps() | {"frames"}
@@ -104,7 +104,7 @@ class CorrelationWindow(IntegerConfigDesc):
         return (2, len(deps["frames"]))
 
 
-class InterpOrder(DynamicSingleChoiceConfigDesc[int]):
+class InterpOrder(DynamicSingleChoice[int]):
     default_label = "Velocity interpolation order."
     default_tooltip = (
         "Select velocity interpolation order, "

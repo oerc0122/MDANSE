@@ -18,13 +18,13 @@ from __future__ import annotations
 import numpy as np
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    OutputTrajectory,
+    PathParam,
+)
 from MDANSE.Framework.Parsers import TrjFile, XTDFile
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
@@ -41,12 +41,12 @@ class Forcite(Converter):
 
     label = "Forcite"
 
-    xtd_file = PathConfigDesc(
+    xtd_file = PathParam(
         mode="r",
         extensions={"XTD files": "*.xtd"},
         label="Input XTD file",
     )
-    trj_file = PathConfigDesc(
+    trj_file = PathParam(
         mode="r",
         extensions={"TRJ files": "*.trj"},
         label="Input TRJ file",
@@ -54,8 +54,8 @@ class Forcite(Converter):
     atom_aliases = AtomMapping(
         depends={"trajectory": "trajectory_file"}, label="Atom mapping", default={}
     )
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """

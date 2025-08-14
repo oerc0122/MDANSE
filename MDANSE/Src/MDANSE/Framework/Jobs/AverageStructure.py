@@ -20,16 +20,16 @@ from ase.atoms import Atom, Atoms
 from ase.io import write as ase_write
 
 from MDANSE import PLATFORM
-from MDANSE.Framework.ConfigDescriptors import (
+from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
     ASEOutputFormat,
     AtomSelection,
-    BooleanConfigDesc,
-    FramesConfigDesc,
-    MDANSETrajectoryFile,
-    RunningModeConfigDesc,
-    SingleChoiceConfigDesc,
+    Boolean,
+    FrameSelect,
+    MDANSETrajectory,
+    RunningMode,
+    SingleChoice,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Units import measure
 
 
@@ -53,21 +53,21 @@ class AverageStructure(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(
         depends={"trajectory": "trajectory"},
     )
-    fold = BooleanConfigDesc(
+    fold = Boolean(
         label="Fold coordinates in to box. Normally it should not be necessary."
     )
-    output_units = SingleChoiceConfigDesc(
+    output_units = SingleChoice(
         label="Distance units of the output",
         choices=("ang", "Bohr", "nm", "pm"),
         aliases={"Angstrom": "ang"},
         default="ang",
     )
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
-    running_mode = RunningModeConfigDesc()
+    running_mode = RunningMode()
     output_files = ASEOutputFormat(fmt="vasp")
 
     def initialize(self):

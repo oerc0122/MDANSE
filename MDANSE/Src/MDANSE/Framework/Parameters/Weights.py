@@ -23,10 +23,10 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from .AbsConfigDesc import ConfigError
-from .ChoiceConfigDesc import DynamicSingleChoiceConfigDesc
+from .Choice import DynamicSingleChoice
 
 
-class Weights(DynamicSingleChoiceConfigDesc[str]):
+class Weights(DynamicSingleChoice[str]):
     """Select the atom property to be used by the weight scheme.
 
     This configurator allows to select which atom properties will be used as weights

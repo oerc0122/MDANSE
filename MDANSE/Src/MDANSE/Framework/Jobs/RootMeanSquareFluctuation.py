@@ -15,15 +15,15 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomSelection,
-    FramesConfigDesc,
-    GroupingLevel,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    RunningModeConfigDesc,
-)
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    FrameSelect,
+    GroupingLevel,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+)
 from MDANSE.MolecularDynamics.Analysis import mean_square_fluctuation
 
 
@@ -47,12 +47,12 @@ class RootMeanSquareFluctuation(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"}, default="atom")
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables"""

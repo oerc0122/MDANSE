@@ -20,12 +20,12 @@ from mdtraj.formats.trr import TRRTrajectoryFile
 from mdtraj.formats.xtc import XTCTrajectoryFile
 
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.ConfigDescriptors import (
-    BooleanConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import (
+    Boolean,
+    OutputTrajectory,
+    PathParam,
+)
 from MDANSE.IO.MinimalPDBReader import MinimalPDBReader
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
@@ -41,22 +41,22 @@ class Gromacs(Converter):
 
     label = "Gromacs"
 
-    pdb_file = PathConfigDesc(
+    pdb_file = PathParam(
         mode="r",
         extensions={"PDB file": "*.pdb"},
         default="INPUT_FILENAME.pdb",
         label="Input PDB file.",
     )
-    xtc_file = PathConfigDesc(
+    xtc_file = PathParam(
         mode="r",
         extensions={"XTC file": "*.xtc", "TRR file": "*.trr"},
         default="INPUT_FILENAME.xtc",
         label="Input XTC file.",
     )
-    fold = BooleanConfigDesc(
+    fold = Boolean(
         label="Fold coordinates into box",
     )
-    output_files = OutputTrajectoryConfigDesc()
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """

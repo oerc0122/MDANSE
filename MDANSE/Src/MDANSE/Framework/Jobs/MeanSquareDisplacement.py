@@ -16,19 +16,19 @@
 from __future__ import annotations
 
 from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
-from MDANSE.Framework.ConfigDescriptors import (
+from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
     AtomSelection,
     AtomTransmutation,
     CorrelationWindow,
-    FramesConfigDesc,
+    FrameSelect,
     GroupingLevel,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    ProjectionConfigDesc,
-    RunningModeConfigDesc,
+    MDANSETrajectory,
+    OutputFile,
+    Projection,
+    RunningMode,
     Weights,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.MolecularDynamics.Analysis import mean_square_displacement
 
@@ -69,8 +69,8 @@ class MeanSquareDisplacement(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
@@ -83,11 +83,11 @@ class MeanSquareDisplacement(IJob):
             "transmutation": "atom_transmutation",
         },
     )
-    projection = ProjectionConfigDesc(
+    projection = Projection(
         label="Project coordinates",
     )
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """
@@ -145,9 +145,7 @@ class MeanSquareDisplacement(IJob):
 
         series = self.projection(series)
 
-        msd = mean_square_displacement(
-            series, self.frame_window
-        )
+        msd = mean_square_displacement(series, self.frame_window)
 
         return index, msd
 
@@ -174,9 +172,7 @@ class MeanSquareDisplacement(IJob):
         for element, number in list(nAtomsPerElement.items()):
             self._outputData[f"msd/{element}"] /= number
 
-        selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.weights
-        )
+        selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
         weight_dict = get_weights(
             selected_weights,
             all_weights,

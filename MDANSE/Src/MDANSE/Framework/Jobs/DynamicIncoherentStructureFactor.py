@@ -50,15 +50,15 @@ class DynamicIncoherentStructureFactor(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    # trajectory = MDANSETrajectoryFile()
-    # frames = CorrelationFramesConfigDesc(depends={"trajectory": "trajectory"})
-    # resolution = ResolutionConfigDesc()
-    # q_vectors = QVectorsConfigDesc()
-    # projection = ProjectorConfigDesc()
-    # grouping = GroupingConfigDesc()
-    # atom_selection = AtomSelectionConfigDesc(depends={"trajectory": "trajectory"})
-    # atom_grouping = AtomGroupingConfigDesc(depends={"trajectory": "trajectory"})
-    # weights = WeightsConfigDesc(depends={"trajectory": "trajectory", "grouping": "atom_grouping", "selection": "atom_selection"})
+    # trajectory = MDANSETrajectory()
+    # frames = CorrelationFrames(depends={"trajectory": "trajectory"})
+    # resolution = Resolution()
+    # q_vectors = QVectors()
+    # projection = Projector()
+    # grouping = Grouping()
+    # atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    # atom_grouping = AtomGrouping(depends={"trajectory": "trajectory"})
+    # weights = Weights(depends={"trajectory": "trajectory", "grouping": "atom_grouping", "selection": "atom_selection"})
 
     def initialize(self):
         """

@@ -23,14 +23,14 @@ from more_itertools import run_length
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    FloatConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    Float,
+    OutputTrajectory,
+    PathParam,
+)
 from MDANSE.Framework.Parsers import XDATCARFile
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import PeriodicBoxConfiguration
@@ -69,12 +69,12 @@ class VASP(Converter):
 
     label = "VASP"
 
-    trajectory_file = PathConfigDesc(
+    trajectory_file = PathParam(
         mode="r",
         extensions={"XDATCAR input": "XDATCAR*"},
         label="Input XDATCAR file",
     )
-    time_step = FloatConfigDesc(
+    time_step = Float(
         label="Time step (fs)",
         default=1.0,
         minimum=1e-9,
@@ -84,8 +84,8 @@ class VASP(Converter):
         label="Atom mapping",
         default={},
     )
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """

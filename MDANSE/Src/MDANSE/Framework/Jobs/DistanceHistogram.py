@@ -20,16 +20,6 @@ import numpy.typing as npt
 from more_itertools import always_iterable
 
 from MDANSE.Framework.AtomGrouping.grouping import pair_labels
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomSelection,
-    AtomTransmutation,
-    FramesConfigDesc,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    RangeCellCutoff,
-    RunningModeConfigDesc,
-    Weights,
-)
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
     CELL_SIZE_LIMIT,
@@ -37,6 +27,16 @@ from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
     intramolecular_lookup_dict,
     van_hove_distinct,
     van_hove_distinct_all_inter,
+)
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    AtomTransmutation,
+    FrameSelect,
+    MDANSETrajectory,
+    OutputFile,
+    RangeCellCutoff,
+    RunningMode,
+    Weights,
 )
 
 
@@ -55,8 +55,8 @@ class DistanceHistogram(IJob):
         "Structure",
     )
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmustation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
@@ -72,8 +72,8 @@ class DistanceHistogram(IJob):
         minimum=0.0,
         dependencies={"trajectory": "trajectory"},
     )
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables."""

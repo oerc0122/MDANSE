@@ -30,6 +30,15 @@ from MDANSE.Framework.ConfigDescriptors import (
 )
 from MDANSE.Framework.Formats.HDFFormat import write_metadata
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    Boolean,
+    FrameSelect,
+    GroupingLevel,
+    MDANSETrajectory,
+    OutputTrajectory,
+    RunningMode,
+)
 from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -52,14 +61,14 @@ class CenterOfMassesTrajectory(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    fold = BooleanConfigDesc(default=False, label="Fold coordinates in to box")
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    fold = Boolean(default=False, label="Fold coordinates in to box")
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     grouping_level = GroupingLevel(
         default="molecule", depends={"trajectory": "trajectory"}
     )
-    output_files = OutputTrajectoryConfigDesc()
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """

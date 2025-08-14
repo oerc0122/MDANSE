@@ -24,7 +24,7 @@ import numpy.typing as npt
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from .AbsConfigDesc import ConfigError
-from .BaseTypesDescriptor import NumericRangeConfigDesc
+from .BaseTypesDescriptor import NumericRange
 
 
 class HistogramInfo:
@@ -55,8 +55,7 @@ class HistogramInfo:
         return (self.bins[1:] + self.bins[:-1]) / 2
 
 
-
-class RangeCellCutoff(NumericRangeConfigDesc):
+class RangeCellCutoff(NumericRange):
     """Range of interatomic distances for a histogram.
 
     It does not allow distances large enough to include

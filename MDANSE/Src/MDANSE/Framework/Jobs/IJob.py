@@ -39,13 +39,13 @@ from more_itertools import consumer, first_true
 from MDANSE import PLATFORM
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
-from MDANSE.Framework.ConfigDescriptors.AbsConfigDesc import Configurable
-from MDANSE.Framework.ConfigDescriptors.OutputFileDescriptors import (
-    OutputFileConfigDesc,
-    OutputTrajectoryConfigDesc,
-)
 from MDANSE.Framework.Jobs.JobStatus import JobStates, JobStatus
 from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
+from MDANSE.Framework.Parameters.AbsConfigDesc import Configurable
+from MDANSE.Framework.Parameters.OutputFileDescriptors import (
+    OutputFile,
+    OutputTrajectory,
+)
 from MDANSE.MLogging import FMT, LOG
 
 RUNSCRIPT = """\
@@ -267,11 +267,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
     def initialize(self):
         if hasattr(self, "output_files"):
             if isinstance(opf := self.output_files, tuple):
-                cls = (
-                    OutputFileConfigDesc
-                    if len(opf) == 3
-                    else OutputTrajectoryConfigDesc
-                )
+                cls = OutputFile if len(opf) == 3 else OutputTrajectory
                 self.output_files = cls.from_old_tuple(opf)
 
             if self.output_files.write_logs:

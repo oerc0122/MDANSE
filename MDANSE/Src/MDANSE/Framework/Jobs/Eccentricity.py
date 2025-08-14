@@ -18,13 +18,13 @@ from __future__ import annotations
 import numpy as np
 from more_itertools import always_iterable
 
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomSelection,
-    FramesConfigDesc,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-)
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    FrameSelect,
+    MDANSETrajectory,
+    OutputFile,
+)
 from MDANSE.Mathematics.Geometry import center_of_mass, moment_of_inertia
 
 
@@ -51,10 +51,10 @@ class Eccentricity(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
-    output_files = OutputFileConfigDesc()
+    output_files = OutputFile()
 
     def initialize(self):
         super().initialize()

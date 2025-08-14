@@ -20,18 +20,18 @@ import collections
 import numpy as np
 from scipy.signal import correlate
 
-from MDANSE.Framework.ConfigDescriptors import (
+from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
     CorrelationWindow,
-    DynamicSingleChoiceConfigDesc,
-    FramesConfigDesc,
+    DynamicSingleChoice,
+    FrameSelect,
     InterpOrder,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
+    MDANSETrajectory,
+    OutputFile,
     PartialCharge,
     Resolution,
-    RunningModeConfigDesc,
+    RunningMode,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.Mathematics.Signal import differentiate, get_spectrum
 
@@ -57,8 +57,8 @@ class Infrared(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     atom_charges = PartialCharge(
         depends={"trajectory": "trajectory"},
@@ -70,14 +70,14 @@ class Infrared(IJob):
     derivative_order = InterpOrder(
         depends={"frames": "frames"}, label="d/dt dipole numerical derivative"
     )
-    molecule_name = DynamicSingleChoiceConfigDesc(
+    molecule_name = DynamicSingleChoice(
         choices="chemical_system._clusters.keys()",
         depends={"choices": "trajectory"},
         label="Molecule name",
         default="",
     )
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         super().initialize()

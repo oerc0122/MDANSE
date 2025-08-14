@@ -15,25 +15,22 @@
 #
 from __future__ import annotations
 
-import h5py
+import multiprocessing
+from warnings import warn
 
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
+from MDANSE.Framework.Parameters import Integer, SingleChoice
+from MDANSE.Framework.Parameters.AbsConfigDesc import ConfigWarning, CustomConfig
 
-from .BaseTypesDescriptor import PathConfigDesc
 
+class RunningMode(CustomConfig):
+    mode = SingleChoice(
+        choices=("single-core", "multicore", "remote"), default="single-core"
+    )
+    n_procs = Integer(minimum=1, maximum=multiprocessing.cpu_count(), default=1)
 
-class MDANSETrajectoryFile(PathConfigDesc):
-    def __init__(
-        self,
-        mode: None = None,
-        *,
-        extensions: None = None,
-        directory: None = None,
-        **params,
-    ):
-        super().__init__(mode="r", extensions={"MDANSE trajectory": "mdt", "HDF5 file": "h5"}, **params)
-
-    def validate(self, value, *_) -> Trajectory:
-        value = super().validate(value)
-
-        return Trajectory(value)
+    def validate(self, desc, value):
+        if self.mode == "single-core" and self.n_procs > 1:
+            warn(
+                "Requested more than one process for single-core job.",
+                category=ConfigWarning,
+            )

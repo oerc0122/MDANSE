@@ -25,8 +25,8 @@ from MDANSE.Framework.Projectors.IProjector import IProjector
 from MDANSE.MLogging import LOG
 
 from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesDescriptor import VectorConfigDesc
-from .ChoiceConfigDesc import SingleChoiceConfigDesc
+from .BaseTypesDescriptor import Vector
+from .ChoiceConfigDesc import SingleChoice
 
 
 class ProjType(Enum):
@@ -39,9 +39,9 @@ class ProjType(Enum):
     PlanarProjector = PLANAR
 
 
-class ProjectionConfigDesc(CustomConfig):
-    proj_type = SingleChoiceConfigDesc(choices=ProjType)
-    axis = VectorConfigDesc(
+class Projection(CustomConfig):
+    proj_type = SingleChoice(choices=ProjType)
+    axis = Vector(
         optional=True,
         non_zero=True,
     )
@@ -70,7 +70,10 @@ class ProjectionConfigDesc(CustomConfig):
             proj.set_axis(self.axis)
 
     @projector.setter
-    def projector(self, value: IProjector | tuple[ProjType | str, npt.NDArray[float] | None] | None) -> None:
+    def projector(
+        self,
+        value: IProjector | tuple[ProjType | str, npt.NDArray[float] | None] | None,
+    ) -> None:
         if isinstance(value, IProjector):
             self.proj_type = ProjType(type(value).__name__)
 

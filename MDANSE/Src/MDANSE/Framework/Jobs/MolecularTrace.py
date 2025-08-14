@@ -18,15 +18,15 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomSelection,
-    FloatConfigDesc,
-    FramesConfigDesc,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    RunningModeConfigDesc,
-)
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    Float,
+    FrameSelect,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+)
 
 
 class MolecularTrace(IJob):
@@ -55,15 +55,15 @@ class MolecularTrace(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
-    resolution = FloatConfigDesc(
+    resolution = Float(
         minimum=0.0,
         default=0.1,
     )
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         super().initialize()
@@ -91,7 +91,7 @@ class MolecularTrace(IJob):
         self._outputData.add(
             "spacing",
             "LineOutputVariable",
-            np.array([self.resolution]*3),
+            np.array([self.resolution] * 3),
             units="nm",
         )
 

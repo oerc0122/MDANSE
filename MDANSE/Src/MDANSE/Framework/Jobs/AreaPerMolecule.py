@@ -20,15 +20,15 @@ import collections
 import numpy as np
 
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.ConfigDescriptors import (
-    DynamicSingleChoiceConfigDesc,
-    FramesConfigDesc,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
-    RunningModeConfigDesc,
-    SingleChoiceConfigDesc,
-)
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    DynamicSingleChoice,
+    FrameSelect,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+    SingleChoice,
+)
 
 
 class AreaPerMoleculeError(Error):
@@ -60,16 +60,14 @@ class AreaPerMolecule(IJob):
         "ac": (0, 2),
     }
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
-    axis = SingleChoiceConfigDesc(
-        choices=_AXIS_MAP.keys(), default="ab", label="Area vectors"
-    )
-    molecule_name = DynamicSingleChoiceConfigDesc(
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    axis = SingleChoice(choices=_AXIS_MAP.keys(), default="ab", label="Area vectors")
+    molecule_name = DynamicSingleChoice(
         choices="chemical_system._clusters.keys()", depends={"choices": "trajectory"}
     )
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     enabled = True
 

@@ -19,20 +19,20 @@ import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
-from MDANSE.Framework.ConfigDescriptors import (
+from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
     AtomSelection,
     AtomTransmutation,
     CorrelationWindow,
-    FramesConfigDesc,
+    FrameSelect,
     GroupingLevel,
-    MDANSETrajectoryFile,
-    OutputFileConfigDesc,
+    MDANSETrajectory,
+    OutputFile,
     PartialCharge,
-    ProjectionConfigDesc,
-    RunningModeConfigDesc,
+    Projection,
+    RunningMode,
     Weights,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
@@ -52,19 +52,19 @@ class PositionAutoCorrelationFunction(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectoryFile()
-    frames = FramesConfigDesc(depends={"trajectory": "trajectory"})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    projection = ProjectionConfigDesc(label="Project coordinates")
+    projection = Projection(label="Project coordinates")
     atom_charges = PartialCharge(
         depends={"trajectory": "trajectory"},
     )
     weights = Weights()
-    output_files = OutputFileConfigDesc()
-    running_mode = RunningModeConfigDesc()
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """

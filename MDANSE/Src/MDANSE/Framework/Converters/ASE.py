@@ -29,17 +29,16 @@ from more_itertools import ilen
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    FloatConfigDesc,
-    IntegerConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-    SingleChoiceConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Framework.Parsers import ASEParser
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    Float,
+    Integer,
+    OutputTrajectory,
+    PathParam,
+    SingleChoice,
+)
 from MDANSE.Framework.Units import INTERNAL_UNITS, UnitError, measure
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
@@ -68,26 +67,24 @@ class ASE(Converter):
     category = ("Converters", "General")
     label = "ASE"
 
-    trajectory_file = PathConfigDesc(
+    trajectory_file = PathParam(
         mode="r",
         label="An MD trajectory file supported by ASE",
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "trajectory_file"}, label="Atom mapping", default={}
     )
-    time_unit = SingleChoiceConfigDesc(
-        ("fs", "ps", "ns"), default="fs", label="Time step unit"
-    )
-    time_step = FloatConfigDesc(default=1.0, minimum=1e-9, label="Time step")
-    n_steps = IntegerConfigDesc(
+    time_unit = SingleChoice(("fs", "ps", "ns"), default="fs", label="Time step unit")
+    time_step = Float(default=1.0, minimum=1e-9, label="Time step")
+    n_steps = Integer(
         default=0, minimum=0, label="Number of time steps (0 for automatic detection)"
     )
-    time_step = FloatConfigDesc(default=1.0, mini=1e-9, label="Time step")
-    n_steps = IntegerConfigDesc(
+    time_step = Float(default=1.0, mini=1e-9, label="Time step")
+    n_steps = Integer(
         default=0, mini=0, label="Number of time steps (0 for automatic detection)"
     )
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
 
     UNIT_CONV = {
         "energy": measure(1.0, "eV").toval("Da nm2 / ps2"),

@@ -23,13 +23,13 @@ from more_itertools import consume as drop
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomMapping,
-    BooleanConfigDesc,
-    OutputTrajectoryConfigDesc,
-    PathConfigDesc,
-)
 from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Parameters import (
+    AtomMapping,
+    Boolean,
+    OutputTrajectory,
+    PathParam,
+)
 from MDANSE.Framework.Parsers import DLPField, DLPHistory
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -52,13 +52,13 @@ class DL_POLY(Converter):
 
     label = "DL-POLY"
 
-    field_file = PathConfigDesc(
+    field_file = PathParam(
         mode="r",
         extensions={"FIELD files": "FIELD*"},
         default="INPUT_FILENAME",
         label="Input FIELD file",
     )
-    history_file = PathConfigDesc(
+    history_file = PathParam(
         mode="r",
         extensions={"HISTORY files": "HISTORY*"},
         default="INPUT_FILENAME",
@@ -69,8 +69,8 @@ class DL_POLY(Converter):
         label="Atom mapping",
         default={},
     )
-    fold = BooleanConfigDesc(label="Fold coordinates into box")
-    output_files = OutputTrajectoryConfigDesc()
+    fold = Boolean(label="Fold coordinates into box")
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """
