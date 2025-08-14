@@ -22,15 +22,16 @@ import numpy as np
 from MDANSE.Framework.AtomGrouping.grouping import (
     pair_labels,
 )
-from MDANSE.Framework.Jobs.IJob import IJob, JobError
-from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
+from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
+
+from .IJob import IJob, JobError
+from .VanHoveFunctionDistinct import (
     CELL_SIZE_LIMIT,
     DETAILED_CELL_MESSAGE,
     intramolecular_lookup_dict,
     van_hove_distinct,
     van_hove_distinct_all_inter,
 )
-from MDANSE.MolecularDynamics.TrajectoryUtils import atom_index_to_molecule_index
 
 
 class DistanceHistogram(IJob):

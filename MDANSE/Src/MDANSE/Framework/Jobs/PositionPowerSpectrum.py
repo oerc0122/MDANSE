@@ -23,10 +23,11 @@ from scipy.signal import correlate
 from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MLogging import LOG
+
+from .IJob import IJob
 
 
 class PositionPowerSpectrum(IJob):

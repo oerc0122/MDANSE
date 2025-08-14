@@ -17,8 +17,9 @@ from __future__ import annotations
 
 import collections
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Analysis import mean_square_fluctuation
+
+from .IJob import IJob
 
 
 class RootMeanSquareFluctuation(IJob):

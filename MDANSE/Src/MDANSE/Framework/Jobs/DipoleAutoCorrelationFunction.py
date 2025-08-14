@@ -20,8 +20,9 @@ import collections
 import numpy as np
 from scipy.signal import correlate
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import center_of_mass
+
+from .IJob import IJob
 
 
 class DipoleAutoCorrelationFunction(IJob):

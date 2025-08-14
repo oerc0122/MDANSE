@@ -24,8 +24,9 @@ from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
     update_pair_results,
 )
-from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
+
+from .DistanceHistogram import DistanceHistogram
 
 
 class PairDistributionFunction(DistanceHistogram):

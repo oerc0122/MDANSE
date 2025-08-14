@@ -29,7 +29,7 @@ from MDANSE import PLATFORM
 from MDANSE.Framework.Formats.IFormat import IFormat
 
 if TYPE_CHECKING:
-    from MDANSE.Framework.Jobs.IJob import IJob
+    from MDANSE.Framework.Jobs import IJob
 
 
 def length_stringio(input: io.BytesIO) -> int:

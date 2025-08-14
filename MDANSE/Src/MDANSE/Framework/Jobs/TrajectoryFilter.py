@@ -24,7 +24,6 @@ import numpy as np
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Formats.HDFFormat import write_metadata
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Signal import FILTER_MAP, Filter
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
@@ -33,6 +32,8 @@ from MDANSE.MolecularDynamics.Configuration import (
     _Configuration,
 )
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
+
+from .IJob import IJob
 
 
 class TrajectoryFilter(IJob):

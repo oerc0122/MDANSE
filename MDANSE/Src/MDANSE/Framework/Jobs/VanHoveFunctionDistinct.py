@@ -28,8 +28,9 @@ from MDANSE.Framework.AtomGrouping.grouping import (
     pair_labels,
     update_pair_results,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
+
+from .IJob import IJob
 
 CELL_SIZE_LIMIT = 1e-9
 DETAILED_CELL_MESSAGE = (

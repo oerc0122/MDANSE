@@ -24,8 +24,7 @@ from pathlib import Path
 
 from MDANSE import PLATFORM
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Framework.Jobs.JobStatus import JobInfo
+from MDANSE.Framework.Jobs import IJob, JobInfo
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
@@ -356,7 +355,7 @@ class CommandLineParser(optparse.OptionParser):
 
         nargs = len(parser.rargs)
 
-        from MDANSE.Framework.Jobs.IJob import IJob
+        from MDANSE.Framework.Jobs import IJob
 
         if nargs != 2:
             LOG.error(

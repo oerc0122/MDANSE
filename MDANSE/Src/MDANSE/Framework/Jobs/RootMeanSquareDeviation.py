@@ -22,7 +22,8 @@ import numpy as np
 from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
+
+from .IJob import IJob
 
 
 class RootMeanSquareDeviation(IJob):

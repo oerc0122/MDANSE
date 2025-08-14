@@ -38,9 +38,10 @@ from MDANSE import PLATFORM
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.Framework.Configurable import Configurable
-from MDANSE.Framework.Jobs.JobStatus import JobStates, JobStatus
 from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
 from MDANSE.MLogging import FMT, LOG
+
+from .JobStatus import JobStates, JobStatus
 
 try:
     from tqdm import tqdm
@@ -279,7 +280,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
 # This is an automatically generated MDANSE run script #
 ########################################################
 
-from MDANSE.Framework.Jobs.IJob import IJob
+from .IJob import IJob
 
 ########################################################
 # Job parameters                                       #
@@ -526,7 +527,7 @@ if __name__ == "__main__":
                 f.write(
                     f'''import collections
 
-from MDANSE.Framework.Jobs.IJob import IJob
+from .IJob import IJob
 
 class {classname}(IJob):
     """

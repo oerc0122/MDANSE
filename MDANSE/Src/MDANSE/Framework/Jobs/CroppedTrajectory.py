@@ -17,8 +17,9 @@ from __future__ import annotations
 
 import collections
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
+
+from .IJob import IJob
 
 
 class CroppedTrajectory(IJob):

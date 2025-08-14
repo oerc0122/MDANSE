@@ -26,10 +26,11 @@ from pathlib import Path
 import numpy as np
 
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.OutputVariables.IOutputVariable import IOutputVariable
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
+
+from .IJob import IJob
 
 MCSTAS_UNITS_LUT = {
     "rad/ps": measure(1, "rad/ps", equivalent=True).toval("meV"),

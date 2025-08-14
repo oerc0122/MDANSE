@@ -19,8 +19,9 @@ import collections
 
 import numpy as np
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Geometry import center_of_mass, moment_of_inertia
+
+from .IJob import IJob
 
 
 class Eccentricity(IJob):

@@ -19,8 +19,9 @@ import collections
 
 import numpy as np
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Units import measure
+
+from .IJob import IJob
 
 NAVOGADRO = 6.02214129e23
 

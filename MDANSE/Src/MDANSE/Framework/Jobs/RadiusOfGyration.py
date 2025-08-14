@@ -19,8 +19,9 @@ import collections
 
 import numpy as np
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Analysis import radius_of_gyration
+
+from .IJob import IJob
 
 
 class RadiusOfGyration(IJob):

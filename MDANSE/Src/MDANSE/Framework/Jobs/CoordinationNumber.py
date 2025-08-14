@@ -26,7 +26,8 @@ from MDANSE.Framework.AtomGrouping.grouping import (
     pair_labels,
     update_pair_results,
 )
-from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
+
+from .DistanceHistogram import DistanceHistogram
 
 
 class CoordinationNumber(DistanceHistogram):

@@ -23,7 +23,8 @@ from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
     pair_labels,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
+
+from .IJob import IJob
 
 
 class StructureFactorFromScatteringFunction(IJob):

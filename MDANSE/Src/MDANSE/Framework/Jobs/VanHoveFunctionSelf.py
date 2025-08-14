@@ -22,12 +22,13 @@ import numpy as np
 from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Framework.Jobs.VanHoveFunctionDistinct import (
+from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
+
+from .IJob import IJob
+from .VanHoveFunctionDistinct import (
     CELL_SIZE_LIMIT,
     DETAILED_CELL_MESSAGE,
 )
-from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
 def van_hove_self(

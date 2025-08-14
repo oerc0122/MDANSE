@@ -19,7 +19,7 @@ import collections
 
 import numpy as np
 
-from MDANSE.Framework.Jobs.IJob import IJob
+from .IJob import IJob
 
 
 class MolecularTrace(IJob):

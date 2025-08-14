@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 from MDANSE.Core.SubclassFactory import SubclassFactory
 
 if TYPE_CHECKING:
-    from MDANSE.Framework.Jobs.IJob import IJob
+    from MDANSE.Framework.Jobs import IJob
 
 
 class IFormat(metaclass=SubclassFactory):

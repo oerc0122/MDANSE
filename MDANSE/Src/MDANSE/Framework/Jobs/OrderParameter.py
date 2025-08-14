@@ -19,10 +19,11 @@ import collections
 
 import numpy as np
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.LinearAlgebra import Vector
 from MDANSE.Mathematics.Signal import correlation
 from MDANSE.Mathematics.Transformation import Rotation
+
+from .IJob import IJob
 
 
 class OrderParameter(IJob):

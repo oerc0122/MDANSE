@@ -22,10 +22,11 @@ import numpy as np
 from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import get_spectrum
 from MDANSE.MolecularDynamics.Analysis import mean_square_displacement
+
+from .IJob import IJob
 
 
 class GaussianDynamicIncoherentStructureFactor(IJob):

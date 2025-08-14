@@ -22,8 +22,9 @@ import numpy as np
 from scipy.spatial import Delaunay as scipyDelaunay
 from scipy.spatial import Voronoi as scipyVoronoi
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import padded_coordinates
+
+from .IJob import IJob
 
 
 def no_exc_min(numbers: list[float]):

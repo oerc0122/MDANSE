@@ -25,7 +25,6 @@ from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
     pair_labels,
 )
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import (
@@ -34,6 +33,8 @@ from MDANSE.Mathematics.Signal import (
 )
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
+
+from .IJob import IJob
 
 
 class CurrentCorrelationFunctionError(Exception):

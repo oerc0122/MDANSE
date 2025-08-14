@@ -21,7 +21,7 @@ import h5py
 
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.Framework.Formats.HDFFormat import write_metadata
-from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Jobs import IJob
 from MDANSE.MLogging import LOG
 
 

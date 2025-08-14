@@ -21,9 +21,10 @@ import copy
 import h5py
 import numpy as np
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import RealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
+
+from .IJob import IJob
 
 
 class GlobalMotionFilteredTrajectory(IJob):

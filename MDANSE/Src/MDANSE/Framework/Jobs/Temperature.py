@@ -19,9 +19,10 @@ import collections
 
 import numpy as np
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Units import measure
 from MDANSE.Mathematics.Signal import differentiate
+
+from .IJob import IJob
 
 KB = measure(1.380649e-23, "kg m2/s2 K").toval("Da nm2/ps2 K")
 

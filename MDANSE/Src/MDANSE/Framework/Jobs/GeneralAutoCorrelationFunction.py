@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import collections
 
-from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import correlation, normalisation_factor
+
+from .IJob import IJob
 
 
 class GeneralAutoCorrelationFunction(IJob):
