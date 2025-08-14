@@ -18,9 +18,10 @@ from __future__ import annotations
 import re
 import subprocess
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
-from MDANSE.Framework.Configurators.McStasOptionsConfigurator import parse_dictionary
 from MDANSE.MLogging import LOG
+
+from .IConfigurator import IConfigurator
+from .McStasOptionsConfigurator import parse_dictionary
 
 
 class McStasParametersConfigurator(IConfigurator):

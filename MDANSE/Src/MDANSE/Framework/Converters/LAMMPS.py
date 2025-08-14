@@ -42,7 +42,7 @@ from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 if TYPE_CHECKING:
-    from MDANSE.Framework.Configurators.ConfigFileConfigurator import (
+    from MDANSE.Framework.Configurators import (
         ConfigFileConfigurator,
     )
 

@@ -17,8 +17,7 @@ from __future__ import annotations
 
 import MDAnalysis as mda
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
-
+from .IConfigurator import IConfigurator
 from .MultiInputFileConfigurator import MultiInputFileConfigurator
 
 

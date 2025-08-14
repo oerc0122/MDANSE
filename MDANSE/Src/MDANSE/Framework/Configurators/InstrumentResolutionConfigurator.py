@@ -17,10 +17,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.InstrumentResolutions.IInstrumentResolution import (
     IInstrumentResolution,
 )
+
+from .IConfigurator import IConfigurator
 
 
 class InstrumentResolutionConfigurator(IConfigurator):

@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.Configurators.IntegerConfigurator import IntegerConfigurator
+from .IntegerConfigurator import IntegerConfigurator
 
 
 class DerivativeOrderConfigurator(IntegerConfigurator):

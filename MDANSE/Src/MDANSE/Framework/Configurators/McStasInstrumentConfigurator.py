@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.Configurators.InputFileConfigurator import InputFileConfigurator
+from .InputFileConfigurator import InputFileConfigurator
 
 
 class McStasInstrumentConfigurator(InputFileConfigurator):

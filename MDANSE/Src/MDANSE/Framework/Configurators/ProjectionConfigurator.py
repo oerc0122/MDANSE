@@ -20,8 +20,9 @@ from typing import SupportsFloat
 
 import numpy as np
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.Projectors.IProjector import IProjector, ProjectorError
+
+from .IConfigurator import IConfigurator
 
 
 class ProjectionConfigurator(IConfigurator):

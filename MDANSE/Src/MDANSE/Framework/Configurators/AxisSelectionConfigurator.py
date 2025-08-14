@@ -15,10 +15,11 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.Configurators.MoleculeSelectionConfigurator import (
+from MDANSE.MolecularDynamics.TrajectoryUtils import find_atoms_in_molecule
+
+from .MoleculeSelectionConfigurator import (
     MoleculeSelectionConfigurator,
 )
-from MDANSE.MolecularDynamics.TrajectoryUtils import find_atoms_in_molecule
 
 
 class AxisSelectionConfigurator(MoleculeSelectionConfigurator):

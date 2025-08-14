@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from MDANSE.Framework.Configurators.IConfigurator import (
+from .IConfigurator import (
     IConfigurator,
 )
 

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import h5py
 
-from MDANSE.Framework.Configurators.InputFileConfigurator import InputFileConfigurator
+from .InputFileConfigurator import InputFileConfigurator
 
 
 class HDFInputFileConfigurator(InputFileConfigurator):

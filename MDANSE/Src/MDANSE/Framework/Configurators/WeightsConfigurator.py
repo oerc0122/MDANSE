@@ -20,7 +20,8 @@ from collections import defaultdict
 import numpy as np
 
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
+
+from .SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
 )
 

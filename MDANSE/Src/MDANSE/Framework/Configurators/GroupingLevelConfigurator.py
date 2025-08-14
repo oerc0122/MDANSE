@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.Configurators.SingleChoiceConfigurator import (
+from .SingleChoiceConfigurator import (
     SingleChoiceConfigurator,
 )
 

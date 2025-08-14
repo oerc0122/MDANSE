@@ -19,8 +19,9 @@ import json
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
+
+from .IConfigurator import IConfigurator
 
 
 class AtomTransmuter:

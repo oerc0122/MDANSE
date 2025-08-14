@@ -18,8 +18,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from MDANSE import PLATFORM
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.Formats.IFormat import IFormat
+
+from .IConfigurator import IConfigurator
 
 
 class OutputFilesConfigurator(IConfigurator):

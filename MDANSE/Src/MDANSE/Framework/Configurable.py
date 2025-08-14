@@ -83,7 +83,7 @@ class Configurable:
                     self.settings[key] = ("MockTrajectoryConfigurator", {})
 
     def build_configuration(self):
-        from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+        from MDANSE.Framework.Configurators import IConfigurator
 
         self._configuration.clear()
 
@@ -340,7 +340,7 @@ class Configurable:
         :return: the documentation about the configurable class
         :rtype: str
         """
-        from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+        from MDANSE.Framework.Configurators import IConfigurator
 
         settings = getattr(cls, "settings", {})
 
@@ -383,7 +383,7 @@ class Configurable:
         :return: a dictionary of the default parameters of the configurable class
         :rtype: dict
         """
-        from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+        from MDANSE.Framework.Configurators import IConfigurator
 
         settings = getattr(cls, "settings", {})
 

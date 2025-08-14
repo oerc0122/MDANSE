@@ -19,7 +19,8 @@ from collections import Counter, defaultdict
 from json import JSONDecodeError
 
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+
+from .IConfigurator import IConfigurator
 
 
 class AtomSelectionConfigurator(IConfigurator):

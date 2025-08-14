@@ -20,7 +20,8 @@ from pathlib import Path
 from ase.io.formats import ioformats
 
 from MDANSE import PLATFORM
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+
+from .IConfigurator import IConfigurator
 
 
 class OutputStructureConfigurator(IConfigurator):

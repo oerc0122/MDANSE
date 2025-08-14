@@ -18,7 +18,8 @@ from __future__ import annotations
 import json
 
 from MDANSE.Framework.AtomMapping import check_mapping_valid, fill_remaining_labels
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+
+from .IConfigurator import IConfigurator
 
 
 class AtomMappingConfigurator(IConfigurator):

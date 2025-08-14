@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+from .IConfigurator import IConfigurator
 
 
 class MultipleChoicesConfigurator(IConfigurator):

@@ -15,8 +15,9 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.MolecularDynamics.MockTrajectory import MockTrajectory
+
+from .IConfigurator import IConfigurator
 
 
 class MockTrajectoryConfigurator(IConfigurator):

@@ -17,8 +17,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
+
+from .IConfigurator import IConfigurator
 
 
 class QVectorsConfigurator(IConfigurator):

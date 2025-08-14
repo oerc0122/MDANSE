@@ -18,8 +18,9 @@ from __future__ import annotations
 from ase.io.formats import all_formats
 
 from MDANSE import PLATFORM
-from MDANSE.Framework.Configurators.InputFileConfigurator import InputFileConfigurator
 from MDANSE.MLogging import LOG
+
+from .InputFileConfigurator import InputFileConfigurator
 
 
 class AseInputFileConfigurator(InputFileConfigurator):

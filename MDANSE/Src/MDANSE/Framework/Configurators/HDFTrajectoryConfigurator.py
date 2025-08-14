@@ -16,8 +16,9 @@
 from __future__ import annotations
 
 from MDANSE import PLATFORM
-from MDANSE.Framework.Configurators.InputFileConfigurator import InputFileConfigurator
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
+
+from .InputFileConfigurator import InputFileConfigurator
 
 
 class HDFTrajectoryConfigurator(InputFileConfigurator):

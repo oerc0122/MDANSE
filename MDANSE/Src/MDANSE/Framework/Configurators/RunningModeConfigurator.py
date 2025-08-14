@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import multiprocessing
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+from .IConfigurator import IConfigurator
 
 
 class RunningModeConfigurator(IConfigurator):

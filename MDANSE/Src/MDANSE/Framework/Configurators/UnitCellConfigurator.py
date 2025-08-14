@@ -17,8 +17,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.MLogging import LOG
+
+from .IConfigurator import IConfigurator
 
 
 class UnitCellConfigurator(IConfigurator):

@@ -23,15 +23,16 @@ import numpy as np
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import AtomLabel, get_element_from_mapping
-from MDANSE.Framework.Configurators.FileWithAtomDataConfigurator import (
-    FileWithAtomDataConfigurator,
-)
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
     RealConfiguration,
 )
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
+
+from .FileWithAtomDataConfigurator import (
+    FileWithAtomDataConfigurator,
+)
 
 
 class XTDFileConfigurator(FileWithAtomDataConfigurator):

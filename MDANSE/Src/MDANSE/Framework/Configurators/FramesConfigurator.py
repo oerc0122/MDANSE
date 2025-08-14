@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.Configurators.RangeConfigurator import RangeConfigurator
+from .RangeConfigurator import RangeConfigurator
 
 
 class FramesConfigurator(RangeConfigurator):

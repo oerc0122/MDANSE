@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import mdtraj as md
 
-from MDANSE.Framework.Configurators.FloatConfigurator import FloatConfigurator
+from .FloatConfigurator import FloatConfigurator
 
 
 class MDTrajTimeStepConfigurator(FloatConfigurator):

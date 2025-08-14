@@ -20,9 +20,10 @@ from pathlib import Path
 import numpy as np
 
 from MDANSE import PLATFORM
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.Framework.Formats.IFormat import IFormat
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
+
+from .IConfigurator import IConfigurator
 
 
 class OutputTrajectoryConfigurator(IConfigurator):

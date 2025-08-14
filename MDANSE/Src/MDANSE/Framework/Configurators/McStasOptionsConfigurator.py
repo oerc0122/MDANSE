@@ -21,7 +21,8 @@ from pathlib import Path
 from typing import Any
 
 from MDANSE import PLATFORM
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
+
+from .IConfigurator import IConfigurator
 
 
 def parse_dictionary(input: str) -> dict[str, Any]:

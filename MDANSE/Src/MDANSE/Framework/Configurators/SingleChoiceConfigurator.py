@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-from MDANSE.Framework.Configurators.IConfigurator import (
+from .IConfigurator import (
     IConfigurator,
 )
 

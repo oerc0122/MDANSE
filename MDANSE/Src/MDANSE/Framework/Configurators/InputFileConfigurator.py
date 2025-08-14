@@ -16,8 +16,9 @@
 from __future__ import annotations
 
 from MDANSE import PLATFORM
-from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
+
+from .IConfigurator import IConfigurator
 
 
 class InputFileConfigurator(IConfigurator):
