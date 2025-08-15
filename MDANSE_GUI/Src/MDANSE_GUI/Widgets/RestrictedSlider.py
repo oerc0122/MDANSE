@@ -48,7 +48,7 @@ class RestrictedSlider(QSlider):
         if self.value() > new_limit:
             self.setValue(new_limit)
 
-    def setValue(self, a0: int) -> None:
+    def setValue(self, a0: int) -> None:  # noqa: N802 -- should be @override py312
         if not self._coupled:
             return super().setValue(a0)
         if self._upper_limit is not None:

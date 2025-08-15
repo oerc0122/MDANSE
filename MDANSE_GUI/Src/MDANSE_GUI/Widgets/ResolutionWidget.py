@@ -323,12 +323,12 @@ class ResolutionWidget(QWidget):
         canvas = QWidget(self)
         layout = QVBoxLayout(canvas)
         figure = mpl.figure(figsize=[width, height], dpi=dpi, frameon=True)
-        figAgg = FigureCanvasQTAgg(figure)
-        figAgg.setParent(canvas)
-        figAgg.updateGeometry()
-        toolbar = NavigationToolbar2QTAgg(figAgg, canvas)
+        fig_agg = FigureCanvasQTAgg(figure)
+        fig_agg.setParent(canvas)
+        fig_agg.updateGeometry()
+        toolbar = NavigationToolbar2QTAgg(fig_agg, canvas)
         toolbar.update()
-        layout.addWidget(figAgg)
+        layout.addWidget(fig_agg)
         layout.addWidget(toolbar)
         self._figure = figure
         return canvas
@@ -478,9 +478,9 @@ class ResolutionWidget(QWidget):
         self._figure.clear()
         axes = self._figure.add_axes(111)
         axes.plot(
-            self._calculator._omega_axis, self._calculator._resolution._omegaWindow
+            self._calculator._omega_axis, self._calculator._resolution._omega_window
         )
-        hh = np.max(self._calculator._resolution._omegaWindow) / 2
+        hh = np.max(self._calculator._resolution._omega_window) / 2
         xs = (
             np.array(
                 [

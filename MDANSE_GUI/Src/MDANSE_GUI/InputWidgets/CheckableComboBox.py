@@ -54,7 +54,7 @@ class CheckableComboBox(QComboBox):
         self.lineEdit().setText("")
         return result
 
-    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:  # noqa: N802 -- Should be @override py312
         """Updates the check state of the items and the lineEdit.
 
         Parameters
@@ -131,7 +131,7 @@ class CheckableComboBox(QComboBox):
         else:
             self.select_all_item.setCheckState(Qt.Unchecked)
 
-    def addItems(self, texts: list[str]) -> None:
+    def addItems(self, texts: list[str]) -> None:  # noqa: N802 -- Should be @override py312
         """
         Parameters
         ----------
@@ -144,7 +144,7 @@ class CheckableComboBox(QComboBox):
     def configure_using_default(self):
         """This is too complex to have a default value"""
 
-    def addItem(self, text: str, bold=False, italic=False, underline=False) -> None:
+    def addItem(self, text: str, bold=False, italic=False, underline=False) -> None:  # noqa: N802 -- Should be @override py312
         """
         Parameters
         ----------

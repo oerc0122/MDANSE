@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Any
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QStandardItem, QStandardItemModel
@@ -55,13 +56,13 @@ class JobTree(QStandardItemModel):
         self._categories = {}
         self._jobs = {}
 
-        self._by_ancestor = {}  # dict of list[int]
+        self._by_ancestor: dict[Any, list[int]] = {}
 
         self.nodecounter = 0  # each node is given a unique number
 
-        self.populateTree(parent_class=parent_class, filter=filter)
+        self.populate_tree(parent_class=parent_class, filter=filter)
 
-    def populateTree(self, parent_class=None, filter=None):
+    def populate_tree(self, parent_class=None, filter=None):
         """This function starts the recursive process of scanning
         the registry tree. Only called once on startup.
         """
@@ -81,13 +82,13 @@ class JobTree(QStandardItemModel):
         for cat, vals in cat_dicts.items():
             if filter and cat not in filter:
                 for subcat in vals:
-                    self.parentsFromCategories((cat, subcat))
+                    self.parents_from_categories((cat, subcat))
         for class_name in sorted_keys:
             class_object = full_dict[class_name]
             if class_object.enabled:
-                self.createNode(class_name, class_object, filter)
+                self.create_node(class_name, class_object, filter)
 
-    def createNode(self, name: str, thing, filter: str = ""):
+    def create_node(self, name: str, thing, filter: str = ""):
         """Creates a new QStandardItem. It will store
         the node number as user data. The 'thing' passed to this method
         will be stored by the model in an internal dictionary, where
@@ -115,16 +116,16 @@ class JobTree(QStandardItemModel):
             trimmed_category = thing.category[self._hidden_levels :]
             if filter:
                 if filter not in thing.category:
-                    parent = self.parentsFromCategories(trimmed_category)
+                    parent = self.parents_from_categories(trimmed_category)
                 else:
                     return
             else:
-                parent = self.parentsFromCategories(trimmed_category)
+                parent = self.parents_from_categories(trimmed_category)
         else:
             parent = self.invisibleRootItem()
         parent.appendRow(new_node)
 
-    def parentsFromCategories(self, category_tuple):
+    def parents_from_categories(self, category_tuple):
         """Returns the parent node for a node that belongs to the
         category specified by category_tuple. Also makes sure that
         the parent nodes exist (or creates them if they don't).

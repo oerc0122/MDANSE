@@ -108,10 +108,10 @@ class OutputTrajectoryWidget(WidgetBase):
         self._layout.addWidget(label2, 1, 2)
         self._layout.addWidget(self.chunk_box, 1, 3)
         self._default_value = default_value
-        self._field.textChanged.connect(self.updateValue)
+        self._field.textChanged.connect(self.update_value)
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
@@ -152,7 +152,7 @@ class OutputTrajectoryWidget(WidgetBase):
         )
         if len(new_value[0]) > 0:
             self._field.setText(str(PurePath(new_value[0])))
-            self.updateValue()
+            self.update_value()
 
     def get_widget_value(self):
         self._configurator.forbidden_files = self._session.reserved_filenames()

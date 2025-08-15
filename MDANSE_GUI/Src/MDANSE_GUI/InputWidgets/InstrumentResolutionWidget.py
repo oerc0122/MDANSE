@@ -98,9 +98,9 @@ class InstrumentResolutionWidget(WidgetBase):
         self._type_combo.setEditable(False)
         self._type_combo.currentTextChanged.connect(self.change_function)
         for field in self._fields:
-            field.textChanged.connect(self.updateValue)
+            field.textChanged.connect(self.update_value)
             field.setToolTip(tooltip_text)
-        self.updateValue()
+        self.update_value()
 
     def configure_using_default(self):
         """This is too complex to have a default value"""
@@ -124,7 +124,7 @@ class InstrumentResolutionWidget(WidgetBase):
 
     @Slot(str)
     def change_function(self, function: str, optional_parameters: dict = None):
-        # need to disconnect textChanged otherwise updateValue will
+        # need to disconnect textChanged otherwise update_value will
         # be called multiple times as the field data will be changed
         # during the function change
         [field.textChanged.disconnect() for field in self._fields]
@@ -144,8 +144,8 @@ class InstrumentResolutionWidget(WidgetBase):
             self._type_combo.setCurrentText(function)
         self._type_combo.blockSignals(False)
         self.set_field_values(new_params)
-        self.updateValue()
-        [field.textChanged.connect(self.updateValue) for field in self._fields]
+        self.update_value()
+        [field.textChanged.connect(self.update_value) for field in self._fields]
 
     def get_widget_value(self):
         function = widget_text_map[self._type_combo.currentText()]

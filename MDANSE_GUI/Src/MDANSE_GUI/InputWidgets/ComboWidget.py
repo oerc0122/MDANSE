@@ -33,7 +33,7 @@ class ComboWidget(WidgetBase):
         field = QComboBox(self._base)
         field.addItems(sorted(option_list))
         field.setCurrentText(default_option)
-        field.currentTextChanged.connect(self.updateValue)
+        field.currentTextChanged.connect(self.update_value)
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
@@ -47,7 +47,7 @@ class ComboWidget(WidgetBase):
         self._configurator = configurator
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
 
     def configure_using_default(self):
         """This is too complex to have a default value"""

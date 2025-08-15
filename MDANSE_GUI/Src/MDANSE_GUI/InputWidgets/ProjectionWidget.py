@@ -43,7 +43,7 @@ class ProjectionWidget(WidgetBase):
         self._vector_fields = vfields
         self._mode = 0
         self._button_group.idClicked.connect(self.button_switched)
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
@@ -53,9 +53,9 @@ class ProjectionWidget(WidgetBase):
         for wid in self._button_group.buttons():
             wid.setToolTip(tooltip_text)
         self.button_switched(0)
-        self._button_group.buttonClicked.connect(self.updateValue)
+        self._button_group.buttonClicked.connect(self.update_value)
         for vfield in self._vector_fields:
-            vfield.textChanged.connect(self.updateValue)
+            vfield.textChanged.connect(self.update_value)
 
     def configure_using_default(self):
         """This is too complex to have a default value"""

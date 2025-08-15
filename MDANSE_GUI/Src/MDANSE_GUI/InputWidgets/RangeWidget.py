@@ -50,7 +50,7 @@ class RangeWidget(WidgetBase):
             self._layout.addWidget(labels[field_num], 0, 2 * field_num)
             self._layout.addWidget(fields[field_num], 0, 2 * field_num + 1)
             fields[field_num].setValidator(validators[field_num])
-            fields[field_num].textChanged.connect(self.updateValue)
+            fields[field_num].textChanged.connect(self.update_value)
             fields[field_num].setPlaceholderText(placeholders[field_num])
         self._fields = fields
         self._validators = validators
@@ -58,7 +58,7 @@ class RangeWidget(WidgetBase):
         self._default_values = placeholders
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:

@@ -98,7 +98,7 @@ class AtomProperties(QStandardItemModel):
 
         self.rebuild_colours()
         self.setHorizontalHeaderLabels(["Element", "Colour", "Radius"])
-        self.itemChanged.connect(self.onNewValues)
+        self.itemChanged.connect(self.on_new_values)
         self._groups = []
         self._total_length = 0
         self.colours = np.array([], dtype=int)
@@ -204,7 +204,7 @@ class AtomProperties(QStandardItemModel):
         return colour_index_list
 
     @Slot()
-    def onNewValues(self):
+    def on_new_values(self):
         self.rebuild_colours()
         colours = np.empty(self._total_length, dtype=int)
         radii = np.empty(self._total_length, dtype=float)

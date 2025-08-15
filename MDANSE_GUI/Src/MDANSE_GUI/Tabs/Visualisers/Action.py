@@ -368,7 +368,7 @@ class Action(QWidget):
         self.check_inputs()
         for widget in self._widgets:
             if isinstance(widget, (OutputFilesWidget, OutputTrajectoryWidget)):
-                widget.updateValue()
+                widget.update_value()
         self.allow_execution()
 
     def apply_instrument(self):
@@ -515,5 +515,5 @@ class Action(QWidget):
             self.new_thread_objects.emit([self._job_name, pardict])
         self.check_inputs()
         for widget in self._widgets:
-            widget.updateValue()
+            widget.update_value()
         self.allow_execution()

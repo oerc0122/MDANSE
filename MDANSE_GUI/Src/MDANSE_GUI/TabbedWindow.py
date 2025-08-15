@@ -90,18 +90,18 @@ class TabbedWindow(QMainWindow):
         self.setWindowTitle(title)
         self.resources = Resources()
         self.current_object = None
-        self.startSettings(settings)
-        self.createCommonModels()
-        self.makeBasicLayout()
+        self.start_settings(settings)
+        self.create_common_models()
+        self.make_basic_layout()
         self.workdir = os.path.expanduser("~")
 
         self.periodic_table = PeriodicTableViewer(self)
         self.element_editor = ElementsDatabaseEditor(self)
         self.unit_editor = UnitsEditor(self)
         self.style_selector = StyleDialog(self)
-        self.style_selector.connectStyleDatabase(self._style_database)
+        self.style_selector.connect_style_database(self._style_database)
         self.style_selector.new_style.connect(self.setStyleSheet)
-        self.style_selector.icon_swap.connect(self.invertToolbar)
+        self.style_selector.icon_swap.connect(self.invert_toolbar)
 
         if app_instance is not None:
             app_instance.aboutToQuit.connect(self._session.save)
@@ -128,29 +128,29 @@ class TabbedWindow(QMainWindow):
         style_hints = QApplication.styleHints()
         colour_scheme = style_hints.colorScheme()
         if colour_scheme == Qt.ColorScheme.Dark:
-            self.invertToolbar(dark=True)
+            self.invert_toolbar(dark=True)
         else:
-            self.invertToolbar(dark=False)
+            self.invert_toolbar(dark=False)
 
-    def createCommonModels(self):
+    def create_common_models(self):
         self._trajectory_model = TrajectoryModel()
         self._instrument_model = GeneralModel()
         self._job_holder = JobHolder()
         self._gui_log_handler = GuiLogHandler()
 
-    def makeBasicLayout(self):
-        self.createConverterViewer()
-        self.createTrajectoryViewer()
-        self.createActionsViewer()
-        self.createJobsViewer()
-        self.createPlotSelection()
-        self.createPlotHolder()
-        self.createInstrumentSelector()
-        self.createLogViewer()
-        self.setupMenubar()
-        self.setupToolbar()
+    def make_basic_layout(self):
+        self.create_converter_viewer()
+        self.create_trajectory_viewer()
+        self.create_actions_viewer()
+        self.create_jobs_viewer()
+        self.create_plot_selection()
+        self.create_plot_holder()
+        self.create_instrument_selector()
+        self.create_log_viewer()
+        self.setup_menu_bar()
+        self.setup_toolbar()
 
-    def startSettings(self, init_settings):
+    def start_settings(self, init_settings):
         self.settings = init_settings
         if self.settings is not None:
             self.settings.beginGroup("MainWindow")
@@ -162,12 +162,12 @@ class TabbedWindow(QMainWindow):
                 self.restoreState(state)
             self.settings.endGroup()
         self.settings_timer = QTimer()
-        self.settings_timer.timeout.connect(self.saveSettings)
+        self.settings_timer.timeout.connect(self.save_settings)
         self.settings_timer.setInterval(2000)
         self.settings_timer.start()
         self.destroyed.connect(self.settings_timer.stop)
 
-    def setupMenubar(self):
+    def setup_menu_bar(self):
         menubar = QMenuBar()
         menubar.setNativeMenuBar(False)  # this works around PyQt problems on MacOS
         menubar.setObjectName("main menubar")
@@ -179,7 +179,7 @@ class TabbedWindow(QMainWindow):
         self.exitAct.triggered.connect(self.shut_down)
         file_group.addAction(self.exitAct)
         self.settingsAct = QAction("User Settings", parent=menubar)
-        self.settingsAct.triggered.connect(self.launchSettingsEditor)
+        self.settingsAct.triggered.connect(self.launch_settings_editor)
         settings_group.addAction(self.settingsAct)
         self.aboutAct = QAction("About MDANSE", parent=menubar)
         self.aboutAct.triggered.connect(self.version_information)
@@ -216,7 +216,7 @@ class TabbedWindow(QMainWindow):
     def show_website_docs(self):
         QDesktopServices.openUrl(MDANSE_DOCS_WEBSITE)
 
-    def setupToolbar(self):
+    def setup_toolbar(self):
         self._toolBar = QToolBar("Main MDANSE toolbar", self)
         # self._toolBar.setMovable(True)
         self._toolBar.setObjectName("main toolbar")
@@ -225,10 +225,10 @@ class TabbedWindow(QMainWindow):
         self._toolBar.setMinimumHeight(24)
         self._toolBar.setMaximumHeight(80)
         valid_keys = [
-            ("periodic_table", self.launchPeriodicTable),
-            ("element", self.launchElementsEditor),
-            ("units", self.launchUnitsEditor),
-            ("user_definitions", self.launchStyleSelector),
+            ("periodic_table", self.launch_periodic_table),
+            ("element", self.launch_elements_editor),
+            ("units", self.launch_units_editor),
+            ("user_definitions", self.launch_style_selector),
         ]
         tooltips = {
             "periodic_table": "Periodic Table of Elements",
@@ -250,24 +250,24 @@ class TabbedWindow(QMainWindow):
         LOG.info(f"Icon size is {self._toolBar.iconSize()}")
 
     @Slot()
-    def launchPeriodicTable(self):
+    def launch_periodic_table(self):
         self.launch_dialog(self.periodic_table)
 
     @Slot()
-    def launchUnitsEditor(self):
+    def launch_units_editor(self):
         self.launch_dialog(self.unit_editor)
 
     @Slot()
-    def launchStyleSelector(self):
+    def launch_style_selector(self):
         self.launch_dialog(self.style_selector)
 
     @Slot()
-    def launchSettingsEditor(self):
+    def launch_settings_editor(self):
         self.settings_editor.update_combo()
         self.launch_dialog(self.settings_editor)
 
     @Slot()
-    def launchElementsEditor(self):
+    def launch_elements_editor(self):
         self.launch_dialog(self.element_editor)
 
     def launch_dialog(self, dialog) -> None:
@@ -281,7 +281,7 @@ class TabbedWindow(QMainWindow):
             dialog.show()
 
     @Slot(bool)
-    def invertToolbar(self, dark=False):
+    def invert_toolbar(self, dark=False):
         if dark:
             for obj, key in self._toolbar_buttons:
                 obj.setIcon(self.resources._inverted_icons[key])
@@ -289,7 +289,7 @@ class TabbedWindow(QMainWindow):
             for obj, key in self._toolbar_buttons:
                 obj.setIcon(self.resources._icons[key])
 
-    def createTrajectoryViewer(self):
+    def create_trajectory_viewer(self):
         name = "Trajectories"
         trajectory_tab = TrajectoryTab.gui_instance(
             self.tabs,
@@ -304,7 +304,7 @@ class TabbedWindow(QMainWindow):
         self._job_holder.trajectory_for_loading.connect(trajectory_tab.load_trajectory)
         self._job_holder.trajectory_for_loading.connect(trajectory_tab.tab_notification)
 
-    def createInstrumentSelector(self):
+    def create_instrument_selector(self):
         name = "Instruments"
         instrument_tab = InstrumentTab.gui_instance(
             self.tabs,
@@ -317,7 +317,7 @@ class TabbedWindow(QMainWindow):
         self.tabs.addTab(instrument_tab._core, name)
         self._tabs[name] = instrument_tab
 
-    def createJobsViewer(self):
+    def create_jobs_viewer(self):
         name = "Running Jobs"
         run_tab = RunTab.gui_instance(
             self.tabs,
@@ -330,7 +330,7 @@ class TabbedWindow(QMainWindow):
         self.tabs.addTab(run_tab._core, name)
         self._tabs[name] = run_tab
 
-    def createConverterViewer(self):
+    def create_converter_viewer(self):
         name = "Converters"
         job_tab = ConverterTab.gui_instance(
             self.tabs, name, self._session, self._settings, self._logger
@@ -342,7 +342,7 @@ class TabbedWindow(QMainWindow):
             job_tab.update_action_on_tab_activation
         )
 
-    def createActionsViewer(self):
+    def create_actions_viewer(self):
         name = "Actions"
         job_tab = JobTab.gui_instance(
             self.tabs,
@@ -361,7 +361,7 @@ class TabbedWindow(QMainWindow):
             job_tab.update_action_on_tab_activation
         )
 
-    def createPlotSelection(self):
+    def create_plot_selection(self):
         name = "Plot Creator"
         plot_tab = PlotSelectionTab.gui_instance(
             self.tabs,
@@ -380,7 +380,7 @@ class TabbedWindow(QMainWindow):
         self._tabs["Plot Creator"]._visualiser.new_plot()
         self._tabs["Plot Holder"].accept_external_data(model)
 
-    def createPlotHolder(self):
+    def create_plot_holder(self):
         name = "Plot Holder"
         plot_tab = PlotTab.gui_instance(
             self.tabs,
@@ -393,7 +393,7 @@ class TabbedWindow(QMainWindow):
         self.tabs.addTab(plot_tab._core, name)
         self._tabs[name] = plot_tab
 
-    def createLogViewer(self):
+    def create_log_viewer(self):
         name = "Logger"
         LOG.addHandler(self._gui_log_handler)
         log_tab = LoggingTab.gui_instance(
@@ -404,11 +404,11 @@ class TabbedWindow(QMainWindow):
         self._tabs[name] = log_tab
 
     @Slot()
-    def saveSettings(self):
+    def save_settings(self):
         self.settings.beginGroup("MainWindow")
         self.settings.setValue("geometry", self.saveGeometry())
         self.settings.setValue("state", self.saveState())
         self.settings.endGroup()
 
-    def reportError(self, text: str):
+    def report_error(self, text: str):
         LOG.error(text)

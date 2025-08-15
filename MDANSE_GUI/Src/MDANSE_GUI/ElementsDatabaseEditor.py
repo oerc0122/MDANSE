@@ -97,10 +97,10 @@ class ComplexValidator(QValidator):
 class FloatInputField(QItemDelegate):
     """QLineEdit with a QDoubleValidator."""
 
-    def setEditorData(self, editor, index):
+    def set_editor_data(self, editor, index):
         editor.setText(str(index.data()))
 
-    def setModelData(self, editor, model, index):
+    def set_model_data(self, editor, model, index):
         new_text = editor.text()
         try:
             float(new_text)
@@ -108,25 +108,25 @@ class FloatInputField(QItemDelegate):
             return
         model.setData(index, new_text)
 
-    def createEditor(self, parent, _option, _index):
+    def create_editor(self, parent, _option, _index):
         sbox = QLineEdit(parent)
         validator = QDoubleValidator()
         sbox.setValidator(validator)
-        sbox.textChanged.connect(self.valueChanged)
+        sbox.textChanged.connect(self.value_changed)
         return sbox
 
     @Slot()
-    def valueChanged(self):
+    def value_changed(self):
         self.commitData.emit(self.sender())
 
 
 class ComplexInputField(QItemDelegate):
     """QLineEdit with a ComplexValidator."""
 
-    def setEditorData(self, editor, index):
+    def set_editor_data(self, editor, index):
         editor.setText(str(index.data()))
 
-    def setModelData(self, editor, model, index):
+    def set_model_data(self, editor, model, index):
         new_text = editor.text()
         try:
             complex(new_text)
@@ -134,25 +134,25 @@ class ComplexInputField(QItemDelegate):
             return
         model.setData(index, new_text)
 
-    def createEditor(self, parent, _option, _index):
+    def create_editor(self, parent, _option, _index):
         sbox = QLineEdit(parent)
         validator = ComplexValidator()
         sbox.setValidator(validator)
-        sbox.textChanged.connect(self.valueChanged)
+        sbox.textChanged.connect(self.value_changed)
         return sbox
 
     @Slot()
-    def valueChanged(self):
+    def value_changed(self):
         self.commitData.emit(self.sender())
 
 
 class IntInputField(QItemDelegate):
     """QLineEdit with a QIntValidator."""
 
-    def setEditorData(self, editor, index):
+    def set_editor_data(self, editor, index):
         editor.setText(str(index.data()))
 
-    def setModelData(self, editor, model, index):
+    def set_model_data(self, editor, model, index):
         new_text = editor.text()
         try:
             int(new_text)
@@ -160,44 +160,44 @@ class IntInputField(QItemDelegate):
             return
         model.setData(index, new_text)
 
-    def createEditor(self, parent, _option, _index):
+    def create_editor(self, parent, _option, _index):
         sbox = QLineEdit(parent)
         validator = QIntValidator()
         sbox.setValidator(validator)
-        sbox.textChanged.connect(self.valueChanged)
+        sbox.textChanged.connect(self.value_changed)
         return sbox
 
     @Slot()
-    def valueChanged(self):
+    def value_changed(self):
         self.commitData.emit(self.sender())
 
 
 class ColorInputField(ColourPicker):
-    def setEditorData(self, editor, index):
+    def set_editor_data(self, editor, index):
         r, g, b = index.data().split(";")
         color = QColor(int(r), int(g), int(b))
         editor.setCurrentColor(color)
 
-    def setModelData(self, editor, model, index):
+    def set_model_data(self, editor, model, index):
         if editor.result() == QColorDialog.DialogCode.Accepted:
             color = editor.currentColor()
             model.setData(index, f"{color.red()};{color.green()};{color.blue()}")
             model.setData(index, color, role=Qt.ItemDataRole.BackgroundRole)
-            self.valueChanged()
+            self.value_changed()
 
-    def valueChanged(self):
+    def value_changed(self):
         self.commitData.emit(self.sender())
 
 
 class NewAtomTypeNameVariable(InputVariable):
-    def inputValid(self) -> bool:
+    def input_valid(self) -> bool:
         """
         Returns
         -------
         bool
             True if the new atom type name is valid.
         """
-        result = self.returnValue()
+        result = self.return_value()
         if not result:
             self.invalid_tooltip = "New atom name should not be an empty string."
             return False
@@ -208,14 +208,14 @@ class NewAtomTypeNameVariable(InputVariable):
 
 
 class NewAtomPropertyNameVariable(InputVariable):
-    def inputValid(self) -> bool:
+    def input_valid(self) -> bool:
         """
         Returns
         -------
         bool
             True if the new atom property name is valid.
         """
-        result = self.returnValue()
+        result = self.return_value()
         if not result:
             self.invalid_tooltip = (
                 "New atom property name should not be an empty string."
@@ -239,17 +239,17 @@ class ElementView(QTableView):
         self.complex_delegate = ComplexInputField(self)
         self.setSortingEnabled(True)
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event):  # noqa: N802 -- Should be @override py312
         menu = QMenu(self)
 
-        Action1 = menu.addAction("New Custom Atom")
-        Action2 = menu.addAction("Copy Atoms")
-        Action3 = menu.addAction("Rename Custom Atom")
-        Action4 = menu.addAction("Delete Custom Atoms")
-        Action5 = menu.addAction("New Custom Property")
-        Action6 = menu.addAction("Copy Properties")
-        Action7 = menu.addAction("Rename Custom Property")
-        Action8 = menu.addAction("Delete Custom Properties")
+        new_atom = menu.addAction("New Custom Atom")
+        copy_atom = menu.addAction("Copy Atoms")
+        rename_atom = menu.addAction("Rename Custom Atom")
+        delete_atom = menu.addAction("Delete Custom Atoms")
+        new_property = menu.addAction("New Custom Property")
+        copy_property = menu.addAction("Copy Properties")
+        raname_property = menu.addAction("Rename Custom Property")
+        delete_property = menu.addAction("Delete Custom Properties")
 
         data_model = self.parent().data_model
 
@@ -288,26 +288,26 @@ class ElementView(QTableView):
 
         temp_model = self.model().sourceModel()
         if temp_model is not None:
-            Action1.triggered.connect(temp_model.new_line_dialog)
-            Action2.triggered.connect(temp_model.copy_rows)
+            new_atom.triggered.connect(temp_model.new_line_dialog)
+            copy_atom.triggered.connect(temp_model.copy_rows)
             if self.mouse_atm in custom_atms:
-                Action3.triggered.connect(temp_model.rename_row_dialog)
+                rename_atom.triggered.connect(temp_model.rename_row_dialog)
             else:
-                Action3.setEnabled(False)
+                rename_atom.setEnabled(False)
             if enable_delete_atms:
-                Action4.triggered.connect(temp_model.delete_rows)
+                delete_atom.triggered.connect(temp_model.delete_rows)
             else:
-                Action4.setEnabled(False)
-            Action5.triggered.connect(temp_model.new_column_dialog)
-            Action6.triggered.connect(temp_model.copy_columns)
+                delete_atom.setEnabled(False)
+            new_property.triggered.connect(temp_model.new_column_dialog)
+            copy_property.triggered.connect(temp_model.copy_columns)
             if self.mouse_prop in custom_props:
-                Action7.triggered.connect(temp_model.rename_column_dialog)
+                raname_property.triggered.connect(temp_model.rename_column_dialog)
             else:
-                Action7.setEnabled(False)
+                raname_property.setEnabled(False)
             if enable_delete_props:
-                Action8.triggered.connect(temp_model.delete_columns)
+                delete_property.triggered.connect(temp_model.delete_columns)
             else:
-                Action8.setEnabled(False)
+                delete_property.setEnabled(False)
 
         menu.exec_(event.globalPos())
 
@@ -350,7 +350,7 @@ class ElementModel(QStandardItemModel):
 
         self.custom_header_brush = QBrush(QColor(255, 165, 0))
         self.database = element_database
-        self.parseDatabase()
+        self.parse_database()
 
         self.itemChanged.connect(self.write_to_database)
 
@@ -364,7 +364,7 @@ class ElementModel(QStandardItemModel):
         """Names of all properties."""
         return self.database.properties
 
-    def parseDatabase(self):
+    def parse_database(self):
         """Build a Qt model from the MDANSE atom database."""
         def_columns = self.database.default_atoms_properties
         def_rows = self.database.default_atoms_types

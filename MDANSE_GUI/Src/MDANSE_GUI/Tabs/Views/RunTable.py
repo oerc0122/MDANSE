@@ -43,7 +43,7 @@ class RunTable(QTableView):
         vh = self.verticalHeader()
         vh.setVisible(False)
 
-    def setModel(self, model: QStandardItemModel) -> None:
+    def set_model(self, model: QStandardItemModel) -> None:
         result = super().setModel(model)
         model.itemChanged.connect(self.selective_resize)
         model.new_job_started.connect(self.name_column_resize)
@@ -59,7 +59,7 @@ class RunTable(QTableView):
             return
         self.resizeColumnToContents(colind)
 
-    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:  # noqa: N802 -- Should be @override py312
         index = self.indexAt(event.pos())
         if index.row() == -1:
             # block right click when it's not on a job
@@ -67,24 +67,24 @@ class RunTable(QTableView):
         model = self.model()
         item = model.itemData(index)
         menu = QMenu()
-        self.populateMenu(menu, item)
+        self.populate_menu(menu, item)
         menu.exec_(event.globalPos())
 
-    def populateMenu(self, menu: QMenu, item: QStandardItem) -> None:
-        job = self.getJobObjects()
+    def populate_menu(self, menu: QMenu, item: QStandardItem) -> None:
+        job = self.get_job_objects()
         job_state = job.entry.job.state
         for action, method in [
-            ("Delete", self.deleteNode),
-            ("Pause", self.pauseJob),
-            ("Resume", self.unpauseJob),
-            ("Terminate", self.terminateJob),
+            ("Delete", self.delete_node),
+            ("Pause", self.pause_job),
+            ("Resume", self.unpause_job),
+            ("Terminate", self.terminate_job),
             # ("Kill", self.killJob),
         ]:
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
             temp_action.setEnabled(action in ALLOWED_ACTIONS[job_state])
 
-    def getJobObjects(self) -> Job | None:
+    def get_job_objects(self) -> Job | None:
         model: JobHolder = self.model()
         index = self.currentIndex()
         item_row = index.row()
@@ -98,8 +98,8 @@ class RunTable(QTableView):
         return model.jobs[entry_number]
 
     @Slot()
-    def deleteNode(self) -> None:
-        job = self.getJobObjects()
+    def delete_node(self) -> None:
+        job = self.get_job_objects()
         try:
             job.process.close()
         except ValueError:
@@ -112,24 +112,24 @@ class RunTable(QTableView):
             self.jobs_logs.emit(([], []))
 
     @Slot()
-    def pauseJob(self) -> None:
-        job = self.getJobObjects()
+    def pause_job(self) -> None:
+        job = self.get_job_objects()
         job.entry.pause_job()
 
     @Slot()
-    def unpauseJob(self) -> None:
-        job = self.getJobObjects()
+    def unpause_job(self) -> None:
+        job = self.get_job_objects()
         job.entry.unpause_job()
 
     @Slot()
-    def killJob(self) -> None:
-        job = self.getJobObjects()
+    def kill_job(self) -> None:
+        job = self.get_job_objects()
         job.process.kill()
         job.entry.kill_job()
         job.listener.stop()
 
     @Slot()
-    def terminateJob(self) -> None:
+    def terminate_job(self) -> None:
         confirmation_box = QMessageBox(
             QMessageBox.Icon.Question,
             "You are about to terminate a job",
@@ -140,7 +140,7 @@ class RunTable(QTableView):
         result = confirmation_box.exec()
         LOG.info(f"QMessageBox result = {result}")
         if result == QMessageBox.StandardButton.Yes:
-            job = self.getJobObjects()
+            job = self.get_job_objects()
             # process is not alive, the job probably finished already
             if job.process.is_alive():
                 job.process.terminate()

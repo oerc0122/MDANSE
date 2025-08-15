@@ -41,7 +41,7 @@ class ActionsTree(QTreeView):
         self.clicked.connect(self.on_select_action)
         self.clicked.connect(self.item_picked)
 
-    def mousePressEvent(self, e: QMouseEvent) -> None:
+    def mousePressEvent(self, e: QMouseEvent) -> None:  # noqa: N802 -- Should be @override py312
         self.click_position = e.position()
         if self.model() is None:
             return None

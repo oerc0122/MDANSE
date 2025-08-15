@@ -31,8 +31,8 @@ class RunningModeWidget(WidgetBase):
         default_value = self._configurator.default
         self._value = default_value
         self.mode_box = QComboBox(self._base)
-        self.mode_box.addItems(self._configurator.availablesModes)
-        self.mode_box.setCurrentText(self._configurator.availablesModes[0])
+        self.mode_box.addItems(self._configurator.available_modes)
+        self.mode_box.setCurrentText(self._configurator.available_modes[0])
         self._field = QSpinBox(self._base)
         self._field.setValue(1)
         self._field.setMinimum(1)
@@ -43,7 +43,7 @@ class RunningModeWidget(WidgetBase):
         self.mode_box.currentIndexChanged.connect(self.mode_changed)
         self._field.valueChanged.connect(self.numproc_changed)
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:

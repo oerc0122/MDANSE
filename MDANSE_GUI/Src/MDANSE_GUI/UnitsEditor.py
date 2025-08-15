@@ -63,7 +63,7 @@ class UnitVisualiser(QFrame):
             self.lines[item] = entry
 
     @Slot(dict)
-    def newValues(self, val_dict: dict):
+    def new_values(self, val_dict: dict):
         for key, value in val_dict.items():
             entry = self.lines[key]
             entry.setReadOnly(False)
@@ -79,16 +79,16 @@ class UnitModel(QStandardItemModel):
 
         self._defaultUnits = copy.deepcopy(UNITS_MANAGER.units)
 
-        self.populateUnitList()
+        self.populate_unit_list()
 
-    def populateUnitList(self):
+    def populate_unit_list(self):
         for unit in self._defaultUnits:
             item = QStandardItem(unit)
             item.setData(unit)
             self.appendRow(item)
 
     @Slot(QModelIndex)
-    def passValue(self, index: QModelIndex):
+    def pass_value(self, index: QModelIndex):
         label = self.itemFromIndex(index)
         unit = UNITS_MANAGER.units[label.text()]
         info = {}
@@ -105,7 +105,7 @@ class UnitModel(QStandardItemModel):
         self.unit_info.emit(info)
 
     @Slot(dict)
-    def addNewUnit(self, info: dict):
+    def add_new_unit(self, info: dict):
         unit_name = info["name"]
         if UNITS_MANAGER.has_unit(unit_name):
             return None
@@ -150,18 +150,18 @@ class UnitsEditor(QDialog):
 
         self.visualiser = UnitVisualiser(self)
 
-        self.view.clicked.connect(self.model.passValue)
-        self.model.unit_info.connect(self.visualiser.newValues)
+        self.view.clicked.connect(self.model.pass_value)
+        self.model.unit_info.connect(self.visualiser.new_values)
 
         new_unit_button = QPushButton("New unit", self)
-        new_unit_button.clicked.connect(self.newUnitDialog)
+        new_unit_button.clicked.connect(self.new_unit_dialog)
 
         layout.addWidget(self.view, 0, 0)
         layout.addWidget(self.visualiser, 0, 1)
         layout.addWidget(new_unit_button, 1, 0)
 
     @Slot()
-    def newUnitDialog(self):
+    def new_unit_dialog(self):
         dialog_variables = [
             InputVariable(
                 input_dict={
@@ -196,7 +196,7 @@ class UnitsEditor(QDialog):
         nu_dialog = InputDialog(
             parent=self.parent(), fields=dialog_variables, title="Create Custom Unit"
         )
-        nu_dialog.got_values.connect(self.model.addNewUnit)
+        nu_dialog.got_values.connect(self.model.add_new_unit)
         nu_dialog.show()
         _result = nu_dialog.exec()
 

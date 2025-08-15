@@ -45,7 +45,7 @@ class DerivativeOrderWidget(WidgetBase):
         self._layout.addWidget(self.numerator)
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
@@ -62,7 +62,7 @@ class DerivativeOrderWidget(WidgetBase):
                     self._configurator.dependencies["frames"]
                 ]
             ):
-                widget.value_changed.connect(self.updateValue)
+                widget.value_changed.connect(self.update_value)
 
     def configure_using_default(self):
         """This is too simple to have a default value"""
@@ -78,7 +78,7 @@ class DerivativeOrderWidget(WidgetBase):
         text_order = str(order)
         new_numerator = suffix_dict.get(text_order[-1])
         self.numerator.setText(new_numerator)
-        self.updateValue()
+        self.update_value()
 
     def get_widget_value(self):
         value = self._field.value()

@@ -35,7 +35,7 @@ class MultiInputFileWidget(InputFileWidget):
         )
 
     @Slot()
-    def valueFromDialog(self):
+    def value_from_dialog(self):
         paths_group = self._settings.group("paths")
         try:
             self.default_path = paths_group.get(self._job_name)
@@ -51,7 +51,7 @@ class MultiInputFileWidget(InputFileWidget):
         if new_value is not None and new_value[0]:
             values = ['"' + str(PurePath(value)) + '"' for value in new_value[0]]
             self._field.setText("[" + ", ".join(values) + "]")
-            self.updateValue()
+            self.update_value()
             try:
                 LOG.info(
                     f"Settings path of {self._job_name} to {os.path.split(new_value[0][0])[0]}"

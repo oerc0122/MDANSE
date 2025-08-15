@@ -227,7 +227,7 @@ class PlotDataModel(QStandardItemModel):
         number = model_item.file_number()
         return self._nodes[number]
 
-    def removeRow(self, row: int, parent: QModelIndex = None):
+    def removeRow(self, row: int, parent: QModelIndex = None):  # noqa: N802 -- should be @override py312
         """Delete a row from the model."""
         self.mutex.lock()
         try:

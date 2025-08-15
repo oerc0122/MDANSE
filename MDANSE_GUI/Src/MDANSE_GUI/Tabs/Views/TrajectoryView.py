@@ -33,7 +33,7 @@ class TrajectoryView(QListView):
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.clicked.connect(self.item_picked)
 
-    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:  # noqa: N802 -- should be @override py312
         index = self.indexAt(event.pos())
         if index.row() == -1:
             # block right click when it's not on a trajectory
@@ -43,16 +43,16 @@ class TrajectoryView(QListView):
             return
         item = model.itemData(index)
         menu = QMenu()
-        self.populateMenu(menu, item)
+        self.populate_menu(menu, item)
         menu.exec_(event.globalPos())
 
-    def populateMenu(self, menu: QMenu, item: QStandardItem):
-        for action, method in [("Delete", self.deleteNode)]:
+    def populate_menu(self, menu: QMenu, item: QStandardItem):
+        for action, method in [("Delete", self.delete_node)]:
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
 
     @Slot()
-    def deleteNode(self):
+    def delete_node(self):
         model = self.model()
         index = self.currentIndex()
         model.removeRow(index.row())

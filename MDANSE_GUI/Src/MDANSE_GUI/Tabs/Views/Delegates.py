@@ -35,16 +35,16 @@ class ColourPicker(QStyledItemDelegate):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    def createEditor(self, parent, option, index):
+    def create_editor(self, parent, option, index):
         dialog = QColorDialog(parent)
         return dialog
 
-    def setEditorData(self, editor, index):
+    def set_editor_data(self, editor, index):
         colour_string = index.data()
         color = QColor(colour_string)
         editor.setCurrentColor(color)
 
-    def setModelData(self, editor, model, index):
+    def set_model_data(self, editor, model, index):
         if editor.result() == QColorDialog.DialogCode.Accepted:
             color = editor.currentColor()
             colour_string = color.toRgb()
@@ -57,7 +57,7 @@ class MainAxisCombo(QItemDelegate):
         self._items = []
         super().__init__(*args, **kwargs)
 
-    def setEditorData(self, editor, index):
+    def set_editor_data(self, editor, index):
         editor.blockSignals(True)
         text = index.model().data(index, Qt.DisplayRole)
         try:
@@ -67,21 +67,21 @@ class MainAxisCombo(QItemDelegate):
         editor.setCurrentIndex(i)
         editor.blockSignals(False)
 
-    def setModelData(self, editor, model, index):
+    def set_model_data(self, editor, model, index):
         model.setData(index, editor.currentText())
 
-    def createEditor(self, parent, option, index):
+    def create_editor(self, parent, option, index):
         combo = QComboBox(parent)
         model = index.model()
         key = index.model().data(index, Qt.ItemDataRole.UserRole)
         dataset = model._datasets[key]
         self._items = [str(x) for x in dataset._axes.keys()]
         combo.addItems(self._items)
-        combo.currentIndexChanged.connect(self.currentIndexChanged)
+        combo.currentIndexChanged.connect(self.current_index_changed)
         return combo
 
     @Slot()
-    def currentIndexChanged(self):
+    def current_index_changed(self):
         self.commitData.emit(self.sender())
 
 
@@ -90,7 +90,7 @@ class MplStyleCombo(QItemDelegate):
         self._items = list([str(x) for x in mpl_items.keys()])
         super().__init__(*args, **kwargs)
 
-    def setEditorData(self, editor, index):
+    def set_editor_data(self, editor, index):
         editor.blockSignals(True)
         text = index.model().data(index, Qt.DisplayRole)
         try:
@@ -100,20 +100,20 @@ class MplStyleCombo(QItemDelegate):
         editor.setCurrentIndex(i)
         editor.blockSignals(False)
 
-    def setModelData(self, editor, model, index):
+    def set_model_data(self, editor, model, index):
         model.setData(index, editor.currentText())
 
-    def createEditor(self, parent, option, index):
+    def create_editor(self, parent, option, index):
         combo = QComboBox(parent)
         li = []
         for item in self._items:
             li.append(item)
         combo.addItems(li)
-        combo.currentIndexChanged.connect(self.currentIndexChanged)
+        combo.currentIndexChanged.connect(self.current_index_changed)
         return combo
 
     @Slot()
-    def currentIndexChanged(self):
+    def current_index_changed(self):
         self.commitData.emit(self.sender())
 
 
@@ -123,22 +123,22 @@ class RadiusSpinBox(QItemDelegate):
         self._step = 0.01
         super().__init__(*args, **kwargs)
 
-    def setEditorData(self, editor, index):
+    def set_editor_data(self, editor, index):
         current_value = float(index.data())
         editor.setValue(current_value)
 
-    def setModelData(self, editor, model, index):
+    def set_model_data(self, editor, model, index):
         model.setData(index, str(round(editor.value(), 2)))
 
-    def createEditor(self, parent, option, index):
+    def create_editor(self, parent, option, index):
         sbox = QDoubleSpinBox(parent)
         sbox.setMinimum(self._minimum)
         sbox.setSingleStep(self._step)
-        sbox.valueChanged.connect(self.valueChanged)
+        sbox.valueChanged.connect(self.value_changed)
         return sbox
 
     @Slot()
-    def valueChanged(self):
+    def value_changed(self):
         self.commitData.emit(self.sender())
 
 

@@ -35,7 +35,7 @@ class CorrelationFramesWidget(FramesWidget):
         validator = QIntValidator(field)
 
         field.setValidator(validator)
-        field.textChanged.connect(self.updateValue)
+        field.textChanged.connect(self.update_value)
         field.setPlaceholderText(c_frames)
 
         self._layout.addWidget(QLabel("Correlation frames", self._base), 1, 0)

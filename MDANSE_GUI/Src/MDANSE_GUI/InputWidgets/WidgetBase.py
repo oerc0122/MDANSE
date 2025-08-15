@@ -87,11 +87,11 @@ class WidgetBase(QObject):
         self._layout_type = layout_type
 
         if self._layout_type == "QHBoxLayout":
-            layoutClass = QHBoxLayout
+            layout_class = QHBoxLayout
         elif self._layout_type == "QVBoxLayout":
-            layoutClass = QVBoxLayout
+            layout_class = QVBoxLayout
         elif self._layout_type == "QGridLayout":
-            layoutClass = QGridLayout
+            layout_class = QGridLayout
         else:
             raise NotImplementedError(
                 f"Cannot create layout of type {self._layout_type}."
@@ -99,14 +99,14 @@ class WidgetBase(QObject):
 
         if self._base_type == "QWidget":
             base = QWidget(parent)
-            layout = layoutClass(base)
+            layout = layout_class(base)
             base.setLayout(layout)
             self._label = QLabel(self._label_text, base)
             layout.addWidget(self._label)
         elif self._base_type == "QGroupBox":
             base = QGroupBox(self._label_text, parent)
             base.setToolTip(self._tooltip)
-            layout = layoutClass(base)
+            layout = layout_class(base)
             base.setLayout(layout)
         else:
             raise NotImplementedError(f"Cannot create base of type {self._base_type}.")
@@ -207,7 +207,7 @@ class WidgetBase(QObject):
 
     @abstractmethod
     @Slot()
-    def updateValue(self):
+    def update_value(self):
         current_value = self.get_widget_value()
         if self._empty:
             self.configure_using_default()
@@ -226,7 +226,7 @@ class WidgetBase(QObject):
 
     @abstractmethod
     def get_value(self):
-        self.updateValue()
+        self.update_value()
         return self._configurator["value"]
 
     @property

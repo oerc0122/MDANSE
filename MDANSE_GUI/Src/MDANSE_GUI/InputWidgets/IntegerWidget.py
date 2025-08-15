@@ -44,13 +44,13 @@ class IntegerWidget(WidgetBase):
             field.setValidator(validator)
             field.setText(str(default_option))
             field.setPlaceholderText(str(default_option))
-            field.textChanged.connect(self.updateValue)
+            field.textChanged.connect(self.update_value)
         self._field = field
         self._default_value = default_option
         self._layout.addWidget(field)
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:

@@ -39,7 +39,7 @@ sys.excepthook = catch_exceptions
 # end of exception handling part.
 
 
-def startGUI(some_args):
+def start_gui(some_args):
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel("INFO")
     stream_handler.setFormatter(FMT)
@@ -83,4 +83,4 @@ def startGUI(some_args):
 
 
 if __name__ == "__main__":
-    startGUI(sys.argv)
+    start_gui(sys.argv)

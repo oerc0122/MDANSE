@@ -239,7 +239,7 @@ class ElementButton(QToolButton):
 
         self.info = ATOMS_DATABASE[element]
         self.setText(element)
-        self.setGroupStyleSheet()
+        self.set_group_style_sheet()
         self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
         self.isotopes = [element]
@@ -247,11 +247,11 @@ class ElementButton(QToolButton):
         for iso in sorted(ATOMS_DATABASE.get_isotopes(element)):
             self.isotopes.append(iso)
 
-        self.clicked.connect(self.altContextMenu)
-        self.isotope_info.connect(self.popIstopeInfo)
+        self.clicked.connect(self.alt_context_menu)
+        self.isotope_info.connect(self.pop_isotope_info)
 
     @Slot()
-    def setGroupStyleSheet(self):
+    def set_group_style_sheet(self):
         rgb = _FAMILY[self.info["family"]]
         text_rgb = ",".join([str(int(x)) for x in rgb])
         varbox_stylesheet = (
@@ -261,29 +261,29 @@ class ElementButton(QToolButton):
         )
         self.setStyleSheet(varbox_stylesheet)
 
-    def enterEvent(self, a0: QEnterEvent) -> None:
+    def enterEvent(self, a0: QEnterEvent) -> None:  # noqa: N802 -- Should be @override py312
         self.atom_info.emit(self.info)
         return super().enterEvent(a0)
 
-    def populateMenu(self, menu: QMenu):
+    def populate_menu(self, menu: QMenu):
         for iso in self.isotopes:
             menu.addAction(iso)
 
-    def altContextMenu(self):
+    def alt_context_menu(self):
         menu = QMenu()
-        self.populateMenu(menu)
+        self.populate_menu(menu)
         res = menu.exec_(self.mapToGlobal(QPoint(10, 10)))
         if res is not None:
             self.isotope_info.emit(res.text())
 
     @Slot(str)
-    def popIstopeInfo(self, isotope: str):
+    def pop_isotope_info(self, isotope: str):
         infotext = ATOMS_DATABASE.info(isotope)
         PopupTextbox(self, input_text=infotext)
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event):  # noqa: N802 -- Should be @override py312
         menu = QMenu()
-        self.populateMenu(menu)
+        self.populate_menu(menu)
         res = menu.exec_(event.globalPos())
         if res is not None:
             self.isotope_info.emit(res.text())
@@ -333,7 +333,7 @@ class InfoDisplay(QFrame):
         self.setStyleSheet(stylesheet)
 
     @Slot(object)
-    def updateDisplay(self, info_object):
+    def update_display(self, info_object):
         # self.fields[0].setText(str(info_object["proton"]))
         self.fields[1].setText(
             "<sup>" + str(info_object["proton"]) + "</sup>" + str(info_object["symbol"])
@@ -375,12 +375,12 @@ class PeriodicTableViewer(QDialog):
 
         self.glayout.addWidget(self.data_display, 1, 5, 3, 8)
 
-        self.placeElements()
+        self.place_elements()
 
-    def placeElements(self):
+    def place_elements(self):
         for key, value in _LAYOUT.items():
             element = ElementButton(self, element=key)
-            element.atom_info.connect(self.data_display.updateDisplay)
+            element.atom_info.connect(self.data_display.update_display)
             row, column = value[0] + 1, value[1] + 1
             self.glayout.addWidget(element, row, column)
 

@@ -35,7 +35,7 @@ class SettingsView(QTreeView):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    def populateMenu(self, menu: QMenu, clicked_on_node: bool):
+    def populate_menu(self, menu: QMenu, clicked_on_node: bool):
         if clicked_on_node:
             for action, method in [("Delete", self.delete_node)]:
                 temp_action = menu.addAction(action)

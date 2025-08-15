@@ -28,7 +28,7 @@ class DummyWidget(WidgetBase):
         self._configurator = {"value": "Oops!"}
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:

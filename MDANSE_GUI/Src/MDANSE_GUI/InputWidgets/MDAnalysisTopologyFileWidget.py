@@ -15,14 +15,14 @@
 #
 from __future__ import annotations
 
-import MDAnalysis as mda
+import MDAnalysis as MDa
 from qtpy.QtWidgets import QComboBox, QLineEdit, QPushButton
 
 from .InputFileWidget import InputFileWidget
 
 
 class MDAnalysisTopologyFileWidget(InputFileWidget):
-    def __init__(self, *args, format_options=sorted(mda._PARSERS.keys()), **kwargs):
+    def __init__(self, *args, format_options=sorted(MDa._PARSERS.keys()), **kwargs):
         self.format_options = ["AUTO"] + list(format_options)
         super().__init__(*args, **kwargs)
 
@@ -41,9 +41,9 @@ class MDAnalysisTopologyFileWidget(InputFileWidget):
         button = QPushButton("Browse", self._base)
         self._layout.addWidget(button)
 
-        field.textChanged.connect(self.updateValue)
-        self.format_combo.currentTextChanged.connect(self.updateValue)
-        button.clicked.connect(self.valueFromDialog)
+        field.textChanged.connect(self.update_value)
+        self.format_combo.currentTextChanged.connect(self.update_value)
+        button.clicked.connect(self.value_from_dialog)
 
     def get_widget_value(self) -> tuple[str, str]:
         """

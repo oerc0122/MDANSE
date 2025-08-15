@@ -46,7 +46,7 @@ class InstrumentList(QListView):
         self._all_instruments = set()
         self._backup_instruments = {}
 
-    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:  # noqa: N802 -- Should be @override py312
         index = self.indexAt(event.pos())
         if index.row() == -1:
             # block right click when it's not on a trajectory
@@ -54,10 +54,10 @@ class InstrumentList(QListView):
         model = self.model()
         item = model.itemData(index)
         menu = QMenu()
-        self.populateMenu(menu, item)
+        self.populate_menu(menu, item)
         menu.exec_(event.globalPos())
 
-    def populateMenu(self, menu: QMenu, item: QStandardItem):
+    def populate_menu(self, menu: QMenu, item: QStandardItem):
         has_backup = False
         instrument = self.model()._nodes[item[257]]
         if instrument is None:
@@ -65,19 +65,19 @@ class InstrumentList(QListView):
         if instrument._name in self._backup_instruments.keys():
             has_backup = True
         for action, method in [
-            ("Delete instrument", self.deleteNode),
+            ("Delete instrument", self.delete_node),
         ]:
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
             if has_backup:
                 temp_action.setEnabled(False)
         for action, method in [
-            ("Duplicate instrument", self.duplicateNode),
+            ("Duplicate instrument", self.duplicate_node),
         ]:
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
         for action, method in [
-            ("Restore original parameters", self.restoreNode),
+            ("Restore original parameters", self.restore_node),
         ]:
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
@@ -85,14 +85,14 @@ class InstrumentList(QListView):
                 temp_action.setEnabled(False)
 
     @Slot()
-    def deleteNode(self):
+    def delete_node(self):
         model = self.model()
         index = self.currentIndex()
         model.removeRow(index.row())
         self.item_details.emit(None)
 
     @Slot()
-    def duplicateNode(self):
+    def duplicate_node(self):
         model = self.model()
         index = self.currentIndex()
         node_number = model.itemFromIndex(index).data()
@@ -107,7 +107,7 @@ class InstrumentList(QListView):
             new_instrument._list_item.setText(new_instrument_name)
 
     @Slot()
-    def restoreNode(self):
+    def restore_node(self):
         model = self.model()
         index = self.currentIndex()
         node_number = model.itemFromIndex(index).data()

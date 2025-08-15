@@ -61,26 +61,26 @@ class InputFileWidget(WidgetBase):
         self.add_widgets_to_layout()
         self._configurator = configurator
         self._file_dialog = file_dialog
-        self.updateValue()
+        self.update_value()
 
     def add_widgets_to_layout(self):
         field = QLineEdit(self._base)
         self._field = field
-        field.textChanged.connect(self.updateValue)
+        field.textChanged.connect(self.update_value)
         field.setText(str(self._default_value))
         field.setPlaceholderText(str(self._default_value))
         field.setToolTip(self._tooltip_text)
         self._layout.addWidget(field)
 
         button = QPushButton("Browse", self._base)
-        button.clicked.connect(self.valueFromDialog)
+        button.clicked.connect(self.value_from_dialog)
         self._layout.addWidget(button)
 
     def configure_using_default(self):
         """This is too specific to have a default value"""
 
     @Slot()
-    def valueFromDialog(self):
+    def value_from_dialog(self):
         """A Slot defined to allow the GUI to be updated based on
         the new path received from a FileDialog.
         This will start a FileDialog, take the resulting path,
@@ -94,7 +94,7 @@ class InputFileWidget(WidgetBase):
         )
         if new_value is not None and new_value[0]:
             self._field.setText(str(PurePath(new_value[0])))
-            self.updateValue()
+            self.update_value()
             try:
                 LOG.info(
                     f"Settings path of {self._job_name} to {os.path.split(new_value[0])[0]}"

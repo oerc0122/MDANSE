@@ -38,7 +38,7 @@ class VectorWidget(WidgetBase):
             self._layout.addWidget(field)
             field.setToolTip(tooltip_text)
         self._mode = 0
-        self.updateValue()
+        self.update_value()
 
     def configure_using_default(self):
         """This is too complex to have a default value"""

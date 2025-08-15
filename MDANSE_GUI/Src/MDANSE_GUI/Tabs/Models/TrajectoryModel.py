@@ -133,7 +133,7 @@ class TrajectoryModel(QStandardItemModel):
             return True
         return False
 
-    def removeRow(self, row: int, parent: QModelIndex = QModelIndex()) -> bool:
+    def removeRow(self, row: int, parent: QModelIndex = QModelIndex()) -> bool:  # noqa: N802 -- should be @override py312
         try:
             node_number = self.item(row).data()
         except AttributeError:

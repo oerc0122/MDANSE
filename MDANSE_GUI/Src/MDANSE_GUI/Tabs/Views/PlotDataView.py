@@ -51,7 +51,7 @@ class PlotDataView(QTreeView):
         # self.data_dialog = DataDialog(self)
         self._data_packet = None
 
-    def mouseDoubleClickEvent(self, e: QMouseEvent) -> None:
+    def mouseDoubleClickEvent(self, e: QMouseEvent) -> None:  # noqa: N802 -- Should be @override py312
         self.click_position = e.position()
         if self.model() is None:
             return None
@@ -71,13 +71,13 @@ class PlotDataView(QTreeView):
             file_node = model.parent_object(index)
             self.quick_plot_data(data_nodes, file_node)
 
-    def mousePressEvent(self, e: QMouseEvent) -> None:
+    def mousePressEvent(self, e: QMouseEvent) -> None:  # noqa: N802 -- Should be @override py312
         self.click_position = e.position()
         if self.model() is None:
             return None
         return super().mousePressEvent(e)
 
-    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:  # noqa: N802 -- Should be @override py312
         index = self.indexAt(event.pos())
         if index.row() == -1:
             # block right click when it's not on a trajectory
@@ -97,16 +97,16 @@ class PlotDataView(QTreeView):
                 packet = text, mda_data_structure.file
             self._data_packet = packet
         menu = QMenu()
-        self.populateMenu(menu, index)
+        self.populate_menu(menu, index)
         menu.exec_(event.globalPos())
 
-    def populateMenu(self, menu: QMenu, index: QModelIndex):
-        for action, method in [("Delete", self.deleteNode)]:
+    def populate_menu(self, menu: QMenu, index: QModelIndex):
+        for action, method in [("Delete", self.delete_node)]:
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
 
     @Slot()
-    def deleteNode(self):
+    def delete_node(self):
         model = self.model()
         index = self.currentIndex()
         mda_data_structure = model.parent_object(index)

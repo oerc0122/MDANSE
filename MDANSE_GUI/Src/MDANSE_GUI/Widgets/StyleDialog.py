@@ -58,13 +58,13 @@ class StyleDatabase(QObject):
         self._styles = sample_styles
 
     @Slot(list)
-    def addStyleString(self, style: list[str]):
+    def add_style_string(self, style: list[str]):
         label = style[0]
         text = style[1]
         self._styles[label] = text
 
     @Slot(str)
-    def returnStyleString(self, label: str) -> str:
+    def return_style_string(self, label: str) -> str:
         try:
             temp = self._styles[label]
         except KeyError:
@@ -74,7 +74,7 @@ class StyleDatabase(QObject):
             return temp
 
     @Slot()
-    def showStoredLabels(self) -> list[str]:
+    def show_stored_labels(self) -> list[str]:
         temp = [str(x) for x in self._styles.keys()]
         self.stored_labels.emit(temp)
         return temp
@@ -94,7 +94,7 @@ class StyleDialog(QDialog):
         self._selector = QComboBox(self)
         self._display = QTextEdit(self)
         self._confirm = QPushButton("Apply", self)
-        self._confirm.clicked.connect(self.commitChanges)
+        self._confirm.clicked.connect(self.commit_changes)
 
         for x in [self._selector, self._display, self._confirm]:
             layout.addWidget(x)
@@ -113,16 +113,16 @@ class StyleDialog(QDialog):
             return True
         return False
 
-    def connectStyleDatabase(self, dbase: StyleDatabase):
+    def connect_style_database(self, dbase: StyleDatabase):
         self._database = dbase
-        labels = dbase.showStoredLabels()
+        labels = dbase.show_stored_labels()
         self._selector.clear()
         [self._selector.addItem(lab) for lab in labels]
         dbase.stored_style.connect(self._display.setText)
-        self._selector.currentTextChanged.connect(dbase.returnStyleString)
+        self._selector.currentTextChanged.connect(dbase.return_style_string)
         self._selector.setCurrentIndex(0)
 
-    def commitChanges(self):
+    def commit_changes(self):
         text = self._display.document().toPlainText()
         self.new_style.emit(text)
         label = self._selector.currentText()

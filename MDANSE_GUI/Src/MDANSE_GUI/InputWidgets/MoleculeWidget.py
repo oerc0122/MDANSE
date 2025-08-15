@@ -82,7 +82,7 @@ class MoleculeWidget(WidgetBase):
         self.field.setCurrentText(default_option)
         self.selected_name = self.field.currentText()
         self.selected_mol = self.mol_dict.get(self.selected_name, None)
-        self.field.currentTextChanged.connect(self.updateValue)
+        self.field.currentTextChanged.connect(self.update_value)
         self.field.currentTextChanged.connect(self.molecule_changed)
         initial_num_atoms = len(
             self.mol_dict.get(default_option, {}).get("atom_indices", []),
@@ -118,7 +118,7 @@ class MoleculeWidget(WidgetBase):
         self.valid_changed.connect(self.toggle_button)
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
 
     @Slot()
     def molecule_changed(self):

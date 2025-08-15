@@ -32,7 +32,7 @@ class DelayedButton(QPushButton):
         self._active_message = self.text()
         self.clicked.connect(self.start_delay)
 
-    def setEnabled(self, a0: bool) -> None:
+    def setEnabled(self, a0: bool) -> None:  # noqa: N802 -- should be @override py312
         if not self._freeze_updates:
             return super().setEnabled(a0)
 

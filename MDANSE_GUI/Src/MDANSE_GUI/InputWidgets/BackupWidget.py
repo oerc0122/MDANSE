@@ -31,9 +31,9 @@ class BackupWidget(WidgetBase):
             tooltip_text = self._tooltip
         else:
             tooltip_text = "There should have been a specialised widget for this parameter, but there isn't."
-        self._field.textChanged.connect(self.updateValue)
+        self._field.textChanged.connect(self.update_value)
         self._field.setToolTip(tooltip_text)
-        self.updateValue()
+        self.update_value()
 
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""

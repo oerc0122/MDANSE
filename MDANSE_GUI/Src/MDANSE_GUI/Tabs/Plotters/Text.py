@@ -162,13 +162,13 @@ class DatasetFormatter:
         """Wrapper for approriately handling ND data."""
 
         if dataset._n_dim == 1:
-            return self.process_1D_data(dataset)
+            return self.process_1d_data(dataset)
         if dataset._n_dim == 2:
-            return self.process_2D_data(dataset, main_axis=main_axis)
+            return self.process_2d_data(dataset, main_axis=main_axis)
 
-        return self.process_ND_data(dataset)
+        return self.process_nd_data(dataset)
 
-    def process_1D_data(
+    def process_1d_data(
         self,
         dataset: SingleDataset,
     ) -> tuple[list[str], Iterator[Iterator[float]]]:
@@ -216,7 +216,7 @@ class DatasetFormatter:
             dataset._axes[best_axis] * conversion_factor, dataset.data
         )
 
-    def process_2D_data(
+    def process_2d_data(
         self,
         dataset: SingleDataset,
         *,
@@ -297,7 +297,7 @@ class DatasetFormatter:
 
         return header_lines, temp
 
-    def process_ND_data(
+    def process_nd_data(
         self,
         dataset: SingleDataset,
     ) -> tuple[list[str], Iterator[Iterator[float]]]:

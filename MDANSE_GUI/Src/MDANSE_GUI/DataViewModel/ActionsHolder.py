@@ -66,11 +66,11 @@ class ActionsSuperModel(QObject):
         self.currentItem = None
         self.currentModel = None
 
-    def setViewer(self, viewer):
+    def set_viewer(self, viewer):
         self.viewer = viewer
 
     @Slot(DataTreeItem)
-    def switchModel(self, item: DataTreeItem):
+    def switch_model(self, item: DataTreeItem):
         """Changes the model behind the viewer to match
         the item selected in the DataView.
 
@@ -88,19 +88,19 @@ class ActionsSuperModel(QObject):
         self.current_model = current_model
         self.currentItem = item
 
-    def buildModels(self, parent_classes: list):
+    def build_models(self, parent_classes: list):
         """Creates several subtrees out of the registry tree.
         Each tree will only contain nodes that share the same
         ancestor.
         """
         for parent_class in parent_classes:
             model = JobTree()
-            model.populateTree(parent_class=parent_class)
+            model.populate_tree(parent_class=parent_class)
             self.models[parent_class.__name__] = model
         LOG.info(f"Build the following models: {self.models.keys()}")
         self.current_model = self.models["IJob"]
 
-    def copyNodeIntoModel(self, thing: object, model: ActionsHolder):
+    def copy_node_into_model(self, thing: object, model: ActionsHolder):
         node_parents = thing.category
         rootnode = None
         for name in node_parents:

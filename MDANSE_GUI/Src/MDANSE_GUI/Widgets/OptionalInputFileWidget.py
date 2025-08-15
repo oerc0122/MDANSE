@@ -55,5 +55,5 @@ class OptionalInputFileWidget(InputFileWidget):
             self.mark_error(self._configurator.error_status)
 
     @Slot()
-    def updateValue(self):
+    def update_value(self):
         pass

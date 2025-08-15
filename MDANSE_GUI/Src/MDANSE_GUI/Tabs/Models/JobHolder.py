@@ -313,11 +313,11 @@ class JobHolder(QStandardItemModel):
         self.setHorizontalHeaderLabels(["Job", "Progress", "Status"])
 
     @Slot(str)
-    def reportError(self, err: str):
+    def report_error(self, err: str):
         LOG.error(err)
 
     @Slot(list)
-    def startProcess(
+    def start_process(
         self, job_vars: tuple[str, dict[str, Any]], load_afterwards: bool = False
     ):
         log_queue = Queue()
@@ -410,8 +410,8 @@ class JobHolder(QStandardItemModel):
         LOG.info("Subprocess ready to start!")
         subprocess_ref.start()
 
-    def startProcessAndLoad(self, job_vars: list):
-        self.startProcess(job_vars, load_afterwards=True)
+    def start_process_and_load(self, job_vars: list):
+        self.start_process(job_vars, load_afterwards=True)
 
 
 class Job(NamedTuple):

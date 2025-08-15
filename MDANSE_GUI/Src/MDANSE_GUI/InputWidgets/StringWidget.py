@@ -27,14 +27,14 @@ class StringWidget(WidgetBase):
         field = QLineEdit(self._base)
         field.setText(default_option)
         field.setPlaceholderText(default_option)
-        field.textChanged.connect(self.updateValue)
+        field.textChanged.connect(self.update_value)
         field.setToolTip(self._tooltip)
         self._field = field
         self._default_value = default_option
         self._layout.addWidget(field)
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:

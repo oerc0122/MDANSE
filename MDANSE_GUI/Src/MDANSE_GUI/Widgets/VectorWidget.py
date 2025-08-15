@@ -66,7 +66,7 @@ class VectorWidget(QWidget):
         self._value = result
         self.value_changed.emit(result)
 
-    def setText(self, input_string: str):
+    def set_text(self, input_string: str):
         if self._dtype == "int":
             converter = int
         elif self._dtype == "float":

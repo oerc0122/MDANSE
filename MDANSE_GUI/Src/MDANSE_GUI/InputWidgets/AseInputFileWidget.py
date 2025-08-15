@@ -58,20 +58,20 @@ class AseInputFileWidget(WidgetBase):
         self._type_combo = combo
         field = QLineEdit(self._base)
         self._field = field
-        field.textChanged.connect(self.updateValue)
+        field.textChanged.connect(self.update_value)
         field.setText(str(default_value))
         field.setToolTip(tooltip_text)
         self._layout.addWidget(field)
         self._layout.addWidget(combo)
         button = QPushButton("Browse", self._base)
-        button.clicked.connect(self.valueFromDialog)
+        button.clicked.connect(self.value_from_dialog)
         self._layout.addWidget(button)
         self._configurator = configurator
         self._file_dialog = QFileDialog.getOpenFileName
-        self.updateValue()
+        self.update_value()
 
     @Slot()
-    def valueFromDialog(self):
+    def value_from_dialog(self):
         """A Slot defined to allow the GUI to be updated based on
         the new path received from a FileDialog.
         This will start a FileDialog, take the resulting path,
@@ -85,7 +85,7 @@ class AseInputFileWidget(WidgetBase):
         )
         if new_value is not None:
             self._field.setText(str(PurePath(new_value[0])))
-            self.updateValue()
+            self.update_value()
             try:
                 type_guess = filetype(new_value[0])
             except Exception:

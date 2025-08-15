@@ -58,10 +58,10 @@ class DataDialog(QDialog):
         layout.addWidget(self._display)
         if is_input:
             self._confirm = QPushButton("Apply", self)
-            self._confirm.clicked.connect(self.commitChanges)
+            self._confirm.clicked.connect(self.commit_changes)
             layout.addWidget(self._confirm)
 
-    def commitChanges(self):
+    def commit_changes(self):
         text = self._display.document().toPlainText()
         self.new_style.emit(text)
         label = self._selector.currentText()

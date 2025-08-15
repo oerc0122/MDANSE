@@ -76,7 +76,7 @@ class GeneralModel(QStandardItemModel):
         self.mutex.unlock()
         self.all_elements.emit(result)
 
-    def removeRow(self, row: int, parent: QModelIndex = None):
+    def removeRow(self, row: int, parent: QModelIndex = None):  # noqa: N802 -- Should be @override py312
         self.mutex.lock()
         try:
             node_number = self.item(row).data()

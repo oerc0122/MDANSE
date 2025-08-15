@@ -191,13 +191,13 @@ class AtomMappingWidget(WidgetBase):
         self.helper_button = QPushButton("Atom mapping helper", self._base)
         self.helper_button.clicked.connect(self.helper_dialog)
         self.helper_button.setEnabled(False)
-        self._field.textChanged.connect(self.updateValue)
+        self._field.textChanged.connect(self.update_value)
         self._default_value = default_value
         self._layout.addWidget(self._field)
         self._layout.addWidget(self.helper_button)
         self._file_widget.value_changed.connect(self.update_helper_button)
         self.update_labels()
-        self.updateValue()
+        self.update_value()
 
     @Slot()
     def update_helper_button(self) -> None:

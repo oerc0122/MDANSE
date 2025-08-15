@@ -25,7 +25,7 @@ from qtpy import QtWidgets
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QSizePolicy
 from scipy.spatial import cKDTree as KDTree
-from scipy.spatial.transform import Rotation as R
+from scipy.spatial.transform import Rotation
 from vtk.util import numpy_support
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
@@ -746,7 +746,7 @@ class MolecularViewer(QtWidgets.QWidget):
         for i in range(parts.GetNumberOfItems()):
             new_vec = matrix[i]
             cart_vec = np.eye(3)[i]
-            rot = R.align_vectors(new_vec, cart_vec)[0].as_matrix()
+            rot = Rotation.align_vectors(new_vec, cart_vec)[0].as_matrix()
 
             vtk_matrix = vtk.vtkMatrix4x4()
             for j in range(3):
@@ -988,7 +988,7 @@ class MolecularViewer(QtWidgets.QWidget):
         viewer_controls : ViewerControls
             instance of the ViewerControls widget from View3D
         """
-        self._trace_dialog = viewer_controls.createTracePanel(self)
+        self._trace_dialog = viewer_controls.create_trace_panel(self)
         self._trace_dialog.new_atom_trace.connect(self.trace_from_dialog)
         self._trace_dialog.remove_atom_trace.connect(self.delete_isosurface_from_dialog)
         self.changed_trace.connect(self._trace_dialog.update_limits)
@@ -1089,7 +1089,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self.create_atom_label_actors()
 
-        self._colour_manager.onNewValues()
+        self._colour_manager.on_new_values()
         self.new_max_frames.emit(self._n_frames - 1)
         self._trace_dialog.update_limits()
 

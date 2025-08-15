@@ -13,7 +13,7 @@ def temporary_fileobject():
     with open(fname, "wb") as target:
         target.write(reference_bytes)
     fob = FileObject()
-    fob.setFilename(fname)
+    fob.set_filename(fname)
     return fob
 
 

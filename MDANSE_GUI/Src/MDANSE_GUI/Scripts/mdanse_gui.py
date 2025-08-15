@@ -19,9 +19,9 @@ import sys
 
 
 def main():
-    from MDANSE_GUI.main import startGUI
+    from MDANSE_GUI.main import start_gui
 
-    startGUI(sys.argv)
+    start_gui(sys.argv)
 
 
 if __name__ == "__main__":

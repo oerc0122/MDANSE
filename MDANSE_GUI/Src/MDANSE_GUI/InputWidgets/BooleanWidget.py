@@ -28,7 +28,7 @@ class BooleanWidget(WidgetBase):
         field = QCheckBox(self._base)
         field.setTristate(False)
         field.setChecked(default_option)
-        field.stateChanged.connect(self.updateValue)
+        field.stateChanged.connect(self.update_value)
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
@@ -38,7 +38,7 @@ class BooleanWidget(WidgetBase):
         self._layout.addWidget(field)
         self.default_labels()
         self.update_labels()
-        self.updateValue()
+        self.update_value()
 
     def default_labels(self):
         """Each Widget should have a default tooltip and label,

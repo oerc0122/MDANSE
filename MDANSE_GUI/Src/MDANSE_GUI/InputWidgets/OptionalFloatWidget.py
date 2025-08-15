@@ -54,7 +54,7 @@ class OptionalFloatWidget(WidgetBase):
                 validator.setTop(maxval)
             field.setValidator(validator)
             field.setText(str(default_option))
-            field.textChanged.connect(self.updateValue)
+            field.textChanged.connect(self.update_value)
             field.setPlaceholderText(str(default_option))
         field.setToolTip(self._tooltip)
         self._layout.addWidget(self._apply_box)
@@ -64,7 +64,7 @@ class OptionalFloatWidget(WidgetBase):
         self.default_labels()
         self.update_labels()
         self._field.setEnabled(False)
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:

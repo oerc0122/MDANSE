@@ -17,13 +17,12 @@ from __future__ import annotations
 
 from typing import Any
 
-import rdkit.Chem as chem
-import rdkit.Chem.AllChem as allchem
-import rdkit.Chem.Draw as draw
 from PIL.ImageQt import ImageQt
 from qtpy.QtCore import QObject
 from qtpy.QtGui import QFont, QImage, QPixmap
 from qtpy.QtWidgets import QDialog, QLabel, QVBoxLayout
+from rdkit import Chem
+from rdkit.Chem import AllChem, Draw
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
@@ -84,7 +83,7 @@ class MoleculePreviewWidget(QDialog):
         info_text += f"Number of such molecules in trajectory: {self.mol_info['no_of_molecules']}\n"
         self.text_label.setText(info_text)
 
-    def prepare_rdkit_molecule(self) -> chem.RWMol | None:
+    def prepare_rdkit_molecule(self) -> Chem.RWMol | None:
         """Create an rdkit molecule from the selected atoms."""
         if len(self.mol_info["atom_indices"]) > self.max_atom_limit:
             self.image_label.clear()
@@ -92,7 +91,7 @@ class MoleculePreviewWidget(QDialog):
             return None
         self.image_label.setText("")
         large_molecule = self.atom_database.chemical_system.rdkit_mol
-        submolecule = chem.RWMol()
+        submolecule = Chem.RWMol()
         mapping = {}
         self.bond_mapping = {}
         for index in self.mol_info["atom_indices"]:
@@ -102,15 +101,15 @@ class MoleculePreviewWidget(QDialog):
             new_pair = mapping[bond[0]], mapping[bond[1]]
             bond_index = submolecule.AddBond(new_pair[0], new_pair[1])
             self.bond_mapping[bond_index] = new_pair
-        allchem.Compute2DCoords(submolecule)
+        AllChem.Compute2DCoords(submolecule)
         return submolecule
 
     def show_formula(self):
         """Draw the molecule."""
         submolecule = self.prepare_rdkit_molecule()
-        draw_options = draw.MolDrawOptions()
+        draw_options = Draw.MolDrawOptions()
         draw_options.addAtomIndices = True
-        pil_image = draw.MolToImage(submolecule, size=(600, 600), options=draw_options)
+        pil_image = Draw.MolToImage(submolecule, size=(600, 600), options=draw_options)
         qt_image = ImageQt(pil_image).copy()
         pixmap = QPixmap.fromImage(qt_image)
         self.image_label.setPixmap(pixmap)
@@ -127,11 +126,11 @@ class MoleculePreviewWidget(QDialog):
         """Draw the formula and highlight the selected atoms and bonds."""
         submolecule = self.prepare_rdkit_molecule()
         optional_bonds = self.filter_bonds(selected_atoms)
-        driver = draw.rdMolDraw2D.MolDraw2DCairo(600, 600)
-        draw_options = draw.MolDrawOptions()
+        driver = Draw.rdMolDraw2D.MolDraw2DCairo(600, 600)
+        draw_options = Draw.MolDrawOptions()
         draw_options.addAtomIndices = True
         driver.SetDrawOptions(draw_options)
-        draw.rdMolDraw2D.PrepareAndDrawMolecule(
+        Draw.rdMolDraw2D.PrepareAndDrawMolecule(
             driver,
             submolecule,
             highlightAtoms=selected_atoms,

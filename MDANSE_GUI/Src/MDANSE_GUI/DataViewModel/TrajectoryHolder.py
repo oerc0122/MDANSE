@@ -35,15 +35,15 @@ class FileObject:
         self.hash_function = hash_function
         self.hash = -1
 
-    def setFilename(self, some_fname: str):
+    def set_filename(self, some_fname: str):
         fname = str(some_fname)
         abspath, filename = os.path.split(fname)
         self.extension = str(filename).split(".")[-1]
         self.filename = filename
         self.absolute_path = PurePath(abspath)
-        self.hash = self.calculateHash(fname)
+        self.hash = self.calculate_hash(fname)
 
-    def calculateHash(self, fname, chunk_size=1024 * 512):
+    def calculate_hash(self, fname, chunk_size=1024 * 512):
         hash_object = self.hash_function()
         with open(fname, "br") as source:
             while chunk := source.read(chunk_size):
@@ -65,7 +65,7 @@ class DataTreeItem(QStandardItem):
         self.processing_used = ""
         self.processing_parameters = {}
 
-    def showHistory(self):
+    def show_history(self):
         history = ";".join(self.ancestors())
         return history
 
@@ -93,7 +93,7 @@ class TrajectoryItem(DataTreeItem):
         self.file_info = FileObject()
 
         if self.filename != "NULL":
-            self.file_info.setFilename(PurePath(self.filename))
+            self.file_info.set_filename(PurePath(self.filename))
         self.setText(os.path.split(self.filename)[1])
 
 
@@ -108,7 +108,7 @@ class DataTreeModel(QStandardItemModel):
         self._trajectory_objects = {}
 
     @Slot(object)
-    def addItem(self, new_entry: Trajectory):
+    def addItem(self, new_entry: Trajectory):  # noqa: N802 -- Should be @override py312
         traj = TrajectoryItem(
             os.path.split(new_entry.filename)[1], trajectory=new_entry
         )

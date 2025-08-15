@@ -108,7 +108,7 @@ class JobStatusProcess(Status):
             type=None,
             start=time.time(),
             elapsed="N/A",
-            n_steps=self._nSteps,
+            n_steps=self._n_steps,
         )
 
         self._pause_event = pause_event
@@ -138,11 +138,11 @@ class JobStatusProcess(Status):
         LOG.info(f"JobStatusProcess PID: {self.state.pid} started 'start_status'")
 
         with suppress(ValueError):
-            self.state.n_steps = int(self._nSteps)
+            self.state.n_steps = int(self._n_steps)
 
         self.job_state = JobStates.STARTING
         self._pipe.send(self.state)
-        # self._updateStep = 1
+        # self._update_step = 1
 
     def stop_status(self):
         """Assert aborted state."""
@@ -153,12 +153,12 @@ class JobStatusProcess(Status):
         """Assert one step is done."""
         self.job_state = JobStates.RUNNING
         self.state.current_step += 1
-        self.state.progress = int(self.state.current_step) * self._updateStep
+        self.state.progress = int(self.state.current_step) * self._update_step
         self._pipe.send(self.state)
 
     def fixed_status(self, current_progress: int):
         """Assert current step is X and done."""
         self.job_state = JobStates.RUNNING
         self.state.current_step = current_progress
-        self.state.progress = int(self.state.current_step) * self._updateStep
+        self.state.progress = int(self.state.current_step) * self._update_step
         self._pipe.send(self.state)

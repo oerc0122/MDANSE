@@ -182,7 +182,7 @@ class ConstrainedDoubleSpinBox(QDoubleSpinBox):
         self.valueChanged.connect(callback)
         self.textChanged.connect(callback)
 
-    def setValue(self, val) -> None:
+    def setValue(self, val) -> None:  # noqa: N802 -- Should be @override py312
         """Store the input value and change the value in the spin box.
 
         Overrides setValue method of QDoubleSpinBox.
@@ -1490,14 +1490,14 @@ class FilterDesigner(QDialog):
         canvas = QWidget(self)
         layout = QVBoxLayout(canvas)
         figure = mpl.figure(figsize=[fig_width, fig_height], dpi=dpi, frameon=True)
-        figAgg = FigureCanvasQTAgg(figure)
-        figAgg.setParent(canvas)
-        toolbar = NavigationToolbar2QTAgg(figAgg, canvas)
+        fig_agg = FigureCanvasQTAgg(figure)
+        fig_agg.setParent(canvas)
+        toolbar = NavigationToolbar2QTAgg(fig_agg, canvas)
         toolbar.update()
-        figAgg.setMinimumSize(*self._canvas_dimensions.values())
-        figAgg.setFixedSize(*self._canvas_dimensions.values())
-        figAgg.updateGeometry()
-        layout.addWidget(figAgg)
+        fig_agg.setMinimumSize(*self._canvas_dimensions.values())
+        fig_agg.setFixedSize(*self._canvas_dimensions.values())
+        fig_agg.updateGeometry()
+        layout.addWidget(fig_agg)
         layout.addWidget(toolbar)
         self._figure_info = QTextEdit()
         self._figure_info.setFontPointSize(8)
@@ -1590,14 +1590,14 @@ class TrajectoryFilterWidget(WidgetBase):
         self._field = QLineEdit(self._default_value, self._base)
         self._field.setPlaceholderText(self._default_value)
         self._field.setMaxLength(2147483647)  # set to the largest possible
-        self._field.textChanged.connect(self.updateValue)
+        self._field.textChanged.connect(self.update_value)
         self.filter_designer = self.create_helper()
         helper_button = QPushButton(self._push_button_text, self._base)
         helper_button.clicked.connect(self.helper_dialog)
         self._layout.addWidget(self._field)
         self._layout.addWidget(helper_button)
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         self._field.setToolTip(self._tooltip_text)
 
     def create_helper(self) -> FilterDesigner:

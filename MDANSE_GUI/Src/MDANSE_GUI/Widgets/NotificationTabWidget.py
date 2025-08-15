@@ -25,7 +25,7 @@ class NotificationTabWidget(QTabWidget):
         self._normal_colours = {}
         self._special_color = QColor(250, 10, 50)
 
-    def addTab(self, widget: QObject, name: str) -> int:
+    def addTab(self, widget: QObject, name: str) -> int:  # noqa: N802 -- Should be @override py312
         object_id = super().addTab(widget, name)
         self._normal_colours[object_id] = self.tabBar().tabTextColor(object_id)
         widget._tab_reference.set_my_id(object_id)

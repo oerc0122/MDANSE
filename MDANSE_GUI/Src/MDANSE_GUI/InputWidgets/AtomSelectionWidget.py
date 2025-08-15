@@ -293,7 +293,7 @@ class SelectionHelper(QDialog):
         self.selected = set()
         self.reset()
 
-    def closeEvent(self, a0):
+    def closeEvent(self, a0):  # noqa: N802 -- Should be @override py312
         """Hide the window instead of closing.
 
         Some issues occur in the
@@ -578,7 +578,7 @@ class AtomSelectionWidget(WidgetBase):
             self._layout.addWidget(load_button)
             self.helper_save_button = True
         self.update_labels()
-        self.updateValue()
+        self.update_value()
         self._field.setToolTip(self._tooltip_text)
 
     def create_helper(

@@ -52,7 +52,7 @@ class UnitCellWidget(WidgetBase):
                 self._layout.addWidget(temp, row, column + 1)
                 self._array_fields[(row, column)] = temp
         self._mode = 0
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:

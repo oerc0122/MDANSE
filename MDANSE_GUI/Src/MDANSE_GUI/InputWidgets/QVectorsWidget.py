@@ -83,13 +83,13 @@ class VectorModel(QStandardItemModel):
 
     def parse_vtype(self, vtype: str, value: str, vname: str):
         if vtype == "RangeConfigurator":
-            inner_type = self._generator.settings[vname][1]["valueType"]
+            inner_type = self._generator.settings[vname][1]["value_type"]
             tempstring = value.strip("()[] ")
             result = [inner_type(x) for x in tempstring.split(",")]
             if len(result) == 3:
                 return result
         elif vtype == "VectorConfigurator":
-            inner_type = self._generator.settings[vname][1]["valueType"]
+            inner_type = self._generator.settings[vname][1]["value_type"]
             tempstring = value.strip("()[] ")
             result = [inner_type(x) for x in tempstring.split(",")]
             if len(result) == 3:
@@ -122,9 +122,9 @@ class QVectorsWidget(WidgetBase):
         self._view.setModel(self._model)
         self._selector.currentTextChanged.connect(self._model.switch_qvector_type)
         self._selector.setCurrentIndex(1)
-        self._model.itemChanged.connect(self.updateValue)
+        self._model.itemChanged.connect(self.update_value)
         self._model.type_changed.connect(self.type_change_update)
-        self.updateValue()
+        self.update_value()
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
@@ -140,12 +140,12 @@ class QVectorsWidget(WidgetBase):
         self._view.horizontalHeader().hide()
 
     def type_change_update(self):
-        # need to disconnect itemChanged otherwise updateValue will
+        # need to disconnect itemChanged otherwise update_value will
         # be called multiple times as the item data has been changed
         # during the type update
         self._model.itemChanged.disconnect()
-        self.updateValue()
-        self._model.itemChanged.connect(self.updateValue)
+        self.update_value()
+        self._model.itemChanged.connect(self.update_value)
 
     @Slot(bool)
     def validate_model_parameters(self, all_are_correct: bool):

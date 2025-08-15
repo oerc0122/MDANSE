@@ -113,12 +113,12 @@ class ViewerControls(QWidget):
         self._time_per_frame = 80  # in ms
         self._frame_factor = 1  # just a scalar multiplication factor
         self._visibility = [True, True, True, True]
-        self.createSlider()
-        self.createButtons(Qt.Orientation.Horizontal)
+        self.create_slider()
+        self.create_buttons(Qt.Orientation.Horizontal)
         self._bkg_dialog = QColorDialog()
         self._projection = True
 
-    def createSlider(self):
+    def create_slider(self):
         """This method creates a slider which illustrates the progress of the
         trajectory animation.
         """
@@ -140,7 +140,7 @@ class ViewerControls(QWidget):
         self._frame_selector = frame_selector
         self.layout().addWidget(base, 1, 0, 1, 1)  # row, column, rowSpan, columnSpan
 
-    def setViewer(self, viewer: MolecularViewer):
+    def set_viewer(self, viewer: MolecularViewer):
         self._viewer = viewer
         self._splitter.addWidget(viewer)
         self._frame_slider.valueChanged.connect(viewer.set_coordinates)
@@ -151,7 +151,7 @@ class ViewerControls(QWidget):
         # viewer.setDataModel(viewer._colour_manager)
         viewer._colour_manager.new_atom_properties.connect(viewer.take_atom_properties)
 
-    def createButtons(self, orientation: Qt.Orientation):
+    def create_buttons(self, orientation: Qt.Orientation):
         """Create a bar with video player buttons for controlling the
         animation.
         """
@@ -180,7 +180,7 @@ class ViewerControls(QWidget):
         self._buttons["start"].clicked.connect(lambda: self.go_to_end(last_frame=False))
         self._buttons["end"].clicked.connect(lambda: self.go_to_end(last_frame=True))
 
-    def createSidePanel(self):
+    def create_side_panel(self):
         """Adds widgets for finer control of the playback"""
         absolute_base = QTabWidget(self)
         absolute_base.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
@@ -221,7 +221,7 @@ class ViewerControls(QWidget):
         frame_time_selector.setValue(80)
         frame_time_selector.setMinimum(1)
         frame_time_selector.setMaximum(5000)
-        frame_time_selector.valueChanged.connect(self.setTimeStep)
+        frame_time_selector.valueChanged.connect(self.set_time_step)
         layout2.addWidget(frame_time_selector)
         wrapper2.setLayout(layout2)
         layout.addWidget(wrapper2)
@@ -233,7 +233,7 @@ class ViewerControls(QWidget):
         frame_skip.setValue(1)
         frame_skip.setMinimum(1)
         frame_skip.setMaximum(5000)
-        frame_skip.valueChanged.connect(self.setFrameSkip)
+        frame_skip.valueChanged.connect(self.set_frame_skip)
         layout3.addWidget(frame_skip)
         wrapper3.setLayout(layout3)
         layout.addWidget(wrapper3)
@@ -246,7 +246,7 @@ class ViewerControls(QWidget):
         size_factor.setMinimum(0.0)
         size_factor.setMaximum(50.0)
         size_factor.setSingleStep(0.05)
-        size_factor.valueChanged.connect(self.setAtomSize)
+        size_factor.valueChanged.connect(self.set_atom_size)
         layout4.addWidget(size_factor)
         wrapper4.setLayout(layout4)
         layout.addWidget(wrapper4)
@@ -287,9 +287,9 @@ class ViewerControls(QWidget):
         for nw, box in enumerate(self._visibility_checkboxes):
             box.setTristate(False)
             box.setChecked(self._visibility[nw])
-            box.stateChanged.connect(self.setVisibility)
-        self.axes_combo.currentIndexChanged.connect(self.changeAxes)
-        self.labels_combo.currentIndexChanged.connect(self.changeLabels)
+            box.stateChanged.connect(self.set_visibility)
+        self.axes_combo.currentIndexChanged.connect(self.change_axes)
+        self.labels_combo.currentIndexChanged.connect(self.change_labels)
 
         layout.addWidget(wrapper5)
         # the database of atom types
@@ -298,7 +298,7 @@ class ViewerControls(QWidget):
             self._atom_details.resizeColumnToContents(column_number)
         self._splitter.addWidget(absolute_base)
 
-    def createTracePanel(self, viewer):
+    def create_trace_panel(self, viewer):
         """Adds widgets for finer control of the playback"""
         base = QWidget(self)
         base.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
@@ -338,33 +338,33 @@ class ViewerControls(QWidget):
         self._projection = not self._projection
 
     @Slot()
-    def setVisibility(self):
+    def set_visibility(self):
         for nw, box in enumerate(self._visibility_checkboxes):
             self._visibility[nw] = box.isChecked()
         self._viewer._new_visibility(self._visibility)
 
     @Slot()
-    def changeAxes(self):
+    def change_axes(self):
         self._viewer._change_axes(self.axes_combo.currentText())
 
     @Slot()
-    def changeLabels(self):
+    def change_labels(self):
         self._viewer._change_atom_labels(self.labels_combo.currentText())
 
     @Slot(int)
-    def setTimeStep(self, new_value: int):
+    def set_time_step(self, new_value: int):
         self._time_per_frame = new_value
         if self._animation_timer.isActive():
             self.animate(self._current_step_size)
 
     @Slot(int)
-    def setFrameSkip(self, new_value: int):
+    def set_frame_skip(self, new_value: int):
         self._frame_factor = new_value
         if self._animation_timer.isActive():
             self.animate(self._current_step_size)
 
     @Slot(float)
-    def setAtomSize(self, new_value: float):
+    def set_atom_size(self, new_value: float):
         if self._viewer is None:
             return
         self._viewer._new_scaling(new_value)
@@ -401,14 +401,14 @@ class ViewerControls(QWidget):
         self._animation_timer.start()
 
     def advance_frame(self):
-        firstFrame = self._frame_selector.minimum()
-        lastFrame = self._frame_selector.maximum()
+        first_frame = self._frame_selector.minimum()
+        last_frame = self._frame_selector.maximum()
         new_value = self._frame_selector.value() + self._frame_step
-        if new_value < firstFrame:
-            self._frame_selector.setValue(firstFrame)
+        if new_value < first_frame:
+            self._frame_selector.setValue(first_frame)
             self.stop_animation()
-        elif new_value > lastFrame:
-            self._frame_selector.setValue(lastFrame)
+        elif new_value > last_frame:
+            self._frame_selector.setValue(last_frame)
             self.stop_animation()
         else:
             self._frame_selector.setValue(new_value)
