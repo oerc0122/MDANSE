@@ -161,7 +161,7 @@ class TraceWidget(QWidget):
             sbox.setValue(0)
         self.update_limits()
         self._fraction_spinbox.setMaximum(100)
-        self._fraction_spinbox.setValue(5)
+        self._fraction_spinbox.setValue(50)
         self._grid_spinbox.setMaximum(10)
         self._grid_spinbox.setMinimum(1)
         self._grid_spinbox.setValue(3)

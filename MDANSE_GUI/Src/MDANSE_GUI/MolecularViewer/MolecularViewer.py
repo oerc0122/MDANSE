@@ -332,26 +332,22 @@ class MolecularViewer(QtWidgets.QWidget):
         element = self._reader._atom_types[index]
         radius = self._reader._trajectory.get_atom_property(element, "covalent_radius")
 
-        upper_limit = np.max(coords, axis=0) + 2 * radius / trace_cutoff
-        lower_limit = np.min(coords, axis=0) - 2 * radius / trace_cutoff
+        upper_limit = np.max(coords, axis=0) + radius / (2 * trace_cutoff)
+        lower_limit = np.min(coords, axis=0) - radius / (2 * trace_cutoff)
         span = upper_limit - lower_limit
         grid_step = radius / fine_sampling
         grid_steps = list((span // grid_step).astype(int))
 
-        # TODO this uses alot of memory fix this so that it does the evaluations
-        #  in batches
         xs = np.linspace(lower_limit[0], upper_limit[0], grid_steps[0])
         ys = np.linspace(lower_limit[1], upper_limit[1], grid_steps[1])
         zs = np.linspace(lower_limit[2], upper_limit[2], grid_steps[2])
-        grid = np.stack(list(np.meshgrid(xs, ys, zs, indexing="ij")), axis=-1)[
-            None, ...
-        ]
+        grid = np.stack(list(np.meshgrid(xs, ys, zs, indexing="ij")), axis=-1)
 
-        centers = np.array(coords)[:, None, None, None, :]
-        diff = grid - centers
-        sq_dist = np.sum(diff**2, axis=-1)
-        gaussians = np.exp(-sq_dist / (2 * radius**2))
-        vals = np.sum(gaussians, axis=0)
+        vals = np.zeros(grid_steps)
+        for coord in coords:
+            diff = grid - coord
+            sq_dist = np.sum(diff**2, axis=-1)
+            vals += np.exp(-sq_dist / (2 * radius**2))
         vals = vals / np.max(vals)
 
         self._image = array_to_3d_imagedata(vals, (grid_step, grid_step, grid_step))
