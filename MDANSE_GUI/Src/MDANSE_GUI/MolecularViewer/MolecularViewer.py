@@ -343,7 +343,9 @@ class MolecularViewer(QtWidgets.QWidget):
         xs = np.linspace(lower_limit[0], upper_limit[0], grid_steps[0])
         ys = np.linspace(lower_limit[1], upper_limit[1], grid_steps[1])
         zs = np.linspace(lower_limit[2], upper_limit[2], grid_steps[2])
-        grid = np.stack(list(np.meshgrid(xs, ys, zs, indexing='ij')), axis=-1)[None, ...]
+        grid = np.stack(list(np.meshgrid(xs, ys, zs, indexing="ij")), axis=-1)[
+            None, ...
+        ]
 
         centers = np.array(coords)[:, None, None, None, :]
         diff = grid - centers
@@ -352,9 +354,7 @@ class MolecularViewer(QtWidgets.QWidget):
         vals = np.sum(gaussians, axis=0)
         vals = vals / np.max(vals)
 
-        self._image = array_to_3d_imagedata(
-            vals, (grid_step, grid_step, grid_step)
-        )
+        self._image = array_to_3d_imagedata(vals, (grid_step, grid_step, grid_step))
 
         new_isocontour = vtk.vtkMarchingContourFilter()
         new_isocontour.UseScalarTreeOn()
