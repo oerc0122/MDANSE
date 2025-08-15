@@ -103,8 +103,8 @@ class ASE(Converter):
     )
 
     UNIT_CONV = {
-        "energy": measure(1.0, "e_v").toval("Da nm2 / ps2"),
-        "forces": measure(1.0, "e_v/ang").toval("Da nm / ps2"),
+        "energy": measure(1.0, "eV").toval("Da nm2 / ps2"),
+        "forces": measure(1.0, "eV/ang").toval("Da nm / ps2"),
         "time": measure(1.0, "fs").toval("ps"),
         "velocities": measure(1.0, "ang/fs").toval("nm/ps"),
         "length": measure(1.0, "ang").toval("nm"),
@@ -295,9 +295,9 @@ class ASE(Converter):
         unit_conv = {}
         if "units" in first_frame.info:
             for key, val in first_frame.info["units"].items():
-                if (key, val) == ("momenta", "(e_v*u)^0.5"):
+                if (key, val) == ("momenta", "(eV*u)^0.5"):
                     unit_conv["momenta"] = sqrt(
-                        measure(1.0, "e_v Da").toval("Da2 nm2/ps2")
+                        measure(1.0, "eV Da").toval("Da2 nm2/ps2")
                     )
 
                 if key not in INTERNAL_UNITS:

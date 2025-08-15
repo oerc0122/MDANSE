@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-import MDAnalysis as mda
+import MDAnalysis as MDa
 
 from MDANSE.Framework.AtomMapping import AtomLabel
 
@@ -44,7 +44,7 @@ class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
         filepath, format = setting
         if format == "AUTO":
             self["format"] = None
-        elif format in mda._PARSERS:
+        elif format in MDa._PARSERS:
             self["format"] = format
         else:
             self.error_status = "MDAnalysis topology file format not recognised."
@@ -58,7 +58,7 @@ class MDAnalysisTopologyFileConfigurator(FileWithAtomDataConfigurator):
         #  which will give us more control over what is guessed. We may
         #  want to change the MDAnalysis guessing options in the future
         #  so that it works better with the MDANSE atom mapping.
-        self.atoms = mda.Universe(
+        self.atoms = MDa.Universe(
             self["filename"], topology_format=self["format"]
         ).atoms
 

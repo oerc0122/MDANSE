@@ -26,7 +26,7 @@ from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 HBAR = measure(1.05457182e-34, "kg m2 / s").toval("Da nm2 / ps")
-HARTREE = measure(27.2113845, "e_v").toval("Da nm2 / ps2")
+HARTREE = measure(27.2113845, "eV").toval("Da nm2 / ps2")
 BOHR = measure(5.29177210903e-11, "m").toval("nm")
 
 

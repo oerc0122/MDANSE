@@ -59,7 +59,7 @@ LAMMPS_UNITS = {
         "charge_conv": 1.0,
     },
     "metal": {
-        "energy": "e_v",
+        "energy": "eV",
         "time": "ps",
         "length": "ang",
         "velocity": "ang/ps",

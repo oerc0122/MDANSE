@@ -61,8 +61,8 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
 
     @classmethod
     def qvectors_to_hkl(
-        self,
-        vector_array: np.array,
+        cls,
+        vector_array: np.ndarray,
         unit_cell: UnitCell,
     ) -> np.ndarray:
         """Recalculate Q vectors to HKL Miller indices.
@@ -86,7 +86,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         return np.dot(unit_cell.direct, vector_array) / (2 * np.pi)
 
     @classmethod
-    def hkl_to_qvectors(self, hkls: np.array, unit_cell: UnitCell) -> np.ndarray:
+    def hkl_to_qvectors(cls, hkls: np.ndarray, unit_cell: UnitCell) -> np.ndarray:
         """Convert an array of HKL values to scattering vectors.
 
         Uses a unit cell object to get the lattice vectors for conversion.

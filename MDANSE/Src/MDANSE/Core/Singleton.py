@@ -23,12 +23,12 @@ class Singleton(type):
 
     __instances = {}
 
-    def __call__(self, *args, **kwargs):
+    def __call__(cls, *args, **kwargs):
         """
         Creates (or returns if it has already been instantiated) an instance of the class.
         """
 
-        if self.__name__ not in self.__instances:
-            self.__instances[self.__name__] = super().__call__(*args, **kwargs)
+        if cls.__name__ not in cls.__instances:
+            cls.__instances[cls.__name__] = super().__call__(*args, **kwargs)
 
-        return self.__instances[self.__name__]
+        return cls.__instances[cls.__name__]

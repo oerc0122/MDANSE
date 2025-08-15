@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-import MDAnalysis as mda
+import MDAnalysis as MDa
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 
@@ -49,7 +49,7 @@ class MDAnalysisCoordinateFileConfigurator(MultiInputFileConfigurator):
 
         if format == "AUTO" or not self["filenames"]:
             self["format"] = None
-        elif format in mda._READERS:
+        elif format in MDa._READERS:
             self["format"] = format
         else:
             self.error_status = "MDAnalysis coordinate file format not recognised."
@@ -62,7 +62,7 @@ class MDAnalysisCoordinateFileConfigurator(MultiInputFileConfigurator):
 
         try:
             if len(self["filenames"]) <= 1 or self["format"] is None:
-                mda.Universe(
+                MDa.Universe(
                     topology_configurator["filename"],
                     *self["filenames"],
                     format=self["format"],
@@ -70,7 +70,7 @@ class MDAnalysisCoordinateFileConfigurator(MultiInputFileConfigurator):
                 ).trajectory
             else:
                 coord_files = [(i, self["format"]) for i in self["filenames"]]
-                mda.Universe(
+                MDa.Universe(
                     topology_configurator["filename"],
                     coord_files,
                     topology_format=topology_configurator["format"],

@@ -137,7 +137,7 @@ class SubclassFactory(type):
         cls._registered_subclasses = {}
 
         @classmethod
-        def __init_subclass__(cls, **kwargs):
+        def init_subclass(cls, **kwargs):
             regkey = cls.__name__
             super().__init_subclass__(**kwargs)
             cls._registered_subclasses[regkey] = cls
@@ -147,7 +147,7 @@ class SubclassFactory(type):
         # It isn't needed in the terminal children too.
         # May be there is a way to avoid adding these needless attributes
         # (registry, __init_subclass__) to there. I don't think about it yet.
-        cls.__init_subclass__ = __init_subclass__
+        cls.__init_subclass__ = init_subclass
 
     def create(cls, name: str, *args, **kwargs) -> Self:
         """Finds the class called 'name' in the _registered_subclasses

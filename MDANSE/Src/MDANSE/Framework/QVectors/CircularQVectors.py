@@ -45,11 +45,21 @@ class CircularQVectors(IQVectors):
     settings["width"] = ("FloatConfigurator", {"mini": 0.0, "default": 1.0})
     settings["axis_1"] = (
         "VectorConfigurator",
-        {"normalize": True, "not_null": True, "default": [1, 0, 0], "value_type": float},
+        {
+            "normalize": True,
+            "not_null": True,
+            "default": [1, 0, 0],
+            "value_type": float,
+        },
     )
     settings["axis_2"] = (
         "VectorConfigurator",
-        {"normalize": True, "not_null": True, "default": [0, 1, 0], "value_type": float},
+        {
+            "normalize": True,
+            "not_null": True,
+            "default": [0, 1, 0],
+            "value_type": float,
+        },
     )
 
     def _generate(self):

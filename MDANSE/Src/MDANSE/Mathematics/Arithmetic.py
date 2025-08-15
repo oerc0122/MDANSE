@@ -66,7 +66,9 @@ def get_weights(
     try:
         len(norm_factor)
     except TypeError:
-        normalise = abs(norm_factor) > 0.0  # if norm_factor is 0, all weights are 0 too.
+        normalise = (
+            abs(norm_factor) > 0.0
+        )  # if norm_factor is 0, all weights are 0 too.
     if normalise:
         for k in weights:
             weights[k] /= np.float64(norm_factor)

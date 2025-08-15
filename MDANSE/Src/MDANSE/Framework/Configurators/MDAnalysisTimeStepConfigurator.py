@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-import MDAnalysis as mda
+import MDAnalysis as MDa
 
 from MDANSE.Framework.Configurators.FloatConfigurator import FloatConfigurator
 
@@ -51,7 +51,7 @@ class MDAnalysisTimeStepConfigurator(FloatConfigurator):
                     coord_format = files_configurator["format"]
                     coord_files = files_configurator["filenames"]
                     if len(coord_files) <= 1 or coord_format is None:
-                        value = mda.Universe(
+                        value = MDa.Universe(
                             file_configurator["filename"],
                             *coord_files,
                             format=coord_format,
@@ -59,7 +59,7 @@ class MDAnalysisTimeStepConfigurator(FloatConfigurator):
                         ).trajectory.ts.dt
                     else:
                         coord_files = [(i, coord_format) for i in coord_files]
-                        value = mda.Universe(
+                        value = MDa.Universe(
                             file_configurator["filename"],
                             coord_files,
                             topology_format=file_configurator["format"],

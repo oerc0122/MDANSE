@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import collections
 
-import MDAnalysis as mda
+import MDAnalysis as MDa
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
@@ -109,7 +109,7 @@ class MDAnalysis(Converter):
         coord_files = self.configuration["coordinate_files"]["filenames"]
 
         if len(coord_files) <= 1 or coord_format is None:
-            self.u = mda.Universe(
+            self.u = MDa.Universe(
                 self.configuration["topology_file"]["filename"],
                 *coord_files,
                 continuous=self.configuration["continuous"]["value"],
@@ -118,7 +118,7 @@ class MDAnalysis(Converter):
             )
         else:
             coord_files = [(i, coord_format) for i in coord_files]
-            self.u = mda.Universe(
+            self.u = MDa.Universe(
                 self.configuration["topology_file"]["filename"],
                 coord_files,
                 continuous=self.configuration["continuous"]["value"],

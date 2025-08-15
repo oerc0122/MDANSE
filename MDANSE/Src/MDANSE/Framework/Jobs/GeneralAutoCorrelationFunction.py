@@ -120,7 +120,7 @@ class GeneralAutoCorrelationFunction(IJob):
             #. index (int): the index of the step.
         :Returns:
             #. index (int): the index of the step.
-            #. atomic_g_a_c_f (np.array): the calculated auto-correlation function for the index
+            #. atomic_gacf (np.array): the calculated auto-correlation function for the index
         """
 
         atom_index = self.trajectory.atom_indices[index]
@@ -135,9 +135,9 @@ class GeneralAutoCorrelationFunction(IJob):
             variable=self.configuration["trajectory_variable"]["value"],
         )
 
-        atomic_g_a_c_f = correlation(series, axis=0, average=1)
+        atomic_gacf = correlation(series, axis=0, average=1)
 
-        return index, atomic_g_a_c_f
+        return index, atomic_gacf
 
     def combine(self, index, x):
         """

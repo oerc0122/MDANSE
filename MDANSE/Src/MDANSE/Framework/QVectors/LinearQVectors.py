@@ -48,7 +48,12 @@ class LinearQVectors(IQVectors):
     settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
     settings["axis"] = (
         "VectorConfigurator",
-        {"normalize": True, "not_null": True, "default": [1, 0, 0], "value_type": float},
+        {
+            "normalize": True,
+            "not_null": True,
+            "default": [1, 0, 0],
+            "value_type": float,
+        },
     )
 
     def _generate(self):

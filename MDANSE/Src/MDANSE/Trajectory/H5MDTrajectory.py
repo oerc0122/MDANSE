@@ -198,7 +198,7 @@ class H5MDTrajectory(TrajectoryFile):
                 self.units[name] = 1.0
 
     @classmethod
-    def file_is_right(self, filename: Path | str) -> bool:
+    def file_is_right(cls, filename: Path | str) -> bool:
         """Check if the input file is likely to be an H5MD trajectory.
 
         Parameters

@@ -67,7 +67,8 @@ class ApproximateDispersionQVectors(LatticeQVectors):
         n_steps = int(d / q_step) + 1
 
         vects = (
-            np.array(q_start)[:, np.newaxis] + np.outer(n, np.arange(0, n_steps)) * q_step
+            np.array(q_start)[:, np.newaxis]
+            + np.outer(n, np.arange(0, n_steps)) * q_step
         )
 
         hkls = self.qvectors_to_hkl(vects, self._unit_cell)

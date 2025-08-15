@@ -69,17 +69,17 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
 
         self._file = ElementTree.parse(self["filename"])
 
-        ROOT = self._file.getroot()
+        root = self._file.getroot()
 
-        SPACEGROUP = list(ROOT.iter("SpaceGroup"))
+        space_group = list(root.iter("SpaceGroup"))
 
-        if SPACEGROUP:
+        if space_group:
             self.pbc = True
-            SPACEGROUP = SPACEGROUP[0]
+            space_group = space_group[0]
             self.cell = np.empty((3, 3), dtype=np.float64)
-            self.cell[0, :] = SPACEGROUP.attrib["AVector"].split(",")
-            self.cell[1, :] = SPACEGROUP.attrib["BVector"].split(",")
-            self.cell[2, :] = SPACEGROUP.attrib["CVector"].split(",")
+            self.cell[0, :] = space_group.attrib["AVector"].split(",")
+            self.cell[1, :] = space_group.attrib["BVector"].split(",")
+            self.cell[2, :] = space_group.attrib["CVector"].split(",")
             self.cell *= measure(1.0, "ang").toval("nm")
             self.cell = UnitCell(self.cell)
 
@@ -88,7 +88,7 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         atoms_mapping = {}
 
         comp = 0
-        for node in ROOT.iter("Atom3d"):
+        for node in root.iter("Atom3d"):
             idx = int(node.attrib["ID"])
 
             image_of = node.attrib.get("ImageOf", None)
@@ -130,7 +130,7 @@ class XTDFileConfigurator(FileWithAtomDataConfigurator):
         self._bonds = []
 
         comp = 0
-        for node in ROOT.iter("Bond"):
+        for node in root.iter("Bond"):
             idx = int(node.attrib["ID"])
 
             image_of = node.attrib.get("ImageOf", None)

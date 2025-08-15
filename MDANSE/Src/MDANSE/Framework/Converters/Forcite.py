@@ -43,9 +43,9 @@ class TrjFile(dict):
         # Record 1
         rec = "!4s20i8x"
         rec_size = struct.calcsize(rec)
-        DATA = struct.unpack(rec, trjfile.read(rec_size))
-        VERSION = DATA[1]
-        if VERSION < 2010:
+        data = struct.unpack(rec, trjfile.read(rec_size))
+        version = data[1]
+        if version < 2010:
             self._fp = "f"
         else:
             self._fp = "d"
@@ -53,8 +53,8 @@ class TrjFile(dict):
         # Diff with doc --> NTRJTI and TRJTIC not in doc
         rec = "!i"
         rec_size = struct.calcsize(rec)
-        (NTRJTI,) = struct.unpack(rec, trjfile.read(rec_size))
-        rec = f"!{80 * NTRJTI}s8x"
+        (ntrjti,) = struct.unpack(rec, trjfile.read(rec_size))
+        rec = f"!{80 * ntrjti}s8x"
         rec_size = struct.calcsize(rec)
         self["title"] = struct.unpack(rec, trjfile.read(rec_size))
         self["title"] = "\n".join([t.decode("utf-8") for t in self["title"]])
@@ -62,26 +62,26 @@ class TrjFile(dict):
         # Record 2
         rec = "!i"
         rec_size = struct.calcsize(rec)
-        NEEXTI = struct.unpack(rec, trjfile.read(rec_size))[0]
-        rec = f"!{80 * NEEXTI}s8x"
+        neexti = struct.unpack(rec, trjfile.read(rec_size))[0]
+        rec = f"!{80 * neexti}s8x"
         rec_size = struct.calcsize(rec)
         trjfile.read(rec_size)
 
         # Record 3
         rec = "!8i8x"
         rec_size = struct.calcsize(rec)
-        PERTYPE, _, LCANON, DEFCEL, _, _, LNPECAN, LTMPDAMP = struct.unpack(
+        pertype, _, lcanon, defcel, _, _, lnpecan, ltmpdamp = struct.unpack(
             rec, trjfile.read(rec_size)
         )
-        self["pertype"] = PERTYPE
-        self["defcel"] = DEFCEL
+        self["pertype"] = pertype
+        self["defcel"] = defcel
 
         # Record 4
         rec = "!i"
         rec_size = struct.calcsize(rec)
-        NFLUSD = struct.unpack(rec, trjfile.read(rec_size))[0]
+        nflusd = struct.unpack(rec, trjfile.read(rec_size))[0]
 
-        rec = f"!{NFLUSD}i{NFLUSD}i{8 * NFLUSD}s8x"
+        rec = f"!{nflusd}i{nflusd}i{8 * nflusd}s8x"
         rec_size = struct.calcsize(rec)
         trjfile.read(rec_size)
 
@@ -98,38 +98,38 @@ class TrjFile(dict):
         # Record 4a
         rec = "!i"
         rec_size = struct.calcsize(rec)
-        (LEEXTI,) = struct.unpack(rec, trjfile.read(rec_size))
-        rec = f"!{LEEXTI}s8x"
+        (leexti,) = struct.unpack(rec, trjfile.read(rec_size))
+        rec = f"!{leexti}s8x"
         rec_size = struct.calcsize(rec)
         trjfile.read(rec_size)
 
         # Record 4b
         rec = "!i"
         rec_size = struct.calcsize(rec)
-        (LPARTI,) = struct.unpack(rec, trjfile.read(rec_size))
-        rec = f"!{LPARTI}s8x"
+        (lparti,) = struct.unpack(rec, trjfile.read(rec_size))
+        rec = f"!{lparti}s8x"
         rec_size = struct.calcsize(rec)
         trjfile.read(rec_size)
 
         self._header_size = trjfile.tell()
 
         # Frame record 1
-        if VERSION == 2000:
+        if version == 2000:
             rec1 = f"!{self._fp}i33{self.fp}5i8x"
-        elif VERSION == 2010:
+        elif version == 2010:
             rec1 = f"!{self._fp}i57{self._fp}6i8x"
         else:
             rec1 = f"!{self._fp}i58{self._fp}6i8x"
 
         rec_size = struct.calcsize(rec1)
-        DATA = struct.unpack(rec1, trjfile.read(rec_size))
+        data = struct.unpack(rec1, trjfile.read(rec_size))
 
-        if VERSION < 2010:
-            self["velocities_written"] = DATA[-3]
+        if version < 2010:
+            self["velocities_written"] = data[-3]
             self["gradients_written"] = 0
         else:
-            self["velocities_written"] = DATA[-4]
-            self["gradients_written"] = DATA[-3]
+            self["velocities_written"] = data[-4]
+            self["gradients_written"] = data[-3]
 
         # Frame record 2
         rec = f"!12{self._fp}8x"
@@ -137,31 +137,31 @@ class TrjFile(dict):
         trjfile.read(rec_size)
 
         # Frame record 3
-        if LCANON:
+        if lcanon:
             rec = f"!4{self._fp}8x"
             rec_size = struct.calcsize(rec)
             trjfile.read(rec_size)
 
-        if PERTYPE > 0:
+        if pertype > 0:
             # Frame record 4
             self._def_cell_rec_pos = trjfile.tell() - self._header_size
             self._def_cell_rec = f"!22{self._fp}8x"
             self._def_cell_rec_size = struct.calcsize(self._def_cell_rec)
             trjfile.read(self._def_cell_rec_size)
 
-        if PERTYPE > 0:
+        if pertype > 0:
             # Frame record 5
             rec = f"!i14{self._fp}8x"
             rec_size = struct.calcsize(rec)
             trjfile.read(rec_size)
 
-        if LNPECAN:
+        if lnpecan:
             # Frame record 6
             rec = f"!3{self._fp}8x"
             rec_size = struct.calcsize(rec)
             trjfile.read(rec_size)
 
-        if LTMPDAMP:
+        if ltmpdamp:
             # Frame record 7
             rec = f"!{self._fp}8x"
             rec_size = struct.calcsize(rec)
@@ -205,7 +205,9 @@ class TrjFile(dict):
             cell = np.zeros((3, 3), dtype=np.float64)
             # ax,by,cz,bz,az,ay
             cell_data = np.array(
-                struct.unpack(self._def_cell_rec, trjfile.read(self._def_cell_rec_size)),
+                struct.unpack(
+                    self._def_cell_rec, trjfile.read(self._def_cell_rec_size)
+                ),
                 dtype=np.float64,
             )[2:8] * measure(1.0, "ang").toval("nm")
             cell[0, 0] = cell_data[0]

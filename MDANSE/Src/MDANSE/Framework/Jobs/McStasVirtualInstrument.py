@@ -32,7 +32,7 @@ from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
 
 MCSTAS_UNITS_LUT = {
-    "rad/ps": measure(1, "rad/ps", equivalent=True).toval("me_v"),
+    "rad/ps": measure(1, "rad/ps", equivalent=True).toval("meV"),
     "nm2/ps": measure(1, "nm2/ps", equivalent=True).toval("b/ps"),
     "nm2": measure(1, "nm2").toval("b"),
     "1/nm": measure(1, "1/nm").toval("1/ang"),
@@ -184,7 +184,9 @@ class McStasVirtualInstrument(IJob):
         self._mc_stas_physical_parameters["density"] /= NAVOGADRO / measure(
             1.0, "cm3"
         ).toval("nm3")
-        self._mc_stas_physical_parameters["V_rho"] *= measure(1.0, "1/nm3").toval("1/ang3")
+        self._mc_stas_physical_parameters["V_rho"] *= measure(1.0, "1/nm3").toval(
+            "1/ang3"
+        )
 
     def run_step(self, index):
         """
@@ -324,7 +326,7 @@ class McStasVirtualInstrument(IJob):
 
     def convert(self, sim_dir: Path | str):
         """
-        Convert McStas data set to net_c_d_f File Format
+        Convert McStas data set to netCDF File Format
         """
 
         sim_dir = Path(sim_dir)
@@ -341,102 +343,102 @@ class McStasVirtualInstrument(IJob):
         is_begin = partial(_startswith, "begin")
         is_comp_filename = partial(_startswith, "filename:")
         # First, determine if this is single or overview plot...
-        SimFile = list(filter(is_begin, open(sim_file).readlines()))
-        Datfile = 0
-        if SimFile == []:
-            FS = self.read_monitor(sim_file)
-            typ = FS["type"].split("(")[0].strip()
+        sim_file = list(filter(is_begin, open(sim_file).readlines()))
+        dat_file = 0
+        if sim_file == []:
+            monitor = self.read_monitor(sim_file)
+            typ = monitor["type"].split("(")[0].strip()
             if typ != "multiarray_1d":
-                FS = self.save_single(FS)
+                monitor = self.save_single(monitor)
                 raise OSError("Invalid")
-                Datfile = 1
+                dat_file = 1
 
         # Get filenames from the sim file
-        MonFiles = list(filter(is_comp_filename, open(sim_file).readlines()))
-        L = len(MonFiles)
-        FSlist = []
+        monitor_files = list(filter(is_comp_filename, open(sim_file).readlines()))
+        n_monitor_files = len(monitor_files)
+        monitorlist = []
         # Scan or overview?
-        if L == 0:
+        if n_monitor_files == 0:
             """Scan view"""
-            if Datfile == 0:
+            if dat_file == 0:
                 is_filename = partial(_startswith, "filename")
 
-                Scanfile = list(filter(is_filename, open(sim_file).readlines()))
-                Scanfile = Scanfile[0].split(": ")
-                Scanfile = sim_dir / Scanfile[1].strip()
+                scan_file = list(filter(is_filename, open(sim_file).readlines()))
+                scan_file = scan_file[0].split(": ")
+                scan_file = sim_dir / scan_file[1].strip()
                 # Proceed to load scan datafile
-                FS = self.read_monitor(Scanfile)
-                L = (len(FS["variables"].split()) - 1) / 2
+                monitor = self.read_monitor(scan_file)
+                n_monitor_files = (len(monitor["variables"].split()) - 1) / 2
                 self.scan_flag = 1
-                for j in range(0, L):
-                    FSsingle = self.get_monitor(FS, j)
-                    FSlist[len(FSlist) :] = [FSsingle]
-                    FSlist[j] = self.save_single(FSsingle)
-                    self.scan_length = FSsingle["data"].shape[0]
+                for j in range(0, n_monitor_files):
+                    monitor_single = self.get_monitor(monitor, j)
+                    monitorlist[len(monitorlist) :] = [monitor_single]
+                    monitorlist[j] = self.save_single(monitor_single)
+                    self.scan_length = monitor_single["data"].shape[0]
         else:
             """Overview or single monitor"""
-            for j in range(0, L):
-                MonFile = MonFiles[j].split(":")
-                MonFile = MonFile[1].strip()
-                MonFile = sim_dir / MonFile
-                FS = self.read_monitor(MonFile)
-                FSlist[len(FSlist) :] = [FS]
-                FSlist[j] = self.save_single(FS)
+            for j in range(0, n_monitor_files):
+                monitor_file = monitor_files[j].split(":")
+                monitor_file = monitor_file[1].strip()
+                monitor_file = sim_dir / monitor_file
+                monitor = self.read_monitor(monitor_file)
+                monitorlist[len(monitorlist) :] = [monitor]
+                monitorlist[j] = self.save_single(monitor)
 
-    def save_single(self, FileStruct):
+    def save_single(self, file_struct):
         """
         save a single 1D/2D data array with axis into a NetCDF file format.
           input:  FileStruct as obtained from read_monitor()
           output: FileStruct data structure
         """
 
-        typ = FileStruct["type"].split("(")[0].strip()
+        typ = file_struct["type"].split("(")[0].strip()
 
         if typ == "array_1d":
             # 1D data set
-            Xmin = eval(FileStruct["xlimits"].split()[0])
-            Xmax = eval(FileStruct["xlimits"].split()[1])
-            x = FileStruct["data"][:, 0]
-            y = FileStruct["data"][:, 1]
+            x_min = eval(file_struct["xlimits"].split()[0])
+            x_max = eval(file_struct["xlimits"].split()[1])
+            x = file_struct["data"][:, 0]
+            y = file_struct["data"][:, 1]
 
-            Title = self.unique(
-                self.treat_str_var(FileStruct["component"]), self._output_data
+            title = self.unique(
+                self.treat_str_var(file_struct["component"]), self._output_data
             )
             xlabel = self.unique(
-                self.treat_str_var(FileStruct["xlabel"]), self._output_data, x
+                self.treat_str_var(file_struct["xlabel"]), self._output_data, x
             )
 
             self._output_data[xlabel] = IOutputVariable.create(
                 "LineOutputVariable", x, xlabel, units="au"
             )
-            self._output_data[Title] = IOutputVariable.create(
-                "LineOutputVariable", y, Title, axis=str(xlabel), units="au"
+            self._output_data[title] = IOutputVariable.create(
+                "LineOutputVariable", y, title, axis=str(xlabel), units="au"
             )
 
         elif typ == "array_2d":
             # 2D data set
-            mysize = FileStruct["data"].shape
+            mysize = file_struct["data"].shape
 
-            data = FileStruct["data"]
+            data = file_struct["data"]
             mysize = data.shape
             data = data.T
 
-            Xmin = eval(FileStruct["xylimits"].split()[0])
-            Xmax = eval(FileStruct["xylimits"].split()[1])
-            Ymin = eval(FileStruct["xylimits"].split()[2])
-            Ymax = eval(FileStruct["xylimits"].split()[3])
+            x_min = eval(file_struct["xylimits"].split()[0])
+            x_max = eval(file_struct["xylimits"].split()[1])
+            y_min = eval(file_struct["xylimits"].split()[2])
+            y_max = eval(file_struct["xylimits"].split()[3])
 
-            x = np.linspace(Xmin, Xmax, mysize[1])
-            y = np.linspace(Ymin, Ymax, mysize[0])
+            x = np.linspace(x_min, x_max, mysize[1])
+            y = np.linspace(y_min, y_max, mysize[0])
 
             title = self.unique(
-                self.treat_str_var(FileStruct["component"]), self._output_data
+                self.treat_str_var(file_struct["component"]), self._output_data
             )
             xlabel = self.unique(
-                self.treat_str_var(FileStruct["xlabel"]), self._output_data, x
+                self.treat_str_var(file_struct["xlabel"]), self._output_data, x
             )
             ylabel = self.unique(
-                self.treat_str_var(FileStruct["ylabel"]), self._output_data, y
+                self.treat_str_var(file_struct["ylabel"]), self._output_data, y
             )
 
             self._output_data.add(xlabel, "LineOutputVariable", x, units="au")
@@ -451,7 +453,7 @@ class McStasVirtualInstrument(IJob):
                 partial_result=True,
             )
 
-        return FileStruct
+        return file_struct
 
     def read_monitor(self, sim_file):
         """
@@ -467,25 +469,25 @@ class McStasVirtualInstrument(IJob):
         # Read header
         is_header = partial(_startswith, "#")
         f = open(sim_file)
-        Lines = f.readlines()
-        Header = list(filter(is_header, Lines))
+        lines = f.readlines()
+        header = list(filter(is_header, lines))
         f.close()
 
         # Traverse header and define corresponding 'struct'
         str_struct = "{"
-        for j in range(0, len(Header)):
+        for j in range(0, len(header)):
             # Field name and data
-            Line = Header[j]
-            Line = Line[2 : len(Line)].strip()
-            Line = Line.split(":")
-            Field = Line[0]
-            Value = ""
-            Value = "".join(":".join(Line[1 : len(Line)]).split("'"))
-            str_struct = str_struct + "'" + Field + "':'" + Value + "'"
-            if j < len(Header) - 1:
+            line = header[j]
+            line = line[2 : len(line)].strip()
+            line = line.split(":")
+            field = line[0]
+            value = ""
+            value = "".join(":".join(line[1 : len(line)]).split("'"))
+            str_struct = str_struct + "'" + field + "':'" + value + "'"
+            if j < len(header) - 1:
                 str_struct += ","
         str_struct = str_struct + "}"
-        Filestruct = eval(str_struct)
+        file_struct = eval(str_struct)
         # Add the data block
 
         data = []
@@ -504,10 +506,10 @@ class McStasVirtualInstrument(IJob):
                     header = False
                 data.append(line)
 
-        Filestruct["data"] = np.genfromtxt(io.StringIO(" ".join(data)))
-        Filestruct["fullpath"] = sim_file
+        file_struct["data"] = np.genfromtxt(io.StringIO(" ".join(data)))
+        file_struct["fullpath"] = sim_file
 
-        return Filestruct
+        return file_struct
 
     def get_monitor(self, monitor, col):
         """
@@ -524,7 +526,7 @@ class McStasVirtualInstrument(IJob):
         # Ugly, hard-coded...
         data = monitor["data"][:, (0, 2 * col + 1, 2 * col + 2)]
         variables = monitor["variables"].split()
-        FSsingle = {
+        monitor_single = {
             "xlimits": monitor["xlimits"],
             "data": data,
             "component": variables[col + 1],
@@ -536,4 +538,4 @@ class McStasVirtualInstrument(IJob):
             "title": "",
         }
 
-        return FSsingle
+        return monitor_single

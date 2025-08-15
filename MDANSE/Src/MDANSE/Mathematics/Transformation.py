@@ -324,8 +324,8 @@ class Rotation(RigidBodyTransformation):
         solutions = []
         # for each solution, find the two other angles (a1, a3).
         for a2 in (a2a, a2b):
-            R2 = Rotation(e2, a2)
-            v = R2(e3)
+            r2 = Rotation(e2, a2)
+            v = r2(e3)
             v1 = v - (v * e1) * e1
             w1 = w - (w * e1) * e1
             norm = ((v1 * v1) * (w1 * w1)) ** 0.5
@@ -338,14 +338,14 @@ class Rotation(RigidBodyTransformation):
                 sina1 = v1 * (w1.cross(e1)) / norm
                 a1 = mod_angle(angle_from_sine_and_cosine(sina1, cosa1), 2 * np.pi)
 
-            R3 = Rotation(e2, -1 * a2) * Rotation(e1, -1 * a1) * self
+            r3 = Rotation(e2, -1 * a2) * Rotation(e1, -1 * a1) * self
             # u = normalized test vector perpendicular to e3
             # if e2 and e3 are // we have an exception before.
             # if we take u = e1^e3 then it will not work for
             # Euler and Kappa axes.
             u = (e2.cross(e3)).normal()
-            cosa3 = u * R3(u)
-            sina3 = u * (R3(u).cross(e3))
+            cosa3 = u * r3(u)
+            sina3 = u * (r3(u).cross(e3))
             a3 = mod_angle(angle_from_sine_and_cosine(sina3, cosa3), 2 * np.pi)
 
             solutions.append(np.array([a1, a2, a3]))

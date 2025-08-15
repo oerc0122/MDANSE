@@ -28,7 +28,7 @@ class RunningModeConfigurator(IConfigurator):
     running the analysis.
     """
 
-    availables_modes = ["single-core", "multicore"]
+    available_modes = ["single-core", "multicore"]
 
     _default = ("single-core", 1)
 
@@ -50,7 +50,7 @@ class RunningModeConfigurator(IConfigurator):
         else:
             mode = value[0].lower()
 
-        if mode not in self.availables_modes:
+        if mode not in self.available_modes:
             self.error_status = f"{mode} is not a valid running mode."
             return
 

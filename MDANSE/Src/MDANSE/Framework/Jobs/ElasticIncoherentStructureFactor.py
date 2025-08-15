@@ -150,7 +150,7 @@ class ElasticIncoherentStructureFactor(IJob):
             #. index (int): The index of the step.
         :Returns:
             #. index (int): The index of the step.
-            #. atomic_e_i_s_f (np.array): The atomic elastic incoherent structure factor
+            #. atomic_eisf (np.array): The atomic elastic incoherent structure factor
         """
 
         # get atom index
@@ -165,7 +165,7 @@ class ElasticIncoherentStructureFactor(IJob):
 
         series = self.configuration["projection"]["projector"](series)
 
-        atomic_e_i_s_f = np.zeros((self._n_q_shells,), dtype=np.float64)
+        atomic_eisf = np.zeros((self._n_q_shells,), dtype=np.float64)
 
         for i, q in enumerate(self.configuration["q_vectors"]["shells"]):
             if q not in self.configuration["q_vectors"]["value"]:
@@ -176,9 +176,9 @@ class ElasticIncoherentStructureFactor(IJob):
             a = np.average(np.exp(1j * np.dot(series, q_vectors)), axis=0)
             a = np.abs(a) ** 2
 
-            atomic_e_i_s_f[i] = np.average(a)
+            atomic_eisf[i] = np.average(a)
 
-        return index, atomic_e_i_s_f
+        return index, atomic_eisf
 
     def combine(self, index, x):
         """

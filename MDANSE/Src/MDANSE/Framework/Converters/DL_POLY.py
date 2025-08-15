@@ -38,7 +38,7 @@ class HistoryFileError(Error):
     pass
 
 
-class DL_POLYConverterError(Error):
+class DLPolyConverterError(Error):
     pass
 
 
@@ -116,7 +116,7 @@ class HistoryFile(dict):
         self["instance"].close()
 
 
-class DL_POLY(Converter):
+class DL_POLY(Converter):  # noqa: N801 -- preserved for compat
     """Converts a DL_POLY trajectory to an MDT trajectory."""
 
     label = "DL-POLY"

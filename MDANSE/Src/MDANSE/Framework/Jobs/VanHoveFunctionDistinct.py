@@ -41,7 +41,7 @@ DETAILED_CELL_MESSAGE = (
 )
 
 
-def distance_array_2D(
+def distance_array_2d(
     ref_atoms: npt.NDArray[float],
     other_atoms: npt.NDArray[float],
     cell_array: npt.NDArray[float],
@@ -158,7 +158,7 @@ def van_hove_distinct(
             intra_mask = mols_ref.reshape((1, len(mols_ref))) == mols_sub.reshape(
                 (len(mols_sub), 1)
             )
-            distance_array = distance_array_2D(reference, subset_coords, cell)
+            distance_array = distance_array_2d(reference, subset_coords, cell)
             bin_values = ((distance_array - rmin) / dr).astype(int)
             if ref_indices[0] == sub_indices[0]:
                 diag_len = min(len(ref_indices), len(sub_indices))
@@ -273,7 +273,7 @@ def van_hove_distinct_all_inter(
             for type1 in unique_types:
                 type_indices_ref[type1] = np.where(symbolindex[ref_indices] == type1)[0]
                 type_indices_sub[type1] = np.where(symbolindex[sub_indices] == type1)[0]
-            distance_array = distance_array_2D(reference, subset_coords, cell)
+            distance_array = distance_array_2d(reference, subset_coords, cell)
             bin_values = ((distance_array - rmin) / dr).astype(int)
             if ref_indices[0] == sub_indices[0]:
                 diag_len = min(len(ref_indices), len(sub_indices))

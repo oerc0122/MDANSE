@@ -87,7 +87,12 @@ class XRayStaticStructureFactor(DistanceHistogram):
     )
     settings["q_values"] = (
         "RangeConfigurator",
-        {"value_type": float, "include_last": True, "mini": 0.0, "default": (0, 500, 1)},
+        {
+            "value_type": float,
+            "include_last": True,
+            "mini": 0.0,
+            "default": (0, 500, 1),
+        },
     )
     settings["grouping_level"] = (
         "GroupingLevelConfigurator",

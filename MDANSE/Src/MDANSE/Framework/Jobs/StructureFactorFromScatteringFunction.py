@@ -149,7 +149,9 @@ class StructureFactorFromScatteringFunction(IJob):
                 f"dcsf/f(q,t)/{pair_str}"
             ]
             sqrt_cij = sqrt(
-                n_atoms_per_element[label_i] * n_atoms_per_element[label_j] * norm_natoms**2
+                n_atoms_per_element[label_i]
+                * n_atoms_per_element[label_j]
+                * norm_natoms**2
             )
             delta_ij = 1 if label_i == label_j else 0
             self._output_data[f"ssf/{pair_str}"][:] = (

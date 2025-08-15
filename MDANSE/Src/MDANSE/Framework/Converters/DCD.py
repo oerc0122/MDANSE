@@ -48,7 +48,7 @@ class InputOutputError(Error):
     pass
 
 
-class EndOfFile(Error):
+class EndOfFileError(Error):
     pass
 
 
@@ -131,7 +131,7 @@ class FortranBinaryFile:
         try:
             data = self.next_record()
         except StopIteration:
-            raise EndOfFile()
+            raise EndOfFileError()
         if repeat:
             unit = struct.calcsize(self.byte_order + fmt)
             assert len(data) % unit == 0
@@ -265,7 +265,7 @@ class DCDFile(FortranBinaryFile, dict):
     def next_step(self):
         try:
             return self.read_step()
-        except EndOfFile:
+        except EndOfFileError:
             raise StopIteration
 
 

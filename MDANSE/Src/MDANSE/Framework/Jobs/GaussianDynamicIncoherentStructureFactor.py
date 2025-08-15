@@ -256,7 +256,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         series = self.configuration["projection"]["projector"](series)
 
-        atomic_s_f = np.zeros((self._n_q_shells, self._n_frames), dtype=np.float64)
+        atomic_sf = np.zeros((self._n_q_shells, self._n_frames), dtype=np.float64)
 
         msd = mean_square_displacement(
             series, self.configuration["frames"]["n_configs"]
@@ -264,9 +264,9 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         for i, q2 in enumerate(self._k_square):
             gaussian = np.exp(-msd * q2 / 6.0)
-            atomic_s_f[i, :] += gaussian
+            atomic_sf[i, :] += gaussian
 
-        return index, (atomic_s_f, msd)
+        return index, (atomic_sf, msd)
 
     def combine(self, index: int, x: tuple[np.ndarray, np.ndarray]):
         """Add the results to the output files.
@@ -279,8 +279,8 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             A tuple of the GDISF and MSD of an atom.
         """
         element = self._atoms[self.trajectory.atom_indices[index]]
-        atomic_s_f, msd = x
-        self._output_data[f"gdisf/f(q,t)/{element}"] += atomic_s_f
+        atomic_sf, msd = x
+        self._output_data[f"gdisf/f(q,t)/{element}"] += atomic_sf
         self._output_data[f"msd/{element}"] += msd
 
     def finalize(self):

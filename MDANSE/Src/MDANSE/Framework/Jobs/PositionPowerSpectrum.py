@@ -219,7 +219,7 @@ class PositionPowerSpectrum(IJob):
         :Returns:
             #. index (int): The index of the step.
             #. atomic_e_s (np.array): The calculated energy spectrum for atom of index=index
-            #. atomic_p_a_c_f (np.array): The calculated position auto-correlation function for atom of index=index
+            #. atomic_pacf (np.array): The calculated position auto-correlation function for atom of index=index
         """
         LOG.debug(f"Running step: {index}")
         trajectory = self.trajectory
@@ -239,10 +239,10 @@ class PositionPowerSpectrum(IJob):
         series = self.configuration["projection"]["projector"](series)
 
         n_configs = self.configuration["frames"]["n_configs"]
-        atomic_p_a_c_f = correlate(series, series[:n_configs], mode="valid") / (
+        atomic_pacf = correlate(series, series[:n_configs], mode="valid") / (
             3 * n_configs
         )
-        return index, atomic_p_a_c_f.T[0]
+        return index, atomic_pacf.T[0]
 
     def combine(self, index, x):
         """

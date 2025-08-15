@@ -73,7 +73,7 @@ def add_grouped_totals(
         return
 
     if dim == 1:
-        add_grouped_totals_1D(
+        add_grouped_totals_1d(
             trajectory,
             output_data,
             result_name,
@@ -84,7 +84,7 @@ def add_grouped_totals(
             **kwargs,
         )
     elif dim == 2:
-        add_grouped_totals_2D(
+        add_grouped_totals_2d(
             trajectory,
             output_data,
             result_name,
@@ -100,7 +100,7 @@ def add_grouped_totals(
         raise NotImplementedError("Grouped total for dim > 2 not implemented.")
 
 
-def add_grouped_totals_1D(
+def add_grouped_totals_1d(
     trajectory: Trajectory,
     output_data: OutputData,
     result_name: str,
@@ -158,7 +158,7 @@ def add_grouped_totals_1D(
             output_data[group_id].scaling_factor = conc
 
 
-def add_grouped_totals_2D(
+def add_grouped_totals_2d(
     trajectory: Trajectory,
     output_data: OutputData,
     result_name: str,

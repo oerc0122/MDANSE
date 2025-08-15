@@ -37,6 +37,7 @@ select = [
     # "D",   # Pydocstyle
     "UP",  # Pyupgrade
     "T20",   # Print
+    "N", # Naming
 ]
 ignore = [
     "E501",     # Line too long
@@ -47,6 +48,7 @@ ignore = [
     "PLR0913",  # Too many arguments
     "PLR0915",  # Too many statements
     "PLC0415",  # Top-level imports
+    "N999",     # Module names
 ]
 
 [lint.isort]

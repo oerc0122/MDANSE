@@ -219,8 +219,8 @@ class DensityOfStates(IJob):
             #. index (int): The index of the step.
         :Returns:
             #. index (int): The index of the step.
-            #. atomic_d_o_s (np.array): The calculated density of state for atom of index=index
-            #. atomic_v_a_c_f (np.array): The calculated velocity auto-correlation function for atom of index=index
+            #. atomic_dos (np.array): The calculated density of state for atom of index=index
+            #. atomic_vacf (np.array): The calculated velocity auto-correlation function for atom of index=index
         """
         LOG.debug(f"Running step: {index}")
         trajectory = self.trajectory
@@ -255,10 +255,10 @@ class DensityOfStates(IJob):
         series = self.configuration["projection"]["projector"](series)
 
         n_configs = self.configuration["frames"]["n_configs"]
-        atomic_v_a_c_f = correlate(series, series[:n_configs], mode="valid") / (
+        atomic_vacf = correlate(series, series[:n_configs], mode="valid") / (
             3 * n_configs
         )
-        return index, atomic_v_a_c_f.T[0]
+        return index, atomic_vacf.T[0]
 
     def combine(self, index, x):
         """

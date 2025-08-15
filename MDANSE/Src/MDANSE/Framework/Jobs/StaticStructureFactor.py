@@ -65,7 +65,12 @@ class StaticStructureFactor(DistanceHistogram):
     )
     settings["q_values"] = (
         "RangeConfigurator",
-        {"value_type": float, "include_last": True, "mini": 0.0, "default": (0, 500, 1)},
+        {
+            "value_type": float,
+            "include_last": True,
+            "mini": 0.0,
+            "default": (0, 500, 1),
+        },
     )
     settings["grouping_level"] = (
         "GroupingLevelConfigurator",
@@ -289,7 +294,9 @@ class StaticStructureFactor(DistanceHistogram):
             )
             assign_weights(self._output_data, weight_dict, "ssf/inter/%s", self.labels)
             assign_weights(self._output_data, weight_dict, "ssf/%s", self.labels)
-            ssf_intra = weighted_sum(self._output_data, "ssf/intra/%s", self.labels_intra)
+            ssf_intra = weighted_sum(
+                self._output_data, "ssf/intra/%s", self.labels_intra
+            )
             self._output_data["ssf/intra/total"][:] = ssf_intra / fact
             ssf_inter = weighted_sum(self._output_data, "ssf/inter/%s", self.labels)
             self._output_data["ssf/inter/total"][:] = ssf_inter / fact

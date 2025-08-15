@@ -105,13 +105,13 @@ def correlation(x, y=None, axis=0, sum_over_axis=None, average=None):
 
     n = x.shape[axis]
 
-    X = np.fft.fft(x, 2 * n, axis=axis)
+    x_fft = np.fft.fft(x, 2 * n, axis=axis)
 
     if y is not None:
         y = np.array(y)
-        Y = np.fft.fft(y, 2 * n, axis=axis)
+        y_fft = np.fft.fft(y, 2 * n, axis=axis)
     else:
-        Y = X
+        y_fft = x_fft
 
     s = [slice(None)] * x.ndim
 
@@ -121,7 +121,7 @@ def correlation(x, y=None, axis=0, sum_over_axis=None, average=None):
 
     s = tuple(s)
 
-    corr = np.real(np.fft.ifft(np.conjugate(X) * Y, axis=axis)[s])
+    corr = np.real(np.fft.ifft(np.conjugate(x_fft) * y_fft, axis=axis)[s])
 
     norm = n - np.arange(n)
 
@@ -352,7 +352,7 @@ class Filter(ABC):
     Ry_to_Hz = 3289841960777247.0
     Ry_to_eV = 13.60569193
 
-    # Conversion factor: frequency axis to energies in me_v
+    # Conversion factor: frequency axis to energies in meV
     _freq_to_mev = 1e3 * Ry_to_eV / Ry_to_Hz
 
     # Conversion factor: angular frequency to cyclic frequency
@@ -417,9 +417,9 @@ class Filter(ABC):
 
         """
 
-        return signal.freqs(*transfer_function, wor_n=range)
+        return signal.freqs(*transfer_function, worN=range)
 
-    def apply(self, input: np.array) -> np.ndarray:
+    def apply(self, input: np.ndarray) -> np.ndarray:
         """Returns the convolution of the digital designed filter with an input signal.
 
         See Also
@@ -517,7 +517,8 @@ class Filter(ABC):
                 freq_range *= self._angular_to_cyclic
         else:
             raise RuntimeError(
-                f"Could not find supplied frequency range around which filter frequency response will be computed. \n_please set the 'custom_freq_range' attribute on the instance of {type(self)}"
+                "Could not find supplied frequency range around which filter frequency response will be computed.\n"
+                f"please set the 'custom_freq_range' attribute on the instance of {type(self)}"
             )
 
         # Compute filter response around frequencies given in range
@@ -577,7 +578,7 @@ class Filter(ABC):
 
     @staticmethod
     def frequency_range(
-        N: int,
+        n: int,
         timestep: float,
         resize_to: int = 1000,
         units: FrequencyUnits = FrequencyUnits.ANGULAR,
@@ -606,7 +607,7 @@ class Filter(ABC):
 
         """
         # Compute cyclic frequencies using FFT method
-        axis_frequencies = fftpack.fftfreq(N, timestep)
+        axis_frequencies = fftpack.fftfreq(n, timestep)
         limit = int(np.floor(len(axis_frequencies) / 2)) if not symmetric else -1
         # Return FFT frequency range with appropriate unit conversion
         coeff = (
@@ -770,7 +771,7 @@ class Filter(ABC):
 
     @classmethod
     def freq_to_energy(cls, freq, units):
-        """Returns the energy value (or values) in millielectronvolts (me_v), converted from frequency value (or values).
+        """Returns the energy value (or values) in millielectronvolts (meV), converted from frequency value (or values).
 
         Parameters
         ----------
@@ -796,7 +797,7 @@ class Filter(ABC):
 
     @classmethod
     def energy_to_freq(cls, energy, units):
-        """Returns the frequency value (or values), converted from energy value (or values) in millielectronvolts (me_v).
+        """Returns the frequency value (or values), converted from energy value (or values) in millielectronvolts (meV).
 
         Parameters
         ----------
@@ -1016,7 +1017,12 @@ class Bessel(Filter):
     default_settings = {
         "order": {"description": "The order of the filter", "value": 1},
         "norm": {
-            "description": "Filter normalization results in the following behaviour at cutoff - phase: phase response obtains midpoint - delay: group delay in passband is the reciprocal of cutoff - mag: gain magnitude is -3 d_b",
+            "description": (
+                "Filter normalization results in the following behaviour at cutoff "
+                "- phase: phase response obtains midpoint "
+                "- delay: group delay in passband is the reciprocal of cutoff "
+                "- mag: gain magnitude is -3 dB"
+            ),
             "values": {"phase", "delay", "mag"},
             "value": "phase",
         },
@@ -1103,7 +1109,7 @@ class Notch(Filter):
             Frequency response over a given range of cyclic frequencies.
         """
 
-        return signal.freqz(*transfer_function, wor_n=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
 
 
 class Peak(Filter):
@@ -1163,7 +1169,7 @@ class Peak(Filter):
 
         """
 
-        return signal.freqz(*transfer_function, wor_n=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
 
 
 class Comb(Filter):
@@ -1237,7 +1243,7 @@ class Comb(Filter):
 
         """
 
-        return signal.freqz(*transfer_function, wor_n=range, fs=self.sample_freq)
+        return signal.freqz(*transfer_function, worN=range, fs=self.sample_freq)
 
 
 FILTERS = (

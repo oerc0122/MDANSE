@@ -102,11 +102,11 @@ class MockTrajectory:
             return False
         coords_nm = coords * measure(1.0, "ang").toval("nm")
         copies = []
-        A, B, C = self._box_repetitions
+        a, b, c = self._box_repetitions
         v_a, v_b, v_c = self._box_size[0, :], self._box_size[1, :], self._box_size[2, :]
-        for na in range(A):
-            for nb in range(B):
-                for nc in range(C):
+        for na in range(a):
+            for nb in range(b):
+                for nc in range(c):
                     shift = na * v_a + nb * v_b + nc * v_c
                     copies.append(coords_nm + shift.reshape((1, 3)))
         self._start_coordinates = np.vstack(copies)

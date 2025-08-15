@@ -264,9 +264,9 @@ class DynamicCoherentStructureFactor(IJob):
 
         traj = self.trajectory
 
-        n_q_vectors = self.configuration["q_vectors"]["value"][shell]["q_vectors"].shape[
-            1
-        ]
+        n_q_vectors = self.configuration["q_vectors"]["value"][shell][
+            "q_vectors"
+        ].shape[1]
 
         rho = {}
         for element in self.trajectory.unique_names:

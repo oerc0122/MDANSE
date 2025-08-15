@@ -380,7 +380,9 @@ class NeutronDynamicTotalStructureFactor(IJob):
             bi = self.trajectory.get_atom_property(ele_i, "b_coherent")
             bj = self.trajectory.get_atom_property(ele_j, "b_coherent")
             sqrt_cij = sqrt(
-                n_atoms_per_element[label_i] * n_atoms_per_element[label_j] * norm_natoms**2
+                n_atoms_per_element[label_i]
+                * n_atoms_per_element[label_j]
+                * norm_natoms**2
             )
             pre_fac = 1 if label_i == label_j else 2
             self._output_data[f"ndsf/f(q,t)_coh/{pair_str}"].scaling_factor *= (

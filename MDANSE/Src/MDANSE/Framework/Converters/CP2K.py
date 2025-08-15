@@ -192,7 +192,10 @@ class CP2K(Converter):
 
         if self.configuration["force_file"]["value"]:
             self._force_file = self.configuration["force_file"]
-            if abs(self._xyz_file["time_step"] - self._force_file["time_step"]) > 1.0e-09:
+            if (
+                abs(self._xyz_file["time_step"] - self._force_file["time_step"])
+                > 1.0e-09
+            ):
                 raise CP2KConverterError(
                     "Inconsistent time step between pos and force files"
                 )
@@ -275,7 +278,9 @@ class CP2K(Converter):
         if self._configuration["fold"]["value"]:
             real_conf.fold_coordinates()
 
-        time = index * self._xyz_file["time_step"] * measure(1.0, iunit="fs").toval("ps")
+        time = (
+            index * self._xyz_file["time_step"] * measure(1.0, iunit="fs").toval("ps")
+        )
 
         # A snapshot is created out of the current configuration.
         self._trajectory.dump_configuration(

@@ -529,12 +529,14 @@ class CurrentCorrelationFunction(IJob):
                 fft="rfft",
             )
             if self.add_ideal_results:
-                self._output_data[f"ccf/J(q,f)_long/ideal/{pair_str}"][:] = get_spectrum(
-                    self._output_data[f"ccf/j(q,t)_long/{pair_str}"],
-                    None,
-                    self.configuration["instrument_resolution"]["time_step"],
-                    axis=1,
-                    fft="rfft",
+                self._output_data[f"ccf/J(q,f)_long/ideal/{pair_str}"][:] = (
+                    get_spectrum(
+                        self._output_data[f"ccf/j(q,t)_long/{pair_str}"],
+                        None,
+                        self.configuration["instrument_resolution"]["time_step"],
+                        axis=1,
+                        fft="rfft",
+                    )
                 )
                 self._output_data[f"ccf/J(q,f)_trans/ideal/{pair_str}"][:] = (
                     get_spectrum(
@@ -557,11 +559,15 @@ class CurrentCorrelationFunction(IJob):
             2,
             conc_exp=0.5,
         )
-        assign_weights(self._output_data, weight_dict, "ccf/j(q,t)_long/%s", self.labels)
+        assign_weights(
+            self._output_data, weight_dict, "ccf/j(q,t)_long/%s", self.labels
+        )
         assign_weights(
             self._output_data, weight_dict, "ccf/j(q,t)_trans/%s", self.labels
         )
-        assign_weights(self._output_data, weight_dict, "ccf/J(q,f)_long/%s", self.labels)
+        assign_weights(
+            self._output_data, weight_dict, "ccf/J(q,f)_long/%s", self.labels
+        )
         assign_weights(
             self._output_data, weight_dict, "ccf/J(q,f)_trans/%s", self.labels
         )
@@ -583,7 +589,9 @@ class CurrentCorrelationFunction(IJob):
         n_total = sum(self.trajectory.get_all_natoms().values())
         fact = n_selected / n_total
 
-        jqt_long_total = weighted_sum(self._output_data, "ccf/j(q,t)_long/%s", self.labels)
+        jqt_long_total = weighted_sum(
+            self._output_data, "ccf/j(q,t)_long/%s", self.labels
+        )
         self._output_data["ccf/j(q,t)_long/total"][:] = jqt_long_total
         jqt_trans_total = weighted_sum(
             self._output_data, "ccf/j(q,t)_trans/%s", self.labels
@@ -612,7 +620,9 @@ class CurrentCorrelationFunction(IJob):
             units="au",
         )
 
-        sqf_long_total = weighted_sum(self._output_data, "ccf/J(q,f)_long/%s", self.labels)
+        sqf_long_total = weighted_sum(
+            self._output_data, "ccf/J(q,f)_long/%s", self.labels
+        )
         self._output_data["ccf/J(q,f)_long/total"][:] = sqf_long_total
         sqf_trans_total = weighted_sum(
             self._output_data, "ccf/J(q,f)_trans/%s", self.labels
@@ -652,7 +662,9 @@ class CurrentCorrelationFunction(IJob):
             sqf_trans_total = weighted_sum(
                 self._output_data, "J(q,f)_trans/ideal/%s", self.labels
             )
-            self._output_data["ccf/J(q,f)_trans/ideal/total"][:] = sqf_trans_total / fact
+            self._output_data["ccf/J(q,f)_trans/ideal/total"][:] = (
+                sqf_trans_total / fact
+            )
             self._output_data["ccf/J(q,f)_trans/ideal/total"].scaling_factor = fact
             add_grouped_totals(
                 self.trajectory,

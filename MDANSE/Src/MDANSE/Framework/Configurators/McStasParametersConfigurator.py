@@ -31,9 +31,9 @@ class McStasParametersConfigurator(IConfigurator):
     _mc_stas_types = {"double": float, "int": int, "string": str}
 
     _default = {
-        "beam_wavelength__angs": 2.0,
+        "beam_wavelength_Angs": 2.0,
         "environment_thickness_m": 0.002,
-        "beam_resolution_me_v": 0.1,
+        "beam_resolution_meV": 0.1,
         "container": "INPUT_FILENAME.laz",
         "container_thickness_m": 5e-05,
         "sample_height_m": 0.05,

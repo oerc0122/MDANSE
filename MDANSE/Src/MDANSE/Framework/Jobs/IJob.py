@@ -76,7 +76,7 @@ try:
 except ImportError:
     LOG.debug("TQDM not installed, no progress bars")
 
-    class tqdm:
+    class tqdm:  # noqa: N801 - Deliberate fake class name
         """Return dummy function for tqdm."""
 
         def __init__(self, x, *_args, **_kwargs):
@@ -327,7 +327,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
         for log_queue in log_queues:
             queue_handler = QueueHandler(log_queue)
             queue_handlers.append(queue_handler)
-            LOG.add_handler(queue_handler)
+            LOG.addHandler(queue_handler)
 
         while True:
             try:
@@ -344,7 +344,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 outputs.put(output)
 
         for queue_handler in queue_handlers:
-            LOG.remove_handler(queue_handler)
+            LOG.removeHandler(queue_handler)
 
         return True
 
@@ -621,9 +621,9 @@ class {classname}(IJob):
         # tracking the fh by storing it in this object causes issues
         # with multiprocessing jobs
         fh.set_name(filename)
-        fh.set_formatter(FMT)
-        fh.set_level(level)
-        LOG.add_handler(fh)
+        fh.setFormatter(FMT)
+        fh.setLevel(level)
+        LOG.addHandler(fh)
         LOG.debug(f"Log handler added for filename {filename}")
 
     def remove_log_file_handler(self) -> None:
@@ -632,4 +632,4 @@ class {classname}(IJob):
         for handler in LOG.handlers:
             if handler.name == self._log_filename:
                 handler.close()
-                LOG.remove_handler(handler)
+                LOG.removeHandler(handler)

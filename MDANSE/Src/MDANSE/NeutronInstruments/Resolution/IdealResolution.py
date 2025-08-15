@@ -21,7 +21,7 @@ from MDANSE.NeutronInstruments.Resolution.Resolution import Resolution
 
 
 class IdealResolution(Resolution):
-    def resolution_window(self, energy_axis: np.ndarray, Ef: float, Ei: float):
+    def resolution_window(self, energy_axis: np.ndarray, e_f: float, e_i: float):
         window_axis = np.linspace(0, energy_axis.max(), len(energy_axis))
         window_value = np.zeros_like(window_axis)
         window_value[0] = 1.0

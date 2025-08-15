@@ -51,7 +51,7 @@ _PREFIXES = {
 
 unit_lookup = {
     "rad/ps": "energy",
-    "me_v": "energy",
+    "meV": "energy",
     "1/cm": "energy",
     "THz": "energy",
     "J_per_mole": "energy",
@@ -156,9 +156,9 @@ class _Unit:
         kg: int = 0,
         m: int = 0,
         s: int = 0,
-        K: int = 0,
+        K: int = 0,  # noqa: N803 - should be K(elvin)
         mol: int = 0,
-        A: int = 0,
+        A: int = 0,  # noqa: N803 - should be A(mpère)
         cd: int = 0,
         rad: int = 0,
         sr: int = 0,
@@ -1029,7 +1029,18 @@ class UnitsManager(metaclass=Singleton):
         self.load()
 
     def add_unit(
-        self, uname, factor, kg=0, m=0, s=0, K=0, mol=0, A=0, cd=0, rad=0, sr=0
+        self,
+        uname,
+        factor,
+        kg=0,
+        m=0,
+        s=0,
+        K=0,  # noqa: N803 - Match unit
+        mol=0,
+        A=0,  # noqa: N803 - Match unit
+        cd=0,
+        rad=0,
+        sr=0,
     ):
         UnitsManager._UNITS[uname] = _Unit(
             uname, factor, kg, m, s, K, mol, A, cd, rad, sr

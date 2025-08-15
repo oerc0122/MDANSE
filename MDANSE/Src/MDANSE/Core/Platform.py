@@ -505,20 +505,22 @@ class PlatformWin(Platform):
         :note: Adapted from Eric Koome's implementation (http://code.activestate.com/recipes/305279-getting-process-information-on-windows/)
         """
 
-        DWORD = ctypes.c_ulong
-        PROCESS_QUERY_INFORMATION = 0x0400
-        PROCESS_VM_READ = 0x0010
+        dword = ctypes.c_ulong
+        process_query_information = 0x0400
+        process_vm_read = 0x0010
 
-        parr = DWORD * 1024
+        parr = dword * 1024
         a_processes = parr()
-        cb_needed = DWORD(0)
-        h_module = DWORD()
+        cb_needed = dword(0)
+        h_module = dword()
 
         processes = {}
 
         # Call Enumprocesses to get hold of process id's
         ctypes.windll.psapi.EnumProcesses(
-            ctypes.byref(a_processes), ctypes.sizeof(a_processes), ctypes.byref(cb_needed)
+            ctypes.byref(a_processes),
+            ctypes.sizeof(a_processes),
+            ctypes.byref(cb_needed),
         )
 
         # Number of processes returned
@@ -529,7 +531,7 @@ class PlatformWin(Platform):
         for pid in pid_process:
             # Get handle to the process based on PID
             h_process = ctypes.windll.kernel32.OpenProcess(
-                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid
+                process_query_information | process_vm_read, False, pid
             )
 
             if h_process:
@@ -572,10 +574,10 @@ class PlatformWin(Platform):
         :type pid: int
         """
 
-        PROCESS_TERMINATE = 1
+        process_terminate = 1
 
         # Get the hadler of the process to be killed.
-        handle = ctypes.windll.kernel32.OpenProcess(PROCESS_TERMINATE, False, pid)
+        handle = ctypes.windll.kernel32.OpenProcess(process_terminate, False, pid)
 
         # Terminate the process.
         ctypes.windll.kernel32.TerminateProcess(handle, -1)

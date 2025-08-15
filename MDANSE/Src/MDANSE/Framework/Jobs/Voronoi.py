@@ -19,8 +19,8 @@ import collections
 import math
 
 import numpy as np
-from scipy.spatial import Delaunay as scipy_delaunay
-from scipy.spatial import Voronoi as scipy_voronoi
+from scipy.spatial import Delaunay
+from scipy.spatial import Voronoi as VoronoiAnalysis
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import padded_coordinates
@@ -140,15 +140,15 @@ class Voronoi(IJob):
             coords = conf["coordinates"]
 
         # Computing Voronoi Diagram
-        Voronoi = scipy_voronoi(coords)
-        vertices_coords = Voronoi.vertices  # Option qhull v p
+        voronoi = VoronoiAnalysis(coords)
+        vertices_coords = voronoi.vertices  # Option qhull v p
 
         # Extracting valid Voronoi regions
-        points_ids = Voronoi.regions  # Option qhull v FN
+        points_ids = voronoi.regions  # Option qhull v FN
         valid_regions_points_ids = []
         valid_region_id = []
         region_id = -1
-        for p in Voronoi.point_region:
+        for p in voronoi.point_region:
             region_id += 1
             id_list = points_ids[p]
             if no_exc_min(id_list) >= 0:
@@ -161,7 +161,7 @@ class Voronoi(IJob):
             valid_regions[vrid] = valid_regions_points_ids[i]
 
         # Extracting ridges of the valid Voronoi regions
-        input_sites = Voronoi.ridge_points  # Option qhull v Fv (part of)
+        input_sites = voronoi.ridge_points  # Option qhull v Fv (part of)
         self.max_region_id = input_sites.max()
 
         # Calculating neighbourhood
@@ -187,9 +187,9 @@ class Voronoi(IJob):
                 delaunay_regions_for_each_valid_voronoi_region[vrid] = [ids]
                 continue
             lut = np.array(ids)
-            Delaunay = scipy_delaunay(vertices_coords[ids])
+            delaunay = Delaunay(vertices_coords[ids])
             delaunay_regions_for_each_valid_voronoi_region[vrid] = [
-                lut[dv] for dv in Delaunay.simplices
+                lut[dv] for dv in delaunay.simplices
             ]
 
         # Volume Computation
