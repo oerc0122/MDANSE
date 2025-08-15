@@ -59,37 +59,6 @@ def array_to_3d_imagedata(data: np.ndarray, spacing: tuple[float, float, float])
     return image
 
 
-def smear_grid(grid: np.ndarray, fine_sampling: int) -> np.ndarray:
-    """Include atom radius effect in the array of atom counts on a grid.
-
-    Parameters
-    ----------
-    grid : np.ndarray
-        a 3D histogram of atom positions over time
-    fine_sampling : int
-        the fraction of the atom radius defining the binning grid
-
-    Returns
-    -------
-    np.ndarray
-        a 3D histogram of the volume taken by the atom
-    """
-    if fine_sampling < 2:
-        return grid
-    final_histogram = grid.copy()
-    for _ in range(1, fine_sampling):
-        n = 1
-        new_histogram = np.zeros_like(grid)
-        new_histogram[:, :, n:] += final_histogram[:, :, :-n]
-        new_histogram[:, :, :-n] += final_histogram[:, :, n:]
-        new_histogram[:, n:, :] += final_histogram[:, :-n, :]
-        new_histogram[:, :-n, :] += final_histogram[:, n:, :]
-        new_histogram[n:, :, :] += final_histogram[:-n, :, :]
-        new_histogram[:-n, :, :] += final_histogram[n:, :, :]
-        final_histogram += new_histogram
-    return final_histogram
-
-
 class MolecularViewer(QtWidgets.QWidget):
     """MolecularViewer is a Qt widget containing a 3D viewer
     of molecular structures, currently implemented in VTK."""
@@ -357,29 +326,35 @@ class MolecularViewer(QtWidgets.QWidget):
         fine_sampling = params.get("fine_sampling", 5)
         rgb = params.get("surface_colour", (0, 0.5, 0.75))
         opacity = params.get("surface_opacity", 0.5)
-        trace_cutoff = params.get("trace_cutoff", 90)
+        trace_cutoff = params.get("trace_cutoff", 90) / 100
 
         coords = self._reader.read_atom_trajectory(index)
         element = self._reader._atom_types[index]
         radius = self._reader._trajectory.get_atom_property(element, "covalent_radius")
-        upper_limit = np.max(coords, axis=0) + radius
-        lower_limit = np.min(coords, axis=0) - radius
-        grid_step = radius / fine_sampling
 
+        upper_limit = np.max(coords, axis=0) + 2 * radius / trace_cutoff
+        lower_limit = np.min(coords, axis=0) - 2 * radius / trace_cutoff
         span = upper_limit - lower_limit
+        grid_step = radius / fine_sampling
         grid_steps = list((span // grid_step).astype(int))
-        gdim = tuple(grid_steps[0:3])
-        grid = np.zeros(gdim, dtype=np.int32)
 
-        indices = ((coords - lower_limit.reshape((1, 3))) // grid_step).astype(int)
-        unique_indices, counts = np.unique(indices, return_counts=True, axis=0)
-        grid[tuple(unique_indices.T)] += counts
-        self._atomic_trace_histogram = smear_grid(grid, fine_sampling)
+        # TODO this uses alot of memory fix this so that it does the evaluations
+        #  in batches
+        xs = np.linspace(lower_limit[0], upper_limit[0], grid_steps[0])
+        ys = np.linspace(lower_limit[1], upper_limit[1], grid_steps[1])
+        zs = np.linspace(lower_limit[2], upper_limit[2], grid_steps[2])
+        grid = np.stack(list(np.meshgrid(xs, ys, zs, indexing='ij')), axis=-1)[None, ...]
+
+        centers = np.array(coords)[:, None, None, None, :]
+        diff = grid - centers
+        sq_dist = np.sum(diff**2, axis=-1)
+        gaussians = np.exp(-sq_dist / (2 * radius**2))
+        vals = np.sum(gaussians, axis=0)
+        vals = vals / np.max(vals)
 
         self._image = array_to_3d_imagedata(
-            self._atomic_trace_histogram, (grid_step, grid_step, grid_step)
+            vals, (grid_step, grid_step, grid_step)
         )
-        isovalue = np.percentile(self._atomic_trace_histogram, trace_cutoff)
 
         new_isocontour = vtk.vtkMarchingContourFilter()
         new_isocontour.UseScalarTreeOn()
@@ -388,7 +363,7 @@ class MolecularViewer(QtWidgets.QWidget):
             new_isocontour.SetInput(self.image)
         else:
             new_isocontour.SetInputData(self._image)
-        new_isocontour.SetValue(0, isovalue)
+        new_isocontour.SetValue(0, trace_cutoff)
 
         self._depthSort = vtk.vtkDepthSortPolyData()
         self._depthSort.SetInputConnection(new_isocontour.GetOutputPort())
