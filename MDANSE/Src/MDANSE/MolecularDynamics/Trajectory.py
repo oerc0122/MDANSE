@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import h5py
 import numpy as np
 import numpy.typing as npt
-from more_itertools import always_iterable, only
+from more_itertools import always_iterable, first
 
 from MDANSE import PLATFORM
 from MDANSE.Chemistry import ATOMS_DATABASE
@@ -1001,12 +1001,13 @@ class TrajectoryWriter:
                 atom_dataset[mapping[key]] = numval
         colour = properties["color"]
 
-        if colour.isdigit():
+        if isinstance(colour, str) and colour.isdigit():
             atom_dataset[mapping["color"]] = int(colour)
 
         else:
             # Get str/bytes from possible array
-            colour = only(always_iterable(colour))
+            print(colour)
+            colour = first(always_iterable(colour))
 
             assert isinstance(colour, (str, bytes))
 
