@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from enum import Enum, auto
 from math import isclose
 from numbers import Number
@@ -42,7 +42,6 @@ __all__ = [
     "String",
     "PathParam",
     "Range",
-    "NumericRange",
     "Array",
     "Vector",
 ]
@@ -67,6 +66,31 @@ class StrCases(Enum):
             if member.name == value or member.value is value:
                 return member
         return NotImplemented
+
+
+class NumericRange:
+    """Wrapper for :class:`more_itertools.numeric_range` for non-private start stop."""
+
+    def __init__(self, *params):
+        self.iterator = numeric_range(*params)
+
+    def __iter__(self) -> Iterator[float | int]:
+        return iter(self.iterator)
+
+    def __getitem__(self, index: int) -> float | int:
+        return self.iterator[index]
+
+    @property
+    def start(self):
+        return self.iterator._start
+
+    @property
+    def stop(self):
+        return self.iterator._stop
+
+    @property
+    def step(self):
+        return self.iterator._step
 
 
 class Boolean(ConfigureDescriptor[bool]):
@@ -307,7 +331,10 @@ class PathParam(ConfigureDescriptor[Path]):
         return value
 
 
-class Range(MinMax[int], ConfigureDescriptor[range]):
+T = TypeVar("T", bound=Number)
+
+
+class Range(MinMax[T], ConfigureDescriptor[T]):
     """
     This configurator allows a user to input a range value.
     """
@@ -316,24 +343,36 @@ class Range(MinMax[int], ConfigureDescriptor[range]):
         self,
         *args,
         include_last: bool = False,
+        dtype: type = float,
         **params,
     ):
         super().__init__(*args, **params)
+        self.type = dtype
         self.include_last = include_last
 
     def validate(
         self, value: int | Sequence | dict | range, deps: dict[str, Any]
-    ) -> range:
-        if isinstance(value, int):
-            value = range(value)
-        elif isinstance(value, Sequence):
-            value = range(*value)
+    ) -> range | NumericRange:
+        cls = range if self.type is int else NumericRange
+        if isinstance(value, Sequence):
+            value = cls(*value)
         elif isinstance(value, dict):
-            value = range(**value)
-        elif not isinstance(value, range):
+            value = cls(**value)
+        elif isinstance(value, Number):
+            try:
+                value = self.type(value)
+            except TypeError as err:
+                raise ConfigError(
+                    f"Do not know how to convert {type(value).__name__} to {self.type.__name__}"
+                ) from err
+
+            value = cls(value)
+        elif not isinstance(value, cls):
             raise ConfigError(
-                f"Do not know how to convert {type(value).__name__} to range"
+                f"Do not know how to convert {type(value).__name__} to {cls.__name__}"
             )
+
+        assert isinstance(value, (NumericRange, range))
 
         if self.include_last:
             value = range(value.start, value.stop + value.step, value.step)
@@ -342,51 +381,6 @@ class Range(MinMax[int], ConfigureDescriptor[range]):
 
         self.validate_range(value.start, ranges)
         self.validate_range(value.stop, ranges)
-
-        return value
-
-
-class NumericRange(MinMax[Number], ConfigureDescriptor[numeric_range]):
-    """
-    This configurator allows a user to input a generalised range.
-    """
-
-    def __init__(
-        self,
-        *args,
-        include_last: bool = False,
-        **params,
-    ):
-        super().__init__(*args, **params)
-        self.include_last = include_last
-
-    def validate(
-        self,
-        value: float | int | Sequence | dict | range | numeric_range,
-        deps: dict[str, Any],
-    ) -> numeric_range:
-        if isinstance(value, (float, int)):
-            value = numeric_range(value)
-        elif isinstance(value, Sequence):
-            value = numeric_range(*value)
-        elif isinstance(value, dict):
-            value = numeric_range(**value)
-        elif isinstance(value, range):
-            value = numeric_range(value.start, value.stop, value.step)
-        elif not isinstance(value, numeric_range):
-            raise ConfigError(
-                f"Do not know how to convert {type(value).__name__} to range"
-            )
-
-        assert value is numeric_range
-
-        if self.include_last:
-            value = numeric_range(value._start, value._stop + value._step, value._step)
-
-        ranges = self.get_ranges(value, deps)
-
-        self.validate_range(value._start, ranges)
-        self.validate_range(value._stop, ranges)
 
         return value
 

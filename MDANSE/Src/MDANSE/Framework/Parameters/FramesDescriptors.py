@@ -67,9 +67,12 @@ class Frames:
         return self.time_stop - self.time_start
 
 
-class FrameSelect(Range):
+class FrameSelect(Range[int]):
     default_tooltip = "Select which frames are to be included."
     default_label = "Frames to include in correlation."
+
+    def __init__(self, *args, dtype: None = None, **kwargs):
+        super().__init__(*args, dtype=int, **kwargs)
 
     def required_deps(self) -> set[str]:
         return super().required_deps() | {"trajectory"}

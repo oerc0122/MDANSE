@@ -29,7 +29,7 @@ from MDANSE.Framework.AtomGrouping.grouping import (
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
 from MDANSE.Framework.Parameters import (
     GroupingLevel,
-    NumericRange,
+    Range,
 )
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
@@ -55,7 +55,7 @@ class StaticStructureFactor(DistanceHistogram):
     grouping_level = GroupingLevel(
         depends={"trajectory": "trajectory"},
     )
-    q_values = NumericRange(
+    q_values = Range[float](
         minimum=0.0,
         default=numeric_range(0.0, 500.0, 1.0),
     )

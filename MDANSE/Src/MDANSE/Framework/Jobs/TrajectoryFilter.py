@@ -38,7 +38,7 @@ from MDANSE.Framework.Parameters import (
     RunningMode,
     Weights,
 )
-from MDANSE.Mathematics.Signal import FILTER_MAP, Filter
+from MDANSE.Mathematics.Signal import FILTER_MAP, Filter as SFilter
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -99,13 +99,20 @@ class TrajectoryFilter(IJob):
             (len(self._selected_atoms), 3, len(self.frames))
         )
 
-    def run_step(self, index):
+    def run_step(self, index: int) -> tuple[int, None]:
         """Run the filter for a single atom.
 
         Parameters
         ----------
         index : int
             The index of the step.
+
+        Returns
+        -------
+        int
+            Index of step
+        None
+            Dummy
 
         """
         LOG.debug(f"Running step: {index}")
@@ -207,12 +214,12 @@ class TrajectoryFilter(IJob):
         super().finalize()
 
 
-def apply(filter: Filter, trajectories: np.ndarray, apply_offsets: bool) -> np.ndarray:
+def apply(filter: SFilter, trajectories: np.ndarray, apply_offsets: bool) -> np.ndarray:
     """Apply the filter to the atomic trajectories.
 
     Parameter
     ---------
-    filter : Filter
+    filter : SFilter
         The filter object to be applied.
     trajectories : np.ndarray
         Atomic trajectories array with shape (num atoms, 3, num timesteps).

@@ -55,7 +55,7 @@ class HistogramInfo:
         return (self.bins[1:] + self.bins[:-1]) / 2
 
 
-class RangeCellCutoff(NumericRange):
+class RangeCellCutoff(Range[float]):
     """Range of interatomic distances for a histogram.
 
     It does not allow distances large enough to include
