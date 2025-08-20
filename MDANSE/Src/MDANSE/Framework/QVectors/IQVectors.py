@@ -22,7 +22,7 @@ import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
-from MDANSE.Framework.Configurable import Configurable
+from MDANSE.Framework.Parameters.AbsConfigDesc import Configurable
 from MDANSE.MLogging import LOG
 
 if TYPE_CHECKING:
@@ -118,7 +118,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
             An object managing the writeout to one or many output files
 
         """
-        qvector_info = self._configuration["q_vectors"]
+        qvector_info = self.q_vectors
         q_values = [float(x) for x in qvector_info]
         output_data.add(
             "vector_generator/q",

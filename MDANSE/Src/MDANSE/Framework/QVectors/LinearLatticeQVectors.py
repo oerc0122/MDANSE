@@ -19,9 +19,10 @@ import collections
 import random
 
 import numpy as np
+from more_itertools import numeric_range
 
+from MDANSE.Framework.Parameters import Float, Integer, Range, Vector
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
-from MDANSE.Mathematics.LinearAlgebra import Vector
 
 
 class LinearLatticeQVectors(LatticeQVectors):
@@ -40,40 +41,37 @@ class LinearLatticeQVectors(LatticeQVectors):
     a shell.
     """
 
-    settings = collections.OrderedDict()
-    settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["shells"] = (
-        "RangeConfigurator",
-        {
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "default": (0, 5.0, 0.5),
-        },
+    seed = Integer(
+        minimum=0,
+        default=0,
     )
-    settings["n_vectors"] = ("IntegerConfigurator", {"mini": 1, "default": 50})
-    settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
-    settings["axis"] = (
-        "VectorConfigurator",
-        {"normalize": False, "notNull": True, "valueType": int, "default": [1, 0, 0]},
+    shells = Range[float](
+        minimum=0.0,
+        default=numeric_range(0.0, 5.0, 0.5),
     )
+    n_vectors = Integer(
+        minimum=1,
+        default=50,
+    )
+    width = Float(minimum=1e-6, default=1.0)
+    axis = Vector(non_null=True, dtype=int, default=np.array([1, 0, 0], dtype=int))
 
     def _generate(self):
-        if self._configuration["seed"]["value"] != 0:
-            np.random.seed(self._configuration["seed"]["value"])
-            random.seed(self._configuration["seed"]["value"])
+        if self.seed != 0:
+            np.random.seed(self.seed)
+            random.seed(self.seed)
 
         # The Q vector corresponding to the input hkl.
         qVect = self.hkl_to_qvectors(
-            self._configuration["axis"]["vector"], self._unit_cell
+            self.axis, self._unit_cell
         )
 
         qMax = (
-            self._configuration["shells"]["last"]
-            + 0.5 * self._configuration["width"]["value"]
+            self.shells[-1]
+            + 0.5 * self.width
         )
 
-        uMax = np.ceil(qMax / Vector(qVect).length()) + 1
+        uMax = np.ceil(qMax / np.linalg.norm(qVect) + 1)
 
         idxs = np.mgrid[-uMax : uMax + 1]
 
@@ -81,16 +79,14 @@ class LinearLatticeQVectors(LatticeQVectors):
 
         dists2 = np.sum(vects**2, axis=0)
 
-        halfWidth = self._configuration["width"]["value"] / 2
-
-        nVectors = self._configuration["n_vectors"]["value"]
+        halfWidth = self.width / 2
 
         if self._status is not None:
-            self._status.start(self._configuration["shells"]["number"])
+            self._status.start(len(self.shells))
 
-        self._configuration["q_vectors"] = collections.OrderedDict()
+        self.q_vectors = {}
 
-        for q in self._configuration["shells"]["value"]:
+        for q in self.shells:
             qmin = max(0, q - halfWidth)
 
             q2low = qmin * qmin
@@ -101,16 +97,16 @@ class LinearLatticeQVectors(LatticeQVectors):
             nHits = len(hits)
 
             if nHits != 0:
-                n = min(nHits, nVectors)
+                n = min(nHits, self.n_vectors)
 
-                if nHits > nVectors:
-                    hits = random.sample(hits, nVectors)
+                if nHits > self.n_vectors:
+                    hits = random.sample(hits, self.n_vectors)
 
-                self._configuration["q_vectors"][q] = {}
-                self._configuration["q_vectors"][q]["q_vectors"] = vects[:, hits]
-                self._configuration["q_vectors"][q]["n_q_vectors"] = n
-                self._configuration["q_vectors"][q]["q"] = q
-                self._configuration["q_vectors"][q]["hkls"] = self.qvectors_to_hkl(
+                self.q_vectors[q] = {}
+                self.q_vectors[q]["q_vectors"] = vects[:, hits]
+                self.q_vectors[q]["n_q_vectors"] = n
+                self.q_vectors[q]["q"] = q
+                self.q_vectors[q]["hkls"] = self.qvectors_to_hkl(
                     vects[:, hits], self._unit_cell
                 )
 

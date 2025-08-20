@@ -19,53 +19,49 @@ import collections
 
 import numpy as np
 
+from MDANSE.Framework.Parameters import Integer, Vector
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 
 class DispersionLatticeQVectors(LatticeQVectors):
     """Generates Q vectors along a direction."""
 
-    settings = collections.OrderedDict()
-    settings["start"] = (
-        "VectorConfigurator",
-        {"valueType": int, "notNull": False, "default": [0, 0, 0]},
+    start = Vector(
+        dtype=int,
+        non_null=False,
+        default=np.zeros(3),
     )
-    settings["direction"] = (
-        "VectorConfigurator",
-        {"valueType": int, "notNull": True, "default": [1, 0, 0]},
-    )
-    settings["n_steps"] = (
-        "IntegerConfigurator",
-        {"label": "number of steps", "mini": 1, "default": 10},
+    direction = Vector(non_null=True, default=np.array([1.0, 0.0, 0.0]))
+    n_steps = Integer(
+        minimum=1,
+        default=10,
+        label="Number of steps",
     )
 
     def _generate(self):
-        start = self._configuration["start"]["value"]
-        direction = self._configuration["direction"]["value"]
-        n_steps = self._configuration["n_steps"]["value"]
 
-        hkls = np.array(start)[:, np.newaxis] + np.outer(
-            direction, np.arange(0, n_steps)
+        hkls = np.array(self.start)[:, np.newaxis] + np.outer(
+            self.direction, np.arange(0, self.n_steps)
         )
 
         # The k matrix (3,n_hkls)
         vects = self.hkl_to_qvectors(hkls, self._unit_cell)
 
-        dists = np.sqrt(np.sum(vects**2, axis=0))
+        dists = np.linalg.norm(vects, axis=0)
 
         if self._status is not None:
             self._status.start(len(dists))
 
-        self._configuration["q_vectors"] = collections.OrderedDict()
+        self.q_vectors = {}
 
         for i, v in enumerate(dists):
-            self._configuration["q_vectors"][v] = {}
-            self._configuration["q_vectors"][v]["q_vectors"] = vects[:, i][
+            self.q_vectors[v] = {}
+            self.q_vectors[v]["q_vectors"] = vects[:, i][
                 :, np.newaxis
             ]
-            self._configuration["q_vectors"][v]["n_q_vectors"] = 1
-            self._configuration["q_vectors"][v]["q"] = v
-            self._configuration["q_vectors"][v]["hkls"] = hkls[:, i][:, np.newaxis]
+            self.q_vectors[v]["n_q_vectors"] = 1
+            self.q_vectors[v]["q"] = v
+            self.q_vectors[v]["hkls"] = hkls[:, i][:, np.newaxis]
 
             if self._status is not None:
                 if self._status.is_stopped():

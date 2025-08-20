@@ -21,74 +21,67 @@ import operator
 
 import numpy as np
 
+from MDANSE.Framework.Parameters import Float, Vector
+from MDANSE.Framework.Parameters.AbsConfigDesc import ConfigError
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 
 class ApproximateDispersionQVectors(LatticeQVectors):
     """Generates Q vectors along a path between two points."""
 
-    settings = collections.OrderedDict()
-    settings["q_start"] = (
-        "VectorConfigurator",
-        {
-            "label": "Q start (nm^-1)",
-            "valueType": float,
-            "notNull": False,
-            "default": [0, 0, 0],
-        },
+    q_start = Vector(
+        label="Q start (nm^-1)",
+        non_null=False,
+        default=np.array([0, 0, 0]),
     )
-    settings["q_end"] = (
-        "VectorConfigurator",
-        {
-            "label": "Q end (nm^-1)",
-            "valueType": float,
-            "notNull": False,
-            "default": [1, 0, 0],
-        },
+    q_end = Vector(
+        label="Q end (nm^-1)",
+        non_null=False,
+        default=np.array([1, 0, 0]),
     )
-    settings["q_step"] = (
-        "FloatConfigurator",
-        {"label": "Q step (nm^-1)", "mini": 1.0e-6, "default": 0.1},
+    q_step = Float(
+        label="Q step (nm^-1)",
+        minimum=1e-6,
+        default=0.1,
     )
+
+    def validate(self, value, deps):
+        if np.isclose(np.linalg.norm(self.q_end - self.q_start), 0.0):
+            raise ConfigError("Zero-length vector cannot be used here")
+
+        return value
 
     def _generate(self):
-        qStart = self._configuration["q_start"]["value"]
-        qEnd = self._configuration["q_end"]["value"]
-        qStep = self._configuration["q_step"]["value"]
+        d = np.linalg.norm(self.q_end - self.q_start)
+        n = (self.q_end - self.q_start).normal()
 
-        d = (qEnd - qStart).length()
-        try:
-            n = (qEnd - qStart).normal()
-        except ZeroDivisionError:
-            self._configuration[
-                "q_end"
-            ].error_status = "Zero-length vector cannot be used here"
-            return
-        nSteps = int(d / qStep) + 1
+        nSteps = int(d / self.q_step) + 1
 
         vects = (
-            np.array(qStart)[:, np.newaxis] + np.outer(n, np.arange(0, nSteps)) * qStep
+            np.array(self.q_start)[:, np.newaxis]
+            + np.outer(n, np.arange(0, nSteps)) * self.q_step
         )
 
         hkls = self.qvectors_to_hkl(vects, self._unit_cell)
 
-        dists = np.sqrt(np.sum(vects**2, axis=0))
-        dists = list(enumerate(dists))
-        dists.sort(key=operator.itemgetter(1))
+        dists = np.linalg.norm(vects, axis=0)
+
+        dists = sorted(enumerate(dists), key=operator.itemgetter(1))
+
         qGroups = itertools.groupby(dists, key=operator.itemgetter(1))
         qGroups = {k: [item[0] for item in v] for k, v in qGroups}
 
         if self._status is not None:
             self._status.start(len(qGroups))
 
-        self._configuration["q_vectors"] = collections.OrderedDict()
+        self.q_vectors = {}
 
         for k, v in qGroups.items():
-            self._configuration["q_vectors"][k] = {}
-            self._configuration["q_vectors"][k]["q"] = k
-            self._configuration["q_vectors"][k]["q_vectors"] = vects[:, v]
-            self._configuration["q_vectors"][k]["n_q_vectors"] = len(v)
-            self._configuration["q_vectors"][k]["hkls"] = hkls[:, v]
+            self.q_vectors[k] = {}
+            self.q_vectors[k]["q"] = k
+            self.q_vectors[k]["q_vectors"] = vects[:, v]
+            self.q_vectors[k]["n_q_vectors"] = len(v)
+            self.q_vectors[k]["hkls"] = hkls[:, v]
 
             if self._status is not None:
                 if self._status.is_stopped():

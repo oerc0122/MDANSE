@@ -15,13 +15,13 @@
 #
 from __future__ import annotations
 
-import collections
 import random
 
 import numpy as np
+from more_itertools import numeric_range
 
+from MDANSE.Framework.Parameters import Float, Integer, Range, Vector
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
-from MDANSE.Mathematics.LinearAlgebra import Vector
 
 
 class CircularLatticeQVectors(LatticeQVectors):
@@ -36,48 +36,45 @@ class CircularLatticeQVectors(LatticeQVectors):
     be found are omitted in the output.
     """
 
-    settings = collections.OrderedDict()
-    settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["shells"] = (
-        "RangeConfigurator",
-        {
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "default": (0.0, 5.0, 0.5),
-        },
+    seed = Integer(
+        minimum=0,
+        default=0,
     )
-    settings["n_vectors"] = ("IntegerConfigurator", {"mini": 1, "default": 50})
-    settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
-    settings["axis_1"] = (
-        "VectorConfigurator",
-        {"normalize": False, "notNull": True, "valueType": int, "default": [1, 0, 0]},
+    shells = Range[float](minimum=0.0, default=numeric_range(0.0, 5.0, 0.5))
+    n_vectors = Integer(
+        minimum=1,
+        default=50,
     )
-    settings["axis_2"] = (
-        "VectorConfigurator",
-        {"normalize": False, "notNull": True, "valueType": int, "default": [0, 1, 0]},
+    width = Float(
+        minimum=1e-6,
+        default=1,
+    )
+    axis_1 = Vector(
+        non_null=True,
+        default=np.array([1.0, 0.0, 0.0]),
+    )
+    axis_2 = Vector(
+        non_null=True,
+        default=np.array([0.0, 1.0, 0.0]),
     )
 
     def _generate(self):
-        if self._configuration["seed"]["value"] != 0:
-            np.random.seed(self._configuration["seed"]["value"])
-            random.seed(self._configuration["seed"]["value"])
+        if self.seed != 0:
+            np.random.seed(self.seed)
+            random.seed(self.seed)
 
         hkls = np.transpose(
             [
-                self._configuration["axis_1"]["vector"],
-                self._configuration["axis_2"]["vector"],
+                self.axis_1,
+                self.axis_2,
             ]
         )
 
         qVects = self.hkl_to_qvectors(hkls, self._unit_cell)
 
-        qMax = (
-            self._configuration["shells"]["last"]
-            + 0.5 * self._configuration["width"]["value"]
-        )
+        qMax = self.shells[-1] + 0.5 * self.width
 
-        uvMax = np.ceil([qMax / Vector(v).length() for v in qVects.T]) + 1
+        uvMax = np.ceil([qMax / np.linalg.norm(v) for v in qVects.T]) + 1
         # Enforce integers in uvMax
         uvMax = uvMax.astype(np.int64)
 
@@ -89,16 +86,14 @@ class CircularLatticeQVectors(LatticeQVectors):
 
         dists2 = np.sum(vects**2, axis=0)
 
-        halfWidth = self._configuration["width"]["value"] / 2
-
-        nVectors = self._configuration["n_vectors"]["value"]
+        halfWidth = self.width / 2
 
         if self._status is not None:
-            self._status.start(self._configuration["shells"]["number"])
+            self._status.start(len(self.shells))
 
-        self._configuration["q_vectors"] = collections.OrderedDict()
+        self.q_vectors = {}
 
-        for q in self._configuration["shells"]["value"]:
+        for q in self.shells:
             qmin = max(0, q - halfWidth)
 
             q2low = qmin * qmin
@@ -109,16 +104,16 @@ class CircularLatticeQVectors(LatticeQVectors):
             nHits = len(hits)
 
             if nHits != 0:
-                n = min(nHits, nVectors)
+                n = min(nHits, self.n_vectors)
 
-                if nHits > nVectors:
-                    hits = random.sample(hits, nVectors)
+                if nHits > self.n_vectors:
+                    hits = random.sample(hits, self.n_vectors)
 
-                self._configuration["q_vectors"][q] = {}
-                self._configuration["q_vectors"][q]["q_vectors"] = vects[:, hits]
-                self._configuration["q_vectors"][q]["n_q_vectors"] = n
-                self._configuration["q_vectors"][q]["q"] = q
-                self._configuration["q_vectors"][q]["hkls"] = self.qvectors_to_hkl(
+                self.q_vectors[q] = {}
+                self.q_vectors[q]["q_vectors"] = vects[:, hits]
+                self.q_vectors[q]["n_q_vectors"] = n
+                self.q_vectors[q]["q"] = q
+                self.q_vectors[q]["hkls"] = self.qvectors_to_hkl(
                     vects[:, hits], self._unit_cell
                 )
 

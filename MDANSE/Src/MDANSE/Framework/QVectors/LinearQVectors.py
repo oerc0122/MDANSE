@@ -18,7 +18,9 @@ from __future__ import annotations
 import collections
 
 import numpy as np
+from more_itertools import numeric_range
 
+from MDANSE.Framework.Parameters import Float, Integer, Range, Vector
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
 
 
@@ -33,51 +35,43 @@ class LinearQVectors(IQVectors):
     a shell.
     """
 
-    settings = collections.OrderedDict()
-    settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["shells"] = (
-        "RangeConfigurator",
-        {
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "default": (0, 5.0, 0.5),
-        },
+    seed = Integer(
+        minimum=0,
+        default=0,
     )
-    settings["n_vectors"] = ("IntegerConfigurator", {"mini": 1, "default": 50})
-    settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
-    settings["axis"] = (
-        "VectorConfigurator",
-        {"normalize": True, "notNull": True, "default": [1, 0, 0], "valueType": float},
+    shells = Range[float](
+        minimum=0.0,
+        default=numeric_range(0.0, 5.0, 0.5),
     )
+    n_vectors = Integer(
+        minimum=1,
+        default=50,
+    )
+    width = Float(minimum=1e-6, default=1.0)
+    axis = Vector(normalise=True, non_null=True, dtype=int, default=np.array([1, 0, 0]))
 
     def _generate(self):
-        if self._configuration["seed"]["value"] != 0:
-            np.random.seed(self._configuration["seed"]["value"])
+        if self.seed != 0:
+            np.random.seed(self.seed)
 
-        axis = self._configuration["axis"]["vector"]
-
-        width = self._configuration["width"]["value"]
-
-        nVectors = self._configuration["n_vectors"]["value"]
 
         if self._status is not None:
-            self._status.start(self._configuration["shells"]["number"])
+            self._status.start(len(self.shells))
 
-        self._configuration["q_vectors"] = collections.OrderedDict()
+        self.q_vectors = {}
 
-        for q in self._configuration["shells"]["value"]:
+        for q in self.shells:
             fact = q * np.sign(
-                np.random.uniform(-0.5, 0.5, nVectors)
-            ) + width * np.random.uniform(-0.5, 0.5, nVectors)
+                np.random.uniform(-0.5, 0.5, self.n_vectors)
+            ) + self.width * np.random.uniform(-0.5, 0.5, self.n_vectors)
 
-            self._configuration["q_vectors"][q] = {}
-            self._configuration["q_vectors"][q]["q_vectors"] = (
-                axis.array[:, np.newaxis] * fact
+            self.q_vectors[q] = {}
+            self.q_vectors[q]["q_vectors"] = (
+                self.axis.array[:, np.newaxis] * fact
             )
-            self._configuration["q_vectors"][q]["n_q_vectors"] = nVectors
-            self._configuration["q_vectors"][q]["q"] = q
-            self._configuration["q_vectors"][q]["hkls"] = None
+            self.q_vectors[q]["n_q_vectors"] = self.n_vectors
+            self.q_vectors[q]["q"] = q
+            self.q_vectors[q]["hkls"] = None
 
             if self._status is not None:
                 if self._status.is_stopped():
