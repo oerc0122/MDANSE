@@ -64,7 +64,7 @@ class ScatteringLengthDensityProfile(IJob):
     trajectory = MDANSETrajectory()
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
-    atom_transmustation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     axis = SingleChoice(choices=("a", "b", "c"), default="c")
     dr = Float(default=0.01, minimum=1e-9)
     output_files = OutputFile()

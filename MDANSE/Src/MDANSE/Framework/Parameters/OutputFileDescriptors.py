@@ -161,7 +161,7 @@ class OutputTrajectory(OutputFile):
 
 
 class ASEOutputFormat(OutputFile):
-    out_format = SingleChoice(choices=(key for key, val in ioformats if val.can_write))
+    out_format = SingleChoice(choices=(key for key, val in ioformats.items() if val.can_write))
 
     def __init__(self, fmt):
         self.out_format = fmt

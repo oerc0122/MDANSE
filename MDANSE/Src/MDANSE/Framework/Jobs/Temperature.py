@@ -55,7 +55,9 @@ class Temperature(IJob):
 
     trajectory = MDANSETrajectory()
     frames = FrameSelect(depends={"trajectory": "trajectory"})
-    interpolation_order = InterpOrder(depends={"frames": "frames"}, label="Velocities")
+    interpolation_order = InterpOrder(
+        depends={"trajectory": "trajectory", "frames": "frames"}, label="Velocities"
+    )
     output_files = OutputFile()
     running_mode = RunningMode()
 

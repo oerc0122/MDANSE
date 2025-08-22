@@ -23,10 +23,11 @@ from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from .AbsConfigDesc import ConfigError
-from .Choice import DynamicSingleChoice
+from .ChoiceConfigDesc import SingleChoice
+from .UtilTypes import Depends, DescID
 
 
-class Weights(DynamicSingleChoice[str]):
+class Weights(SingleChoice[str, str]):
     """Select the atom property to be used by the weight scheme.
 
     This configurator allows to select which atom properties will be used as weights
@@ -38,6 +39,7 @@ class Weights(DynamicSingleChoice[str]):
 
     def __init__(
         self,
+        choices: None = None,
         default: str = "equal",
         aliases: dict[str, str] | None = None,
         **kwargs,
@@ -56,11 +58,12 @@ class Weights(DynamicSingleChoice[str]):
         super().__init__(
             default=default,
             aliases=aliases | self.base_aliases,
+            choices=None,
             **kwargs,
         )
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"selection", "trajectory", "transmutation"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("selection"), DescID("trajectory"), DescID("transmutation")}
 
     def get_choices(self, _deps) -> set[str]:
         """Limit the list of atom properties to usable values."""
@@ -90,7 +93,7 @@ class Weights(DynamicSingleChoice[str]):
         ] + [x for x in limited_choices if "atomic" in x or "radius" in x]
         return limited_choices
 
-    def validate(self, value: str, deps: dict[str, Any]) -> str:
+    def validate(self, value: str, deps: Depends, /) -> str:
         """Assign the input value and check validity.
 
         Parameters
@@ -113,7 +116,7 @@ class Weights(DynamicSingleChoice[str]):
 
         return value
 
-    def test_values_for_nan(self, property_name: str, deps: dict[str, Any]) -> bool:
+    def test_values_for_nan(self, property_name: str, deps: Depends, /) -> bool:
         """Throw an error early if weights are not usable."""
         atom_select = deps["selection"]
         atom_trans = deps["transmutation"]

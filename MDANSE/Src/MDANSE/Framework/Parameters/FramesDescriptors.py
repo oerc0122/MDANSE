@@ -8,23 +8,27 @@ from more_itertools import numeric_range
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesDescriptor import Integer, Range
-from .ChoiceConfigDesc import DynamicSingleChoice
+from .BaseTypesDescriptor import Integer, NumericRange, Range
+from .ChoiceConfigDesc import SingleChoice
+from .UtilTypes import Depends, DescID
 
 
 class Frame(NamedTuple):
     time: float
     loc_index: int
-    index: int
+    ind: int
 
 
 class Frames:
-    def __init__(self, traj: Trajectory, samples: range):
-        self.samples = samples
+    def __init__(self, traj: Trajectory, samples: range | NumericRange | Frames):
+        if isinstance(samples, Frames):
+            self.samples = samples.samples
+        else:
+            self.samples = samples
         time = traj.time()
-        self.times = numeric_range(
-            time[samples[0]],
-            time[samples[-1]],
+        self.times = NumericRange(
+            time[self.samples[0]],
+            time[self.samples[-1]],
             time[1] - time[0],
         )
 
@@ -32,7 +36,7 @@ class Frames:
         return Frame(
             time=self.times[value],
             loc_index=value,
-            index=self.index_start + (value * self.index_step),
+            ind=self.index_start + (value * self.index_step),
         )
 
     def __len__(self) -> int:
@@ -74,16 +78,17 @@ class FrameSelect(Range[int]):
     def __init__(self, *args, dtype: None = None, **kwargs):
         super().__init__(*args, dtype=int, **kwargs)
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"trajectory"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("trajectory")}
 
-    def get_ranges(self, _value: None, deps: dict[str, Any]) -> tuple[int, int]:
+    def get_ranges(self, deps: Depends) -> tuple[int, int]:
         return (0, len(deps["trajectory"]) + 1)
 
     def validate(
         self,
         value: range | tuple[int, ...] | None | Literal["all"],
         deps: dict[str, Any],
+        /,
     ) -> Frames:
         trajectory: Trajectory = deps["trajectory"]
         nsteps = len(trajectory)
@@ -91,23 +96,25 @@ class FrameSelect(Range[int]):
         if value in {"all", None}:
             value = (0, nsteps, 1)
 
-        value = super().validate(value, deps)
+        ranges = super().validate(value, deps)
 
-        return Frames(trajectory, value)
+        print(ranges)
+
+        return Frames(trajectory, ranges)
 
 
 class CorrelationWindow(Integer):
     default_label = "Correlation window"
     default_tooltip = "Number of frames in correlation window."
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"frames"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("frames")}
 
-    def get_ranges(self, deps: dict[str, Any]):
+    def get_ranges(self, deps: Depends):
         return (2, len(deps["frames"]))
 
 
-class InterpOrder(DynamicSingleChoice[int]):
+class InterpOrder(SingleChoice[int | str, int]):
     default_label = "Velocity interpolation order."
     default_tooltip = (
         "Select velocity interpolation order, "
@@ -123,20 +130,26 @@ class InterpOrder(DynamicSingleChoice[int]):
         "5th order": 5,
     }
 
-    def __init__(self, *args, aliases: None = None, **kwargs):
+    def __init__(self, *args, aliases: None = None, choices: None = None, **kwargs):
         if aliases is not None:
-            raise ConfigError("Aliases may not be non-None")
+            raise ConfigError("aliases may not be non-None")
+        if choices is not None:
+            raise ConfigError("choices may not be non-None")
 
-        super().__init__(self, *args, aliases=self.base_aliases, **kwargs)
+        super().__init__(*args, choices=(), aliases=self.base_aliases, **kwargs)
 
     @property
     def choices(self) -> list[int]:
+        assert isinstance(self.last_choices, set)
         return sorted(self.last_choices)
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"trajectory", "frames"}
+    @choices.setter
+    def choices(self, value) -> None: ...
 
-    def get_choices(self, deps) -> set[int]:
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("trajectory"), DescID("frames")}
+
+    def get_choices(self, deps: Depends) -> set[int]:
         maxi = min(6, len(deps["frames"]))
         mini = 0 if "velocities" in deps["trajectory"].variables() else 1
         return set(range(mini, maxi))

@@ -23,7 +23,9 @@ from MDANSE.Framework.Parameters import (
     Boolean,
     OutputTrajectory,
     PathParam,
+    to_class,
 )
+from MDANSE.Framework.Parsers import TrjFile, XTDFile
 
 
 class DFTB(Forcite):
@@ -35,11 +37,13 @@ class DFTB(Forcite):
         mode="r",
         extensions={"XTD file": ".xtd"},
         label="The XTD file.",
+        callback=to_class(XTDFile),
     )
     trj_file = PathParam(
         mode="r",
         extensions={"TRJ file": ".trj"},
         label="The TRJ file.",
+        callback=to_class(TrjFile),
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "xtd_file"},

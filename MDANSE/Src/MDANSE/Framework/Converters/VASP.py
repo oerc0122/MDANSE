@@ -30,6 +30,7 @@ from MDANSE.Framework.Parameters import (
     Float,
     OutputTrajectory,
     PathParam,
+    to_class,
 )
 from MDANSE.Framework.Parsers import XDATCARFile
 from MDANSE.Framework.Units import measure
@@ -73,6 +74,7 @@ class VASP(Converter):
         mode="r",
         extensions={"XDATCAR input": "XDATCAR*"},
         label="Input XDATCAR file",
+        callback=to_class(XDATCARFile),
     )
     time_step = Float(
         label="Time step (fs)",
@@ -95,17 +97,15 @@ class VASP(Converter):
 
         self._atomicAliases = self.atom_aliases
 
-        self._xdatcarFile = XDATCARFile(self.trajectory_file)
-
-        self.frames = self._xdatcarFile.frames
+        self.frames = self.trajectory_file.frames
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self._xdatcarFile.n_frames
+        self.numberOfSteps = self.trajectory_file.n_frames
 
         self._chemical_system = ChemicalSystem()
         element_list = [
             get_element_from_mapping(self._atomicAliases, symbol)
-            for symbol in self._xdatcarFile.element_list
+            for symbol in self.trajectory_file.element_list
         ]
 
         self._chemical_system.initialise_atoms(element_list)
@@ -147,7 +147,7 @@ class VASP(Converter):
             real_conf.fold_coordinates()
 
         # Compute the actual time
-        time = frame["step"] * self.time_step * self._xdatcarFile.UNIT_CONV["time"]
+        time = frame["step"] * self.time_step * self.trajectory_file.UNIT_CONV["time"]
 
         # Dump the configuration to the output trajectory
         self._trajectory.dump_configuration(

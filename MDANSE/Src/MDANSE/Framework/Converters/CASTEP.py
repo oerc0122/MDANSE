@@ -28,6 +28,7 @@ from MDANSE.Framework.Parameters import (
     Boolean,
     OutputTrajectory,
     PathParam,
+    to_class,
 )
 from MDANSE.Framework.Parsers import CASTEPMDFile
 from MDANSE.Framework.Units import measure
@@ -45,6 +46,7 @@ class CASTEP(Converter):
         mode="r",
         extensions={"MD files": "*.md"},
         label="A CASTEP MD trajectory file.",
+        callback=to_class(CASTEPMDFile),
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "trajectory_file"},
@@ -64,20 +66,17 @@ class CASTEP(Converter):
 
         self._atomicAliases = self.atom_aliases
 
-        # Create a representation of md file
-        self._castepFile = CASTEPMDFile(self.trajectory_file)
-
-        self._frames = self._castepFile.frames
+        self._frames = self.trajectory_file.frames
 
         # Save the number of steps
-        self.numberOfSteps = ilen(self._castepFile.frames)
+        self.numberOfSteps = ilen(self.trajectory_file.frames)
 
         # Create a bound universe
         self._chemical_system = ChemicalSystem()
 
         element_list = [
             get_element_from_mapping(self.atom_aliases, symbol)
-            for symbol in self._castepFile.element_list
+            for symbol in self.trajectory_file.element_list
         ]
 
         self._chemical_system.initialise_atoms(element_list)
@@ -156,6 +155,5 @@ class CASTEP(Converter):
 
         # Close the output trajectory.
         self._trajectory.write_standard_atom_database()
-        self._trajectory.close()
 
         super().finalize()

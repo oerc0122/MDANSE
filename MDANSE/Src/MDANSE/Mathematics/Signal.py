@@ -17,17 +17,13 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from collections import namedtuple
 from copy import copy
 from enum import Enum
-from typing import Final, NamedTuple
+from typing import Any, Final, NamedTuple
 
 import numpy as np
-from scipy import fftpack, signal
-
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
-from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
+from scipy import fftpack, signal
 
 
 class SignalError(Error):
@@ -297,6 +293,8 @@ class Filter(ABC):
 
     # Conversion factor: cyclic frequency to angular frequency
     _cyclic_to_angular = 2 * np.pi
+
+    default_settings: dict[str, Any]
 
     class FrequencyUnits(Enum):
         """Enumeration for frequency unit type."""
@@ -1202,7 +1200,7 @@ DEFAULT_TIME_STEP: Final[float] = 0.005
 DEFAULT_N_STEPS: Final[int] = 320
 
 
-def filter_default_attributes(filter=DEFAULT_FILTER):
+def filter_default_attributes(filter: type[Filter] = DEFAULT_FILTER):
     """Get the filter-specific settings dictionary for a filter class.
 
     Parameters

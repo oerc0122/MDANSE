@@ -15,7 +15,6 @@
 #
 from __future__ import annotations
 
-import collections
 from collections.abc import Iterator
 
 import numpy as np
@@ -28,8 +27,16 @@ from MDANSE.Framework.AtomGrouping.grouping import (
 )
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
 from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    AtomTransmutation,
+    FrameSelect,
     GroupingLevel,
+    MDANSETrajectory,
+    OutputFile,
     Range,
+    RangeCellCutoff,
+    RunningMode,
+    Weights,
 )
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
@@ -52,13 +59,30 @@ class StaticStructureFactor(DistanceHistogram):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    grouping_level = GroupingLevel(
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    r_values = RangeCellCutoff(
+        label="r values (nm)",
+        include_last=True,
+        minimum=0.0,
         depends={"trajectory": "trajectory"},
     )
     q_values = Range[float](
         minimum=0.0,
         default=numeric_range(0.0, 500.0, 1.0),
     )
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    weights = Weights(
+        depends={
+            "selection": "atom_selection",
+            "transmutation": "atom_transmutation",
+            "trajectory": "trajectory",
+        }
+    )
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         frame_index = self.frames[0].index

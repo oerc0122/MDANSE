@@ -27,6 +27,17 @@ from MDANSE.Framework.AtomGrouping.grouping import (
     update_pair_results,
 )
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    AtomTransmutation,
+    FrameSelect,
+    GroupingLevel,
+    MDANSETrajectory,
+    OutputFile,
+    Range,
+    RangeCellCutoff,
+    RunningMode,
+)
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
@@ -70,81 +81,56 @@ class XRayStaticStructureFactor(DistanceHistogram):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    r_values = RangeCellCutoff(
+        label="r values (nm)",
+        include_last=True,
+        minimum=0.0,
+        depends={"trajectory": "trajectory"},
     )
-    settings["r_values"] = (
-        "DistHistCutoffConfigurator",
-        {
-            "label": "r values (nm)",
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "dependencies": {"trajectory": "trajectory"},
-        },
+    q_values = Range[float](
+        minimum=0.0,
+        default=(0, 501, 1),
     )
-    settings["q_values"] = (
-        "RangeConfigurator",
-        {"valueType": float, "includeLast": True, "mini": 0.0, "default": (0, 500, 1)},
-    )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def finalize(self):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
 
-        nq = self.configuration["q_values"]["number"]
+        nq = len(self.q_values)
 
-        nFrames = self.configuration["frames"]["number"]
+        nFrames = len(self.frames)
 
         self.averageDensity /= nFrames
 
-        densityFactor = 4.0 * np.pi * self.configuration["r_values"]["mid_points"]
+        densityFactor = 4.0 * np.pi * self.r_values.mid_points
 
-        shellSurfaces = densityFactor * self.configuration["r_values"]["mid_points"]
+        shellSurfaces = densityFactor * self.r_values.mid_points
 
-        shellVolumes = shellSurfaces * self.configuration["r_values"]["step"]
+        shellVolumes = shellSurfaces * self.r_values.binning.step
 
         self._outputData.add(
             "xssf/axes/q",
             "LineOutputVariable",
-            self.configuration["q_values"]["value"],
+            self.q_values,
             units="1/nm",
         )
 
         q = self._outputData["xssf/axes/q"]
-        r = self.configuration["r_values"]["mid_points"]
+        r = self.r_values.mid_points
 
         fact1 = 4.0 * np.pi * self.averageDensity
 
         sincqr = np.sinc(np.outer(q, r) / np.pi)
 
-        dr = self.configuration["r_values"]["step"]
+        dr = self.r_values.binning.step
 
         for label, _ in self.labels:
             self._outputData.add(
@@ -337,8 +323,8 @@ class XRayStaticStructureFactor(DistanceHistogram):
             self._outputData["xssf/total"].scaling_factor = fact
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

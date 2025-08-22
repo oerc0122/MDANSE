@@ -52,9 +52,9 @@ class Projection(CustomConfig):
         axis: npt.NDArray[float] | None = None,
         **kwargs,
     ):
-        super().__init__(**kwargs)
         self.proj_type = proj_type
         self.axis = axis
+        super().__init__(**kwargs)
 
     @property
     def projector(self) -> IProjector:
@@ -68,6 +68,8 @@ class Projection(CustomConfig):
 
         if self.proj_type is not ProjType.NULL:
             proj.set_axis(self.axis)
+
+        return proj
 
     @projector.setter
     def projector(
@@ -99,4 +101,7 @@ class Projection(CustomConfig):
         )
 
     def validate(self, _desc, _value) -> IProjector | None:
-        return self.projector
+        try:
+            return self.projector
+        except ConfigError:
+            return None

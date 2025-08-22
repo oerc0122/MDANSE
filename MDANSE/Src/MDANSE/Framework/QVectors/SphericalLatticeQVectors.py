@@ -21,7 +21,7 @@ import random
 import numpy as np
 
 from MDANSE.Framework.Parameters import (
-
+    Integer, Range, Float,
 )
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
@@ -41,27 +41,29 @@ class SphericalLatticeQVectors(LatticeQVectors):
     vectors in the shell.
     """
 
-    settings = collections.OrderedDict()
-    settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["shells"] = (
-        "RangeConfigurator",
-        {
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "default": (0, 5.0, 0.5),
-        },
+    seed = Integer(
+        minimum=0, default=0
     )
-    settings["n_vectors"] = ("IntegerConfigurator", {"mini": 1, "default": 50})
-    settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
+    shells = Range(
+        minimum=0.,
+        default=(0, 5., 0.5),
+        include_last=True,
+    )
+    n_vectors = Integer(
+        minimum=1, default=50)
+    width = Float(
+        minimum=1e-6,
+        default=1.,
+        )
 
     def _generate(self):
-        if self._configuration["seed"]["value"] != 0:
-            np.random.seed(self._configuration["seed"]["value"])
-            random.seed(self._configuration["seed"]["value"])
+        if self.seed != 0:
+            np.random.seed(self.seed)
+            random.seed(self.seed)
         qMax = (
-            self._configuration["shells"]["last"]
-            + 0.5 * self._configuration["width"]["value"]
+            self.shells[-1
+                        ]
+            + 0.5 * self.width
         )
 
         hklMax = np.ceil(self.qvectors_to_hkl(qMax * np.eye(3), self._unit_cell)) + 1
@@ -81,16 +83,15 @@ class SphericalLatticeQVectors(LatticeQVectors):
 
         dists2 = np.sum(vects**2, axis=0)
 
-        halfWidth = self._configuration["width"]["value"] / 2
+        halfWidth = self.width / 2
 
-        nVectors = self._configuration["n_vectors"]["value"]
 
         if self._status is not None:
-            self._status.start(self._configuration["shells"]["number"])
+            self._status.start(len(self.shells))
 
-        self._configuration["q_vectors"] = collections.OrderedDict()
+        self.q_vectors = {}
 
-        for q in self._configuration["shells"]["value"]:
+        for q in self.shells:
             qmin = max(0, q - halfWidth)
 
             q2low = qmin * qmin
@@ -101,16 +102,16 @@ class SphericalLatticeQVectors(LatticeQVectors):
             nHits = len(hits)
 
             if nHits != 0:
-                n = min(nHits, nVectors)
+                n = min(nHits, self.n_vectors)
 
-                if nHits > nVectors:
-                    hits = random.sample(sorted(hits), nVectors)
+                if nHits > self.n_vectors:
+                    hits = random.sample(sorted(hits), self.n_vectors)
 
-                self._configuration["q_vectors"][q] = {}
-                self._configuration["q_vectors"][q]["q_vectors"] = vects[:, hits]
-                self._configuration["q_vectors"][q]["n_q_vectors"] = n
-                self._configuration["q_vectors"][q]["q"] = q
-                self._configuration["q_vectors"][q]["hkls"] = self.qvectors_to_hkl(
+                self.q_vectors[q] = {}
+                self.q_vectors[q]["q_vectors"] = vects[:, hits]
+                self.q_vectors[q]["n_q_vectors"] = n
+                self.q_vectors[q]["q"] = q
+                self.q_vectors[q]["hkls"] = self.qvectors_to_hkl(
                     vects[:, hits], self._unit_cell
                 )
 

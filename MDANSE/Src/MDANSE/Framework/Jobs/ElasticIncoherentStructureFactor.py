@@ -15,14 +15,23 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 
-from MDANSE.Framework.AtomGrouping.grouping import (
-    add_grouped_totals,
-)
+from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    AtomTransmutation,
+    FrameSelect,
+    GroupingLevel,
+    MDANSETrajectory,
+    OutputFile,
+    Projection,
+    QVectors,
+    QVectorsSelect,
+    RunningMode,
+    Weights,
+)
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 
 
@@ -49,53 +58,23 @@ class ElasticIncoherentStructureFactor(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    q_vectors_type = QVectorsSelect(depends={"trajectory": "trajectory"})
+    q_vectors = QVectors(depends={"generator": "q_vectors_type"})
+    projection = Projection(label="project coordinates")
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    weights = Weights(
+        depends={
+            "selection": "atom_selection",
+            "transmutation": "atom_transmutation",
+            "trajectory": "trajectory",
+        }
     )
-    settings["q_vectors"] = (
-        "QVectorsConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["projection"] = (
-        "ProjectionConfigurator",
-        {"label": "project coordinates"},
-    )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "default": "b_incoherent",
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            },
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """
@@ -107,7 +86,7 @@ class ElasticIncoherentStructureFactor(IJob):
 
         self._nQShells = self.configuration["q_vectors"]["n_shells"]
 
-        self._nFrames = self.configuration["frames"]["number"]
+        self._nFrames = len(self.frames)
 
         self.labels = [
             (element, (element,)) for element in self.trajectory.get_natoms()
@@ -116,7 +95,7 @@ class ElasticIncoherentStructureFactor(IJob):
         self._outputData.add(
             "eisf/axes/q",
             "LineOutputVariable",
-            self.configuration["q_vectors"]["shells"],
+            self.q_vectors.shells,
             units="1/nm",
         )
 
@@ -158,20 +137,20 @@ class ElasticIncoherentStructureFactor(IJob):
 
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.configuration["frames"]["first"],
-            last=self.configuration["frames"]["last"] + 1,
-            step=self.configuration["frames"]["step"],
+            first=self.frames.first_index,
+            last=self.frames.last_index + 1,
+            step=self.frames.step_index,
         )
 
-        series = self.configuration["projection"]["projector"](series)
+        series = self.projection(series)
 
         atomicEISF = np.zeros((self._nQShells,), dtype=np.float64)
 
-        for i, q in enumerate(self.configuration["q_vectors"]["shells"]):
-            if q not in self.configuration["q_vectors"]["value"]:
+        for i, q in enumerate(self.q_vectors.shells):
+            if q not in self.q_vectors.q_vectors:
                 continue
 
-            qVectors = self.configuration["q_vectors"]["value"][q]["q_vectors"]
+            qVectors = self.q_vectors.q_vectors[q]["q_vectors"]
 
             a = np.average(np.exp(1j * np.dot(series, qVectors)), axis=0)
             a = np.abs(a) ** 2
@@ -198,9 +177,7 @@ class ElasticIncoherentStructureFactor(IJob):
         Finalizes the calculations (e.g. averaging the total term, output files creations ...)
         """
 
-        self.configuration["q_vectors"]["generator"].write_vectors_to_file(
-            self._outputData
-        )
+        self.q_vectors.write_vectors_to_file(self._outputData)
 
         nAtomsPerElement = self.trajectory.get_natoms()
         for element, number in nAtomsPerElement.items():
@@ -242,8 +219,8 @@ class ElasticIncoherentStructureFactor(IJob):
         )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_formats,
             str(self),
             self,
         )

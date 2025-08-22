@@ -52,7 +52,7 @@ class DynamicIncoherentStructureFactor(IJob):
 
     # trajectory = MDANSETrajectory()
     # frames = CorrelationFrames(depends={"trajectory": "trajectory"})
-    # resolution = Resolution()
+    # resolution = InstrumentResolution()
     # q_vectors = QVectors()
     # projection = Projector()
     # grouping = Grouping()

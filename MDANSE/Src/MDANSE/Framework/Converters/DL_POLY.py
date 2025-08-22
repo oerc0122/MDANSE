@@ -29,6 +29,7 @@ from MDANSE.Framework.Parameters import (
     Boolean,
     OutputTrajectory,
     PathParam,
+    to_class,
 )
 from MDANSE.Framework.Parsers import DLPField, DLPHistory
 from MDANSE.MolecularDynamics.Configuration import (
@@ -57,15 +58,17 @@ class DL_POLY(Converter):
         extensions={"FIELD files": "FIELD*"},
         default="INPUT_FILENAME",
         label="Input FIELD file",
+        callback=to_class(DLPField),
     )
     history_file = PathParam(
         mode="r",
         extensions={"HISTORY files": "HISTORY*"},
         default="INPUT_FILENAME",
         label="Input HISTORY file",
+        callback=to_class(DLPHistory),
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "trajectory_file"},
+        depends={"trajectory": "field_file"},
         label="Atom mapping",
         default={},
     )
@@ -79,16 +82,14 @@ class DL_POLY(Converter):
         super().initialize()
 
         self._atomic_aliases = self.atom_aliases
-        self._field_file = DLPField(self.field_file)
-        self._history_file = DLPHistory(self.history_file)
 
-        self.frames = self._history_file.frames
+        self.frames = self.history_file.frames
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self._history_file.n_frames
+        self.numberOfSteps = self.history_file.n_frames
         self._chemical_system = ChemicalSystem()
 
-        self._field_file.build_chemical_system(
+        self.field_file.build_chemical_system(
             self._chemical_system, self._atomic_aliases
         )
 
@@ -99,7 +100,7 @@ class DL_POLY(Converter):
             positions_dtype=self.output_files.dtype,
             chunking_limit=self.output_files.chunk_size,
             compression=self.output_files.compression,
-            initial_charges=self._field_file.get_atom_charges(),
+            initial_charges=self.field_file.get_atom_charges(),
         )
 
     def run_step(self, index: int) -> tuple[int, None]:
@@ -123,7 +124,7 @@ class DL_POLY(Converter):
 
         frame = next(self.frames)
 
-        if self._history_file.imcon:
+        if self.history_file.imcon:
             conf = PeriodicRealConfiguration(
                 self._trajectory.chemical_system, frame["positions"], frame["cell"]
             )

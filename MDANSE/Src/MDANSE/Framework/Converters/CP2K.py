@@ -30,6 +30,7 @@ from MDANSE.Framework.Parameters import (
     Boolean,
     OutputTrajectory,
     PathParam,
+    to_class,
 )
 from MDANSE.Framework.Parsers import CP2KCellFile, XYZFile
 from MDANSE.Framework.Units import measure
@@ -65,7 +66,10 @@ class CP2K(Converter):
     }
 
     pos_file = PathParam(
-        "r", extensions={"XYZ file": ".xyz"}, label="Positions file (XYZ)"
+        "r",
+        extensions={"XYZ file": ".xyz"},
+        label="Positions file (XYZ)",
+        callback=to_class(XYZFile),
     )
     vel_file = PathParam(
         "r",

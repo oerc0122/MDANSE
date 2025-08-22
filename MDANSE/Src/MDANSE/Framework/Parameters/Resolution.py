@@ -15,7 +15,6 @@
 #
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING, Any, NamedTuple, TypedDict
 
 import numpy as np
@@ -26,9 +25,10 @@ from MDANSE.Framework.InstrumentResolutions.IInstrumentResolution import (
 )
 
 from .AbsConfigDesc import ConfigError, ConfigureDescriptor
+from .UtilTypes import Depends, DescID
 
 if TYPE_CHECKING:
-    from .FramesDescriptors import Frames
+    from .UtilTypes import Frames
 
 
 class Resolution(TypedDict, total=False):
@@ -58,7 +58,9 @@ class RunResolution(NamedTuple):
         return self.romega, "rad/ps"
 
 
-class InstrumentResolution(ConfigureDescriptor[RunResolution]):
+class InstrumentResolution(
+    ConfigureDescriptor[Resolution | tuple[str, dict[str, Any]], RunResolution]
+):
     r"""Defines the resolution function to use for signal broadening.
 
     The instrument resolution will be used in frequency-dependent analysis
@@ -83,11 +85,11 @@ class InstrumentResolution(ConfigureDescriptor[RunResolution]):
 
     _default = ("gaussian", {"mu": 0.0, "sigma": 10.0})
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"frames"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("frames")}
 
     def validate(
-        self, value: Resolution, deps: dict[str, Any] | tuple[str, dict[str, Any]]
+        self, value: Resolution | tuple[str, dict[str, Any]], deps: Depends, /
     ) -> RunResolution:
         """Configure the instrument resolution.
 
@@ -102,11 +104,6 @@ class InstrumentResolution(ConfigureDescriptor[RunResolution]):
         -------
 
         """
-        if not self.update_needed(value):
-            return
-
-        self._original_input = value
-
         frames: Frames = deps["frames"]
 
         n_frames = len(frames)

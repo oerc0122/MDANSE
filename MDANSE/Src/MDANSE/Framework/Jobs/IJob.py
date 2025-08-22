@@ -273,7 +273,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
             if self.output_files.write_logs:
                 log_filename = self.output_files.path.with_suffix(".log")
                 self.add_log_file_handler(
-                    log_filename, self.output_files.log_level.value
+                    log_filename, self.output_files.log_level
                 )
         else:
             LOG.error("IJob did not find 'write_logs' in output_files")
@@ -292,7 +292,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
         """
         if (trajectory := self.configuration.get("trajectory")) is None:
             return
-        self.trajectory = trajectory["instance"]
+        self._trajectory = trajectory
         if (selection := self.configuration.get("atom_selection")) is not None:
             self.trajectory.set_selection(selection["flatten_indices"])
             array_length = self.trajectory.chemical_system._total_number_of_atoms

@@ -16,19 +16,18 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from .AbsConfigDesc import ConfigError
-from .BaseTypesDescriptor import NumericRange
+from .BaseTypesDescriptor import NumericRange, Range
+from .UtilTypes import Depends, DescID
 
 
 class HistogramInfo:
-    def __init__(self, bins: Sequence[float]):
+    def __init__(self, bins: NumericRange):
         self.binning = bins
 
     def __len__(self) -> int:
@@ -48,7 +47,7 @@ class HistogramInfo:
 
     @property
     def bins(self) -> npt.NDArray[float]:
-        self.bins = np.fromiter(self.binning, dtype=np.float64)
+        self.bins = np.array(list(self.binning), dtype=np.float64)
 
     @property
     def mid_points(self) -> npt.NDArray[float]:
@@ -66,13 +65,13 @@ class RangeCellCutoff(Range[float]):
         super().__init__(*args, **kwargs)
         self._max_value = max_value
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"trajectory"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("trajectory")}
 
     def validate(
         self,
         value: int | Sequence | dict | range,
-        deps: dict[str, Any],
+        deps: Depends, /,
     ) -> HistogramInfo:
         """Configure the distance histogram cutoff configurator.
 

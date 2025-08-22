@@ -25,11 +25,11 @@ from MDANSE.Framework.Parameters import (
     CorrelationWindow,
     DynamicSingleChoice,
     FrameSelect,
+    InstrumentResolution,
     InterpOrder,
     MDANSETrajectory,
     OutputFile,
     PartialCharge,
-    Resolution,
     RunningMode,
 )
 from MDANSE.Mathematics.Geometry import center_of_mass
@@ -64,11 +64,12 @@ class Infrared(IJob):
         depends={"trajectory": "trajectory"},
     )
 
-    instrument_resolution = Resolution(
+    instrument_resolution = InstrumentResolution(
         depends={"trajectory": "trajectory", "frames": "frames"},
     )
     derivative_order = InterpOrder(
-        depends={"frames": "frames"}, label="d/dt dipole numerical derivative"
+        depends={"trajectory": "trajectory", "frames": "frames"},
+        label="d/dt dipole numerical derivative",
     )
     molecule_name = DynamicSingleChoice(
         choices="chemical_system._clusters.keys()",

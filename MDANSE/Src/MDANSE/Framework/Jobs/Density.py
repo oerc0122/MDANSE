@@ -114,7 +114,7 @@ class Density(IJob):
         tuple[int, None]
         """
         # get the Frame index
-        frame_index = self.frames[index].index
+        frame_index = self.frames[index].ind
 
         conf = self.trajectory.configuration(frame_index)
 

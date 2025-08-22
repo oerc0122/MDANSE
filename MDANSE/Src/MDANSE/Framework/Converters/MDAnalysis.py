@@ -56,23 +56,23 @@ class MDAnalysis(Converter):
     category = ("Converters", "General")
     label = "MDAnalysis"
 
+    topology_format = SingleChoice(choices=mda._PARSERS.keys())
     topology_file = PathParam(
         mode="r",
         label="Topology file",
     )
-    topology_format = SingleChoice(choices=())
+    coordinate_format = SingleChoice(choices=mda._PARSERS.keys())
     coordinate_file = PathParam(
         mode="r",
         label="Coordinate file",
     )
-    coordinate_format = SingleChoice(choices=())
     time_step = Float(
         label="Time step",
         default=1.0,
         minimum=1e-9,
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "trajectory_file"},
+        depends={"trajectory": "topology_file"},
         label="Atom mapping",
         default={},
     )

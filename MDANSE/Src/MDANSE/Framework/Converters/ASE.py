@@ -104,7 +104,7 @@ class ASE(Converter):
         self._initial_masses = None
 
         # The number of steps of the analysis.
-        self.n_steps = self.n_steps_in
+        self.numberOfSteps = self.n_steps_in
 
         self._timestep = float(self.time_step) * measure(1.0, self.time_unit).toval(
             "ps"
@@ -114,14 +114,14 @@ class ASE(Converter):
         LOG.info(f"isPeriodic after parse_first_step: {self._isPeriodic}")
         self._start = 0
 
-        if not self.n_steps:
-            self.n_steps = self._total_number_of_steps
+        if not self.numberOfSteps:
+            self.numberOfSteps = self._total_number_of_steps
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.output_files.path,
             self._chemical_system,
-            self.n_steps,
+            self.numberOfSteps,
             positions_dtype=self.output_files.dtype,
             chunking_limit=self.output_files.chunk_size,
             compression=self.output_files.compression,

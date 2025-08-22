@@ -29,16 +29,17 @@ from MDANSE.Framework.Parameters import (
     AtomSelection,
     AtomTransmutation,
     CorrelationWindow,
-    Filter,
     FrameSelect,
     InstrumentResolution,
     MDANSETrajectory,
     OutputTrajectory,
     Projection,
     RunningMode,
+    TrajectoryFilter,
     Weights,
 )
-from MDANSE.Mathematics.Signal import FILTER_MAP, Filter as SFilter
+from MDANSE.Mathematics.Signal import FILTER_MAP
+from MDANSE.Mathematics.Signal import Filter as SFilter
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -77,8 +78,14 @@ class TrajectoryFilter(IJob):
         depends={"trajectory": "trajectory", "frames": "frames"}
     )
     projection = Projection(label="Project coordinates")
-    trajectory_filter = Filter()
-    weights = Weights()
+    trajectory_filter = TrajectoryFilter()
+    weights = Weights(
+        depends={
+            "selection": "atom_selection",
+            "transmutation": "atom_transmutation",
+            "trajectory": "trajectory",
+        }
+    )
     output_files = OutputTrajectory()
     running_mode = RunningMode()
 

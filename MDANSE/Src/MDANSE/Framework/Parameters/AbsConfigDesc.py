@@ -17,20 +17,69 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Collection, Container, Iterator
+from collections.abc import Callable, Container, Iterable, Iterator, Mapping, Sequence
 from enum import Enum
-from typing import Any, Generic, TypeVar
-from warnings import Warning
+from functools import singledispatchmethod
+from itertools import compress
+from numbers import Real
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Literal,
+    NewType,
+    Protocol,
+    TypeGuard,
+    TypeVar,
+    cast,
+    overload,
+    runtime_checkable,
+)
 
 import numpy as np
 from more_itertools import value_chain
 
 from MDANSE.Core.Error import Error
 from MDANSE.IO.IOUtils import MDANSEEncoder
+from MDANSE.MLogging import LOG
+
+from .UtilTypes import Depends, DescID
+
+if TYPE_CHECKING:
+    from typing import Self
 
 SENTINEL = object()
+P = TypeVar("P")
 T = TypeVar("T")
+Num = TypeVar("Num", bound=Real)
+K = TypeVar("K")
+V = TypeVar("V")
 CD = TypeVar("CD", bound="ConfigureDescriptor")
+
+cjoin = ", ".join
+
+
+@runtime_checkable
+class Validatable(Protocol):
+    def validate(self, desc: ConfigureDescriptor, value: T) -> T: ...
+
+
+@runtime_checkable
+class CustomChoices(Protocol):
+    def get_choices(self, deps: Depends) -> set: ...
+
+
+@runtime_checkable
+class HasOption(Protocol):
+    @property
+    def choices(self) -> set: ...
+
+    @property
+    def exclude(self) -> set: ...
+
+
+def is_enum(x: Any) -> TypeGuard[type[Enum]]:
+    return isinstance(x, type) and issubclass(x, Enum)
 
 
 class ConfigError(Error):
@@ -74,21 +123,26 @@ class Configurable:
     """
 
     @property
-    def configuration(self) -> dict[str, Any]:
+    def configuration(self) -> dict[DescID, Any]:
         return {name: getattr(self, name) for name in self.descriptors}
 
+    @configuration.setter
+    def configuration(self, value: dict[DescID, Any]):
+        for name, val in value:
+            setattr(self, name, val)
+
     @property
-    def descriptors(self) -> dict[str, Parameter]:
+    def descriptors(self) -> dict[DescID, Parameter]:
         """Get all descriptors owned by self."""
         return {
-            name: param
+            DescID(name): param
             for cls in value_chain(type(self).__bases__, type(self))
             for name, param in cls.__dict__.items()
             if isinstance(param, Parameter)
         }
 
     @property
-    def parameters(self) -> list[str]:
+    def parameters(self) -> list[DescID]:
         return list(self.descriptors)
 
     def to_json(self) -> str:
@@ -126,22 +180,31 @@ class CustomConfig(Parameter, Configurable):
     """Abstract mixin for classes which contain Descriptors, but are themselves to be configured."""
 
 
-class ConfigureDescriptor(Parameter, Generic[T]):
+def to_class(cls):
+    """Simple wrapper for callbacks."""
+
+    def tc(*args):
+        return cls(args[1])
+
+    return tc
+
+
+class ConfigureDescriptor(Parameter, Generic[P, T]):
     """Abstract configure descriptor.
 
     Parameters
     ----------
-    default : T
+    default : P
         Default value if not configured.
     optional : bool
         Whether this value can be disabled (None).
-    choices : Container[T], optional
+    choices : Sequence[T], optional
         Valid options for this value.
-    exclude : Container[T]
+    exclude : Sequence[T]
         Invalid options for this value.
-    mutex : Container[str]
+    mutex : Sequence[str]
         Other variables with which this is mutually exclusive.
-    depends : Container[str]
+    depends : Sequence[str]
         Other variables which must be set for this to be set.
     callback : Callable
         Custom function to be called post-validation.
@@ -154,18 +217,18 @@ class ConfigureDescriptor(Parameter, Generic[T]):
     def __init__(
         self,
         *,
-        default: T = SENTINEL,
+        default: P | object = SENTINEL,
         optional: bool | None = None,
-        choices: Container[T] | None = None,
-        exclude: Container[T] = (),
-        mutex: Container[str] = (),
-        depends: dict[str, str] | None = None,
-        callback: Callable[[CD, T, dict[str, str]], T] | None = None,
+        choices: Sequence[T] | None = None,
+        exclude: Sequence[T] = (),
+        mutex: Sequence[DescID] = (),
+        depends: dict[str, DescID] | None = None,
+        callback: Callable[[Self, T, Depends], T] | None = None,
         label: str = "",
         tooltip: str = "",
         **params,
     ):
-        self.default: T = default
+        self.default: P = default
         self.optional = optional if optional is not None else default is not SENTINEL
 
         self.choices = choices
@@ -173,88 +236,131 @@ class ConfigureDescriptor(Parameter, Generic[T]):
 
         self.mutex = mutex
 
-        self.depends: dict[str, str] = depends if depends is not None else {}
+        self.depends: dict[str, DescID] = depends if depends is not None else {}
         self.callback = callback
 
+        self.dependents: set[ConfigureDescriptor] = set()
+
         if missing := (self.required_deps() - self.depends.keys()):
-            raise ConfigError(f"Required deps ({', '.join(missing)}) missing.")
+            raise ConfigError(
+                f"Required deps ({', '.join(missing)}) missing for {type(self).__name__}."
+            )
 
         super().__init__(label=label, tooltip=tooltip)
+
+    def _bad_mutex(self, owner: object) -> Iterable[bool]:
+        return (getattr(owner, f"_{ex}_configured") for ex in self.mutex)
+
+    def _bad_deps(self, owner: object) -> Iterable[bool]:
+        return (
+            not getattr(owner, f"_{dep}_configured") for dep in self.depends.values()
+        )
+
+    def _get_deps(self, owner: object) -> Depends:
+        return cast(
+            Depends, {dep: getattr(owner, key) for dep, key in self.depends.items()}
+        )
 
     def __set_name__(self, owner: object, name: str):
         self.name = name
         self.private_name = "_" + name
         self.configured_var = self.private_name + "_configured"
+
+        # Update the depend checks
+        for dep in self.depends.values():
+            owner.__dict__[dep].dependents.add(self)
+
         setattr(owner, self.configured_var, False)
 
-    def __get__(self, owner: object, objtype: type | None = None) -> T:
+    def __get__(self, owner: object, objtype: type | None = None) -> Self | T:
         if owner is None:
             return self
+
+        if any(self._bad_deps(owner)):
+            raise ConfigError(
+                f"Dependencies ({', '.join(compress(self.depends, self._bad_deps(owner)))}) "
+                "are not correctly defined."
+            )
 
         if not self.optional and not getattr(owner, self.configured_var):
             raise ConfigError(f"Non-optional value ({self.name}) has not been set")
 
         value = getattr(owner, self.private_name, SENTINEL)
-        return value if value is not SENTINEL else self.default
+        deps = self._get_deps(owner)
 
-    def _bad_mutex(self, owner: object) -> Iterator[bool]:
-        return (getattr(owner, f"_{ex}_configured") for ex in self.mutex)
-
-    def _bad_deps(self, owner: object) -> Iterator[bool]:
-        return (
-            not getattr(owner, f"_{dep}_configured") for dep in self.depends.values()
-        )
-
-    def __set__(self, owner: object, value):
-        setattr(owner, self.configured_var, False)
-        setattr(owner, self.private_name, SENTINEL)
-
-        if any(self._bad_deps(owner)):
-            raise ConfigError(
-                f"Dependencies ({', '.join(self._bad_deps)}) are not correctly defined."
-            )
-        if any(self._bad_mutex(owner)):
-            raise ConfigError(
-                f"Mutually exclusive value ({', '.join(self._bad_mutex)}) is also configured."
-            )
-
-        deps = {dep: getattr(owner, key) for dep, key in self.depends.items()}
-        value = self.validate(value, deps)
+        if value is not SENTINEL:
+            out = cast(T, value)
+        else:
+            out = self.validate(self.default, deps)
 
         # Custom
         if self.callback is not None:
-            value = self.callback(self, value, deps)
+            out = self.callback(self, out, deps)
+
+        return out
+
+    def __set__(self, owner: object, value: P):
+        setattr(owner, self.configured_var, False)
+        setattr(owner, self.private_name, SENTINEL)
+
+        if self.optional and value is None:
+            return
+
+        if any(self._bad_deps(owner)):
+            raise ConfigError(
+                f"Dependencies ({', '.join(compress(self.depends, self._bad_deps(owner)))}) "
+                "are not correctly defined."
+            )
+        if any(self._bad_mutex(owner)):
+            raise ConfigError(
+                f"Mutually exclusive value ({', '.join(compress(self.mutex, self._bad_mutex(owner)))}) "
+                "is also configured."
+            )
+
+        deps = self._get_deps(owner)
+        out = self.validate(value, deps)
 
         # For grouped config descriptors
-        if hasattr(owner, "validate"):
-            value = owner.validate(self, value)
+        if isinstance(owner, Validatable):
+            out = owner.validate(self, out)
 
-        setattr(owner, self.private_name, value)
+        for dependent in self.dependents:
+            name = dependent.name
+            try:
+                val = getattr(owner, name)
+                setattr(owner, name, val)
+            except ConfigError as err:
+                LOG.info(f"Invalidated {name}. Reason: {err}")
+                setattr(owner, dependent.configured_var, False)
+
+        setattr(owner, self.private_name, out)
         setattr(owner, self.configured_var, True)
 
-    def required_deps(self) -> set[str]:
+    def required_deps(self) -> set[DescID]:
         return set()
 
     @property
-    def choices(self) -> set[T]:
+    def choices(self) -> set[T] | type[Enum]:
         """
         Returns the set of values allowed for an input.
         """
         return self._choices
 
     @choices.setter
-    def choices(self, value: Container[T] | Enum) -> None:
+    def choices(self, value: Sequence[T] | type[Enum] | None) -> None:
+        self._choices: set[T] | type[Enum]
         if value is None:
             self._choices = set()
-            return
-        if isinstance(value, Enum):
+        elif is_enum(value):
             self._choices = value
-            return
-        self._choices = set(value)
+        else:
+            value = cast(Sequence[T], value)
+            self._choices = set(value)
+
         self.last_choices = self._choices
 
     @property
-    def exclude(self) -> set[int]:
+    def exclude(self) -> set[T]:
         """
         Returns the set of values which are not forbidden.
 
@@ -266,132 +372,130 @@ class ConfigureDescriptor(Parameter, Generic[T]):
         return self._exclude
 
     @exclude.setter
-    def exclude(self, value: Container[int]) -> None:
+    def exclude(self, value: Sequence[T]) -> None:
         if value is None:
             self._exclude = set()
             return
         self._exclude = set(value)
 
-    def validate_choices(self, value: T, choices: set[T] | Enum | None = None) -> bool:
-        choices = self.choices if choices is None else choices
-        return not choices or value in choices
+    @overload  # Standard choice
+    def _validate_choices(self, value: T, choices: set[T] | None = None) -> bool: ...
+    @overload  # Require keys in mapping
+    def _validate_choices(
+        self, value: Mapping[K, V], choices: set[K] | None = None
+    ) -> bool: ...
+    @overload  # Enum choices
+    def _validate_choices(
+        self, value: Enum, choices: type[Enum] | None = None
+    ) -> bool: ...
+    @overload  # Multi-choice
+    def _validate_choices(
+        self, value: Sequence[T], choices: set[T] | None = None
+    ) -> bool: ...
 
-    def validate_exclude(self, value: T, exclude: set[T] | None = None) -> bool:
+    def _validate_choices(self, value, choices=None) -> bool:
+        test_choices = self.choices if choices is None else choices
+        return not test_choices or value in test_choices
+
+    @singledispatchmethod
+    def _validate_exclude(self, value: T, exclude: set[T] | None = None) -> bool:
         exclude = self.exclude if exclude is None else exclude
         return not exclude or value not in exclude
 
+    @_validate_exclude.register(Sequence)
+    def _(self, value: Sequence[T], exclude: set[T] | None = None) -> bool:
+        excludes = self.exclude if exclude is None else exclude
+        return set(value) > excludes
+
+    @_validate_exclude.register(Mapping)
+    def _(self, value: Mapping[K, V], exclude: set[K] | None = None) -> bool:
+        excl = self.exclude if exclude is None else exclude
+        if erroneous := excl & value.keys():
+            raise ConfigError(
+                f"Forbidden keys ({cjoin(map(str, erroneous))}) are present."
+            )
+        return True
+
     @abstractmethod
-    def validate(self, value: T, deps: dict[str, Any]) -> T:
+    def validate(self, value: P, deps: Depends, /) -> T:
         """
         Ensure that the passed variable is of the right type.
         """
+        # Assume that the variable is the right type at this point
+        out = cast(T, value)
+
         # Choices
-        if self.choices and isinstance(self.choices, Enum):  # Enum
+        if self.choices and is_enum(self.choices):  # Enum
             try:
-                value = self.choices(value)
+                out = self.choices(out).value
             except ValueError:
                 raise ConfigError(
-                    f"Value ({value!r}) not in choices ({', '.join(self.choices)})."
+                    f"Value ({out!r}) not in choices ({', '.join(choice.name for choice in self.choices)})."
                 )
 
-        elif hasattr(self, "get_choices"):  # Function
+        elif isinstance(self, CustomChoices):  # Function
             self.last_choices = self.get_choices(deps)
 
-            if not self.validate_choices(value, self.last_choices):
+            if not self._validate_choices(out, self.last_choices):
                 raise ConfigError(
-                    f"Value ({value!r}) not in choices ({', '.join(self.last_choices)})."
+                    f"Value ({out!r}) not in choices ({', '.join(self.last_choices)})."
                 )
 
-        elif not self.validate_choices(value):  # Set
+        elif not self._validate_choices(out):  # Set
             raise ConfigError(
-                f"Value ({value!r}) not in choices ({', '.join(self.choices)})."
+                f"Value ({out!r}) not in choices ({', '.join(map(str, self.choices))})."
             )
 
         # Exclude
-        if not self.validate_exclude(value):
+        if not self._validate_exclude(out):
             raise ConfigError(
-                f"Value ({value!r}) in excluded values ({', '.join(self.exclude)})."
+                f"Value ({out!r}) in excluded values ({', '.join(map(str, self.exclude))})."
             )
 
-        return value
+        return out
 
 
-class MinMax(ABC, Generic[T]):
+class MinMax(ABC, Generic[Num]):
     def __init__(
-        self, minimum: T | None = None, maximum: T | None = None, *args, **kwargs
+        self, *args, minimum: Num | None = None, maximum: Num | None = None, **kwargs
     ):
         self.minimum = minimum
         self.maximum = maximum
         super().__init__(*args, **kwargs)
 
-    @property
-    def minimum(self) -> T | None:
-        """
-        Returns the minimum value allowed for an input int.
-
-        Returns
-        -------
-        int or None
-            The minimum value allowed for an input value int.
-        """
-        return self._minimum
-
-    @minimum.setter
-    def minimum(self, value: T | None) -> None:
-        self._minimum = value if value is not None else -np.inf
-
-    @property
-    def maximum(self) -> T | None:
-        """
-        Returns the maximum value allowed for an input int.
-
-        Returns
-        -------
-        int or None
-            The maximum value allowed for an input value int.
-        """
-        return self._maximum
-
-    @maximum.setter
-    def maximum(self, value: T | None) -> None:
-        self._maximum = value if value is not None else np.inf
-
-    def get_ranges(self, value: T, deps: dict[str, Any]):
+    def get_ranges(self, deps: Depends) -> tuple[Num | None, Num | None]:
         return self.minimum, self.maximum
 
-    def validate_range(self, value: T, ranges: tuple[T, T] | None = None) -> None:
+    def validate_range(
+        self, value: Num, ranges: tuple[Num | None, Num | None] | None = None
+    ) -> None:
         if ranges is not None:
             mini, maxi = ranges
         else:
             mini, maxi = self.minimum, self.maximum
 
-        if mini > value > maxi:
+        try:
+            self.validate_minimum(value, mini)
+            self.validate_maximum(value, maxi)
+        except ConfigError:
             raise ConfigError(
                 f"Value ({value}) outside of valid range ({mini}, {maxi})"
             )
 
-    def validate_minimum(self, value: T, mini: T | None = None) -> None:
-        mini = mini if mini is not None else self.minimum
+    def validate_minimum(self, value: Num, mini: Num | None = None) -> None:
+        minimum = mini if mini is not None else self.minimum
 
-        if mini > value:
-            raise ConfigError(f"Value ({value}) less than minimum ({mini})")
+        if minimum is None:
+            return
 
-    def validate_maximum(self, value: T, maxi: T | None = None) -> None:
-        maxi = maxi if maxi is not None else self.maximum
+        if value < minimum:
+            raise ConfigError(f"Value ({value}) less than minimum ({minimum})")
 
-        if maxi > value:
-            raise ConfigError(f"Value ({value}) greater than maximum ({maxi})")
+    def validate_maximum(self, value: Num, maxi: Num | None = None) -> None:
+        maximum = maxi if maxi is not None else self.maximum
 
+        if maximum is None:
+            return
 
-class MultipleValues(ABC):
-    def validate_choices(
-        self, values: Collection[T], choices: set[T] | None = None
-    ) -> bool:
-        choices = self.choices if choices is None else choices
-        return set(values) <= choices
-
-    def validate_exclude(
-        self, values: Collection[T], exclude: set[T] | None = None
-    ) -> bool:
-        exclude = self.exclude if exclude is None else exclude
-        return set(values) > exclude
+        if value > maximum:
+            raise ConfigError(f"Value ({value}) greater than maximum ({maximum})")

@@ -112,14 +112,14 @@ class ReorientationalTimeCorrelationFunction(IJob):
     output_files = OutputFile()
     running_mode = RunningMode()
 
-    settings["molecule_and_axis"] = (
-        "AxisSelectionConfigurator",
-        {
-            "label": "molecule name",
-            "default": "",
-            "dependencies": {"trajectory": "trajectory"},
-        },
-    )
+    # settings["molecule_and_axis"] = (
+    #     "AxisSelectionConfigurator",
+    #     {
+    #         "label": "molecule name",
+    #         "default": "",
+    #         "dependencies": {"trajectory": "trajectory"},
+    #     },
+    # )
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables."""

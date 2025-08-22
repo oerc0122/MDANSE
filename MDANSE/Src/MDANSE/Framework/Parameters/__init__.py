@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+from .AbsConfigDesc import to_class
 from .AtomMappingDesc import (
     AtomMapping,
     AtomSelection,
@@ -40,11 +41,12 @@ from .ChoiceConfigDesc import (
     MultipleChoice,
     SingleChoice,
 )
-from .Filter import Filter
+from .Filter import TrajectoryFilter
 from .FramesDescriptors import CorrelationWindow, Frames, FrameSelect, InterpOrder
-from .InputFileDescriptors import MDANSETrajectory, MDANSEResult
-from .OutputFileDescriptors import OutputFile, OutputTrajectory
+from .InputFileDescriptors import MDANSEResult, MDANSETrajectory
+from .OutputFileDescriptors import ASEOutputFormat, OutputFile, OutputTrajectory
 from .ProjectionDescriptor import Projection
+from .QVectorsDescriptor import QVectors, QVectorsSelect
 from .RangeDescriptors import RangeCellCutoff
 from .Resolution import InstrumentResolution
 from .RunningModeDescriptor import RunningMode
@@ -59,14 +61,15 @@ __all__ = [
     "CorrelationWindow",
     "DynamicMultiChoice",
     "DynamicSingleChoice",
-    "Float",
     "Filter",
-    "Frames",
+    "Float",
     "FrameSelect",
+    "Frames",
     "GroupingLevel",
     "InstrumentResolution",
     "Integer",
     "InterpOrder",
+    "MDANSEResult",
     "MDANSETrajectory",
     "MultipleChoice",
     "NumericRange",
@@ -76,12 +79,14 @@ __all__ = [
     "PartialChargeMapper",
     "PathParam",
     "Projection",
-    "RangeCellCutoff",
+    "QVectors",
+    "QVectorsSelect",
     "Range",
+    "RangeCellCutoff",
     "RunningMode",
     "SingleChoice",
     "String",
     "Vector",
     "Weights",
-    "MDANSEResult",
+    "to_class",
 ]

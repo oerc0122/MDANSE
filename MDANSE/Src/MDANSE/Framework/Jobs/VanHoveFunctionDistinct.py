@@ -363,12 +363,18 @@ class VanHoveFunctionDistinct(IJob):
         label="r values (nm)",
         include_last=True,
         minimum=0.0,
-        dependencies={"trajectory": "trajectory"},
+        depends={"trajectory": "trajectory"},
     )
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    weights = Weights()
+    weights = Weights(
+        depends={
+            "selection": "atom_selection",
+            "transmutation": "atom_transmutation",
+            "trajectory": "trajectory",
+        }
+    )
     output_files = OutputFile()
     running_mode = RunningMode()
 

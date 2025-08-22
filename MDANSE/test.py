@@ -18,47 +18,47 @@ V.time_step = 1.0
 
 V.run(prog_bar=True)
 
-# X = CASTEP()
+X = CASTEP()
 
-# X.fold = False
-# X.trajectory_file = DATA_DIR / "PBAnew.md"
-# X.output_files.path = "./doom_file.mdt"
-# X.time_unit = "ps"
-# X.time_step = 10.0
+X.fold = False
+X.trajectory_file = DATA_DIR / "PBAnew.md"
+X.output_files.path = "./doom_file.mdt"
+X.time_unit = "ps"
+X.time_step = 10.0
 
 
-# X.run()
+X.run(prog_bar=True)
 
-# Y = ASE()
+Y = ASE()
 
-# Y.fold = False
-# Y.trajectory_file = DATA_DIR / "Cu_5steps_ASEformat.traj"
-# Y.output_files.path = "./final_doom_file.mdt"
-# Y.time_unit = "ps"
-# Y.time_step = 10.0
+Y.fold = False
+Y.trajectory_file = DATA_DIR / "Cu_5steps_ASEformat.traj"
+Y.output_files.path = "./final_doom_file.mdt"
+Y.time_unit = "ps"
+Y.time_step = 10.0
 
-# Y.run()
+Y.run(prog_bar=True)
 
-# Z = Density()
-# Z.trajectory = X.output_files.path
-# Z.frames = "all"
-# Z.output_files.path = "./apm"
+Z = Density()
+Z.trajectory = X.output_files.path
+Z.frames = "all"
+Z.output_files.path = "./apm"
 
-# Z.run()
+Z.run(prog_bar=True)
 
-# Q = XYZFile(DATA_DIR / "SrTiO3_MD-pos-1.xyz")
-# print(Q)
-# print(Q.time_step)
-# for i in Q.frames:
-#     print(i)
+Q = XYZFile(DATA_DIR / "SrTiO3_MD-pos-1.xyz")
+print(Q)
+print(Q.time_step)
+for i in Q.frames:
+    print(i)
 
-# X = Forcite()
+X = Forcite()
 
-# X.fold = False
-# X.xtd_file = DATA_DIR / "H2O.xtd"
-# X.trj_file = DATA_DIR / "H2O.trj"
-# X.output_files.path = "./doom_file.mdt"
-# X.time_unit = "ps"
-# X.time_step = 10.0
+X.fold = False
+X.xtd_file = DATA_DIR / "H2O.xtd"
+X.trj_file = DATA_DIR / "H2O.trj"
+X.output_files.path = "./doom_file.mdt"
+X.time_unit = "ps"
+X.time_step = 10.0
 
-# X.run()
+X.run(prog_bar=True)

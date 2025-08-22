@@ -16,41 +16,49 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ParamSpec, cast
 
 from MDANSE.IO.IOUtils import json_handler
 from MDANSE.Mathematics.Signal import (
     DEFAULT_FILTER,
     FILTER_MAP,
     FILTERS,
+    Filter,
     filter_default_attributes,
 )
-from MDANSE.Mathematics.Signal import Filter as SFilter
 
 from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesConfigDesc import Dict
+from .BaseTypesDescriptor import Dict
 from .ChoiceConfigDesc import SingleChoice
+from .UtilTypes import Depends, DescID
 
-if TYPE_CHECKING:
-    FilterType = type[SFilter]
+FilterType = type[Filter]
 
 
 class FilterParamDict(Dict[str, Any]):
     def __init__(self, *args, fixed: None = None, **kwargs):
         super().__init__(*args, fixed=True, **kwargs)
+        self.last_choices = set()
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"filter"}
+    @property
+    def choices(self) -> set[str]:
+        return self.last_choices
 
-    def get_choices(self, value, deps: dict[str, Any]):
+    @choices.setter
+    def choices(self, value) -> None: ...
+
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("filter")}
+
+    def get_choices(self, deps: Depends, /):
         return deps["filter"].default_settings.keys()
 
 
-class Filter(CustomConfig):
+class TrajectoryFilter(CustomConfig):
     default_tooltip = "Choose trajectory filter."
     default_label = "Trajectory filter"
 
-    filter_type = SingleChoice[FilterType](
+    filter_type = SingleChoice[str | FilterType, FilterType](
         choices=FILTERS,
         aliases=FILTER_MAP,
     )
@@ -61,7 +69,8 @@ class Filter(CustomConfig):
         filter: FilterType | str = DEFAULT_FILTER,
         params: dict[str, Any] | None = None,
     ):
-        if filter not in FILTER_MAP:
+        filter = FILTER_MAP.get(filter, filter)
+        if filter not in FILTERS:
             raise ConfigError("Config not in keys.")
 
         if isinstance(filter, str):
@@ -72,11 +81,12 @@ class Filter(CustomConfig):
         self.params = params or filter_default_attributes(self.filter_type)
 
     @property
-    def filter(self) -> FilterType:
-        return self.filter_type(**self.params)
+    def filter(self) -> Filter:
+        filt = cast(FilterType, self.filter_type)
+        return filt(**self.params)
 
     @filter.setter
-    def filter(self, value: dict | str | Path | tuple[str, dict[str, Any]] | SFilter):
+    def filter(self, value: dict | str | Path | tuple[str, dict[str, Any]] | Filter):
         if isinstance(value, (dict, str, Path)):
             try:
                 value = json_handler(value)
@@ -86,7 +96,7 @@ class Filter(CustomConfig):
             self.params = value
         elif isinstance(value, tuple):
             self.filter_type, self.params = value
-        elif isinstance(value, SFilter):
+        elif isinstance(value, Filter):
             self.filter_type = type(value).__name__
             self.params = {
                 key: val for key, val in value.__dict__ if key in value.default_settings

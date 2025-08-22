@@ -33,6 +33,7 @@ from MDANSE.MLogging import LOG
 
 from .AbsConfigDesc import ConfigError, ConfigureDescriptor
 from .ChoiceConfigDesc import SingleChoice
+from .UtilTypes import Depends, DescID
 
 if TYPE_CHECKING:
     from MDANSE.MolecularDynamics.Trajectory import Trajectory
@@ -77,6 +78,7 @@ class Mapper(ABC):
         self._new_map = {}
         self.selector.reset()
 
+    @staticmethod
     def get_selector(selection_string: str | Path | dict) -> ReusableSelection:
         selector = ReusableSelection()
         try:
@@ -95,20 +97,23 @@ class Mapper(ABC):
     def apply(self, selection_string: Path | str | dict, *args, **kwargs): ...
 
 
-class AtomMapping(ConfigureDescriptor[dict]):
+class AtomMapping(ConfigureDescriptor[dict | str, dict[str, dict[str, str]]]):
     def __init__(self, default: dict[str, dict[str, str]] | str = {}, **kwargs):
         super().__init__(default=default, **kwargs)
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"trajectory"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("trajectory")}
 
-    def validate(self, value: dict | str, deps: dict[str, Trajectory]) -> dict:
+    def validate(self, value: dict | str, deps: Depends, /) -> dict[str, dict[str, str]]:
+        if not value:
+            return {}
+
         file_info = deps["trajectory"]
 
         try:
             value = json_handler(value)
         except Exception as err:
-            raise ConfigError("Failed to get replacement values..") from err
+            raise ConfigError("Failed to get replacement values.") from err
 
         labels = file_info.labels
         try:
@@ -122,7 +127,7 @@ class AtomMapping(ConfigureDescriptor[dict]):
         return value
 
 
-class AtomSelection(ConfigureDescriptor[list[int]]):
+class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
     """Selects atoms in trajectory based on the input string.
 
     This configurator allows the selection of a specific set of
@@ -139,18 +144,18 @@ class AtomSelection(ConfigureDescriptor[list[int]]):
     def __init__(self, default: Collection[int] = (), **kwargs):
         super().__init__(default=default, **kwargs)
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"trajectory"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("trajectory")}
 
     def validate(
-        self, selection_string: dict | str | Path, deps: dict[str, Trajectory]
+        self, value: dict | str | Path, deps: Depends, /,
     ) -> list[int]:
         file_info = deps["trajectory"]
 
         selector = ReusableSelection()
 
         try:
-            selection = json_handler(selection_string)
+            selection = json_handler(value)
         except Exception as err:
             raise ConfigError("Failed to get selection dict.") from err
 
@@ -164,18 +169,18 @@ class AtomSelection(ConfigureDescriptor[list[int]]):
         return sorted(indices)
 
 
-class PartialCharge(ConfigureDescriptor[dict[int, float]]):
+class PartialCharge(ConfigureDescriptor[str | Path | dict, dict[int, float]]):
     """The partial charge mapper. Updates an atom partial charge map
     with applications of the update_charges method with a selection
     setting and partial charge."""
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"trajectory"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("trajectory")}
 
     def validate(
         self,
         value: str | Path | dict,
-        deps: dict[str, Trajectory],
+        deps: Depends, /,
     ) -> dict[int, float]:
         try:
             value = json_handler(value)
@@ -279,18 +284,22 @@ class PartialChargeMapper(Mapper):
         """
         return json.dumps(self.get_grouped_setting())
 
+class GroupingLevels(Enum):
+    atom = auto()
+    molecule = auto()
 
-class GroupingLevel(SingleChoice[str]):
+
+class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
     base_aliases = {
-        "each atom": "atom",
-        "each molecule": "molecule",
+        "each atom": GroupingLevels.atom,
+        "each molecule": GroupingLevels.molecule,
     }
 
     def __init__(
         self,
         *args,
         choices: None = None,
-        default: Literal["atom", "molecule"] = "atom",
+        default: GroupingLevels | str = GroupingLevels.atom,
         **kwargs,
     ):
         if choices is not None:
@@ -300,22 +309,22 @@ class GroupingLevel(SingleChoice[str]):
 
         super().__init__(
             *args,
-            choices=("atom", "molecule"),
+            choices=GroupingLevels,
             default=default,
             aliases=aliases,
             **kwargs,
         )
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"trajectory"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("trajectory")}
 
     def validate(
-        self, value: Literal["atom", "molecule"], deps: dict[str, Trajectory]
+        self, value: GroupingLevels | str, deps: Depends, /,
     ) -> str:
         value = super().validate(value, deps)
 
         if (
-            value == "molecule"
+            value is GroupingLevels.molecule
             and not self.deps["trajectory"].chemical_system.unique_molecules()
         ):
             raise ConfigError("Requested molecule grouping, but no molecules exist")
@@ -361,11 +370,11 @@ class AtomTransmuter(Mapper):
         self._new_map.update(dict.fromkeys(indices, symbol))
 
 
-class AtomTransmutation(ConfigureDescriptor[dict]):
+class AtomTransmutation(ConfigureDescriptor[dict | str | Path, dict]):
     def validate(
         self,
         value: dict | str | Path,
-        deps: dict[str, Any],
+        deps: Depends, /,
     ):
         try:
             value = json_handler(value)

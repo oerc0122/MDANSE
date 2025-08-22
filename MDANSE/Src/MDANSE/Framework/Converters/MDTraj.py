@@ -50,23 +50,23 @@ class MDTraj(Converter):
     category = ("Converters", "General")
     label = "MDTraj"
 
+    topology_format = SingleChoice(choices=md.FormatRegistry.loaders.keys())
     topology_file = PathParam(
         mode="r",
         label="Topology file",
     )
-    topology_format = SingleChoice(choices=())
+    coordinate_format = SingleChoice(choices=md.FormatRegistry.loaders.keys())
     coordinate_files = PathParam(
         mode="r",
         label="Coordinate file",
     )
-    coordinate_format = SingleChoice(choices=())
     time_step = Float(
         label="Time step",
         default=1.0,
         minimum=1e-9,
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "trajectory_file"},
+        depends={"trajectory": "topology_file"},
         label="Atom mapping",
         default={},
     )
@@ -75,9 +75,7 @@ class MDTraj(Converter):
     output_files = OutputTrajectory()
 
     def initialize(self):
-        """Load the trajectory using MDTraj and create the
-        trajectory writer.
-        """
+        """Load the trajectory using MDTraj and create the trajectory writer."""
         coord_files = self.coordinate_files
         top_file = self.topology_file
         if top_file:
@@ -99,7 +97,7 @@ class MDTraj(Converter):
         elements, atom_names, atom_labels = [], [], defaultdict(list)
         for atnumber, at in enumerate(self.traj.topology.atoms):
             element = get_element_from_mapping(
-                self.configuration["atom_aliases"]["value"],
+                self.atom_aliases,
                 at.name,
                 symbol=at.element.symbol,
                 residue=at.residue.name,

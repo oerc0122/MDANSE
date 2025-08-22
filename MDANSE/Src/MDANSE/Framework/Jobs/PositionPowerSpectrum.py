@@ -70,7 +70,13 @@ class PositionPowerSpectrum(IJob):
         depends={"trajectory": "trajectory", "frames": "frames"}
     )
     projection = Projection(label="Project coordinates")
-    weights = Weights()
+    weights = Weights(
+        depends={
+            "selection": "atom_selection",
+            "transmutation": "atom_transmutation",
+            "trajectory": "trajectory",
+        }
+    )
     output_files = OutputFile()
     running_mode = RunningMode()
 

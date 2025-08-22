@@ -327,6 +327,7 @@ class LAMMPSConfigFile(dict):
 
     def __init__(self, filename: Path | str | None = None):
         self.filename = filename
+        self.parse()
 
     @staticmethod
     def header_parser(lines: Iterable[str]) -> dict[str, Any]:

@@ -24,6 +24,7 @@ from MDANSE.Framework.Parameters import (
     Boolean,
     OutputTrajectory,
     PathParam,
+    to_class,
 )
 from MDANSE.Framework.Parsers import TrjFile, XTDFile
 from MDANSE.Framework.Units import measure
@@ -45,14 +46,16 @@ class Forcite(Converter):
         mode="r",
         extensions={"XTD files": "*.xtd"},
         label="Input XTD file",
+        callback=to_class(XTDFile),
     )
     trj_file = PathParam(
         mode="r",
         extensions={"TRJ files": "*.trj"},
         label="Input TRJ file",
+        callback=to_class(TrjFile),
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "trajectory_file"}, label="Atom mapping", default={}
+        depends={"trajectory": "xtd_file"}, label="Atom mapping", default={}
     )
     fold = Boolean(label="Fold coordinates into box")
     output_files = OutputTrajectory()
@@ -65,52 +68,48 @@ class Forcite(Converter):
 
         self._atomicAliases = self.atom_aliases
 
-        self._xtdfile = XTDFile(self.xtd_file)
-
         self._chemical_system = ChemicalSystem()
-        coordinates = np.vstack([atom.xyz for atom in self._xtdfile._atoms.values()])
-        element_list = [atom.element for atom in self._xtdfile._atoms.values()]
-        charges = [atom.charge for atom in self._xtdfile._atoms.values()]
-        name_list = [atom.name for atom in self._xtdfile._atoms.values()]
+        coordinates = np.vstack([atom.xyz for atom in self.xtd_file._atoms.values()])
+        element_list = [atom.element for atom in self.xtd_file._atoms.values()]
+        charges = [atom.charge for atom in self.xtd_file._atoms.values()]
+        name_list = [atom.name for atom in self.xtd_file._atoms.values()]
         unique_labels = set(name_list)
         label_dict = {label: [] for label in unique_labels}
-        for temp_index, atom in enumerate(self._xtdfile._atoms.values()):
+        for temp_index, atom in enumerate(self.xtd_file._atoms.values()):
             label_dict[atom.name].append(temp_index)
 
         self._chemical_system.initialise_atoms(element_list, name_list)
-        self._chemical_system.add_bonds(self._xtdfile._bonds)
+        self._chemical_system.add_bonds(self.xtd_file._bonds)
         self._chemical_system.add_labels(label_dict)
         self._chemical_system.find_clusters_from_bonds()
 
-        if self._xtdfile.pbc:
+        if self.xtd_file.pbc:
             boxConf = PeriodicBoxConfiguration(
-                self._chemical_system, coordinates, self._xtdfile.cell
+                self._chemical_system, coordinates, self.xtd_file.cell
             )
             real_conf = boxConf.to_real_configuration()
         else:
             coordinates *= measure(1.0, "ang").toval("nm")
             real_conf = RealConfiguration(
-                self._chemical_system, coordinates, unit_cell=self._xtdfile._cell
+                self._chemical_system, coordinates, unit_cell=self.xtd_file._cell
             )
 
         real_conf.fold_coordinates()
         self._configuration = real_conf
 
-        self._trjfile = TrjFile(self.trj_file)
-
         # The number of steps of the analysis.
-        self.numberOfSteps = self._trjfile.n_frames
+        self.numberOfSteps = self.trj_file.n_frames
 
-        self.frames = self._trjfile.frames
+        self.frames = self.trj_file.frames
 
-        if self._trjfile.velocities_written:
+        if self.trj_file.velocities_written:
             self._velocities = np.zeros(
                 (self._chemical_system.number_of_atoms, 3), dtype=np.float64
             )
         else:
             self._velocities = None
 
-        if self._trjfile.gradients_written:
+        if self.trj_file.gradients_written:
             self._gradients = np.zeros(
                 (self._chemical_system.number_of_atoms, 3), dtype=np.float64
             )
@@ -145,19 +144,19 @@ class Forcite(Converter):
 
         # # If the universe is periodic set its shape with the current dimensions of the unit cell.
         conf = self._configuration
-        conf["coordinates"][self._trjfile.movable_atoms, :] = frame["pos"]
+        conf["coordinates"][self.trj_file.movable_atoms, :] = frame["pos"]
         if conf.is_periodic:
-            if self._trjfile.options.defcel:
+            if self.trj_file.options.defcel:
                 conf.unit_cell = frame["cell"]
             if self.fold:
                 conf.fold_coordinates()
 
         if self._velocities is not None:
-            self._velocities[self._trjfile.movable_atoms, :] = frame["vel"]
+            self._velocities[self.trj_file.movable_atoms, :] = frame["vel"]
             conf["velocities"] = self._velocities
 
         if self._gradients is not None:
-            self._gradients[self._trjfile.movable_atoms, :] = frame["force"]
+            self._gradients[self.trj_file.movable_atoms, :] = frame["force"]
             conf["gradients"] = self._gradients
 
         self._trajectory.dump_configuration(

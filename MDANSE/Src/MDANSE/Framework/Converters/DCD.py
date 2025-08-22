@@ -19,7 +19,13 @@ import numpy as np
 from more_itertools import ilen
 
 from MDANSE.Framework.Converters.Converter import Converter
-from MDANSE.Framework.Parameters import Boolean, Float, OutputTrajectory, PathParam
+from MDANSE.Framework.Parameters import (
+    Boolean,
+    Float,
+    OutputTrajectory,
+    PathParam,
+    to_class,
+)
 from MDANSE.Framework.Parsers.DCDFile import DCDFile
 from MDANSE.IO.MinimalPDBReader import MinimalPDBReader
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
@@ -35,12 +41,14 @@ class DCD(Converter):
         mode="r",
         extensions={"PDB files": "*.pdb"},
         label="Input PDB file",
+        callback=to_class(MinimalPDBReader)
     )
     dcd_file = PathParam(
         mode="r",
         extensions={"DCD files": "*.dcd"},
-        label="Input PDB file",
-    )
+        label="Input DCD file",
+        callback=to_class(DCDFile)
+        )
     time_step = Float(default=1.0, minimum=1e-9, label="Time step (ps)")
     fold = Boolean(label="Fold coordinates into box")
     output_files = OutputTrajectory()
@@ -51,14 +59,11 @@ class DCD(Converter):
         """
         super().initialize()
 
-        self.reader = DCDFile(self.dcd_file)
-
         # The number of steps of the analysis.
-        self.numberOfSteps = ilen(self.reader.frames)
+        self.numberOfSteps = ilen(self.dcd_file.frames)
 
         # Create all chemical entities from the PDB file.
-        pdb_reader = MinimalPDBReader(self.pdb_file)
-        self._chemical_system = pdb_reader._chemical_system
+        self._chemical_system = self.pdb_file._chemical_system
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
@@ -83,7 +88,7 @@ class DCD(Converter):
         tuple[int, None]
         """
         # The x, y and z values of the current frame.
-        unit_cell, config = self.reader.read_step()
+        unit_cell, config = self.dcd_file.read_step()
 
         conf = PeriodicRealConfiguration(
             self._trajectory._chemical_system, config, unit_cell

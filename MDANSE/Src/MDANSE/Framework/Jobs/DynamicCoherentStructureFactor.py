@@ -15,18 +15,29 @@
 #
 from __future__ import annotations
 
-import collections
 from math import sqrt
 
 import numpy as np
 from scipy.signal import correlate
 
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.AtomGrouping.grouping import (
-    add_grouped_totals,
-    pair_labels,
-)
+from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals, pair_labels
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    AtomTransmutation,
+    CorrelationWindow,
+    FrameSelect,
+    GroupingLevel,
+    InstrumentResolution,
+    MDANSETrajectory,
+    OutputFile,
+    QVectors,
+    QVectorsSelect,
+    RangeCellCutoff,
+    RunningMode,
+    Weights,
+)
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
@@ -59,63 +70,42 @@ class DynamicCoherentStructureFactor(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    q_vector_type = QVectorsSelect(depends={"trajectory": "trajectory"})
+    q_vectors = QVectors(depends={"generator": "q_vector_type"})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    instrument_resolution = InstrumentResolution(
+        depends={"trajectory": "trajectory", "frames": "frames"},
     )
-    settings["instrument_resolution"] = (
-        "InstrumentResolutionConfigurator",
-        {"dependencies": {"trajectory": "trajectory", "frames": "frames"}},
+    r_values = RangeCellCutoff(
+        label="r values (nm)",
+        include_last=True,
+        minimum=0.0,
+        depends={"trajectory": "trajectory"},
     )
-    settings["q_vectors"] = (
-        "QVectorsConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    weights = Weights(
+        depends={
+            "selection": "atom_selection",
+            "transmutation": "atom_transmutation",
+            "trajectory": "trajectory",
+        }
     )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "default": "b_coherent",
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            },
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
-        self.numberOfSteps = self.configuration["q_vectors"]["n_shells"]
+        self.numberOfSteps = len(self.q_vectors)
 
-        nQShells = self.configuration["q_vectors"]["n_shells"]
+        nQShells = self.q_vectors.n_shells
         if not isinstance(
-            self.configuration["q_vectors"]["generator"],
+            self.q_vectors.generator,
             LatticeQVectors,
         ):
             LOG.warning(

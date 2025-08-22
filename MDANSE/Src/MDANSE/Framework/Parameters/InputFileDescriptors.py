@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import h5py
@@ -23,9 +24,10 @@ from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from .AbsConfigDesc import ConfigError, ConfigureDescriptor
 from .BaseTypesDescriptor import PathParam
+from .UtilTypes import Depends, DescID
 
 
-class MDANSETrajectory(ConfigureDescriptor[Trajectory]):
+class MDANSETrajectory(ConfigureDescriptor[str | Path, Trajectory]):
     default_tooltip = "Input MDANSE trajectory from converter or h5md file."
     default_label = "Trajectory to use."
 
@@ -40,36 +42,42 @@ class MDANSETrajectory(ConfigureDescriptor[Trajectory]):
             "All files": "*",
         }
 
-    def validate_choices(
+    def _validate_choices(
         self,
         value: Trajectory,
         choices: set[str] | None = None,
     ) -> bool:
-        choices = self.choices if choices is None else choices
-        return all(value.has_variable(choice) for choice in choices)
+        choice_in = self.choices if choices is None else choices
+        return all(value.has_variable(choice) for choice in choice_in)
 
-    def validate_exclude(
+    def _validate_exclude(
         self,
         value: Trajectory,
         exclude: set[str] | None = None,
     ) -> bool:
-        excludes = self.exclude if exclude is None else exclude
-        return not any(value.has_variable(exclude) for exclude in excludes)
+        exclude_in = self.exclude if exclude is None else exclude
+        return not any(value.has_variable(exclude) for exclude in exclude_in)
 
-    def validate(self, value, deps: dict[str, Any]) -> Trajectory:
-        value = PathParam.validate(self, value, deps)
+    def validate(self, value, deps: Depends) -> Trajectory:
+        try:
+            value = Path(value).expanduser()
+        except TypeError as error:
+            raise ConfigError(f"Value ({value}) is not a valid Path.") from error
+
+        if not value.exists():
+            raise ConfigError(f"File at ({value}) does not exist.")
 
         try:
             out = Trajectory(value)
         except Exception:
             raise ConfigError(f"Could not load file ({value}) as Trajectory")
 
-        out = super().validate(out)
+        out = super().validate(out, deps)
 
         return out
 
 
-class MDANSEResult(ConfigureDescriptor[h5py.File]):
+class MDANSEResult(ConfigureDescriptor[str | Path | h5py.File, h5py.File]):
     default_tooltip = "Input MDANSE result from prior analysis."
 
     def __init__(
@@ -79,15 +87,15 @@ class MDANSEResult(ConfigureDescriptor[h5py.File]):
         super().__init__(**params)
         self.extension = {"MDANSE result": "mda", "HDF5 file": "h5", "All files": "*"}
 
-    def validate_choices(
+    def _validate_choices(
         self,
         value: h5py.File,
         choices: set[str] | None = None,
     ) -> bool:
-        choices = self.choices if choices is None else choices
+        choice_in = self.choices if choices is None else choices
         return all(choice in value for choice in choices)
 
-    def validate_exclude(
+    def _validate_exclude(
         self,
         value: h5py.File,
         exclude: set[str] | None = None,

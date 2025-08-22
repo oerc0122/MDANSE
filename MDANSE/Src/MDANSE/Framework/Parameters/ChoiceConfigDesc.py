@@ -16,16 +16,19 @@
 from __future__ import annotations
 
 from collections.abc import Container, Sequence
-from typing import Any, TypeVar
+from enum import EnumMeta
+from typing import Any, TypeVar, cast
 
 from MDANSE.Core.get_deep_attr import get_deep_attr
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor, MultipleValues
+from .AbsConfigDesc import ConfigError, ConfigureDescriptor
+from .UtilTypes import Depends, DescID
 
+P = TypeVar("P")
 T = TypeVar("T")
 
 
-class Choice(ConfigureDescriptor):
+class Choice(ConfigureDescriptor[P, T]):
     """
     Select an option from a multiple choice set.
     """
@@ -34,7 +37,7 @@ class Choice(ConfigureDescriptor):
         self,
         *,
         n_choices: int | None,
-        aliases: dict[Any, T] | None = None,
+        aliases: dict[Any, P] | None = None,
         **params,
     ):
         super().__init__(**params)
@@ -64,52 +67,88 @@ class Choice(ConfigureDescriptor):
         self._n_choices = int(value)
 
 
-class MultipleChoice(MultipleValues, Choice):
-    def __init__(self, choices: Container[T], n_choices: int | None, **params):
-        super().__init__(choices=choices, n_choices=n_choices, **params)
+class MultipleChoice(Choice[Sequence[P], Sequence[T]]):
+    def __init__(self, *args, choices: Sequence[T], n_choices: int | None, **params):
+        super().__init__(*args, choices=choices, n_choices=n_choices, **params)
 
-    def validate(self, values: Sequence[T], *_) -> Sequence[T]:
-        values = [self.aliases.get(value, value) for value in values]
-        values = super().validate(values)
+    def _validate_choices(
+        self, value: Sequence[T], choices: set[T] | None = None
+    ) -> bool:
+        choice = self.choices if choices is None else choices
+        assert not isinstance(choice, EnumMeta)
+        return set(value) <= choice
+
+    # def _validate_exclude(
+    #     self, value: Sequence[T], exclude: set[T] | None = None
+    # ) -> bool:
+    #     excludes = self.exclude if exclude is None else exclude
+    #     return set(value) > excludes
+
+    def validate(self, values: Sequence[P], deps: Depends, /) -> Sequence[T]:
+        dealiased = cast(list[P], [self.aliases.get(value, value) for value in values])
+        out = super().validate(dealiased, deps)
 
         if len(values) > self.n_choices:
             raise ConfigError(f"Too many options selected ({values}).")
 
-        return values
+        return out
 
 
-class SingleChoice(Choice):
-    def __init__(self, choices: Container[T], **params):
+class SingleChoice(Choice[P, T]):
+    def __init__(self, choices: Container[T], n_choices: None = None, **params):
+        if n_choices is not None:
+            raise ConfigError(f"Cannot define n_choices in {type(self).__name__}")
         super().__init__(choices=choices, n_choices=1, **params)
 
-    def validate(self, value: T, *_) -> T:
+    def validate(self, value: P, deps: Depends, /) -> T:
         value = self.aliases.get(value, value)
-        return super().validate(value)
+        return super().validate(value, deps)
 
 
-class DynamicSingleChoice(SingleChoice):
-    def __init__(self, choices: str, depends: dict[str, str], **params):
-        super().__init__(choices=choices, depends=depends, **params)
+class DynamicSingleChoice(SingleChoice[P, T]):
+    def __init__(self, choices: str, **params):
+        super().__init__(choices=(), **params)
+        self.getter = choices
         self.last_choices = set()
 
-    def required_deps(self) -> set[str]:
-        return super().required_deps() | {"choices"}
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("choices")}
 
     @property
     def choices(self) -> set[T]:
         return self.last_choices
 
     @choices.setter
-    def choices(self, value: str) -> None:
-        self._choices = value
+    def choices(self, value: Any) -> None:
+        self._choices = set()
 
     def get_choices(self, deps) -> set[T]:
-        choices = set(get_deep_attr(deps["choices"], self._choices))
+        choices = set(get_deep_attr(deps["choices"], self.getter))
         if not choices:
-            raise ConfigError(f"No valid choices at deps['choices'].{self._choices}")
+            raise ConfigError(f"No valid choices at deps['choices'].{self.getter}")
 
         return choices
 
+class DynamicMultiChoice(MultipleChoice[Sequence[P], Sequence[T]]):
+    def __init__(self, choices: str, n_choices: int | None, **params):
+        super().__init__(choices=(), n_choices=n_choices, **params)
+        self.getter = choices
+        self.last_choices = set()
 
-class DynamicMultiChoice(MultipleValues, DynamicSingleChoice):
-    pass
+    def required_deps(self) -> set[DescID]:
+        return super().required_deps() | {DescID("choices")}
+
+    @property
+    def choices(self) -> set[T]:
+        return self.last_choices
+
+    @choices.setter
+    def choices(self, value: Any) -> None:
+        self._choices = set()
+
+    def get_choices(self, deps) -> set[T]:
+        choices = set(get_deep_attr(deps["choices"], self.getter))
+        if not choices:
+            raise ConfigError(f"No valid choices at deps['choices'].{self.getter}")
+
+        return choices

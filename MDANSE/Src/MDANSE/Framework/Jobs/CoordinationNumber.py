@@ -15,17 +15,14 @@
 #
 from __future__ import annotations
 
-import collections
 import itertools as it
 from collections.abc import Iterator
+from typing import ClassVar
 
 import numpy as np
 import numpy.typing as npt
 
-from MDANSE.Framework.AtomGrouping.grouping import (
-    pair_labels,
-    update_pair_results,
-)
+from MDANSE.Framework.AtomGrouping.grouping import pair_labels, update_pair_results
 from MDANSE.Framework.Jobs.DistanceHistogram import DistanceHistogram
 from MDANSE.Framework.Parameters import (
     AtomSelection,
@@ -38,6 +35,7 @@ from MDANSE.Framework.Parameters import (
     RunningMode,
     Weights,
 )
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 class CoordinationNumber(DistanceHistogram):
@@ -63,11 +61,11 @@ class CoordinationNumber(DistanceHistogram):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory: Trajectory = MDANSETrajectory()
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
-    atom_transmustation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
         depends={
             "selection": "atom_selection",
@@ -79,7 +77,7 @@ class CoordinationNumber(DistanceHistogram):
         label="r values (nm)",
         include_last=True,
         minimum=0.0,
-        dependencies={"trajectory": "trajectory"},
+        depends={"trajectory": "trajectory"},
     )
     output_files = OutputFile()
     running_mode = RunningMode()

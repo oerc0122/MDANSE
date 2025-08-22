@@ -62,7 +62,13 @@ class PositionAutoCorrelationFunction(IJob):
     atom_charges = PartialCharge(
         depends={"trajectory": "trajectory"},
     )
-    weights = Weights()
+    weights = Weights(
+        depends={
+            "selection": "atom_selection",
+            "transmutation": "atom_transmutation",
+            "trajectory": "trajectory",
+        }
+    )
     output_files = OutputFile()
     running_mode = RunningMode()
 

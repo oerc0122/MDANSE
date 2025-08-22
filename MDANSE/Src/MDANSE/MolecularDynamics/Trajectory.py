@@ -398,8 +398,8 @@ class Trajectory:
         """Close the trajectory."""
         self._trajectory.close()
 
-    def __getitem__(self, frame: int) -> dict[str, npt.NDArray[float]]:
-        """Return the configuration at a given frame.
+    def __getitem__(self, frame: int | Frame):
+        """Return the configuration at a given frame
 
         Parameters
         ----------
@@ -411,6 +411,8 @@ class Trajectory:
         dict[str, npt.NDArray[float]]
             Configuration at frame.
         """
+        if isinstance(frame, Frame):
+            frame = frame.index
         return self._trajectory[frame]
 
     def __getstate__(self):
@@ -1052,7 +1054,6 @@ class TrajectoryWriter:
 
         else:
             # Get str/bytes from possible array
-            print(colour)
             colour = first(always_iterable(colour))
 
             assert isinstance(colour, (str, bytes))
