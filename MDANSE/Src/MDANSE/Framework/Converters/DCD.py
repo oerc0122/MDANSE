@@ -41,13 +41,13 @@ class DCD(Converter):
         mode="r",
         extensions={"PDB files": "*.pdb"},
         label="Input PDB file",
-        callback=to_class(MinimalPDBReader)
+        on_set=to_class(MinimalPDBReader)
     )
     dcd_file = PathParam(
         mode="r",
         extensions={"DCD files": "*.dcd"},
         label="Input DCD file",
-        callback=to_class(DCDFile)
+        on_set=to_class(DCDFile)
         )
     time_step = Float(default=1.0, minimum=1e-9, label="Time step (ps)")
     fold = Boolean(label="Fold coordinates into box")

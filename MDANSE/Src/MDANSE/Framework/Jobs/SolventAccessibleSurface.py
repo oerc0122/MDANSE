@@ -130,7 +130,9 @@ class SolventAccessibleSurface(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     n_sphere_points = Integer(minimum=1, default=1000)

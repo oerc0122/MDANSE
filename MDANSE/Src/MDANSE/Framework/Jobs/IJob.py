@@ -278,34 +278,20 @@ class IJob(Configurable, metaclass=SubclassFactory):
         else:
             LOG.error("IJob did not find 'write_logs' in output_files")
 
-        self.set_up_trajectory()
-
-    def set_up_trajectory(self):
-        """Apply operations to the trajectory instance, if present.
-
-        Atom selection, atom transmutation and result grouping are all
-        applied to the Trajectory object. If the job works on a trajectory,
-        the Trajectory instance is now saved as an attribute of this IJob
-        instance.
-
-        These operations were previously handled by IConfigurator subclasses.
-        """
-        if (trajectory := self.configuration.get("trajectory")) is None:
-            return
-        self._trajectory = trajectory
-        if (selection := self.configuration.get("atom_selection")) is not None:
-            self.trajectory.set_selection(selection["flatten_indices"])
-            array_length = self.trajectory.chemical_system._total_number_of_atoms
-            valid_indices = selection["flatten_indices"]
-            self._outputData.add(
-                "selected_atoms",
-                "LineOutputVariable",
-                [index in valid_indices for index in range(array_length)],
-            )
-        if (transmutation := self.configuration.get("atom_transmutation")) is not None:
-            self.trajectory.set_transmutation(transmutation.transmutation)
-        if (grouping := self.configuration.get("grouping_level")) is not None:
-            self.trajectory.set_grouping(grouping["level"])
+        if selection := self.configuration.get("atom_selection"):
+            try:
+                array_length = selection["total_number_of_atoms"]
+            except KeyError:
+                LOG.warning(
+                    "Job could not find total number of atoms in atom selection."
+                )
+            else:
+                valid_indices = selection["flatten_indices"]
+                self._outputData.add(
+                    "selected_atoms",
+                    "LineOutputVariable",
+                    [index in valid_indices for index in range(array_length)],
+                )
 
     @abc.abstractmethod
     def run_step(self, index):

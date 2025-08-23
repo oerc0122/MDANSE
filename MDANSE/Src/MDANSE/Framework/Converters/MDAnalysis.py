@@ -40,6 +40,25 @@ from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
+def get_coords(_desc, coord_files, deps):
+    if len(coord_files) <= 1 or deps["coordinate_format"] is None:
+        return mda.Universe(
+            deps["topology"],
+            *coord_files,
+            continuous=deps["continuous"],
+            format=deps["coordinate_format"],
+            topology_format=deps["topology_format"],
+        )
+
+    coord_files = [(i, deps["coordinate_format"]) for i in coord_files]
+    return mda.Universe(
+        deps["topology"],
+        coord_files,
+        continuous=deps["continuous"],
+        topology_format=deps["topology_format"],
+    )
+
+
 class MDAnalysis(Converter):
     """Converts a trajectory to the MDT format using MDAnalysis.
 
@@ -62,9 +81,17 @@ class MDAnalysis(Converter):
         label="Topology file",
     )
     coordinate_format = SingleChoice(choices=mda._PARSERS.keys())
-    coordinate_file = PathParam(
+    continuous = Boolean(label="Continuous frame stitching")
+    trajectory = PathParam(
         mode="r",
         label="Coordinate file",
+        get_depends={
+            "topology_format": "topology_format",
+            "coordinate_format": "coordinate_format",
+            "topology": "topology_file",
+            "continuous": "continuous",
+        },
+        on_get=get_coords,
     )
     time_step = Float(
         label="Time step",
@@ -72,11 +99,10 @@ class MDAnalysis(Converter):
         minimum=1e-9,
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "topology_file"},
+        depends={"trajectory": "trajectory"},
         label="Atom mapping",
         default={},
     )
-    continuous = Boolean(label="Continuous frame stitching")
     fold = Boolean(label="Fold coordinates into box")
     output_files = OutputTrajectory()
 
@@ -84,34 +110,15 @@ class MDAnalysis(Converter):
         """Load the trajectory using MDAnalysis and create the
         trajectory writer.
         """
-        coord_format = self.coordinate_format
-        coord_files = self.coordinate_files
 
-        if len(coord_files) <= 1 or coord_format is None:
-            self.u = mda.Universe(
-                self.topology_file,
-                *coord_files,
-                continuous=self.continuous,
-                format=coord_format,
-                topology_format=self.topology_format,
-            )
-        else:
-            coord_files = [(i, coord_format) for i in coord_files]
-            self.u = mda.Universe(
-                self.topology_file,
-                coord_files,
-                continuous=self.continuous,
-                topology_format=self.topology_format,
-            )
-
-        self.numberOfSteps = len(self.u.trajectory)
+        self.numberOfSteps = len(self.trajectory.trajectory)
 
         self._chemical_system = ChemicalSystem()
         element_list = []
         name_list = []
         label_dict = defaultdict(list)
 
-        for at_number, at in enumerate(self.u.atoms):
+        for at_number, at in enumerate(self.trajectory.atoms):
             kwargs = {
                 getattr(at, arg)
                 for arg in ("element", "name", "type", "resname", "mass")
@@ -155,7 +162,7 @@ class MDAnalysis(Converter):
             positions_dtype=self.output_files.dtype,
             chunking_limit=self.output_files.chunk_size,
             compression=self.output_files.compression,
-            initial_charges=getattr(self.u.atoms, "charges", None),
+            initial_charges=getattr(self.trajectory.atoms, "charges", None),
         )
         super().initialize()
 
@@ -173,22 +180,24 @@ class MDAnalysis(Converter):
         tuple[int, None]
             A tuple of the job index and None.
         """
-        self.u.trajectory[index]
+        self.trajectory.trajectory[index]
 
         # convert from MDAnalysis units to MDANSE units
         # see https://userguide.mdanalysis.org/stable/units.html for
         # default units in MDAnalysis
-        if self.u.trajectory.ts.triclinic_dimensions is None:
+        if self.trajectory.trajectory.ts.triclinic_dimensions is None:
             conf = RealConfiguration(
                 self._trajectory._chemical_system,
-                self.u.trajectory.ts.positions * measure(1.0, "ang").toval("nm"),
+                self.trajectory.trajectory.ts.positions
+                * measure(1.0, "ang").toval("nm"),
             )
         else:
             conf = PeriodicRealConfiguration(
                 self._trajectory._chemical_system,
-                self.u.trajectory.ts.positions * measure(1.0, "ang").toval("nm"),
+                self.trajectory.trajectory.ts.positions
+                * measure(1.0, "ang").toval("nm"),
                 UnitCell(
-                    self.u.trajectory.ts.triclinic_dimensions
+                    self.trajectory.trajectory.ts.triclinic_dimensions
                     * measure(1.0, "ang").toval("nm")
                 ),
             )
@@ -196,18 +205,18 @@ class MDAnalysis(Converter):
             if self.fold:
                 conf.fold_coordinates()
 
-            if hasattr(self.u.trajectory.ts, "velocities"):
-                conf["velocities"] = self.u.trajectory.ts.velocities * measure(
+            if hasattr(self.trajectory.trajectory.ts, "velocities"):
+                conf["velocities"] = self.trajectory.trajectory.ts.velocities * measure(
                     1.0, "ang/ps"
                 ).toval("nm/ps")
 
-            if hasattr(self.u.trajectory.ts, "forces"):
-                conf["gradients"] = self.u.trajectory.ts.forces * measure(
+            if hasattr(self.trajectory.trajectory.ts, "forces"):
+                conf["gradients"] = self.trajectory.trajectory.ts.forces * measure(
                     1.0, "kJ/mol ang", equivalent=True
                 ).toval("Da nm/ps2")
 
         if self.time_step == 0.0:
-            time = index * self.u.trajectory.ts.dt
+            time = index * self.trajectory.trajectory.ts.dt
         else:
             time = index * self.time_step
 

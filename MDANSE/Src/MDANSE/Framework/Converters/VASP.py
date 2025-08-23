@@ -74,7 +74,7 @@ class VASP(Converter):
         mode="r",
         extensions={"XDATCAR input": "XDATCAR*"},
         label="Input XDATCAR file",
-        callback=to_class(XDATCARFile),
+        on_set=to_class(XDATCARFile),
     )
     time_step = Float(
         label="Time step (fs)",

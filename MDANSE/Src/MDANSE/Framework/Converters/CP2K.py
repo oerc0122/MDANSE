@@ -69,7 +69,7 @@ class CP2K(Converter):
         "r",
         extensions={"XYZ file": ".xyz"},
         label="Positions file (XYZ)",
-        callback=to_class(XYZFile),
+        on_set=to_class(XYZFile),
     )
     vel_file = PathParam(
         "r",

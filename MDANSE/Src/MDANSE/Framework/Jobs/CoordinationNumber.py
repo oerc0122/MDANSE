@@ -61,7 +61,11 @@ class CoordinationNumber(DistanceHistogram):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory: Trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})

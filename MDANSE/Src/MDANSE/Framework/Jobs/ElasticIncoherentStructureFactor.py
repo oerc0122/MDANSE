@@ -58,7 +58,11 @@ class ElasticIncoherentStructureFactor(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     q_vectors_type = QVectorsSelect(depends={"trajectory": "trajectory"})
     q_vectors = QVectors(depends={"generator": "q_vectors_type"})

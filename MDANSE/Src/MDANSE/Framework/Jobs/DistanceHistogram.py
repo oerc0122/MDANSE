@@ -55,7 +55,10 @@ class DistanceHistogram(IJob):
         "Structure",
     )
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})

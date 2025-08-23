@@ -47,6 +47,9 @@ class RadiusOfGyration(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+    )
     trajectory = MDANSETrajectory()
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})

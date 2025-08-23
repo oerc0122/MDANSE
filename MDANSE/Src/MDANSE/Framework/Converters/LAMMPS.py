@@ -232,7 +232,7 @@ class LAMMPS(Converter):
         label="LAMMPS configuration file.",
         extensions={"LAMMPS config": "*.config"},
         default="INPUT_FILENAME.config",
-        callback=to_class(LAMMPSConfigFile),
+        on_set=to_class(LAMMPSConfigFile),
     )
     trajectory_file = PathParam(
         mode="r",

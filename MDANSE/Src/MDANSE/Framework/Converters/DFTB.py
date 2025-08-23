@@ -37,13 +37,13 @@ class DFTB(Forcite):
         mode="r",
         extensions={"XTD file": ".xtd"},
         label="The XTD file.",
-        callback=to_class(XTDFile),
+        on_set=to_class(XTDFile),
     )
     trj_file = PathParam(
         mode="r",
         extensions={"TRJ file": ".trj"},
         label="The TRJ file.",
-        callback=to_class(TrjFile),
+        on_set=to_class(TrjFile),
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "xtd_file"},

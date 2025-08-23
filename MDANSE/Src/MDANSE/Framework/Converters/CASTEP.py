@@ -46,7 +46,7 @@ class CASTEP(Converter):
         mode="r",
         extensions={"MD files": "*.md"},
         label="A CASTEP MD trajectory file.",
-        callback=to_class(CASTEPMDFile),
+        on_set=to_class(CASTEPMDFile),
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "trajectory_file"},

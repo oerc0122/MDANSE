@@ -60,7 +60,11 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
+    )
     dcsf_input_file = MDANSEResult(
         label="MDANSE Coherent Structure Factor",
     )

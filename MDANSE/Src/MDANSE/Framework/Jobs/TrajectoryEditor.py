@@ -59,13 +59,16 @@ class TrajectoryEditor(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"}, default=(0, None, 1))
     unit_cell = Array(
         optional=True,
         default=None,
         non_zero=True,
-        on_get=UnitCell,
+        on_set=UnitCell,
         shape=(3, 3),
     )
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})

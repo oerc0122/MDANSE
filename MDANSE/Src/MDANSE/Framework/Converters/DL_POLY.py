@@ -58,14 +58,14 @@ class DL_POLY(Converter):
         extensions={"FIELD files": "FIELD*"},
         default="INPUT_FILENAME",
         label="Input FIELD file",
-        callback=to_class(DLPField),
+        on_set=to_class(DLPField),
     )
     history_file = PathParam(
         mode="r",
         extensions={"HISTORY files": "HISTORY*"},
         default="INPUT_FILENAME",
         label="Input HISTORY file",
-        callback=to_class(DLPHistory),
+        on_set=to_class(DLPHistory),
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "field_file"},

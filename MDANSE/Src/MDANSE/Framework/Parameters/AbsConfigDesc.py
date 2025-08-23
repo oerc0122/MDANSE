@@ -206,8 +206,10 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         Other variables with which this is mutually exclusive.
     depends : Sequence[str]
         Other variables which must be set for this to be set.
-    callback : Callable
+    on_set : Callable
         Custom function to be called post-validation.
+    on_get : Callable
+        Custom function to be called before returning value.
     label : str
         GUI label to present to user.
     tooltip : str
@@ -223,7 +225,9 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         exclude: Sequence[T] = (),
         mutex: Sequence[DescID] = (),
         depends: dict[str, DescID] | None = None,
-        callback: Callable[[Self, T, Depends], T] | None = None,
+        on_set: Callable[[Self, T, Depends], T] | None = None,
+        on_get_depends: dict[str, DescID] | None = None,
+        on_get: Callable[[Self, T, Depends], T] | None = None,
         label: str = "",
         tooltip: str = "",
         **params,
@@ -237,7 +241,10 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         self.mutex = mutex
 
         self.depends: dict[str, DescID] = depends if depends is not None else {}
-        self.callback = callback
+        self.get_depends: dict[str, DescID] = depends if depends is not None else {}
+
+        self.on_set = on_set
+        self.on_get = on_get
 
         self.dependents: set[ConfigureDescriptor] = set()
 
@@ -294,8 +301,19 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
             out = self.validate(self.default, deps)
 
         # Custom
-        if self.callback is not None:
-            out = self.callback(self, out, deps)
+        if self.on_get is not None:
+            cb_deps = (
+                cast(
+                    Depends,
+                    {
+                        dep: getattr(owner, key)
+                        for dep, key in self.on_get_depends.items()
+                    },
+                )
+                if self.on_get_depends
+                else deps
+            )
+            out = self.on_get(self, out, cb_deps)
 
         return out
 
@@ -332,6 +350,10 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
             except ConfigError as err:
                 LOG.info(f"Invalidated {name}. Reason: {err}")
                 setattr(owner, dependent.configured_var, False)
+
+        # Custom
+        if self.on_set is not None:
+            out = self.on_set(self, out, deps)
 
         setattr(owner, self.private_name, out)
         setattr(owner, self.configured_var, True)

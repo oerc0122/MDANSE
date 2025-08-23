@@ -55,7 +55,11 @@ class StructureFactorFromScatteringFunction(IJob):
 
     ancestor = ["hdf_data"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
+    )
     dcsf_input_file = MDANSEResult(
         tooltip="Input MDANSE result containing DCSF result.",
         label="MDANSE Coherent Structure Factor",

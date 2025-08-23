@@ -51,7 +51,9 @@ class Eccentricity(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     output_files = OutputFile()

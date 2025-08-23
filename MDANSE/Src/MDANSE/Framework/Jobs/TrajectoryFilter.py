@@ -69,7 +69,10 @@ class TrajectoryFilter(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})

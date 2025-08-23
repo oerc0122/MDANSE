@@ -112,7 +112,11 @@ class VanHoveFunctionSelf(IJob):
         "Dynamics",
     )
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     r_values = RangeCellCutoff(

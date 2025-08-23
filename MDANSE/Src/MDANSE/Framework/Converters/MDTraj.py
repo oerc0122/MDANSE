@@ -39,6 +39,21 @@ from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
+def get_coords(_desc, value, deps):
+    if deps["topology"] is not None:
+        return md.load(
+            value,
+            top=deps["topology"],
+            discard_overlapping_frames=deps["discard"],
+        )
+
+    return md.load(
+            value,
+            discard_overlapping_frames=deps["discard"]
+        )
+
+
+
 class MDTraj(Converter):
     """Converts a trajectory to the MDT format using MDTraj.
 
@@ -50,15 +65,18 @@ class MDTraj(Converter):
     category = ("Converters", "General")
     label = "MDTraj"
 
-    topology_format = SingleChoice(choices=md.FormatRegistry.loaders.keys())
     topology_file = PathParam(
         mode="r",
         label="Topology file",
+        optional=True,
+        default=None,
     )
-    coordinate_format = SingleChoice(choices=md.FormatRegistry.loaders.keys())
-    coordinate_files = PathParam(
+    discard_overlapping_frames = Boolean(label="Discard overlapping frames")
+    trajectory = PathParam(
         mode="r",
         label="Coordinate file",
+        get_depends={"topology": "topology_file", "discard": "discard_overlapping_frames"},
+        on_get=get_coords,
     )
     time_step = Float(
         label="Time step",
@@ -70,32 +88,18 @@ class MDTraj(Converter):
         label="Atom mapping",
         default={},
     )
-    discard_overlapping_frames = Boolean(label="Discard overlapping frames")
     fold = Boolean(label="Fold coordinates into box")
     output_files = OutputTrajectory()
 
     def initialize(self):
         """Load the trajectory using MDTraj and create the trajectory writer."""
-        coord_files = self.coordinate_files
-        top_file = self.topology_file
-        if top_file:
-            self.traj = md.load(
-                coord_files,
-                top=top_file,
-                discard_overlapping_frames=self.discard_overlapping_frames,
-            )
-        else:
-            self.traj = md.load(
-                coord_files,
-                discard_overlapping_frames=self.discard_overlapping_frames,
-            )
 
-        self.numberOfSteps = self.traj.n_frames
+        self.numberOfSteps = self.trajectory.n_frames
         mdtraj_to_mdanse = {}
 
         self._chemical_system = ChemicalSystem()
         elements, atom_names, atom_labels = [], [], defaultdict(list)
-        for atnumber, at in enumerate(self.traj.topology.atoms):
+        for atnumber, at in enumerate(self.trajectory.topology.atoms):
             element = get_element_from_mapping(
                 self.atom_aliases,
                 at.name,
@@ -114,16 +118,16 @@ class MDTraj(Converter):
         self._chemical_system.add_labels(atom_labels)
         bonds = [
             (mdtraj_to_mdanse[at1.index], mdtraj_to_mdanse[at2.index])
-            for at1, at2 in self.traj.topology.bonds
+            for at1, at2 in self.trajectory.topology.bonds
         ]
         self._chemical_system.add_bonds(bonds)
         self._chemical_system.find_clusters_from_bonds()
 
         self._trajectory = TrajectoryWriter(
-            self.configuration["output_files"]["file"],
+            self.output_files.path,
             self._chemical_system,
             self.numberOfSteps,
-            positions_dtype=self.output_files.path,
+            positions_dtype=self.output_files.dtype,
             chunking_limit=self.output_files.chunk_size,
             compression=self.output_files.compression,
         )
@@ -143,17 +147,17 @@ class MDTraj(Converter):
         tuple[int, None]
             A tuple of the job index and None.
         """
-        if self.traj.unitcell_vectors is None:
+        if self.trajectory.unitcell_vectors is None:
             conf = RealConfiguration(
                 self._trajectory._chemical_system,
-                self.traj.xyz[index],
+                self.trajectory.xyz[index],
             )
         else:
             conf = PeriodicRealConfiguration(
                 self._trajectory._chemical_system,
-                self.traj.xyz[index],
+                self.trajectory.xyz[index],
                 UnitCell(
-                    self.traj.unitcell_vectors[index],
+                    self.trajectory.unitcell_vectors[index],
                 ),
             )
             if self.fold:
@@ -169,7 +173,7 @@ class MDTraj(Converter):
         if self.numberOfSteps == 1:
             time = 0
         elif isclose(self.time_step, 0.0):
-            time = index * self.traj.timestep
+            time = index * self.trajectory.timestep
         else:
             time = index * self.time_step
 

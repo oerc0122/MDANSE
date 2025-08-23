@@ -53,7 +53,7 @@ class AverageStructure(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(selection="atom_selection")
     frames = FrameSelect(
         depends={"trajectory": "trajectory"},
     )

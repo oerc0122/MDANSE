@@ -47,6 +47,10 @@ class RootMeanSquareFluctuation(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        grouping="grouping_level",
+    )
     trajectory = MDANSETrajectory()
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"}, default="atom")

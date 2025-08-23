@@ -51,7 +51,9 @@ class RotationAutocorrelation(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     molecule_name = DynamicSingleChoice(

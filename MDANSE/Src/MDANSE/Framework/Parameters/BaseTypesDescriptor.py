@@ -22,7 +22,7 @@ from functools import singledispatchmethod
 from math import isclose
 from numbers import Number
 from pathlib import Path
-from typing import Literal, SupportsFloat, SupportsInt, TypeVar, overload, Generic
+from typing import Generic, Literal, SupportsFloat, SupportsInt, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -238,7 +238,8 @@ class Dict(
     def validate(
         self,
         value: Sequence[tuple[K, V]] | dict[K, V] | str | Path,
-        deps: Depends, /,
+        deps: Depends,
+        /,
     ) -> dict[K, V]:
         if not isinstance(value, (dict, str, Path)):
             value = dict(value)
@@ -363,13 +364,7 @@ T = TypeVar("T", int, float)
 class Range(
     MinMax[T],
     ConfigureDescriptor[
-        int
-        | float
-        | list[T]
-        | tuple[T, ...]
-        | range
-        | numeric_range
-        | NumericRange[T],
+        int | float | list[T] | tuple[T, ...] | range | numeric_range | NumericRange[T],
         NumericRange[T],
     ],
 ):

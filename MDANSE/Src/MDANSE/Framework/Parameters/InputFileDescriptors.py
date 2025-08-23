@@ -27,15 +27,51 @@ from .BaseTypesDescriptor import PathParam
 from .UtilTypes import Depends, DescID
 
 
+def set_up_trajectory(self, trajectory: Trajectory, deps):
+    """Apply operations to the trajectory instance, if present.
+
+    Atom selection, atom transmutation and result grouping are all
+    applied to the Trajectory object. If the job works on a trajectory,
+    the Trajectory instance is now saved as an attribute of this IJob
+    instance.
+
+    These operations were previously handled by IConfigurator subclasses.
+    """
+    if (selection := deps.get("atom_selection")) is not None:
+        trajectory.set_selection(selection)
+    if (transmutation := deps.get("atom_transmutation")) is not None:
+        trajectory.set_transmutation(transmutation.transmutation)
+    if (grouping := deps.get("grouping_level")) is not None:
+        trajectory.set_grouping(grouping["level"])
+
+    return trajectory
+
 class MDANSETrajectory(ConfigureDescriptor[str | Path, Trajectory]):
     default_tooltip = "Input MDANSE trajectory from converter or h5md file."
     default_label = "Trajectory to use."
 
     def __init__(
         self,
+        *,
+        selection: str | None = None,
+        transmutation: str | None = None,
+        grouping: str | None = None,
+        on_get_depends: None = None,
+        on_get: None = None,
         **params,
     ):
-        super().__init__(**params)
+        if on_get_depends is not None:
+            raise ConfigError(f"Cannot set `on_get_depends` in {type(self).__name__}.")
+        if on_get is not None:
+            raise ConfigError(f"Cannot set `on_get` in {type(self).__name__}.")
+
+        ogd = {
+            "atom_selection": selection,
+            "atom_transmutation": transmutation,
+            "grouping_level": grouping,
+        }
+
+        super().__init__(on_get_depends=ogd, on_get=set_up_trajectory, **params)
         self.extension = {
             "MDANSE trajectory": "mdt",
             "HDF5 file": "h5",

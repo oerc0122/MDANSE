@@ -46,13 +46,13 @@ class Forcite(Converter):
         mode="r",
         extensions={"XTD files": "*.xtd"},
         label="Input XTD file",
-        callback=to_class(XTDFile),
+        on_set=to_class(XTDFile),
     )
     trj_file = PathParam(
         mode="r",
         extensions={"TRJ files": "*.trj"},
         label="Input TRJ file",
-        callback=to_class(TrjFile),
+        on_set=to_class(TrjFile),
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "xtd_file"}, label="Atom mapping", default={}

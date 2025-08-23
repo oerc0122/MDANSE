@@ -59,7 +59,11 @@ class StaticStructureFactor(DistanceHistogram):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     r_values = RangeCellCutoff(
         label="r values (nm)",
