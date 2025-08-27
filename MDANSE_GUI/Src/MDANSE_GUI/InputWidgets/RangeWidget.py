@@ -29,7 +29,7 @@ class RangeWidget(WidgetBase):
 
     def setup_fields(self, *args, **kwargs):
         start, end, step = kwargs.get("default", self._configurator.default)
-        num_type = kwargs.get("valueType", int)
+        num_type = kwargs.get("value_type", int)
 
         labels = [
             QLabel("From", self._base),
@@ -62,7 +62,7 @@ class RangeWidget(WidgetBase):
         if self._tooltip:
             tooltip_text = self._tooltip
         else:
-            tooltip_text = "Values to be used, given as (First, Last, StepSize)"
+            tooltip_text = "Values to be used, given as (first, last, step)"
         for wid in fields + labels:
             wid.setToolTip(tooltip_text)
 
