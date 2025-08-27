@@ -15,8 +15,7 @@
 #
 from __future__ import annotations
 
-from .AbsConfigDesc import to_class
-from .AtomMappingDesc import (
+from .AtomMapping import (
     AtomMapping,
     AtomSelection,
     AtomTransmutation,
@@ -24,7 +23,7 @@ from .AtomMappingDesc import (
     PartialCharge,
     PartialChargeMapper,
 )
-from .BaseTypesDescriptor import (
+from .BaseTypes import (
     Array,
     Boolean,
     Float,
@@ -35,21 +34,22 @@ from .BaseTypesDescriptor import (
     String,
     Vector,
 )
-from .ChoiceConfigDesc import (
+from .Choices import (
     DynamicMultiChoice,
     DynamicSingleChoice,
     MultipleChoice,
     SingleChoice,
 )
 from .Filter import TrajectoryFilter
-from .FramesDescriptors import CorrelationWindow, Frames, FrameSelect, InterpOrder
-from .InputFileDescriptors import MDANSEResult, MDANSETrajectory
-from .OutputFileDescriptors import ASEOutputFormat, OutputFile, OutputTrajectory
-from .ProjectionDescriptor import Projection
-from .QVectorsDescriptor import QVectors, QVectorsSelect
-from .RangeDescriptors import RangeCellCutoff
+from .Frames import CorrelationWindow, Frames, FrameSelect, InterpOrder
+from .InputFiles import MDANSEResult, MDANSETrajectory
+from .OutputFiles import ASEOutputFormat, OutputFile, OutputTrajectory
+from .Parameters import to_class
+from .Projection import Projection
+from .QVectors import QVectors, QVectorsSelect
+from .Ranges import RangeCellCutoff
 from .Resolution import InstrumentResolution
-from .RunningModeDescriptor import RunningMode
+from .RunningMode import RunningMode
 from .Weights import Weights
 
 __all__ = [

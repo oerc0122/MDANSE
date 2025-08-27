@@ -22,7 +22,7 @@ import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
-from MDANSE.Framework.Parameters.AbsConfigDesc import Configurable
+from MDANSE.Framework.Parameters.Parameters import Configurable
 from MDANSE.MLogging import LOG
 
 if TYPE_CHECKING:

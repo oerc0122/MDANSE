@@ -31,8 +31,8 @@ from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 from MDANSE.IO.IOUtils import json_handler
 from MDANSE.MLogging import LOG
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor
-from .ChoiceConfigDesc import SingleChoice
+from .Parameters import ConfigError, ConfigureDescriptor
+from .Choices import SingleChoice
 from .UtilTypes import Depends, DescID
 
 if TYPE_CHECKING:

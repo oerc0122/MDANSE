@@ -21,8 +21,8 @@ import numpy as np
 import numpy.typing as npt
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .AbsConfigDesc import ConfigError
-from .BaseTypesDescriptor import NumericRange, Range
+from .Parameters import ConfigError
+from .BaseTypes import NumericRange, Range
 from .UtilTypes import Depends, DescID
 
 

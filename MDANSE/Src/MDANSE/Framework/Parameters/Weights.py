@@ -22,8 +22,8 @@ import numpy as np
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .AbsConfigDesc import ConfigError
-from .ChoiceConfigDesc import SingleChoice
+from .Parameters import ConfigError
+from .Choices import SingleChoice
 from .UtilTypes import Depends, DescID
 
 

@@ -22,7 +22,7 @@ import operator
 import numpy as np
 
 from MDANSE.Framework.Parameters import Float, Vector
-from MDANSE.Framework.Parameters.AbsConfigDesc import ConfigError
+from MDANSE.Framework.Parameters.Parameters import ConfigError
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 

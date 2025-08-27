@@ -19,7 +19,7 @@ import multiprocessing
 from warnings import warn
 
 from MDANSE.Framework.Parameters import Integer, SingleChoice
-from MDANSE.Framework.Parameters.AbsConfigDesc import ConfigWarning, CustomConfig
+from MDANSE.Framework.Parameters.Parameters import ConfigWarning, CustomConfig
 
 
 class RunningMode(CustomConfig):

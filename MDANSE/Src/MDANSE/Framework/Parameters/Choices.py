@@ -21,7 +21,7 @@ from typing import Any, TypeVar, cast
 
 from MDANSE.Core.get_deep_attr import get_deep_attr
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor
+from .Parameters import ConfigError, ConfigureDescriptor
 from .UtilTypes import Depends, DescID
 
 P = TypeVar("P")

@@ -24,9 +24,9 @@ import numpy.typing as npt
 from MDANSE.Framework.Projectors.IProjector import IProjector
 from MDANSE.MLogging import LOG
 
-from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesDescriptor import Vector
-from .ChoiceConfigDesc import SingleChoice
+from .Parameters import ConfigError, CustomConfig
+from .BaseTypes import Vector
+from .Choices import SingleChoice
 
 
 class ProjType(Enum):

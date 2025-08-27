@@ -24,7 +24,7 @@ from MDANSE.Framework.InstrumentResolutions.IInstrumentResolution import (
     IInstrumentResolution,
 )
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor
+from .Parameters import ConfigError, ConfigureDescriptor
 from .UtilTypes import Depends, DescID
 
 if TYPE_CHECKING:

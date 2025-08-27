@@ -22,8 +22,8 @@ import h5py
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor
-from .BaseTypesDescriptor import PathParam
+from .Parameters import ConfigError, ConfigureDescriptor
+from .BaseTypes import PathParam
 from .UtilTypes import Depends, DescID
 
 

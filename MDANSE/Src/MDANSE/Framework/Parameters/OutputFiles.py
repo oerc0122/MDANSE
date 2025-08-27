@@ -23,13 +23,13 @@ import numpy as np
 from ase.io.formats import ioformats
 
 from MDANSE.Framework.Formats import OutputFormats
-from MDANSE.Framework.Parameters.AbsConfigDesc import Parameter
+from MDANSE.Framework.Parameters.Parameters import Parameter
 from MDANSE.MLogging import LogLevels
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
-from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesDescriptor import Integer, PathParam
-from .ChoiceConfigDesc import MultipleChoice, SingleChoice
+from .Parameters import ConfigError, CustomConfig
+from .BaseTypes import Integer, PathParam
+from .Choices import MultipleChoice, SingleChoice
 
 
 class OldOutputSettings(NamedTuple):

@@ -30,7 +30,7 @@ from more_itertools import numeric_range
 
 from MDANSE.IO.IOUtils import json_handler
 
-from .AbsConfigDesc import ConfigError, ConfigureDescriptor, MinMax
+from .Parameters import ConfigError, ConfigureDescriptor, MinMax
 from .UtilTypes import Depends
 
 K = TypeVar("K")

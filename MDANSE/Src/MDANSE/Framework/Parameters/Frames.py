@@ -7,9 +7,9 @@ from more_itertools import numeric_range
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesDescriptor import Integer, NumericRange, Range
-from .ChoiceConfigDesc import SingleChoice
+from .Parameters import ConfigError, CustomConfig
+from .BaseTypes import Integer, NumericRange, Range
+from .Choices import SingleChoice
 from .UtilTypes import Depends, DescID
 
 

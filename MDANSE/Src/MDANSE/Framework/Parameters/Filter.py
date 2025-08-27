@@ -27,9 +27,9 @@ from MDANSE.Mathematics.Signal import (
     filter_default_attributes,
 )
 
-from .AbsConfigDesc import ConfigError, CustomConfig
-from .BaseTypesDescriptor import Dict
-from .ChoiceConfigDesc import SingleChoice
+from .Parameters import ConfigError, CustomConfig
+from .BaseTypes import Dict
+from .Choices import SingleChoice
 from .UtilTypes import Depends, DescID
 
 FilterType = type[Filter]
