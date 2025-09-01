@@ -46,6 +46,7 @@ def set_up_trajectory(self, trajectory: Trajectory, deps):
 
     return trajectory
 
+
 class MDANSETrajectory(ConfigureDescriptor[str | Path, Trajectory]):
     default_tooltip = "Input MDANSE trajectory from converter or h5md file."
     default_label = "Trajectory to use."
@@ -129,7 +130,7 @@ class MDANSEResult(ConfigureDescriptor[str | Path | h5py.File, h5py.File]):
         choices: set[str] | None = None,
     ) -> bool:
         choice_in = self.choices if choices is None else choices
-        return all(choice in value for choice in choices)
+        return all(choice in value for choice in choice_in)
 
     def _validate_exclude(
         self,

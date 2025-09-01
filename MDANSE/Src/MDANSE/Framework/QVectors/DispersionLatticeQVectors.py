@@ -39,7 +39,6 @@ class DispersionLatticeQVectors(LatticeQVectors):
     )
 
     def _generate(self):
-
         hkls = np.array(self.start)[:, np.newaxis] + np.outer(
             self.direction, np.arange(0, self.n_steps)
         )
@@ -56,9 +55,7 @@ class DispersionLatticeQVectors(LatticeQVectors):
 
         for i, v in enumerate(dists):
             self.q_vectors[v] = {}
-            self.q_vectors[v]["q_vectors"] = vects[:, i][
-                :, np.newaxis
-            ]
+            self.q_vectors[v]["q_vectors"] = vects[:, i][:, np.newaxis]
             self.q_vectors[v]["n_q_vectors"] = 1
             self.q_vectors[v]["q"] = v
             self.q_vectors[v]["hkls"] = hkls[:, i][:, np.newaxis]

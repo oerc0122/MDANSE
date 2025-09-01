@@ -340,7 +340,10 @@ class PathParam(ConfigureDescriptor[str | Path, Path]):
         self.extension.setdefault("All files", "*")
         self.directory = directory
 
-    def validate(self, value, deps: Depends, /) -> Path:
+    def validate(self, value: Path | str, deps: Depends, /) -> Path | None:
+        if self.optional and value is None:
+            return None
+
         try:
             value = Path(value).expanduser()
         except TypeError as error:

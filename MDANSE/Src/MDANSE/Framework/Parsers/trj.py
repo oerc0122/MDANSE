@@ -148,26 +148,27 @@ class TrjFile(Parser):
                 self.velocities_written = data[-4]
                 self.gradients_written = data[-3]
 
-            self.frame_data = [
+            frame_data = [
                 "step_info",
                 "cell_prop_info",
             ]
             if self.options.lcanon:
-                self.frame_data.append("nose")
+                frame_data.append("nose")
             if self.options.pertype:
-                self.frame_data.extend(("cell", "natoms"))
+                frame_data.extend(("cell", "natoms"))
             if self.options.lnpecan:
-                self.frame_data.append("pecan")
+                frame_data.append("pecan")
             if self.options.ltmpdamp:
-                self.frame_data.append("temp_damp")
+                frame_data.append("temp_damp")
 
-            self.frame_data.extend(("pos_x", "pos_y", "pos_z"))
+            frame_data.extend(("pos_x", "pos_y", "pos_z"))
 
             if self.velocities_written:
-                self.frame_data.extend(("vel_x", "vel_y", "vel_z"))
+                frame_data.extend(("vel_x", "vel_y", "vel_z"))
             if self.gradients_written:
-                self.frame_data.extend(("force_x", "force_y", "force_z"))
+                frame_data.extend(("force_x", "force_y", "force_z"))
 
+            self.frame_data = tuple(frame_data)
             self.framesize = len(self.frame_data)
             parser.send(-1)
 

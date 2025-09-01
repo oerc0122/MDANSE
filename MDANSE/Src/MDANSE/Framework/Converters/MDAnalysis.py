@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 
 import MDAnalysis as mda
@@ -30,6 +31,7 @@ from MDANSE.Framework.Parameters import (
     OutputTrajectory,
     PathParam,
     SingleChoice,
+    to_class,
 )
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
@@ -41,6 +43,7 @@ from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
 def get_coords(_desc, coord_files, deps):
+    coord_files = (coord_files,)  # TODO: Add multi-file
     if len(coord_files) <= 1 or deps["coordinate_format"] is None:
         return mda.Universe(
             deps["topology"],
@@ -72,34 +75,45 @@ class MDAnalysis(Converter):
     <a href="https://userguide.mdanalysis.org/stable/formats/index.html#formats">formats</a>.
     """
 
+    UNIT_CONV = {
+        "length": measure(1.0, "ang").toval("nm"),
+        "velocity": measure(1.0, "ang/ps").toval("nm/ps"),
+        "force": measure(1.0, "kJ/mol ang", equivalent=True).toval("Da nm/ps2"),
+    }
+
     category = ("Converters", "General")
     label = "MDAnalysis"
 
-    topology_format = SingleChoice(choices=mda._PARSERS.keys())
+    topology_format = SingleChoice(
+        choices=mda._PARSERS.keys() | {None}, aliases={"AUTO": None}, default=None
+    )
     topology_file = PathParam(
         mode="r",
         label="Topology file",
     )
-    coordinate_format = SingleChoice(choices=mda._PARSERS.keys())
-    continuous = Boolean(label="Continuous frame stitching")
-    trajectory = PathParam(
+    coordinate_format = SingleChoice(
+        choices=mda._READERS.keys() | {None}, aliases={"AUTO": None}, default=None
+    )
+    continuous = Boolean(label="Continuous frame stitching", default=False)
+    coordinate_files = PathParam(
         mode="r",
         label="Coordinate file",
-        get_depends={
+        depends={
             "topology_format": "topology_format",
             "coordinate_format": "coordinate_format",
             "topology": "topology_file",
             "continuous": "continuous",
         },
-        on_get=get_coords,
+        on_set=get_coords,
     )
     time_step = Float(
-        label="Time step",
-        default=1.0,
-        minimum=1e-9,
+        label="Time step (ps)",
+        tooltip="If 0.0 use timestep from files.",
+        default=0.0,
+        minimum=0.0,
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "trajectory"},
+        depends={"trajectory": "coordinate_files"},
         label="Atom mapping",
         default={},
     )
@@ -110,17 +124,18 @@ class MDAnalysis(Converter):
         """Load the trajectory using MDAnalysis and create the
         trajectory writer.
         """
+        super().initialize()
 
-        self.numberOfSteps = len(self.trajectory.trajectory)
+        self.numberOfSteps = len(self.coordinate_files.trajectory)
 
         self._chemical_system = ChemicalSystem()
         element_list = []
         name_list = []
         label_dict = defaultdict(list)
 
-        for at_number, at in enumerate(self.trajectory.atoms):
+        for at_number, at in enumerate(self.coordinate_files.atoms):
             kwargs = {
-                getattr(at, arg)
+                arg: getattr(at, arg)
                 for arg in ("element", "name", "type", "resname", "mass")
                 if hasattr(at, arg)
             }
@@ -137,9 +152,7 @@ class MDAnalysis(Converter):
                 label_dict[tag].append(at_number)
             kwargs.pop(k)
 
-            element = get_element_from_mapping(
-                self.configuration["atom_aliases"]["value"], main_label, **kwargs
-            )
+            element = get_element_from_mapping(self.atom_aliases, main_label, **kwargs)
 
             for arg in ("name", "type", "element"):
                 if hasattr(at, arg):
@@ -162,7 +175,7 @@ class MDAnalysis(Converter):
             positions_dtype=self.output_files.dtype,
             chunking_limit=self.output_files.chunk_size,
             compression=self.output_files.compression,
-            initial_charges=getattr(self.trajectory.atoms, "charges", None),
+            initial_charges=getattr(self.coordinate_files.atoms, "charges", None),
         )
         super().initialize()
 
@@ -180,43 +193,44 @@ class MDAnalysis(Converter):
         tuple[int, None]
             A tuple of the job index and None.
         """
-        self.trajectory.trajectory[index]
+        self.coordinate_files.trajectory[index]
 
         # convert from MDAnalysis units to MDANSE units
         # see https://userguide.mdanalysis.org/stable/units.html for
         # default units in MDAnalysis
-        if self.trajectory.trajectory.ts.triclinic_dimensions is None:
+        if self.coordinate_files.trajectory.ts.triclinic_dimensions is None:
             conf = RealConfiguration(
                 self._trajectory._chemical_system,
-                self.trajectory.trajectory.ts.positions
-                * measure(1.0, "ang").toval("nm"),
+                self.coordinate_files.trajectory.ts.positions
+                * self.UNIT_CONV["length"],
             )
         else:
             conf = PeriodicRealConfiguration(
                 self._trajectory._chemical_system,
-                self.trajectory.trajectory.ts.positions
-                * measure(1.0, "ang").toval("nm"),
+                self.coordinate_files.trajectory.ts.positions
+                * self.UNIT_CONV["length"],
                 UnitCell(
-                    self.trajectory.trajectory.ts.triclinic_dimensions
-                    * measure(1.0, "ang").toval("nm")
+                    self.coordinate_files.trajectory.ts.triclinic_dimensions
+                    * self.UNIT_CONV["length"],
                 ),
             )
 
             if self.fold:
                 conf.fold_coordinates()
 
-            if hasattr(self.trajectory.trajectory.ts, "velocities"):
-                conf["velocities"] = self.trajectory.trajectory.ts.velocities * measure(
-                    1.0, "ang/ps"
-                ).toval("nm/ps")
+            if hasattr(self.coordinate_files.trajectory.ts, "velocities"):
+                conf["velocities"] = (
+                    self.coordinate_files.trajectory.ts.velocities
+                    * self.UNIT_CONV["velocity"]
+                )
 
-            if hasattr(self.trajectory.trajectory.ts, "forces"):
-                conf["gradients"] = self.trajectory.trajectory.ts.forces * measure(
-                    1.0, "kJ/mol ang", equivalent=True
-                ).toval("Da nm/ps2")
+            if hasattr(self.coordinate_files.trajectory.ts, "forces"):
+                conf["gradients"] = (
+                    self.coordinate_files.trajectory.ts.forces * self.UNIT_CONV["force"]
+                )
 
-        if self.time_step == 0.0:
-            time = index * self.trajectory.trajectory.ts.dt
+        if math.isclose(self.time_step, 0.0):
+            time = index * self.coordinate_files.trajectory.ts.dt
         else:
             time = index * self.time_step
 

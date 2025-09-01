@@ -62,14 +62,9 @@ class LinearLatticeQVectors(LatticeQVectors):
             random.seed(self.seed)
 
         # The Q vector corresponding to the input hkl.
-        qVect = self.hkl_to_qvectors(
-            self.axis, self._unit_cell
-        )
+        qVect = self.hkl_to_qvectors(self.axis, self._unit_cell)
 
-        qMax = (
-            self.shells[-1]
-            + 0.5 * self.width
-        )
+        qMax = self.shells[-1] + 0.5 * self.width
 
         uMax = np.ceil(qMax / np.linalg.norm(qVect) + 1)
 

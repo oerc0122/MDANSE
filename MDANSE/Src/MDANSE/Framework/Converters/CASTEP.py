@@ -51,7 +51,6 @@ class CASTEP(Converter):
     atom_aliases = AtomMapping(
         depends={"trajectory": "trajectory_file"},
         label="Atom mapping",
-        default={},
     )
     fold = Boolean(label="Fold coordinates into box")
     output_files = OutputTrajectory()
@@ -105,7 +104,7 @@ class CASTEP(Converter):
         """
         frame = next(self._frames)
 
-        # Read the informatino in the frame
+        # Read the information in the frame
         time_step = frame["time"]
 
         unit_cell = UnitCell(np.vstack(frame["h"]))

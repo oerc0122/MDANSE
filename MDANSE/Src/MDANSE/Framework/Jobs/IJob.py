@@ -42,10 +42,10 @@ from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.Framework.Jobs.JobStatus import JobStates, JobStatus
 from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
 from MDANSE.Framework.Parameters import (
-    Configurable,
     OutputFile,
     OutputTrajectory,
 )
+from MDANSE.Framework.Parameters.Parameters import Configurable
 from MDANSE.MLogging import FMT, LOG
 
 RUNSCRIPT = """\

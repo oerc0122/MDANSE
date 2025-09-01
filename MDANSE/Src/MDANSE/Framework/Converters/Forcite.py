@@ -98,7 +98,7 @@ class Forcite(Converter):
         self._configuration = real_conf
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.trj_file.n_frames
+        self.numberOfSteps = self.trj_file.n_frames - 1
 
         self.frames = self.trj_file.frames
 

@@ -21,7 +21,9 @@ import random
 import numpy as np
 
 from MDANSE.Framework.Parameters import (
-    Integer, Range, Float,
+    Integer,
+    Range,
+    Float,
 )
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
@@ -41,30 +43,23 @@ class SphericalLatticeQVectors(LatticeQVectors):
     vectors in the shell.
     """
 
-    seed = Integer(
-        minimum=0, default=0
-    )
+    seed = Integer(minimum=0, default=0)
     shells = Range(
-        minimum=0.,
-        default=(0, 5., 0.5),
+        minimum=0.0,
+        default=(0, 5.0, 0.5),
         include_last=True,
     )
-    n_vectors = Integer(
-        minimum=1, default=50)
+    n_vectors = Integer(minimum=1, default=50)
     width = Float(
         minimum=1e-6,
-        default=1.,
-        )
+        default=1.0,
+    )
 
     def _generate(self):
         if self.seed != 0:
             np.random.seed(self.seed)
             random.seed(self.seed)
-        qMax = (
-            self.shells[-1
-                        ]
-            + 0.5 * self.width
-        )
+        qMax = self.shells[-1] + 0.5 * self.width
 
         hklMax = np.ceil(self.qvectors_to_hkl(qMax * np.eye(3), self._unit_cell)) + 1
 
@@ -84,7 +79,6 @@ class SphericalLatticeQVectors(LatticeQVectors):
         dists2 = np.sum(vects**2, axis=0)
 
         halfWidth = self.width / 2
-
 
         if self._status is not None:
             self._status.start(len(self.shells))

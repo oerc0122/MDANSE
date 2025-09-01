@@ -215,11 +215,7 @@ class VanHoveFunctionSelf(IJob):
         self.shell_volumes = []
         for i in range(self.n_mid_points):
             self.shell_volumes.append(
-                (
-                    self.r_values.binning[i]
-                    + self.r_values.binning.step
-                )
-                ** 3
+                (self.r_values.binning[i] + self.r_values.binning.step) ** 3
                 - self.r_values.binning[i] ** 3,
             )
         self.shell_volumes = (4 / 3) * np.pi * np.array(self.shell_volumes)
@@ -305,9 +301,7 @@ class VanHoveFunctionSelf(IJob):
                 number**2 * self.frame_window * self.r_values.binning.step
             )
 
-        selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.weights
-        )
+        selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
         for weights in selected_weights, all_weights:
             for key, value in weights.items():
                 weights[key] = abs(value) ** 2

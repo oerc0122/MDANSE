@@ -41,14 +41,14 @@ class DCD(Converter):
         mode="r",
         extensions={"PDB files": "*.pdb"},
         label="Input PDB file",
-        on_set=to_class(MinimalPDBReader)
+        on_set=to_class(MinimalPDBReader),
     )
     dcd_file = PathParam(
         mode="r",
         extensions={"DCD files": "*.dcd"},
         label="Input DCD file",
-        on_set=to_class(DCDFile)
-        )
+        on_set=to_class(DCDFile),
+    )
     time_step = Float(default=1.0, minimum=1e-9, label="Time step (ps)")
     fold = Boolean(label="Fold coordinates into box")
     output_files = OutputTrajectory()
@@ -65,6 +65,8 @@ class DCD(Converter):
         # Create all chemical entities from the PDB file.
         self._chemical_system = self.pdb_file._chemical_system
 
+        self.frames = self.dcd_file.frames
+
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(
             self.output_files.path,
@@ -75,7 +77,7 @@ class DCD(Converter):
             compression=self.output_files.compression,
         )
 
-    def run_step(self, index):
+    def run_step(self, index: int):
         """Runs a single step of the job.
 
         Parameters
@@ -88,7 +90,7 @@ class DCD(Converter):
         tuple[int, None]
         """
         # The x, y and z values of the current frame.
-        unit_cell, config = self.dcd_file.read_step()
+        unit_cell, config = next(self.frames)
 
         conf = PeriodicRealConfiguration(
             self._trajectory._chemical_system, config, unit_cell

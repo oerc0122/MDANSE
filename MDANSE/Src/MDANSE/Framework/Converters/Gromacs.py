@@ -66,10 +66,10 @@ class Gromacs(Converter):
 
         data_to_be_written = ["configuration", "time"]
 
-        if self.xtc_file not in {".xtc", ".trr"}:
+        if self.xtc_file.suffix not in {".xtc", ".trr"}:
             raise GromacsConverterError(
                 "Invalid file format: Gromacs converter can only convert XTC and TRR files, "
-                f"but {self.configuration['xtc_file']['filename'][-4:]} was provided."
+                f"but {self.xtc_file.suffix} was provided."
             )
 
         # Create XTC or TRR object depending on which kind of trajectory was loaded

@@ -129,6 +129,7 @@ class DynamicSingleChoice(SingleChoice[P, T]):
 
         return choices
 
+
 class DynamicMultiChoice(MultipleChoice[Sequence[P], Sequence[T]]):
     def __init__(self, choices: str, n_choices: int | None, **params):
         super().__init__(choices=(), n_choices=n_choices, **params)

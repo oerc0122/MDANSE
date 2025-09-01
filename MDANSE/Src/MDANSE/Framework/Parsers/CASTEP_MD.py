@@ -93,7 +93,7 @@ class CASTEPMDFile(Parser):
             data, *key = line.split("<--")
 
             if not key:
-                accum["time"] = data
+                accum["time"] = float(data) * AUT
             else:
                 key = one(key).strip()
                 if key not in "RVF":

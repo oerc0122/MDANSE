@@ -63,7 +63,11 @@ class Weights(SingleChoice[str, str]):
         )
 
     def required_deps(self) -> set[DescID]:
-        return super().required_deps() | {DescID("selection"), DescID("trajectory"), DescID("transmutation")}
+        return super().required_deps() | {
+            DescID("selection"),
+            DescID("trajectory"),
+            DescID("transmutation"),
+        }
 
     def get_choices(self, _deps) -> set[str]:
         """Limit the list of atom properties to usable values."""

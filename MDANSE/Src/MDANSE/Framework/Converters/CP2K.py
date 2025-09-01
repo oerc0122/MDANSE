@@ -58,10 +58,10 @@ class CP2K(Converter):
     label = "CP2K"
 
     UNITS = {
-        "pos": measure(1.0, iunit="ang").toval("nm"),
+        "coordinates": measure(1.0, iunit="ang").toval("nm"),
         "cell": measure(1.0, iunit="ang").toval("nm"),
-        "vel": measure(1.0, iunit="ang/fs").toval("nm/ps"),
-        "force": measure(1.0, iunit="Da ang / fs2").toval("Da nm / ps2"),
+        "velocities": measure(1.0, iunit="ang/fs").toval("nm/ps"),
+        "forces": measure(1.0, iunit="Da ang / fs2").toval("Da nm / ps2"),
         "time": measure(1.0, iunit="fs").toval("ps"),
     }
 
@@ -100,15 +100,15 @@ class CP2K(Converter):
         super().initialize()
 
         self.files = {
-            "coordinates": self.configuration["pos_file"].instance,
-            "cell": self.configuration["cell_file"].instance,
+            "coordinates": self.pos_file,
+            "cell": CP2KCellFile(self.cell_file),
         }
 
-        if vfile := self.configuration["vel_file"].instance:
-            self.files["velocities"] = vfile
+        if self.vel_file is not None:
+            self.files["velocities"] = XYZFile(self.vel_file)
 
-        if ffile := self.configuration["force_file"].instance:
-            self.files["forces"] = ffile
+        if self.force_file is not None:
+            self.files["forces"] = XYZFile(self.force_file)
 
         for attr in ("time_step", "n_frames"):
             if not all_equal(getattr(file, attr) for file in self.files.values()):
@@ -122,9 +122,7 @@ class CP2K(Converter):
         self._chemical_system = ChemicalSystem()
 
         element_list = [
-            get_element_from_mapping(
-                self.configuration["atom_aliases"]["value"], symbol
-            )
+            get_element_from_mapping(self.atom_aliases, symbol)
             for symbol in self.files["coordinates"].atoms
         ]
 

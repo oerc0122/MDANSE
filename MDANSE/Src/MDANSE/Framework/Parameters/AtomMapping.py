@@ -31,8 +31,8 @@ from MDANSE.Framework.AtomSelector.selector import ReusableSelection
 from MDANSE.IO.IOUtils import json_handler
 from MDANSE.MLogging import LOG
 
-from .Parameters import ConfigError, ConfigureDescriptor
 from .Choices import SingleChoice
+from .Parameters import ConfigError, ConfigureDescriptor
 from .UtilTypes import Depends, DescID
 
 if TYPE_CHECKING:
@@ -98,18 +98,21 @@ class Mapper(ABC):
 
 
 class AtomMapping(ConfigureDescriptor[dict | str, dict[str, dict[str, str]]]):
+    default_tooltip = "Mapping of index to new species"
+
     def __init__(self, default: dict[str, dict[str, str]] | str = {}, **kwargs):
         super().__init__(default=default, **kwargs)
 
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("trajectory")}
 
-    def validate(self, value: dict | str, deps: Depends, /) -> dict[str, dict[str, str]]:
-        if not value:
+    def validate(
+        self, value: dict | str, deps: Depends, /
+    ) -> dict[str, dict[str, str]]:
+        if not value or value == "{}":
             return {}
 
         file_info = deps["trajectory"]
-
         try:
             value = json_handler(value)
         except Exception as err:
@@ -148,7 +151,10 @@ class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
         return super().required_deps() | {DescID("trajectory")}
 
     def validate(
-        self, value: dict | str | Path, deps: Depends, /,
+        self,
+        value: dict | str | Path,
+        deps: Depends,
+        /,
     ) -> list[int]:
         file_info = deps["trajectory"]
 
@@ -180,7 +186,8 @@ class PartialCharge(ConfigureDescriptor[str | Path | dict, dict[int, float]]):
     def validate(
         self,
         value: str | Path | dict,
-        deps: Depends, /,
+        deps: Depends,
+        /,
     ) -> dict[int, float]:
         try:
             value = json_handler(value)
@@ -284,6 +291,7 @@ class PartialChargeMapper(Mapper):
         """
         return json.dumps(self.get_grouped_setting())
 
+
 class GroupingLevels(Enum):
     atom = auto()
     molecule = auto()
@@ -319,7 +327,10 @@ class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
         return super().required_deps() | {DescID("trajectory")}
 
     def validate(
-        self, value: GroupingLevels | str, deps: Depends, /,
+        self,
+        value: GroupingLevels | str,
+        deps: Depends,
+        /,
     ) -> str:
         value = super().validate(value, deps)
 
@@ -374,7 +385,8 @@ class AtomTransmutation(ConfigureDescriptor[dict | str | Path, dict]):
     def validate(
         self,
         value: dict | str | Path,
-        deps: Depends, /,
+        deps: Depends,
+        /,
     ):
         try:
             value = json_handler(value)

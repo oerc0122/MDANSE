@@ -50,6 +50,7 @@ from MDANSE.Framework.Parsers import (
     LAMMPSReader,
     LAMMPSxyz,
 )
+from MDANSE.Framework.Parsers.LAMMPS import LAMMPS_UNITS
 from MDANSE.Framework.Parsers.LAMMPSConfig import ATOM_TYPES_MAP
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
@@ -64,156 +65,6 @@ if TYPE_CHECKING:
     from MDANSE.Framework.Configurators.ConfigFileConfigurator import (
         ConfigFileConfigurator,
     )
-
-ELECTRON_CHARGE = 1.6021765e-19
-DIMS = ("x", "y", "z")
-
-LAMMPS_UNITS = {
-    "real": {
-        "energy": "kcal_per_mole",
-        "time": "fs",
-        "length": "ang",
-        "velocity": "ang/fs",
-        "mass": "Da",
-        "charge_conv": 1.0,
-    },
-    "metal": {
-        "energy": "eV",
-        "time": "ps",
-        "length": "ang",
-        "velocity": "ang/ps",
-        "mass": "Da",
-        "charge_conv": 1.0,
-    },
-    "si": {
-        "energy": "J",
-        "time": "s",
-        "length": "m",
-        "velocity": "m/s",
-        "mass": "kg",
-        "charge_conv": 1.0 / ELECTRON_CHARGE,
-    },
-    "cgs": {
-        "energy": "erg",  # this will fail
-        "time": "s",
-        "length": "cm",
-        "velocity": "cm/s",
-        "mass": "g",
-        "charge_conv": 1.0 / 4.8032044e-10,
-    },
-    "electron": {
-        "energy": "Ha",
-        "time": "fs",
-        "length": "Bohr",
-        "velocity": "ang/fs",
-        "mass": "Da",
-        "charge_conv": 1.0,
-    },
-    "micro": {
-        "energy": "pg*m/s",
-        "time": "us",
-        "length": "um",
-        "velocity": "m/s",
-        "mass": "pg",
-        "charge_conv": 1.0 / (ELECTRON_CHARGE * 1e12),
-    },
-    "nano": {
-        "energy": "ag*m/s",
-        "time": "ns",
-        "length": "nm",
-        "velocity": "m/s",
-        "mass": "ag",
-        "charge_conv": 1.0,
-    },
-}
-
-UnitSchemes = Literal["real", "metal", "si", "cgs", "electron", "micro", "nano"]
-
-
-class LAMMPSTrajectoryFileError(Error):
-    pass
-
-
-class BoxStyle(Enum):
-    """Different styles of "box" provided by LAMMPS.
-
-    Handles conversion to standard 3x3 lattice vectors.
-    """
-
-    ORTHOGONAL = auto()
-    NONORTHOGONAL = auto()
-    TRICLINIC = auto()
-
-    def to_cell(
-        self, value: NDArray[float], *, bounds: bool = False
-    ) -> tuple[NDArray[float], NDArray[float]]:
-        """Convert from LAMMPS box definition to unit cell, origin.
-
-        Parameters
-        ----------
-        value : NDArray[float]
-            LAMMPS unit cell specification.
-        bounds : bool
-            For LAMMPS' non-orthogonal cells dumps provide *bounds*
-            rather than ``[xyz](lo|hi)``. If this is true, convert them.
-
-        Returns
-        -------
-        NDArray[float]
-            Unit cell as 3x3 matrix.
-        NDArray[float]
-            Origin as 3-vector.
-
-        Examples
-        --------
-        >>> BoxStyle.ORTHOGONAL.to_cell([2, 5, 2, 5, 2, 5])
-        (array([[3., 0., 0.],
-               [0., 3., 0.],
-               [0., 0., 3.]]), array([2., 2., 2.]))
-        >>> BoxStyle.ORTHOGONAL.to_cell([[2, 5], [2, 5], [2, 5]])
-        (array([[3., 0., 0.],
-               [0., 3., 0.],
-               [0., 0., 3.]]), array([2., 2., 2.]))
-        >>> BoxStyle.NONORTHOGONAL.to_cell([[2, 5, 1], [2, 5, 2], [2, 5, 4]])
-        (array([[3., 0., 0.],
-               [1., 3., 0.],
-               [2., 4., 3.]]), array([2., 2., 2.]))
-        >>> a = BoxStyle.NONORTHOGONAL.to_cell([[-7.6875, 20.0293, 0.],
-        ...                                     [0., 11.5962, -7.6875],
-        ...                                     [0., 19.6804, 0.]], bounds=True)
-        >>> b = BoxStyle.NONORTHOGONAL.to_cell([[0., 20.0293, 0.],
-        ...                                     [0., 11.5962, -7.6875],
-        ...                                     [0., 19.6804, 0.]], bounds=False)
-        >>> np.allclose(a[0], b[0]), np.allclose(a[1], b[1])
-        (True, True)
-        >>> BoxStyle.TRICLINIC.to_cell([[1, 2, 3, 2], [4, 5, 6, 2], [7, 8, 9, 2]])
-        (array([[1., 2., 3.],
-               [4., 5., 6.],
-               [7., 8., 9.]]), array([2., 2., 2.]))
-        """
-        value = np.array(value, dtype=float)
-        if self is BoxStyle.ORTHOGONAL:
-            value = value.reshape((3, 2))
-            unit_cell, origin = np.diag(value[:, 1] - value[:, 0]), value[:, 0]
-        elif self is BoxStyle.NONORTHOGONAL:
-            value = value.reshape((3, 3))
-            xy, xz, yz = value[:, 2]
-
-            if bounds:
-                value[0, 0] -= min(0.0, xy, xz, xy + xz)
-                value[0, 1] -= max(0.0, xy, xz, xy + xz)
-                value[1, 0] -= min(0.0, yz)
-                value[1, 1] -= max(0.0, yz)
-
-            unit_cell, origin = np.diag(value[:, 1] - value[:, 0]), value[:, 0]
-            unit_cell[1, 0] = xy
-            unit_cell[2, 0] = xz
-            unit_cell[2, 1] = yz
-        elif self is BoxStyle.TRICLINIC:
-            value = value.reshape((3, 4))
-            unit_cell, origin = value[:3, :3], value[:, 3]
-
-        return unit_cell, origin
 
 
 class LAMMPS(Converter):
@@ -290,7 +141,7 @@ class LAMMPS(Converter):
         if self.lammps_units == "From config":
             if "units" not in self.config_file:
                 raise KeyError("Units not found in lammps config")
-            self.lammps_units = self.lammps_config["units"]
+            self.lammps_units = self.config_file["units"]
 
         self._reader = self.create_reader(self.trajectory_format)
 
@@ -301,7 +152,7 @@ class LAMMPS(Converter):
         if self.numberOfSteps == 0:
             self.numberOfSteps = self._reader.get_time_steps(self.trajectory_file)
 
-        charges_single_cell = self.lammps_config["charges"]
+        charges_single_cell = self.config_file["charges"]
         charges_single_cell *= self._reader.units["charge_conv"]
 
         # Assume replicate
@@ -414,6 +265,6 @@ class LAMMPS(Converter):
         """
 
         self._reader.open_file(self.trajectory_file)
-        chemical_system = self._reader.parse_first_step(aliases, self.lammps_config)
+        chemical_system = self._reader.parse_first_step(aliases, self.config_file)
         self._reader.close()
         return chemical_system

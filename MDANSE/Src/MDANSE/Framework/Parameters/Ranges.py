@@ -71,7 +71,8 @@ class RangeCellCutoff(Range[float]):
     def validate(
         self,
         value: int | Sequence | dict | range,
-        deps: Depends, /,
+        deps: Depends,
+        /,
     ) -> HistogramInfo:
         """Configure the distance histogram cutoff configurator.
 

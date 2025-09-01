@@ -54,7 +54,6 @@ class LinearQVectors(IQVectors):
         if self.seed != 0:
             np.random.seed(self.seed)
 
-
         if self._status is not None:
             self._status.start(len(self.shells))
 
@@ -66,9 +65,7 @@ class LinearQVectors(IQVectors):
             ) + self.width * np.random.uniform(-0.5, 0.5, self.n_vectors)
 
             self.q_vectors[q] = {}
-            self.q_vectors[q]["q_vectors"] = (
-                self.axis.array[:, np.newaxis] * fact
-            )
+            self.q_vectors[q]["q_vectors"] = self.axis.array[:, np.newaxis] * fact
             self.q_vectors[q]["n_q_vectors"] = self.n_vectors
             self.q_vectors[q]["q"] = q
             self.q_vectors[q]["hkls"] = None

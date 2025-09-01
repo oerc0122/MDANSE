@@ -47,11 +47,7 @@ def get_coords(_desc, value, deps):
             discard_overlapping_frames=deps["discard"],
         )
 
-    return md.load(
-            value,
-            discard_overlapping_frames=deps["discard"]
-        )
-
+    return md.load(value, discard_overlapping_frames=deps["discard"])
 
 
 class MDTraj(Converter):
@@ -72,16 +68,19 @@ class MDTraj(Converter):
         default=None,
     )
     discard_overlapping_frames = Boolean(label="Discard overlapping frames")
-    trajectory = PathParam(
+    coordinate_files = PathParam(
         mode="r",
         label="Coordinate file",
-        get_depends={"topology": "topology_file", "discard": "discard_overlapping_frames"},
+        on_get_depends={
+            "topology": "topology_file",
+            "discard": "discard_overlapping_frames",
+        },
         on_get=get_coords,
     )
     time_step = Float(
         label="Time step",
-        default=1.0,
-        minimum=1e-9,
+        default=0.0,
+        minimum=0.0,
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "topology_file"},
@@ -93,13 +92,14 @@ class MDTraj(Converter):
 
     def initialize(self):
         """Load the trajectory using MDTraj and create the trajectory writer."""
+        super().initialize()
 
-        self.numberOfSteps = self.trajectory.n_frames
+        self.numberOfSteps = self.coordinate_files.n_frames
         mdtraj_to_mdanse = {}
 
         self._chemical_system = ChemicalSystem()
         elements, atom_names, atom_labels = [], [], defaultdict(list)
-        for atnumber, at in enumerate(self.trajectory.topology.atoms):
+        for atnumber, at in enumerate(self.coordinate_files.topology.atoms):
             element = get_element_from_mapping(
                 self.atom_aliases,
                 at.name,
@@ -118,7 +118,7 @@ class MDTraj(Converter):
         self._chemical_system.add_labels(atom_labels)
         bonds = [
             (mdtraj_to_mdanse[at1.index], mdtraj_to_mdanse[at2.index])
-            for at1, at2 in self.trajectory.topology.bonds
+            for at1, at2 in self.coordinate_files.topology.bonds
         ]
         self._chemical_system.add_bonds(bonds)
         self._chemical_system.find_clusters_from_bonds()
@@ -131,7 +131,6 @@ class MDTraj(Converter):
             chunking_limit=self.output_files.chunk_size,
             compression=self.output_files.compression,
         )
-        super().initialize()
 
     def run_step(self, index: int):
         """For the given frame, read the MDTraj trajectory data,
@@ -147,17 +146,17 @@ class MDTraj(Converter):
         tuple[int, None]
             A tuple of the job index and None.
         """
-        if self.trajectory.unitcell_vectors is None:
+        if self.coordinate_files.unitcell_vectors is None:
             conf = RealConfiguration(
                 self._trajectory._chemical_system,
-                self.trajectory.xyz[index],
+                self.coordinate_files.xyz[index],
             )
         else:
             conf = PeriodicRealConfiguration(
                 self._trajectory._chemical_system,
-                self.trajectory.xyz[index],
+                self.coordinate_files.xyz[index],
                 UnitCell(
-                    self.trajectory.unitcell_vectors[index],
+                    self.coordinate_files.unitcell_vectors[index],
                 ),
             )
             if self.fold:
@@ -173,7 +172,7 @@ class MDTraj(Converter):
         if self.numberOfSteps == 1:
             time = 0
         elif isclose(self.time_step, 0.0):
-            time = index * self.trajectory.timestep
+            time = index * self.coordinate_files.timestep
         else:
             time = index * self.time_step
 

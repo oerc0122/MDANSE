@@ -128,8 +128,15 @@ class Configurable:
 
     @configuration.setter
     def configuration(self, value: dict[DescID, Any]):
-        for name, val in value:
-            setattr(self, name, val)
+        if extra := value.keys() - self.parameters:
+            raise ConfigError(
+                f"Unrecognised parameters in dict for {type(self).__name__}: {', '.join(extra)}."
+            )
+
+        # Preserve definition order
+        for name in self.parameters:
+            if name in value:
+                setattr(self, name, value[name])
 
     @property
     def descriptors(self) -> dict[DescID, Parameter]:
@@ -149,7 +156,7 @@ class Configurable:
         to_json = {
             name: obj.to_json() if isinstance(obj, Parameter) else obj
             for name, obj in self.configuration.items()
-        }
+        } | {"class_type": type(self).__name__}
         return json.dumps(to_json, cls=MDANSEEncoder)
 
     output_configuration = to_json
@@ -241,7 +248,9 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         self.mutex = mutex
 
         self.depends: dict[str, DescID] = depends if depends is not None else {}
-        self.get_depends: dict[str, DescID] = depends if depends is not None else {}
+        self.get_depends: dict[str, DescID] = (
+            on_get_depends if on_get_depends is not None else {}
+        )
 
         self.on_set = on_set
         self.on_get = on_get
@@ -277,9 +286,9 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         for dep in self.depends.values():
             owner.__dict__[dep].dependents.add(self)
 
-        setattr(owner, self.configured_var, False)
+        setattr(owner, self.configured_var, self.optional)
 
-    def __get__(self, owner: object, objtype: type | None = None) -> Self | T:
+    def __get__(self, owner: object, objtype: type | None = None) -> Self | T | None:
         if owner is None:
             return self
 
@@ -295,22 +304,19 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         value = getattr(owner, self.private_name, SENTINEL)
         deps = self._get_deps(owner)
 
-        if value is not SENTINEL:
-            out = cast(T, value)
-        else:
-            out = self.validate(self.default, deps)
+        if self.optional and value is SENTINEL:
+            value = self.validate(self.default, deps)
+
+        out = cast(T, value)
 
         # Custom
         if self.on_get is not None:
             cb_deps = (
                 cast(
                     Depends,
-                    {
-                        dep: getattr(owner, key)
-                        for dep, key in self.on_get_depends.items()
-                    },
+                    {dep: getattr(owner, key) for dep, key in self.get_depends.items()},
                 )
-                if self.on_get_depends
+                if self.get_depends
                 else deps
             )
             out = self.on_get(self, out, cb_deps)
@@ -326,7 +332,7 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
 
         if any(self._bad_deps(owner)):
             raise ConfigError(
-                f"Dependencies ({', '.join(compress(self.depends, self._bad_deps(owner)))}) "
+                f"Dependencies for {self.name} ({', '.join(compress(self.depends, self._bad_deps(owner)))}) "
                 "are not correctly defined."
             )
         if any(self._bad_mutex(owner)):
@@ -342,21 +348,22 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         if isinstance(owner, Validatable):
             out = owner.validate(self, out)
 
-        for dependent in self.dependents:
-            name = dependent.name
-            try:
-                val = getattr(owner, name)
-                setattr(owner, name, val)
-            except ConfigError as err:
-                LOG.info(f"Invalidated {name}. Reason: {err}")
-                setattr(owner, dependent.configured_var, False)
-
         # Custom
         if self.on_set is not None:
             out = self.on_set(self, out, deps)
 
         setattr(owner, self.private_name, out)
         setattr(owner, self.configured_var, True)
+
+        for dependent in self.dependents:
+            name = dependent.name
+            try:
+                val = getattr(owner, name)
+                setattr(owner, name, val)
+            except ConfigError as err:
+                if "Non-optional" not in err._msg:
+                    LOG.info(f"Invalidated {name!r}. Reason: {err}")
+                    setattr(owner, dependent.configured_var, False)
 
     def required_deps(self) -> set[DescID]:
         return set()

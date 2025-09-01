@@ -98,8 +98,6 @@ class FrameSelect(Range[int]):
 
         ranges = super().validate(value, deps)
 
-        print(ranges)
-
         return Frames(trajectory, ranges)
 
 

@@ -126,7 +126,7 @@ class DL_POLY(Converter):
 
         if self.history_file.imcon:
             conf = PeriodicRealConfiguration(
-                self._trajectory.chemical_system, frame["positions"], frame["cell"]
+                self._trajectory.chemical_system, frame["positions"], frame["unit_cell"]
             )
         else:
             conf = RealConfiguration(
@@ -143,7 +143,7 @@ class DL_POLY(Converter):
 
         self._trajectory.dump_configuration(
             conf,
-            frame["step"],
+            frame["time"],
             units={
                 "time": "ps",
                 "unit_cell": "nm",

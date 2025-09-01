@@ -27,9 +27,9 @@ from MDANSE.Framework.Parameters.Parameters import Parameter
 from MDANSE.MLogging import LogLevels
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
-from .Parameters import ConfigError, CustomConfig
 from .BaseTypes import Integer, PathParam
 from .Choices import MultipleChoice, SingleChoice
+from .Parameters import ConfigError, CustomConfig
 
 
 class OldOutputSettings(NamedTuple):
@@ -161,7 +161,9 @@ class OutputTrajectory(OutputFile):
 
 
 class ASEOutputFormat(OutputFile):
-    out_format = SingleChoice(choices=(key for key, val in ioformats.items() if val.can_write))
+    out_format = SingleChoice(
+        choices=(key for key, val in ioformats.items() if val.can_write)
+    )
 
     def __init__(self, fmt):
         self.out_format = fmt

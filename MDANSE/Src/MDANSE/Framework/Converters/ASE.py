@@ -76,7 +76,7 @@ class ASE(Converter):
     )
     time_unit = SingleChoice(("fs", "ps", "ns"), default="fs", label="Time step unit")
     time_step = Float(default=1.0, minimum=1e-9, label="Time step")
-    n_steps_in = Integer(
+    n_steps = Integer(
         default=0, minimum=0, label="Number of time steps (0 for automatic detection)"
     )
     time_step = Float(default=1.0, mini=1e-9, label="Time step")
@@ -104,7 +104,7 @@ class ASE(Converter):
         self._initial_masses = None
 
         # The number of steps of the analysis.
-        self.numberOfSteps = self.n_steps_in
+        self.numberOfSteps = self.n_steps
 
         self._timestep = float(self.time_step) * measure(1.0, self.time_unit).toval(
             "ps"

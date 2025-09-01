@@ -17,8 +17,8 @@ STRUCT_CONV: dict[str, Literal["<", ">"]] = {
 FROM_BYTES_CONV: dict[str, Literal["little", "big"]] = {
     "big": "big",
     "little": "little",
-    ">": "little",
-    "<": "big",
+    "<": "little",
+    ">": "big",
 }
 
 
