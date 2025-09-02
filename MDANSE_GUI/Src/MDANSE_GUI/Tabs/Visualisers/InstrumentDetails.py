@@ -76,8 +76,8 @@ class InstrumentDetails(QWidget):
             instance.textChanged.connect(self.update_values)
         elif widget == "VectorWidget":
             instance = VectorWidget(self)
-            instance.set_value([0, 0, 0])
-            instance.value_changed.connect(self.update_values)
+            instance.setValue([0, 0, 0])
+            instance.valueChanged.connect(self.update_values)
         qlabel = QLabel(label, self)
         layout.addWidget(qlabel, next_row, 0)
         layout.addWidget(instance, next_row, 1)

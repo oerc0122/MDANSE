@@ -47,7 +47,7 @@ class OptionalInputFileWidget(InputFileWidget):
             self.mark_error(
                 "COULD NOT SET THIS VALUE - you may need to change the values in other widgets"
             )
-        self.value_changed.emit()
+        self.valueChanged.emit()
         if self._configurator.valid:
             self.clear_error()
             self.value_updated.emit()

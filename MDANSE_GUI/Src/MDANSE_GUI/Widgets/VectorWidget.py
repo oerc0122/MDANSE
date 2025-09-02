@@ -26,7 +26,7 @@ from qtpy.QtWidgets import (
 
 
 class VectorWidget(QWidget):
-    value_changed = Signal(list)
+    valueChanged = Signal(list)
 
     def __init__(self, *args, dtype=None, **kwargs) -> None:
         label_text = kwargs.pop("label", "Vector input")
@@ -64,24 +64,24 @@ class VectorWidget(QWidget):
                 value = float(strvalue)
             result.append(value)
         self._value = result
-        self.value_changed.emit(result)
+        self.valueChanged.emit(result)
 
-    def set_text(self, input_string: str):
+    def setText(self, input_string: str):
         if self._dtype == "int":
             converter = int
         elif self._dtype == "float":
             converter = float
         try:
-            self.set_value(
+            self.setValue(
                 [converter(x) for x in input_string.strip("[]()").split(",")]
             )
         except Exception:
-            self.set_value([0, 0, 0])
+            self.setValue([0, 0, 0])
 
     def text(self):
         return ",".join([field.text() for field in self._fields])
 
     @Slot(object)
-    def set_value(self, new_value):
+    def setValue(self, new_value):
         for n, value in enumerate(new_value):
             self._fields[n].setText(str(value))

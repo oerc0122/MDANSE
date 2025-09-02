@@ -71,7 +71,7 @@ class GeneralInput(QObject):
 
     final_value = Signal(object)
     string_value = Signal(str)
-    value_changed = Signal()
+    valueChanged = Signal()
 
     def __init__(self, *args, data_type=None, **kwargs):
         new_kwargs = copy.copy(kwargs)
@@ -135,7 +135,7 @@ class GeneralInput(QObject):
             converted = self.default_value
             LOG.error(f"TypeError converting {newone} using {self.data_type}")
         self.current_value = converted
-        self.value_changed.emit()
+        self.valueChanged.emit()
         if emit:
             self.string_value.emit(self.current_value)
 
@@ -202,7 +202,7 @@ class InputGroup(QObject):
         self.values = []
 
     @Slot()
-    def value_changed(self):
+    def valueChanged(self):
         """This slot is triggered when one of the inputs
         changes its value. It then checks ALL the inputs
         and outputs their values put together."""
@@ -215,7 +215,7 @@ class InputGroup(QObject):
     def register_value(self, field: GeneralInput):
         """Adds an input field to the list of fields"""
         self.fields.append(field)
-        field.value_changed.connect(self.value_changed)
+        field.valueChanged.connect(self.valueChanged)
 
     def return_value(self):
         result = []

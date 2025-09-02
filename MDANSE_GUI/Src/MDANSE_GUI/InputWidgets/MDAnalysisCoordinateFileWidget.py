@@ -15,7 +15,7 @@
 #
 from __future__ import annotations
 
-import MDAnalysis as MDa
+import MDAnalysis as mda
 from qtpy.QtWidgets import QFileDialog
 
 from .MDAnalysisTopologyFileWidget import MDAnalysisTopologyFileWidget
@@ -29,7 +29,7 @@ class MDAnalysisCoordinateFileWidget(
         super().__init__(
             *args,
             file_dialog=file_dialog,
-            format_options=sorted(MDa._READERS.keys()),
+            format_options=sorted(mda._READERS.keys()),
             **kwargs,
         )
         for widget in self.parent()._widgets:
@@ -39,4 +39,4 @@ class MDAnalysisCoordinateFileWidget(
                     self._configurator.dependencies["input_file"]
                 ]
             ):
-                widget.value_changed.connect(self.update_value)
+                widget.valueChanged.connect(self.update_value)

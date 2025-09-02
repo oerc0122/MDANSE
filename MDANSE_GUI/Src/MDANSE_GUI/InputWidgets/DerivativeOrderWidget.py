@@ -62,7 +62,7 @@ class DerivativeOrderWidget(WidgetBase):
                     self._configurator.dependencies["frames"]
                 ]
             ):
-                widget.value_changed.connect(self.update_value)
+                widget.valueChanged.connect(self.update_value)
 
     def configure_using_default(self):
         """This is too simple to have a default value"""

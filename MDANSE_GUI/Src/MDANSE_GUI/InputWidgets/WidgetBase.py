@@ -65,7 +65,7 @@ class WidgetBase(QObject):
 
     valid_changed = Signal()
     value_updated = Signal()
-    value_changed = Signal()
+    valueChanged = Signal()
 
     def __init__(
         self,
@@ -217,7 +217,7 @@ class WidgetBase(QObject):
             self.mark_error(
                 "COULD NOT SET THIS VALUE - you may need to change the values in other widgets"
             )
-        self.value_changed.emit()
+        self.valueChanged.emit()
         if not self._configurator.valid:
             self.mark_error(self._configurator.error_status)
         else:

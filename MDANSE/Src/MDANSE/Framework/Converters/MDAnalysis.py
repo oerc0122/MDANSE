@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import collections
 
-import MDAnalysis as MDa
+import MDAnalysis as mda
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
@@ -109,7 +109,7 @@ class MDAnalysis(Converter):
         coord_files = self.configuration["coordinate_files"]["filenames"]
 
         if len(coord_files) <= 1 or coord_format is None:
-            self.u = MDa.Universe(
+            self.u = mda.Universe(
                 self.configuration["topology_file"]["filename"],
                 *coord_files,
                 continuous=self.configuration["continuous"]["value"],
@@ -118,7 +118,7 @@ class MDAnalysis(Converter):
             )
         else:
             coord_files = [(i, coord_format) for i in coord_files]
-            self.u = MDa.Universe(
+            self.u = mda.Universe(
                 self.configuration["topology_file"]["filename"],
                 coord_files,
                 continuous=self.configuration["continuous"]["value"],
@@ -230,7 +230,7 @@ class MDAnalysis(Converter):
 
             if hasattr(self.u.trajectory.ts, "forces"):
                 conf["gradients"] = self.u.trajectory.ts.forces * measure(
-                    1.0, "k_j/mol ang", equivalent=True
+                    1.0, "kJ/mol ang", equivalent=True
                 ).toval("Da nm/ps2")
 
         if float(self.configuration["time_step"]["value"]) == 0.0:

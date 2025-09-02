@@ -35,16 +35,16 @@ class ColourPicker(QStyledItemDelegate):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    def create_editor(self, parent, option, index):
+    def createEditor(self, parent, option, index):
         dialog = QColorDialog(parent)
         return dialog
 
-    def set_editor_data(self, editor, index):
+    def setEditorData(self, editor, index):
         colour_string = index.data()
         color = QColor(colour_string)
         editor.setCurrentColor(color)
 
-    def set_model_data(self, editor, model, index):
+    def setModelData(self, editor, model, index):
         if editor.result() == QColorDialog.DialogCode.Accepted:
             color = editor.currentColor()
             colour_string = color.toRgb()
@@ -57,7 +57,7 @@ class MainAxisCombo(QItemDelegate):
         self._items = []
         super().__init__(*args, **kwargs)
 
-    def set_editor_data(self, editor, index):
+    def setEditorData(self, editor, index):
         editor.blockSignals(True)
         text = index.model().data(index, Qt.DisplayRole)
         try:
@@ -67,10 +67,10 @@ class MainAxisCombo(QItemDelegate):
         editor.setCurrentIndex(i)
         editor.blockSignals(False)
 
-    def set_model_data(self, editor, model, index):
+    def setModelData(self, editor, model, index):
         model.setData(index, editor.currentText())
 
-    def create_editor(self, parent, option, index):
+    def createEditor(self, parent, option, index):
         combo = QComboBox(parent)
         model = index.model()
         key = index.model().data(index, Qt.ItemDataRole.UserRole)
@@ -90,7 +90,7 @@ class MplStyleCombo(QItemDelegate):
         self._items = list([str(x) for x in mpl_items.keys()])
         super().__init__(*args, **kwargs)
 
-    def set_editor_data(self, editor, index):
+    def setEditorData(self, editor, index):
         editor.blockSignals(True)
         text = index.model().data(index, Qt.DisplayRole)
         try:
@@ -100,10 +100,10 @@ class MplStyleCombo(QItemDelegate):
         editor.setCurrentIndex(i)
         editor.blockSignals(False)
 
-    def set_model_data(self, editor, model, index):
+    def setModelData(self, editor, model, index):
         model.setData(index, editor.currentText())
 
-    def create_editor(self, parent, option, index):
+    def createEditor(self, parent, option, index):
         combo = QComboBox(parent)
         li = []
         for item in self._items:
@@ -123,22 +123,22 @@ class RadiusSpinBox(QItemDelegate):
         self._step = 0.01
         super().__init__(*args, **kwargs)
 
-    def set_editor_data(self, editor, index):
+    def setEditorData(self, editor, index):
         current_value = float(index.data())
         editor.setValue(current_value)
 
-    def set_model_data(self, editor, model, index):
+    def setModelData(self, editor, model, index):
         model.setData(index, str(round(editor.value(), 2)))
 
-    def create_editor(self, parent, option, index):
+    def createEditor(self, parent, option, index):
         sbox = QDoubleSpinBox(parent)
         sbox.setMinimum(self._minimum)
         sbox.setSingleStep(self._step)
-        sbox.valueChanged.connect(self.value_changed)
+        sbox.valueChanged.connect(self.valueChanged)
         return sbox
 
     @Slot()
-    def value_changed(self):
+    def valueChanged(self):
         self.commitData.emit(self.sender())
 
 

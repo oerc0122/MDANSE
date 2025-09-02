@@ -31,4 +31,4 @@ class MDTrajTopologyFileWidget(InputFileWidget):
                     self._configurator.dependencies["coordinate_files"]
                 ]
             ):
-                widget.value_changed.connect(self.update_value)
+                widget.valueChanged.connect(self.update_value)

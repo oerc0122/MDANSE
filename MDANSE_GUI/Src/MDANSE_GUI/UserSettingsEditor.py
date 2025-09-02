@@ -108,7 +108,7 @@ class UserSettingsEditor(QDialog):
         self.proxy_model.setSourceModel(self.data_model)
         self.viewer.setModel(self.proxy_model)
         self.expand_columns()
-        self.data_model.itemChanged.connect(self.data_model.on_value_changed)
+        self.data_model.itemChanged.connect(self.data_model.on_valueChanged)
 
     @Slot()
     def expand_columns(self):

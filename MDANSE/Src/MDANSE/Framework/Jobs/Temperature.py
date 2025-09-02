@@ -87,14 +87,14 @@ class Temperature(IJob):
             "LineOutputVariable",
             (self._n_frames,),
             axis="temp/axes/time",
-            units="k_j_per_mole",
+            units="kJ_per_mole",
         )
         self._output_data.add(
             "temp/avg_kinetic_energy",
             "LineOutputVariable",
             (self._n_frames,),
             axis="temp/axes/time",
-            units="k_j_per_mole",
+            units="kJ_per_mole",
         )
         self._output_data.add(
             "temp/temperature",

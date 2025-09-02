@@ -195,7 +195,7 @@ class AtomMappingWidget(WidgetBase):
         self._default_value = default_value
         self._layout.addWidget(self._field)
         self._layout.addWidget(self.helper_button)
-        self._file_widget.value_changed.connect(self.update_helper_button)
+        self._file_widget.valueChanged.connect(self.update_helper_button)
         self.update_labels()
         self.update_value()
 

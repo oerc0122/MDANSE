@@ -163,7 +163,7 @@ class UserSettingsModel(QStandardItemModel):
                 LOG.debug(group.as_toml())
 
     @Slot("QStandardItem*")
-    def on_value_changed(self, item: QStandardItem):
+    def on_valueChanged(self, item: QStandardItem):
         item_key = item.text()
         index = item.index()
         column = index.column()

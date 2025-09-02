@@ -97,10 +97,10 @@ class ComplexValidator(QValidator):
 class FloatInputField(QItemDelegate):
     """QLineEdit with a QDoubleValidator."""
 
-    def set_editor_data(self, editor, index):
+    def setEditorData(self, editor, index):  # noqa: N802 -- Should be @override py312
         editor.setText(str(index.data()))
 
-    def set_model_data(self, editor, model, index):
+    def setModelData(self, editor, model, index):  # noqa: N802 -- Should be @override py312
         new_text = editor.text()
         try:
             float(new_text)
@@ -108,25 +108,25 @@ class FloatInputField(QItemDelegate):
             return
         model.setData(index, new_text)
 
-    def create_editor(self, parent, _option, _index):
+    def createEditor(self, parent, _option, _index):  # noqa: N802 -- Should be @override py312
         sbox = QLineEdit(parent)
         validator = QDoubleValidator()
         sbox.setValidator(validator)
-        sbox.textChanged.connect(self.value_changed)
+        sbox.textChanged.connect(self.valueChanged)
         return sbox
 
     @Slot()
-    def value_changed(self):
+    def valueChanged(self):  # noqa: N802 -- Should be @override py312
         self.commitData.emit(self.sender())
 
 
 class ComplexInputField(QItemDelegate):
     """QLineEdit with a ComplexValidator."""
 
-    def set_editor_data(self, editor, index):
+    def setEditorData(self, editor, index):  # noqa: N802 -- Should be @override py312
         editor.setText(str(index.data()))
 
-    def set_model_data(self, editor, model, index):
+    def setModelData(self, editor, model, index):  # noqa: N802 -- Should be @override py312
         new_text = editor.text()
         try:
             complex(new_text)
@@ -134,25 +134,25 @@ class ComplexInputField(QItemDelegate):
             return
         model.setData(index, new_text)
 
-    def create_editor(self, parent, _option, _index):
+    def createEditor(self, parent, _option, _index):  # noqa: N802 -- Should be @override py312
         sbox = QLineEdit(parent)
         validator = ComplexValidator()
         sbox.setValidator(validator)
-        sbox.textChanged.connect(self.value_changed)
+        sbox.textChanged.connect(self.valueChanged)
         return sbox
 
     @Slot()
-    def value_changed(self):
+    def valueChanged(self):  # noqa: N802 -- Should be @override py312
         self.commitData.emit(self.sender())
 
 
 class IntInputField(QItemDelegate):
     """QLineEdit with a QIntValidator."""
 
-    def set_editor_data(self, editor, index):
+    def setEditorData(self, editor, index):  # noqa: N802 -- Should be @override py312
         editor.setText(str(index.data()))
 
-    def set_model_data(self, editor, model, index):
+    def setModelData(self, editor, model, index):  # noqa: N802 -- Should be @override py312
         new_text = editor.text()
         try:
             int(new_text)
@@ -160,32 +160,32 @@ class IntInputField(QItemDelegate):
             return
         model.setData(index, new_text)
 
-    def create_editor(self, parent, _option, _index):
+    def createEditor(self, parent, _option, _index):  # noqa: N802 -- Should be @override py312
         sbox = QLineEdit(parent)
         validator = QIntValidator()
         sbox.setValidator(validator)
-        sbox.textChanged.connect(self.value_changed)
+        sbox.textChanged.connect(self.valueChanged)
         return sbox
 
     @Slot()
-    def value_changed(self):
+    def valueChanged(self):  # noqa: N802 -- Should be @override py312
         self.commitData.emit(self.sender())
 
 
 class ColorInputField(ColourPicker):
-    def set_editor_data(self, editor, index):
+    def setEditorData(self, editor, index):
         r, g, b = index.data().split(";")
         color = QColor(int(r), int(g), int(b))
         editor.setCurrentColor(color)
 
-    def set_model_data(self, editor, model, index):
+    def setModelData(self, editor, model, index):
         if editor.result() == QColorDialog.DialogCode.Accepted:
             color = editor.currentColor()
             model.setData(index, f"{color.red()};{color.green()};{color.blue()}")
             model.setData(index, color, role=Qt.ItemDataRole.BackgroundRole)
-            self.value_changed()
+            self.valueChanged()
 
-    def value_changed(self):
+    def valueChanged(self):
         self.commitData.emit(self.sender())
 
 
@@ -248,7 +248,7 @@ class ElementView(QTableView):
         delete_atom = menu.addAction("Delete Custom Atoms")
         new_property = menu.addAction("New Custom Property")
         copy_property = menu.addAction("Copy Properties")
-        raname_property = menu.addAction("Rename Custom Property")
+        rename_property = menu.addAction("Rename Custom Property")
         delete_property = menu.addAction("Delete Custom Properties")
 
         data_model = self.parent().data_model
@@ -301,9 +301,9 @@ class ElementView(QTableView):
             new_property.triggered.connect(temp_model.new_column_dialog)
             copy_property.triggered.connect(temp_model.copy_columns)
             if self.mouse_prop in custom_props:
-                raname_property.triggered.connect(temp_model.rename_column_dialog)
+                rename_property.triggered.connect(temp_model.rename_column_dialog)
             else:
-                raname_property.setEnabled(False)
+                rename_property.setEnabled(False)
             if enable_delete_props:
                 delete_property.triggered.connect(temp_model.delete_columns)
             else:

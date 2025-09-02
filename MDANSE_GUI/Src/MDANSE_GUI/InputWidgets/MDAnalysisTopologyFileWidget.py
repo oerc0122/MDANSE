@@ -15,14 +15,14 @@
 #
 from __future__ import annotations
 
-import MDAnalysis as MDa
+import MDAnalysis as mda
 from qtpy.QtWidgets import QComboBox, QLineEdit, QPushButton
 
 from .InputFileWidget import InputFileWidget
 
 
 class MDAnalysisTopologyFileWidget(InputFileWidget):
-    def __init__(self, *args, format_options=sorted(MDa._PARSERS.keys()), **kwargs):
+    def __init__(self, *args, format_options=sorted(mda._PARSERS.keys()), **kwargs):
         self.format_options = ["AUTO"] + list(format_options)
         super().__init__(*args, **kwargs)
 

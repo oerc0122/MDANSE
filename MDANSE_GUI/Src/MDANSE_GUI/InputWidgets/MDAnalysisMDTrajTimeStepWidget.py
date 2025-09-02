@@ -32,7 +32,7 @@ class MDAnalysisMDTrajTimeStepWidget(FloatWidget):
                 ]
             ):
                 self._topology_file_widget = widget
-                self._topology_file_widget.value_changed.connect(self.update_from_files)
+                self._topology_file_widget.valueChanged.connect(self.update_from_files)
             if (
                 widget._configurator
                 is self._configurator.configurable[
@@ -40,7 +40,7 @@ class MDAnalysisMDTrajTimeStepWidget(FloatWidget):
                 ]
             ):
                 self._coordinates_file_widget = widget
-                self._coordinates_file_widget.value_changed.connect(
+                self._coordinates_file_widget.valueChanged.connect(
                     self.update_from_files
                 )
 
