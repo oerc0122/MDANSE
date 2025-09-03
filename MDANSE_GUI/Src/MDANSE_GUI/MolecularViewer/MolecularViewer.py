@@ -111,6 +111,7 @@ class MolecularViewer(QtWidgets.QWidget):
 
         setattr(self._iren, "keyPressEvent", dummy_method)
 
+        # the main render which includes the trajectory
         self._renderer = vtk.vtkRenderer()
         self._renderer.SetLayer(0)
         # create another renderer for the atoms labels, we want the
@@ -120,10 +121,19 @@ class MolecularViewer(QtWidgets.QWidget):
         self._label_renderer.SetLayer(1)
         self._label_renderer.SetBackgroundAlpha(0)
         self._label_renderer.SetInteractive(False)
+        # create another renderer for the axes, we want the axes to
+        # be ontop of everything else and fixed to the corner of
+        # the screen
+        self._axes_renderer = vtk.vtkRenderer()
+        self._axes_renderer.SetLayer(2)
+        self._axes_renderer.SetBackgroundAlpha(0)
+        self._axes_renderer.SetInteractive(False)
+        self._axes_renderer.SetViewport(0.0, 0.0, 0.25, 0.25)
 
-        self._iren.GetRenderWindow().SetNumberOfLayers(2)
+        self._iren.GetRenderWindow().SetNumberOfLayers(3)
         self._iren.GetRenderWindow().AddRenderer(self._renderer)
         self._iren.GetRenderWindow().AddRenderer(self._label_renderer)
+        self._iren.GetRenderWindow().AddRenderer(self._axes_renderer)
 
         self._iren.GetRenderWindow().SetPosition((0, 0))
 
@@ -132,10 +142,6 @@ class MolecularViewer(QtWidgets.QWidget):
         self._iren.Enable()
 
         self._iren.GetRenderWindow()
-
-        self.axes_assembly, self.label_actor, self.axes_widgets = (
-            self.create_arrow_widgets()
-        )
 
         self.atom_actor = None
         self._last_coords = None
@@ -152,6 +158,26 @@ class MolecularViewer(QtWidgets.QWidget):
         self._label_renderer.SetActiveCamera(self._camera)
         self._camera.SetFocalPoint(0, 0, 0)
         self._camera.SetPosition(0, 0, 20)
+
+        # camera for the axes
+        self._axes_camera = vtk.vtkCamera()
+        self._axes_renderer.SetActiveCamera(self._axes_camera)
+        self._axes_camera.SetFocalPoint(0, 0, 0)
+        self._axes_camera.SetPosition(0, 0, 8)
+
+        def update_axes_orientation(caller, event):
+            """The axes camera needs to rotate with the main camera."""
+            m = self._camera.GetViewTransformMatrix()
+            rot = np.array([[m.GetElement(i, j) for j in range(3)] for i in range(3)])
+            pos = np.array([0, 0, 8]) @ rot
+            up = np.array([0, 1, 0]) @ rot
+            self._axes_camera.SetPosition(pos[0], pos[1], pos[2])
+            self._axes_camera.SetViewUp(up[0], up[1], up[2])
+            self._axes_renderer.ResetCameraClippingRange()
+
+        self._renderer.GetActiveCamera().AddObserver(
+            "ModifiedEvent", update_axes_orientation
+        )
 
         self._n_atoms = 0
         self._n_frames = 0
@@ -178,58 +204,85 @@ class MolecularViewer(QtWidgets.QWidget):
 
         self._current_frame = 0
 
+        self.axes_actors = []
+        self.update_axes()
+
         self._colour_manager = AtomProperties()
         self.dummy_size = 0.0
 
         self.reset_camera = False
 
-    def create_arrow_widgets(self):
-        """Create three axes for each direction. We want to create three
-        separate arrows so that we can apply a rotation to each one to
-        align it along the unit cell axes. We could create one axis and
-        apply a non-orthogonal transform to it but this causes the
-        arrows to become distorted.
-        """
-        axes_widgets = []
+    def clear_axes(self):
+        if not self.axes_actors:
+            return
 
-        labels = ["X", "Y", "Z"]
-        assembly = vtk.vtkAssembly()
-        for axes in labels:
-            axes_actor = vtkAxesActor()
-            axes_actor.AxisLabelsOn()
-            axes_actor.SetShaftTypeToCylinder()
-            others = copy.deepcopy(labels)
-            others.remove(axes)
-            for label in others:
-                getattr(axes_actor, f"Get{label}AxisShaftProperty")().SetOpacity(0.0)
-                getattr(axes_actor, f"Get{label}AxisTipProperty")().SetOpacity(0.0)
-            assembly.AddPart(axes_actor)
+        for actor in self.axes_actors:
+            self._axes_renderer.RemoveActor(actor)
 
-        axes_widget = vtk.vtkOrientationMarkerWidget()
-        axes_widget.SetOrientationMarker(assembly)
-        axes_widget.SetInteractor(self._iren.GetRenderWindow().GetInteractor())
-        axes_widget.SetViewport(0.0, 0.0, 0.25, 0.25)
-        axes_widget.SetEnabled(True)
-        axes_widget.InteractiveOff()
-        axes_widgets.append(axes_widget)
+        self.axes_actors = []
 
-        label_actor = vtkAxesActor()
-        label_actor.AxisLabelsOn()
-        label_actor.GetXAxisShaftProperty().SetOpacity(0.0)
-        label_actor.GetYAxisShaftProperty().SetOpacity(0.0)
-        label_actor.GetZAxisShaftProperty().SetOpacity(0.0)
-        label_actor.GetXAxisTipProperty().SetOpacity(0.0)
-        label_actor.GetYAxisTipProperty().SetOpacity(0.0)
-        label_actor.GetZAxisTipProperty().SetOpacity(0.0)
-        axes_widget = vtk.vtkOrientationMarkerWidget()
-        axes_widget.SetOrientationMarker(label_actor)
-        axes_widget.SetInteractor(self._iren.GetRenderWindow().GetInteractor())
-        axes_widget.SetViewport(0.0, 0.0, 0.25, 0.25)
-        axes_widget.SetEnabled(True)
-        axes_widget.InteractiveOff()
-        axes_widgets.append(axes_widget)
+    def update_axes(self):
+        def add_arrow(color, rx, ry, rz):
+            arrow_source = vtk.vtkArrowSource()
+            arrow_mapper = vtk.vtkPolyDataMapper()
+            arrow_mapper.SetInputConnection(arrow_source.GetOutputPort())
+            arrow_actor = vtk.vtkActor()
+            arrow_actor.SetMapper(arrow_mapper)
+            arrow_actor.GetProperty().SetColor(color)
+            arrow_actor.SetOrientation(rx, ry, rz)
+            self.axes_actors.append(arrow_actor)
+            self._axes_renderer.AddActor(arrow_actor)
 
-        return assembly, label_actor, axes_widgets
+        def add_text(text, coord):
+            vec_text = vtk.vtkVectorText()
+            vec_text.SetText(text)
+
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputConnection(vec_text.GetOutputPort())
+
+            follower = vtk.vtkFollower()
+            follower.SetMapper(mapper)
+            follower.SetScale(0.25)
+            follower.SetCamera(self._axes_renderer.GetActiveCamera())
+            follower.SetPosition(*coord)
+            self.axes_actors.append(follower)
+            self._axes_renderer.AddActor(follower)
+
+        self.clear_axes()
+
+        if self.current_axes_type == "none":
+            return
+
+        if self.current_axes_type == "cartesian":
+            add_arrow((1, 0, 0), 0, 0, 0)
+            add_arrow((0, 1, 0), 0, 0, 90)
+            add_arrow((0, 0, 1), 0, -90, 0)
+            add_text("X", [1, 0, 0])
+            add_text("Y", [0, 1, 0])
+            add_text("Z", [0, 0, 1])
+            return
+
+        if self._reader is None:
+            return
+        uc = self._reader.read_pbc(self._current_frame)
+        if uc is None:
+            return
+
+        if self.current_axes_type == "direct":
+            matrix = uc.direct.copy()
+            labels = ["a", "b", "c"]
+        elif self.current_axes_type == "reciprocal":
+            matrix = uc.inverse.copy().T
+            labels = ["a*", "b*", "c*"]
+
+        matrix /= np.linalg.norm(matrix, axis=1)[:, np.newaxis]
+        for i, label in enumerate(labels):
+            new_vec = matrix[i]
+            z, x, y = R.align_vectors(new_vec, [1, 0, 0])[0].as_euler(
+                "zxy", degrees=True
+            )
+            add_arrow(np.eye(3)[i], x, y, z)
+            add_text(label, new_vec)
 
     def _new_trajectory_object(self, fname: str, trajectory: Trajectory):
         """Creates and sets a new trajectory reader for the input trajectory.
@@ -696,78 +749,6 @@ class MolecularViewer(QtWidgets.QWidget):
                 return
 
         self._polydata_bonds_exist = False
-
-    def update_axes(self):
-        """Updates the axes depending on the axes type used."""
-        for widget in self.axes_widgets:
-            widget.SetEnabled(False)
-        if self.current_axes_type == "none":
-            return
-
-        if self.current_axes_type == "cartesian":
-            transform = vtk.vtkTransform()
-            transform.Identity()
-            parts = self.axes_assembly.GetParts()
-            parts.InitTraversal()
-            for i in range(parts.GetNumberOfItems()):
-                arrow = parts.GetNextProp()
-                arrow.SetUserTransform(transform)
-            self.label_actor.SetUserTransform(transform)
-            for widget in self.axes_widgets:
-                widget.SetEnabled(True)
-            self.label_actor.SetXAxisLabelText("X")
-            self.label_actor.SetYAxisLabelText("Y")
-            self.label_actor.SetZAxisLabelText("Z")
-            return
-
-        if self._reader is None:
-            return
-        uc = self._reader.read_pbc(self._current_frame)
-        if uc is None:
-            return
-
-        for widget in self.axes_widgets:
-            widget.SetEnabled(True)
-
-        if self.current_axes_type == "direct":
-            self.label_actor.SetXAxisLabelText("a")
-            self.label_actor.SetYAxisLabelText("b")
-            self.label_actor.SetZAxisLabelText("c")
-            matrix = uc.direct.copy()
-        elif self.current_axes_type == "reciprocal":
-            self.label_actor.SetXAxisLabelText("a*")
-            self.label_actor.SetYAxisLabelText("b*")
-            self.label_actor.SetZAxisLabelText("c*")
-            matrix = uc.inverse.copy().T
-        matrix /= np.linalg.norm(matrix, axis=1)[:, np.newaxis]
-
-        parts = self.axes_assembly.GetParts()
-        parts.InitTraversal()
-        for i in range(parts.GetNumberOfItems()):
-            new_vec = matrix[i]
-            cart_vec = np.eye(3)[i]
-            rot = R.align_vectors(new_vec, cart_vec)[0].as_matrix()
-
-            vtk_matrix = vtk.vtkMatrix4x4()
-            for j in range(3):
-                for k in range(3):
-                    vtk_matrix.SetElement(j, k, rot[j, k])
-            vtk_matrix.SetElement(3, 3, 1.0)
-
-            transform = vtk.vtkTransform()
-            transform.SetMatrix(vtk_matrix)
-            arrow = parts.GetNextProp()
-            arrow.SetUserTransform(transform)
-
-        matrix = matrix.T
-        vtk_matrix = vtk.vtkMatrix4x4()
-        for i in range(3):
-            for j in range(3):
-                vtk_matrix.SetElement(i, j, matrix[i, j])
-        vtk_matrix.SetElement(3, 3, 1.0)
-        transform = vtk.vtkTransform()
-        transform.SetMatrix(vtk_matrix)
-        self.label_actor.SetUserTransform(transform)
 
     def create_bond_cell_array(
         self,
