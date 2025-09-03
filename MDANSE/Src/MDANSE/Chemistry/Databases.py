@@ -20,7 +20,7 @@ import json
 from collections import defaultdict
 from collections.abc import ItemsView
 from pathlib import Path
-from typing import Any, Optional, SupportsComplex, Union
+from typing import Any, SupportsComplex
 
 from MDANSE.Core.Error import Error
 from MDANSE.Core.Platform import PLATFORM
@@ -426,6 +426,11 @@ class AtomsDatabase(_Database):
         """Return the names of the properties stored in the atoms database."""
         return sorted(self._properties.keys())
 
+    @property
+    def units(self) -> dict[str, str]:
+        """Return the dictionary mapping properties to their physical units."""
+        return self._units
+
     def get_property(self, pname: str) -> dict[str, str | int | float | list]:
         """Return the values of a property for all atoms.
 
@@ -570,40 +575,6 @@ class AtomsDatabase(_Database):
 
         """
         return pname in self._properties
-
-    def info(self, atom: str) -> str:
-        """Return as string all the information about the input atom.
-
-        Parameters
-        ----------
-        atom : str
-            Atom type.
-
-        Returns
-        -------
-        str
-            Multi-line list of all the atom properties.
-
-        """
-        # A delimiter line.
-        delimiter = "-" * 70
-        tab_fmt = " {:<20}{!s:>50}"
-
-        info = [
-            delimiter,
-            f"{atom:^70}",
-            tab_fmt.format("property", "value"),
-            delimiter,
-        ]
-
-        # The values for all element's properties
-        for pname in sorted(self._properties):
-            info.append(tab_fmt.format(pname, self._data[atom].get(pname, None)))
-
-        info.append(delimiter)
-        info = "\n".join(info)
-
-        return info
 
     def match_numeric_property(
         self,

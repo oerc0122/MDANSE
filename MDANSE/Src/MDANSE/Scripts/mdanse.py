@@ -15,436 +15,457 @@
 #
 from __future__ import annotations
 
-import optparse
-import pickle
-import subprocess
-import sys
 import textwrap
+from argparse import (
+    ArgumentParser,
+    Namespace,
+    RawDescriptionHelpFormatter,
+    _SubParsersAction,
+)
 from pathlib import Path
+from typing import Any
 
-from MDANSE import PLATFORM
+import h5py
+
+import MDANSE
+from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Core.Error import Error
+from MDANSE.Framework.Converters.Converter import Converter
+from MDANSE.Framework.Formats.HDFFormat import check_metadata
 from MDANSE.Framework.Jobs.IJob import IJob
-from MDANSE.Framework.Jobs.JobStatus import JobInfo
+from MDANSE.IO.AtomInfo import atom_info
 from MDANSE.MLogging import LOG
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
-
-
-class IndentedHelp(optparse.IndentedHelpFormatter):
-    """This class modify slightly the help formatter of the optparse.OptionParser class.
-
-    This allows to take into account the line feed properly.
-
-    @note: code taken as it is from an implementation made by Tim Chase
-    (http://groups.google.com/group/comp.lang.python/browse_thread/thread/6df6e6b541a15bc2/09f28e26af0699b1)
-    """
-
-    def format_description(self, description):
-        if not description:
-            return ""
-        desc_width = self.width - self.current_indent
-        indent = " " * self.current_indent
-        bits = description.splitlines()
-        formatted_bits = (
-            textwrap.fill(
-                bit, desc_width, initial_indent=indent, subsequent_indent=indent
-            )
-            for bit in bits
-        )
-        result = "\n".join(formatted_bits) + "\n"
-
-        return result
-
-    def format_option(self, option):
-        indent = " " * self.current_indent
-        result = ""
-        opts = self.option_strings[option]
-        opt_width = self.help_position - self.current_indent - 2
-        if len(opts) > opt_width:
-            opts = f"{indent}{opts}\n"
-            indent_first = self.help_position
-        else:  # start help on same line as opts
-            opts = f"{indent}{opts}  "
-            indent_first = 0
-        result += opts
-        if option.help:
-            help_text = self.expand_default(option)
-            # Everything is the same up through here
-            help_lines = [
-                textwrap.wrap(para, self.help_width) for para in help_text.splitlines()
-            ]
-            # Everything is the same after here
-            result += f"{indent_first}{help_lines[0]}\n"
-            result += (
-                "\n".join(
-                    f"{' ' * self.help_position}{line}" for line in help_lines[1:]
-                )
-                + "\n"
-            )
-        elif not opts.endswith("\n"):
-            result += "\n"
-
-        return result
+from MDANSE.MolecularDynamics.Trajectory import (
+    Trajectory,
+    chemical_system_summary,
+    trajectory_summary,
+)
 
 
 class CommandLineParserError(Error):
     pass
 
 
-class CommandLineParser(optparse.OptionParser):
-    """A sublcass of OptionParser.
+def show_element_info(element):
+    if element:
+        print(ATOMS_DATABASE.info(element))  # noqa: T201
 
-    Creates the MDANSE commad line parser.
-    """
 
-    def __init__(self, *args, **kwargs):
-        optparse.OptionParser.__init__(self, *args, **kwargs)
+def get_hdf5_contents(file_object: h5py.File):
+    key_list = []
 
-    def check_job(self, option, opt_str, value, parser):
-        """Display the jobs list
+    def save_key(name, obj):
+        if isinstance(obj, h5py.Dataset):
+            key_list.append(name)
 
-        @param option: the option that triggered the callback.
-        @type option: optparse.Option instance
+    file_object.visititems(save_key)
+    return key_list
 
-        @param opt_str: the option string seen on the command line.
-        @type opt_str: str
 
-        @param value: the argument for the option.
-        @type value: str
+def show_trajectory_contents(args: Namespace):
+    trajectory_path = args.file_name
+    if not trajectory_path:
+        return
+    trajectory_name = Path.cwd() / trajectory_path
+    instance = Trajectory(trajectory_name)
+    result = trajectory_summary(instance)
+    result += chemical_system_summary(instance.chemical_system)
+    traj_arrays = get_hdf5_contents(instance.file)
+    result += "====DATA ARRAYS====\n"
+    result += "\n".join(
+        f"{name}: type={instance.file[name].dtype}, shape={instance.file[name].shape}"
+        for name in traj_arrays
+    )
+    print(result)  # noqa: T201
 
-        @param parser: the MDANSE option parser.
-        @type parser: instance of MDANSEOptionParser
-        """
 
-        if len(parser.rargs) != 1:
-            raise CommandLineParserError(
-                f"Invalid number of arguments for {opt_str!r} option"
-            )
-
-        basename = parser.rargs[0]
-
-        filename = PLATFORM.temporary_files_directory() / basename
-
-        if not filename.exists():
-            raise CommandLineParserError("Invalid job name")
-
-        # Open the job temporary file
-        try:
-            f = open(filename, "rb")
-            info = pickle.load(f)
-            f.close()
-
-        # If the file could not be opened/unpickled for whatever reason, try at the next checkpoint
-        except Exception:
-            raise CommandLineParserError(
-                f"The job {basename!r} could not be opened properly."
-            )
-
-        # The job file could be opened and unpickled properly
+def show_results_contents(filename: str, *, verbose: bool) -> str:
+    text = str(filename) + "\n"
+    with h5py.File(filename) as source:
+        text += "===HEADER===\n"
+        if verbose:
+            for attr in source.attrs:
+                text += f"{attr}: {source.attrs[attr]}\n"
         else:
-            # Check that the unpickled object is a JobStatus object
-            if not isinstance(info, JobInfo):
-                raise CommandLineParserError(f"Invalid contents for job {basename!r}.")
-
-            LOG.info("Information about %s job:", basename)
-            for k, v in info.items():
-                LOG.info("%-20s [%s]", k, v)
-
-    def display_element_info(self, option, opt_str, value, parser):
-        if len(parser.rargs) != 1:
-            raise CommandLineParserError(
-                f"Invalid number of arguments for {opt_str!r} option"
+            for attr in source.attrs:
+                text += f"{attr}\n"
+                for line in source.attrs[attr].split("\n"):
+                    if "=" in line:
+                        text += line[:80] + "\n"
+        text += "===DATASETS===\n"
+        for key in get_hdf5_contents(source):
+            text += f"{key}: type={source[key].dtype}, shape={source[key].shape}\n"
+        if not verbose:
+            text += (
+                "\n The header output was truncated. Use --verbose for full output\n"
             )
+    print(text)  # noqa: T201
 
-        element = parser.rargs[0]
 
-        from MDANSE.Chemistry import ATOMS_DATABASE
+def show_jobs(*, show_converters: bool = False):
+    if show_converters:
+        converters = Converter.indirect_subclasses()
+        output = "\n".join(
+            [
+                "==Converters==",
+                *sorted(converters),
+            ]
+        )
+    else:
+        analyses = []
+        for job_name in IJob.indirect_subclasses():
+            instance = IJob.create(job_name)
+            if instance.category[0] != "Converters" and instance.enabled:
+                analyses.append([*getattr(instance, "category", []), job_name])
+        output = "\n".join(
+            [
+                "==Analysis==",
+                *sorted(" -> ".join(analysis[1:]) for analysis in analyses),
+            ]
+        )
+    print(output)  # noqa: T201
 
-        try:
-            LOG.info(ATOMS_DATABASE.info(element))
-        except ValueError:
-            raise CommandLineParserError(
-                f"The entry {element!r} is not registered in the database"
-            )
 
-    def display_jobs_list(self, option, opt_str, value, parser):
-        """Display the jobs list
+def show_single_job(job_name: str):
+    if job_name in IJob.indirect_subclasses():
+        instance = IJob.create(job_name)
+    elif job_name in Converter.indirect_subclasses():
+        instance = Converter.create(job_name)
+    else:
+        raise KeyError(f"{job_name} is not a converter or analysis included in MDANSE.")
+    result = f"{job_name}\n"
+    result += "~" * len(job_name) + "\n\n"
+    if instance.__doc__:
+        result += "\n".join(str(x).lstrip() for x in instance.__doc__.split("\n"))
+    if not result.endswith("\n"):
+        result += "\n"
+    result += "\nInputs:\n\n"
+    parameters = instance.get_default_parameters()
+    # tab_fmt = "{:<20}{!s:>40}{!s:>10}"
+    for iname, (ival, ilabel) in parameters.items():
+        result += f"- {iname!s:<25}: default={ival!s:<50} # {ilabel!s:>25}\n"
+    print(result)  # noqa: T201
 
-        @param option: the option that triggered the callback.
-        @type option: optparse.Option instance
 
-        @param opt_str: the option string seen on the command line.
-        @type opt_str: str
+def save_job(
+    input_job_name: str | None,
+    trajectory_path: str | Path | None = None,
+    script_name: str | Path | None = None,
+):
+    job = IJob.create(input_job_name)
+    if trajectory_path:
+        job.configure(trajectory=trajectory_path)
+    if not script_name:
+        script_name = f"script_template_{input_job_name}.py"
+    job.save(script_name)
+    print(f"Script has been saved as {script_name}")  # noqa: T201
 
-        @param value: the argument for the option.
-        @type value: str
 
-        @param parser: the MDANSE option parser.
-        @type parser: instance of MDANSEOptionParser
-        """
+def save_converter(
+    input_job_name: str | None,
+    script_name: str | Path | None = None,
+):
+    job = Converter.create(input_job_name)
+    if not script_name:
+        script_name = f"script_template_{input_job_name}.py"
+    job.save(script_name)
+    print(f"Script has been saved as {script_name}")  # noqa: T201
 
-        if len(parser.rargs) != 0:
-            raise CommandLineParserError(
-                f"Invalid number of arguments for {opt_str!r} option"
-            )
 
-        jobs = PLATFORM.temporary_files_directory().glob("*")
-
-        for j in jobs:
-            # Open the job temporary file
-            try:
-                with j.open("rb") as f:
-                    info = pickle.load(f)
-
-            # If the file could not be opened/unpickled for whatever reason, try at the next checkpoint
-            except Exception:
-                continue
-
-            # The job file could be opened and unpickled properly
-            else:
-                # Check that the unpickled object is a JobStatus object
-                if not isinstance(info, JobInfo):
-                    continue
-
-                LOG.info("%-20s [%s]", j.stem, info["state"])
-
-    def display_trajectory_contents(self, option, opt_str, value, parser):
-        """Displays trajectory contents
-
-        @param option: the option that triggered the callback.
-        @type option: optparse.Option instance
-
-        @param opt_str: the option string seen on the command line.
-        @type opt_str: str
-
-        @param value: the argument for the option.
-        @type value: str
-
-        @param parser: the MDANSE option parser.
-        @type parser: instance of MDANSEOptionParser
-        """
-
-        trajName = parser.rargs[0]
-        inputTraj = Trajectory(trajName)
-        LOG.info(str(inputTraj))
-
-    def error(self, msg):
-        """Called when an error occured in the command line.
-
-        @param msg: the error message.
-        @type msg: str
-        """
-
-        self.print_help(sys.stderr)
-        self.exit(2, f"Error: {msg}\n")
-
-    def query_classes_registry(self, option, opt_str, value, parser):
-        """
-        Callback that displays the list of the jobs available in MDANSE
-
-        @param option: the Option instance calling the callback.
-
-        @param opt_str: the option string seen on the command-line triggering the callback
-
-        @param value: the argument to this option seen on the command-line.
-
-        @param parser: the MDANSEOptionParser instance.
-        """
-
-        if len(parser.rargs) == 0:
-            LOG.info("Registered jobs:")
-            for interfaceName in IJob.indirect_subclasses():
-                LOG.info("\t- %s", interfaceName)
-        elif len(parser.rargs) == 1:
-            val = parser.rargs[0]
-            LOG.info(IJob.create(val).info())
+def execute_element(args: Namespace):
+    element = args.name
+    database = Trajectory(args.traj) if args.traj else ATOMS_DATABASE
+    match_str = args.search
+    list_flag = args.list
+    if list_flag:
+        if hasattr(database, "atoms_in_database"):
+            std_output = database.atoms_in_database
         else:
-            raise CommandLineParserError(
-                f"Invalid number of arguments for {opt_str!r} option"
+            std_output = database.atoms
+    elif match_str:
+        std_output = [name for name in database.atoms if element in name]
+        if not std_output:
+            std_output = (
+                f"No element names containing the string '{element}' were found."
             )
+    elif database.has_atom(element):
+        std_output = atom_info(element, database=database)
+    else:
+        std_output = f"Element {element} is not the atom database."
+    print(std_output)  # noqa: T201
 
-    def run_job(self, option, opt_str, value, parser):
-        """Run job file(s).
 
-        @param option: the option that triggered the callback.
-        @type option: optparse.Option instance
+def execute_converter(args: Namespace):
+    if args.list:
+        show_jobs(show_converters=True)
+        return
+    if args.name and args.output:
+        save_converter(args.name, script_name=args.output)
+        return
+    if args.name:
+        show_single_job(args.name)
 
-        @param opt_str: the option string seen on the command line.
-        @type opt_str: str
 
-        @param value: the argument for the option.
-        @type value: str
+def execute_analysis(args: Namespace):
+    if args.traj:
+        raise NotImplementedError(
+            "Setting up a script for a specific trajectory is not possible at the moment."
+        )
+    if args.list:
+        show_jobs()
+        return
+    if args.name and args.output:
+        save_job(args.name, trajectory_path=args.traj, script_name=args.output)
+        return
+    if args.name:
+        show_single_job(args.name)
 
-        @param parser: the MDANSE option parser.
-        @type parser: instance of MDANSEOptionParser
+
+def execute_results(args: Namespace):
+    show_results_contents(args.file_name, verbose=args.verbose)
+
+
+def _converter_parser(subparsers: _SubParsersAction) -> Any:
+    """Set up converter input options."""
+    converter = subparsers.add_parser(
+        "convert",
+        help="Create a script to convert MD output into an MDANSE .mdt file.",
+        formatter_class=RawDescriptionHelpFormatter,
+        description=textwrap.dedent(
+            """
+        MDANSE converts trajectories from different formats
+        to a binary HDF5 file with an .mdt extension.
+        Different converters are available in MDANSE,
+        depending on the MD engine used to run the simulation.
+
+        Examples
+        --------
+            mdanse convert -l
+                Shows the list of all the available converters.
+            mdanse convert CP2K
+                Shows the description of the CP2K converter.
+            mdanse convert CP2K -o mdanse_cp2k_script.py
+                Saves a CP2K conversion script with default input values as mdanse_cp2K_script.py
         """
+        ),
+    )
+    converter.add_argument(
+        "-l",
+        "--list",
+        action="store_true",
+        help="List all the converter types.",
+    )
+    converter.add_argument(
+        "name", nargs="?", help="Name of the specific converter to be used."
+    )
+    converter.add_argument(
+        "-o",
+        "--output",
+        help="Use this file name for the output Python script.",
+    )
+    return converter
 
-        if len(parser.rargs) != 1:
-            raise CommandLineParserError(
-                f"Invalid number of arguments for {opt_str!r} option"
-            )
 
-        filename = Path(parser.rargs[0])
+def _analysis_parser(subparsers: _SubParsersAction) -> Any:
+    """Set up analysis input options."""
+    analysis = subparsers.add_parser(
+        "analysis",
+        help="Create a script to analyse an MD trajectory.",
+        formatter_class=RawDescriptionHelpFormatter,
+        description=textwrap.dedent(
+            """
+        MDANSE can perform different analysis types on .mdt trajectories.
+        mdanse analysis commands let you view the available analysis types,
+        and create analysis scripts which you can run after adjusting the parameters.
 
-        if not filename.exists():
-            raise CommandLineParserError(
-                f"The job file {filename!r} could not be executed"
-            )
-
-        subprocess.Popen([sys.executable, filename])
-
-    def save_job(self, option, opt_str, value, parser):
+        Examples:
+        ---------
+            mdanse analysis -l
+                Shows the list of all the available analysis types.
+            mdanse analysis DensityOfStates
+                Shows the description of the density of states analysis.
+            mdanse analysis DensityOfStates -o mdanse_dos_script.py
+                Saves a density of states script with default input values as mdanse_dos_script.py
         """
-        Save job templates.
+        ),
+    )
+    analysis.add_argument(
+        "-l",
+        "--list",
+        action="store_true",
+        help="List all the analysis types.",
+    )
+    analysis.add_argument(
+        "name", nargs="?", help="Name of the specific analysis to be used."
+    )
+    analysis.add_argument(
+        "-t", "--traj", help="Use this trajectory file as analysis input."
+    )
+    analysis.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="Use this file name for the output Python script.",
+    )
+    return analysis
 
-        @param option: the option that triggered the callback.
-        @type option: optparse.Option instance
 
-        @param opt_str: the option string seen on the command line.
-        @type opt_str: str
+def _trajectory_parser(subparsers: _SubParsersAction) -> Any:
+    """Set up trajectory input options."""
+    trajectory = subparsers.add_parser(
+        "traj",
+        help="View contents of a trajectory file.",
+        formatter_class=RawDescriptionHelpFormatter,
+        description=textwrap.dedent(
+            """
+        MDANSE stores trajectories as binary HDF5 files (.mdt).
+        'mdanse traj' allows you to view the contents of a trajectory file.
+        The information includes chemical composition, number of steps,
+        data arrays in the file (positions, velocities, etc.).
 
-        @param value: the argument for the option.
-        @type value: str
-
-        @param parser: the MDANSE option parser.
-        @type parser: instance of MDANSEOptionParser
+        Examples:
+        ---------
+            mdanse traj hexane_CP2K_157K.mdt
+                Shows information about the trajectory hexane_CP2K_157K.mdt
         """
+        ),
+    )
+    trajectory.add_argument(
+        "file_name", help="Path to the trajectory file, e.g. converted_dlpoly_run.mdt"
+    )
+    return trajectory
 
-        if len(parser.rargs) != 1:
-            raise CommandLineParserError(
-                f"Invalid number of arguments for {opt_str!r} option"
-            )
 
-        jobs = IJob
+def _results_parser(subparsers: _SubParsersAction) -> Any:
+    """Set up results input options."""
+    results = subparsers.add_parser(
+        "results",
+        help="View contents of a result file.",
+        formatter_class=RawDescriptionHelpFormatter,
+        description=textwrap.dedent(
+            """
+        MDANSE results are normally written to an HDF5 file with an .mda extension.
+        These are binary files, and cannot be viewed immediately with a text editor.
+        mdanse results command can be used to quickly check what information has
+        been written to an .mda file.
 
-        name = parser.rargs[0]
-
-        # A name for the template is built.
-        filename = Path(f"template_{name.lower()}.py").absolute()
-
-        # Try to save the template for the job.
-        try:
-            jobs.create(name).save(filename)
-        # Case where an error occured when writing the template.
-        except OSError:
-            raise CommandLineParserError(
-                f"Could not write the job template as {filename!r}"
-            )
-        # If the job class has no save method, thisis not a valid MDANSE job.
-        except KeyError:
-            raise CommandLineParserError(f"The job {name!r} is not a valid MDANSE job")
-        # Otherwise, print some information about the saved template.
-        else:
-            LOG.info("Saved template for job %r as %r", name, filename)
-
-    def save_job_template(self, option, opt_str, value, parser):
+        Examples:
+        ---------
+            mdanse results dos_BaTiO3_250K.mda
+                Shows the names of header entries and datasets in the file dos_BaTiO3_250K.mda
+            mdanse results -v dos_BaTiO3_250K.mda
+                Shows the full header information and dataset names in the file dos_BaTiO3_250K.mda
         """
-        Save job templates.
+        ),
+    )
+    results.add_argument(
+        "file_name", help="Path to the results file, e.g. dcsf_h2o_200K.mda"
+    )
+    results.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show the full contents each header entry. False by default.",
+    )
+    return results
 
-        @param option: the option that triggered the callback.
-        @type option: optparse.Option instance
 
-        @param opt_str: the option string seen on the command line.
-        @type opt_str: str
+def _element_parser(subparsers: _SubParsersAction) -> Any:
+    """Set up element input options."""
+    element = subparsers.add_parser(
+        "element",
+        help="View chemical element information.",
+        formatter_class=RawDescriptionHelpFormatter,
+        description=textwrap.dedent(
+            """
+        MDANSE has its own database of chemical elements, which
+        can be modified and extended by users.
+        When you convert trajectories, the properties of the relevant atoms
+        are written into the trajectory file from the current version of
+        the database.
+        You can view the atom properties in the database and in the trajectory
+        files using the 'mdanse element' command.
 
-        @param value: the argument for the option.
-        @type value: str
-
-        @param parser: the MDANSE option parser.
-        @type parser: instance of MDANSEOptionParser
+        Examples:
+        ---------
+            mdanse element Au
+                Shows the properties of gold (Au) stored in the MDANSE database.
+            mdanse element --traj some_AuAg_alloy.mdt Au
+                Shows the properties of gold (Au) stored in the trajectory file.
+            mdanse element -s Li
+                Shows all the elements with 'Li' in their name (e.g. Li, Li6, Li7)
         """
+        ),
+    )
+    element.add_argument(
+        "name",
+        help="Symbol of the chemical element or isotope, e.g. Au, Li7, etc.",
+        nargs="?",
+    )
+    element.add_argument(
+        "-t", "--traj", help="Use this trajectory file as atom database."
+    )
+    element.add_argument(
+        "-s",
+        "--search",
+        action="store_true",
+        help="Find chemical elements with matching names.",
+    )
+    element.add_argument(
+        "-l",
+        "--list",
+        action="store_true",
+        help="List all the chemical elements in the database.",
+    )
+    return element
 
-        nargs = len(parser.rargs)
 
-        from MDANSE.Framework.Jobs.IJob import IJob
+def build_parsers() -> ArgumentParser:
+    parser = ArgumentParser(
+        prog="mdanse",
+        formatter_class=RawDescriptionHelpFormatter,
+        description=textwrap.dedent(
+            """
+        This is the command line interface of MDANSE
+        (Molecular Dynamics Analysis for Neutron Scattering Experiments).
+        The usual MDANSE workflow consists of converting the trajectory,
+        running an analysis and viewing the results.
 
-        if nargs != 2:
-            LOG.error(
-                "Two arguments required resp. the name and the shortname of the class to be templated"
-            )
-            return
-
-        classname, shortname = parser.rargs
-
-        try:
-            IJob.save_template(shortname, classname)
-        except (OSError, KeyError):
-            return
+        Find out more about specific subcommands by running:
+        mdanse convert -h
+        mdanse analysis -h
+        mdanse traj -h
+        mdanse results -h
+        mdanse element -h
+        """
+        ),
+        epilog="Please report any problems with MDANSE as issues on https://github.com/ISISNeutronMuon/MDANSE",
+    )
+    subparsers = parser.add_subparsers(
+        title="MDANSE CLI Commands",
+        help="Run each command with -h to see input options.",
+    )
+    # Add handler functions to parsers:
+    for subparser, function in [
+        (_element_parser(subparsers), execute_element),
+        (_trajectory_parser(subparsers), show_trajectory_contents),
+        (_converter_parser(subparsers), execute_converter),
+        (_analysis_parser(subparsers), execute_analysis),
+        (_results_parser(subparsers), execute_results),
+    ]:
+        subparser.set_defaults(func=function)
+    return parser
 
 
 def main():
-    import MDANSE
+    LOG.setLevel("INFO")
+    parser = build_parsers()
 
-    # Creates the option parser.
-    parser = CommandLineParser(
-        formatter=IndentedHelp(), version=f"MDANSE {MDANSE.__version__} "
-    )
-
-    # Creates a first the group of general options.
-    group = optparse.OptionGroup(parser, "General options")
-    group.add_option(
-        "-d",
-        "--database",
-        action="callback",
-        callback=parser.display_element_info,
-        help="Display chemical informations about a given element.",
-    )
-    group.add_option(
-        "-r",
-        "--registry",
-        action="callback",
-        callback=parser.query_classes_registry,
-        help="Display the contents of MDANSE classes registry.",
-    )
-    group.add_option(
-        "-t",
-        "--traj",
-        action="callback",
-        callback=parser.display_trajectory_contents,
-        help="Display the chemical contents of a trajectory.",
-    )
-
-    # Add the goup to the parser.
-    parser.add_option_group(group)
-
-    # Creates a second group of job-specific options.
-    group = optparse.OptionGroup(parser, "Job managing options")
-
-    # Add the goup to the parser.
-    parser.add_option_group(group)
-
-    group.add_option(
-        "--jc",
-        action="callback",
-        callback=parser.check_job,
-        help="Check the status of a given job.",
-    )
-    group.add_option(
-        "--jl",
-        action="callback",
-        callback=parser.display_jobs_list,
-        help="Display the jobs list.",
-    )
-    group.add_option(
-        "--jr", action="callback", callback=parser.run_job, help="Run MDANSE job(s)."
-    )
-    group.add_option(
-        "--js",
-        action="callback",
-        callback=parser.save_job,
-        help="Save a job script with default patameters.",
-        metavar="MDANSE_SCRIPT",
-    )
-    group.add_option(
-        "--jt",
-        action="callback",
-        callback=parser.save_job_template,
-        help="Save a job template.",
-        metavar="MDANSE_SCRIPT",
-    )
-
-    # The command line is parsed.
-    options, _ = parser.parse_args()
+    args: Namespace = parser.parse_args()
+    if not vars(args):
+        parser.print_help()
+    else:
+        args.func(args)
 
 
 if __name__ == "__main__":
