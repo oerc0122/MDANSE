@@ -173,7 +173,6 @@ class MolecularViewer(QtWidgets.QWidget):
             up = np.array([0, 1, 0]) @ rot
             self._axes_camera.SetPosition(pos[0], pos[1], pos[2])
             self._axes_camera.SetViewUp(up[0], up[1], up[2])
-            self._axes_renderer.ResetCameraClippingRange()
 
         self._renderer.GetActiveCamera().AddObserver(
             "ModifiedEvent", update_axes_orientation
