@@ -221,14 +221,24 @@ class MolecularViewer(QtWidgets.QWidget):
         self.axes_actors = []
 
     def update_axes(self):
-        def add_arrow(color, rx, ry, rz):
+        def add_arrow(color, direction):
+            rot = R.align_vectors(direction, [1, 0, 0])[0].as_matrix()
+
+            vtk_matrix = vtk.vtkMatrix4x4()
+            for j in range(3):
+                for k in range(3):
+                    vtk_matrix.SetElement(j, k, rot[j, k])
+            vtk_matrix.SetElement(3, 3, 1.0)
+            transform = vtk.vtkTransform()
+            transform.SetMatrix(vtk_matrix)
+
             arrow_source = vtk.vtkArrowSource()
             arrow_mapper = vtk.vtkPolyDataMapper()
             arrow_mapper.SetInputConnection(arrow_source.GetOutputPort())
             arrow_actor = vtk.vtkActor()
             arrow_actor.SetMapper(arrow_mapper)
             arrow_actor.GetProperty().SetColor(color)
-            arrow_actor.SetOrientation(rx, ry, rz)
+            arrow_actor.SetUserTransform(transform)
             self.axes_actors.append(arrow_actor)
             self._axes_renderer.AddActor(arrow_actor)
 
@@ -253,9 +263,9 @@ class MolecularViewer(QtWidgets.QWidget):
             return
 
         if self.current_axes_type == "cartesian":
-            add_arrow((1, 0, 0), 0, 0, 0)
-            add_arrow((0, 1, 0), 0, 0, 90)
-            add_arrow((0, 0, 1), 0, -90, 0)
+            add_arrow([1, 0, 0], [1, 0, 0])
+            add_arrow([0, 1, 0], [0, 1, 0])
+            add_arrow([0, 0, 1], [0, 0, 1])
             add_text("X", [1, 0, 0])
             add_text("Y", [0, 1, 0])
             add_text("Z", [0, 0, 1])
@@ -276,12 +286,8 @@ class MolecularViewer(QtWidgets.QWidget):
 
         matrix /= np.linalg.norm(matrix, axis=1)[:, np.newaxis]
         for i, label in enumerate(labels):
-            new_vec = matrix[i]
-            z, x, y = R.align_vectors(new_vec, [1, 0, 0])[0].as_euler(
-                "zxy", degrees=True
-            )
-            add_arrow(np.eye(3)[i], x, y, z)
-            add_text(label, new_vec)
+            add_arrow(np.eye(3)[i], matrix[i])
+            add_text(label, matrix[i])
 
     def _new_trajectory_object(self, fname: str, trajectory: Trajectory):
         """Creates and sets a new trajectory reader for the input trajectory.
