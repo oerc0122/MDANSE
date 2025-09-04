@@ -59,38 +59,35 @@ class Configurable:
         if settings is not None:
             self.set_settings(settings)
 
-        if trajectory_input == "mdmc":
-            self.mdmc_trajectory_input()
-        elif trajectory_input == "mock":
-            self.mock_trajectory_input()
+        self.trajectory_type = trajectory_input
 
-    def mdmc_trajectory_input(self):
-        """Remove the hdf_trajectory (file-based) from settings,
-        and introduce an MDMC trajectory instead.
-        """
-        for key, value in self.settings.items():
-            if key == "trajectory":
-                if value[0] == "HDFTrajectoryConfigurator":
-                    self.settings[key] = ("MDMCTrajectoryConfigurator", {})
+    def replace_trajectory(self) -> tuple[str, dict[str, str]] | None:
+        """Return a replacement configurator type for the trajectory input.
 
-    def mock_trajectory_input(self):
-        """Remove the hdf_trajectory (file-based) from settings,
-        and introduce a mock trajectory instead.
-        """
-        for key, value in self.settings.items():
-            if key == "trajectory":
-                if value[0] == "HDFTrajectoryConfigurator":
-                    self.settings[key] = ("MockTrajectoryConfigurator", {})
+        It is possible to replace the normal .mdt trajectory file input,
+        which at the moment is done using a keyword argument passed to
+        the class constructor. This method returns the class name and
+        parameter dictionary to replace the normal trajectory input
+        in the analysis job, if this had been requested in the constructor."""
+        if self.trajectory_type == "mdmc":
+            return ("MDMCTrajectoryConfigurator", {})
+        if self.trajectory_type == "mock":
+            return ("MockTrajectoryConfigurator", {})
+        return None
 
     def build_configuration(self):
         from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 
         self._configuration.clear()
 
-        for name, (typ, kwds) in list(self.settings.items()):
+        for name, (orig_class_name, orig_kwds) in self.settings.items():
+            if name == "trajectory" and self.trajectory_type != "mdanse":
+                class_name, kwds = self.replace_trajectory()
+            else:
+                class_name, kwds = orig_class_name, orig_kwds
             try:
                 self._configuration[name] = IConfigurator.create(
-                    typ, name, configurable=self, **kwds
+                    class_name, name, configurable=self, **kwds
                 )
             # Any kind of error has to be caught
             except Exception:

@@ -20,6 +20,7 @@ import math
 from collections import Counter, defaultdict
 from collections.abc import Sequence
 from functools import cached_property
+from more_itertools import always_iterable
 from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -222,15 +223,15 @@ class Trajectory:
     def unique_elements(self) -> set[str]:
         """Set of unique chemical elements in the current selection."""
         if self._selection:
-            return set(self.selection_getter(self.atom_types))
-        return set(self.atom_types)
+            return set(always_iterable(self.selection_getter(self.atom_types)))
+        return set(always_iterable(self.atom_types))
 
     @property
     def unique_names(self) -> set[str]:
         """Set of unique atom labels in the current selection."""
         if self._selection:
-            return set(self.selection_getter(self.atom_names))
-        return set(self.atom_names)
+            return set(always_iterable(self.selection_getter(self.atom_names)))
+        return set(always_iterable(self.atom_names))
 
     def set_transmutation(self, changed_atoms: dict[int, str]):
         """Apply transmutation to atom types in the trajectory.
@@ -284,11 +285,9 @@ class Trajectory:
         """
         weights = []
         for n_elements, atm_names, atm_elements in [
-            (
-                self.get_natoms(),
-                self.selection_getter(self.atom_names),
-                self.selection_getter(self.atom_types),
-            ),
+            (self.get_natoms(),
+             always_iterable(self.selection_getter(self.atom_names)),
+             always_iterable(self.selection_getter(self.atom_types))),
             (
                 self.get_all_natoms(),
                 self.atom_names,
@@ -314,7 +313,7 @@ class Trajectory:
 
         """
         if self._selection:
-            return Counter(self.selection_getter(self.atom_names))
+            return Counter(always_iterable(self.selection_getter(self.atom_names)))
         return Counter(self.atom_names)
 
     def get_all_natoms(self) -> dict[str, int]:
@@ -351,11 +350,8 @@ class Trajectory:
 
         """
         all_elements = np.array(self.atom_names)
-        unique_elements = set(self.selection_getter(all_elements))
-        indices_per_element = {
-            element: list(np.where(all_elements == element)[0])
-            for element in unique_elements
-        }
+        unique_elements = set(always_iterable(self.selection_getter(all_elements)))
+        indices_per_element = {element: list(np.where(all_elements==element)[0]) for element in unique_elements}
         return indices_per_element
 
     def guess_correct_format(self) -> ValidFormats:
@@ -703,7 +699,7 @@ class Trajectory:
         return self._atom_cache[(atom_symbol, atom_property)]
 
     def has_atom(self, symbol: str):
-        return symbol in self.atoms_in_database
+        return symbol in self.atoms
 
     def get_property_dict(self, symbol: str) -> dict[str, Any]:
         """Returns a dictionary of all the properties of an atom type.
@@ -721,11 +717,11 @@ class Trajectory:
         """
         return {
             property_name: self.get_atom_property(symbol, property_name)
-            for property_name in self.properties_in_database
+            for property_name in self.properties
         }
 
     @property
-    def atoms_in_database(self) -> list[str]:
+    def atoms(self) -> list[str]:
         """Return the names of atoms defined in the atom property database.
 
         Here, it defaults to the central atom property database.
@@ -739,7 +735,7 @@ class Trajectory:
         return self._trajectory.atoms_in_database()
 
     @property
-    def properties_in_database(self) -> list[str]:
+    def properties(self) -> list[str]:
         """Return the list of atom properties provided by the trajectory.
 
         Here, it defaults to the central atom property database.
@@ -750,7 +746,7 @@ class Trajectory:
             List of atom property names that can be accessed.
 
         """
-        return self._trajectory.properties_in_database()
+        return self._trajectory.properties()
 
     @property
     def chemical_system(self) -> ChemicalSystem:
@@ -850,7 +846,7 @@ def create_average_atom(
     database: Trajectory,
     radius_padding: float = 0.0,
 ):
-    all_properties = database.properties_in_database
+    all_properties = database.properties
     values = {}
     for property in all_properties:
         temp = []
