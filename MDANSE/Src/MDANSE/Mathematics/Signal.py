@@ -22,8 +22,10 @@ from enum import Enum
 from typing import Any, Final, NamedTuple
 
 import numpy as np
-from MDANSE.Core.Error import Error
 from scipy import fftpack, signal
+
+from MDANSE.Core.Error import Error
+from MDANSE.IO.IOUtils import UCEnum
 
 
 class SignalError(Error):
@@ -296,13 +298,13 @@ class Filter(ABC):
 
     default_settings: dict[str, Any]
 
-    class FrequencyUnits(Enum):
+    class FrequencyUnits(UCEnum):
         """Enumeration for frequency unit type."""
 
         CYCLIC: str = "THz"
         ANGULAR: str = "rad/ps"
 
-    class FrequencyRangeMethod(Enum):
+    class FrequencyRangeMethod(UCEnum):
         """Enumeration for custom (externally provided) and FFT-derived frequency ranges for plotting the
         filter response.
 
@@ -311,7 +313,7 @@ class Filter(ABC):
         CUSTOM: int = 0
         FFT: int = 1
 
-    class Flags(Enum):
+    class Flags(UCEnum):
         """Enumeration for flags associated with usage of filters."""
 
         DIGITAL_ONLY: int = 0

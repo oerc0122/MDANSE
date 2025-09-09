@@ -33,7 +33,8 @@ def test_basic_meansquare(generate_benchmarks, tmp_path, running_mode):
         temp_name = result_file.with_suffix("")
 
     parameters = {
-        "frames": (0, 10, 1, 5),
+        "frames": (0, 10, 1),
+        "frame_window": 5,
         "output_files": (temp_name, ("MDAFormat",), "INFO"),
         "running_mode": running_mode,
         "trajectory": short_traj,

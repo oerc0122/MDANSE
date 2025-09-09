@@ -325,7 +325,7 @@ class Trajectory:
 
         return tuple(weights)
 
-    def get_natoms(self) -> dict[str, int]:
+    def get_natoms(self, *, total: bool = False) -> dict[str, int]:
         """Count the selected atoms, per element.
 
         Returns
@@ -334,7 +334,7 @@ class Trajectory:
             A dictionary of the number of atom per element.
 
         """
-        if self._selection:
+        if not total and self._selection:
             return Counter(always_iterable(self.selection_getter(self.atom_names)))
         return Counter(self.atom_names)
 
@@ -349,7 +349,7 @@ class Trajectory:
         """
         return Counter(self.atom_names)
 
-    def get_total_natoms(self) -> int:
+    def get_total_natoms(self, *, total: bool = False) -> int:
         """Count all the selected atoms.
 
         Returns
@@ -358,7 +358,7 @@ class Trajectory:
             The total number of atoms selected.
 
         """
-        if self._selection:
+        if not total and self._selection:
             return len(self._selection)
         return len(self.atom_types)
 
@@ -398,7 +398,7 @@ class Trajectory:
         """Close the trajectory."""
         self._trajectory.close()
 
-    def __getitem__(self, frame: int | Frame):
+    def __getitem__(self, frame: int):
         """Return the configuration at a given frame
 
         Parameters
@@ -411,8 +411,6 @@ class Trajectory:
         dict[str, npt.NDArray[float]]
             Configuration at frame.
         """
-        if isinstance(frame, Frame):
-            frame = frame.index
         return self._trajectory[frame]
 
     def __getstate__(self):

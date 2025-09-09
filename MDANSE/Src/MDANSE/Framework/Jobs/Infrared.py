@@ -65,7 +65,7 @@ class Infrared(IJob):
     )
 
     instrument_resolution = InstrumentResolution(
-        depends={"trajectory": "trajectory", "frames": "frames"},
+        depends={"trajectory": "trajectory", "window": "frame_window"},
     )
     derivative_order = InterpOrder(
         depends={"trajectory": "trajectory", "frames": "frames"},
@@ -238,7 +238,7 @@ class Infrared(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

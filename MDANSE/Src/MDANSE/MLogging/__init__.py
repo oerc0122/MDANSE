@@ -18,12 +18,8 @@ class LogLevels(Enum):
     def _missing_(cls, value: str):
         if not isinstance(value, str):
             return
-
         value = "_".join(value.split()).upper()
-
-        for member in cls:
-            if value == member.name:
-                return member
+        return vars(cls).get(value)
 
 
 FMT = logging.Formatter(

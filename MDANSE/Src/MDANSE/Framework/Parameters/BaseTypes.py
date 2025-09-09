@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from enum import Enum, auto
 from functools import singledispatchmethod
 from math import isclose
@@ -28,7 +28,7 @@ import numpy as np
 import numpy.typing as npt
 from more_itertools import numeric_range
 
-from MDANSE.IO.IOUtils import json_handler
+from MDANSE.IO.IOUtils import UCEnum, json_handler
 
 from .Parameters import ConfigError, ConfigureDescriptor, MinMax
 from .UtilTypes import Depends
@@ -55,7 +55,7 @@ def _nop(x: str) -> str:
     return x
 
 
-class StrCases(Enum):
+class StrCases(UCEnum):
     PRESERVE = _nop
     UPPER = str.upper
     LOWER = str.lower
@@ -182,10 +182,6 @@ class Float(MinMax[float], ConfigureDescriptor[SupportsFloat, float]):
 
 class Integer(MinMax[int], ConfigureDescriptor[SupportsInt, int]):
     """Configurator takes an integer input."""
-
-    def __init__(self, **params):
-        super().__init__(**params)
-
     def validate(self, value: SupportsInt, deps: Depends, /) -> int:
         try:
             value = int(value)
@@ -310,7 +306,7 @@ class PathParam(ConfigureDescriptor[str | Path, Path]):
     This configurator allows to input a path value.
     """
 
-    class FileModes(Enum):
+    class FileModes(UCEnum):
         MUST_EXIST = auto()
         MAY_EXIST = auto()
         MUST_NOT_EXIST = auto()
@@ -442,11 +438,15 @@ class Array(ConfigureDescriptor[str | npt.ArrayLike, np.ndarray]):
         self.non_zero = non_zero
         self.dtype = dtype
 
-    def validate(self, value: str | npt.ArrayLike, deps: Depends, /) -> np.ndarray:
+    def validate(
+        self, value: str | npt.ArrayLike, deps: Depends, /
+    ) -> np.ndarray | None:
         if isinstance(value, str):
             value = np.fromstring(value, dtype=self.dtype)
         elif isinstance(value, Sequence):
             value = np.array(value, dtype=self.dtype)
+        elif self.optional and value is None:
+            return None
 
         value = super().validate(value, deps)
 

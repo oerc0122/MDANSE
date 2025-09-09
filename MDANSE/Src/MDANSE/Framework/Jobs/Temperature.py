@@ -74,7 +74,7 @@ class Temperature(IJob):
         self._outputData.add(
             "temp/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frames.times,
             units="ps",
         )
         self._outputData.add(
@@ -129,17 +129,17 @@ class Temperature(IJob):
         if self.interpolation_order == 0:
             series = trajectory.read_configuration_trajectory(
                 index,
-                first=self.frames.first_index,
-                last=self.frames.last_index + 1,
-                step=self.frames.step_index,
+                first=self.frames.index_start,
+                last=self.frames.index_stop + 1,
+                step=self.frames.index_step,
                 variable="velocities",
             )
         else:
             series = trajectory.read_atomic_trajectory(
                 index,
-                first=self.frames.first_index,
-                last=self.frames.last_index + 1,
-                step=self.frames.step_index,
+                first=self.frames.index_start,
+                last=self.frames.index_stop + 1,
+                step=self.frames.index_step,
             )
 
             for axis in range(3):
@@ -185,7 +185,7 @@ class Temperature(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

@@ -69,7 +69,7 @@ def _converter_test(
     parameters,
     compression,
 ):
-    temp_name = tmp_path / "output.mdt"
+    temp_name = tmp_path / "output"
     out_name = temp_name.with_suffix(".mdt")
     log_name = temp_name.with_suffix(".log")
     result_file = CONV_DIR / result
@@ -811,7 +811,7 @@ def test_lammps_config_parser(config_file, expected):
         (
             "VASP",
             '{"": {"O": "Os", "Mo": "Os", "Bi": "Os"}}',
-            {"fold": False, "time_step": 1.0, "xdatcar_file": vasp_xdatcar},
+            {"fold": False, "time_step": 1.0, "trajectory_file": vasp_xdatcar},
         ),
         (
             "cp2k",
@@ -841,7 +841,7 @@ def test_lammps_config_parser(config_file, expected):
         (
             "CASTEP",
             '{"": {"C": "Os", "Fe": "Os", "O": "Os", "H": "Os", "N": "Os"}}',
-            {"castep_file": pbanew_md, "fold": False},
+            {"trajectory_file": pbanew_md, "fold": False},
         ),
         (
             "DFTB",
@@ -1037,7 +1037,7 @@ def test_lammps_config_parser(config_file, expected):
                 }
             ),
             {
-                "coordinate_files": [str(mdtraj_small)],  # Does not work with Path
+                "coordinate_files": mdtraj_small,
                 "time_step": 1.0,
             },
         ),

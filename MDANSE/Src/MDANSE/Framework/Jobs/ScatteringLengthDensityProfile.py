@@ -151,7 +151,7 @@ class ScatteringLengthDensityProfile(IJob):
         """
 
         # get the Frame index
-        frame_index = self.frames[index].index
+        frame_index = self.frames[index].ind
 
         conf = self.trajectory.configuration(frame_index)
 
@@ -221,7 +221,7 @@ class ScatteringLengthDensityProfile(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

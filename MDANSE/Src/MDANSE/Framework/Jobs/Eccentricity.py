@@ -66,7 +66,7 @@ class Eccentricity(IJob):
         self._outputData.add(
             "ecc/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frames.times,
             units="ps",
         )
         self._outputData.add(
@@ -99,7 +99,7 @@ class Eccentricity(IJob):
         """
         frame = self.frames[index]
 
-        conf = self.trajectory.configuration(frame.index)
+        conf = self.trajectory.configuration(frame.ind)
         conf = conf.contiguous_configuration()
         series = conf["coordinates"][self._indices, :]
 
@@ -128,7 +128,7 @@ class Eccentricity(IJob):
     def finalize(self):
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Container, Iterable, Iterator, Mapping, Sequence
+from contextlib import suppress
 from enum import Enum
 from functools import singledispatchmethod
 from itertools import compress
@@ -184,11 +185,43 @@ class Configurable:
 
 
 class CustomConfig(Parameter, Configurable):
-    """Abstract mixin for classes which contain Descriptors, but are themselves to be configured."""
+    """Mixin for classes which contain Descriptors, but are to be configured."""
+
+    def __set_name__(self, owner: object, name: str):
+        self.name = name
+        self._owner = owner
+
+        # Set descriptors to true owner and remove config from self.
+        for desc_name, desc in self.descriptors.items():
+            with suppress(AttributeError):
+                delattr(type(self), desc.configured_var)
+            desc.__set_name__(owner, f"{self.name}_{desc_name}")
+
+    def __get__(self, owner: object, objtype: type | None = None):
+        # Make descriptor for unique per-instance use.
+        return self
+
+    def __getattribute__(self, name: str):
+        # If dealing with a descriptor call the get using config's parent
+        # rather than descriptor's.
+        desc = super().__getattribute__("descriptors")
+        if name in desc:
+            owner = self._owner
+            return desc[name].__get__(owner, type(owner))
+        # Fallback for config properties
+        return super().__getattribute__(name)
+
+    def __setattr__(self, name: str, value: Any):
+        # If dealing with a descriptor call the get using config's parent
+        # rather than descriptor's.
+        if name in self.descriptors:
+            self.descriptors[name].__set__(self._owner, value)
+            return
+        super().__setattr__(name, value)
 
 
 def to_class(cls):
-    """Simple wrapper for callbacks."""
+    """Simplified wrapper for callbacks."""
 
     def tc(*args):
         return cls(args[1])
@@ -267,15 +300,15 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
     def _bad_mutex(self, owner: object) -> Iterable[bool]:
         return (getattr(owner, f"_{ex}_configured") for ex in self.mutex)
 
-    def _bad_deps(self, owner: object) -> Iterable[bool]:
-        return (
-            not getattr(owner, f"_{dep}_configured") for dep in self.depends.values()
-        )
+    def _bad_deps(
+        self, owner: object, depends: Depends | None = None
+    ) -> Iterable[bool]:
+        depends = depends if depends is not None else self.depends
+        return (not getattr(owner, f"_{dep}_configured") for dep in depends.values())
 
-    def _get_deps(self, owner: object) -> Depends:
-        return cast(
-            Depends, {dep: getattr(owner, key) for dep, key in self.depends.items()}
-        )
+    def _get_deps(self, owner: object, depends: Depends | None = None) -> Depends:
+        depends = depends if depends is not None else self.depends
+        return cast(Depends, {dep: getattr(owner, key) for dep, key in depends.items()})
 
     def __set_name__(self, owner: object, name: str):
         self.name = name
@@ -302,28 +335,21 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
             raise ConfigError(f"Non-optional value ({self.name}) has not been set")
 
         value = getattr(owner, self.private_name, SENTINEL)
-        deps = self._get_deps(owner)
 
         if self.optional and value is SENTINEL:
+            deps = self._get_deps(owner)
             value = self.validate(self.default, deps)
 
         out = cast(T, value)
 
         # Custom
         if self.on_get is not None:
-            cb_deps = (
-                cast(
-                    Depends,
-                    {dep: getattr(owner, key) for dep, key in self.get_depends.items()},
-                )
-                if self.get_depends
-                else deps
-            )
+            cb_deps = self._get_deps(owner, self.get_depends)
             out = self.on_get(self, out, cb_deps)
 
         return out
 
-    def __set__(self, owner: object, value: P):
+    def __set__(self, owner: object, value: P) -> None:
         setattr(owner, self.configured_var, False)
         setattr(owner, self.private_name, SENTINEL)
 
@@ -361,7 +387,7 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
                 val = getattr(owner, name)
                 setattr(owner, name, val)
             except ConfigError as err:
-                if "Non-optional" not in err._msg:
+                if err._msg and "Non-optional" not in err._msg:
                     LOG.info(f"Invalidated {name!r}. Reason: {err}")
                     setattr(owner, dependent.configured_var, False)
 
@@ -454,20 +480,20 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         out = cast(T, value)
 
         # Choices
-        if self.choices and is_enum(self.choices):  # Enum
-            try:
-                out = self.choices(out).value
-            except ValueError:
-                raise ConfigError(
-                    f"Value ({out!r}) not in choices ({', '.join(choice.name for choice in self.choices)})."
-                )
-
-        elif isinstance(self, CustomChoices):  # Function
+        if isinstance(self, CustomChoices):  # Function
             self.last_choices = self.get_choices(deps)
 
             if not self._validate_choices(out, self.last_choices):
                 raise ConfigError(
                     f"Value ({out!r}) not in choices ({', '.join(self.last_choices)})."
+                )
+
+        elif self.choices and is_enum(self.choices):  # Enum
+            try:
+                out = self.choices(out)
+            except ValueError:
+                raise ConfigError(
+                    f"Value ({out!r}) not in choices ({', '.join(choice.name for choice in self.choices)})."
                 )
 
         elif not self._validate_choices(out):  # Set

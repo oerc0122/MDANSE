@@ -15,14 +15,23 @@
 #
 from __future__ import annotations
 
-import collections
-
 from scipy.signal import correlate
 
-from MDANSE.Framework.AtomGrouping.grouping import (
-    add_grouped_totals,
-)
+from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    AtomTransmutation,
+    CorrelationWindow,
+    FrameSelect,
+    GroupingLevel,
+    InterpOrder,
+    MDANSETrajectory,
+    OutputFile,
+    Projection,
+    RunningMode,
+    Weights,
+)
 from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
 from MDANSE.Mathematics.Signal import differentiate
 
@@ -45,55 +54,27 @@ class VelocityAutoCorrelationFunction(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "CorrelationFramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
     )
-    settings["interpolation_order"] = (
-        "InterpolationOrderConfigurator",
-        {
-            "label": "velocities",
-            "dependencies": {"trajectory": "trajectory", "frames": "frames"},
-        },
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
+    interpolation_order = InterpOrder(
+        label="Velocities", depends={"trajectory": "trajectory", "frames": "frames"}
     )
-    settings["projection"] = (
-        "ProjectionConfigurator",
-        {"label": "project coordinates"},
+    projection = Projection(label="Project coordinates")
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    weights = Weights(
+        depends={
+            "trajectory": "trajectory",
+        }
     )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["weights"] = (
-        "WeightsConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-                "atom_selection": "atom_selection",
-                "atom_transmutation": "atom_transmutation",
-            }
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         """
@@ -111,7 +92,7 @@ class VelocityAutoCorrelationFunction(IJob):
         self._outputData.add(
             "vacf/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["duration"],
+            self.frame_window.times,
             units="ps",
         )
 
@@ -119,7 +100,7 @@ class VelocityAutoCorrelationFunction(IJob):
             self._outputData.add(
                 f"vacf/{element}",
                 "LineOutputVariable",
-                (self.configuration["frames"]["n_frames"],),
+                (self.frame_window.n_frames,),
                 axis="vacf/axes/time",
                 units="nm2/ps2",
                 main_result=True,
@@ -129,7 +110,7 @@ class VelocityAutoCorrelationFunction(IJob):
         self._outputData.add(
             "vacf/total",
             "LineOutputVariable",
-            (self.configuration["frames"]["n_frames"],),
+            (self.frame_window.n_frames,),
             axis="vacf/axes/time",
             units="nm2/ps2",
             main_result=True,
@@ -154,33 +135,32 @@ class VelocityAutoCorrelationFunction(IJob):
         # get atom index
         atom_index = self.trajectory.atom_indices[index]
 
-        if self.configuration["interpolation_order"]["value"] == 0:
+        if self.interpolation_order == 0:
             series = trajectory.read_configuration_trajectory(
                 atom_index,
-                first=self.configuration["frames"]["first"],
-                last=self.configuration["frames"]["last"] + 1,
-                step=self.configuration["frames"]["step"],
+                first=self.frames.index_start,
+                last=self.frames.index_stop + 1,
+                step=self.frames.index_step,
                 variable="velocities",
             )
         else:
             series = trajectory.read_atomic_trajectory(
                 atom_index,
-                first=self.configuration["frames"]["first"],
-                last=self.configuration["frames"]["last"] + 1,
-                step=self.configuration["frames"]["step"],
+                first=self.frames.index_start,
+                last=self.frames.index_stop + 1,
+                step=self.frames.index_step,
             )
 
-            order = self.configuration["interpolation_order"]["value"]
             for axis in range(3):
                 series[:, axis] = differentiate(
                     series[:, axis],
-                    order=order,
-                    dt=self.configuration["frames"]["time_step"],
+                    order=self.interpolation_order,
+                    dt=self.frames.time_step,
                 )
 
-        series = self.configuration["projection"]["projector"](series)
+        series = self.projection.projector(series)
 
-        n_configs = self.configuration["frames"]["n_configs"]
+        n_configs = self.frame_window.n_configs
         atomicVACF = correlate(series, series[:n_configs], mode="valid") / (
             3 * n_configs
         )
@@ -208,13 +188,13 @@ class VelocityAutoCorrelationFunction(IJob):
         for element, number in nAtomsPerElement.items():
             self._outputData[f"vacf/{element}"] /= number
 
-        selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.configuration["weights"]["property"]
-        )
-        if self.configuration["weights"]["property"] in ("b_coherent", "b_incoherent"):
+        selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
+
+        if self.weights in ("b_coherent", "b_incoherent"):
             for weights in selected_weights, all_weights:
                 for key, value in weights.items():
                     weights[key] = abs(value) ** 2
+
         weight_dict = get_weights(
             selected_weights,
             all_weights,
@@ -244,8 +224,8 @@ class VelocityAutoCorrelationFunction(IJob):
         )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.root,
+            self.output_files.out_format,
             str(self),
             self,
         )

@@ -15,7 +15,6 @@
 #
 from __future__ import annotations
 
-import collections
 import math
 
 import numpy as np
@@ -23,6 +22,13 @@ from scipy.spatial import Delaunay as scipyDelaunay
 from scipy.spatial import Voronoi as scipyVoronoi
 
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    Boolean,
+    Float,
+    FrameSelect,
+    MDANSETrajectory,
+    OutputFile,
+)
 from MDANSE.MolecularDynamics.Configuration import padded_coordinates
 
 
@@ -65,38 +71,29 @@ class Voronoi(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = collections.OrderedDict()
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}, "default": (0, 5, 1)},
-    )
-    settings["pbc"] = (
-        "BooleanConfigurator",
-        {"label": "apply periodic_boundary_condition", "default": True},
-    )
-    settings["pbc_border_size"] = ("FloatConfigurator", {"mini": 0.0, "default": 0.2})
-    settings["output_files"] = ("OutputFilesConfigurator", {})
+    trajectory = MDANSETrajectory()
+    frames = FrameSelect(depends={"trajectory": "trajectory"}, default=(0, 5, 1))
+    pbc = Boolean(label="Apply periodic_boundary_condition", default=True)
+    pbc_border_size = Float(minimum=0.0, default=0.2)
+    output_files = OutputFile()
 
     def initialize(self):
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.numberOfSteps = len(self.frames)
 
         # Will store the time.
         self._outputData.add(
             "voronoi/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["time"],
+            self.frames.times,
             units="ps",
         )
 
         # Will store mean volume for voronoi regions.
         self.mean_volume = np.zeros(self.numberOfSteps)
 
-        self.nb_init_pts = self.configuration["trajectory"][
-            "instance"
-        ].chemical_system.number_of_atoms
+        self.nb_init_pts = self.trajectory.chemical_system.number_of_atoms
 
         # Will store neighbourhood histogram for voronoi regions.
         self.neighbourhood_hist = {}
@@ -125,16 +122,16 @@ class Voronoi(IJob):
         """
 
         # This is the actual index of the frame corresponding to the loop index.
-        frameIndex = self.configuration["frames"]["value"][index]
+        frameIndex = self.frames[index].ind
 
         conf = self.trajectory.configuration(frameIndex)
         unit_cell = conf._unit_cell
 
-        if self.configuration["pbc"]["value"]:
+        if self.pbc:
             coords, _ = padded_coordinates(
                 conf["coordinates"],
                 unit_cell,
-                self.configuration["pbc_border_size"]["value"],
+                self.pbc_border_size,
             )
         else:
             coords = conf["coordinates"]
@@ -246,8 +243,8 @@ class Voronoi(IJob):
         )
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_format,
             str(self),
             self,
         )

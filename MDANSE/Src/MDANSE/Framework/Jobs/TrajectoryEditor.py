@@ -120,7 +120,7 @@ class TrajectoryEditor(IJob):
             conn = Connectivity(trajectory=self._input_trajectory, selection=indices)
             conn.find_bonds(tolerance=tolerance)
             conn.add_bond_information(new_chemical_system)
-            conf = self.trajectory.configuration(self.frames[0].index)
+            conf = self.trajectory.configuration(self.frames[0].ind)
             coords = conf.coordinates[indices]
             if conf.is_periodic:
                 com_conf = PeriodicRealConfiguration(
@@ -177,7 +177,7 @@ class TrajectoryEditor(IJob):
         """
 
         # get the Frame index
-        frameIndex = self.frames[index].index
+        frameIndex = self.frames[index].ind
 
         conf = self.trajectory.configuration(frameIndex)
         conf = conf.contiguous_configuration(bring_to_centre=True)

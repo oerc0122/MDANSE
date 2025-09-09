@@ -38,7 +38,9 @@ from MDANSE.Framework.Parameters import (
     OutputTrajectory,
     PathParam,
     SingleChoice,
+    to_class,
 )
+from MDANSE.Framework.Parsers import ASEParser
 from MDANSE.Framework.Units import INTERNAL_UNITS, UnitError, measure
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
@@ -70,6 +72,7 @@ class ASE(Converter):
     trajectory_file = PathParam(
         mode="r",
         label="An MD trajectory file supported by ASE",
+        on_set=to_class(ASEParser),
     )
     atom_aliases = AtomMapping(
         depends={"trajectory": "trajectory_file"}, label="Atom mapping", default={}
@@ -154,7 +157,7 @@ class ASE(Converter):
             frame = next(self._input)
         else:
             LOG.info("ASE using the slower way")
-            frame = read(self.trajectory_file, index=index)
+            frame = self.trajectory_file[index]
 
         assert isinstance(frame, Atoms)
 
@@ -254,17 +257,15 @@ class ASE(Converter):
     def parse_first_step(self, mapping):
         try:
             self._total_number_of_steps = len(self._input)
-            self._input = ASETrajectory(self.trajectory_file)
+            self._input = self.trajectory_file.as_trajectory
             first_frame = self._input[0]
             LOG.debug(
                 "Length found using len(self._input)=%d", self._total_number_of_steps
             )
         except Exception:
-            self._total_number_of_steps = ilen(iread(self.trajectory_file))
-            self._input = iread(
-                self.trajectory_file  # , index="[:]"
-            )
-            first_frame = read(self.trajectory_file, index=0)
+            self._total_number_of_steps = ilen(self.trajectory_file.frames)
+            self._input = self.trajectory_file.frames
+            first_frame = self.trajectory_file[0]
             LOG.debug("Length found using ilen=%d", self._total_number_of_steps)
 
         assert isinstance(first_frame, Atoms)

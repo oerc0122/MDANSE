@@ -33,6 +33,7 @@ from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import get_element_from_mapping
 from MDANSE.Framework.Units import measure
+from MDANSE.IO.IOUtils import UCEnum
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
@@ -115,7 +116,7 @@ class LAMMPSTrajectoryFileError(Error):
     pass
 
 
-class BoxStyle(Enum):
+class BoxStyle(UCEnum):
     """Different styles of "box" provided by LAMMPS.
 
     Handles conversion to standard 3x3 lattice vectors.

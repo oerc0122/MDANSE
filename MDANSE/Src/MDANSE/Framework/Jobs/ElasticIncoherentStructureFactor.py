@@ -72,8 +72,6 @@ class ElasticIncoherentStructureFactor(IJob):
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -141,9 +139,9 @@ class ElasticIncoherentStructureFactor(IJob):
 
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.frames.first_index,
-            last=self.frames.last_index + 1,
-            step=self.frames.step_index,
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
 
         series = self.projection(series)
@@ -224,7 +222,7 @@ class ElasticIncoherentStructureFactor(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

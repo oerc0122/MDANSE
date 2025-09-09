@@ -81,7 +81,11 @@ class XRayStaticStructureFactor(DistanceHistogram):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        grouping="grouping_level",
+        transmutation="atom_transmutation",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     r_values = RangeCellCutoff(
         label="r values (nm)",
@@ -90,6 +94,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
         depends={"trajectory": "trajectory"},
     )
     q_values = Range[float](
+        include_last=True,
         minimum=0.0,
         default=(0, 501, 1),
     )
@@ -108,7 +113,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
 
         nFrames = len(self.frames)
 
-        self.averageDensity /= nFrames
+        self.average_density /= nFrames
 
         densityFactor = 4.0 * np.pi * self.r_values.mid_points
 
@@ -126,7 +131,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
         q = self._outputData["xssf/axes/q"]
         r = self.r_values.mid_points
 
-        fact1 = 4.0 * np.pi * self.averageDensity
+        fact1 = 4.0 * np.pi * self.average_density
 
         sincqr = np.sinc(np.outer(q, r) / np.pi)
 
@@ -209,8 +214,8 @@ class XRayStaticStructureFactor(DistanceHistogram):
             ni = nAtomsPerElement[label_i]
             nj = nAtomsPerElement[label_j]
 
-            idi = self.selectedElements.index(label_i)
-            idj = self.selectedElements.index(label_j)
+            idi = self.selected_elements.index(label_i)
+            idj = self.selected_elements.index(label_j)
 
             if label_i == label_j:
                 nij = ni**2 / 2.0
@@ -324,7 +329,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

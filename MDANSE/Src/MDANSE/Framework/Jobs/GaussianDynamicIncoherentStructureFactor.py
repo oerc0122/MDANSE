@@ -72,13 +72,11 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     instrument_resolution = InstrumentResolution(
-        depends={"trajectory": "trajectory", "frames": "frames"}
+        depends={"trajectory": "trajectory", "window": "frame_window"}
     )
     projection = Projection(label="project coordinates")
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -225,9 +223,9 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.frames.first_index,
-            last=self.frames.last_index + 1,
-            step=self.frames.step_index,
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
 
         series = self.projection(series)
@@ -377,7 +375,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

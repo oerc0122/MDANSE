@@ -440,7 +440,7 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

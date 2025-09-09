@@ -22,8 +22,8 @@ import h5py
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .Parameters import ConfigError, ConfigureDescriptor
 from .BaseTypes import PathParam
+from .Parameters import SENTINEL, ConfigError, Configurable, ConfigureDescriptor
 from .UtilTypes import Depends, DescID
 
 
@@ -37,12 +37,12 @@ def set_up_trajectory(self, trajectory: Trajectory, deps):
 
     These operations were previously handled by IConfigurator subclasses.
     """
-    if (selection := deps.get("atom_selection")) is not None:
+    if (selection := deps.get("selection")) is not None:
         trajectory.set_selection(selection)
-    if (transmutation := deps.get("atom_transmutation")) is not None:
-        trajectory.set_transmutation(transmutation.transmutation)
-    if (grouping := deps.get("grouping_level")) is not None:
-        trajectory.set_grouping(grouping["level"])
+    if (transmutation := deps.get("transmutation")) is not None:
+        trajectory.set_transmutation(transmutation)
+    if (grouping := deps.get("grouping")) is not None:
+        trajectory.set_grouping(grouping.name.lower())
 
     return trajectory
 
@@ -57,27 +57,38 @@ class MDANSETrajectory(ConfigureDescriptor[str | Path, Trajectory]):
         selection: str | None = None,
         transmutation: str | None = None,
         grouping: str | None = None,
-        on_get_depends: None = None,
-        on_get: None = None,
         **params,
     ):
-        if on_get_depends is not None:
-            raise ConfigError(f"Cannot set `on_get_depends` in {type(self).__name__}.")
-        if on_get is not None:
-            raise ConfigError(f"Cannot set `on_get` in {type(self).__name__}.")
+        super().__init__(**params)
 
-        ogd = {
-            "atom_selection": selection,
-            "atom_transmutation": transmutation,
-            "grouping_level": grouping,
+        self._special_deps = {
+            key: val
+            for key, val in [
+                ("selection", selection),
+                ("transmutation", transmutation),
+                ("grouping", grouping),
+            ]
+            if val is not None
         }
 
-        super().__init__(on_get_depends=ogd, on_get=set_up_trajectory, **params)
         self.extension = {
             "MDANSE trajectory": "mdt",
             "HDF5 file": "h5",
             "All files": "*",
         }
+
+    def __get__(self, owner: Configurable, obj_type):
+        out = super().__get__(owner, obj_type)
+
+        deps = {}
+        for key, val in self._special_deps.items():
+            desc = owner.descriptors[val]
+            value = getattr(owner, desc.private_name, SENTINEL)
+            if value is SENTINEL:
+                value = desc.validate(desc.default, {"trajectory": out})
+            deps[key] = value
+
+        return set_up_trajectory(self, out, deps)
 
     def _validate_choices(
         self,

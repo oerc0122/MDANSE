@@ -22,49 +22,47 @@ import numpy as np
 import numpy.typing as npt
 
 from MDANSE.Framework.Projectors.IProjector import IProjector
+from MDANSE.IO.IOUtils import UCEnum
 from MDANSE.MLogging import LOG
 
-from .Parameters import ConfigError, CustomConfig
 from .BaseTypes import Vector
 from .Choices import SingleChoice
+from .Parameters import ConfigError, CustomConfig
 
 
-class ProjType(Enum):
+class ProjType(UCEnum):
     NULL = auto()
     AXIAL = auto()
     PLANAR = auto()
 
-    NullProjector = NULL
-    AxialProjector = AXIAL
-    PlanarProjector = PLANAR
+    NULLPROJECTOR = NULL
+    AXIALPROJECTOR = AXIAL
+    PLANARPROJECTOR = PLANAR
 
 
 class Projection(CustomConfig):
-    proj_type = SingleChoice(choices=ProjType)
+    proj_type = SingleChoice(choices=ProjType, default=ProjType.NULL)
     axis = Vector(
         optional=True,
         non_zero=True,
+        default=None,
     )
 
     def __init__(
         self,
-        proj_type: ProjType = ProjType.NULL,
-        axis: npt.NDArray[float] | None = None,
         **kwargs,
     ):
-        self.proj_type = proj_type
-        self.axis = axis
         super().__init__(**kwargs)
 
     @property
     def projector(self) -> IProjector:
         if not self.check_status():
             LOG.warning(
-                f"Projector ({self.proj_type.name}) requested, but no axis defined, returning Null"
+                f"Projector ({self.proj_type.name}) requested, but no axis defined, returning NullProjector"
             )
-            return IProjector.create("null")
+            return IProjector.create("NullProjector")
 
-        proj = IProjector.create(self.proj_type.name.lower())
+        proj = IProjector.create(self.proj_type.name.title() + "Projector")
 
         if self.proj_type is not ProjType.NULL:
             proj.set_axis(self.axis)
@@ -100,8 +98,19 @@ class Projection(CustomConfig):
             and self.first_axis is not None
         )
 
+    def __set__(self, owner, value: tuple[ProjType | str, npt.NDArray[float] | None]):
+        self.projector = value
+
     def validate(self, _desc, _value) -> IProjector | None:
         try:
             return self.projector
         except ConfigError:
             return None
+
+    def __repr__(self) -> str:
+        return (
+            f"{type(self).__name__}("
+            f"proj_type={self.proj_type.name.title()!r}, "
+            f"axis={self.axis}"
+            ")"
+        )

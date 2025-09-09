@@ -370,8 +370,6 @@ class VanHoveFunctionDistinct(IJob):
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -405,7 +403,7 @@ class VanHoveFunctionDistinct(IJob):
         self.n_mid_points = len(self.r_values.mid_points)
 
         conf = self.trajectory.configuration(
-            self.frames.first_index,
+            self.frames.index_start,
         )
         if not hasattr(conf, "unit_cell"):
             raise ValueError(DETAILED_CELL_MESSAGE)
@@ -535,13 +533,13 @@ class VanHoveFunctionDistinct(IJob):
         # average the distance histograms at the input time
         # difference over a number of configuration
         for i in range(self.n_configs):
-            frame_index_t0 = self.frames[i].index
+            frame_index_t0 = self.frames[i].ind
             conf_t0 = self.trajectory.configuration(
                 frame_index_t0,
             )
             coords_t0 = conf_t0.coordinates[self._indices]
 
-            frame_index_t1 = self.frames[i + time].index
+            frame_index_t1 = self.frames[i + time].ind
             conf_t1 = self.trajectory.configuration(
                 frame_index_t1,
             )
@@ -709,7 +707,7 @@ class VanHoveFunctionDistinct(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

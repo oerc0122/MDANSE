@@ -246,6 +246,11 @@ class FieldFile:
             bonds=bonds,
         )
 
+    @property
+    def labels(self) -> list[AtomLabel]:
+        return list(self.atom_labels)
+
+    @property
     def atom_labels(self) -> Iterable[AtomLabel]:
         """
         Yields

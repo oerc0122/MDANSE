@@ -275,15 +275,18 @@ def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLab
     """
     pattern = re.compile(r"^([A-Za-z]\w*=[^=;]+(;[A-Za-z]\w*=[^=;]+)*)*$")
     if not all(pattern.match(grp_label) for grp_label in mapping):
+        print("No pattern match")
         return False
 
     if set(mapping_to_labels(mapping)) != set(labels):
+        print("Not all labels")
         return False
 
     for label in labels:
         grp_label = label.grp_label
         atm_label = label.atm_label
         if mapping[grp_label][atm_label] not in ATOMS_DATABASE:
+            print("Honk?")
             return False
 
     return True

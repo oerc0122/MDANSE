@@ -21,9 +21,9 @@ import random
 import numpy as np
 
 from MDANSE.Framework.Parameters import (
+    Float,
     Integer,
     Range,
-    Float,
 )
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 

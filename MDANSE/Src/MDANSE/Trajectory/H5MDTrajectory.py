@@ -15,7 +15,6 @@
 #
 from __future__ import annotations
 
-from enum import Enum
 from pathlib import Path
 
 import h5py
@@ -25,6 +24,7 @@ import numpy.typing as npt
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Units import measure
+from MDANSE.IO.IOUtils import UCEnum
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -70,14 +70,14 @@ class H5MDTrajectory(TrajectoryFile):
         "time": "/particles/all/position/time",
     }
 
-    class MassLoc(Enum):
+    class MassLoc(UCEnum):
         """Mass location in H5MD."""
 
         PER_STEP = "/particles/all/mass/value"
         GLOBAL = "/particles/all/mass"
         NONE = None
 
-    class ChargeLoc(Enum):
+    class ChargeLoc(UCEnum):
         """Charge location in H5MD."""
 
         PER_STEP = "/particles/all/charge/value"

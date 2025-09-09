@@ -64,8 +64,6 @@ class DistanceHistogram(IJob):
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -160,7 +158,7 @@ class DistanceHistogram(IJob):
 
         """
         # get the Frame index
-        frame_index = self.frames[index]
+        frame_index = self.frames[index].ind
 
         conf = self.trajectory.configuration(frame_index)
 

@@ -78,13 +78,13 @@ class MeanSquareDisplacement(IJob):
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
-    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(
+        depends={"trajectory": "trajectory"}, default={}
+    )
     weights = Weights(
-        default="atomic_weight",
+        default="equal",
         depends={
             "trajectory": "trajectory",
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
         },
     )
     projection = Projection(
@@ -109,7 +109,7 @@ class MeanSquareDisplacement(IJob):
         self._outputData.add(
             "msd/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frame_window.times,
             units="ps",
         )
 
@@ -118,7 +118,7 @@ class MeanSquareDisplacement(IJob):
             self._outputData.add(
                 f"msd/{element}",
                 "LineOutputVariable",
-                (len(self.frames),),
+                (self.frame_window.window,),
                 axis="msd/axes/time",
                 units="nm2",
                 main_result=True,
@@ -142,14 +142,14 @@ class MeanSquareDisplacement(IJob):
         atom_index = self.trajectory.atom_indices[index]
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.frames.first_index,
-            last=self.frames.last_index + 1,
-            step=self.frames.step_index,
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
 
-        series = self.projection(series)
+        series = self.projection.projector(series)
 
-        msd = mean_square_displacement(series, self.frame_window)
+        msd = mean_square_displacement(series, self.frame_window.n_configs)
 
         return index, msd
 
@@ -173,10 +173,11 @@ class MeanSquareDisplacement(IJob):
 
         # The MSDs per element are averaged.
         nAtomsPerElement = self.trajectory.get_natoms()
-        for element, number in list(nAtomsPerElement.items()):
+        for element, number in nAtomsPerElement.items():
             self._outputData[f"msd/{element}"] /= number
 
         selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
+
         weight_dict = get_weights(
             selected_weights,
             all_weights,
@@ -214,7 +215,7 @@ class MeanSquareDisplacement(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

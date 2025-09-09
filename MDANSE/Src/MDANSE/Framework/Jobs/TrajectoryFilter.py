@@ -29,13 +29,13 @@ from MDANSE.Framework.Parameters import (
     AtomSelection,
     AtomTransmutation,
     CorrelationWindow,
+    Filter,
     FrameSelect,
     InstrumentResolution,
     MDANSETrajectory,
     OutputTrajectory,
     Projection,
     RunningMode,
-    TrajectoryFilter,
     Weights,
 )
 from MDANSE.Mathematics.Signal import FILTER_MAP
@@ -78,14 +78,12 @@ class TrajectoryFilter(IJob):
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     instrument_resolution = InstrumentResolution(
-        depends={"trajectory": "trajectory", "frames": "frames"}
+        depends={"trajectory": "trajectory", "window": "frame_window"}
     )
     projection = Projection(label="Project coordinates")
-    trajectory_filter = TrajectoryFilter()
+    trajectory_filter = Filter()
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -125,7 +123,6 @@ class TrajectoryFilter(IJob):
             Dummy
 
         """
-        LOG.debug(f"Running step: {index}")
         trajectory = self.trajectory
 
         # get atom index
@@ -133,9 +130,9 @@ class TrajectoryFilter(IJob):
 
         series = trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.frames.first_index,
-            last=self.frames.last_index + 1,
-            step=self.frames.step_index,
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
 
         self.atomic_trajectory_array[index] = series.T
@@ -159,11 +156,11 @@ class TrajectoryFilter(IJob):
 
     def finalize(self):
         """Write out the new trajectory."""
-        filter_params = self.filter.params.copy()
-        filter_params.setdefault("n_steps", len(self.trajectory))
-        filter_params.setdefault("time_step_ps", self.trajectory["md_time_step"])
+        filter_params = self.trajectory_filter.params.copy()
+        filter_params.setdefault("n_steps", len(self.frames))
+        filter_params.setdefault("time_step_ps", self.frames.time_step)
 
-        filter = self.filter_type(**filter_params)
+        filter = self.trajectory_filter.filter_type(**filter_params["attributes"])
 
         trajectories = copy.deepcopy(self.atomic_trajectory_array)
 
@@ -288,7 +285,7 @@ def write_filtered_trajectory(
 
         filtered_configuration = get_output_configuration(
             parent=parent_configuration.trajectory.configuration(
-                parent_configuration.frames[0].index,
+                parent_configuration.frames[0].ind,
             ),
             output_chemical_system=output_trajectory.chemical_system,
             output_coordinates=filtered_configuration_coordinates,

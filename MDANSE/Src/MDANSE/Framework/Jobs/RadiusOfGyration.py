@@ -68,7 +68,7 @@ class RadiusOfGyration(IJob):
         self._outputData.add(
             "rog/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frames.times,
             units="ps",
         )
 
@@ -103,7 +103,7 @@ class RadiusOfGyration(IJob):
         """
 
         # get the Frame index
-        frameIndex = self.frames[index].index
+        frameIndex = self.frames[index].ind
 
         conf = self.trajectory.configuration(frameIndex)
 
@@ -132,7 +132,7 @@ class RadiusOfGyration(IJob):
         # Write the output variables.
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

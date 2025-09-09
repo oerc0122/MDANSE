@@ -21,7 +21,7 @@ import numpy as np
 
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
-from MDANSE.Framework.Configurable import Configurable
+from MDANSE.Framework.Parameters.Parameters import Configurable
 
 
 class InstrumentResolutionError(Error):

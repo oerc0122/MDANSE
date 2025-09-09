@@ -40,7 +40,7 @@ from .Choices import (
     MultipleChoice,
     SingleChoice,
 )
-from .Filter import TrajectoryFilter
+from .Filter import Filter
 from .Frames import CorrelationWindow, Frames, FrameSelect, InterpOrder
 from .InputFiles import MDANSEResult, MDANSETrajectory
 from .OutputFiles import ASEOutputFormat, OutputFile, OutputTrajectory

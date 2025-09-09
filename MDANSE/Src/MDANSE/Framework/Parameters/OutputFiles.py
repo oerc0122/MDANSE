@@ -15,15 +15,14 @@
 #
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, TypeVar
 
 import numpy as np
 from ase.io.formats import ioformats
 
 from MDANSE.Framework.Formats import OutputFormats
-from MDANSE.Framework.Parameters.Parameters import Parameter
 from MDANSE.MLogging import LogLevels
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
@@ -31,11 +30,13 @@ from .BaseTypes import Integer, PathParam
 from .Choices import MultipleChoice, SingleChoice
 from .Parameters import ConfigError, CustomConfig
 
+Self = TypeVar("Self", bound="OutputFile")
+
 
 class OldOutputSettings(NamedTuple):
     path: Path | str
-    format: OutputFormats | str | int | Iterable[OutputFormats | str | int]
-    loglevel: LogLevels | int | str
+    out_format: OutputFormats | str | int | Iterable[OutputFormats | str | int]
+    log_level: LogLevels | int | str
 
 
 class OldTrajectorySettings(NamedTuple):
@@ -43,8 +44,8 @@ class OldTrajectorySettings(NamedTuple):
     dtype: int
     chunk_size: int
     compression: str
-    format: OutputFormats | str | int | Iterable[OutputFormats | str | int]
-    loglevel: LogLevels | int | str
+    out_format: OutputFormats | str | int | Iterable[OutputFormats | str | int]
+    log_level: LogLevels | int | str
 
 
 class OutputFormat(MultipleChoice):
@@ -62,23 +63,17 @@ class OutputFormat(MultipleChoice):
 
 
 class OutputFile(CustomConfig):
-    out_format = OutputFormat(("MDAFormat", "TextFormat"))
+    path = PathParam(mode="w")
+    out_format = OutputFormat(
+        ("MDAFormat", "TextFormat", "FileInMemory"), default=("MDAFormat", "TextFormat")
+    )
     log_level = SingleChoice(
         choices=LogLevels,
         default=LogLevels.NONE,
         label="Reporting log level.",
     )
-    path = PathParam(mode="w")
 
-    def __init__(
-        self,
-        formats: Iterable[OutputFormats | str | int] = ("MDAFormat", "TextFormat"),
-        level: LogLevels = LogLevels.NONE,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.log_level = level
-        self.out_format = formats
+    NAMES = ("path", "out_format", "log_level")
 
     @property
     def root(self) -> Path:
@@ -88,28 +83,55 @@ class OutputFile(CustomConfig):
     def write_logs(self) -> bool:
         return self.log_level is not None
 
-    @property
-    def configuration(self) -> dict[str, Any]:
-        return {
-            "path": self.path,
-            "log_level": self.log_level,
-            "formats": self.out_format,
-        }
+    def set(
+        self,
+        path: Path | str = "",
+        out_format: Iterable[OutputFormats | str | int] = ("MDAFormat", "TextFormat"),
+        log_level: LogLevels = LogLevels.NONE,
+    ) -> None:
+        """Set values from old-style tuple."""
+        self.path = path
+        self.out_format = out_format
+        self.log_level = log_level
 
-    @classmethod
-    def from_old_tuple(cls, args: OldOutputSettings):
-        out = cls()
-        out.path, out.out_format, out.log_level = args
-        return out
+    def set_from_self(self, other) -> None:
+        """Set from a like-object."""
+        if other.NAMES != self.NAMES:
+            raise ConfigError(
+                f"Type mismatch: {type(self).__name__} vs {type(other).__name__}"
+            )
+
+        for arg in self.NAMES:
+            setattr(self, arg, getattr(other, arg))
+
+    def __set__(self, owner: object, value: dict[str, Any] | Sequence | Self):
+        if isinstance(value, dict):
+            self.set(**value)
+            return
+
+        if isinstance(value, Sequence):
+            self.set(*value)
+            return
+
+        self.set_from_self(value)
+
+    def __str__(self) -> str:
+        return str(self.path)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.path}, {self.out_format})"
 
 
-class OutputFilePlusMem(OutputFile):
-    out_format = OutputFormat(("MDAFormat", "TextFormat", "FileInMemory"))
+def add_mdt(_desc, value, _deps):
+    """Add .mdt to filepath."""
+    return value.with_suffix(".mdt")
 
 
 class OutputTrajectory(OutputFile):
+    path = PathParam(mode="w", on_set=add_mdt)
     out_format = OutputFormat(
         ("MDTFormat",),
+        default=("MDTFormat",),
     )
     dtype = SingleChoice(
         choices=(np.float16, np.float32, np.float64),
@@ -125,27 +147,22 @@ class OutputTrajectory(OutputFile):
         choices=("none", *TrajectoryWriter.allowed_compression), default="none"
     )
 
-    def __init__(
-        self,
-        level: LogLevels = LogLevels.NONE,
-        dtype: int | str | None = None,
-        chunk_size: int | None = None,
-        compression: str = "none",
-        **kwargs,
-    ):
-        super().__init__(formats=("MDTFormat",), level=level, **kwargs)
-        if dtype is not None:
-            self.dtype = str(dtype)
-        if chunk_size is not None:
-            self.chunk_size = chunk_size
-        self.compression = self.compression
+    NAMES = ("path", "dtype", "chunk_size", "compression", "log_level")
 
-    @classmethod
-    def from_old_tuple(cls, args: OldTrajectorySettings):
-        """Construct object from old-style tuple."""
-        out = cls()
-        out.path, out.dtype, out.chunk_size, out.compression, out.log_level = args
-        return out
+    def set(
+        self,
+        path: Path | str = "",
+        dtype: int | str = "64",
+        chunk_size: int = 128,
+        compression: str = "none",
+        log_level: LogLevels = LogLevels.NONE,
+    ) -> None:
+        """Set values from old-style tuple."""
+        self.path = path
+        self.dtype = dtype
+        self.chunk_size = chunk_size
+        self.compression = compression
+        self.log_level = log_level
 
     @property
     def dtype_size(self) -> int:
@@ -162,8 +179,6 @@ class OutputTrajectory(OutputFile):
 
 class ASEOutputFormat(OutputFile):
     out_format = SingleChoice(
-        choices=(key for key, val in ioformats.items() if val.can_write)
+        choices=(key for key, val in ioformats.items() if val.can_write),
+        default="vasp",
     )
-
-    def __init__(self, fmt):
-        self.out_format = fmt

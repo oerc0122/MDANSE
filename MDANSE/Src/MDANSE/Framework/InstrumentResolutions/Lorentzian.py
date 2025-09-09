@@ -20,6 +20,7 @@ import collections
 from MDANSE.Framework.InstrumentResolutions.IInstrumentResolution import (
     IInstrumentResolution,
 )
+from MDANSE.Framework.Parameters import Float
 
 
 class Lorentzian(IInstrumentResolution):
@@ -27,13 +28,11 @@ class Lorentzian(IInstrumentResolution):
     Defines an instrument resolution with a lorentzian response
     """
 
-    settings = collections.OrderedDict()
-    settings["mu"] = ("FloatConfigurator", {"default": 0.0})
-    settings["sigma"] = ("FloatConfigurator", {"default": 1.0})
+    mu = Float(default=0.0)
+    sigma = Float(default=1.0)
 
     def set_kernel(self, omegas, dt):
-        mu = self._configuration["mu"]["value"]
-        sigma = self._configuration["sigma"]["value"]
-
-        self._omegaWindow = (2.0 * sigma) / ((omegas - mu) ** 2 + sigma**2)
+        self._omegaWindow = (2.0 * self.sigma) / (
+            (omegas - self.mu) ** 2 + self.sigma**2
+        )
         self._timeWindow = self.apply_fft(self._omegaWindow, dt)

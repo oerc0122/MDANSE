@@ -111,7 +111,3 @@ class CASTEPMDFile(Parser):
     def element_list(self) -> Collection[str]:
         first_frame = first(self.frames)
         return [spec for (spec, ind), _ in first_frame["R"]]
-
-    @property
-    def atom_labels(self) -> Iterable[AtomLabel]:
-        return super().atom_labels()

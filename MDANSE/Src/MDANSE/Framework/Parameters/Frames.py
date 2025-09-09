@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any, Literal, NamedTuple
+import math
+from typing import Any, Literal, NamedTuple, SupportsInt
 
-from more_itertools import numeric_range
+import numpy as np
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .Parameters import ConfigError, CustomConfig
 from .BaseTypes import Integer, NumericRange, Range
 from .Choices import SingleChoice
+from .Parameters import ConfigError
 from .UtilTypes import Depends, DescID
 
 
@@ -25,12 +25,16 @@ class Frames:
             self.samples = samples.samples
         else:
             self.samples = samples
-        time = traj.time()
-        self.times = NumericRange(
-            time[self.samples[0]],
-            time[self.samples[-1]],
-            time[1] - time[0],
-        )
+
+        if any(time := traj.time()):
+            step = time[1] - time[0]
+            self.times = NumericRange(
+                time[self.samples[0]],
+                time[self.samples[-1]] + (step / 2),
+                step,
+            )
+        else:
+            self.times = self.samples
 
     def __getitem__(self, value: int) -> Frame:
         return Frame(
@@ -70,13 +74,46 @@ class Frames:
     def duration(self) -> float:
         return self.time_stop - self.time_start
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.index_start}, {self.index_stop}, {self.index_step})"
+
+
+FrameInput = Frames | range | tuple[int, ...] | None | Literal["all"]
+
+
+class FrameWindow:
+    def __init__(self, window: int, frames: Frames):
+        self.window = window
+        self._frames = frames
+
+    @property
+    def n_frames(self):
+        return self.window
+
+    @property
+    def n_configs(self):
+        return len(self._frames) - self.window + 1
+
+    @property
+    def times(self):
+        return self._frames.times[: self.window]
+
+    @property
+    def duration(self):
+        return [time - self.times[0] for time in self.times]
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.window})"
+
 
 class FrameSelect(Range[int]):
     default_tooltip = "Select which frames are to be included."
     default_label = "Frames to include in correlation."
 
-    def __init__(self, *args, dtype: None = None, **kwargs):
-        super().__init__(*args, dtype=int, **kwargs)
+    def __init__(
+        self, *args, default: FrameInput = "all", dtype: None = None, **kwargs
+    ):
+        super().__init__(*args, default=default, dtype=int, **kwargs)
 
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("trajectory")}
@@ -84,26 +121,54 @@ class FrameSelect(Range[int]):
     def get_ranges(self, deps: Depends) -> tuple[int, int]:
         return (0, len(deps["trajectory"]) + 1)
 
+    def __set__(self, owner: object, value: tuple[SupportsInt, ...]):
+
+        # Support legacy
+        corr = [x for x in self.dependents if isinstance(x, CorrelationWindow)]
+        window = None
+        if len(value) == 4 and corr:
+            value, window = value[:3], value[3]
+
+        super().__set__(owner, value)
+
+        if corr and window:
+            corr[0].__set__(owner, window)
+
     def validate(
         self,
-        value: range | tuple[int, ...] | None | Literal["all"],
+        value: FrameInput,
         deps: dict[str, Any],
         /,
     ) -> Frames:
+        if isinstance(value, Frames):
+            value = value.samples
+
         trajectory: Trajectory = deps["trajectory"]
         nsteps = len(trajectory)
 
-        if value in {"all", None}:
+        if value is None or value == "all":
             value = (0, nsteps, 1)
 
         ranges = super().validate(value, deps)
-
         return Frames(trajectory, ranges)
 
 
 class CorrelationWindow(Integer):
     default_label = "Correlation window"
     default_tooltip = "Number of frames in correlation window."
+
+    def __init__(self, *args, default: int | None = None, **kwargs):
+        super().__init__(*args, default=default, optional=True, **kwargs)
+
+    def validate(self, value: SupportsInt, deps: Depends):
+        if isinstance(value, FrameWindow):
+            value = value.window
+        elif value is None:
+            value = math.ceil(len(deps["frames"]) / 2)
+
+        value = super().validate(value, deps)
+
+        return FrameWindow(value, deps["frames"])
 
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("frames")}
@@ -138,6 +203,9 @@ class InterpOrder(SingleChoice[int | str, int]):
 
     @property
     def choices(self) -> list[int]:
+        if getattr(self, "last_choices", None) is None:
+            self.last_choices = self.get_choices()
+
         assert isinstance(self.last_choices, set)
         return sorted(self.last_choices)
 

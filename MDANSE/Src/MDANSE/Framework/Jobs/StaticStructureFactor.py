@@ -73,6 +73,7 @@ class StaticStructureFactor(DistanceHistogram):
     )
     q_values = Range[float](
         minimum=0.0,
+        include_last=True,
         default=numeric_range(0.0, 500.0, 1.0),
     )
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
@@ -80,8 +81,6 @@ class StaticStructureFactor(DistanceHistogram):
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -89,7 +88,7 @@ class StaticStructureFactor(DistanceHistogram):
     running_mode = RunningMode()
 
     def initialize(self):
-        frame_index = self.frames[0].index
+        frame_index = self.frames[0].ind
 
         conf = self.trajectory.configuration(frame_index)
         try:
@@ -115,7 +114,7 @@ class StaticStructureFactor(DistanceHistogram):
 
         nFrames = len(self.frames)
 
-        self.averageDensity /= nFrames
+        self.average_density /= nFrames
         r = self.r_values.mid_points
         dr = self.r_values.binning.step
 
@@ -188,7 +187,7 @@ class StaticStructureFactor(DistanceHistogram):
 
         q = self._outputData["ssf/axes/q"]
 
-        fact1 = 4.0 * np.pi * self.averageDensity
+        fact1 = 4.0 * np.pi * self.average_density
 
         sincqr = np.sinc(np.outer(q, r) / np.pi)
 
@@ -216,8 +215,8 @@ class StaticStructureFactor(DistanceHistogram):
             ni = nAtomsPerElement[label_i]
             nj = nAtomsPerElement[label_j]
 
-            idi = self.selectedElements.index(label_i)
-            idj = self.selectedElements.index(label_j)
+            idi = self.selected_elements.index(label_i)
+            idj = self.selected_elements.index(label_j)
 
             if label_i == label_j:
                 nij = ni**2 / 2.0
@@ -303,7 +302,7 @@ class StaticStructureFactor(DistanceHistogram):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

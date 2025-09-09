@@ -68,7 +68,7 @@ class AverageStructure(IJob):
     )
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     running_mode = RunningMode()
-    output_files = ASEOutputFormat(fmt="vasp")
+    output_files = ASEOutputFormat()
 
     def initialize(self):
         """

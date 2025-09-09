@@ -35,50 +35,35 @@ from .UtilTypes import Depends, DescID
 FilterType = type[Filter]
 
 
-class FilterParamDict(Dict[str, Any]):
-    def __init__(self, *args, fixed: None = None, **kwargs):
-        super().__init__(*args, fixed=True, **kwargs)
-        self.last_choices = set()
+# class FilterParamDict(Dict[str, Any]):
+#     def __init__(self, *args, fixed: None = None, **kwargs):
+#         super().__init__(*args, fixed=True, **kwargs)
+#         self.last_choices = set()
 
-    @property
-    def choices(self) -> set[str]:
-        return self.last_choices
+#     @property
+#     def choices(self) -> set[str]:
+#         return self.last_choices
 
-    @choices.setter
-    def choices(self, value) -> None: ...
+#     @choices.setter
+#     def choices(self, value) -> None: ...
 
-    def required_deps(self) -> set[DescID]:
-        return super().required_deps() | {DescID("filter")}
+#     def required_deps(self) -> set[DescID]:
+#         return super().required_deps() | {DescID("filter")}
 
-    def get_choices(self, deps: Depends, /):
-        return deps["filter"].default_settings.keys()
+#     def get_choices(self, deps: Depends, /):
+#         return deps["filter"].default_settings.keys()
 
 
-class TrajectoryFilter(CustomConfig):
+class Filter(CustomConfig):
     default_tooltip = "Choose trajectory filter."
     default_label = "Trajectory filter"
 
     filter_type = SingleChoice[str | FilterType, FilterType](
         choices=FILTERS,
         aliases=FILTER_MAP,
+        default=DEFAULT_FILTER,
     )
-    params = FilterParamDict(depends={"filter": "filter_type"})
-
-    def __init__(
-        self,
-        filter: FilterType | str = DEFAULT_FILTER,
-        params: dict[str, Any] | None = None,
-    ):
-        filter = FILTER_MAP.get(filter, filter)
-        if filter not in FILTERS:
-            raise ConfigError("Config not in keys.")
-
-        if isinstance(filter, str):
-            filter = FILTER_MAP[filter]
-
-        self.filter_type = filter
-
-        self.params = params or filter_default_attributes(self.filter_type)
+    params = Dict(default=filter_default_attributes(DEFAULT_FILTER))
 
     @property
     def filter(self) -> Filter:
@@ -101,3 +86,10 @@ class TrajectoryFilter(CustomConfig):
             self.params = {
                 key: val for key, val in value.__dict__ if key in value.default_settings
             }
+
+    def __set__(
+        self,
+        owner: object,
+        value: dict | str | Path | tuple[str, dict[str, Any]] | Filter,
+    ):
+        self.filter = value

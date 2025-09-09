@@ -72,7 +72,7 @@ class RootMeanSquareDeviation(IJob):
         self._outputData.add(
             "rmsd/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frames.times,
             units="ps",
         )
 
@@ -110,9 +110,9 @@ class RootMeanSquareDeviation(IJob):
 
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.frames.first_index,
-            last=self.frames.last_index + 1,
-            step=self.frames.step_index,
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
 
         # Compute the squared sum of the difference between all the coordinate of atoms i and the reference ones
@@ -165,7 +165,7 @@ class RootMeanSquareDeviation(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

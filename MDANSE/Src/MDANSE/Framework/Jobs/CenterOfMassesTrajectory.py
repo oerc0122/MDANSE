@@ -134,7 +134,7 @@ class CenterOfMassesTrajectory(IJob):
         """
 
         # get the Frame index
-        frameIndex = self.frames.sample[index]
+        frameIndex = self.frames[index].ind
         chemical_system = self.trajectory.chemical_system
         atom_database = self.trajectory
 

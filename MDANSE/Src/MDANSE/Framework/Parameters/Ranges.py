@@ -19,15 +19,18 @@ from collections.abc import Sequence
 
 import numpy as np
 import numpy.typing as npt
+
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .Parameters import ConfigError
 from .BaseTypes import NumericRange, Range
+from .Parameters import ConfigError
 from .UtilTypes import Depends, DescID
 
 
 class HistogramInfo:
     def __init__(self, bins: NumericRange):
+        if isinstance(bins, HistogramInfo):
+            bins = bins.binning
         self.binning = bins
 
     def __len__(self) -> int:
@@ -35,19 +38,19 @@ class HistogramInfo:
 
     @property
     def start(self) -> float:
-        return self.binning._start
+        return self.binning.start
 
     @property
     def stop(self) -> float:
-        return self.binning._stop
+        return self.binning.stop
 
     @property
     def step(self) -> float:
-        return self.binning._step
+        return self.binning.step
 
     @property
     def bins(self) -> npt.NDArray[float]:
-        self.bins = np.array(list(self.binning), dtype=np.float64)
+        return np.array(list(self.binning), dtype=np.float64)
 
     @property
     def mid_points(self) -> npt.NDArray[float]:
@@ -81,7 +84,7 @@ class RangeCellCutoff(Range[float]):
         value : tuple
             A tuple of the range parameters.
         """
-        value = super().validate(value)
+        value = super().validate(value, deps)
 
         if self._max_value:
             try:

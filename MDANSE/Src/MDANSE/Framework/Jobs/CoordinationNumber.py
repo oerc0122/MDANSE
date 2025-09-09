@@ -72,8 +72,6 @@ class CoordinationNumber(DistanceHistogram):
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -136,7 +134,7 @@ class CoordinationNumber(DistanceHistogram):
         shell_surfaces = density_factor * mid_points
         shell_volumes = shell_surfaces * self.r_values.step
 
-        self.averageDensity *= 4.0 * np.pi / n_frames
+        self.average_density *= 4.0 * np.pi / n_frames
 
         r2 = mid_points**2
         dr = self.r_values.step
@@ -148,7 +146,7 @@ class CoordinationNumber(DistanceHistogram):
 
         # symmetrize the data
         for (idi, i), (idj, j) in it.combinations_with_replacement(
-            enumerate(self.selectedElements), 2
+            enumerate(self.selected_elements), 2
         ):
             if i == j:
                 continue
@@ -184,14 +182,14 @@ class CoordinationNumber(DistanceHistogram):
             ni = nAtomsPerElement[label_i]
             nj = nAtomsPerElement[label_j]
 
-            idi = self.selectedElements.index(label_i)
-            idj = self.selectedElements.index(label_j)
+            idi = self.selected_elements.index(label_i)
+            idj = self.selected_elements.index(label_j)
 
             nij = ni**2 / 2.0 if label_i == label_j else ni * nj
 
             fact = 2 * nij * n_frames * shell_volumes
 
-            rho_j = self.averageDensity * self._concentrations[label_j]
+            rho_j = self.average_density * self._concentrations[label_j]
 
             self.h_total[idi, idj, :] /= fact
             cnTotal = np.add.accumulate(self.h_total[idi, idj, :] * r2) * dr
@@ -210,7 +208,7 @@ class CoordinationNumber(DistanceHistogram):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

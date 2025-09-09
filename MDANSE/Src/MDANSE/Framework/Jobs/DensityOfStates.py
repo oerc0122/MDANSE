@@ -57,9 +57,13 @@ class DensityOfStates(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        grouping="grouping_level",
+        transmutation="atom_transmutation",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
-    frames_window = CorrelationWindow(depends={"frames": "frames"})
+    frame_window = CorrelationWindow(depends={"frames": "frames"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
@@ -67,8 +71,6 @@ class DensityOfStates(IJob):
         default="atomic_weight",
         depends={
             "trajectory": "trajectory",
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
         },
     )
     projection = Projection(
@@ -79,7 +81,7 @@ class DensityOfStates(IJob):
         depends={"trajectory": "trajectory", "frames": "frames"},
     )
     instrument_resolution = InstrumentResolution(
-        depends={"frames": "frames"},
+        depends={"window": "frame_window"},
     )
     output_files = OutputFile()
     running_mode = RunningMode()
@@ -101,13 +103,13 @@ class DensityOfStates(IJob):
         self._outputData.add(
             "dos/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frames.times,
             units="ps",
         )
         self._outputData.add(
             "vacf/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frames.times,
             units="ps",
         )
 
@@ -210,17 +212,17 @@ class DensityOfStates(IJob):
         if self.interpolation_order == 0:
             series = trajectory.read_configuration_trajectory(
                 atom_index,
-                first=self.frames.first_index,
-                last=self.frames.last_index + 1,
-                step=self.frames.step_index,
+                first=self.frames.index_start,
+                last=self.frames.index_stop + 1,
+                step=self.frames.index_step,
                 variable="velocities",
             )
         else:
             series = trajectory.read_atomic_trajectory(
                 atom_index,
-                first=self.frames.first_index,
-                last=self.frames.last_index + 1,
-                step=self.frames.step_index,
+                first=self.frames.index_start,
+                last=self.frames.index_stop + 1,
+                step=self.frames.index_step,
             )
 
             order = self.interpolation_order

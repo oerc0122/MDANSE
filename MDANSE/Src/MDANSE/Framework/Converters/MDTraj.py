@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from functools import cached_property
 from math import isclose
 
 import mdtraj as md
@@ -29,25 +30,13 @@ from MDANSE.Framework.Parameters import (
     Float,
     OutputTrajectory,
     PathParam,
-    SingleChoice,
 )
+from MDANSE.Framework.Parsers import MDTrajTopology
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
     RealConfiguration,
 )
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
-from MDANSE.MolecularDynamics.UnitCell import UnitCell
-
-
-def get_coords(_desc, value, deps):
-    if deps["topology"] is not None:
-        return md.load(
-            value,
-            top=deps["topology"],
-            discard_overlapping_frames=deps["discard"],
-        )
-
-    return md.load(value, discard_overlapping_frames=deps["discard"])
 
 
 class MDTraj(Converter):
@@ -75,7 +64,7 @@ class MDTraj(Converter):
             "topology": "topology_file",
             "discard": "discard_overlapping_frames",
         },
-        on_get=get_coords,
+        on_get=MDTrajTopology,
     )
     time_step = Float(
         label="Time step",
@@ -83,23 +72,20 @@ class MDTraj(Converter):
         minimum=0.0,
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "topology_file"},
+        depends={"trajectory": "coordinate_files"},
         label="Atom mapping",
         default={},
     )
     fold = Boolean(label="Fold coordinates into box")
     output_files = OutputTrajectory()
 
-    def initialize(self):
-        """Load the trajectory using MDTraj and create the trajectory writer."""
-        super().initialize()
-
-        self.numberOfSteps = self.coordinate_files.n_frames
+    @cached_property
+    def chemical_system(self) -> ChemicalSystem:
         mdtraj_to_mdanse = {}
 
-        self._chemical_system = ChemicalSystem()
+        chemical_system = ChemicalSystem()
         elements, atom_names, atom_labels = [], [], defaultdict(list)
-        for atnumber, at in enumerate(self.coordinate_files.topology.atoms):
+        for atnumber, at in enumerate(self.coordinate_files.atoms):
             element = get_element_from_mapping(
                 self.atom_aliases,
                 at.name,
@@ -114,18 +100,28 @@ class MDTraj(Converter):
             if at.residue.name:
                 atom_labels[at.residue.name].append(atnumber)
 
-        self._chemical_system.initialise_atoms(elements, atom_names)
-        self._chemical_system.add_labels(atom_labels)
+        chemical_system.initialise_atoms(elements, atom_names)
+        chemical_system.add_labels(atom_labels)
         bonds = [
             (mdtraj_to_mdanse[at1.index], mdtraj_to_mdanse[at2.index])
-            for at1, at2 in self.coordinate_files.topology.bonds
+            for at1, at2 in self.coordinate_files.bonds
         ]
-        self._chemical_system.add_bonds(bonds)
-        self._chemical_system.find_clusters_from_bonds()
+        chemical_system.add_bonds(bonds)
+        chemical_system.find_clusters_from_bonds()
+
+        return chemical_system
+
+    def initialize(self):
+        """Load the trajectory using MDTraj and create the trajectory writer."""
+        super().initialize()
+
+        self.numberOfSteps = self.coordinate_files.n_frames
+
+        self.frames = self.coordinate_files.frames
 
         self._trajectory = TrajectoryWriter(
             self.output_files.path,
-            self._chemical_system,
+            self.chemical_system,
             self.numberOfSteps,
             positions_dtype=self.output_files.dtype,
             chunking_limit=self.output_files.chunk_size,
@@ -146,21 +142,16 @@ class MDTraj(Converter):
         tuple[int, None]
             A tuple of the job index and None.
         """
-        if self.coordinate_files.unitcell_vectors is None:
-            conf = RealConfiguration(
-                self._trajectory._chemical_system,
-                self.coordinate_files.xyz[index],
-            )
+        pos, cell = next(self.frames)
+        if cell is None:
+            conf = RealConfiguration(self.chemical_system, pos)
         else:
-            conf = PeriodicRealConfiguration(
-                self._trajectory._chemical_system,
-                self.coordinate_files.xyz[index],
-                UnitCell(
-                    self.coordinate_files.unitcell_vectors[index],
-                ),
-            )
+            conf = PeriodicRealConfiguration(self.chemical_system, pos, cell)
             if self.fold:
                 conf.fold_coordinates()
+
+        if isinstance(conf, PeriodicRealConfiguration) and self.fold:
+            conf.fold_coordinates()
 
         # TODO as of 11/12/2024 MDTraj does not read velocity data
         #  there is a discussion about this on GitHub
@@ -192,5 +183,4 @@ class MDTraj(Converter):
         pass
 
     def finalize(self):
-        self._trajectory.close()
         super().finalize()

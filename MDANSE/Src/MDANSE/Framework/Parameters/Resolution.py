@@ -57,9 +57,13 @@ class RunResolution(NamedTuple):
     def preview_output_axis(self):
         return self.romega, "rad/ps"
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(kernel={self.kernel!r}, parameters={self.resolution_parameters})"
+
+ResolutionInput = RunResolution | Resolution | tuple[str, dict[str, Any]]
 
 class InstrumentResolution(
-    ConfigureDescriptor[Resolution | tuple[str, dict[str, Any]], RunResolution]
+    ConfigureDescriptor[ResolutionInput, RunResolution]
 ):
     r"""Defines the resolution function to use for signal broadening.
 
@@ -83,13 +87,24 @@ class InstrumentResolution(
 
     """
 
-    _default = ("gaussian", {"mu": 0.0, "sigma": 10.0})
+    def __init__(
+        self,
+        *args,
+        default: ResolutionInput | None = None,
+        **kwargs,
+    ):
+        if default is None:
+            default = ("gaussian", {"mu": 0.0, "sigma": 10.0})
+        super().__init__(*args, default=default, **kwargs)
 
     def required_deps(self) -> set[DescID]:
-        return super().required_deps() | {DescID("frames")}
+        return super().required_deps() | {DescID("window")}
 
     def validate(
-        self, value: Resolution | tuple[str, dict[str, Any]], deps: Depends, /
+        self,
+        value: ResolutionInput,
+        deps: Depends,
+        /,
     ) -> RunResolution:
         """Configure the instrument resolution.
 
@@ -104,27 +119,34 @@ class InstrumentResolution(
         -------
 
         """
-        frames: Frames = deps["frames"]
+        frames: Frames = deps["window"]
 
-        n_frames = len(frames)
-        if n_frames < 2:
+        if frames.n_frames < 2:
             raise ConfigError("This analysis requires more time steps")
 
-        time_step = frames.time_step
+        time_step = frames._frames.time_step
 
         # We compute angular frequency AND NOT ORDINARY FREQUENCY ANYMORE
 
         omega = (
-            2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(2 * n_frames - 1, time_step))
+            2.0
+            * np.pi
+            * np.fft.fftshift(np.fft.fftfreq(2 * frames.n_frames - 1, time_step))
         )
 
         # generate the rfftfreq for the positive frequency only results
-        romega = 2.0 * np.pi * np.fft.rfftfreq(2 * n_frames - 1, time_step)
+        romega = 2.0 * np.pi * np.fft.rfftfreq(2 * frames.n_frames - 1, time_step)
 
-        kernel, parameters = value
+        if isinstance(value, RunResolution):
+            kernel, parameters = value.kernel, value.resolution_parameters
+        elif isinstance(value, dict):
+            value = value.copy()
+            kernel, parameters = value.pop("res_type"), value
+        else:
+            kernel, parameters = value
 
-        resolution = IInstrumentResolution.create(kernel)
-        resolution.setup(parameters)
+        resolution: IInstrumentResolution = IInstrumentResolution.create(kernel)
+        resolution.configuration = parameters
         resolution.set_kernel(omega, time_step)
         time_window = resolution.timeWindow.real
 
@@ -132,8 +154,8 @@ class InstrumentResolution(
             kernel=kernel,
             omega=omega,
             romega=romega,
-            resolution_parameters=value,
+            resolution_parameters=parameters,
             time_window=time_window,
             omega_window=resolution.omegaWindow,
-            time_window_positive=np.fft.ifftshift(time_window)[: len(self.frames)],
+            time_window_positive=np.fft.ifftshift(time_window)[: frames.window],
         )

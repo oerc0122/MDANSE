@@ -37,6 +37,7 @@ from qtpy.QtWidgets import (
 )
 
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
+from MDANSE.IO.IOUtils import UCEnum
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
@@ -55,7 +56,7 @@ from MDANSE_GUI.Widgets.SelectionWidgets import (
 )
 
 
-class SelectionValidity(Enum):
+class SelectionValidity(UCEnum):
     """Strings for selection check results."""
 
     VALID_SELECTION = "Valid selection"

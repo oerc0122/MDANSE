@@ -130,8 +130,6 @@ class VanHoveFunctionSelf(IJob):
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -156,7 +154,7 @@ class VanHoveFunctionSelf(IJob):
         ]
 
         conf = self.trajectory.configuration(
-            self.frames.first_index,
+            self.frames.index_start,
         )
         if not hasattr(conf, "unit_cell"):
             raise ValueError(DETAILED_CELL_MESSAGE)
@@ -172,7 +170,7 @@ class VanHoveFunctionSelf(IJob):
         self._outputData.add(
             "vh/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frames.times,
             units="ps",
         )
         self._outputData.add(
@@ -241,8 +239,8 @@ class VanHoveFunctionSelf(IJob):
         """
         histograms = np.zeros((self.n_mid_points, self.n_frames))
         first = self.frames.start_index
-        last = self.frames.last_index + 1
-        step = self.frames.step_index
+        last = self.frames.index_stop + 1
+        step = self.frames.index_step
 
         atom_index = self.trajectory.atom_indices[index]
         series = self.trajectory.read_atomic_trajectory(
@@ -351,7 +349,7 @@ class VanHoveFunctionSelf(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

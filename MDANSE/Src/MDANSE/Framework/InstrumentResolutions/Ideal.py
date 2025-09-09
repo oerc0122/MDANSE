@@ -27,8 +27,6 @@ from MDANSE.Framework.InstrumentResolutions.IInstrumentResolution import (
 class Ideal(IInstrumentResolution):
     """Defines an ideal instrument resolution with a Dirac response"""
 
-    settings = collections.OrderedDict()
-
     def set_kernel(self, omegas, dt):
         nOmegas = len(omegas)
         self._omegaWindow = np.zeros(nOmegas, dtype=np.float64)

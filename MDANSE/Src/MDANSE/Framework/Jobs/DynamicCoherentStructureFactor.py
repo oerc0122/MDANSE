@@ -79,7 +79,7 @@ class DynamicCoherentStructureFactor(IJob):
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     instrument_resolution = InstrumentResolution(
-        depends={"trajectory": "trajectory", "frames": "frames"},
+        depends={"trajectory": "trajectory", "window": "frame_window"},
     )
     r_values = RangeCellCutoff(
         label="r values (nm)",
@@ -89,8 +89,6 @@ class DynamicCoherentStructureFactor(IJob):
     )
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )

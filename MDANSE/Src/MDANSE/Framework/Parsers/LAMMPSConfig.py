@@ -21,17 +21,18 @@ from collections.abc import Iterable, Sequence
 from itertools import starmap
 from pathlib import Path
 from string import ascii_uppercase as upcase
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 import numpy as np
-from more_itertools import first, first_true, split_before, spy
-from numpy.typing import NDArray
-
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import AtomLabel
 from MDANSE.Framework.Parsers.LAMMPS import BoxStyle
 from MDANSE.IO.IOUtils import strip_comments
 from MDANSE.MLogging import LOG
+from more_itertools import first, split_before, spy
+from numpy.typing import NDArray
+
+from .Parser import Parser
 
 
 class LAMMPSConfigFileError(Error):
@@ -318,7 +319,7 @@ def int_list_parser(lines, *_) -> dict[str, tuple[int, ...]]:
     }
 
 
-class LAMMPSConfigFile(dict):
+class LAMMPSConfigFile(Parser, dict):
     """Parse the result of a LAMMPS ``write_data``.
 
     Provides necessary initial details if not included in
@@ -735,6 +736,7 @@ class LAMMPSConfigFile(dict):
         self.setdefault("elements", dict(zip(elem_range, map(str, elem_range))))
         self.setdefault("charges", np.zeros(self["n_atoms"]))
 
+    @property
     def atom_labels(self) -> Iterable[AtomLabel]:
         """
         Yields

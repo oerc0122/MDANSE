@@ -17,10 +17,10 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -28,7 +28,7 @@ import numpy.typing as npt
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.AtomMapping import check_mapping_valid, fill_remaining_labels
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
-from MDANSE.IO.IOUtils import json_handler
+from MDANSE.IO.IOUtils import UCEnum, json_handler
 from MDANSE.MLogging import LOG
 
 from .Choices import SingleChoice
@@ -144,7 +144,7 @@ class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
 
     """
 
-    def __init__(self, default: Collection[int] = (), **kwargs):
+    def __init__(self, default: Collection[int] | dict | None = None, **kwargs):
         super().__init__(default=default, **kwargs)
 
     def required_deps(self) -> set[DescID]:
@@ -152,14 +152,18 @@ class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
 
     def validate(
         self,
-        value: dict | str | Path,
+        value: Sequence[int] | dict | str | Path,
         deps: Depends,
         /,
     ) -> list[int]:
-        file_info = deps["trajectory"]
+        trajectory = deps["trajectory"]
+
+        if value is None or value == "all":
+            return list(range(len(trajectory.atom_types)))
+        if isinstance(value, list | tuple | set):
+            return sorted(value)
 
         selector = ReusableSelection()
-
         try:
             selection = json_handler(value)
         except Exception as err:
@@ -170,7 +174,7 @@ class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
         except TypeError as err:
             raise ConfigError("Unable to load from dictionary.") from err
 
-        indices = selector.select_in_trajectory(file_info)
+        indices = selector.select_in_trajectory(trajectory)
 
         return sorted(indices)
 
@@ -292,22 +296,25 @@ class PartialChargeMapper(Mapper):
         return json.dumps(self.get_grouped_setting())
 
 
-class GroupingLevels(Enum):
-    atom = auto()
-    molecule = auto()
+class GroupingLevels(UCEnum):
+    ATOM = auto()
+    MOLECULE = auto()
+
+    def __repr__(self) -> str:
+        return self.name.title()
 
 
 class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
     base_aliases = {
-        "each atom": GroupingLevels.atom,
-        "each molecule": GroupingLevels.molecule,
+        "each atom": GroupingLevels.ATOM,
+        "each molecule": GroupingLevels.MOLECULE,
     }
 
     def __init__(
         self,
         *args,
         choices: None = None,
-        default: GroupingLevels | str = GroupingLevels.atom,
+        default: GroupingLevels | str = GroupingLevels.ATOM,
         **kwargs,
     ):
         if choices is not None:
@@ -335,8 +342,8 @@ class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
         value = super().validate(value, deps)
 
         if (
-            value is GroupingLevels.molecule
-            and not self.deps["trajectory"].chemical_system.unique_molecules()
+            value is GroupingLevels.MOLECULE
+            and not deps["trajectory"].chemical_system.unique_molecules()
         ):
             raise ConfigError("Requested molecule grouping, but no molecules exist")
 
@@ -382,6 +389,11 @@ class AtomTransmuter(Mapper):
 
 
 class AtomTransmutation(ConfigureDescriptor[dict | str | Path, dict]):
+    def __init__(self, default: dict[int, str] | None = None, **kwargs):
+        if default is None:
+            default = {}
+        super().__init__(default=default, **kwargs)
+
     def validate(
         self,
         value: dict | str | Path,

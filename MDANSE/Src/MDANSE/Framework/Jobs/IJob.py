@@ -266,25 +266,23 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
     def initialize(self):
         if hasattr(self, "output_files"):
-            if isinstance(opf := self.output_files, tuple):
-                cls = OutputFile if len(opf) == 3 else OutputTrajectory
-                self.output_files = cls.from_old_tuple(opf)
-
             if self.output_files.write_logs:
                 log_filename = self.output_files.path.with_suffix(".log")
-                self.add_log_file_handler(log_filename, self.output_files.log_level)
+                self.add_log_file_handler(
+                    log_filename, self.output_files.log_level.value
+                )
         else:
             LOG.error("IJob did not find 'write_logs' in output_files")
 
-        if selection := self.configuration.get("atom_selection"):
+        if selection := getattr(self, "atom_selection", None):
             try:
-                array_length = selection["total_number_of_atoms"]
+                array_length = self.trajectory.get_total_natoms(total=True)
             except KeyError:
                 LOG.warning(
                     "Job could not find total number of atoms in atom selection."
                 )
             else:
-                valid_indices = selection["flatten_indices"]
+                valid_indices = selection
                 self._outputData.add(
                     "selected_atoms",
                     "LineOutputVariable",
@@ -418,7 +416,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
         for i in range(self.numberOfSteps):
             inputQueue.put(i)
 
-        for _ in range(self.running_mode.slots):
+        for _ in range(self.running_mode.n_procs):
             self._run_multicore_check_terminate(listener)
             p = Process(
                 target=self.process_tasks_queue,
@@ -526,8 +524,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
             if status and self._status is None:
                 self._status = self._status_constructor(self)
 
-            for key, val in parameters.items():
-                setattr(self, key, val)
+            self.configuration = parameters
 
             self.initialize()
 

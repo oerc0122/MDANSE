@@ -20,9 +20,9 @@ from typing import Any
 
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
 
-from .Parameters import ConfigError
 from .BaseTypes import Dict
 from .Choices import SingleChoice
+from .Parameters import ConfigError
 from .UtilTypes import Depends, DescID
 
 

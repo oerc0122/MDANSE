@@ -71,13 +71,12 @@ class PositionPowerSpectrum(IJob):
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     instrument_resolution = InstrumentResolution(
-        depends={"trajectory": "trajectory", "frames": "frames"}
+        depends={"trajectory": "trajectory", "window": "frame_window"}
     )
     projection = Projection(label="Project coordinates")
     weights = Weights(
+        default="atomic_weight",
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -101,13 +100,13 @@ class PositionPowerSpectrum(IJob):
         self._outputData.add(
             "pps/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frame_window.times,
             units="ps",
         )
         self._outputData.add(
             "pacf/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frame_window.times,
             units="ps",
         )
 
@@ -143,7 +142,7 @@ class PositionPowerSpectrum(IJob):
             self._outputData.add(
                 f"pacf/{element}",
                 "LineOutputVariable",
-                (len(self.frames),),
+                (self.frame_window.n_frames,),
                 axis="pacf/axes/time",
                 units="nm2",
             )
@@ -168,7 +167,7 @@ class PositionPowerSpectrum(IJob):
         self._outputData.add(
             "pacf/total",
             "LineOutputVariable",
-            (len(self.frames),),
+            (self.frame_window.n_frames,),
             axis="pacf/axes/time",
             units="nm2",
         )
@@ -210,19 +209,18 @@ class PositionPowerSpectrum(IJob):
 
         series = trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.frames.first_index,
-            last=self.frames.last_index + 1,
-            step=self.frames.step_index,
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
 
-        series = series - np.average(series, axis=0)
+        series -= np.average(series, axis=0)
+        series = self.projection.projector(series)
 
-        series = self.projection(series)
-
-        n_configs = self.frame_window
-        atomicPACF = correlate(series, series[:n_configs], mode="valid") / (
-            3 * n_configs
+        atomicPACF = correlate(series, series[:self.frame_window.n_configs], mode="valid") / (
+            3 * self.frame_window.n_configs
         )
+
         return index, atomicPACF.T[0]
 
     def combine(self, index, x):
@@ -242,21 +240,20 @@ class PositionPowerSpectrum(IJob):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
-
         nAtomsPerElement = self.trajectory.get_natoms()
         for element, number in nAtomsPerElement.items():
             self._outputData[f"pacf/{element}"][:] /= number
             self._outputData[f"pps/{element}"][:] = get_spectrum(
                 self._outputData[f"pacf/{element}"],
                 self.instrument_resolution.time_window,
-                self.instrument_resolution.time_step,
+                self.frames.time_step,
                 fft="rfft",
             )
             if self.add_ideal_results:
                 self._outputData[f"pps/ideal/{element}"][:] = get_spectrum(
                     self._outputData[f"pacf/{element}"],
                     None,
-                    self.instrument_resolution.time_step,
+                    self.frames.time_step,
                     fft="rfft",
                 )
 
@@ -339,7 +336,7 @@ class PositionPowerSpectrum(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

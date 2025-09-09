@@ -136,7 +136,7 @@ class MolecularTrace(IJob):
         # This is the actual index of the frame corresponding to the loop index.
         frame = self.frames[index]
 
-        conf = self.trajectory.configuration(frame.index)
+        conf = self.trajectory.configuration(frame.ind)
         conf = conf.continuous_configuration()
 
         grid = np.zeros(self.gdim, dtype=np.int32)
@@ -176,7 +176,7 @@ class MolecularTrace(IJob):
         # Write the output variables.
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

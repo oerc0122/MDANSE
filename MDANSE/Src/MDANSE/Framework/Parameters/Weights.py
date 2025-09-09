@@ -22,8 +22,8 @@ import numpy as np
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-from .Parameters import ConfigError
 from .Choices import SingleChoice
+from .Parameters import ConfigError
 from .UtilTypes import Depends, DescID
 
 
@@ -64,14 +64,12 @@ class Weights(SingleChoice[str, str]):
 
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {
-            DescID("selection"),
             DescID("trajectory"),
-            DescID("transmutation"),
         }
 
     def get_choices(self, _deps) -> set[str]:
         """Limit the list of atom properties to usable values."""
-        full_choices = set(ATOMS_DATABASE.numeric_properties) | self._aliases.keys()
+        full_choices = set(ATOMS_DATABASE.numeric_properties) | self.aliases.keys()
         limited_choices = full_choices - {
             "abundance",
             "block",
@@ -110,26 +108,22 @@ class Weights(SingleChoice[str, str]):
 
         trajectory: Trajectory = deps["trajectory"]
 
-        if value not in trajectory.properties_in_database:
+        if value not in trajectory.properties:
             raise ConfigError(
                 f"weight {value} is not registered as a valid numeric property."
             )
 
-        if self.test_values_for_nan(value):
+        if self.test_values_for_nan(value, deps):
             raise ConfigError(f"Property {value} is NaN for at least one atom type.")
 
         return value
 
     def test_values_for_nan(self, property_name: str, deps: Depends, /) -> bool:
         """Throw an error early if weights are not usable."""
-        atom_select = deps["selection"]
-        atom_trans = deps["transmutation"]
         trajectory: Trajectory = deps["trajectory"]
 
-        trajectory.set_transmutation(atom_trans)
-        trajectory.set_selection(atom_select)
         atom_types = np.unique(trajectory.atom_types)
         return any(
-            np.isnan(self._trajectory.get_atom_property(atom, property_name))
+            np.isnan(trajectory.get_atom_property(atom, property_name))
             for atom in atom_types
         )

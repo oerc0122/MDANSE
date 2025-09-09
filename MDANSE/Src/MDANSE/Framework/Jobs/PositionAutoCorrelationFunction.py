@@ -68,8 +68,6 @@ class PositionAutoCorrelationFunction(IJob):
     )
     weights = Weights(
         depends={
-            "selection": "atom_selection",
-            "transmutation": "atom_transmutation",
             "trajectory": "trajectory",
         }
     )
@@ -92,7 +90,7 @@ class PositionAutoCorrelationFunction(IJob):
         self._outputData.add(
             "pacf/axes/time",
             "LineOutputVariable",
-            self.frames.time,
+            self.frame_window.times,
             units="ps",
         )
 
@@ -101,7 +99,7 @@ class PositionAutoCorrelationFunction(IJob):
             self._outputData.add(
                 f"pacf/{element}",
                 "LineOutputVariable",
-                (len(self.frames),),
+                (self.frame_window.window,),
                 axis="pacf/axes/time",
                 units="nm2",
                 main_result=True,
@@ -126,16 +124,16 @@ class PositionAutoCorrelationFunction(IJob):
 
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.frames.first_index,
-            last=self.frames.last_index + 1,
-            step=self.frames.step_index,
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
 
         series = series - np.average(series, axis=0)
         series = self.projection(series)
 
-        atomicPACF = correlate(series, series[: self.frame_window], mode="valid") / (
-            3 * self.frame_window
+        atomicPACF = correlate(series, series[: self.frame_window.n_configs], mode="valid") / (
+            3 * self.frame_window.n_configs
         )
         return index, atomicPACF.T[0]
 
@@ -206,7 +204,7 @@ class PositionAutoCorrelationFunction(IJob):
 
         self._outputData.write(
             self.output_files.path,
-            self.output_files.out_formats,
+            self.output_files.out_format,
             str(self),
             self,
         )
