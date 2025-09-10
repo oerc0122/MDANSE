@@ -278,7 +278,7 @@ class DynamicIncoherentStructureFactor(IJob):
         )
         for weights in selected_weights, all_weights:
             for key, value in weights.items():
-                weights[key] = value**2
+                weights[key] = abs(value)**2
         weight_dict = get_weights(
             selected_weights,
             all_weights,
