@@ -62,8 +62,8 @@ def get_weights(
     )
     _, normFactor = adjust_weights(all_props, all_contents, n_atms, dim, conc_exp)
 
+    normalise = True
     try:
-        # skip normalisation if weights are q-dependent e.g. x-ray SSF
         len(normFactor)
     except TypeError:
         normalise = abs(normFactor) > 0.0  # if normFactor is 0, all weights are 0 too.
