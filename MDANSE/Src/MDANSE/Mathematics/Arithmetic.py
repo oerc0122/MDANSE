@@ -108,13 +108,13 @@ def adjust_weights(
         for el in props:
             atom_conc_product = contents[el] / n_atms
             property_product = props[el]
-            factor = atom_conc_product ** conc_exp * property_product
+            factor = atom_conc_product**conc_exp * property_product
             weights[el] = factor
             normFactor += atom_conc_product * property_product
     elif dim == 2:
         cartesianProduct = itertools.product(props, repeat=2)
         for el_a, el_b in cartesianProduct:
-            atom_conc_product = contents[el_a] * contents[el_b]  / n_atms**2
+            atom_conc_product = contents[el_a] * contents[el_b] / n_atms**2
             property_product = props[el_a].conjugate() * props[el_b]
 
             factor = atom_conc_product**conc_exp * property_product
