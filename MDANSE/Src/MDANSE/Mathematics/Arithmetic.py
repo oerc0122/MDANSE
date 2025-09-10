@@ -105,7 +105,7 @@ def adjust_weights(
     weights = {}
 
     if dim == 1:
-        for el in props:
+        for el in props.keys():
             atom_conc_product = contents[el] / n_atms
             property_product = props[el]
             factor = atom_conc_product**conc_exp * property_product
