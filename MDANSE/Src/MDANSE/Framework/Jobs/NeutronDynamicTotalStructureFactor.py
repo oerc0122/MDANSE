@@ -384,11 +384,11 @@ class NeutronDynamicTotalStructureFactor(IJob):
             )
             pre_fac = 1 if label_i == label_j else 2
             self._outputData[f"ndsf/f(q,t)_coh/{pair_str}"].scaling_factor *= (
-                pre_fac * bi * bj * sqrt_cij
-            )
+                pre_fac * bi.conjugate() * bj * sqrt_cij
+            ).real
             self._outputData[f"ndsf/s(q,f)_coh/{pair_str}"].scaling_factor *= (
-                pre_fac * bi * bj * sqrt_cij
-            )
+                pre_fac * bi.conjugate() * bj * sqrt_cij
+            ).real
 
             self._outputData["ndsf/f(q,t)_coh/total"][:] += (
                 self._outputData[f"ndsf/f(q,t)_coh/{pair_str}"][:]
@@ -409,10 +409,10 @@ class NeutronDynamicTotalStructureFactor(IJob):
             ele_i = self.trajectory.element_from_label[label]
             bi = self.trajectory.get_atom_property(ele_i, "b_incoherent")
             self._outputData[f"ndsf/f(q,t)_inc/{label}"].scaling_factor *= (
-                bi**2 * number * norm_natoms
+                abs(bi)**2 * number * norm_natoms
             )
             self._outputData[f"ndsf/s(q,f)_inc/{label}"].scaling_factor *= (
-                bi**2 * number * norm_natoms
+                abs(bi)**2 * number * norm_natoms
             )
             self._outputData["ndsf/f(q,t)_inc/total"][:] += (
                 self._outputData[f"ndsf/f(q,t)_inc/{label}"][:]

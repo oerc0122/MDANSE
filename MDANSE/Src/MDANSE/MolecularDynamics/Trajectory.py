@@ -268,7 +268,7 @@ class Trajectory:
         self,
         *,
         prop: str | None = None,
-    ) -> tuple[dict[str, float], dict[str, float]]:
+    ) -> tuple[dict[str, float | complex], dict[str, float | complex]]:
         """Generate a dictionary of weights.
 
         Parameters
