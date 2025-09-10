@@ -109,9 +109,8 @@ def adjust_weights(
     weights = {}
 
     if dim == 1:
-        for el in props:
+        for el, property_product in props.items():
             atom_conc_product = contents[el] / n_atms
-            property_product = props[el]
             factor = atom_conc_product**conc_exp * property_product
             weights[(el,)] = factor
             normFactor += atom_conc_product * property_product
