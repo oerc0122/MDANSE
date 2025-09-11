@@ -23,13 +23,13 @@ import numpy as np
 
 
 def get_weights(
-    selected_props: dict[str, float],
-    all_props: dict[str, float],
+    selected_props: dict[str, float | complex],
+    all_props: dict[str, float | complex],
     selected_contents: dict[str, int],
     all_contents: dict[str, int],
     dim: int,
     conc_exp: float = 1.0,
-) -> dict[str, float]:
+) -> dict[str, float | complex]:
     """Calculate the scaling factors to be applied to output datasets.
 
     Returns a dictionary of scaling factors, where the
@@ -69,20 +69,19 @@ def get_weights(
         normalise = abs(normFactor) > 0.0  # if normFactor is 0, all weights are 0 too.
     if normalise:
         for k in weights:
-            weights[k] /= np.float64(normFactor)
-
+            weights[k] /= normFactor
     weights["sum"] = normFactor
 
     return weights
 
 
 def adjust_weights(
-    props: dict[str, float],
+    props: dict[str, float | complex],
     contents: dict[str, int],
     n_atms: int,
     dim: int,
     conc_exp: float = 1.0,
-) -> tuple[dict[str | tuple[str], float], float]:
+) -> tuple[dict[str | tuple[str], float | complex], float]:
     """Combine the weights based on whether they will be used for nth-body
     property and adjust them based on their atom concentrations.
 
@@ -109,24 +108,33 @@ def adjust_weights(
 
     weights = {}
 
-    cartesianProduct = itertools.product(props, repeat=dim)
-    for elements in cartesianProduct:
-        atom_conc_product = np.prod([contents[el] / n_atms for el in elements])
-        property_product = np.prod(np.array([props[el] for el in elements]), axis=0)
+    if dim == 1:
+        for el, property_product in props.items():
+            atom_conc_product = contents[el] / n_atms
+            factor = atom_conc_product**conc_exp * property_product
+            weights[(el,)] = factor
+            normFactor += atom_conc_product * property_product
+    elif dim == 2:
+        cartesianProduct = itertools.product(props, repeat=2)
+        for el_a, el_b in cartesianProduct:
+            atom_conc_product = contents[el_a] * contents[el_b] / n_atms**2
+            property_product = props[el_a].conjugate() * props[el_b]
 
-        factor = atom_conc_product**conc_exp * property_product
-        # E.g. for property b_coh, 5 Cu atoms, 100 total atoms, and dim=2
-        # factor = (5*5/(100*100))**conc_exp * b_coh(Cu)*b_coh(Cu)
+            factor = atom_conc_product**conc_exp * property_product
+            # E.g. for property b_coh, 5 Cu atoms, 100 total atoms, and dim=2
+            # factor = (5*5/(100*100))**conc_exp * b_coh_cu.conjugate() * b_coh_cu
 
-        weights[elements] = np.float64(np.copy(factor))
-        normFactor += atom_conc_product * property_product
+            weights[(el_a, el_b)] = factor
+            normFactor += atom_conc_product * property_product
+    else:
+        raise NotImplementedError(f"Dimension {dim} not implemented.")
 
-    return weights, normFactor
+    return weights, abs(normFactor.real)
 
 
 def assign_weights(
     values: dict[str, np.ndarray],
-    weights: dict[str, float],
+    weights: dict[str, float | complex],
     match_key: str,
     match_labels: Iterable[tuple[str, tuple[str, ...]]],
     symmetric: bool = True,
@@ -157,9 +165,9 @@ def assign_weights(
     for k in values.keys() & matches:
         if symmetric:
             permutations = set(itertools.permutations(matches[k], r=len(matches[k])))
-            w = sum(weights[p] for p in permutations)
+            w = sum(weights[p].real for p in permutations)
         else:
-            w = weights[matches[k]]
+            w = weights[matches[k]].real
 
         values[k].scaling_factor *= w
 
