@@ -86,6 +86,14 @@ class AtomLabel:
         """
         return hash((self.atm_label, self.grp_label, self.mass))
 
+    def __repr__(self) -> str:
+        grps = self.grp_label.split(";") if self.grp_label else []
+        grps = map(lambda x: x.split("="), grps)
+        cont = ", ".join(
+            f"{key}={val!r}" for key, val in (("atm_label", self.atm_label), *grps)
+        )
+        return f"{type(self).__name__}({cont})"
+
 
 def guess_element(atm_label: str, mass: float | int | None = None) -> str:
     """From an input atom label find a match to an element in the atom
