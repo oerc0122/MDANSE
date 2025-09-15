@@ -91,7 +91,7 @@ class CenterOfMassesTrajectory(IJob):
         new_element_list = []
         used_up_atoms = set()
         new_chemical_system = ChemicalSystem()
-        for cluster_name in chemical_system._clusters.keys():
+        for cluster_name in chemical_system._clusters:
             for cluster in chemical_system._clusters[cluster_name]:
                 if selected_indices and set(cluster) <= selected_indices:
                     if cluster_name not in self.cluster_composition:
@@ -117,7 +117,7 @@ class CenterOfMassesTrajectory(IJob):
         )
         self._unique_atoms = np.unique(new_element_list)
         self._molecule_radii = {
-            cluster_name: [] for cluster_name in chemical_system._clusters.keys()
+            cluster_name: [] for cluster_name in chemical_system._clusters
         }
         self.selected_indices = selected_indices
 
@@ -141,13 +141,11 @@ class CenterOfMassesTrajectory(IJob):
 
         conf = self.trajectory.configuration(frameIndex)
         conf = conf.contiguous_configuration()
-        temp_radii = {
-            cluster_name: [] for cluster_name in chemical_system._clusters.keys()
-        }
+        temp_radii = {cluster_name: [] for cluster_name in chemical_system._clusters}
 
         com_coords = np.empty((n_coms, 3), dtype=np.float64)
         mol_index = 0
-        for cluster_name in chemical_system._clusters.keys():
+        for cluster_name in chemical_system._clusters:
             for cluster in chemical_system._clusters[cluster_name]:
                 if not set(cluster).issubset(self.selected_indices):
                     continue
@@ -207,7 +205,7 @@ class CenterOfMassesTrajectory(IJob):
 
         time_averaged_radii = {
             cluster_name: np.mean(self._molecule_radii[cluster_name])
-            for cluster_name in self._molecule_radii.keys()
+            for cluster_name in self._molecule_radii
         }
 
         self._output_trajectory.write_atom_database(
