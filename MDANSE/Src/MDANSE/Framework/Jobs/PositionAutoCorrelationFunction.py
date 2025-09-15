@@ -132,9 +132,9 @@ class PositionAutoCorrelationFunction(IJob):
         series = series - np.average(series, axis=0)
         series = self.projection(series)
 
-        atomicPACF = correlate(series, series[: self.frame_window.n_configs], mode="valid") / (
-            3 * self.frame_window.n_configs
-        )
+        atomicPACF = correlate(
+            series, series[: self.frame_window.n_configs], mode="valid"
+        ) / (3 * self.frame_window.n_configs)
         return index, atomicPACF.T[0]
 
     def combine(self, index, x):

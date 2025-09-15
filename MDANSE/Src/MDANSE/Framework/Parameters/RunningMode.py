@@ -29,9 +29,6 @@ class OldRunningMode(NamedTuple):
     n_procs: int
 
 
-Self = TypeVar("Self", bound="RunningMode")
-
-
 class CPUSlots(Integer):
     def validate(self, value: SupportsInt, deps: dict[None, None]):
         value = int(value)

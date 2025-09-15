@@ -54,17 +54,21 @@ class RunResolution(NamedTuple):
     def n_romegas(self) -> int:
         return len(self.romega)
 
+    @property
+    def add_ideal(self) -> bool:
+        return self.kernel.lower() != "ideal"
+
     def preview_output_axis(self):
         return self.romega, "rad/ps"
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(kernel={self.kernel!r}, parameters={self.resolution_parameters})"
 
+
 ResolutionInput = RunResolution | Resolution | tuple[str, dict[str, Any]]
 
-class InstrumentResolution(
-    ConfigureDescriptor[ResolutionInput, RunResolution]
-):
+
+class InstrumentResolution(ConfigureDescriptor[ResolutionInput, RunResolution]):
     r"""Defines the resolution function to use for signal broadening.
 
     The instrument resolution will be used in frequency-dependent analysis

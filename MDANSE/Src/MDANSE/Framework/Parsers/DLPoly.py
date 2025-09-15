@@ -104,7 +104,7 @@ class HistoryFile(Parser):
         accum["ind"] = np.empty(self.natm, dtype=int)
         accum["charge"] = np.empty(self.natm, dtype=float)
         for i, line in enumerate(map(str.split, step[4 :: self.keytrj + 2])):
-            spec, ind, mass, charge, *_rsd = line
+            spec, ind, _mass, charge, *_rsd = line
             ref = int(ind) - 1
             accum["ind"][i] = int(ind)
             accum["spec"][ref] = spec
@@ -218,7 +218,7 @@ class FieldFile:
 
                 for atom in block:
                     spec, mass, charge, *rep_froz = (atom + " 1 0").split()
-                    repeat, frozen = map(int, rep_froz[:2])
+                    repeat, _frozen = map(int, rep_froz[:2])
 
                     current_slice = np.s_[curr : curr + repeat]
                     specs[current_slice] = spec

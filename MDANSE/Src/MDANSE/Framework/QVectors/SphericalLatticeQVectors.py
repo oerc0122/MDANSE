@@ -44,7 +44,7 @@ class SphericalLatticeQVectors(LatticeQVectors):
     """
 
     seed = Integer(minimum=0, default=0)
-    shells = Range(
+    shells = Range[float](
         minimum=0.0,
         default=(0, 5.0, 0.5),
         include_last=True,
@@ -95,19 +95,18 @@ class SphericalLatticeQVectors(LatticeQVectors):
 
             nHits = len(hits)
 
-            if nHits != 0:
+            if nHits:
                 n = min(nHits, self.n_vectors)
 
                 if nHits > self.n_vectors:
                     hits = random.sample(sorted(hits), self.n_vectors)
 
-                self.q_vectors[q] = {}
-                self.q_vectors[q]["q_vectors"] = vects[:, hits]
-                self.q_vectors[q]["n_q_vectors"] = n
-                self.q_vectors[q]["q"] = q
-                self.q_vectors[q]["hkls"] = self.qvectors_to_hkl(
-                    vects[:, hits], self._unit_cell
-                )
+                self.q_vectors[q] = {
+                    "q_vectors": vects[:, hits],
+                    "n_q_vectors": n,
+                    "q": q,
+                    "hkls": self.qvectors_to_hkl(vects[:, hits], self._unit_cell),
+                }
 
             if self._status is not None:
                 if self._status.is_stopped():

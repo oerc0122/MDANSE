@@ -15,7 +15,6 @@
 #
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Any
 
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
@@ -49,11 +48,17 @@ class QVectorsSelect(SingleChoice[str | IQVectors, IQVectors]):
 
     def validate(self, value: str | type[IQVectors], deps: Depends, /) -> IQVectors:
         value: type[IQVectors] = super().validate(value, deps)
+        return value(deps["trajectory"].configuration(0))
 
-        return value(deps["trajectory"])
 
+class QVectorsParams(Dict[str, Any]):
+    def __set__(self, owner: object, value):
+        if isinstance(value, tuple):
+            typ, value = value
+            setattr(owner, self.depends["generator"], typ)
 
-class QVectors(Dict[str, Any]):
+        super().__set__(owner, value)
+
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("generator")}
 
@@ -65,4 +70,5 @@ class QVectors(Dict[str, Any]):
 
         gen = deps["generator"]
         gen.configuration = value
+        gen.generate()
         return gen

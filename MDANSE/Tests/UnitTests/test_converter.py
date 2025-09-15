@@ -406,7 +406,7 @@ def _converter_test(
                 "coordinate_format": "XTC",
                 "coordinate_files": md_xtc,
             },
-        ),  # Does not work with Path
+        ),
         (
             "MDTraj",
             "hem_cam.mdt",
@@ -865,8 +865,8 @@ def test_lammps_config_parser(config_file, expected):
             "MDAnalysis",
             '{"name=O;type=O;mass=15.999": {"O": "Os"}, "name=C;type=C;mass=12.011": {"C": "Os"}}',
             {
-                "topology_file": (cp2k_pos, "AUTO"),
-                "coordinate_files": ([], "AUTO"),
+                "topology_file": cp2k_pos,
+                "coordinate_files": [],
             },
         ),  # Does not work with Path
         (

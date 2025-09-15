@@ -48,20 +48,18 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
 
     def generate(self) -> bool:
         """Generate vectors by calling the internal method _generate."""
-        if self._configured:
-            self._generate()
+        self._generate()
 
-            if self._status is not None:
-                self._status.finish()
+        if self._status is not None:
+            self._status.finish()
             return True
         LOG.error(
             "Cannot generate vectors: q vector generator is not configured correctly.",
         )
         return False
 
-    @classmethod
+    @staticmethod
     def qvectors_to_hkl(
-        self,
         vector_array: np.array,
         unit_cell: UnitCell,
     ) -> np.ndarray:
@@ -85,8 +83,8 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         """
         return np.dot(unit_cell.direct, vector_array) / (2 * np.pi)
 
-    @classmethod
-    def hkl_to_qvectors(self, hkls: np.array, unit_cell: UnitCell) -> np.ndarray:
+    @staticmethod
+    def hkl_to_qvectors(hkls: np.array, unit_cell: UnitCell) -> np.ndarray:
         """Convert an array of HKL values to scattering vectors.
 
         Uses a unit cell object to get the lattice vectors for conversion.

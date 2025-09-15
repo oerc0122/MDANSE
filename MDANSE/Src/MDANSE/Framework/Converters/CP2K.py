@@ -47,14 +47,6 @@ class CP2KConverterError(Error):
 class CP2K(Converter):
     """Converts a CP2K trajectory to an MDT trajectory."""
 
-    UNITS = {
-        "coordinates": measure(1.0, iunit="ang").toval("nm"),
-        "cell": measure(1.0, iunit="ang").toval("nm"),
-        "velocities": measure(1.0, iunit="ang/fs").toval("nm/ps"),
-        "forces": measure(1.0, iunit="Da ang / fs2").toval("Da nm / ps2"),
-        "time": measure(1.0, iunit="fs").toval("ps"),
-    }
-
     label = "CP2K"
 
     UNITS = {
@@ -166,7 +158,7 @@ class CP2K(Converter):
             **data,
         )
 
-        if self.configuration["fold"]["value"]:
+        if self.fold:
             real_conf.fold_coordinates()
 
         time = index * self.files["coordinates"].time_step * self.UNITS["time"]
@@ -204,7 +196,6 @@ class CP2K(Converter):
         Closes the files and calls the
         superclass finalize method.
         """
-
         # Close the output trajectory.
         self._trajectory.write_standard_atom_database()
 

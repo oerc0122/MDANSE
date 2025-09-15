@@ -19,6 +19,7 @@ import collections
 
 import numpy as np
 
+from MDANSE.Framework.Parameters import Float, Integer, Range
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE.Mathematics.Geometry import random_points_on_sphere
 
@@ -33,45 +34,33 @@ class SphericalQVectors(IQVectors):
     vectors in the shell.
     """
 
-    settings = collections.OrderedDict()
-    settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["shells"] = (
-        "RangeConfigurator",
-        {
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "default": (0, 5.0, 0.5),
-        },
-    )
-    settings["n_vectors"] = ("IntegerConfigurator", {"mini": 1, "default": 50})
-    settings["width"] = ("FloatConfigurator", {"mini": 0.0, "default": 1.0})
+    seed = Integer(minimum=0, default=0)
+    shells = Range(minimum=0.0, include_last=True, default=(0, 5.0, 0.5))
+    n_vectors = Integer(minimum=1, default=50)
+    width = Float(minimum=1e-9, default=1.0)
 
     def _generate(self):
-        if self._configuration["seed"]["value"] != 0:
-            np.random.seed(self._configuration["seed"]["value"])
+        if self.seed != 0:
+            np.random.seed(self.seed)
 
-        width = self._configuration["width"]["value"]
-
-        nVectors = self._configuration["n_vectors"]["value"]
-
-        self._configuration["q_vectors"] = collections.OrderedDict()
+        self.q_vectors = {}
 
         if self._status is not None:
-            self._status.start(len(self._configuration["shells"]["value"]))
+            self._status.start(len(self.shells))
 
-        for q in self._configuration["shells"]["value"]:
+        for q in self.shells:
             fact = q * np.sign(
-                np.random.uniform(-0.5, 0.5, nVectors)
-            ) + width * np.random.uniform(-0.5, 0.5, nVectors)
+                np.random.uniform(-0.5, 0.5, self.n_vectors)
+            ) + self.width * np.random.uniform(-0.5, 0.5, self.n_vectors)
 
-            v = random_points_on_sphere(radius=1.0, nPoints=nVectors)
+            v = random_points_on_sphere(radius=1.0, nPoints=self.n_vectors)
 
-            self._configuration["q_vectors"][q] = {}
-            self._configuration["q_vectors"][q]["q_vectors"] = fact * v
-            self._configuration["q_vectors"][q]["n_q_vectors"] = nVectors
-            self._configuration["q_vectors"][q]["q"] = q
-            self._configuration["q_vectors"][q]["hkls"] = None
+            self.q_vectors[q] = {
+                "q_vectors": fact * v,
+                "n_q_vectors": self.n_vectors,
+                "q": q,
+                "hkls": None,
+            }
 
             if self._status is not None:
                 if self._status.is_stopped():

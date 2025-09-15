@@ -18,6 +18,7 @@ from __future__ import annotations
 import numpy as np
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
+from MDANSE.Framework.AtomMapping import get_element_from_mapping
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Parameters import (
     AtomMapping,
@@ -66,11 +67,14 @@ class Forcite(Converter):
         """
         super().initialize()
 
-        self._atomicAliases = self.atom_aliases
-
         self._chemical_system = ChemicalSystem()
         coordinates = np.vstack([atom.xyz for atom in self.xtd_file._atoms.values()])
-        element_list = [atom.element for atom in self.xtd_file._atoms.values()]
+
+        element_list = [
+            get_element_from_mapping(self.atom_aliases, atom.element, type=atom.name)
+            for atom in self.xtd_file._atoms.values()
+        ]
+
         charges = [atom.charge for atom in self.xtd_file._atoms.values()]
         name_list = [atom.name for atom in self.xtd_file._atoms.values()]
         unique_labels = set(name_list)

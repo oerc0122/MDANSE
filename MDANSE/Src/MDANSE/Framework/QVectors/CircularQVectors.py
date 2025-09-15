@@ -56,7 +56,8 @@ class CircularQVectors(IQVectors):
         if self.seed != 0:
             np.random.seed(self.seed)
 
-        axis = self.axis_1.cross(self.axis_2).normal()
+        axis = np.cross(self.axis_1, self.axis_2)
+        axis /= np.linalg.norm(axis)
 
         if self._status is not None:
             self._status.start(len(self.shells))

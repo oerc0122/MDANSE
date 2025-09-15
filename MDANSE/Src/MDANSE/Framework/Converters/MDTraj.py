@@ -28,6 +28,7 @@ from MDANSE.Framework.Parameters import (
     AtomMapping,
     Boolean,
     Float,
+    ManyPath,
     OutputTrajectory,
     PathParam,
 )
@@ -57,7 +58,7 @@ class MDTraj(Converter):
         default=None,
     )
     discard_overlapping_frames = Boolean(label="Discard overlapping frames")
-    coordinate_files = PathParam(
+    coordinate_files = ManyPath(
         mode="r",
         label="Coordinate file",
         on_get_depends={
@@ -143,6 +144,7 @@ class MDTraj(Converter):
             A tuple of the job index and None.
         """
         pos, cell = next(self.frames)
+
         if cell is None:
             conf = RealConfiguration(self.chemical_system, pos)
         else:
@@ -181,6 +183,3 @@ class MDTraj(Converter):
 
     def combine(self, index, x):
         pass
-
-    def finalize(self):
-        super().finalize()

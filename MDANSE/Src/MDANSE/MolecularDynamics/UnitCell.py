@@ -43,6 +43,8 @@ class UnitCell:
         :param unit_cell: the unit cell matrix
         :type unit_cell: 3x3 numpy array
         """
+        if isinstance(unit_cell, UnitCell):
+            unit_cell = unit_cell._unit_cell
 
         self._unit_cell = np.array(unit_cell).astype(np.float64)
 

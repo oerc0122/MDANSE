@@ -32,12 +32,12 @@ class ApproximateDispersionQVectors(LatticeQVectors):
     q_start = Vector(
         label="Q start (nm^-1)",
         non_null=False,
-        default=np.array([0, 0, 0]),
+        default=np.array([0.0, 0.0, 0.0]),
     )
     q_end = Vector(
         label="Q end (nm^-1)",
         non_null=False,
-        default=np.array([1, 0, 0]),
+        default=np.array([1.0, 0.0, 0.0]),
     )
     q_step = Float(
         label="Q step (nm^-1)",
@@ -45,7 +45,7 @@ class ApproximateDispersionQVectors(LatticeQVectors):
         default=0.1,
     )
 
-    def validate(self, value, deps):
+    def validate(self, desc, value):
         if np.isclose(np.linalg.norm(self.q_end - self.q_start), 0.0):
             raise ConfigError("Zero-length vector cannot be used here")
 
@@ -53,7 +53,7 @@ class ApproximateDispersionQVectors(LatticeQVectors):
 
     def _generate(self):
         d = np.linalg.norm(self.q_end - self.q_start)
-        n = (self.q_end - self.q_start).normal()
+        n = (self.q_end - self.q_start) / d
 
         nSteps = int(d / self.q_step) + 1
 

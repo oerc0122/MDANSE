@@ -86,12 +86,14 @@ class AtomLabel:
         """
         return hash((self.atm_label, self.grp_label, self.mass))
 
-    def __repr__(self) -> str:
+    @property
+    def kw(self) -> dict[str, str]:
         grps = self.grp_label.split(";") if self.grp_label else []
         grps = (x.split("=") for x in grps)
-        cont = ", ".join(
-            f"{key}={val!r}" for key, val in (("atm_label", self.atm_label), *grps)
-        )
+        return dict((("atm_label", self.atm_label), *grps))
+
+    def __repr__(self) -> str:
+        cont = ", ".join(f"{key}={val!r}" for key, val in self.kw.items())
         return f"{type(self).__name__}({cont})"
 
 

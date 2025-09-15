@@ -28,6 +28,7 @@ from .BaseTypes import (
     Boolean,
     Float,
     Integer,
+    ManyPath,
     NumericRange,
     PathParam,
     Range,
@@ -46,7 +47,7 @@ from .InputFiles import MDANSEResult, MDANSETrajectory
 from .OutputFiles import ASEOutputFormat, OutputFile, OutputTrajectory
 from .Parameters import to_class
 from .Projection import Projection
-from .QVectors import QVectors, QVectorsSelect
+from .QVectors import QVectorsParams, QVectorsSelect
 from .Ranges import RangeCellCutoff
 from .Resolution import InstrumentResolution
 from .RunningMode import RunningMode
@@ -71,6 +72,7 @@ __all__ = [
     "InterpOrder",
     "MDANSEResult",
     "MDANSETrajectory",
+    "ManyPath",
     "MultipleChoice",
     "NumericRange",
     "OutputFile",
@@ -79,7 +81,7 @@ __all__ = [
     "PartialChargeMapper",
     "PathParam",
     "Projection",
-    "QVectors",
+    "QVectorsParams",
     "QVectorsSelect",
     "Range",
     "RangeCellCutoff",

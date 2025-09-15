@@ -119,6 +119,7 @@ class AtomMapping(ConfigureDescriptor[dict | str, dict[str, dict[str, str]]]):
             raise ConfigError("Failed to get replacement values.") from err
 
         labels = file_info.labels
+
         try:
             fill_remaining_labels(value, labels)
         except AttributeError as err:
@@ -221,7 +222,7 @@ class PartialCharge(ConfigureDescriptor[str | Path | dict, dict[int, float]]):
 
         system = deps["trajectory"].chemical_system
 
-        if not processed_values.keys() <= system._atom_indices:
+        if not processed_values.keys() <= set(system._atom_indices):
             LOG.warning("At least one atom index not found in the current system.")
 
         return {
@@ -422,9 +423,7 @@ class AtomTransmutation(ConfigureDescriptor[dict | str | Path, dict]):
             )
 
         elements = set(value.values())
-        known_atoms = set(deps["trajectory"].atoms_in_database) | set(
-            ATOMS_DATABASE.atoms
-        )
+        known_atoms = set(deps["trajectory"].atoms) | set(ATOMS_DATABASE.atoms)
 
         if missing := elements - known_atoms:
             raise ConfigError(

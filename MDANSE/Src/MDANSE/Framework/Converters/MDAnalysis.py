@@ -28,11 +28,13 @@ from MDANSE.Framework.Parameters import (
     AtomMapping,
     Boolean,
     Float,
+    ManyPath,
     OutputTrajectory,
     PathParam,
     SingleChoice,
     to_class,
 )
+from MDANSE.Framework.Parsers import MDAnalysisTopology
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -40,26 +42,6 @@ from MDANSE.MolecularDynamics.Configuration import (
 )
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
-
-
-def get_coords(_desc, coord_files, deps):
-    coord_files = (coord_files,)  # TODO: Add multi-file
-    if len(coord_files) <= 1 or deps["coordinate_format"] is None:
-        return mda.Universe(
-            deps["topology"],
-            *coord_files,
-            continuous=deps["continuous"],
-            format=deps["coordinate_format"],
-            topology_format=deps["topology_format"],
-        )
-
-    coord_files = [(i, deps["coordinate_format"]) for i in coord_files]
-    return mda.Universe(
-        deps["topology"],
-        coord_files,
-        continuous=deps["continuous"],
-        topology_format=deps["topology_format"],
-    )
 
 
 class MDAnalysis(Converter):
@@ -75,12 +57,6 @@ class MDAnalysis(Converter):
     <a href="https://userguide.mdanalysis.org/stable/formats/index.html#formats">formats</a>.
     """
 
-    UNIT_CONV = {
-        "length": measure(1.0, "ang").toval("nm"),
-        "velocity": measure(1.0, "ang/ps").toval("nm/ps"),
-        "force": measure(1.0, "kJ/mol ang", equivalent=True).toval("Da nm/ps2"),
-    }
-
     category = ("Converters", "General")
     label = "MDAnalysis"
 
@@ -95,7 +71,7 @@ class MDAnalysis(Converter):
         choices=mda._READERS.keys() | {None}, aliases={"AUTO": None}, default=None
     )
     continuous = Boolean(label="Continuous frame stitching", default=False)
-    coordinate_files = PathParam(
+    coordinate_files = ManyPath(
         mode="r",
         label="Coordinate file",
         depends={
@@ -104,7 +80,7 @@ class MDAnalysis(Converter):
             "topology": "topology_file",
             "continuous": "continuous",
         },
-        on_set=get_coords,
+        on_set=MDAnalysisTopology,
     )
     time_step = Float(
         label="Time step (ps)",
@@ -126,23 +102,18 @@ class MDAnalysis(Converter):
         """
         super().initialize()
 
-        self.numberOfSteps = len(self.coordinate_files.trajectory)
+        self.numberOfSteps = self.coordinate_files.n_frames
 
         self._chemical_system = ChemicalSystem()
         element_list = []
         name_list = []
         label_dict = defaultdict(list)
 
-        for at_number, at in enumerate(self.coordinate_files.atoms):
-            kwargs = {
-                arg: getattr(at, arg)
-                for arg in ("element", "name", "type", "resname", "mass")
-                if hasattr(at, arg)
-            }
+        for at_number, atom in enumerate(self.coordinate_files.atom_labels):
+            kwargs = atom.kw
 
-            # the first out of the list above will be the main label
-            (k, main_label) = first(kwargs.items())
-            del kwargs[k]
+            main_label = kwargs.pop("atm_label")
+
             # label_list will be populated too
             tag = kwargs.get(
                 first_true(("resname", "type", "name"), pred=kwargs.__contains__)
@@ -150,23 +121,26 @@ class MDAnalysis(Converter):
 
             if tag:
                 label_dict[tag].append(at_number)
-            kwargs.pop(k)
 
             element = get_element_from_mapping(self.atom_aliases, main_label, **kwargs)
 
             for arg in ("name", "type", "element"):
-                if hasattr(at, arg):
-                    name = getattr(at, arg)
+                if arg in self.coordinate_files.atom_props:
+                    name = getattr(self.coordinate_files.atoms[at_number], arg)
                     break
             else:
                 name = None
 
             element_list.append(element)
             name_list.append(name)
+
         if None in name_list:
             name_list = None
+
         self._chemical_system.initialise_atoms(element_list, name_list)
         self._chemical_system.add_labels(label_dict)
+
+        self.frames = self.coordinate_files.frames
 
         self._trajectory = TrajectoryWriter(
             self.output_files.path,
@@ -193,44 +167,17 @@ class MDAnalysis(Converter):
         tuple[int, None]
             A tuple of the job index and None.
         """
-        self.coordinate_files.trajectory[index]
+        data = next(self.frames)
 
-        # convert from MDAnalysis units to MDANSE units
-        # see https://userguide.mdanalysis.org/stable/units.html for
-        # default units in MDAnalysis
-        if self.coordinate_files.trajectory.ts.triclinic_dimensions is None:
-            conf = RealConfiguration(
-                self._trajectory._chemical_system,
-                self.coordinate_files.trajectory.ts.positions
-                * self.UNIT_CONV["length"],
-            )
-        else:
-            conf = PeriodicRealConfiguration(
-                self._trajectory._chemical_system,
-                self.coordinate_files.trajectory.ts.positions
-                * self.UNIT_CONV["length"],
-                UnitCell(
-                    self.coordinate_files.trajectory.ts.triclinic_dimensions
-                    * self.UNIT_CONV["length"],
-                ),
-            )
-
+        if "unit_cell" in data:
+            conf = PeriodicRealConfiguration(self._chemical_system, **data)
             if self.fold:
                 conf.fold_coordinates()
-
-            if hasattr(self.coordinate_files.trajectory.ts, "velocities"):
-                conf["velocities"] = (
-                    self.coordinate_files.trajectory.ts.velocities
-                    * self.UNIT_CONV["velocity"]
-                )
-
-            if hasattr(self.coordinate_files.trajectory.ts, "forces"):
-                conf["gradients"] = (
-                    self.coordinate_files.trajectory.ts.forces * self.UNIT_CONV["force"]
-                )
+        else:
+            conf = RealConfiguration(self._chemical_system, **data)
 
         if math.isclose(self.time_step, 0.0):
-            time = index * self.coordinate_files.trajectory.ts.dt
+            time = index * self.coordinate_files.timestep
         else:
             time = index * self.time_step
 

@@ -78,7 +78,7 @@ class PositionPowerSpectrum(IJob):
         default="atomic_weight",
         depends={
             "trajectory": "trajectory",
-        }
+        },
     )
     output_files = OutputFile()
     running_mode = RunningMode()
@@ -217,9 +217,9 @@ class PositionPowerSpectrum(IJob):
         series -= np.average(series, axis=0)
         series = self.projection.projector(series)
 
-        atomicPACF = correlate(series, series[:self.frame_window.n_configs], mode="valid") / (
-            3 * self.frame_window.n_configs
-        )
+        atomicPACF = correlate(
+            series, series[: self.frame_window.n_configs], mode="valid"
+        ) / (3 * self.frame_window.n_configs)
 
         return index, atomicPACF.T[0]
 

@@ -1228,27 +1228,25 @@ class TrajectoryWriter:
 
         # Write the configuration variables
         configuration_grp = self._h5_file["/configuration"]
+
         for k, v in configuration.variables.items():
-            data = np.empty(v.shape)
-            data[:] = np.nan
+            data = np.full_like(v, np.nan)
             data[self._selected_atoms, :] = v[self._selected_atoms, :]
+
             dset = configuration_grp.get(k, None)
+
             if dset is None:
-                if self._compression in TrajectoryWriter.allowed_compression:
-                    dset = configuration_grp.create_dataset(
-                        k,
-                        shape=(self._n_steps, self._padded_size, 3),
-                        chunks=self._chunk_tuple,
-                        dtype=self._dtype,
-                        compression=self._compression,
-                    )
-                else:
-                    dset = configuration_grp.create_dataset(
-                        k,
-                        shape=(self._n_steps, self._padded_size, 3),
-                        chunks=self._chunk_tuple,
-                        dtype=self._dtype,
-                    )
+                dset = configuration_grp.create_dataset(
+                    k,
+                    shape=(self._n_steps, self._n_atoms, 3),
+                    chunks=self._chunk_tuple,
+                    dtype=self._dtype,
+                    compression=(
+                        self._compression
+                        if self._compression in TrajectoryWriter.allowed_compression
+                        else None
+                    ),
+                )
                 dset.attrs["units"] = units.get(k, "")
             dset[self._current_index, : self._n_atoms] = data
 

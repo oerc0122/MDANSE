@@ -15,6 +15,7 @@
 #
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 from typing import NamedTuple, NoReturn
 from xml.etree import ElementTree
@@ -23,6 +24,7 @@ import numpy as np
 import numpy.typing as npt
 from more_itertools import first
 
+from MDANSE.Framework.AtomMapping import AtomLabel
 from MDANSE.Framework.Units import measure
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
@@ -141,8 +143,20 @@ class XTDFile(Parser):
 
     @property
     def element_list(self) -> list[str]:
-        return [atom.name for atom in self._atoms.values()]
+        return [atom.element for atom in self._atoms.values()]
 
     @property
     def frames(self) -> NoReturn:
         raise StopIteration
+
+    @property
+    def atom_labels(self) -> Iterable[AtomLabel]:
+        """Return the set of atom labels.
+
+        Yields
+        ------
+        AtomLabel
+            An atom label.
+        """
+        for atom in self._atoms.values():
+            yield AtomLabel(atom.element, type=atom.name)

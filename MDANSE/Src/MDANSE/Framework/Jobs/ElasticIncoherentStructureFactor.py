@@ -27,7 +27,7 @@ from MDANSE.Framework.Parameters import (
     MDANSETrajectory,
     OutputFile,
     Projection,
-    QVectors,
+    QVectorsParams,
     QVectorsSelect,
     RunningMode,
     Weights,
@@ -65,7 +65,7 @@ class ElasticIncoherentStructureFactor(IJob):
     )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     q_vectors_type = QVectorsSelect(depends={"trajectory": "trajectory"})
-    q_vectors = QVectors(depends={"generator": "q_vectors_type"})
+    q_vectors = QVectorsParams(depends={"generator": "q_vectors_type"})
     projection = Projection(label="project coordinates")
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})

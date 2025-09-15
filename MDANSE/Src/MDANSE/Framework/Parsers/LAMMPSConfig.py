@@ -24,13 +24,14 @@ from string import ascii_uppercase as upcase
 from typing import Any, Literal
 
 import numpy as np
+from more_itertools import first, split_before, spy
+from numpy.typing import NDArray
+
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import AtomLabel
 from MDANSE.Framework.Parsers.LAMMPS import BoxStyle
 from MDANSE.IO.IOUtils import strip_comments
 from MDANSE.MLogging import LOG
-from more_itertools import first, split_before, spy
-from numpy.typing import NDArray
 
 from .Parser import Parser
 
@@ -242,7 +243,7 @@ ATOM_TYPES_MAP = {
 
 ATOM_TYPES_MAP.update(
     {
-        f"{key}_w_image": value + ("ix", "iy", "iz")
+        f"{key}_w_image": (*value, "ix", "iy", "iz")
         for key, value in ATOM_TYPES_MAP.items()
     }
 )
@@ -621,7 +622,7 @@ class LAMMPSConfigFile(Parser, dict):
         element_map = {
             int(line.split()[0]): match[1].title()
             for line in lines
-            if (match := re.search(r"# ([A-Z][a-z]{,2})\s*$", line, re.I))
+            if (match := re.search(r"# ([A-Z][a-z]{,2})\s*$", line, re.IGNORECASE))
         }
 
         if element_map and self.setdefault("elements", element_map) != element_map:
@@ -711,7 +712,7 @@ class LAMMPSConfigFile(Parser, dict):
             (line,), lines = spy(lines)
 
             # Fix for VMD disobeying spec.
-            if not re.match(r"\s*\d+\s+atoms", line, re.I):
+            if not re.match(r"\s*\d+\s+atoms", line, re.IGNORECASE):
                 comment += " " + next(lines)
 
             for desc in re.finditer(r"(\w+)\s*=\s*(\w+)", comment):

@@ -317,13 +317,13 @@ class IJob(Configurable, metaclass=SubclassFactory):
             If not None, the parameters with which the job file will be built.
         """
         if parameters is None:
-            parameters = cls.get_default_parameters()
+            parameters = cls._get_default_parameters()
 
         jobFile = Path(jobFile)
 
         parameters = {
-            key: (val, label) if not isinstance(val, Path) else (str(val), label)
-            for key, (val, label) in sorted(parameters.items())
+            key: val if not isinstance(val, Path) else str(val)
+            for key, val in parameters.items()
         }
 
         with open(jobFile, "w") as f:

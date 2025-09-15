@@ -26,7 +26,7 @@ from typing import Generic, Literal, SupportsFloat, SupportsInt, TypeVar, overlo
 
 import numpy as np
 import numpy.typing as npt
-from more_itertools import numeric_range
+from more_itertools import always_iterable, numeric_range
 
 from MDANSE.IO.IOUtils import UCEnum, json_handler
 
@@ -40,13 +40,13 @@ T = TypeVar("T")
 cjoin = ", ".join
 
 __all__ = [
+    "Array",
     "Boolean",
     "Float",
     "Integer",
-    "String",
     "PathParam",
     "Range",
-    "Array",
+    "String",
     "Vector",
 ]
 
@@ -163,6 +163,9 @@ class Float(MinMax[float], ConfigureDescriptor[SupportsFloat, float]):
         self.non_zero = non_zero
 
     def validate(self, value: SupportsFloat, deps: Depends, /) -> float:
+        if self.optional and value is None:
+            return None
+
         try:
             value = float(value)
         except ValueError as error:
@@ -182,7 +185,11 @@ class Float(MinMax[float], ConfigureDescriptor[SupportsFloat, float]):
 
 class Integer(MinMax[int], ConfigureDescriptor[SupportsInt, int]):
     """Configurator takes an integer input."""
+
     def validate(self, value: SupportsInt, deps: Depends, /) -> int:
+        if self.optional and value is None:
+            return None
+
         try:
             value = int(value)
         except ValueError as error:
@@ -233,10 +240,13 @@ class Dict(
 
     def validate(
         self,
-        value: Sequence[tuple[K, V]] | dict[K, V] | str | Path,
+        value: Sequence[tuple[K, V]] | dict[K, V] | str | Path | None,
         deps: Depends,
         /,
     ) -> dict[K, V]:
+        if self.optional and value is None:
+            return None
+
         if not isinstance(value, (dict, str, Path)):
             value = dict(value)
         else:
@@ -350,11 +360,28 @@ class PathParam(ConfigureDescriptor[str | Path, Path]):
         if self.mode is self.FileModes.MAY_EXIST:
             pass
         elif self.mode is self.FileModes.MUST_EXIST and not value.exists():
-            raise ConfigError(f"File at ({value}) does not exist.")
+            raise ConfigError(f"File at {value!r} does not exist.")
         elif self.mode is self.FileModes.MUST_NOT_EXIST and value.exists():
-            raise ConfigError(f"File at ({value}) must not exist.")
+            raise ConfigError(f"File at {value!r} must not exist.")
 
         return value
+
+
+class ManyPath(PathParam):
+    def validate(
+        self, value: Path | str, deps: Depends, /
+    ) -> Sequence[Path | str | None]:
+        if self.optional and not value:
+            return ()
+
+        if isinstance(value, str):
+            value = value.split(";")
+
+        return tuple(
+            super(ManyPath, self).validate(pth, deps)
+            for pth in always_iterable(value)
+            if pth
+        )
 
 
 T = TypeVar("T", int, float)

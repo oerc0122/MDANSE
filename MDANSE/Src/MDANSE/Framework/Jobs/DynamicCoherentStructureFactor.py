@@ -32,7 +32,7 @@ from MDANSE.Framework.Parameters import (
     InstrumentResolution,
     MDANSETrajectory,
     OutputFile,
-    QVectors,
+    QVectorsParams,
     QVectorsSelect,
     RangeCellCutoff,
     RunningMode,
@@ -74,7 +74,7 @@ class DynamicCoherentStructureFactor(IJob):
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     q_vector_type = QVectorsSelect(depends={"trajectory": "trajectory"})
-    q_vectors = QVectors(depends={"generator": "q_vector_type"})
+    q_vectors = QVectorsParams(depends={"generator": "q_vector_type"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})

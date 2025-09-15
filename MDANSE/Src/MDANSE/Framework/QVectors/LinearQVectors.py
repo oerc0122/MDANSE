@@ -48,7 +48,7 @@ class LinearQVectors(IQVectors):
         default=50,
     )
     width = Float(minimum=1e-6, default=1.0)
-    axis = Vector(normalise=True, non_null=True, dtype=int, default=np.array([1, 0, 0]))
+    axis = Vector(normalise=True, non_null=True, default=np.array([1.0, 0.0, 0.0]))
 
     def _generate(self):
         if self.seed != 0:
@@ -65,7 +65,7 @@ class LinearQVectors(IQVectors):
             ) + self.width * np.random.uniform(-0.5, 0.5, self.n_vectors)
 
             self.q_vectors[q] = {}
-            self.q_vectors[q]["q_vectors"] = self.axis.array[:, np.newaxis] * fact
+            self.q_vectors[q]["q_vectors"] = self.axis[:, np.newaxis] * fact
             self.q_vectors[q]["n_q_vectors"] = self.n_vectors
             self.q_vectors[q]["q"] = q
             self.q_vectors[q]["hkls"] = None

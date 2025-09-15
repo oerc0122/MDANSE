@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Container, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import singledispatchmethod
@@ -27,8 +27,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Generic,
-    Literal,
-    NewType,
     Protocol,
     TypeGuard,
     TypeVar,
@@ -38,7 +36,7 @@ from typing import (
 )
 
 import numpy as np
-from more_itertools import value_chain
+from more_itertools import first_true, value_chain
 
 from MDANSE.Core.Error import Error
 from MDANSE.IO.IOUtils import MDANSEEncoder
@@ -123,6 +121,17 @@ class Configurable:
         - Derive from this class
     """
 
+    @classmethod
+    def _get_default_parameters(cls):
+        return {
+            key: desc.default
+            if hasattr(desc, "default") and desc.default is not SENTINEL
+            else "N/A"
+            for key, desc in cls._get_descriptors().items()
+        }
+
+    default_parameters = property(lambda self: type(self)._get_default_parameters())
+
     @property
     def configuration(self) -> dict[DescID, Any]:
         return {name: getattr(self, name) for name in self.descriptors}
@@ -131,7 +140,7 @@ class Configurable:
     def configuration(self, value: dict[DescID, Any]):
         if extra := value.keys() - self.parameters:
             raise ConfigError(
-                f"Unrecognised parameters in dict for {type(self).__name__}: {', '.join(extra)}."
+                f"Unrecognised parameters in dict for {type(self).__name__}: {cjoin(extra)}."
             )
 
         # Preserve definition order
@@ -139,15 +148,16 @@ class Configurable:
             if name in value:
                 setattr(self, name, value[name])
 
-    @property
-    def descriptors(self) -> dict[DescID, Parameter]:
-        """Get all descriptors owned by self."""
+    @classmethod
+    def _get_descriptors(cls) -> dict[DescID, Parameter]:
         return {
             DescID(name): param
-            for cls in value_chain(type(self).__bases__, type(self))
-            for name, param in cls.__dict__.items()
+            for par in value_chain(cls.__bases__, cls)
+            for name, param in par.__dict__.items()
             if isinstance(param, Parameter)
         }
+
+    descriptors = property(lambda self: type(self)._get_descriptors())
 
     @property
     def parameters(self) -> list[DescID]:
@@ -170,6 +180,129 @@ class Configurable:
             return False
 
         return True
+
+    @classmethod
+    def build_doc_example(cls) -> str:
+        docstring = ":Example:\n\n"
+        docstring += ">>> \n"
+        docstring += ">>> \n"
+        docstring += ">>> parameters = {}\n"
+        for k, v in cls._get_default_parameters().items():
+            docstring += f">>> parameters[{k!r}]={v!r}\n"
+        docstring += ">>> \n"
+        docstring += f">>> job = IJob.create({cls.__name__!r})\n"
+        docstring += ">>> job.setup(parameters)\n"
+        docstring += ">>> job.run()\n"
+        return docstring
+
+    @classmethod
+    def build_doc_texttable(cls, doclist: list[dict[str, str]]) -> str:
+        docstring = "\n**Job input configurators:** \n\n"
+
+        columns = ["Parameter", "Default value", "Description"]
+
+        sizes = [len(v) for v in columns]
+
+        for v in doclist:
+            sizes[0] = max(sizes[0], len(v["Parameter"]))
+            sizes[1] = max(sizes[1], len(v["Default value"]))
+            # Case of Description field: has to be splitted and parsed for inserting sphinx "|" keyword for multiline
+            v["Description"] = v["Description"].strip()
+            v["Description"] = v["Description"].splitlines()
+            v["Description"] = ["| " + vv.strip() for vv in v["Description"]]
+            sizes[2] = max(value_chain(sizes[2], map(len, v["Description"])))
+
+        data_line = "| " + "| ".join(f"{{}}:<{size}" for size in sizes) + "|\n"
+        sep_line = "+" + "+".join("-" * (size + 1) for size in sizes) + "+\n"
+
+        docstring += sep_line
+        docstring += data_line.format(*columns)
+        docstring += sep_line.replace("-", "=")
+
+        for v in doclist:
+            docstring += data_line.format(
+                v["Parameter"], v["Default value"], v["Description"][0]
+            )
+            if len(v["Description"]) > 1:
+                for descr in v["Description"][1:]:
+                    data_line.format("", "", descr)
+            docstring += sep_line
+
+        docstring += "\n"
+        return docstring
+
+    @classmethod
+    def build_doc_htmltable(cls, doclist: list[dict[str, str]]) -> str:
+        docstring = "\n**Job input configurators:**"
+
+        columns = ["Parameter", "Default value", "Description"]
+
+        for v in doclist:
+            # Case of Description field: has to be splitted and parsed for inserting sphinx "|" keyword for multiline
+            v["Description"] = v["Description"].strip()
+            v["Description"] = v["Description"].split("\n")
+            v["Description"] = ["" + vv.strip() for vv in v["Description"]]
+
+        docstring += "<table>\n"
+        docstring += "<tr>"
+        for col in columns:
+            docstring += f"<th>{col}</th>"
+        docstring += "</tr>\n"
+
+        for v in doclist:
+            docstring += "<tr>"
+            for item in [
+                v["Parameter"],
+                v["Default value"],
+                v["Description"][0],
+            ]:
+                docstring += f"<td>{item}</td>"
+            docstring += "</tr>\n"
+
+        docstring += "</table>\n"
+        return docstring
+
+    @classmethod
+    def build_doc(cls, use_html_table: bool = False) -> str:
+        """Return the documentation about a configurable class based on its configurators contents.
+
+        Parameters
+        ----------
+        cls : MDANSE.Framework.Parameters.Configurable
+            The configurable class for which documentation should be built.
+        use_html_table : bool
+             Use an HTML table.
+
+        Returns
+        -------
+        str
+            The documentation about the configurable class.
+
+        """
+
+        doclist = []
+
+        defaults = cls._get_default_parameters()
+
+        for name, desc in cls._get_descriptors().items():
+            descr = getattr(desc, "description", "")
+            descr += "\n" + str(desc.__doc__)
+            doclist.append(
+                {
+                    "Parameter": name,
+                    "Default value": repr(defaults[name]),
+                    "Description": descr,
+                }
+            )
+
+        docstring = cls.build_doc_example()
+
+        if use_html_table:
+            docstring += cls.build_doc_htmltable(doclist)
+        else:
+            docstring += cls.build_doc_texttable(doclist)
+
+        return docstring
 
     def __str__(self) -> str:
         out = f"{type(self).__name__}(\n"
@@ -292,10 +425,16 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
 
         if missing := (self.required_deps() - self.depends.keys()):
             raise ConfigError(
-                f"Required deps ({', '.join(missing)}) missing for {type(self).__name__}."
+                f"Required deps ({cjoin(missing)}) missing for {type(self).__name__}."
             )
 
         super().__init__(label=label, tooltip=tooltip)
+
+    def _find_dep_class(self, typ: type) -> ConfigureDescriptor:
+        return first_true(
+            self.dependents,
+            pred=lambda x: isinstance(x, typ),
+        )
 
     def _bad_mutex(self, owner: object) -> Iterable[bool]:
         return (getattr(owner, f"_{ex}_configured") for ex in self.mutex)
@@ -327,7 +466,7 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
 
         if any(self._bad_deps(owner)):
             raise ConfigError(
-                f"Dependencies ({', '.join(compress(self.depends, self._bad_deps(owner)))}) "
+                f"Dependencies ({cjoin(compress(self.depends, self._bad_deps(owner)))}) "
                 "are not correctly defined."
             )
 
@@ -358,12 +497,12 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
 
         if any(self._bad_deps(owner)):
             raise ConfigError(
-                f"Dependencies for {self.name} ({', '.join(compress(self.depends, self._bad_deps(owner)))}) "
+                f"Dependencies for {self.name} ({cjoin(compress(self.depends, self._bad_deps(owner)))}) "
                 "are not correctly defined."
             )
         if any(self._bad_mutex(owner)):
             raise ConfigError(
-                f"Mutually exclusive value ({', '.join(compress(self.mutex, self._bad_mutex(owner)))}) "
+                f"Mutually exclusive value ({cjoin(compress(self.mutex, self._bad_mutex(owner)))}) "
                 "is also configured."
             )
 
@@ -485,7 +624,7 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
 
             if not self._validate_choices(out, self.last_choices):
                 raise ConfigError(
-                    f"Value ({out!r}) not in choices ({', '.join(self.last_choices)})."
+                    f"Value ({out!r}) not in choices ({cjoin(self.last_choices)})."
                 )
 
         elif self.choices and is_enum(self.choices):  # Enum
@@ -493,18 +632,18 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
                 out = self.choices(out)
             except ValueError:
                 raise ConfigError(
-                    f"Value ({out!r}) not in choices ({', '.join(choice.name for choice in self.choices)})."
+                    f"Value ({out!r}) not in choices ({cjoin(choice.name for choice in self.choices)})."
                 )
 
         elif not self._validate_choices(out):  # Set
             raise ConfigError(
-                f"Value ({out!r}) not in choices ({', '.join(map(str, self.choices))})."
+                f"Value ({out!r}) not in choices ({cjoin(map(str, self.choices))})."
             )
 
         # Exclude
         if not self._validate_exclude(out):
             raise ConfigError(
-                f"Value ({out!r}) in excluded values ({', '.join(map(str, self.exclude))})."
+                f"Value ({out!r}) in excluded values ({cjoin(map(str, self.exclude))})."
             )
 
         return out

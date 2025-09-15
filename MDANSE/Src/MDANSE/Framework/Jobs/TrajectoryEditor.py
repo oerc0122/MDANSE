@@ -31,6 +31,7 @@ from MDANSE.Framework.Parameters import (
     MDANSETrajectory,
     OutputTrajectory,
     PartialCharge,
+    to_class,
 )
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -63,18 +64,19 @@ class TrajectoryEditor(IJob):
         selection="atom_selection",
         transmutation="atom_transmutation",
     )
-    frames = FrameSelect(depends={"trajectory": "trajectory"}, default=(0, None, 1))
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
     unit_cell = Array(
         optional=True,
         default=None,
         non_zero=True,
-        on_set=UnitCell,
+        on_set=to_class(UnitCell),
         shape=(3, 3),
     )
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     atom_charges = PartialCharge(
         depends={"trajectory": "trajectory"},
+        default={},
     )
     molecule_tolerance = Float(
         opttional=True,
@@ -91,13 +93,13 @@ class TrajectoryEditor(IJob):
         super().initialize()
 
         self.numberOfSteps = len(self.frames)
+        self._input_trajectory = self.trajectory
         self._input_chemical_system = self.trajectory.chemical_system
 
         if self.unit_cell is not None:
-            self._new_unit_cell = UnitCell(self.unit_cell)
-            self._input_trajectory._trajectory._unit_cells = [
-                self._new_unit_cell
-            ] * len(self._input_trajectory)
+            self._input_trajectory._trajectory._unit_cells = [self.unit_cell] * len(
+                self.trajectory
+            )
 
         # The collection of atoms corresponding to the atoms selected for output.
         indices = self.trajectory.atom_indices
@@ -175,9 +177,10 @@ class TrajectoryEditor(IJob):
             #. index (int): The index of the step.
             #. None
         """
-
         # get the Frame index
-        frameIndex = self.frames[index].ind
+        frame = self.frames[index]
+        frameIndex = frame.ind
+        time = frame.time
 
         conf = self.trajectory.configuration(frameIndex)
         conf = conf.contiguous_configuration(bring_to_centre=True)
@@ -217,8 +220,6 @@ class TrajectoryEditor(IJob):
             new_charges[number] = q
 
         # The times corresponding to the running index.
-        time = self.frames[index].time
-
         self._output_trajectory.dump_configuration(com_conf, time)
         self._output_trajectory.write_charges(new_charges, index)
 

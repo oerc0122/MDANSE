@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from test_helpers.paths import CONV_DIR
+from inspect import isabstract
 
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
@@ -28,21 +29,22 @@ def test_qvectors_for_nonorthogonal_cell():
         rtol=1e-7,
     )
 
+GENERATORS = {name for name, gen in IQVectors.indirect_subclass_dictionary().items() if gen._generate is not IQVectors._generate and "shells" in gen._get_descriptors()}
 
-@pytest.mark.parametrize("qvector_generator", IQVectors.indirect_subclasses())
+@pytest.mark.parametrize("qvector_generator", GENERATORS)
 def test_qvector_to_hkl_conversion(trajectory, qvector_generator):
     instance = IQVectors.create(qvector_generator, trajectory.configuration(0))
-    instance.setup({"shells": (5.0, 50.0, 10.0)})
+
+    if "shells" not in instance.parameters:
+        return
+
+    instance.configuration = {"shells": (5.0, 50.0, 10.0)}
     unit_cell = trajectory.unit_cell(0)
     instance.generate()
-    try:
-        instance._configuration["shells"]
-    except KeyError:
-        print(f"{qvector_generator} has no shells")
-        return
-    for q in instance._configuration["shells"]["value"][:2]:
+
+    for q in instance.shells[:2]:
         try:
-            original_qvectors = instance._configuration["q_vectors"][q]["q_vectors"]
+            original_qvectors = instance.q_vectors[q]["q_vectors"]
         except KeyError:
             return
         if len(original_qvectors) == 0:
@@ -52,7 +54,7 @@ def test_qvector_to_hkl_conversion(trajectory, qvector_generator):
         assert np.allclose(original_qvectors, recalculated_qvectors)
 
 
-@pytest.mark.parametrize("qvector_generator", IQVectors.indirect_subclasses())
+@pytest.mark.parametrize("qvector_generator", GENERATORS)
 def test_disf(tmp_path, trajectory, qvector_generator):
     temp_name = tmp_path / "output"
     out_file = temp_name.with_suffix(".mda")
@@ -70,9 +72,8 @@ def test_disf(tmp_path, trajectory, qvector_generator):
     }
 
     instance = IQVectors.create(qvector_generator, trajectory.configuration())
-    qvector_defaults = {
-        name: value[1]["default"] for name, value in instance.settings.items()
-    }
+
+    qvector_defaults = instance.default_parameters
 
     if len(qvector_defaults) < 1:
         return

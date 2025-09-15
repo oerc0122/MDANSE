@@ -27,7 +27,8 @@ class Frames:
             self.samples = samples
 
         if any(time := traj.time()):
-            step = time[1] - time[0]
+            a, b = self.samples[:2]
+            step = time[b] - time[a]
             self.times = NumericRange(
                 time[self.samples[0]],
                 time[self.samples[-1]] + (step / 2),
@@ -122,7 +123,6 @@ class FrameSelect(Range[int]):
         return (0, len(deps["trajectory"]) + 1)
 
     def __set__(self, owner: object, value: tuple[SupportsInt, ...]):
-
         # Support legacy
         corr = [x for x in self.dependents if isinstance(x, CorrelationWindow)]
         window = None
