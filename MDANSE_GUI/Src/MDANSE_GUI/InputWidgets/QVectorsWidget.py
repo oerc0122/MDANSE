@@ -288,6 +288,9 @@ class ShellPanel(QWidget):
                 override_title=f"Shell {shell_index}, q={vec_key}, contains no vectors.",
                 override_label="To introduce vectors at this Q, you may have to run the simulation with a larger cell.",
             )
+            self.plot_widget.plot_blank()
+            return
+        if not self.parent_dialog.isVisible():
             return
         if not self.parent_dialog.isVisible():
             return
