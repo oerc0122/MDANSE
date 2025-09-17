@@ -29,7 +29,7 @@ def test_qvectors_for_nonorthogonal_cell():
         rtol=1e-7,
     )
 
-GENERATORS = {name for name, gen in IQVectors.indirect_subclass_dictionary().items() if gen._generate is not IQVectors._generate and "shells" in gen._get_descriptors()}
+GENERATORS = [name for name, gen in IQVectors.indirect_subclass_dictionary().items() if gen._generate is not IQVectors._generate and "shells" in gen._get_descriptors()]
 
 @pytest.mark.parametrize("qvector_generator", GENERATORS)
 def test_qvector_to_hkl_conversion(trajectory, qvector_generator):

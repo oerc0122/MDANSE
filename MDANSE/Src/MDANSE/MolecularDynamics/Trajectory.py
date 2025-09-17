@@ -144,7 +144,6 @@ class Trajectory:
         self._grouping_level = GroupingLevels.ATOM
         self._atom_cache = {}
         self._selection = []
-        self.selection_getter = None
         self._transmutation = {}
 
     @property
@@ -272,7 +271,12 @@ class Trajectory:
             Selected atom indices, output by ReusableSelection.
         """
         self._selection = selected_indices
-        self.selection_getter = itemgetter(*selected_indices)
+
+    @property
+    def selection_getter(self):
+        if not self._selection:
+            return itemgetter(*self.atom_indices)
+        return itemgetter(*self._selection)
 
     def set_grouping(self, grouping_level: str):
         """Assign the grouping level to the trajectory.

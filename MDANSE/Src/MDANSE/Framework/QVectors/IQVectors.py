@@ -42,6 +42,10 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
 
         self._status = status
 
+    @property
+    def n_shells(self) -> int:
+        return len(self.shells)
+
     @abc.abstractmethod
     def _generate(self):
         pass
@@ -151,3 +155,16 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
                     units="au",
                     axis="vector_generator/coordinates|index",
                 )
+
+    def preview_output_axis(self):
+        """Output the values of |Q| from current parameters.
+
+        Returns
+        -------
+        list[float]
+            Values of |Q|.
+        str
+            Physical unit of Q.
+
+        """
+        return self.shells, "1/nm"

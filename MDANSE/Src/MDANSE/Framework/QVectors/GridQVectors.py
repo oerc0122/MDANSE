@@ -80,14 +80,14 @@ class GridQVectors(LatticeQVectors):
         dists = enumerate(bins[inds])
         q_groups = map_reduce(dists, itemgetter(1), itemgetter(0))
         # Functions rely on ordered dicts for some reason?
-        q_groups = {key: q_groups[key] for key in sorted(q_groups)}
+        self.q_groups = {key: q_groups[key] for key in sorted(q_groups)}
 
         if self._status is not None:
-            self._status.start(len(q_groups))
+            self._status.start(len(self.q_groups))
 
         self.q_vectors = {}
 
-        for q, v in q_groups.items():
+        for q, v in self.q_groups.items():
             self.q_vectors[q] = {
                 "q": q,
                 "q_vectors": vects[:, v],
@@ -99,3 +99,7 @@ class GridQVectors(LatticeQVectors):
                 if self._status.is_stopped():
                     return
                 self._status.update()
+
+    @property
+    def shells(self):
+        return list(self.q_groups.keys())

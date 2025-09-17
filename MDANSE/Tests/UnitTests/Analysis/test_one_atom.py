@@ -58,23 +58,28 @@ def test_analysis_one_atom_total(generate_benchmarks, jobname, tmp_path):
     parameters = {
         "output_files": (temp_name, ("MDAFormat",), "INFO"),
         "r_values": (0.0, 0.8, 0.01),
-        "frames": None,
+        "frames": "all",
         "running_mode": ("single-core",),
         "trajectory": trajname,
+        "q_vector_type": "SphericalLatticeQVectors",
+        "q_vectors": {"shells": (0.1, 5, 0.1), "width": 0.1, "n_vectors": 50, "seed": 0},
     }
-    if jobname in ["TrajectoryEditor", "TrajectoryFilter"]:
+    if jobname in {"TrajectoryEditor", "TrajectoryFilter"}:
         parameters["output_files"] = (temp_name,  64, 128, "none", "INFO")
         out_file = temp_name.with_suffix(".mdt")
+
     elif jobname in ["AverageStructure"]:
         parameters["output_files"] = (temp_name, "vasp", "INFO")
         out_file = temp_name
 
-    job = IJob.create(jobname, trajectory_input="mdanse")
+
+    job = IJob.create(jobname)
+    parameters = {key: value for key, value in parameters.items() if key in job.parameters}
+    job.configuration = parameters
     try:
-        job.run(parameters, status=True)
-    except:
-        for name, conf in job.configuration.items():
-            print(name, conf.error_status)
+        job.run(status=True)
+    except Exception:
+        print(job)
         raise RuntimeError()
 
     if generate_benchmarks:

@@ -165,7 +165,7 @@ class Configurable:
 
     def to_json(self) -> str:
         to_json = {
-            name: obj.to_json() if isinstance(obj, Parameter) else obj
+            name: obj.to_json() if isinstance(obj, Parameter) else {name: str(obj)}
             for name, obj in self.configuration.items()
         } | {"class_type": type(self).__name__}
         return json.dumps(to_json, cls=MDANSEEncoder)

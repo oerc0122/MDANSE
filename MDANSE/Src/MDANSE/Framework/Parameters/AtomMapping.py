@@ -365,10 +365,7 @@ class AtomTransmuter(Mapper):
         """
         super().__init__()
         self._current_trajectory = trajectory
-        self._original_map = {
-            number: element
-            for number, element in enumerate(trajectory.chemical_system.atom_list)
-        }
+        self._original_map = dict(enumerate(trajectory.chemical_system.atom_list))
 
     def apply(self, selection_string: str, symbol: str) -> None:
         """With the selection dictionary update selector and then

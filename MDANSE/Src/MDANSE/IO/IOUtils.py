@@ -22,7 +22,7 @@ from enum import Enum
 from functools import singledispatch
 from itertools import filterfalse
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
 from more_itertools import value_chain
@@ -45,6 +45,11 @@ class UCEnum(Enum):
         return vars(cls).get(value.upper())
 
 
+@runtime_checkable
+class Serialisable(Protocol):
+    def to_json(self) -> str: ...
+
+
 class MDANSEEncoder(json.JSONEncoder):
     """Custom JSON encoder to encode paths as strings."""
 
@@ -53,6 +58,10 @@ class MDANSEEncoder(json.JSONEncoder):
             return str(obj)
         elif isinstance(obj, np.ndarray):
             return "\n".join(map(str, obj))
+        elif isinstance(obj, Enum):
+            return obj.name
+        elif isinstance(obj, Serialisable):
+            return obj.to_json()
         return super().default(obj)
 
 

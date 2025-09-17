@@ -75,6 +75,13 @@ class Frames:
     def duration(self) -> float:
         return self.time_stop - self.time_start
 
+    @property
+    def indices(self) -> NumericRange:
+        return self.samples
+
+    def preview_output_axis(self):
+        return self.times, "ps"
+
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.index_start}, {self.index_stop}, {self.index_step})"
 
@@ -193,13 +200,22 @@ class InterpOrder(SingleChoice[int | str, int]):
         "5th order": 5,
     }
 
-    def __init__(self, *args, aliases: None = None, choices: None = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        default: int = 3,
+        aliases: None = None,
+        choices: None = None,
+        **kwargs,
+    ):
         if aliases is not None:
             raise ConfigError("aliases may not be non-None")
         if choices is not None:
             raise ConfigError("choices may not be non-None")
 
-        super().__init__(*args, choices=(), aliases=self.base_aliases, **kwargs)
+        super().__init__(
+            *args, choices=(), aliases=self.base_aliases, default=default, **kwargs
+        )
 
     @property
     def choices(self) -> list[int]:

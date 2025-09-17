@@ -151,8 +151,16 @@ class MDANSEResult(ConfigureDescriptor[str | Path | h5py.File, h5py.File]):
         excludes = self.exclude if exclude is None else exclude
         return not any(exclude in value for exclude in excludes)
 
-    def validate(self, value, deps: dict[str, Any]) -> Trajectory:
-        value = PathParam.validate(self, value, deps)
+    def validate(self, value, deps: dict[str, Any]) -> h5py.File:
+        if self.optional and value is None:
+            return None
+
+        try:
+            value = Path(value).expanduser()
+        except TypeError as error:
+            raise ConfigError(f"Value ({value}) is not a valid Path.") from error
+
+        super().validate(value, deps)
 
         try:
             out = h5py.File(value)
