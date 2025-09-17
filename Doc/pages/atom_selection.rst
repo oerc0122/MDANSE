@@ -182,12 +182,18 @@ with selection is
 .. math::
    :label: selection1
 
-   F_{\text{coh},\alpha\beta}{(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\alpha\, \cap\, s}c_{\beta\, \cap\, s}}}}{\sum\limits_{j \in (\alpha\, \cap\, s)}{\sum\limits_{k \in (\beta\, \cap\, s)} \left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}},
+   F_{\text{coh},\alpha\beta}(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\alpha\, \cap\, s}c_{\beta\, \cap\, s}}} \sum\limits_{j \in (\alpha\, \cap\, s)} \sum\limits_{k \in (\beta\, \cap\, s)} \mathrm{Re}\left[ F_{jk}{(\mathbf{q},t)} \right]
 
 .. math::
    :label: selection2
 
-   F_{\text{inc},\alpha}{(\mathbf{q},t ) = \frac{1}{N c_{\alpha\, \cap\, s}}}{\sum\limits_{j \in (\alpha\, \cap\, s)} \left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}
+   F_{\text{inc},\alpha}(\mathbf{q},t ) = \frac{1}{N c_{\alpha\, \cap\, s}} \sum\limits_{j \in (\alpha\, \cap\, s)} \mathrm{Re}\left[ F_{jj}{(\mathbf{q},t)} \right]
+
+.. math::
+   :label: atompartial2_1
+
+   F_{jk}{(\mathbf{q},t) = \left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}
+
 
 where :math:`N` is the total number of all atoms,
 :math:`c_{\alpha\, \cap\, s} = N_{\alpha\, \cap\, s} / N`, and :math:`N_{\alpha\, \cap\, s}`
@@ -197,14 +203,14 @@ the DCSF and DISF weights are
 .. math::
    :label: selection4
 
-   W_{\alpha\beta} = \left[2 - \delta_{\alpha\beta}\right]\frac{\sqrt{c_{\alpha\, \cap\, s}c_{\beta\, \cap\, s}} b_{\mathrm{coh},\alpha}b_{\mathrm{coh},\beta}}{\sum_{\gamma\delta} c_{\gamma}c_{\delta}  b_{\mathrm{coh},\gamma}b_{\mathrm{coh},\delta}}
+   W_{\alpha\beta} = \left[2 - \delta_{\alpha\beta}\right]\frac{\sqrt{c_{\alpha\, \cap\, s}c_{\beta\, \cap\, s}}\ \mathrm{Re} \left[ b_{\mathrm{coh},\alpha}^{\dagger}b_{\mathrm{coh},\beta}\right]}{\sum_{\gamma\delta} c_{\gamma}c_{\delta}  b_{\mathrm{coh},\gamma}^{\dagger}b_{\mathrm{coh},\delta}}
 
 and
 
 .. math::
    :label: selection5
 
-   W_{\alpha} = \frac{c_{\alpha\, \cap\, s} b_{\mathrm{inc},\alpha}^2}{\sum_{\gamma} c_{\gamma} b_{\mathrm{inc},\gamma}^2}
+   W_{\alpha} = \frac{c_{\alpha\, \cap\, s} \vert b_{\mathrm{inc},\alpha} \vert^2}{\sum_{\gamma} c_{\gamma} \vert b_{\mathrm{inc},\gamma} \vert^2}
 
 so that the normalisation factors on the weights do not depend on the selection.
 The total DCSF and DISF results are a weighted sum of the partial terms

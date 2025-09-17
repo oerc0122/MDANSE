@@ -21,7 +21,12 @@ intermediate scattering functions is
 .. math::
    :label: atompartial1
 
-   F_{\text{coh},\text{CH}}{(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\text{C}}c_{\text{H}}}}}{\sum\limits_{j \in \text{C}}{\sum\limits_{k \in \text{H}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}},
+   F_{\text{coh},\text{CH}}(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\text{C}}c_{\text{H}}}} \sum\limits_{j \in \text{C}} \sum\limits_{k \in \text{H}} \mathrm{Re}\left[F_{jk}(\mathbf{q},t)\right],
+
+.. math::
+   :label: atompartial1_1
+
+   F_{jk}{(\mathbf{q},t) = \left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}
 
 so the summations run over all carbon and hydrogen atoms in the system.
 The total is a weighted sum of all partial components
@@ -39,7 +44,7 @@ intermediate scattering functions is
 .. math::
    :label: atompartial3
 
-   F_{\text{inc},\text{C}}{(\mathbf{q},t ) = \frac{1}{Nc_{\text{C}}}}{\sum\limits_{j \in \text{C}}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}
+   F_{\text{inc},\text{C}}(\mathbf{q},t ) = \frac{1}{Nc_{\text{C}}} \sum\limits_{j \in \text{C}} \mathrm{Re}\left[F_{jj}(\mathbf{q},t)\right]
 
 so the summation run over all carbon atoms and the total is a weight sum
 of all partial components
@@ -67,7 +72,7 @@ partial coherent intermediate scattering function is
 .. math::
    :label: moleculepartial1
 
-   F_{\text{coh},\text{HO}}^{[\text{EtOH}][\text{H2O}]}{(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\text{H}}^{\text{EtOH}}c_{\text{O}}^{\text{H2O}}}}}{\sum\limits_{j \in (\text{EtOH}\, \cap\, \text{H})}{\sum\limits_{k \in (\text{H2O}\, \cap\, \text{O})}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}},
+   F_{\text{coh},\text{HO}}^{[\text{EtOH}][\text{H2O}]}{(\mathbf{q},t) =  \frac{1}{N \sqrt{c_{\text{H}}^{\text{EtOH}}c_{\text{O}}^{\text{H2O}}}}} \sum\limits_{j \in (\text{EtOH}\, \cap\, \text{H})} \sum\limits_{k \in (\text{H2O}\, \cap\, \text{O})} \mathrm{Re}\left[F_{jk}(\mathbf{q},t)\right]
 
 where :math:`c_{\text{H}}^{\text{EtOH}} = N_{\text{H}}^{\text{EtOH}} / N` and
 :math:`c_{\text{O}}^{\text{H2O}} = N_{\text{O}}^{\text{H2O}} / N`. Here,
@@ -91,7 +96,7 @@ water respectively. For coherent scattering lengths
 .. math::
    :label: moleculepartial3
 
-   W_{\text{HO}}^{[\text{EtOH}][\text{H2O}]} = 2\frac{\sqrt{c_{\text{H}}^{\text{EtOH}}c_{\text{O}}^{\text{H2O}}} b_{\mathrm{coh},\text{H}}b_{\mathrm{coh},\text{O}}}{c_{\text{C}}^{\text{EtOH}}c_{\text{C}}^{\text{EtOH}}  b_{\mathrm{coh},\text{C}}b_{\mathrm{coh},\text{C}} + \cdots}.
+   W_{\text{HO}}^{[\text{EtOH}][\text{H2O}]} = 2\frac{\sqrt{c_{\text{H}}^{\text{EtOH}}c_{\text{O}}^{\text{H2O}}} \ \mathrm{Re} \left[ b_{\mathrm{coh},\text{H}}^{\dagger} b_{\mathrm{coh},\text{O}}\right] }{c_{\text{C}}^{\text{EtOH}}c_{\text{C}}^{\text{EtOH}}  b_{\mathrm{coh},\text{C}}^{\dagger} b_{\mathrm{coh},\text{C}} + \cdots}.
 
 The total coherent intermediate scattering functions
 is a weighted sum of all molecular terms
@@ -113,7 +118,7 @@ carbon atoms is
 .. math::
    :label: moleculepartial5
 
-   F_{\text{inc},\text{C}}^{\text{EtOH}}{(\mathbf{q},t ) = \frac{1}{Nc_{\text{C}}^{\text{EtOH}}}}{\sum\limits_{j \in (\text{EtOH}\, \cap \, \text{C})}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle},
+   F_{\text{inc},\text{C}}^{\text{EtOH}}(\mathbf{q},t ) = \frac{1}{Nc_{\text{C}}^{\text{EtOH}}} \sum\limits_{j \in (\text{EtOH}\, \cap \, \text{C})} \mathrm{Re}\left[F_{jj}(\mathbf{q},t)\right]
 
 and the molecular incoherent intermediate scattering functions for ethanol
 is
@@ -128,7 +133,7 @@ with incoherent scattering length weights of
 .. math::
    :label: moleculepartial7
 
-   W_{\text{C}}^{\text{EtOH}} = \frac{c_{\text{C}}^{\text{EtOH}}b_{\text{inc},\text{C}}^{2}}{c_{\text{C}}^{\text{EtOH}}b_{\text{inc},\text{C}}^{2} + \cdots}.
+   W_{\text{C}}^{\text{EtOH}} = \frac{c_{\text{C}}^{\text{EtOH}}\vert b_{\text{inc},\text{C}} \vert^{2}}{c_{\text{C}}^{\text{EtOH}}\vert b_{\text{inc},\text{C}} \vert^{2} + \cdots}.
 
 The total incoherent intermediate scattering functions
 is a weighted sum of all molecular terms
