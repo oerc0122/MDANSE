@@ -139,12 +139,12 @@ treatments for coherent and incoherent scattering lengths
 .. math::
    :label: scattering9
 
-   {\text{F}_{\text{coh}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{jk}b_{\mathrm{coh},j}}b_{\mathrm{coh},k}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{k}\left( t \right)} \right\rbrack} \right\rangle,}
+   {\text{F}_{\text{coh}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{jk}b_{\mathrm{coh},j}^{\dagger}}b_{\mathrm{coh},k}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{k}\left( t \right)} \right\rbrack} \right\rangle,}
 
 .. math::
    :label: scattering10
 
-   {\text{F}_{\text{inc}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{j}{b_{\mathrm{inc},j}^{2}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( t \right)} \right\rbrack} \right\rangle}}.}
+   {\text{F}_{\text{inc}}{\left( {q,t} \right) = \frac{1}{N}}{\sum\limits_{j}{\vert b_{\mathrm{inc},j} \vert^{2}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\hat{\mathbf{r}}_{j}\left( t \right)} \right\rbrack} \right\rangle}}.}
 
 
 **Classical Framework and Corrections**:
@@ -216,7 +216,7 @@ is the correlation function of the Fourier components of the particle current
 .. math::
    :label: ccf1
 
-    J_{\mu\nu}(\mathbf{q}, t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} J_{\alpha\beta\mu\nu}(\mathbf{q}, t),
+    J_{\mu\nu}(\mathbf{q}, t) = \sum_{\alpha}\sum_{\beta \geq \alpha} W_{\alpha\beta} \mathrm{Re} \left[ J_{\alpha\beta\mu\nu}(\mathbf{q}, t) \right],
 
 .. math::
    :label: ccf2
@@ -251,12 +251,12 @@ partial longitudinal and transverse current correlation functions are
 .. math::
    :label: ccf6
 
-    J^{\mathrm{L}}_{\alpha\beta}(\mathbf{q}, t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}} \langle \mathbf{j}^{\mathrm{L}}_{\alpha}(-\mathbf{q}, 0) \cdot \mathbf{j}^{\mathrm{L}}_{\beta}(\mathbf{q}, t) \rangle,
+    J^{\mathrm{L}}_{\alpha\beta}(\mathbf{q}, t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}}  \mathrm{Re} \left[ \langle \mathbf{j}^{\mathrm{L}}_{\alpha}(-\mathbf{q}, 0) \cdot \mathbf{j}^{\mathrm{L}}_{\beta}(\mathbf{q}, t) \rangle \right],
 
 .. math::
    :label: ccf7
 
-    J^{\mathrm{T}}_{\alpha\beta}(\mathbf{q}, t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}} \langle \mathbf{j}^{\mathrm{T}}_{\alpha}(-\mathbf{q}, 0) \cdot \mathbf{j}^{\mathrm{T}}_{\beta}(\mathbf{q}, t) \rangle.
+    J^{\mathrm{T}}_{\alpha\beta}(\mathbf{q}, t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}}  \mathrm{Re} \left[ \langle \mathbf{j}^{\mathrm{T}}_{\alpha}(-\mathbf{q}, 0) \cdot \mathbf{j}^{\mathrm{T}}_{\beta}(\mathbf{q}, t) \rangle \right].
 
 
 From the continuity equation we can obtain a relation between the
@@ -289,7 +289,7 @@ where
 .. math::
    :label: dcsf3
 
-   F_{\text{coh},\alpha\beta}{(\mathbf{q},t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}}}{\sum\limits_{j \in \alpha}{\sum\limits_{k \in \beta}\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle}}
+   F_{\text{coh},\alpha\beta}{(\mathbf{q},t) = \frac{1}{N \sqrt{c_{\alpha} c_{\beta}}}}{\sum\limits_{j \in \alpha}{\sum\limits_{k \in \beta}  \mathrm{Re} \left[ \left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{k}\left( t \right)} \right\rbrack} \right\rangle \right]}}
 
 and
 
@@ -325,7 +325,7 @@ where
 .. math::
    :label: disf3
 
-   F_{\text{inc},\alpha}{(\mathbf{q},t) = \frac{1}{N c_{\alpha} }}{\sum\limits_{j \in \alpha}{\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle}}
+   F_{\text{inc},\alpha}{(\mathbf{q},t) = \frac{1}{N c_{\alpha} }}{\sum\limits_{j \in \alpha}{ \mathrm{Re} \left[\left\langle {\exp\left\lbrack {{- i}\mathbf{q}\cdot\mathbf{r}_{j}\left( 0 \right)} \right\rbrack\exp\left\lbrack {i\mathbf{q}\cdot\mathbf{r}_{j}\left( t \right)} \right\rbrack} \right\rangle \right]}}
 
 and
 
@@ -503,12 +503,12 @@ In this analysis the total incoherent, total coherent and total
 .. math::
    :label: ndtsf1
    
-   F_{\mathrm{inc}}(\mathbf{q},t) = \sum_{\alpha} c_{\alpha}b_{\text{inc},\alpha}^{2} F_{\mathrm{inc},\alpha}(\mathbf{q},t),
+   F_{\mathrm{inc}}(\mathbf{q},t) = \sum_{\alpha} c_{\alpha}\vert b_{\text{inc},\alpha} \vert^{2} F_{\mathrm{inc},\alpha}(\mathbf{q},t),
 
 .. math::
    :label: ndtsf2
    
-   F_{\mathrm{coh}}(\mathbf{q},t) = \sum_{\alpha\beta} \sqrt{c_{\alpha}c_{\beta}} b_{\text{coh},\alpha}b_{\text{coh},\beta} F_{\mathrm{coh},\alpha\beta}(\mathbf{q},t),
+   F_{\mathrm{coh}}(\mathbf{q},t) = \sum_{\alpha\beta} \sqrt{c_{\alpha}c_{\beta}}\ \mathrm{Re} \left[ b_{\text{coh},\alpha}b_{\text{coh},\beta} \right] F_{\mathrm{coh},\alpha\beta}(\mathbf{q},t),
 
 .. math::
    :label: ndtsf3
