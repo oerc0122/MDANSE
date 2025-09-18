@@ -8,7 +8,7 @@ Partial properties
 ^^^^^^^^^^^^^^^^^^
 
 In MDANSE, most properties are split by atom-type
-and the total results is a sum of these partial
+and the total result is a sum of these partial
 properties. For example, the partial coherent and incoherent intermediate
 scattering functions scaled with weight factors are
 
@@ -36,7 +36,7 @@ the concentrations of atoms of atom-types :math:`\alpha` and :math:`\beta`.
 :math:`N_{\alpha}` and :math:`N_{\beta}` are the the number of atoms-type
 :math:`\alpha` and :math:`\beta`, and :math:`N` is the total number of atoms.
 In MDANSE, the real part of :math:`F_{jk}(\mathbf{q},t)` is taken in Eqs.
-:math:numref:`partial1` so that it will the average over :math:`+\mathbf{q}`
+:math:numref:`partial1` so that it is the average over :math:`+\mathbf{q}`
 and :math:`-\mathbf{q}`. The total is now a sum of the partial terms
 
 .. math::
@@ -47,7 +47,7 @@ and :math:`-\mathbf{q}`. The total is now a sum of the partial terms
 For summation involving two atom-types only the unique pairs are included up,
 since the averaging over :math:`+\mathbf{q}` and :math:`-\mathbf{q}` will mean that
 :math:`\mathcal{F}_{\text{coh},\alpha\beta}(\mathbf{q},t) \approx \mathcal{F}_{\text{coh},\beta\alpha}(\mathbf{q},t)`.
-The factor of two for the off-diagonal terms are included in the weight factor.
+The factor of two for the off-diagonal terms is included in the weight factor.
 
 .. _water-dos-weighted:
 
@@ -56,7 +56,7 @@ The factor of two for the off-diagonal terms are included in the weight factor.
    :width: 11.748cm
    :height: 9.393cm
 
-   The total and partial DOS of water, partial DOS are **weighted** so that the
+   The total and partial DOS of water. Partial DOS are **weighted** so that the
    sum of partial DOS equals to the total.
 
 The partial properties can also be scaled without the weights
@@ -89,8 +89,9 @@ and :math:`F_{\text{inc},\alpha}(\mathbf{q},t)`) partial properties.
    :width: 11.748cm
    :height: 9.393cm
 
-   The total and partial intermolecular PDF of water, partial PDF are
-   **unweighted** so that the weighted sum of partial PDF equals to the total.
+   The total and partial intermolecular PDF of water. Partial PDF are
+   **unweighted** and only
+   their weighted sum equals to the total PDF.
 
 The weighted and unweighted options are more useful for different cases, for example,
 it might be more useful to use the weighted terms for the density of states (DOS) calculations (:numref:`water-dos-weighted`)
@@ -140,7 +141,9 @@ For the DCSF calculation using ``b_coherent``, the weights are
 
 where :math:`b_{\mathrm{coh},\alpha}^{\dagger}` and :math:`b_{\mathrm{coh},\beta}` are
 the coherent scattering lengths of the atoms of types :math:`\alpha` and
-:math:`\beta`. The total coherent intermediate scattering functions becomes
+:math:`\beta`. (:math:`b_{\mathrm{coh},\alpha}^{\dagger}` is the complex conjugate of
+:math:`b_{\mathrm{coh},\alpha}`, as neutron scattering lengths are complex numbers.)
+The total coherent intermediate scattering functions becomes
 
 .. math::
    :label: doubledcsf2
