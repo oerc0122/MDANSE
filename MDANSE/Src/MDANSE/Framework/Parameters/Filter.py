@@ -91,5 +91,9 @@ class Filter(CustomConfig):
         self,
         owner: object,
         value: dict | str | Path | tuple[str, dict[str, Any]] | Filter,
-    ):
-        self.filter = value
+    ) -> None:
+        if isinstance(value, (dict, str, Path, tuple, Filter)):
+            self.filter = value
+            return
+
+        super().__set__(owner, value)

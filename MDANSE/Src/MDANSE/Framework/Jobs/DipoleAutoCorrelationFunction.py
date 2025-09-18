@@ -78,14 +78,14 @@ class DipoleAutoCorrelationFunction(IJob):
         self._outputData.add(
             "dacf/axes/time",
             "LineOutputVariable",
-            self.frames.duration,
+            self.frame_window.duration,
             units="ps",
         )
 
         self._outputData.add(
             "dacf/dacf",
             "LineOutputVariable",
-            (self.frames.n_frames,),
+            (self.frame_window.n_frames,),
             axis="dacf/axes/time",
             main_result=True,
         )
@@ -105,7 +105,7 @@ class DipoleAutoCorrelationFunction(IJob):
             auto-correlation function for a molecule.
         """
         molecule = self.molecules[index]
-        dipoles = np.zeros((self.frames.n_frames, 3), dtype=np.float64)
+        dipoles = np.zeros((len(self.frames), 3), dtype=np.float64)
         for i, frame_index in enumerate(
             range(
                 self.frames.index_start,
@@ -134,7 +134,7 @@ class DipoleAutoCorrelationFunction(IJob):
                     contiguous_configuration["coordinates"][idx, :] - com
                 )
 
-        n_configs = self.frames.n_frames
+        n_configs = self.frame_window.n_configs
         mol_dacf = correlate(dipoles, dipoles[:n_configs], mode="valid") / (
             3 * n_configs
         )
@@ -151,8 +151,8 @@ class DipoleAutoCorrelationFunction(IJob):
         self._outputData["dacf/dacf"] /= self.numberOfSteps
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.root,
+            self.output_files.out_format,
             str(self),
             self,
         )

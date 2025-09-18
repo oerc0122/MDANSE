@@ -32,8 +32,7 @@ from MDANSE.Framework.Parameters import (
     InstrumentResolution,
     MDANSETrajectory,
     OutputFile,
-    QVectorsParams,
-    QVectorsSelect,
+    QVectors,
     RangeCellCutoff,
     RunningMode,
     Weights,
@@ -77,19 +76,14 @@ class DynamicCoherentStructureFactor(IJob):
     )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
-    q_vector_type = QVectorsSelect(depends={"trajectory": "trajectory"})
-    q_vectors = QVectorsParams(depends={"generator": "q_vector_type"})
+    q_vectors = QVectors(depends={"trajectory": "trajectory"})
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"}, default="all")
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     instrument_resolution = InstrumentResolution(
         depends={"trajectory": "trajectory", "window": "frame_window"},
     )
-    weights = Weights(
-        depends={
-            "trajectory": "trajectory",
-        }
-    )
+    weights = Weights(default="b_coherent", depends={"trajectory": "trajectory"})
     output_files = OutputFile()
     running_mode = RunningMode()
 
@@ -97,15 +91,18 @@ class DynamicCoherentStructureFactor(IJob):
         """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
-        self.numberOfSteps = self.q_vectors.n_shells
+        self.generator = self.q_vectors.generator
+        self.numberOfSteps = self.generator.n_shells
 
-        nQShells = self.q_vectors.n_shells
+        nQShells = self.generator.n_shells
         if not isinstance(
-            self.q_vectors,
+            self.generator,
             LatticeQVectors,
         ):
             LOG.warning(
-                f"This task should be used with a lattice-based Q vector generator. You have picked {self.q_vector_type}. The results are likely to be incorrect."
+                "This task should be used with a lattice-based Q vector generator. "
+                "You have picked {type(self.generator.__name__}}. "
+                "The results are likely to be incorrect."
             )
 
         self._nFrames = self.frame_window.n_frames
@@ -117,7 +114,7 @@ class DynamicCoherentStructureFactor(IJob):
         self._outputData.add(
             "dcsf/axes/q",
             "LineOutputVariable",
-            self.q_vectors.shells,
+            self.generator.shells,
             units="1/nm",
         )
 
@@ -207,8 +204,7 @@ class DynamicCoherentStructureFactor(IJob):
         self._cell_std = 0.0
         try:
             all_cells = [
-                self.trajectory.unit_cell(frame.ind)._unit_cell
-                for frame in self.frames
+                self.trajectory.unit_cell(frame.ind)._unit_cell for frame in self.frames
             ]
         except TypeError:
             self._average_unit_cell = None
@@ -240,14 +236,14 @@ class DynamicCoherentStructureFactor(IJob):
             shell index, rho density array
 
         """
-        shell = self.q_vectors.shells[index]
+        shell = self.generator.shells[index]
 
-        if shell not in self.q_vectors.q_vectors:
+        if shell not in self.generator.q_vectors:
             return index, None
 
         traj = self.trajectory
 
-        nQVectors = self.q_vectors.q_vectors[shell]["q_vectors"].shape[1]
+        nQVectors = self.generator.q_vectors[shell]["q_vectors"].shape[1]
 
         rho = {}
         for element in self.trajectory.unique_names:
@@ -269,15 +265,15 @@ class DynamicCoherentStructureFactor(IJob):
             ):
                 cell_fixed = False
             if not cell_present:
-                qVectors = self.q_vectors.q_vectors[shell]["q_vectors"]
+                qVectors = self.generator.q_vectors[shell]["q_vectors"]
             else:
                 try:
-                    hkls = self.q_vectors.q_vectors[shell]["hkls"]
+                    hkls = self.generator.q_vectors[shell]["hkls"]
                 except KeyError:
-                    qVectors = self.q_vectors.q_vectors[shell]["q_vectors"]
+                    qVectors = self.generator.q_vectors[shell]["q_vectors"]
                 else:
                     if hkls is None:
-                        qVectors = self.q_vectors.q_vectors[shell]["q_vectors"]
+                        qVectors = self.generator.q_vectors[shell]["q_vectors"]
                     else:
                         qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
 
@@ -316,7 +312,7 @@ class DynamicCoherentStructureFactor(IJob):
 
     def finalize(self):
         """Apply weights and write out the results."""
-        self.q_vectors.write_vectors_to_file(self._outputData)
+        self.generator.write_vectors_to_file(self._outputData)
 
         nAtomsPerElement = self.trajectory.get_natoms()
 

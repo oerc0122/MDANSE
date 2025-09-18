@@ -128,14 +128,18 @@ class MeanSquareDisplacement(IJob):
         self._atoms = self.trajectory.atom_names
 
     def run_step(self, index):
-        """
-        Runs a single step of the job.
+        """Runs a single step of the job.
 
-        Args:
-            index (int): the index of the step
+        Parameters
+        ----------
+        index : int
+            The index of the step.
 
-        Returns:
-            tuple: the result of the step
+        Returns
+        -------
+        tuple
+            The result of the step.
+
         """
 
         # get selected atom indices sublist
@@ -153,12 +157,15 @@ class MeanSquareDisplacement(IJob):
 
         return index, msd
 
-    def combine(self, index, result):
-        """
-        Combines returned results of run_step.
+    def combine(self, index: int, result):
+        """Combines returned results of run_step.
 
-        Args:
-            result (tuple): the output of run_step method
+        Parameters
+        ----------
+        result : tuple
+            the output of run_step method
+        index : int
+            Current step
         """
 
         # The symbol of the atom.

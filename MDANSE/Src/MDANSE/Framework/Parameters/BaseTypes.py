@@ -472,7 +472,7 @@ class Array(ConfigureDescriptor[str | npt.ArrayLike, np.ndarray]):
             value = np.fromstring(value, dtype=self.dtype)
         elif isinstance(value, Sequence):
             value = np.array(value, dtype=self.dtype)
-        elif self.optional and value is None:
+        elif self.optional and (value is None or len(value) == 0):
             return None
 
         value = super().validate(value, deps)
@@ -480,10 +480,12 @@ class Array(ConfigureDescriptor[str | npt.ArrayLike, np.ndarray]):
         assert isinstance(value, np.ndarray)
 
         if self.non_zero and (
-            (value.ndim == 2 and not np.isclose(np.linalg.det(value), 0.0))
-            or (value.ndim == 1 and not np.isclose(np.linalg.norm(value), 0.0))
+            (value.ndim == 2 and np.isclose(np.linalg.det(value), 0.0))
+            or (value.ndim == 1 and np.isclose(np.linalg.norm(value), 0.0))
         ):
-            raise ConfigError("Non-zero Array has zero critical value.")
+            raise ConfigError(
+                f"Non-zero {type(self).__name__} has zero critical value."
+            )
 
         return value
 
@@ -504,6 +506,9 @@ class Vector(Array):
         self.normalise = normalise
 
     def validate(self, value, deps: Depends, /) -> np.ndarray:
+        if self.optional and (value is None or len(value) == 0):
+            return None
+
         value = super().validate(value, deps)
 
         if self.normalise:

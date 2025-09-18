@@ -67,22 +67,13 @@ class DensityOfStates(IJob):
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    weights = Weights(
-        default="atomic_weight",
-        depends={
-            "trajectory": "trajectory",
-        },
-    )
-    projection = Projection(
-        label="Project coordinates",
-    )
+    weights = Weights(default="atomic_weight", depends={"trajectory": "trajectory"})
+    projection = Projection(label="Project coordinates")
     interpolation_order = InterpOrder(
         label="Velocities",
         depends={"trajectory": "trajectory", "frames": "frames"},
     )
-    instrument_resolution = InstrumentResolution(
-        depends={"window": "frame_window"},
-    )
+    instrument_resolution = InstrumentResolution(depends={"window": "frame_window"})
     output_files = OutputFile()
     running_mode = RunningMode()
 
@@ -94,7 +85,7 @@ class DensityOfStates(IJob):
 
         self.numberOfSteps = self.trajectory.get_total_natoms()
 
-        self.add_ideal_results = self.instrument_resolution.kernel != "ideal"
+        self.add_ideal_results = self.instrument_resolution.add_ideal
 
         self.labels = [
             (element, (element,)) for element in self.trajectory.get_natoms()
@@ -103,13 +94,13 @@ class DensityOfStates(IJob):
         self._outputData.add(
             "dos/axes/time",
             "LineOutputVariable",
-            self.frames.times,
+            self.frame_window.times,
             units="ps",
         )
         self._outputData.add(
             "vacf/axes/time",
             "LineOutputVariable",
-            self.frames.times,
+            self.frame_window.times,
             units="ps",
         )
 
@@ -145,7 +136,7 @@ class DensityOfStates(IJob):
             self._outputData.add(
                 f"vacf/{element}",
                 "LineOutputVariable",
-                (len(self.frames),),
+                (self.frame_window.n_frames,),
                 axis="vacf/axes/time",
                 units="nm2/ps2",
             )
@@ -169,7 +160,7 @@ class DensityOfStates(IJob):
         self._outputData.add(
             "vacf/total",
             "LineOutputVariable",
-            (len(self.frames),),
+            (self.frame_window.n_frames,),
             axis="dos/axes/time",
             units="nm2/ps2",
         )
@@ -203,7 +194,6 @@ class DensityOfStates(IJob):
             #. atomicDOS (np.array): The calculated density of state for atom of index=index
             #. atomicVACF (np.array): The calculated velocity auto-correlation function for atom of index=index
         """
-        LOG.debug(f"Running step: {index}")
         trajectory = self.trajectory
 
         # get atom index
@@ -225,17 +215,16 @@ class DensityOfStates(IJob):
                 step=self.frames.index_step,
             )
 
-            order = self.interpolation_order
             for axis in range(3):
                 series[:, axis] = differentiate(
                     series[:, axis],
-                    order=order,
+                    order=self.interpolation_order,
                     dt=self.frames.time_step,
                 )
 
-        series = self.projection(series)
+        series = self.projection.projector(series)
 
-        n_configs = len(self.frames)
+        n_configs = self.frame_window.n_configs
         atomicVACF = correlate(series, series[:n_configs], mode="valid") / (
             3 * n_configs
         )
@@ -243,10 +232,14 @@ class DensityOfStates(IJob):
 
     def combine(self, index, x):
         """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
+        Combines returned results of run_step.
+
+        Parameters
+        ----------
+        index : int
+            The index of the step.
+        x : Any
+            The returned result(s) of run_step.
         """
 
         # The symbol of the atom.
@@ -265,21 +258,23 @@ class DensityOfStates(IJob):
             self._outputData[f"dos/{element}"][:] = get_spectrum(
                 self._outputData[f"vacf/{element}"],
                 self.instrument_resolution.time_window,
-                self.instrument_resolution.time_step,
+                self.frames.time_step,
                 fft="rfft",
             )
             if self.add_ideal_results:
                 self._outputData[f"dos/ideal/{element}"][:] = get_spectrum(
                     self._outputData[f"vacf/{element}"],
                     None,
-                    self.instrument_resolution.time_step,
+                    self.frames.time_step,
                     fft="rfft",
                 )
+
         selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
         if self.weights in {"b_coherent", "b_incoherent"}:
             for weights in selected_weights, all_weights:
                 for key, value in weights.items():
                     weights[key] = abs(value) ** 2
+
         weight_dict = get_weights(
             selected_weights,
             all_weights,

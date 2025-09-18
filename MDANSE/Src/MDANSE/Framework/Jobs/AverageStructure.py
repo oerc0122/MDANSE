@@ -95,7 +95,7 @@ class AverageStructure(IJob):
             raise ValueError(
                 "Unit cell needs to be defined for the AverageStructure analysis. "
                 "You can add a unit cell using TrajectoryEditor."
-            )
+            ) from None
 
     def run_step(self, index):
         """Runs a single step of the job.

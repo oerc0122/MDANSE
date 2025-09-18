@@ -32,6 +32,7 @@ from MDANSE.Framework.Parameters import (
     AtomSelection,
     AtomTransmutation,
     FrameSelect,
+    GroupingLevel,
     MDANSETrajectory,
     OutputFile,
     RangeCellCutoff,
@@ -58,15 +59,13 @@ class DistanceHistogram(IJob):
     trajectory = MDANSETrajectory(
         selection="atom_selection",
         transmutation="atom_transmutation",
+        grouping="grouping_level",
     )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    weights = Weights(
-        depends={
-            "trajectory": "trajectory",
-        }
-    )
+    weights = Weights(depends={"trajectory": "trajectory"})
     r_values = RangeCellCutoff(
         label="r values (nm)",
         include_last=True,
@@ -113,11 +112,7 @@ class DistanceHistogram(IJob):
         # The histogram of the intramolecular distances.
         if self.intra:
             self.h_intra = np.zeros(
-                (
-                    n_elements,
-                    n_elements,
-                    len(self.r_values.mid_points),
-                ),
+                (n_elements, n_elements, len(self.r_values.mid_points)),
                 dtype=np.float64,
             )
         else:

@@ -44,10 +44,11 @@ from .Choices import (
 from .Filter import Filter
 from .Frames import CorrelationWindow, Frames, FrameSelect, InterpOrder
 from .InputFiles import MDANSEResult, MDANSETrajectory
+from .Molecules import MolecularAxis
 from .OutputFiles import ASEOutputFormat, OutputFile, OutputTrajectory
 from .Parameters import to_class
 from .Projection import Projection
-from .QVectors import QVectorsParams, QVectorsSelect
+from .QVectors import QVectors
 from .Ranges import RangeCellCutoff
 from .Resolution import InstrumentResolution
 from .RunningMode import RunningMode
@@ -73,6 +74,7 @@ __all__ = [
     "MDANSEResult",
     "MDANSETrajectory",
     "ManyPath",
+    "MolecularAxis",
     "MultipleChoice",
     "NumericRange",
     "OutputFile",
@@ -81,8 +83,7 @@ __all__ = [
     "PartialChargeMapper",
     "PathParam",
     "Projection",
-    "QVectorsParams",
-    "QVectorsSelect",
+    "QVectors",
     "Range",
     "RangeCellCutoff",
     "RunningMode",

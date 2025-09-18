@@ -16,10 +16,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import h5py
 
+from MDANSE.MolecularDynamics.MockTrajectory import MockTrajectory
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 from .BaseTypes import PathParam
@@ -90,6 +91,17 @@ class MDANSETrajectory(ConfigureDescriptor[str | Path, Trajectory]):
 
         return set_up_trajectory(self, out, deps)
 
+    def __set__(
+        self, owner: Configurable, value: Path | str | Trajectory | MockTrajectory
+    ):
+        if isinstance(value, (Trajectory, MockTrajectory)):
+            setattr(owner, self.private_name, value)
+            setattr(owner, self.configured_var, True)
+            self._validate_dependents(owner)
+            return
+
+        super().__set__(owner, value)
+
     def _validate_choices(
         self,
         value: Trajectory,
@@ -118,7 +130,7 @@ class MDANSETrajectory(ConfigureDescriptor[str | Path, Trajectory]):
         try:
             out = Trajectory(value)
         except Exception:
-            raise ConfigError(f"Could not load file ({value}) as Trajectory")
+            raise ConfigError(f"Could not load file ({value}) as Trajectory") from None
 
         out = super().validate(out, deps)
 
@@ -165,7 +177,7 @@ class MDANSEResult(ConfigureDescriptor[str | Path | h5py.File, h5py.File]):
         try:
             out = h5py.File(value)
         except Exception:
-            raise ConfigError(f"Could not load file ({value}) as hdf5.")
+            raise ConfigError(f"Could not load file ({value}) as hdf5.") from None
 
         out = super().validate(out, deps)
 

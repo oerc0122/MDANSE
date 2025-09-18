@@ -121,18 +121,15 @@ class VanHoveFunctionSelf(IJob):
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     r_values = RangeCellCutoff(
         label="r values (nm)",
-        include_last=True,
         minimum=0.0,
+        include_last=True,
+        max_value=True,
         depends={"trajectory": "trajectory"},
     )
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    weights = Weights(
-        depends={
-            "trajectory": "trajectory",
-        }
-    )
+    weights = Weights(depends={"trajectory": "trajectory"})
     output_files = OutputFile()
     running_mode = RunningMode()
 
@@ -141,7 +138,7 @@ class VanHoveFunctionSelf(IJob):
         super().initialize()
 
         self.numberOfSteps = len(self.trajectory.atom_indices)
-        self.n_frames = len(self.frames)
+        self.n_frames = self.frame_window.window
         self._atoms = self.trajectory.atom_names
 
         self.selectedElements = self.trajectory.unique_names
@@ -153,9 +150,7 @@ class VanHoveFunctionSelf(IJob):
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
 
-        conf = self.trajectory.configuration(
-            self.frames.index_start,
-        )
+        conf = self.trajectory.configuration(self.frames.index_start)
         if not hasattr(conf, "unit_cell"):
             raise ValueError(DETAILED_CELL_MESSAGE)
         if conf.unit_cell.volume < CELL_SIZE_LIMIT:
@@ -170,7 +165,7 @@ class VanHoveFunctionSelf(IJob):
         self._outputData.add(
             "vh/axes/time",
             "LineOutputVariable",
-            self.frames.times,
+            self.frame_window.duration,
             units="ps",
         )
         self._outputData.add(
@@ -238,32 +233,26 @@ class VanHoveFunctionSelf(IJob):
 
         """
         histograms = np.zeros((self.n_mid_points, self.n_frames))
-        first = self.frames.start_index
-        last = self.frames.index_stop + 1
-        step = self.frames.index_step
 
         atom_index = self.trajectory.atom_indices[index]
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=first,
-            last=last,
-            step=step,
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
         cell_vols = np.array(
-            [
-                self.trajectory.configuration(i).unit_cell.volume
-                for i in range(first, last, step)
-            ],
+            [self.trajectory.configuration(i).unit_cell.volume for i in self.frames.indices],
         )
 
         histograms = van_hove_self(
             series,
             histograms,
             cell_vols,
-            self.r_values.binning.first,
+            self.r_values.binning.start,
             self.r_values.binning.step,
-            self.frame_window,
-            self.n_frames,
+            self.frame_window.n_configs,
+            self.frame_window.n_frames,
         )
 
         return index, histograms
@@ -293,10 +282,10 @@ class VanHoveFunctionSelf(IJob):
         nAtomsPerElement = self.trajectory.get_natoms()
         for element, number in nAtomsPerElement.items():
             self._outputData[f"vh/g(r,t)/{element}"][:] /= (
-                self.shell_volumes[:, np.newaxis] * number**2 * self.frame_window
+                self.shell_volumes[:, np.newaxis] * number**2 * self.frame_window.n_configs
             )
             self._outputData[f"vh/4_pi_r2_g(r,t)/{element}"][:] /= (
-                number**2 * self.frame_window * self.r_values.binning.step
+                number**2 * self.frame_window.n_configs * self.r_values.binning.step
             )
 
         selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)

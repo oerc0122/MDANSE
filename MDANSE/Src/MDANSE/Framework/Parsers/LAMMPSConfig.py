@@ -734,7 +734,9 @@ class LAMMPSConfigFile(Parser, dict):
 
         elem_range = range(1, self["n_atom_types"] + 1)
 
-        self.setdefault("elements", dict(zip(elem_range, map(str, elem_range))))
+        self.setdefault(
+            "elements", dict(zip(elem_range, map(str, elem_range), strict=True))
+        )
         self.setdefault("charges", np.zeros(self["n_atoms"]))
 
     @property
@@ -747,7 +749,11 @@ class LAMMPSConfigFile(Parser, dict):
         """
         conts = sorted(self.keys() & {"elements", "mass"})
         if conts == ["elements", "mass"]:
-            for elem, mass in zip(self["elements"].values(), self["mass"]):
+            for elem, mass in zip(
+                self["elements"].values(),
+                self["mass"],
+                strict=True,
+            ):
                 yield AtomLabel(elem, mass=mass)
         elif conts == ["elements"]:
             for elem in self["elements"].values():

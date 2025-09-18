@@ -201,7 +201,6 @@ class PositionPowerSpectrum(IJob):
             #. atomicES (np.array): The calculated energy spectrum for atom of index=index
             #. atomicPACF (np.array): The calculated position auto-correlation function for atom of index=index
         """
-        LOG.debug(f"Running step: {index}")
         trajectory = self.trajectory
 
         # get atom index
@@ -225,10 +224,14 @@ class PositionPowerSpectrum(IJob):
 
     def combine(self, index, x):
         """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
+        Combines returned results of run_step.
+
+        Parameters
+        ----------
+        index : int
+            The index of the step.
+        x : Any
+            The returned result(s) of run_step.
         """
 
         # The symbol of the atom.

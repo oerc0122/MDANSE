@@ -168,6 +168,7 @@ def test_dynamics_analysis(
     parameters["output_files"] = (temp_name, (output_format,), "INFO")
 
     job = IJob.create(job_type)
+    parameters = {key: value for key, value in parameters.items() if key in job.parameters}
     job.run(parameters, status=True)
 
     if generate_benchmarks:
@@ -196,6 +197,6 @@ def test_output_axis_preview(tmp_path, parameters):
     parameters["running_mode"] = ("single-core", 1)
     parameters["output_files"] = (temp_name, ("MDAFormat",), "INFO")
     job = IJob.create("DensityOfStates")
-    job.setup(parameters)
+    job.configuration = {key: value for key, value in parameters.items() if key in job.parameters}
     axes = job.preview_output_axis()
     assert len(axes) == 2  # two configurators return valid arrays

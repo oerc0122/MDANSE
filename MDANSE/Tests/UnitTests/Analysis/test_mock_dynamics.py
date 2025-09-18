@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import pytest
-from MDANSE.Framework.Jobs.IJob import IJob
 from test_helpers.compare_hdf5 import compare_hdf5
 from test_helpers.paths import DATA_DIR, RESULTS_DIR
+
+from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.MolecularDynamics.MockTrajectory import MockTrajectory
 
 mock_json = DATA_DIR / "mock.json"
 
@@ -21,10 +25,10 @@ def test_vacf(generate_benchmarks, tmp_path, interp_order):
         "interpolation_order": interp_order,
         "output_files": (temp_name, ("MDAFormat",), "INFO"),
         "running_mode": ("single-core",),
-        "trajectory": mock_json,
+        "trajectory": MockTrajectory.from_json(mock_json),
     }
 
-    vacf = IJob.create("VelocityAutoCorrelationFunction", trajectory_input="mock")
+    vacf = IJob.create("VelocityAutoCorrelationFunction")
     vacf.run(parameters, status=True)
 
     if generate_benchmarks:
@@ -33,6 +37,10 @@ def test_vacf(generate_benchmarks, tmp_path, interp_order):
     assert out_file.is_file()
     assert log_file.is_file()
 
-    compare_hdf5(out_file, result_file,
-                [f"vacf/{elem}" for elem in ("H", "O", "Si", "total")],
-                scale_result=False, compare_axis=True)
+    compare_hdf5(
+        out_file,
+        result_file,
+        [f"vacf/{elem}" for elem in ("H", "O", "Si", "total")],
+        scale_result=False,
+        compare_axis=True,
+    )

@@ -77,7 +77,7 @@ class MolecularTrace(IJob):
 
         self.min = np.full(3, np.inf, dtype=np.float64)
         self.max = np.full(3, -np.inf, dtype=np.float64)
-        for frame_index in self.frames:
+        for frame_index in self.frames.indices:
             conf = self.trajectory.configuration(frame_index)
             conf = conf.continuous_configuration()
             coords = conf["coordinates"]
@@ -101,7 +101,7 @@ class MolecularTrace(IJob):
         self.grid = np.zeros(self.gdim, dtype=np.int32)
 
         labels = ["x_position", "y_position", "z_position"]
-        for label, gdim, mini in zip(labels, self.gdim, self.min):
+        for label, gdim, mini in zip(labels, self.gdim, self.min, strict=True):
             self._outputData.add(
                 label,
                 "LineOutputVariable",

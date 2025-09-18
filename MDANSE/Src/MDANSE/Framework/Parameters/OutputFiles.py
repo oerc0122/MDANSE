@@ -105,6 +105,10 @@ class OutputFile(CustomConfig):
             setattr(self, arg, getattr(other, arg))
 
     def __set__(self, owner: object, value: dict[str, Any] | Sequence | Self):
+        if isinstance(value, str):
+            self.set(value)
+            return
+
         if isinstance(value, dict):
             self.set(**value)
             return
@@ -116,10 +120,16 @@ class OutputFile(CustomConfig):
         self.set_from_self(value)
 
     def __str__(self) -> str:
-        return str(self.path)
+        try:
+            return str(self.path)
+        except ConfigError:
+            return f"{type(self).__name__}(Undefined or invalid)"
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.path}, {self.out_format})"
+        try:
+            return f"{type(self).__name__}({self.path!r}, {self.out_format})"
+        except ConfigError:
+            return f"{type(self).__name__}(Undefined or invalid)"
 
 
 def add_mdt(_desc, value, _deps):

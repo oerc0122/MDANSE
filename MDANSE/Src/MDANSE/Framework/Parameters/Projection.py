@@ -45,6 +45,7 @@ class Projection(CustomConfig):
     axis = Vector(
         optional=True,
         non_zero=True,
+        normalise=True,
         default=None,
     )
 
@@ -100,12 +101,6 @@ class Projection(CustomConfig):
 
     def __set__(self, owner, value: tuple[ProjType | str, npt.NDArray[float] | None]):
         self.projector = value
-
-    def validate(self, _desc, _value) -> IProjector | None:
-        try:
-            return self.projector
-        except ConfigError:
-            return None
 
     def __repr__(self) -> str:
         return (

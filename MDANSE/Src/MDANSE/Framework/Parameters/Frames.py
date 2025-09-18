@@ -133,7 +133,7 @@ class FrameSelect(Range[int]):
         # Support legacy
         corr = [x for x in self.dependents if isinstance(x, CorrelationWindow)]
         window = None
-        if len(value) == 4 and corr:
+        if value and len(value) == 4 and corr:
             value, window = value[:3], value[3]
 
         super().__set__(owner, value)

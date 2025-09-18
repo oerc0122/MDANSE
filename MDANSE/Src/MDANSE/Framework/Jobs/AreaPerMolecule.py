@@ -122,7 +122,7 @@ class AreaPerMolecule(IJob):
         """
 
         # Get the frame index
-        frame_index = self.frames[index]
+        frame_index = self.frames[index].ind
 
         configuration = self.trajectory.configuration(frame_index)
 
@@ -155,7 +155,7 @@ class AreaPerMolecule(IJob):
 
         self._outputData.write(
             self.output_files.root,
-            self.output_files.formats,
+            self.output_files.out_format,
             str(self),
             self,
         )

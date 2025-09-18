@@ -100,7 +100,9 @@ class Parameter(ABC):
         *,
         label: str | None = None,
         tooltip: str | None = None,
+        **kwargs,
     ):
+        super().__init__(**kwargs)
         self.label = label or self.default_label
         self.tooltip = tooltip or self.default_tooltip
 
@@ -115,11 +117,7 @@ GUI Description
 
 
 class Configurable:
-    """Allows any object that derives from it to be configurable within the MDANSE framework.
-
-    Within that framework, to be configurable, a class must:
-        - Derive from this class
-    """
+    """Allows any object that derives from it to be configurable within the MDANSE framework."""
 
     @classmethod
     def _get_default_parameters(cls):
@@ -317,40 +315,80 @@ class Configurable:
         return out
 
 
-class CustomConfig(Parameter, Configurable):
+class HasDependencies:
+    """Mixin for classes which support dependencies."""
+
+    def __init__(self, *, depends: dict[str, DescID] | None = None, **kwargs):
+        super().__init__(**kwargs)
+
+        self.depends: dict[str, DescID] = depends if depends is not None else {}
+        self.dependents: set[HasDependencies] = set()
+
+        if missing := (self.required_deps() - self.depends.keys()):
+            raise ConfigError(
+                f"Required deps ({cjoin(missing)}) missing for {type(self).__name__}."
+            )
+
+    def _set_dependents(self, owner: HasDependencies) -> None:
+        # Update the depend checks
+        for dep in self.depends.values():
+            if dep != "parent":
+                owner.__dict__[dep].dependents.add(self)
+
+    def _bad_deps(
+        self, owner: HasDependencies, depends: Depends | None = None
+    ) -> Iterable[bool]:
+        depends = depends if depends is not None else self.depends
+        return (
+            not getattr(owner, f"_{dep}_configured", False)
+            for dep in depends.values()
+            if dep != "parent"
+        )
+
+    def _get_deps(self, owner: HasDependencies, depends: Depends | None = None) -> Depends:
+        depends = depends if depends is not None else self.depends
+
+        if any(self._bad_deps(owner, depends)):
+            raise ConfigError(
+                f"Dependencies ({cjoin(compress(self.depends, self._bad_deps(owner)))}) "
+                "are not correctly defined."
+            )
+
+        return cast(Depends, {dep: getattr(owner, key) for dep, key in depends.items() if key != "parent"})
+
+    def required_deps(self) -> set[DescID]:
+        return set()
+
+    def _find_dep_class(self, typ: type) -> ConfigureDescriptor:
+        return first_true(
+            self.dependents,
+            pred=lambda x: isinstance(x, typ),
+        )
+
+    def _validate_dependents(self, owner: HasDependencies):
+        for dependent in self.dependents:
+            name = dependent.name
+            try:
+                val = getattr(owner, name)
+                setattr(owner, name, val)
+            except ConfigError as err:
+                if err._msg and "Required" not in err._msg:
+                    LOG.info(f"Invalidated {name!r}. Reason: {err}")
+                    setattr(owner, dependent.configured_var, False)
+
+
+class CustomConfig(Parameter, Configurable, HasDependencies):
     """Mixin for classes which contain Descriptors, but are to be configured."""
 
-    def __set_name__(self, owner: object, name: str):
-        self.name = name
-        self._owner = owner
+    def __get__(self, owner: Configurable, objtype: type | None = None):
+        self.last_deps = self._get_deps(owner)
 
-        # Set descriptors to true owner and remove config from self.
-        for desc_name, desc in self.descriptors.items():
-            with suppress(AttributeError):
-                delattr(type(self), desc.configured_var)
-            desc.__set_name__(owner, f"{self.name}_{desc_name}")
-
-    def __get__(self, owner: object, objtype: type | None = None):
-        # Make descriptor for unique per-instance use.
         return self
 
-    def __getattribute__(self, name: str):
-        # If dealing with a descriptor call the get using config's parent
-        # rather than descriptor's.
-        desc = super().__getattribute__("descriptors")
-        if name in desc:
-            owner = self._owner
-            return desc[name].__get__(owner, type(owner))
-        # Fallback for config properties
-        return super().__getattribute__(name)
-
-    def __setattr__(self, name: str, value: Any):
-        # If dealing with a descriptor call the get using config's parent
-        # rather than descriptor's.
-        if name in self.descriptors:
-            self.descriptors[name].__set__(self._owner, value)
-            return
-        super().__setattr__(name, value)
+    def __set__(self, owner: Configurable, value):
+        raise ConfigError(
+            f"Do not know how to set ({type(self).__name__}) with ({type(value).__name__})"
+        )
 
 
 def to_class(cls):
@@ -362,7 +400,7 @@ def to_class(cls):
     return tc
 
 
-class ConfigureDescriptor(Parameter, Generic[P, T]):
+class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
     """Abstract configure descriptor.
 
     Parameters
@@ -412,7 +450,6 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
 
         self.mutex = mutex
 
-        self.depends: dict[str, DescID] = depends if depends is not None else {}
         self.get_depends: dict[str, DescID] = (
             on_get_depends if on_get_depends is not None else {}
         )
@@ -420,57 +457,26 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         self.on_set = on_set
         self.on_get = on_get
 
-        self.dependents: set[ConfigureDescriptor] = set()
+        super().__init__(depends=depends, label=label, tooltip=tooltip)
 
-        if missing := (self.required_deps() - self.depends.keys()):
-            raise ConfigError(
-                f"Required deps ({cjoin(missing)}) missing for {type(self).__name__}."
-            )
-
-        super().__init__(label=label, tooltip=tooltip)
-
-    def _find_dep_class(self, typ: type) -> ConfigureDescriptor:
-        return first_true(
-            self.dependents,
-            pred=lambda x: isinstance(x, typ),
-        )
-
-    def _bad_mutex(self, owner: object) -> Iterable[bool]:
+    def _bad_mutex(self, owner: Configurable) -> Iterable[bool]:
         return (getattr(owner, f"_{ex}_configured") for ex in self.mutex)
 
-    def _bad_deps(
-        self, owner: object, depends: Depends | None = None
-    ) -> Iterable[bool]:
-        depends = depends if depends is not None else self.depends
-        return (not getattr(owner, f"_{dep}_configured") for dep in depends.values())
-
-    def _get_deps(self, owner: object, depends: Depends | None = None) -> Depends:
-        depends = depends if depends is not None else self.depends
-        return cast(Depends, {dep: getattr(owner, key) for dep, key in depends.items()})
-
-    def __set_name__(self, owner: object, name: str):
+    def __set_name__(self, owner: type, name: str):
         self.name = name
         self.private_name = "_" + name
         self.configured_var = self.private_name + "_configured"
 
-        # Update the depend checks
-        for dep in self.depends.values():
-            owner.__dict__[dep].dependents.add(self)
-
         setattr(owner, self.configured_var, self.optional)
 
-    def __get__(self, owner: object, objtype: type | None = None) -> Self | T | None:
+        self._set_dependents(owner)
+
+    def __get__(self, owner: Configurable, objtype: type | None = None) -> Self | T | None:
         if owner is None:
             return self
 
-        if any(self._bad_deps(owner)):
-            raise ConfigError(
-                f"Dependencies ({cjoin(compress(self.depends, self._bad_deps(owner)))}) "
-                "are not correctly defined."
-            )
-
         if not self.optional and not getattr(owner, self.configured_var):
-            raise ConfigError(f"Non-optional value ({self.name}) has not been set")
+            raise ConfigError(f"Required value ({self.name}) has not been set")
 
         value = getattr(owner, self.private_name, SENTINEL)
 
@@ -487,18 +493,13 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
 
         return out
 
-    def __set__(self, owner: object, value: P) -> None:
+    def __set__(self, owner: Configurable, value: P) -> None:
         setattr(owner, self.configured_var, False)
         setattr(owner, self.private_name, SENTINEL)
 
         if self.optional and value is None:
             return
 
-        if any(self._bad_deps(owner)):
-            raise ConfigError(
-                f"Dependencies for {self.name} ({cjoin(compress(self.depends, self._bad_deps(owner)))}) "
-                "are not correctly defined."
-            )
         if any(self._bad_mutex(owner)):
             raise ConfigError(
                 f"Mutually exclusive value ({cjoin(compress(self.mutex, self._bad_mutex(owner)))}) "
@@ -506,6 +507,9 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
             )
 
         deps = self._get_deps(owner)
+        if "parent" in self.depends.values():
+            deps |= owner.last_deps
+
         out = self.validate(value, deps)
 
         # For grouped config descriptors
@@ -519,18 +523,7 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         setattr(owner, self.private_name, out)
         setattr(owner, self.configured_var, True)
 
-        for dependent in self.dependents:
-            name = dependent.name
-            try:
-                val = getattr(owner, name)
-                setattr(owner, name, val)
-            except ConfigError as err:
-                if err._msg and "Non-optional" not in err._msg:
-                    LOG.info(f"Invalidated {name!r}. Reason: {err}")
-                    setattr(owner, dependent.configured_var, False)
-
-    def required_deps(self) -> set[DescID]:
-        return set()
+        self._validate_dependents(owner)
 
     @property
     def choices(self) -> set[T] | type[Enum]:
@@ -632,7 +625,7 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
             except ValueError:
                 raise ConfigError(
                     f"Value ({out!r}) not in choices ({cjoin(choice.name for choice in self.choices)})."
-                )
+                ) from None
 
         elif not self._validate_choices(out):  # Set
             raise ConfigError(
@@ -670,10 +663,10 @@ class MinMax(ABC, Generic[Num]):
         try:
             self.validate_minimum(value, mini)
             self.validate_maximum(value, maxi)
-        except ConfigError:
+        except ConfigError as err:
             raise ConfigError(
                 f"Value ({value}) outside of valid range ({mini}, {maxi})"
-            )
+            ) from err
 
     def validate_minimum(self, value: Num, mini: Num | None = None) -> None:
         minimum = mini if mini is not None else self.minimum

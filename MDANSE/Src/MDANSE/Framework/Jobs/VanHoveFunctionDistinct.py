@@ -356,7 +356,11 @@ class VanHoveFunctionDistinct(IJob):
         "Dynamics",
     )
 
-    trajectory = MDANSETrajectory()
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
+    )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     r_values = RangeCellCutoff(
@@ -376,8 +380,8 @@ class VanHoveFunctionDistinct(IJob):
         """Get the input parameters from the job input parsers."""
         super().initialize()
 
-        self.numberOfSteps = len(self.frames)
-        self.n_configs = self.frame_window
+        self.numberOfSteps = self.frame_window.window
+        self.n_configs = self.frame_window.n_configs
         if self.trajectory.chemical_system.unique_molecules():
             self.indices_intra = intramolecular_lookup_dict(
                 self.trajectory.chemical_system,
@@ -415,7 +419,7 @@ class VanHoveFunctionDistinct(IJob):
         self._outputData.add(
             "vh/axes/time",
             "LineOutputVariable",
-            self.frames.duration,
+            self.frame_window.duration,
             units="ps",
         )
 

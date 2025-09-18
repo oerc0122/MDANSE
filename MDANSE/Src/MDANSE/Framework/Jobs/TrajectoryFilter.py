@@ -82,11 +82,7 @@ class TrajectoryFilter(IJob):
     )
     projection = Projection(label="Project coordinates")
     trajectory_filter = Filter()
-    weights = Weights(
-        depends={
-            "trajectory": "trajectory",
-        }
-    )
+    weights = Weights(default="atomic_weight", depends={"trajectory": "trajectory"})
     output_files = OutputTrajectory()
     running_mode = RunningMode()
 

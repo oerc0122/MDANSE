@@ -59,18 +59,11 @@ class PositionAutoCorrelationFunction(IJob):
     )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
+    projection = Projection(label="Project coordinates")
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    projection = Projection(label="Project coordinates")
-    atom_charges = PartialCharge(
-        depends={"trajectory": "trajectory"},
-    )
-    weights = Weights(
-        depends={
-            "trajectory": "trajectory",
-        }
-    )
+    weights = Weights(depends={"trajectory": "trajectory"})
     output_files = OutputFile()
     running_mode = RunningMode()
 
@@ -130,7 +123,7 @@ class PositionAutoCorrelationFunction(IJob):
         )
 
         series = series - np.average(series, axis=0)
-        series = self.projection(series)
+        series = self.projection.projector(series)
 
         atomicPACF = correlate(
             series, series[: self.frame_window.n_configs], mode="valid"
@@ -139,10 +132,14 @@ class PositionAutoCorrelationFunction(IJob):
 
     def combine(self, index, x):
         """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
+        Combines returned results of run_step.
+
+        Parameters
+        ----------
+        index : int
+            The index of the step.
+        x : Any
+            The returned result(s) of run_step.
         """
 
         # The symbol of the atom.

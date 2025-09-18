@@ -21,12 +21,19 @@ from MDANSE.Framework.QVectors.IQVectors import IQVectors
 
 from .BaseTypes import Dict
 from .Choices import SingleChoice
-from .Parameters import ConfigError
+from .Parameters import ConfigError, CustomConfig, HasDependencies
 from .UtilTypes import Depends, DescID
 
 
 class QVectorsSelect(SingleChoice[str | IQVectors, IQVectors]):
-    def __init__(self, *args, choices: None = None, aliases: None = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        choices: None = None,
+        aliases: None = None,
+        on_get: None = None,
+        **kwargs,
+    ):
         if choices is not None:
             raise ConfigError(
                 f"Not allowed to provide choices to {type(self).__name__}."
@@ -35,13 +42,33 @@ class QVectorsSelect(SingleChoice[str | IQVectors, IQVectors]):
             raise ConfigError(
                 f"Not allowed to provide aliases to {type(self).__name__}."
             )
+        if on_get is not None:
+            raise ConfigError(
+                f"Not allowed to provide on_get to {type(self).__name__}."
+            )
 
         super().__init__(
             *args,
             choices=IQVectors.indirect_subclass_dictionary().values(),
             aliases=IQVectors.indirect_subclass_dictionary(),
+            on_get=self._generate,
             **kwargs,
         )
+
+    @staticmethod
+    def _generate(_desc, out, _deps) -> IQVectors:
+        try:
+            out.generate()
+        except Exception as err:
+            raise ConfigError("Invalid or incomplete QVector configuration.") from err
+        return out
+
+    def __set_name__(self, owner: type, name: str):
+        self.name = name
+        self.private_name = "_" + name
+        self.configured_var = self.private_name + "_configured"
+
+        setattr(owner, self.configured_var, self.optional)
 
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("trajectory")}
@@ -51,24 +78,38 @@ class QVectorsSelect(SingleChoice[str | IQVectors, IQVectors]):
         return value(deps["trajectory"].configuration(0))
 
 
-class QVectorsParams(Dict[str, Any]):
+class QVectorsParams(HasDependencies):
     def __set__(self, owner: object, value):
-        if isinstance(value, tuple):
-            typ, value = value
-            setattr(owner, self.depends["generator"], typ)
+        generator = getattr(owner, self.depends["generator"])
+        generator.configuration = value
 
-        super().__set__(owner, value)
+    def __get__(self, owner: object, objtype: type | None):
+        return getattr(owner, self.depends["generator"]).configuration
 
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("generator")}
 
-    def get_choices(self, deps: Depends):
-        return deps["generator"].parameters
 
-    def validate(self, value: dict[str, Any], deps: Depends, /) -> IQVectors:
-        value = super().validate(value, deps)
+class QVectors(CustomConfig):
+    generator = QVectorsSelect(depends={"trajectory": "parent"})
+    params = QVectorsParams(depends={"generator": "generator"})
 
-        gen = deps["generator"]
-        gen.configuration = value
-        gen.generate()
-        return gen
+    def required_deps(self) -> set[str]:
+        return super().required_deps() | {"trajectory"}
+
+    def __set__(self, owner: object, value):
+        self.last_deps = self._get_deps(owner)
+
+        if isinstance(value, tuple):
+            self.generator, self.params = value
+            return
+
+        if isinstance(value, str):
+            self.generator = value
+            return
+
+        if isinstance(value, dict):
+            self.params = value
+            return
+
+        self.configuration = value.configuration

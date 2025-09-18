@@ -96,7 +96,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
     q_values = Range[float](
         include_last=True,
         minimum=0.0,
-        default=(0, 501, 1),
+        default=(0, 500, 1),
     )
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
@@ -110,16 +110,11 @@ class XRayStaticStructureFactor(DistanceHistogram):
         """
 
         nq = len(self.q_values)
-
-        nFrames = len(self.frames)
-
-        self.average_density /= nFrames
-
-        densityFactor = 4.0 * np.pi * self.r_values.mid_points
-
-        shellSurfaces = densityFactor * self.r_values.mid_points
-
-        shellVolumes = shellSurfaces * self.r_values.binning.step
+        n_frames = len(self.frames)
+        self.average_density /= n_frames
+        density_factor = 4.0 * np.pi * self.r_values.mid_points
+        shell_surfaces = density_factor * self.r_values.mid_points
+        shell_volumes = shell_surfaces * self.r_values.binning.step
 
         self._outputData.add(
             "xssf/axes/q",
@@ -132,9 +127,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
         r = self.r_values.mid_points
 
         fact1 = 4.0 * np.pi * self.average_density
-
         sincqr = np.sinc(np.outer(q, r) / np.pi)
-
         dr = self.r_values.binning.step
 
         for label, _ in self.labels:
@@ -225,7 +218,7 @@ class XRayStaticStructureFactor(DistanceHistogram):
                     self.h_intra[idi, idj] += self.h_intra[idj, idi]
                 self.h_total[idi, idj] += self.h_total[idj, idi]
 
-            fact = 2 * nij * nFrames * shellVolumes
+            fact = 2 * nij * n_frames * shell_volumes
 
             pdfTotal = self.h_total[idi, idj, :] / fact
             yield (

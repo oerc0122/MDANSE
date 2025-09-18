@@ -402,8 +402,8 @@ class Trajectory:
         """Close the trajectory."""
         self._trajectory.close()
 
-    def __getitem__(self, frame: int):
-        """Return the configuration at a given frame
+    def __getitem__(self, frame: int) -> dict[str, npt.NDArray[float]]:
+        """Return the configuration at a given frame.
 
         Parameters
         ----------
@@ -791,6 +791,8 @@ class Trajectory:
         """
         return self._trajectory.variables()
 
+    def __str__(self) -> str:
+        return f"{type(self).__name__}({self.filename!r})"
 
 additive_atom_properties = [
     "nucleon",

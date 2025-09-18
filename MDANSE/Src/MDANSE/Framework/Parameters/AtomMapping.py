@@ -100,7 +100,7 @@ class Mapper(ABC):
 class AtomMapping(ConfigureDescriptor[dict | str, dict[str, dict[str, str]]]):
     default_tooltip = "Mapping of index to new species"
 
-    def __init__(self, default: dict[str, dict[str, str]] | str = {}, **kwargs):
+    def __init__(self, default: dict[str, dict[str, str]] | str = "{}", **kwargs):
         super().__init__(default=default, **kwargs)
 
     def required_deps(self) -> set[DescID]:
@@ -300,34 +300,32 @@ class PartialChargeMapper(Mapper):
 class GroupingLevels(UCEnum):
     ATOM = auto()
     MOLECULE = auto()
+    EACH_MOLECULE = auto()
+    EACH_ATOM = auto()
 
     def __repr__(self) -> str:
         return self.name.title()
 
 
 class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
-    base_aliases = {
-        "each atom": GroupingLevels.ATOM,
-        "each molecule": GroupingLevels.MOLECULE,
-    }
-
     def __init__(
         self,
         *args,
         choices: None = None,
+        exclude: set[GroupingLevels] = frozenset(
+            GroupingLevels.EACH_ATOM, GroupingLevels.EACH_MOLECULE
+        ),
         default: GroupingLevels | str = GroupingLevels.ATOM,
         **kwargs,
     ):
         if choices is not None:
             raise ConfigError(f"Cannot provide choices to {type(self).__name__}")
 
-        aliases = kwargs.pop("aliases", {}) | self.base_aliases
-
         super().__init__(
             *args,
             choices=GroupingLevels,
             default=default,
-            aliases=aliases,
+            exclude=exclude,
             **kwargs,
         )
 
@@ -408,8 +406,8 @@ class AtomTransmutation(ConfigureDescriptor[dict | str | Path, dict]):
 
         try:
             value = {int(idx): element for idx, element in value.items()}
-        except ValueError:
-            raise ConfigError("Keys of transmutation map should be castable to `int`")
+        except ValueError as err:
+            raise ConfigError("Keys of transmutation map should be castable to `int`") from err
 
         system = deps["trajectory"].chemical_system
         idxs = range(system.total_number_of_atoms)

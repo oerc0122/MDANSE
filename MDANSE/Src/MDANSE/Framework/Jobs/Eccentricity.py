@@ -88,7 +88,7 @@ class Eccentricity(IJob):
             ]
         )
 
-    def run_step(self, index: int):
+    def run_step(self, index: int) -> tuple[int, float]:
         """Calculate the eccentricity for the selected atoms at the
         frame index.
 
@@ -97,9 +97,9 @@ class Eccentricity(IJob):
         index : int
             The frame index.
         """
-        frame = self.frames[index]
+        frame = self.frames[index].ind
 
-        conf = self.trajectory.configuration(frame.ind)
+        conf = self.trajectory.configuration(frame)
         conf = conf.contiguous_configuration()
         series = conf["coordinates"][self._indices, :]
 
@@ -113,7 +113,7 @@ class Eccentricity(IJob):
         eccentricity = np.sqrt(pm3**2 - pm1**2) / pm3
         return index, eccentricity
 
-    def combine(self, frame_idx: int, eccentricity: float):
+    def combine(self, frame_idx: int, eccentricity: float) -> None:
         """Save the calculated eccentricity of the selected atoms.
 
         Parameters
@@ -125,7 +125,7 @@ class Eccentricity(IJob):
         """
         self._outputData["ecc/eccentricity"][frame_idx] = eccentricity
 
-    def finalize(self):
+    def finalize(self) -> None:
         self._outputData.write(
             self.output_files.path,
             self.output_files.out_format,

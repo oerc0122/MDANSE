@@ -15,6 +15,8 @@
 #
 from __future__ import annotations
 
+import numpy.typing as npt
+
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Parameters import (
     AtomSelection,
@@ -24,6 +26,7 @@ from MDANSE.Framework.Parameters import (
     OutputFile,
     RunningMode,
 )
+from MDANSE.Framework.Parameters.AtomMapping import GroupingLevels
 from MDANSE.MolecularDynamics.Analysis import mean_square_fluctuation
 
 
@@ -51,9 +54,12 @@ class RootMeanSquareFluctuation(IJob):
         selection="atom_selection",
         grouping="grouping_level",
     )
-    trajectory = MDANSETrajectory()
     frames = FrameSelect(depends={"trajectory": "trajectory"})
-    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"}, default="atom")
+    grouping_level = GroupingLevel(
+        depends={"trajectory": "trajectory"},
+        default="each atom",
+        exclude={GroupingLevels.ATOM, GroupingLevels.MOLECULE},
+    )
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     output_files = OutputFile()
     running_mode = RunningMode()
@@ -63,7 +69,7 @@ class RootMeanSquareFluctuation(IJob):
         super().initialize()
         self.numberOfSteps = len(self.trajectory.atom_indices)
 
-        self.group_molecules = self.grouping_level.name != "ATOM"
+        self.group_molecules = self.grouping_level.name != "EACH_ATOM"
         self.ele_idxs = {}
 
         self._names = self.trajectory.atom_names
@@ -98,7 +104,7 @@ class RootMeanSquareFluctuation(IJob):
                 units="nm",
             )
 
-    def run_step(self, index: int) -> tuple[int, float]:
+    def run_step(self, index: int) -> tuple[int, npt.NDArray[float]]:
         """Runs a single step of the job.
 
         Parameters
@@ -110,18 +116,19 @@ class RootMeanSquareFluctuation(IJob):
         -------
         intex : int
             The index of the step.
-        rmsf : float
+        rmsf : npt.NDArray[float]
             The calculated root mean square fluctuation for atom index.
 
         """
-        # read the particle trajectory
-
-        if not self.group_molecules:
-            struct_index = self.trajectory.atom_indices[index]
-        else:
+        # read the trajectory
+        if self.group_molecules:
             struct_index = self.cluster_lookup[index]
+            func = self.trajectory.read_com_trajectory
+        else:
+            struct_index = self.trajectory.atom_indices[index]
+            func = self.trajectory.read_atomic_trajectory
 
-        series = self.trajectory.read_atomic_trajectory(
+        series = func(
             struct_index,
             first=self.frames.index_start,
             last=self.frames.index_stop + 1,

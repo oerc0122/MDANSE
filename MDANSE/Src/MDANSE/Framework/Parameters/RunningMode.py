@@ -44,15 +44,14 @@ class RunningMode(CustomConfig):
     )
     n_procs = CPUSlots(minimum=1, maximum=multiprocessing.cpu_count(), default=1)
 
-    def __init__(self, **params):
-        super().__init__(**params)
-
     def validate(self, desc, value):
         if self.mode == "single-core" and self.n_procs > 1:
             warn(
                 "Requested more than one process for single-core job.",
                 category=ConfigWarning,
+                stacklevel=2,
             )
+        return value
 
     def set(
         self,
@@ -62,20 +61,16 @@ class RunningMode(CustomConfig):
         self.mode = mode
         self.n_procs = n_procs
 
-    def set_from_self(self, other):
-        self.mode = other.mode
-        self.n_procs = other.n_procs
-
     def __set__(self, owner: object, value: tuple | dict):
         if isinstance(value, dict):
             self.set(**value)
-            return
-
-        if isinstance(value, Sequence):
+        elif isinstance(value, Sequence):
             self.set(*value)
-            return
+        elif isinstance(value, RunningMode):
+            self.configuration = value.configuration
+        else:
+            super().__set__(owner, value)
 
-        self.set_from_self(value)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(mode={self.mode!r}, n_procs={self.n_procs})"

@@ -27,8 +27,7 @@ from MDANSE.Framework.Parameters import (
     MDANSETrajectory,
     OutputFile,
     Projection,
-    QVectorsParams,
-    QVectorsSelect,
+    QVectors,
     RunningMode,
     Weights,
 )
@@ -64,16 +63,16 @@ class ElasticIncoherentStructureFactor(IJob):
         grouping="grouping_level",
     )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
-    q_vectors_type = QVectorsSelect(depends={"trajectory": "trajectory"})
-    q_vectors = QVectorsParams(depends={"generator": "q_vectors_type"})
+    q_vectors = QVectors(depends={"trajectory": "trajectory"})
     projection = Projection(label="project coordinates")
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
     weights = Weights(
+        default="b_incoherent",
         depends={
             "trajectory": "trajectory",
-        }
+        },
     )
     output_files = OutputFile()
     running_mode = RunningMode()
@@ -84,9 +83,10 @@ class ElasticIncoherentStructureFactor(IJob):
         """
         super().initialize()
 
+        self.generator = self.q_vectors.generator
         self.numberOfSteps = len(self.trajectory.atom_indices)
 
-        self._nQShells = self.configuration["q_vectors"]["n_shells"]
+        self._nQShells = self.generator.n_shells
 
         self._nFrames = len(self.frames)
 
@@ -97,7 +97,7 @@ class ElasticIncoherentStructureFactor(IJob):
         self._outputData.add(
             "eisf/axes/q",
             "LineOutputVariable",
-            self.q_vectors.shells,
+            self.generator.shells,
             units="1/nm",
         )
 
@@ -144,15 +144,15 @@ class ElasticIncoherentStructureFactor(IJob):
             step=self.frames.index_step,
         )
 
-        series = self.projection(series)
+        series = self.projection.projector(series)
 
         atomicEISF = np.zeros((self._nQShells,), dtype=np.float64)
 
-        for i, q in enumerate(self.q_vectors.shells):
-            if q not in self.q_vectors.q_vectors:
+        for i, q in enumerate(self.generator.shells):
+            if q not in self.generator.q_vectors:
                 continue
 
-            qVectors = self.q_vectors.q_vectors[q]["q_vectors"]
+            qVectors = self.generator.q_vectors[q]["q_vectors"]
 
             a = np.average(np.exp(1j * np.dot(series, qVectors)), axis=0)
             a = np.abs(a) ** 2
@@ -163,10 +163,14 @@ class ElasticIncoherentStructureFactor(IJob):
 
     def combine(self, index, x):
         """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
+        Combines returned results of run_step.
+
+        Parameters
+        ----------
+        index : int
+            The index of the step.
+        x : Any
+            The returned result(s) of run_step.
         """
 
         # The symbol of the atom.
@@ -179,15 +183,13 @@ class ElasticIncoherentStructureFactor(IJob):
         Finalizes the calculations (e.g. averaging the total term, output files creations ...)
         """
 
-        self.q_vectors.write_vectors_to_file(self._outputData)
+        self.generator.write_vectors_to_file(self._outputData)
 
         nAtomsPerElement = self.trajectory.get_natoms()
         for element, number in nAtomsPerElement.items():
             self._outputData[f"eisf/{element}"][:] /= number
 
-        selected_weights, all_weights = self.trajectory.get_weights(
-            prop=self.configuration["weights"]["property"]
-        )
+        selected_weights, all_weights = self.trajectory.get_weights(prop=self.weights)
         for weights in selected_weights, all_weights:
             for key, value in weights.items():
                 weights[key] = abs(value) ** 2

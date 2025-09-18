@@ -89,12 +89,12 @@ class Infrared(IJob):
 
         self.numberOfSteps = len(self.molecules)
 
-        self.add_ideal_results = self.instrument_resolution.kernel != "ideal"
+        self.add_ideal_results = self.instrument_resolution.add_ideal
 
         self._outputData.add(
             "ir/axes/time",
             "LineOutputVariable",
-            self.frames.duration,
+            self.frame_window.duration,
             units="ps",
         )
         self._outputData.add(
@@ -128,7 +128,7 @@ class Infrared(IJob):
         self._outputData.add(
             "ddacf/ddacf",
             "LineOutputVariable",
-            (len(self.frames),),
+            (self.frame_window.n_frames,),
             axis="ir/axes/time",
         )
         self._outputData.add(
@@ -164,8 +164,8 @@ class Infrared(IJob):
         ddipole = np.zeros((len(self.frames), 3), dtype=np.float64)
         for i, frame_index in enumerate(
             range(
-                self.frames.index_first,
-                self.frames.index_last + 1,
+                self.frames.index_start,
+                self.frames.index_stop + 1,
                 self.frames.index_step,
             )
         ):
@@ -197,7 +197,7 @@ class Infrared(IJob):
                 dt=self.frames.time_step,
             )
 
-        n_configs = self.frames.n_configs
+        n_configs = self.frame_window.n_configs
         mol_ddacf = correlate(ddipole, ddipole[:n_configs], mode="valid") / (
             3 * n_configs
         )
@@ -225,14 +225,14 @@ class Infrared(IJob):
         self._outputData["ir/ir"][:] = get_spectrum(
             self._outputData["ddacf/ddacf"],
             self.instrument_resolution.time_window,
-            self.instrument_resolution.time_step,
+            self.frames.time_step,
             fft="rfft",
         )
         if self.add_ideal_results:
             self._outputData["ir/ideal"][:] = get_spectrum(
                 self._outputData["ddacf/ddacf"],
                 None,
-                self.instrument_resolution.time_step,
+                self.frames.time_step,
                 fft="rfft",
             )
 

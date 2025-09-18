@@ -78,11 +78,11 @@ class MultipleChoice(Choice[Sequence[P], Sequence[T]]):
         assert not isinstance(choice, EnumMeta)
         return set(value) <= choice
 
-    # def _validate_exclude(
-    #     self, value: Sequence[T], exclude: set[T] | None = None
-    # ) -> bool:
-    #     excludes = self.exclude if exclude is None else exclude
-    #     return set(value) > excludes
+    def _validate_exclude(
+        self, value: Sequence[T], exclude: set[T] | None = None
+    ) -> bool:
+        excludes = self.exclude if exclude is None else exclude
+        return set(value) > excludes
 
     def validate(self, values: Sequence[P], deps: Depends, /) -> Sequence[T]:
         dealiased = cast(list[P], [self.aliases.get(value, value) for value in values])

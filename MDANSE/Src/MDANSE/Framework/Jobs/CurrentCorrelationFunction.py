@@ -18,6 +18,7 @@ from __future__ import annotations
 from math import sqrt
 
 import numpy as np
+import numpy.typing as npt
 from more_itertools import always_iterable
 from scipy.signal import correlate
 
@@ -33,8 +34,7 @@ from MDANSE.Framework.Parameters import (
     InterpOrder,
     MDANSETrajectory,
     OutputFile,
-    QVectorsParams,
-    QVectorsSelect,
+    QVectors,
     RunningMode,
     Weights,
 )
@@ -81,8 +81,7 @@ class CurrentCorrelationFunction(IJob):
     )
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
-    q_vector_type = QVectorsSelect(depends={"trajectory": "trajectory"})
-    q_vectors = QVectorsParams(depends={"generator": "q_vector_type"})
+    q_vectors = QVectors(depends={"trajectory": "trajectory"})
     interpolation_order = InterpOrder(
         depends={"trajectory": "trajectory", "frames": "frames"}
     )
@@ -105,16 +104,17 @@ class CurrentCorrelationFunction(IJob):
         """Initialize the input parameters and analysis self variables."""
         super().initialize()
 
-        self.numberOfSteps = self.q_vectors.n_shells
+        self.generator = self.q_vectors.generator
+        self.numberOfSteps = self.generator.n_shells
 
-        nQShells = self.q_vectors.n_shells
+        nQShells = self.generator.n_shells
 
         self._nOmegas = self.instrument_resolution.n_romegas
 
         self._outputData.add(
             "ccf/axes/q",
             "LineOutputVariable",
-            self.q_vectors.shells,
+            self.generator.shells,
             units="1/nm",
         )
 
@@ -283,7 +283,9 @@ class CurrentCorrelationFunction(IJob):
                 ),
             )
 
-    def run_step(self, index: int):
+    def run_step(
+        self, index: int
+    ) -> tuple[int, tuple[npt.NDArray[complex], npt.NDArray[complex]]]:
         """Calculate the current densities for the input q vector shell index.
 
         Parameters
@@ -292,7 +294,10 @@ class CurrentCorrelationFunction(IJob):
             Index of the shell.
 
         """
-        shell = self.q_vectors.shells[index]
+
+        shell = self.generator.shells[index]
+        if shell not in self.generator.q_vectors:
+            return index, None
 
         trajectory = self.trajectory
         cell_present = True
@@ -309,16 +314,16 @@ class CurrentCorrelationFunction(IJob):
             ):
                 cell_fixed = False
         if not cell_present:
-            qVectors = self.q_vectors.q_vectors[shell]["q_vectors"]
+            qVectors = self.generator.q_vectors[shell]["q_vectors"]
             cell_fixed = False
         else:
             try:
-                hkls = self.q_vectors.q_vectors[shell]["hkls"]
+                hkls = self.generator.q_vectors[shell]["hkls"]
             except KeyError:
-                qVectors = self.q_vectors.q_vectors[shell]["q_vectors"]
+                qVectors = self.generator.q_vectors[shell]["q_vectors"]
             else:
                 if hkls is None:
-                    qVectors = self.q_vectors.q_vectors[shell]["q_vectors"]
+                    qVectors = self.generator.q_vectors[shell]["q_vectors"]
                 else:
                     qVectors = IQVectors.hkl_to_qvectors(hkls, unit_cell)
 
@@ -358,24 +363,27 @@ class CurrentCorrelationFunction(IJob):
         qVectors2 = qVectors2[non_zero]
         nQVectors = qVectors.shape[1]
         if not cell_fixed:
-            hkls = self.q_vectors.q_vectors[shell]["hkls"][:, non_zero]
+            hkls = self.generator.q_vectors[shell]["hkls"][:, non_zero]
             qVectors = np.empty((3, nQVectors, num_frames))
             for nf, frame in enumerate(self.frames):
                 unit_cell = trajectory.unit_cell(frame.ind)
                 qVectors[:, :, nf] = IQVectors.hkl_to_qvectors(hkls, unit_cell)
             qVectors2 = np.sum(qVectors**2, axis=0)
 
-        rho_l = {}
-        rho_t = {}
-        for element in self._elements:
-            rho_l[element] = np.zeros(
+        rho_l = {
+            element: np.zeros(
                 (len(self.frames), 3, nQVectors),
                 dtype=np.complex64,
             )
-            rho_t[element] = np.zeros(
+            for element in self._elements
+        }
+        rho_t = {
+            element: np.zeros(
                 (len(self.frames), 3, nQVectors),
                 dtype=np.complex64,
             )
+            for element in self._elements
+        }
 
         for element, idxs in self.indices_per_element.items():
             for idx in idxs:
@@ -480,7 +488,7 @@ class CurrentCorrelationFunction(IJob):
 
     def finalize(self):
         """Normalize, Fourier transform and write the results out."""
-        self.q_vectors.write_vectors_to_file(
+        self.generator.write_vectors_to_file(
             self._outputData,
         )
 

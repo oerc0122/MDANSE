@@ -65,8 +65,8 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     q_shells = Range[float](
+        default=(0., 10., 1.),
         minimum=0.0,
-        include_last=True,
     )
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
@@ -75,11 +75,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         depends={"trajectory": "trajectory", "window": "frame_window"}
     )
     projection = Projection(label="project coordinates")
-    weights = Weights(
-        depends={
-            "trajectory": "trajectory",
-        }
-    )
+    weights = Weights(depends={"trajectory": "trajectory"})
     output_files = OutputFile()
     running_mode = RunningMode()
 
@@ -91,10 +87,10 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
 
         self.numberOfSteps = len(self.trajectory.atom_indices)
         self._nQShells = len(self.q_shells)
-        self._nFrames = len(self.frames)
+        self._nFrames = self.frame_window.n_frames
         self._nOmegas = self.instrument_resolution.n_omegas
         self._kSquare = np.array(self.q_shells) ** 2
-        self.add_ideal_results = self.instrument_resolution.kernel.lower() != "ideal"
+        self.add_ideal_results = self.instrument_resolution.add_ideal
         self.labels = [
             (element, (element,)) for element in self.trajectory.get_natoms()
         ]
@@ -113,7 +109,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
         self._outputData.add(
             "gdisf/axes/time",
             "LineOutputVariable",
-            self.frames.duration,
+            self.frame_window.duration,
             units="ps",
         )
         self._outputData.add(
@@ -228,14 +224,11 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             step=self.frames.index_step,
         )
 
-        series = self.projection(series)
+        series = self.projection.projector(series)
 
         atomicSF = np.zeros((self._nQShells, self._nFrames), dtype=np.float64)
 
-        msd = mean_square_displacement(
-            series,
-            self.frame_window,
-        )
+        msd = mean_square_displacement(series, self.frame_window.n_configs)
 
         for i, q2 in enumerate(self._kSquare):
             gaussian = np.exp(-msd * q2 / 6.0)
@@ -268,7 +261,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
             self._outputData[f"gdisf/s(q,f)/{element}"][:] = get_spectrum(
                 self._outputData[f"gdisf/f(q,t)/{element}"],
                 self.instrument_resolution.time_window,
-                self.instrument_resolution.time_step,
+                self.frames.time_step,
                 axis=1,
             )
             self._outputData[f"msd/{element}"][:] /= number
@@ -276,7 +269,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
                 self._outputData[f"gdisf/s(q,f)/ideal/{element}"][:] = get_spectrum(
                     self._outputData[f"gdisf/f(q,t)/{element}"],
                     None,
-                    self.instrument_resolution.time_step,
+                    self.frames.time_step,
                     axis=1,
                 )
 

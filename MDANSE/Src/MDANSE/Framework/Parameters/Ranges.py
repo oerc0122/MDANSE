@@ -95,7 +95,7 @@ class RangeCellCutoff(Range[float]):
             except ConfigError:
                 raise ConfigError(
                     "The cutoff distance goes into the simulation box periodic images."
-                )
+                ) from None
 
         return HistogramInfo(value)
 

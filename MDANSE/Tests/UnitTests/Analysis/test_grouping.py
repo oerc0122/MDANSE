@@ -142,7 +142,8 @@ def test_analysis(generate_benchmarks, tmp_path, parameters, traj_info, job_info
     parameters["weights"] = weights
 
     job = IJob.create(job_type)
-    job.run(parameters, status=True)
+    job.configuration = {key: value for key, value in parameters.items() if key in job.parameters}
+    job.run(status=True)
 
     if generate_benchmarks:
         return
@@ -174,7 +175,8 @@ def test_rmsf(generate_benchmarks, tmp_path, parameters, traj_info):
     parameters["output_files"] = (temp_name, ("MDAFormat",), "INFO")
 
     rmsf = IJob.create("RootMeanSquareFluctuation")
-    rmsf.run(parameters, status=True)
+    rmsf.configuration = {key: value for key, value in parameters.items() if key in rmsf.parameters}
+    rmsf.run(status=True)
 
     if generate_benchmarks:
         return
@@ -205,7 +207,8 @@ def test_ndtsf(generate_benchmarks, tmp_path, disf, dcsf, qvector_grid):
     }
 
     ndtsf = IJob.create("NeutronDynamicTotalStructureFactor")
-    ndtsf.run(parameters, status=True)
+    ndtsf.configuration = {key: value for key, value in parameters.items() if key in ndtsf.parameters}
+    ndtsf.run(status=True)
 
     if generate_benchmarks:
         return
@@ -280,7 +283,8 @@ def test_selection_grouping_transmutation_combined(generate_benchmarks, tmp_path
     parameters["weights"] = weights
 
     job = IJob.create(job_type)
-    job.run(parameters, status=True)
+    job.configuration = {key: value for key, value in parameters.items() if key in job.parameters}
+    job.run(status=True)
 
     if generate_benchmarks:
         return
@@ -301,4 +305,3 @@ def test_selection_grouping_transmutation_combined(generate_benchmarks, tmp_path
             assert f"/{dset_name}/C" not in h5_file
             assert f"/{dset_name}/<C1_O2>/O" in h5_file
             assert f"/{dset_name}/<C1_O2>/B" in h5_file
-
