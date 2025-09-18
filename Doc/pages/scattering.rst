@@ -508,7 +508,7 @@ In this analysis the total incoherent, total coherent and total
 .. math::
    :label: ndtsf2
    
-   F_{\mathrm{coh}}(\mathbf{q},t) = \sum_{\alpha\beta} \sqrt{c_{\alpha}c_{\beta}}\ \mathrm{Re} \left[ b_{\text{coh},\alpha}b_{\text{coh},\beta} \right] F_{\mathrm{coh},\alpha\beta}(\mathbf{q},t),
+   F_{\mathrm{coh}}(\mathbf{q},t) = \sum_{\alpha\beta} \sqrt{c_{\alpha}c_{\beta}}\ \mathrm{Re} \left[ b_{\text{coh},\alpha}^{\dagger}b_{\text{coh},\beta} \right] F_{\mathrm{coh},\alpha\beta}(\mathbf{q},t),
 
 .. math::
    :label: ndtsf3
