@@ -44,11 +44,11 @@ class CircularQVectors(IQVectors):
         default=1,
     )
     axis_1 = Vector(
-        non_null=True,
+        non_zero=True,
         default=np.array([1.0, 0.0, 0.0]),
     )
     axis_2 = Vector(
-        non_null=True,
+        non_zero=True,
         default=np.array([0.0, 1.0, 0.0]),
     )
 

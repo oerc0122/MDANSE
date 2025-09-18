@@ -403,7 +403,6 @@ class ConfigureDescriptor(Parameter, Generic[P, T]):
         on_get: Callable[[Self, T, Depends], T] | None = None,
         label: str = "",
         tooltip: str = "",
-        **params,
     ):
         self.default: P = default
         self.optional = optional if optional is not None else default is not SENTINEL

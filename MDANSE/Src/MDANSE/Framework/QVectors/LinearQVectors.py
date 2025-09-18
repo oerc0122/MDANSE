@@ -48,7 +48,7 @@ class LinearQVectors(IQVectors):
         default=50,
     )
     width = Float(minimum=1e-6, default=1.0)
-    axis = Vector(normalise=True, non_null=True, default=np.array([1.0, 0.0, 0.0]))
+    axis = Vector(normalise=True, non_zero=True, default=np.array([1.0, 0.0, 0.0]))
 
     def _generate(self):
         if self.seed != 0:

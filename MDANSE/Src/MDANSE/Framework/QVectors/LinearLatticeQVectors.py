@@ -54,7 +54,7 @@ class LinearLatticeQVectors(LatticeQVectors):
         default=50,
     )
     width = Float(minimum=1e-6, default=1.0)
-    axis = Vector(non_null=True, dtype=int, default=np.array([1, 0, 0], dtype=int))
+    axis = Vector(non_zero=True, dtype=int, default=np.array([1, 0, 0], dtype=int))
 
     def _generate(self):
         if self.seed != 0:

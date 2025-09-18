@@ -82,7 +82,7 @@ class ASE(Converter):
     n_steps = Integer(
         default=0, minimum=0, label="Number of time steps (0 for automatic detection)"
     )
-    time_step = Float(default=1.0, mini=1e-9, label="Time step")
+    time_step = Float(default=1.0, minimum=1e-9, label="Time step")
     fold = Boolean(label="Fold coordinates into box")
     output_files = OutputTrajectory()
 

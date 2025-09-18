@@ -31,12 +31,10 @@ class ApproximateDispersionQVectors(LatticeQVectors):
 
     q_start = Vector(
         label="Q start (nm^-1)",
-        non_null=False,
         default=np.array([0.0, 0.0, 0.0]),
     )
     q_end = Vector(
         label="Q end (nm^-1)",
-        non_null=False,
         default=np.array([1.0, 0.0, 0.0]),
     )
     q_step = Float(

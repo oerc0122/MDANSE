@@ -28,10 +28,9 @@ class DispersionLatticeQVectors(LatticeQVectors):
 
     start = Vector(
         dtype=int,
-        non_null=False,
         default=np.zeros(3),
     )
-    direction = Vector(non_null=True, default=np.array([1.0, 0.0, 0.0]))
+    direction = Vector(non_zero=True, default=np.array([1.0, 0.0, 0.0]))
     n_steps = Integer(
         minimum=1,
         default=10,

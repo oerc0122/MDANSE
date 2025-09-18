@@ -79,7 +79,7 @@ class TrajectoryEditor(IJob):
         default={},
     )
     molecule_tolerance = Float(
-        opttional=True,
+        optional=True,
         default=None,
         label="Search for molecules (covalent radii plus the tolerance in nm)",
         minimum=0.0,
