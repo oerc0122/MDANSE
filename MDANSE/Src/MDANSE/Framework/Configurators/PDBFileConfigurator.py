@@ -13,15 +13,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from __future__ import annotations
+
 import re
 from collections.abc import Iterable
 
-from MDANSE.Framework.AtomMapping import get_element_from_mapping
-from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.Framework.AtomMapping import AtomLabel
-from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
+from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
+from MDANSE.Framework.AtomMapping import AtomLabel, get_element_from_mapping
 
+from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
 
 ATOM_LINE_RECORDS = {
     "record_name": slice(0, 6),
