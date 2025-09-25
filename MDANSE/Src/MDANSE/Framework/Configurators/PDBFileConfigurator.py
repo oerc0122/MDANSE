@@ -166,7 +166,7 @@ class PDBFileConfigurator(FileWithAtomDataConfigurator):
         AtomLabel
             An atom label.
         """
-        for element, name, res_name, res_num in self.atoms:
+        for element, name, res_name, _ in self.atoms:
             yield AtomLabel(
                 element,
                 name=name,
