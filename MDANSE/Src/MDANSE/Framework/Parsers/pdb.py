@@ -150,7 +150,7 @@ class PDBFile(Parser):
                         )
                     )
 
-    def build_chemical_system(self, aliases) -> ChemicalSystem:
+    def build_chemical_system(self, aliases: dict[str, dict[str, str]]) -> ChemicalSystem:
         """
         Build a :class:`~MDANSE.Chemistry.ChemicalSystem.ChemicalSystem`.
 

@@ -313,7 +313,7 @@ class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
         *args,
         choices: None = None,
         exclude: set[GroupingLevels] = frozenset(
-            GroupingLevels.EACH_ATOM, GroupingLevels.EACH_MOLECULE
+            {GroupingLevels.EACH_ATOM, GroupingLevels.EACH_MOLECULE}
         ),
         default: GroupingLevels | str = GroupingLevels.ATOM,
         **kwargs,

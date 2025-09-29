@@ -20,14 +20,14 @@ from more_itertools import ilen
 
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Parameters import (
+    AtomMapping,
     Boolean,
     Float,
     OutputTrajectory,
     PathParam,
     to_class,
 )
-from MDANSE.Framework.Parsers.DCDFile import DCDFile
-from MDANSE.IO.MinimalPDBReader import MinimalPDBReader
+from MDANSE.Framework.Parsers import DCDFile, PDBFile
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
@@ -41,13 +41,16 @@ class DCD(Converter):
         mode="r",
         extensions={"PDB files": "*.pdb"},
         label="Input PDB file",
-        on_set=to_class(MinimalPDBReader),
+        on_set=to_class(PDBFile),
     )
     dcd_file = PathParam(
         mode="r",
         extensions={"DCD files": "*.dcd"},
         label="Input DCD file",
         on_set=to_class(DCDFile),
+    )
+    atom_aliases = AtomMapping(
+        depends={"trajectory": "pdb_file"}, label="Atom mapping", default={},
     )
     time_step = Float(default=1.0, minimum=1e-9, label="Time step (ps)")
     fold = Boolean(label="Fold coordinates into box")
@@ -63,7 +66,7 @@ class DCD(Converter):
         self.numberOfSteps = ilen(self.dcd_file.frames)
 
         # Create all chemical entities from the PDB file.
-        self._chemical_system = self.pdb_file._chemical_system
+        self._chemical_system = self.pdb_file.build_chemical_system(self.atom_aliases)
 
         self.frames = self.dcd_file.frames
 

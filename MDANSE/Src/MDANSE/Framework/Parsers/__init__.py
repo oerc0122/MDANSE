@@ -29,6 +29,7 @@ from .LAMMPS import LAMMPSxyz as LAMMPSxyz
 from .LAMMPSConfig import LAMMPSConfigFile as LAMMPSConfigFile
 from .MDAnalysis import MDAnalysisTopology
 from .MDTraj import MDTrajTopology
+from .pdb import PDBFile as PDBFile
 from .trj import TrjFile as TrjFile
 from .XDatCar import XDATCARFile as XDATCARFile
 from .xtd import XTDFile as XTDFile

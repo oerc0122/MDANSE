@@ -22,11 +22,13 @@ from mdtraj.formats.xtc import XTCTrajectoryFile
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.Converters.Converter import Converter
 from MDANSE.Framework.Parameters import (
+    AtomMapping,
     Boolean,
     OutputTrajectory,
     PathParam,
+    to_class,
 )
-from MDANSE.IO.MinimalPDBReader import MinimalPDBReader
+from MDANSE.Framework.Parsers import PDBFile
 from MDANSE.MolecularDynamics.Configuration import PeriodicRealConfiguration
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
@@ -46,12 +48,16 @@ class Gromacs(Converter):
         extensions={"PDB file": "*.pdb"},
         default="INPUT_FILENAME.pdb",
         label="Input PDB file.",
+        on_set=to_class(PDBFile),
     )
     xtc_file = PathParam(
         mode="r",
         extensions={"XTC file": "*.xtc", "TRR file": "*.trr"},
         default="INPUT_FILENAME.xtc",
         label="Input XTC file.",
+    )
+    atom_aliases = AtomMapping(
+        depends={"trajectory": "pdb_file"}, label="Atom mapping", default={},
     )
     fold = Boolean(
         label="Fold coordinates into box",
@@ -109,8 +115,7 @@ class Gromacs(Converter):
         self.numberOfSteps = len(self._xdr_file)
 
         # Create all chemical entities from the PDB file.
-        pdb_reader = MinimalPDBReader(self.pdb_file)
-        chemical_system = pdb_reader._chemical_system
+        chemical_system = self.pdb_file.build_chemical_system(self.atom_aliases)
 
         # A trajectory is opened for writing.
         self._trajectory = TrajectoryWriter(

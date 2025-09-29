@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import struct
+from collections.abc import Collection
 from typing import NamedTuple
 
 import numpy as np
@@ -231,5 +232,5 @@ class TrjFile(Parser):
                 yield frame
 
     @property
-    def element_list(self):
-        return None
+    def element_list(self) -> Collection[str]:
+        return ("du",)
