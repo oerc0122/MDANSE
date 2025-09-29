@@ -295,8 +295,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
     def preview_output_axis(self):
         axes = {}
-        for configurator in self.configuration.values():
-            preview_method = getattr(configurator, "preview_output_axis", None)
+        for descriptor in self.configuration.values():
+            preview_method = getattr(descriptor, "preview_output_axis", None)
             if callable(preview_method):
                 axis, unit = preview_method()
                 if axis is not None:

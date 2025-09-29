@@ -113,3 +113,17 @@ class QVectors(CustomConfig):
             return
 
         self.configuration = value.configuration
+
+
+    def preview_output_axis(self):
+        """Output the values of |Q| from current parameters.
+
+        Returns
+        -------
+        list[float]
+            Values of |Q|.
+        str
+            Physical unit of Q.
+
+        """
+        return self.generator.preview_output_axis()
