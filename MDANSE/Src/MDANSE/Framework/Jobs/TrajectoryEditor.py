@@ -74,10 +74,7 @@ class TrajectoryEditor(IJob):
     )
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    atom_charges = PartialCharge(
-        depends={"trajectory": "trajectory"},
-        default={},
-    )
+    atom_charges = PartialCharge(depends={"trajectory": "trajectory"}, default={})
     molecule_tolerance = Float(
         optional=True,
         default=None,
@@ -213,11 +210,7 @@ class TrajectoryEditor(IJob):
 
         new_charges = np.zeros(len(self._indices))
         for number, at_index in enumerate(self._indices):
-            try:
-                q = self.atom_charges[at_index]
-            except KeyError:
-                q = charges[at_index]
-            new_charges[number] = q
+            new_charges[number] = self.atom_charges.get(at_index, charges[at_index])
 
         # The times corresponding to the running index.
         self._output_trajectory.dump_configuration(com_conf, time)
@@ -242,9 +235,6 @@ class TrajectoryEditor(IJob):
         """
         Finalizes the calculations (e.g. averaging the total term, output files creations ...).
         """
-
-        # The input trajectory is closed.
-        self.trajectory.close()
 
         # The output trajectory is closed.
         self._output_trajectory.write_standard_atom_database()

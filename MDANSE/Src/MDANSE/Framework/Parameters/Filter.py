@@ -63,7 +63,7 @@ class Filter(CustomConfig):
         aliases=FILTER_MAP,
         default=DEFAULT_FILTER,
     )
-    params = Dict(default=filter_default_attributes(DEFAULT_FILTER))
+    params = Dict(default={"attributes": filter_default_attributes(DEFAULT_FILTER)})
 
     @property
     def filter(self) -> Filter:

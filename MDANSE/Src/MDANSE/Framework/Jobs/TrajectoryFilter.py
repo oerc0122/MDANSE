@@ -196,9 +196,6 @@ class TrajectoryFilter(IJob):
             output_trajectory=self._output_trajectory,
         )
 
-        # The input trajectory is closed.
-        self.trajectory.close()
-
         # The output trajectory is closed.
         write_metadata(self, self._output_trajectory._h5_file)
         self._output_trajectory.close()

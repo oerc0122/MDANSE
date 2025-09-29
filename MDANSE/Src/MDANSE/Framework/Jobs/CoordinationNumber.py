@@ -70,11 +70,6 @@ class CoordinationNumber(DistanceHistogram):
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
-    weights = Weights(
-        depends={
-            "trajectory": "trajectory",
-        }
-    )
     r_values = RangeCellCutoff(
         label="r values (nm)",
         include_last=True,
