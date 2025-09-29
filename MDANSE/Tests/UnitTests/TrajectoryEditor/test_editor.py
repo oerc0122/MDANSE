@@ -99,13 +99,13 @@ def test_jumps_removed_correctly():
                 "__len__()",
                 (
                     "unit_cell(0)._unit_cell",
-                    np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+                    np.array([[1, 2, 3], [0, 4, 5], [0, 0, 6]]),
                 ),
             ),
             {
                 "trajectory": short_traj,
                 "frames": (0, 501, 1),
-                "unit_cell": np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+                "unit_cell": np.array([[1, 2, 3], [0, 4, 5], [0, 0, 6]]),
             },
         ),
         (
@@ -115,7 +115,7 @@ def test_jumps_removed_correctly():
                 "__len__()",
                 (
                     "chemical_system.atom_list",
-                    (
+                    [
                         "C",
                         "C",
                         "C",
@@ -136,7 +136,7 @@ def test_jumps_removed_correctly():
                         "B",
                         "B",
                         "B",
-                    ),
+                    ],
                 ),
             ),
             {
