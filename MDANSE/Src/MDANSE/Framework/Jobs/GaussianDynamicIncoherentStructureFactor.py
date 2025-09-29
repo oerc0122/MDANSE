@@ -65,7 +65,7 @@ class GaussianDynamicIncoherentStructureFactor(IJob):
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     frame_window = CorrelationWindow(depends={"frames": "frames"})
     q_shells = Range[float](
-        default=(0., 10., 1.),
+        default=(0.0, 10.0, 1.0),
         minimum=0.0,
     )
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})

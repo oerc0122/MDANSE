@@ -242,7 +242,10 @@ class VanHoveFunctionSelf(IJob):
             step=self.frames.index_step,
         )
         cell_vols = np.array(
-            [self.trajectory.configuration(i).unit_cell.volume for i in self.frames.indices],
+            [
+                self.trajectory.configuration(i).unit_cell.volume
+                for i in self.frames.indices
+            ],
         )
 
         histograms = van_hove_self(
@@ -282,7 +285,9 @@ class VanHoveFunctionSelf(IJob):
         nAtomsPerElement = self.trajectory.get_natoms()
         for element, number in nAtomsPerElement.items():
             self._outputData[f"vh/g(r,t)/{element}"][:] /= (
-                self.shell_volumes[:, np.newaxis] * number**2 * self.frame_window.n_configs
+                self.shell_volumes[:, np.newaxis]
+                * number**2
+                * self.frame_window.n_configs
             )
             self._outputData[f"vh/4_pi_r2_g(r,t)/{element}"][:] /= (
                 number**2 * self.frame_window.n_configs * self.r_values.binning.step

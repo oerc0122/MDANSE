@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from math import sqrt
+from typing import Any
 
 import numpy as np
 
@@ -65,12 +66,8 @@ class NeutronDynamicTotalStructureFactor(IJob):
         transmutation="atom_transmutation",
         grouping="grouping_level",
     )
-    dcsf_input_file = MDANSEResult(
-        label="MDANSE Coherent Structure Factor",
-    )
-    disf_input_file = MDANSEResult(
-        label="MDANSE Incoherent Structure Factor",
-    )
+    dcsf_input_file = MDANSEResult(label="MDANSE Coherent Structure Factor")
+    disf_input_file = MDANSEResult(label="MDANSE Incoherent Structure Factor")
     grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
@@ -80,14 +77,16 @@ class NeutronDynamicTotalStructureFactor(IJob):
     def _get_data_from_files(self, props: str):
         out = {}
         for file, prop in zip(
-            (self.dcsf_input_file, self.disf_input_file), self._expand(props), strict=True,
+            (self.dcsf_input_file, self.disf_input_file),
+            self._expand(props),
+            strict=True,
         ):
             try:
                 out[file] = file[prop][:]
             except KeyError:
                 raise NeutronDynamicTotalStructureFactorError(
                     f"No `{prop}` found in {file.path} input file"
-                )
+                ) from None
         return tuple(out.values())
 
     @staticmethod
@@ -298,20 +297,23 @@ class NeutronDynamicTotalStructureFactor(IJob):
             self.dcsf_input_file["metadata/inputs/weights"][0].decode().strip('"')
         )
 
-    def run_step(self, index):
-        """
-        Runs a single step of the job.\n
+    def run_step(self, index: int) -> tuple[int, None]:
+        """Runs a single step of the job.
 
-        :Parameters:
-            #. index (int): The index of the step.
-        :Returns:
-            #. index (int): The index of the step.
-            #. rho (np.array): The exponential part of I(k,t)
+        Parameters
+        ----------
+        index : int
+            The index of the step.
+
+        Returns
+        -------
+        tuple[int, None]
+            The index of the step.
         """
 
         return index, None
 
-    def combine(self, index, x):
+    def combine(self, index: int, x: Any) -> None:
         """
         Combines returned results of run_step.
 

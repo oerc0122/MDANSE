@@ -114,7 +114,6 @@ class QVectors(CustomConfig):
 
         self.configuration = value.configuration
 
-
     def preview_output_axis(self):
         """Output the values of |Q| from current parameters.
 

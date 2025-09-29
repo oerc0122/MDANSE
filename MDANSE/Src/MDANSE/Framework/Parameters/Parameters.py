@@ -44,9 +44,6 @@ from MDANSE.MLogging import LOG
 
 from .UtilTypes import Depends, DescID
 
-if TYPE_CHECKING:
-    from typing import Self
-
 SENTINEL = object()
 P = TypeVar("P")
 T = TypeVar("T")
@@ -89,8 +86,8 @@ class ConfigWarning(Warning):
     pass
 
 
-class Parameter(ABC):
-    """Abstract mixin for classes which can have a GUI Component."""
+class Parameter:
+    """Mixin for classes which can have a GUI Component."""
 
     default_label = ""
     default_tooltip = ""
@@ -345,7 +342,9 @@ class HasDependencies:
             if dep != "parent"
         )
 
-    def _get_deps(self, owner: HasDependencies, depends: Depends | None = None) -> Depends:
+    def _get_deps(
+        self, owner: HasDependencies, depends: Depends | None = None
+    ) -> Depends:
         depends = depends if depends is not None else self.depends
 
         if any(self._bad_deps(owner, depends)):
@@ -354,7 +353,14 @@ class HasDependencies:
                 "are not correctly defined."
             )
 
-        return cast(Depends, {dep: getattr(owner, key) for dep, key in depends.items() if key != "parent"})
+        return cast(
+            Depends,
+            {
+                dep: getattr(owner, key)
+                for dep, key in depends.items()
+                if key != "parent"
+            },
+        )
 
     def required_deps(self) -> set[DescID]:
         return set()
@@ -436,9 +442,9 @@ class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
         exclude: Sequence[T] = (),
         mutex: Sequence[DescID] = (),
         depends: dict[str, DescID] | None = None,
-        on_set: Callable[[Self, T, Depends], T] | None = None,
+        on_set: Callable[[CD, T, Depends], T] | None = None,
         on_get_depends: dict[str, DescID] | None = None,
-        on_get: Callable[[Self, T, Depends], T] | None = None,
+        on_get: Callable[[CD, T, Depends], T] | None = None,
         label: str = "",
         tooltip: str = "",
     ):
@@ -471,7 +477,9 @@ class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
 
         self._set_dependents(owner)
 
-    def __get__(self, owner: Configurable, objtype: type | None = None) -> Self | T | None:
+    def __get__(
+        self, owner: Configurable, objtype: type | None = None
+    ) -> CD | T | None:
         if owner is None:
             return self
 

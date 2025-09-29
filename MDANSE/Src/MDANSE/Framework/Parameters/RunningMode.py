@@ -71,6 +71,5 @@ class RunningMode(CustomConfig):
         else:
             super().__set__(owner, value)
 
-
     def __repr__(self) -> str:
         return f"{type(self).__name__}(mode={self.mode!r}, n_procs={self.n_procs})"

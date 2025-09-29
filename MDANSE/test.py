@@ -35,14 +35,12 @@ DATA_DIR = Path("~/MDANSE/MDANSE/Tests/UnitTests/Data/").expanduser()
 # V.run(prog_bar=True)
 
 X = CASTEP()
-print("1", X)
 
 X.fold = False
 X.trajectory_file = DATA_DIR / "PBAnew.md"
 X.output_files.path = "./doom_file.mdt"
 X.time_unit = "ps"
 X.time_step = 10.0
-print(X)
 # X.run(prog_bar=True)
 
 # Y = ASE()

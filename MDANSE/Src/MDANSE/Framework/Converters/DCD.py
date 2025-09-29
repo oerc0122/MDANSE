@@ -50,7 +50,9 @@ class DCD(Converter):
         on_set=to_class(DCDFile),
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "pdb_file"}, label="Atom mapping", default={},
+        depends={"trajectory": "pdb_file"},
+        label="Atom mapping",
+        default={},
     )
     time_step = Float(default=1.0, minimum=1e-9, label="Time step (ps)")
     fold = Boolean(label="Fold coordinates into box")

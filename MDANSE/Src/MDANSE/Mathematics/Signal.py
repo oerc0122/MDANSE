@@ -784,7 +784,6 @@ class Butterworth(Filter):
     }
 
     def __init__(self, **kwargs):
-        print(kwargs)
         super().__init__(**kwargs)
 
         self.coeffs = TransferFunction(

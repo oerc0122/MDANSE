@@ -260,7 +260,9 @@ def mapping_to_labels(mapping: dict[str, dict[str, str]]) -> list[AtomLabel]:
     return labels
 
 
-def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLabel]) -> bool:
+def check_mapping_valid(
+    mapping: dict[str, dict[str, str]], labels: list[AtomLabel]
+) -> bool:
     """Given a list of labels check that the mapping is valid.
 
     Parameters

@@ -57,7 +57,9 @@ class Gromacs(Converter):
         label="Input XTC file.",
     )
     atom_aliases = AtomMapping(
-        depends={"trajectory": "pdb_file"}, label="Atom mapping", default={},
+        depends={"trajectory": "pdb_file"},
+        label="Atom mapping",
+        default={},
     )
     fold = Boolean(
         label="Fold coordinates into box",
