@@ -49,7 +49,7 @@ class Mapper(ABC):
         Returns
         -------
         dict[int, float]
-            The full partial charge setting.
+            The full mapping.
         """
         return self._original_map | self._new_map
 
@@ -69,12 +69,12 @@ class Mapper(ABC):
         Returns
         -------
         str
-            A json string of the minimal transmutation setting.
+            A json string of the minimal mapping.
         """
         return json.dumps(self.get_setting())
 
     def reset_setting(self) -> None:
-        """Resets the transmutation setting."""
+        """Resets the mapping."""
         self._new_map = {}
         self.selector.reset()
 

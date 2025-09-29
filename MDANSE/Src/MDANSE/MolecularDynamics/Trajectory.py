@@ -20,6 +20,8 @@ import math
 from collections import Counter, defaultdict
 from collections.abc import Sequence
 from enum import auto
+from contextlib import suppress
+from functools import cached_property
 from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -225,7 +227,7 @@ class Trajectory:
     @property
     def atom_names(self) -> Sequence[str]:
         """Labels of ALL the atoms, after transmutation."""
-        if self._grouping_level == GroupingLevels.MOLECULE:
+        if self._grouping_level is GroupingLevels.MOLECULE:
             temp_names = {}
             for mol_name, clusters in self.chemical_system._clusters.items():
                 for cluster in clusters:
@@ -260,6 +262,10 @@ class Trajectory:
         changed_atoms : dict[int, str]
             Substitution dictionary, as created by AtomTransmutationConfigurator
         """
+        with suppress(AttributeError):
+            del self.atom_indices
+        with suppress(AttributeError):
+            del self.atom_types
         self._transmutation = changed_atoms
 
     def set_selection(self, selected_indices: Sequence[int]):
@@ -270,6 +276,8 @@ class Trajectory:
         selected_indices : Sequence[int]
             Selected atom indices, output by ReusableSelection.
         """
+        with suppress(AttributeError):
+            del self.atom_indices
         self._selection = selected_indices
 
     @property
@@ -286,6 +294,12 @@ class Trajectory:
         grouping_level : str
             Grouping level, as output by GroupingLevelConfigurator.
         """
+        with suppress(AttributeError):
+            del self.element_from_label
+        with suppress(AttributeError):
+            del self.group_lookup
+        with suppress(AttributeError):
+            del self.atom_names
         self._grouping_level = grouping_level
 
     def get_weights(
