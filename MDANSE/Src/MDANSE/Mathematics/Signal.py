@@ -321,13 +321,13 @@ class Filter(ABC):
         FUNDAMENTAL_EVENLY_DIVIDES_FS: int = 2
 
     @abstractmethod
-    def __init__(self, **kwargs):
+    def __init__(self, n_steps: int, time_step_ps: float, **kwargs):
         # Custom frequency range (assumes frequencies are angular) around which to compute the filter frequency response
         self.custom_freq_range = []
         # Number of simulation steps
-        self.n_steps = kwargs.pop("n_steps")
+        self.n_steps = n_steps
         # Simulation sample frequency in THz
-        self.sample_freq = 1 / kwargs.pop("time_step_ps")
+        self.sample_freq = 1 / time_step_ps
         self.set_filter_attributes(kwargs)
 
     def compute_frequencies(
@@ -784,6 +784,7 @@ class Butterworth(Filter):
     }
 
     def __init__(self, **kwargs):
+        print(kwargs)
         super().__init__(**kwargs)
 
         self.coeffs = TransferFunction(

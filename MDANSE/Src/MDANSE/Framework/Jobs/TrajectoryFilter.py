@@ -152,11 +152,11 @@ class TrajectoryFilter(IJob):
 
     def finalize(self):
         """Write out the new trajectory."""
-        filter_params = self.trajectory_filter.params.copy()
+        filter_params = self.trajectory_filter.params["attributes"].copy()
         filter_params.setdefault("n_steps", len(self.frames))
         filter_params.setdefault("time_step_ps", self.frames.time_step)
 
-        filter = self.trajectory_filter.filter_type(**filter_params["attributes"])
+        filter = self.trajectory_filter.filter_type(**filter_params)
 
         trajectories = copy.deepcopy(self.atomic_trajectory_array)
 
