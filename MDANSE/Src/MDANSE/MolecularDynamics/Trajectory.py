@@ -21,6 +21,7 @@ from collections import Counter, defaultdict
 from collections.abc import Sequence
 from enum import auto
 from contextlib import suppress
+from enum import auto
 from functools import cached_property
 from operator import itemgetter
 from pathlib import Path
@@ -807,6 +808,7 @@ class Trajectory:
 
     def __str__(self) -> str:
         return f"{type(self).__name__}({self.filename!r})"
+
 
 additive_atom_properties = [
     "nucleon",

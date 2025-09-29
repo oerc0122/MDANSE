@@ -18,7 +18,6 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Sequence
-from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -28,8 +27,9 @@ import numpy.typing as npt
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.AtomMapping import check_mapping_valid, fill_remaining_labels
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
-from MDANSE.IO.IOUtils import UCEnum, json_handler
+from MDANSE.IO.IOUtils import json_handler
 from MDANSE.MLogging import LOG
+from MDANSE.MolecularDynamics.Trajectory import GroupingLevels
 
 from .Choices import SingleChoice
 from .Parameters import ConfigError, ConfigureDescriptor
@@ -297,16 +297,6 @@ class PartialChargeMapper(Mapper):
         return json.dumps(self.get_grouped_setting())
 
 
-class GroupingLevels(UCEnum):
-    ATOM = auto()
-    MOLECULE = auto()
-    EACH_MOLECULE = auto()
-    EACH_ATOM = auto()
-
-    def __repr__(self) -> str:
-        return self.name.title()
-
-
 class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
     def __init__(
         self,
@@ -407,7 +397,9 @@ class AtomTransmutation(ConfigureDescriptor[dict | str | Path, dict]):
         try:
             value = {int(idx): element for idx, element in value.items()}
         except ValueError as err:
-            raise ConfigError("Keys of transmutation map should be castable to `int`") from err
+            raise ConfigError(
+                "Keys of transmutation map should be castable to `int`"
+            ) from err
 
         system = deps["trajectory"].chemical_system
         idxs = range(system.total_number_of_atoms)

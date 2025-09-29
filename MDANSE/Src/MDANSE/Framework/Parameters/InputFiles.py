@@ -43,7 +43,7 @@ def set_up_trajectory(self, trajectory: Trajectory, deps):
     if (transmutation := deps.get("transmutation")) is not None:
         trajectory.set_transmutation(transmutation)
     if (grouping := deps.get("grouping")) is not None:
-        trajectory.set_grouping(grouping.name.lower())
+        trajectory.set_grouping(grouping)
 
     return trajectory
 
