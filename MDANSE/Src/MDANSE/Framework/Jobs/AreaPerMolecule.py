@@ -71,6 +71,10 @@ class AreaPerMolecule(IJob):
 
     enabled = True
 
+    @property
+    def axis_indices(self):
+        return self._AXIS_MAP[self.axis]
+
     def initialize(self):
         """
         Initialize the analysis (open trajectory, create output variables ...)
@@ -79,10 +83,6 @@ class AreaPerMolecule(IJob):
 
         # This will define the number of steps of the analysis. MUST be defined for all analysis.
         self.numberOfSteps = len(self.frames)
-
-        # Extract the indices corresponding to the axis selection (a=0,b=1,c=2).
-        axis_labels = self.axis
-        self._axisIndexes = self._AXIS_MAP[axis_labels]
 
         # The number of molecules that match the input name. Must be > 0.
         self._nMolecules = len(
@@ -129,13 +129,13 @@ class AreaPerMolecule(IJob):
         try:
             unit_cell = configuration.unit_cell._unit_cell
             normalVect = np.cross(
-                unit_cell[self._axisIndexes[0]], unit_cell[self._axisIndexes[1]]
+                unit_cell[self.axis_indices[0]], unit_cell[self.axis_indices[1]]
             )
-        except Exception:
+        except Exception as err:
             raise AreaPerMoleculeError(
                 "The unit cell must be defined for AreaPerMolecule. "
                 "You can add a box using TrajectoryEditor."
-            ) from None
+            ) from err
 
         apm = np.linalg.norm(normalVect) / self._nMolecules
 
