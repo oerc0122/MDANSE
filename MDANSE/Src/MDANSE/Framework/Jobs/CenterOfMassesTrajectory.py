@@ -37,7 +37,6 @@ from MDANSE.Framework.Parameters import (
     GroupingLevel,
     MDANSETrajectory,
     OutputTrajectory,
-    RunningMode,
 )
 from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.MolecularDynamics.Configuration import (

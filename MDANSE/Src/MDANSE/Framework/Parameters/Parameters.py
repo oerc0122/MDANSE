@@ -36,7 +36,7 @@ from typing import (
 )
 
 import numpy as np
-from more_itertools import first_true, value_chain
+from more_itertools import first_true, partition, value_chain
 
 from MDANSE.Core.Error import Error
 from MDANSE.IO.IOUtils import MDANSEEncoder
@@ -143,6 +143,15 @@ class Configurable:
             if name in value:
                 setattr(self, name, value[name])
 
+    @property
+    def raw_values(self) -> dict[DescID, Any]:
+        return {
+            name: desc.raw_values
+            if isinstance(desc, Configurable)
+            else getattr(self, desc.raw_name)
+            for name, desc in self.descriptors.items()
+        }
+
     @classmethod
     def _get_descriptors(cls) -> dict[DescID, Parameter]:
         return {
@@ -151,6 +160,14 @@ class Configurable:
             for name, param in par.__dict__.items()
             if isinstance(param, Parameter)
         }
+
+    def __getstate__(self) -> dict[DescID, Any]:
+        return self.raw_values
+
+    def __setstate__(self, state: dict[DescID, Any]):
+        obj, params = partition(self.parameters.__contains__, state)
+        self.__dict__ = {key: state[key] for key in obj}
+        self.configuration = {key: state[key] for key in params}
 
     descriptors = property(lambda self: type(self)._get_descriptors())
 
@@ -185,8 +202,8 @@ class Configurable:
         for k, v in cls._get_default_parameters().items():
             docstring += f">>> parameters[{k!r}]={v!r}\n"
         docstring += ">>> \n"
-        docstring += f">>> job = IJob.create({cls.__name__!r})\n"
-        docstring += ">>> job.setup(parameters)\n"
+        docstring += f">>> job = {cls.__name__!r}()\n"
+        docstring += ">>> job.configuration = parameters\n"
         docstring += ">>> job.run()\n"
         return docstring
 
@@ -337,7 +354,7 @@ class HasDependencies:
     ) -> Iterable[bool]:
         depends = depends if depends is not None else self.depends
         return (
-            not getattr(owner, f"_{dep}_configured", False)
+            not getattr(owner, f"_{dep}__configured", False)
             for dep in depends.values()
             if dep != "parent"
         )
@@ -466,19 +483,23 @@ class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
         super().__init__(depends=depends, label=label, tooltip=tooltip)
 
     def _bad_mutex(self, owner: Configurable) -> Iterable[bool]:
-        return (getattr(owner, f"_{ex}_configured") for ex in self.mutex)
+        return (getattr(owner, f"_{ex}__configured") for ex in self.mutex)
 
     def __set_name__(self, owner: type, name: str):
         self.name = name
-        self.private_name = "_" + name
+        self.private_name = "_" + name + "_"
         self.configured_var = self.private_name + "_configured"
+        self.raw_name = self.private_name + "_raw"
 
         setattr(owner, self.configured_var, self.optional)
+        setattr(owner, self.raw_name, self.default)
 
         self._set_dependents(owner)
 
     def __get__(
-        self, owner: Configurable, objtype: type | None = None
+        self,
+        owner: Configurable,
+        objtype: type | None = None,
     ) -> CD | T | None:
         if owner is None:
             return self
@@ -504,6 +525,7 @@ class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
     def __set__(self, owner: Configurable, value: P) -> None:
         setattr(owner, self.configured_var, False)
         setattr(owner, self.private_name, SENTINEL)
+        raw = value
 
         if self.optional and value is None:
             return
@@ -530,6 +552,7 @@ class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
 
         setattr(owner, self.private_name, out)
         setattr(owner, self.configured_var, True)
+        setattr(owner, self.raw_name, raw)
 
         self._validate_dependents(owner)
 
@@ -651,7 +674,11 @@ class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
 
 class MinMax(ABC, Generic[Num]):
     def __init__(
-        self, *args, minimum: Num | None = None, maximum: Num | None = None, **kwargs
+        self,
+        *args,
+        minimum: Num | None = None,
+        maximum: Num | None = None,
+        **kwargs,
     ):
         self.minimum = minimum
         self.maximum = maximum
@@ -661,7 +688,9 @@ class MinMax(ABC, Generic[Num]):
         return self.minimum, self.maximum
 
     def validate_range(
-        self, value: Num, ranges: tuple[Num | None, Num | None] | None = None
+        self,
+        value: Num,
+        ranges: tuple[Num | None, Num | None] | None = None,
     ) -> None:
         if ranges is not None:
             mini, maxi = ranges

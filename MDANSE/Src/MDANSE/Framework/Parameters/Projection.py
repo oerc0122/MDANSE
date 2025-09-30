@@ -86,6 +86,12 @@ class Projection(CustomConfig):
             self.proj_type = ProjType(name)
             self.axis = axis
 
+        elif isinstance(value, dict):
+            if "name" in value:
+                self.proj_type = ProjType(value["name"])
+            if "axis" in value:
+                self.axis = value["axis"]
+
         elif value is None:
             self.proj_type = ProjType.NULL
             self.axis = None

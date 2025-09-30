@@ -65,10 +65,12 @@ class QVectorsSelect(SingleChoice[str | IQVectors, IQVectors]):
 
     def __set_name__(self, owner: type, name: str):
         self.name = name
-        self.private_name = "_" + name
+        self.private_name = "_" + name + "_"
         self.configured_var = self.private_name + "_configured"
+        self.raw_name = self.private_name + "_raw"
 
         setattr(owner, self.configured_var, self.optional)
+        setattr(owner, self.raw_name, self.default)
 
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("trajectory")}

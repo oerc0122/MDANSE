@@ -204,7 +204,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
     ancestor = []
     runscript_import_line = "from MDANSE.Framework.Jobs.IJob import IJob"
 
-    enabled = False
+    enabled = True
 
     def check_status(self):
         pass
@@ -247,7 +247,10 @@ class IJob(Configurable, metaclass=SubclassFactory):
         self.log_queue = Queue()
 
     def __getstate__(self):
-        d = self.__dict__.copy()
+        d = self.__dict__.copy() | super().__getstate__()
+        # Remove hidden internals
+        to_remove = tuple(map("_".__add__, self.parameters))
+        d = {key: value for key, value in d.items() if not key.startswith(to_remove)}
         del d["_processes"]
         return d
 
@@ -429,7 +432,10 @@ class IJob(Configurable, metaclass=SubclassFactory):
         steps = range(self.numberOfSteps + 1)
         if prog:
             steps = tqdm(
-                steps, total=self.numberOfSteps, unit="steps", desc=type(self).__name__
+                steps,
+                total=self.numberOfSteps,
+                unit="steps",
+                desc=type(self).__name__,
             )
         steps = iter(steps)
 
