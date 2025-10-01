@@ -130,6 +130,9 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         self.root = kwargs.get("root")
 
         self.dependencies = kwargs.get("dependencies", {})
+        self.dependents = set()
+        for k, v in self.dependencies.items():
+            self.configurable[k].dependents.add(name)
 
         self.default = kwargs.get("default", self.__class__._default)
 
@@ -233,7 +236,13 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         bool
             If True, self.configure(new_input) needs to be run
         """
-        return not self.configured or self._original_input != new_input
+        update = not self.configured or self._original_input != new_input
+        if update:
+            # now we need to tell all configurators that dependent on
+            # this configurator to update themselves
+            for dependent in self.dependents:
+                self.configurable[dependent].configured = False
+        return update
 
     def to_json(self) -> str:
         """Encode this input variable as a JSON string.
