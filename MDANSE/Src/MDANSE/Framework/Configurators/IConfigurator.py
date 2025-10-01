@@ -109,7 +109,7 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         name: str,
         *,
         configurable: Configurable | None = None,
-        root: None = None,
+        root: type | None = None,
         dependencies: dict[str, str] | None = None,
         default: Any | None = None,
         label: str | None = None,
@@ -137,21 +137,16 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         ]
 
         self.configurable = configurable
-
         self.root = root
-
         self.dependencies = dependencies or {}
-
         self.default = default or type(self)._default
-
-        self.label = label or getattr(
-            type(self), "label", name.replace("_", " ").strip()
+        self.label = (
+            label
+            or getattr(type(self), "label", None)
+            or name.replace("_", " ").strip()
         )
-
         self.optional = optional
-
         self.configured = False
-
         self.valid = True
 
         self._error_status = "OK"

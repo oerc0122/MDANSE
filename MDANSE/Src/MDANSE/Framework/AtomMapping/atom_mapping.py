@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import re
-from typing import TypeVar
+from typing import SupportsFloat, TypeVar
 
 import numpy as np
 
@@ -26,7 +26,7 @@ AtLabel = TypeVar("AtLabel", bound="AtomLabel")
 
 
 class AtomLabel:
-    def __init__(self, atm_label: str, **kwargs):
+    def __init__(self, atm_label: str, mass: SupportsFloat | None = None, **kwargs):
         """Creates an atom label object which is used for atom mapping
         and atom type guessing.
 
@@ -41,14 +41,11 @@ class AtomLabel:
         # methods as of writing e.g. re.sub
         translation = str.maketrans("", "", ";=")
         self.atm_label = atm_label.translate(translation)
-        self.grp_label = ""
-        if kwargs:
-            for k, v in kwargs.items():
-                self.grp_label += f"{k}={str(v).translate(translation)};"
-            self.grp_label = self.grp_label[:-1]
-        self.mass = kwargs.get("mass")
-        if self.mass is not None:
-            self.mass = float(self.mass)
+        self.grp_label = ";".join(
+            f"{k}={str(v).translate(translation)}"
+            for k, v in (kwargs | {"mass": mass}).items()
+        )
+        self.mass = None if mass in {None, "None"} else float(mass)
 
     def __eq__(self, other: AtLabel) -> bool:
         """Used to check if atom labels are equal.
@@ -249,12 +246,8 @@ def mapping_to_labels(mapping: dict[str, dict[str, str]]) -> list[AtomLabel]:
     """
     labels = []
     for grp_label, atm_map in mapping.items():
-        kwargs = {}
-        if grp_label:
-            for k, v in [i.split("=") for i in grp_label.split(";")]:
-                kwargs[k] = v
-        for atm_label in atm_map:
-            labels.append(AtomLabel(atm_label, **kwargs))
+        kwargs = dict(i.split("=") for i in grp_label.split(";") if i)
+        labels.extend(AtomLabel(atm_label, **kwargs) for atm_label in atm_map)
     return labels
 
 
