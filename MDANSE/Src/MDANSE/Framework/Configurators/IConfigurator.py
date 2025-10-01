@@ -239,7 +239,7 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         update = not self.configured or self._original_input != new_input
         if update:
             # now we need to tell all configurators that dependent on
-            # this configurator to update themselves
+            # this configurator that they need to be updated
             for dependent in self.dependents:
                 self.configurable[dependent].configured = False
         return update
