@@ -131,7 +131,7 @@ class IConfigurator(dict, metaclass=SubclassFactory):
 
         self.dependencies = kwargs.get("dependencies", {})
         self.dependents = set()
-        for k, v in self.dependencies.items():
+        for k in self.dependencies:
             self.configurable[k].dependents.add(name)
 
         self.default = kwargs.get("default", self.__class__._default)
