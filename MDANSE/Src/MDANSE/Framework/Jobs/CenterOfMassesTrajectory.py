@@ -15,19 +15,9 @@
 #
 from __future__ import annotations
 
-import collections
-
 import numpy as np
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-from MDANSE.Framework.ConfigDescriptors import (
-    AtomSelection,
-    BooleanConfigDesc,
-    FramesConfigDesc,
-    GroupingLevel,
-    MDANSETrajectoryFile,
-    OutputTrajectoryConfigDesc,
-)
 from MDANSE.Framework.Formats.HDFFormat import write_metadata
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Parameters import (

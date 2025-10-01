@@ -15,8 +15,6 @@
 #
 from __future__ import annotations
 
-import numpy.typing as npt
-
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.Framework.Parameters import (
     AtomSelection,
@@ -57,8 +55,7 @@ class RootMeanSquareFluctuation(IJob):
     frames = FrameSelect(depends={"trajectory": "trajectory"})
     grouping_level = GroupingLevel(
         depends={"trajectory": "trajectory"},
-        default="each atom",
-        exclude={GroupingLevels.ATOM, GroupingLevels.MOLECULE},
+        default="atom",
     )
     atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
     output_files = OutputFile()
@@ -69,7 +66,7 @@ class RootMeanSquareFluctuation(IJob):
         super().initialize()
         self.numberOfSteps = len(self.trajectory.atom_indices)
 
-        self.group_molecules = self.grouping_level.name != "EACH_ATOM"
+        self.group_molecules = self.grouping_level is not GroupingLevels.ATOM
         self.ele_idxs = {}
 
         self._names = self.trajectory.atom_names
@@ -104,32 +101,25 @@ class RootMeanSquareFluctuation(IJob):
                 units="nm",
             )
 
-    def run_step(self, index: int) -> tuple[int, npt.NDArray[float]]:
+    def run_step(self, index: int) -> tuple[int, float]:
         """Runs a single step of the job.
 
         Parameters
         ----------
         index : int
-            The index of the step.
+            The atom index.
 
         Returns
         -------
-        intex : int
+        index : int
             The index of the step.
         rmsf : npt.NDArray[float]
             The calculated root mean square fluctuation for atom index.
-
         """
         # read the trajectory
-        if self.group_molecules:
-            struct_index = self.cluster_lookup[index]
-            func = self.trajectory.read_com_trajectory
-        else:
-            struct_index = self.trajectory.atom_indices[index]
-            func = self.trajectory.read_atomic_trajectory
-
-        series = func(
-            struct_index,
+        atom_index = self.trajectory.atom_indices[index]
+        series = self.trajectory.read_atomic_trajectory(
+            atom_index,
             first=self.frames.index_start,
             last=self.frames.index_stop + 1,
             step=self.frames.index_step,
@@ -146,10 +136,12 @@ class RootMeanSquareFluctuation(IJob):
         index : int
             The index of the step.
         rmsf : float
-            The returned result(s) of run_step
-
+            The RMSF results for the atom.
         """
-        self._outputData["rmsf/rmsf"][index] = rmsf
+        self._outputData["rmsf/all"][index] = rmsf
+        name = self._names[index]
+        idxs = self.ele_idxs[name]
+        self._outputData[f"rmsf/{name}"][idxs.index(index)] = rmsf
 
     def finalize(self):
         """Finalizes the calculations (e.g. averaging the total term, output

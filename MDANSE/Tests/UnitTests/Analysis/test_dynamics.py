@@ -66,8 +66,7 @@ def test_pps(generate_benchmarks, tmp_path):
 
     pps = IJob.create("PositionPowerSpectrum")
     pps.configuration = parameters
-    print(pps)
-    pps.run(parameters, status=True)
+    pps.run(status=True)
 
     if generate_benchmarks:
         return

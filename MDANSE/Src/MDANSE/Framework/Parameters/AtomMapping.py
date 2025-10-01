@@ -76,7 +76,6 @@ class Mapper(ABC):
     def reset_setting(self) -> None:
         """Resets the mapping."""
         self._new_map = {}
-        self.selector.reset()
 
     @staticmethod
     def get_selector(selection_string: str | Path | dict) -> ReusableSelection:
@@ -302,9 +301,6 @@ class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
         self,
         *args,
         choices: None = None,
-        exclude: set[GroupingLevels] = frozenset(
-            {GroupingLevels.EACH_ATOM, GroupingLevels.EACH_MOLECULE}
-        ),
         default: GroupingLevels | str = GroupingLevels.ATOM,
         **kwargs,
     ):
@@ -315,7 +311,6 @@ class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
             *args,
             choices=GroupingLevels,
             default=default,
-            exclude=exclude,
             **kwargs,
         )
 

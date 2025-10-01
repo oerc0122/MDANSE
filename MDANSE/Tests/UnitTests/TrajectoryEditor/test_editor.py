@@ -3,9 +3,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from test_helpers.compare_hdf5 import compare_hdf5
-from test_helpers.get_deep_attr import get_deep_attr
 from test_helpers.paths import CONV_DIR
 
+from MDANSE.Core.get_deep_attr import get_deep_attr
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Configuration import remove_jumps
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
