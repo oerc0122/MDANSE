@@ -141,6 +141,10 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         self.root = root
 
         self.dependencies = dependencies or {}
+        self.dependents = set()
+        if self.configurable is not None:
+            for v in self.dependencies.values():
+                self.configurable[v].dependents.add(name)
 
         self.default = default or type(self)._default
 
@@ -243,7 +247,13 @@ class IConfigurator(dict, metaclass=SubclassFactory):
         bool
             If True, self.configure(new_input) needs to be run
         """
-        return not self.configured or self._original_input != new_input
+        update = not self.configured or self._original_input != new_input
+        if update:
+            # now we need to tell all configurators that dependent on
+            # this configurator that they need to be updated
+            for dependent in self.dependents:
+                self.configurable[dependent].configured = False
+        return update
 
     def to_json(self) -> str:
         """Encode this input variable as a JSON string.
