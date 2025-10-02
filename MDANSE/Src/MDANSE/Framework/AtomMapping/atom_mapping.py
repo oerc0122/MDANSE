@@ -26,7 +26,9 @@ AtLabel = TypeVar("AtLabel", bound="AtomLabel")
 
 
 class AtomLabel:
-    def __init__(self, atm_label: str, **kwargs):
+    TRANSLATION = str.maketrans("", "", ";=")
+
+    def __init__(self, atm_label: str, mass: float | None = None, **kwargs):
         """Creates an atom label object which is used for atom mapping
         and atom type guessing.
 
@@ -39,16 +41,9 @@ class AtomLabel:
         """
         # use translations since it's faster than the alternative
         # methods as of writing e.g. re.sub
-        translation = str.maketrans("", "", ";=")
-        self.atm_label = atm_label.translate(translation)
-        self.grp_label = ""
-        if kwargs:
-            for k, v in kwargs.items():
-                self.grp_label += f"{k}={str(v).translate(translation)};"
-            self.grp_label = self.grp_label[:-1]
-        self.mass = kwargs.get("mass")
-        if self.mass is not None:
-            self.mass = float(self.mass)
+        self.atm_label = atm_label.translate(self.TRANSLATION)
+        self.props = kwargs | {"mass": mass}
+        self.mass = None if mass in {"None", None} else float(mass)
 
     def __eq__(self, other: AtLabel) -> bool:
         """Used to check if atom labels are equal.
@@ -86,12 +81,18 @@ class AtomLabel:
         """
         return hash((self.atm_label, self.grp_label, self.mass))
 
-    def __repr__(self) -> str:
+    @property
+    def grp_label(self):
+        return ";".join(f"{k}={str(v).translate(self.TRANSLATION)}" for k, v in self.props.items())
+
+    @property
+    def kw(self) -> dict[str, str]:
         grps = self.grp_label.split(";") if self.grp_label else []
         grps = (x.split("=") for x in grps)
-        cont = ", ".join(
-            f"{key}={val!r}" for key, val in (("atm_label", self.atm_label), *grps)
-        )
+        return dict((("atm_label", self.atm_label), *grps))
+
+    def __repr__(self) -> str:
+        cont = ", ".join(f"{key}={val!r}" for key, val in self.kw.items())
         return f"{type(self).__name__}({cont})"
 
 
@@ -116,19 +117,19 @@ def guess_element(atm_label: str, mass: float | int | None = None) -> str:
     AttributeError
         Error if unable to match to an element.
     """
-    if (mass is not None and mass == 0.0) or atm_label.upper() in [
+    if (mass is not None and mass == 0.0) or atm_label.upper() in {
         "DUMMY",
         "DU",
         "D",
         "M",
-    ]:
+    }:
         return "Du"
 
     regex = "([A-Za-z][A-Za-z]?)"
 
     guesses = []
     guess_0 = re.findall(regex, atm_label)
-    if len(guess_0) != 0:
+    if guess_0:
         guess = guess_0[0].capitalize()
         guesses.append(guess)
         if len(guess) == 2:
@@ -258,7 +259,9 @@ def mapping_to_labels(mapping: dict[str, dict[str, str]]) -> list[AtomLabel]:
     return labels
 
 
-def check_mapping_valid(mapping: dict[str, dict[str, str]], labels: list[AtomLabel]):
+def check_mapping_valid(
+    mapping: dict[str, dict[str, str]], labels: list[AtomLabel]
+) -> bool:
     """Given a list of labels check that the mapping is valid.
 
     Parameters
