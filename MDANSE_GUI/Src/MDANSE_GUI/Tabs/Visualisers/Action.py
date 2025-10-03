@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import traceback
 from pathlib import Path
+import math
 
 import numpy as np
-from qtpy.QtCore import Signal, Slot
+from qtpy.QtCore import Signal, Slot, QTimer
 from qtpy.QtWidgets import (
     QCheckBox,
     QFileDialog,
@@ -419,6 +420,14 @@ class Action(QWidget):
                 else:
                     text += f"<p>[{array[0]}, {array[1]}, {array[2]}, ..., {array[-1]}] ({new_unit})</p>"
             self._preview_box.setHtml(text)
+            # need to use singleshot to ensure we get the right height
+            QTimer.singleShot(0, lambda: self._preview_box.setFixedHeight(
+                math.ceil(
+                    self._preview_box.document().size().height() +
+                    self._preview_box.contentsMargins().top() +
+                    self._preview_box.contentsMargins().bottom()
+                )
+            ))
 
     @Slot()
     def allow_execution(self):
