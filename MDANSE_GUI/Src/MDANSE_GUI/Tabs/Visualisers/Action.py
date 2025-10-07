@@ -310,7 +310,7 @@ class Action(QWidget):
             self._preview_box = QLabel(self)
             QHBoxLayout(box).addWidget(self._preview_box)
             self.layout.addWidget(box)
-            self._widgets_in_layout["preview_box"] = self._preview_box
+            self._widgets_in_layout["preview_box"] = box
 
         if "button_base" not in self._widgets_in_layout:
             buttonbase = QWidget(self)
