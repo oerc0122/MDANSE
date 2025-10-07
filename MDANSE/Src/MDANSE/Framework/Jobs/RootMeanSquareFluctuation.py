@@ -71,9 +71,7 @@ class RootMeanSquareFluctuation(IJob):
         super().initialize()
         self.numberOfSteps = len(self.trajectory.atom_indices)
 
-        self.group_molecules = (
-            self.configuration["grouping_level"]["value"] != "atom"
-        )
+        self.group_molecules = self.configuration["grouping_level"]["value"] != "atom"
         self.ele_idxs = {}
 
         self._names = self.trajectory.atom_names
@@ -166,7 +164,9 @@ class RootMeanSquareFluctuation(IJob):
                     units="nm",
                 )
                 for i, idx in enumerate(idxs):
-                    self._outputData[f"rmsf/<{grp}>/all"][i] = self._outputData["rmsf/all"][idx]
+                    self._outputData[f"rmsf/<{grp}>/all"][i] = self._outputData[
+                        "rmsf/all"
+                    ][idx]
 
         # Write the output variables.
         self._outputData.write(
