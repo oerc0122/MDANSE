@@ -307,6 +307,7 @@ class Action(QWidget):
 
         if self._use_preview and "preview_box" not in self._widgets_in_layout:
             self._preview_box = QTextEdit(self)
+            self._preview_box.setLineWrapMode(QTextEdit.NoWrap)
             self.layout.addWidget(self._preview_box)
             self._widgets_in_layout["preview_box"] = self._preview_box
 
@@ -420,16 +421,13 @@ class Action(QWidget):
                 else:
                     text += f"<p>[{array[0]}, {array[1]}, {array[2]}, ..., {array[-1]}] ({new_unit})</p>"
             self._preview_box.setHtml(text)
-            # need to use singleshot to ensure we get the right height
-            QTimer.singleShot(
-                0,
-                lambda: self._preview_box.setFixedHeight(
-                    math.ceil(
-                        self._preview_box.document().size().height()
-                        + self._preview_box.contentsMargins().top()
-                        + self._preview_box.contentsMargins().bottom()
-                    )
-                ),
+            self._preview_box.document().adjustSize()
+            self._preview_box.setFixedHeight(
+                math.ceil(
+                    self._preview_box.document().size().height()
+                    + self._preview_box.contentsMargins().top()
+                    + self._preview_box.contentsMargins().bottom()
+                )
             )
 
     @Slot()
