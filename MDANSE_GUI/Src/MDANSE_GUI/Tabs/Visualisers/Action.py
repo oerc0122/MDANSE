@@ -20,7 +20,7 @@ import traceback
 from pathlib import Path
 
 import numpy as np
-from qtpy.QtCore import QTimer, Signal, Slot
+from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import (
     QCheckBox,
     QFileDialog,
@@ -308,6 +308,7 @@ class Action(QWidget):
         if self._use_preview and "preview_box" not in self._widgets_in_layout:
             self._preview_box = QTextEdit(self)
             self._preview_box.setLineWrapMode(QTextEdit.NoWrap)
+            self._preview_box.setReadOnly(True)
             self.layout.addWidget(self._preview_box)
             self._widgets_in_layout["preview_box"] = self._preview_box
 
