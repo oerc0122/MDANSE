@@ -26,8 +26,8 @@ class RootMeanSquareFluctuation(IJob):
 
     The root mean square fluctuation (RMSF) for a set of atoms is similar to the
     square root of the mean square displacement (MSD), except that it is spatially
-    resolved (by atom/residue/etc) rather than time resolved. It reveals the
-    dynamical heterogeneity of the molecule over the course of a MD simulation.
+    resolved rather than time resolved. It reveals the dynamical heterogeneity
+    of the molecule over the course of an MD simulation.
 
     As opposed to most analysis types, the result is a single number per atom index.
     """
@@ -65,9 +65,7 @@ class RootMeanSquareFluctuation(IJob):
     settings["running_mode"] = ("RunningModeConfigurator", {})
 
     def initialize(self):
-        """
-        Initialize the input parameters and analysis self variables
-        """
+        """Initialize the input parameters and analysis self variables"""
         super().initialize()
         self.numberOfSteps = len(self.trajectory.atom_indices)
 
@@ -107,14 +105,18 @@ class RootMeanSquareFluctuation(IJob):
             )
 
     def run_step(self, index):
-        """
-        Runs a single step of the job.\n
+        """Runs a single step of the job.
 
-        :Parameters:
-            #. index (int): The index of the step.
-        :Returns:
-            #. index (int): The index of the step.
-            #. rmsf (np.array): the calculated root mean square fluctuation for atom index
+        Parameters
+        ----------
+        index : int
+            The atom index.
+
+        Returns
+        -------
+        set[int, float]
+            The atom index and the calculated root mean square
+            fluctuation for that atom.
         """
         atom_index = self.trajectory.atom_indices[index]
         series = self.trajectory.read_atomic_trajectory(
@@ -127,23 +129,24 @@ class RootMeanSquareFluctuation(IJob):
         return index, rmsf
 
     def combine(self, index, x):
-        """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
-        """
+        """Combines returned results of run_step.
 
+        Parameters
+        ----------
+        index : int
+            The atom index.
+        x : float
+            The RMSF results for the atom.
+        """
         self._outputData["rmsf/all"][index] = x
         name = self._names[index]
         idxs = self.ele_idxs[name]
         self._outputData[f"rmsf/{name}"][idxs.index(index)] = x
 
     def finalize(self):
+        """Finalizes the calculations (e.g. averaging the total term, output
+        files creations ...).
         """
-        Finalizes the calculations (e.g. averaging the total term, output files creations ...).
-        """
-
         if self.group_molecules:
             for grp in self.trajectory.group_lookup:
                 eles = self.trajectory.group_elements(grp)
