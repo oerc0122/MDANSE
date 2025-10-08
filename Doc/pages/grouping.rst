@@ -188,8 +188,9 @@ Root Mean Square Fluctuation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The root mean square fluctuation (RMSF) analysis does not average
-results but instead calculates them on and groups them together.
-With the ``atom`` option, the RMSF results will be split up so that there will
-be results for each atom type. With the ``molecule`` option, the RMSF
-results will be split up so that there will be results for each atom type
-in each molecule and the results for all atoms in each molecule.
+results but instead calculates them for individual atoms and groups them together.
+With the ``atom`` option, the RMSF results will be split up into datasets,
+with one dataset per each atom type. With the ``molecule`` option, the RMSF
+results will be split up into groups of datasets, with one group per molecule type.
+A group will contain results for each atom type in the molecule,
+as well as the results for all atoms in the molecule.
