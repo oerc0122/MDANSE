@@ -20,8 +20,6 @@ import math
 from collections import Counter, defaultdict
 from collections.abc import Sequence
 from enum import auto
-from functools import cached_property
-from more_itertools import always_iterable
 from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -153,14 +151,14 @@ class Trajectory:
         self.selection_getter = None
         self._transmutation = {}
 
-    @cached_property
+    @property
     def atom_indices(self) -> list[int]:
         """Indices of the currently selected atoms."""
         if self._selection:
             return self._selection
         return list(range(len(self.atom_types)))
 
-    @cached_property
+    @property
     def atom_types(self) -> Sequence[str]:
         """Chemical elements of ALL atoms, with transmutation applied."""
         if not self._transmutation:
@@ -170,7 +168,7 @@ class Trajectory:
             temp[index] = type
         return temp
 
-    @cached_property
+    @property
     def element_from_label(self) -> dict[str, str]:
         """Maps the full atom labels to the chemical elements.
 
@@ -192,7 +190,7 @@ class Trajectory:
             mapping.update(temp_names)
         return mapping
 
-    @cached_property
+    @property
     def group_lookup(self) -> dict[str, int] | dict[str, list[int]]:
         """Dictionary of currently existing groups.
 
@@ -217,7 +215,7 @@ class Trajectory:
 
         return {k: v for k, v in temp_dict.items() if v}
 
-    @cached_property
+    @property
     def atom_names(self) -> Sequence[str]:
         """Labels of ALL the atoms, after transmutation."""
         if self._grouping_level == GroupingLevels.EACH_MOLECULE:
