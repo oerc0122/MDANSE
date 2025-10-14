@@ -54,6 +54,6 @@ def test_atom_transmutation_reset(protein_trajectory):
     atm_transmuter = AtomTransmuter(protein_trajectory)
     atm_transmuter.apply('{"0": {"function_name": "select_atoms", "atom_types": ["S"]}}', "C")
     atm_transmuter.apply('{"0": {"function_name": "select_atoms", "index_list": [98, 99]}}', "S")
-    atm_transmuter.reset_setting()
+    atm_transmuter.reset()
     mapping = atm_transmuter.get_setting()
     assert mapping == {}

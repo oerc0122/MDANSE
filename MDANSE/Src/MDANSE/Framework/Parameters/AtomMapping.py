@@ -40,12 +40,16 @@ if TYPE_CHECKING:
 
 
 class Mapper(ABC):
+    """Base class for mapping types."""
+
     def __init__(self):
         self._original_map = {}
         self._new_map = {}
 
     def get_full_setting(self) -> dict[int, float]:
         """
+        Get resultant setting map.
+
         Returns
         -------
         dict[int, float]
@@ -55,10 +59,12 @@ class Mapper(ABC):
 
     def get_setting(self) -> dict[int, float]:
         """
+        Get overridden settings.
+
         Returns
         -------
         dict[int, float]
-            The minimal partial charge setting.
+            The minimal overridden settings.
         """
         return {
             key: self._new_map[key] for key in self._original_map.keys() & self._new_map
@@ -66,6 +72,8 @@ class Mapper(ABC):
 
     def get_json_setting(self) -> str:
         """
+        Get settings as JSON string.
+
         Returns
         -------
         str
@@ -73,12 +81,25 @@ class Mapper(ABC):
         """
         return json.dumps(self.get_setting())
 
-    def reset_setting(self) -> None:
-        """Resets the mapping."""
-        self._new_map = {}
-
     @staticmethod
     def get_selector(selection_string: str | Path | dict) -> ReusableSelection:
+        """Get a reusable selector for the mapping.
+
+        Parameters
+        ----------
+        selection_string : str | Path | dict
+            Selection as JSON.
+
+        Returns
+        -------
+        ReusableSelection
+            Selector.
+
+        Raises
+        ------
+        ConfigError
+            If invalid selection JSON.
+        """
         selector = ReusableSelection()
         try:
             selection = json_handler(selection_string)
@@ -97,6 +118,8 @@ class Mapper(ABC):
 
 
 class AtomMapping(ConfigureDescriptor[dict | str, dict[str, dict[str, str]]]):
+    """Parameter for mapping from species to species."""
+
     default_tooltip = "Mapping of index to new species"
 
     def __init__(self, default: dict[str, dict[str, str]] | str = "{}", **kwargs):
@@ -139,9 +162,8 @@ class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
 
     Attributes
     ----------
-    _default : str
+    default : Collection[int] | dict | None
         The defaults selection setting.
-
     """
 
     def __init__(self, default: Collection[int] | dict | None = None, **kwargs):
@@ -231,9 +253,12 @@ class PartialCharge(ConfigureDescriptor[str | Path | dict, dict[int, float]]):
 
 
 class PartialChargeMapper(Mapper):
-    """The partial charge mapper. Updates an atom partial charge map
-    with applications of the update_charges method with a selection
-    setting and partial charge."""
+    """The partial charge mapper.
+
+    Updates an atom partial charge map with application of
+    :meth:`update_charges` with a selection setting and partial
+    charge.
+    """
 
     def __init__(self, trajectory: Trajectory):
         """
@@ -252,8 +277,7 @@ class PartialChargeMapper(Mapper):
         }
 
     def apply(self, selection_string: Path | str | dict, charge: float) -> None:
-        """With the selection dictionary update the selector and then
-        update the partial charge map.
+        """Update the selector and then update the partial charge map.
 
         Parameters
         ----------
@@ -297,6 +321,8 @@ class PartialChargeMapper(Mapper):
 
 
 class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
+    """Grouping level selector."""
+
     def __init__(
         self,
         *args,
@@ -335,9 +361,11 @@ class GroupingLevel(SingleChoice[GroupingLevels | str, GroupingLevels]):
 
 
 class AtomTransmuter(Mapper):
-    """The atom transmuter setting generator. Updates an atom
-    transmutation setting with applications of the apply_transmutation
-    method with a selection setting and symbol."""
+    """The atom transmuter setting generator.
+
+    Updates an atom transmutation setting with application of
+    :meth:`apply_transmutation` with a selection setting and symbol.
+    """
 
     def __init__(self, trajectory: Trajectory) -> None:
         """
@@ -351,8 +379,7 @@ class AtomTransmuter(Mapper):
         self._original_map = dict(enumerate(trajectory.chemical_system.atom_list))
 
     def apply(self, selection_string: str, symbol: str) -> None:
-        """With the selection dictionary update selector and then
-        update the transmutation map.
+        """Update selector and then update the transmutation map.
 
         Parameters
         ----------

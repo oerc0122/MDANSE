@@ -56,20 +56,12 @@ def _nop(x: str) -> str:
 
 
 class StrCases(UCEnum):
+    """Case settings for string parameters"""
+
     PRESERVE = _nop
     UPPER = str.upper
     LOWER = str.lower
     TITLE = str.title
-
-    @classmethod
-    def _missing_(cls, value):
-        if isinstance(value, str):
-            value = value.upper()
-
-        for member in cls:
-            if member.name == value or member.value is value:
-                return member
-        return NotImplemented
 
 
 class NumericRange(Generic[T]):
@@ -150,9 +142,7 @@ class Boolean(ConfigureDescriptor[Bools, bool]):
 
 
 class Float(MinMax[float], ConfigureDescriptor[SupportsFloat, float]):
-    """
-    This configurator allows to input a float value.
-    """
+    """Floating point parameter."""
 
     def __init__(
         self,
@@ -184,7 +174,7 @@ class Float(MinMax[float], ConfigureDescriptor[SupportsFloat, float]):
 
 
 class Integer(MinMax[int], ConfigureDescriptor[SupportsInt, int]):
-    """Configurator takes an integer input."""
+    """Integer parameter."""
 
     def validate(self, value: SupportsInt, deps: Depends, /) -> int:
         if self.optional and value is None:
@@ -206,8 +196,10 @@ class Dict(
     ConfigureDescriptor[Sequence[tuple[K, V]] | dict[K, V] | str | Path, dict[K, V]]
 ):
     """
-    This configurator allows a user to input a dict value.
+    Dictionary parameter.
 
+    Notes
+    -----
     `choices` are keys which *must* be present in the dict.
 
     `exclude` are keys which *must not* be present in the dict.
@@ -267,8 +259,14 @@ class Dict(
 
 
 class String(ConfigureDescriptor[str, str]):
-    """
-    This configurator allows to input a string value.
+    """String parameter.
+
+    Parameters
+    ----------
+    case : Callable[[str], str]
+        Function to modify case if needed.
+    regex : str | re.Pattern | None, optional
+        Regular Expression to validate string against.
     """
 
     def __init__(
@@ -284,6 +282,7 @@ class String(ConfigureDescriptor[str, str]):
 
     @property
     def regex(self) -> re.Pattern | None:
+        """Validation regular expression."""
         return self._regex
 
     @regex.setter
@@ -312,8 +311,16 @@ class String(ConfigureDescriptor[str, str]):
 
 
 class PathParam(ConfigureDescriptor[str | Path, Path]):
-    """
-    This configurator allows to input a path value.
+    """Path parameter.
+
+    Parameters
+    ----------
+    mode : FileModes
+        Required file status.
+    extensions : dict[str, str], optional
+        Expected file extensions (for GUI)
+    directory : bool (unused)
+        Whether path can refer to a directory.
     """
 
     class FileModes(UCEnum):
@@ -368,8 +375,13 @@ class PathParam(ConfigureDescriptor[str | Path, Path]):
 
 
 class ManyPath(PathParam):
+    """Parameter for specifying multiple files simultaneously.
+
+    Files can be defined as either a Sequence of paths or
+    a semi-colon separated list of paths.
+    """
     def validate(
-        self, value: Path | str, deps: Depends, /
+        self, value: Sequence[Path | str] | Path | str, deps: Depends, /
     ) -> Sequence[Path | str | None]:
         if self.optional and not value:
             return ()
@@ -394,8 +406,14 @@ class Range(
         NumericRange[T],
     ],
 ):
-    """
-    This configurator allows a user to input a range value.
+    """Range parameter.
+
+    Parameters
+    ----------
+    include_last : bool
+        Whether range is inclusive (True) or exclusive (False).
+    dtype : type
+        Return value data type.
     """
 
     def __init__(
@@ -451,6 +469,17 @@ class Range(
 
 
 class Array(ConfigureDescriptor[str | npt.ArrayLike, np.ndarray]):
+    """Array parameter.
+
+    Parameters
+    ----------
+    shape : tuple[int, ...]
+        Expected data shape.
+    dtype : type
+        Array datatype to return.
+    non_zero : bool
+        Whether array must have a non-zero critical value.
+    """
     def __init__(
         self,
         *,
@@ -491,6 +520,17 @@ class Array(ConfigureDescriptor[str | npt.ArrayLike, np.ndarray]):
 
 
 class Vector(Array):
+    """Vector parameter.
+
+    Subset of array type.
+
+    Parameters
+    ----------
+    length : int
+        Length of vector.
+    normalise : bool
+        Whether vector should be normalised on return.
+    """
     def __init__(
         self,
         *,

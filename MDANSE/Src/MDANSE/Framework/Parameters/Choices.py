@@ -29,8 +29,14 @@ T = TypeVar("T")
 
 
 class Choice(ConfigureDescriptor[P, T]):
-    """
-    Select an option from a multiple choice set.
+    """Select an option from a multiple choice set.
+
+    Parameters
+    ----------
+    n_choices : int or None
+        Maximum number of valid choices (unlimited if ``None``)
+    aliases : dict
+        Alternative names/symbols which are allowed.
     """
 
     def __init__(
@@ -68,6 +74,8 @@ class Choice(ConfigureDescriptor[P, T]):
 
 
 class MultipleChoice(Choice[Sequence[P], Sequence[T]]):
+    """Select multiple options from the set of choices."""
+
     def __init__(self, *args, choices: Sequence[T], n_choices: int | None, **params):
         super().__init__(*args, choices=choices, n_choices=n_choices, **params)
 
@@ -95,6 +103,8 @@ class MultipleChoice(Choice[Sequence[P], Sequence[T]]):
 
 
 class SingleChoice(Choice[P, T]):
+    """Select a single option from the set of choices."""
+
     def __init__(self, choices: Container[T], n_choices: None = None, **params):
         if n_choices is not None:
             raise ConfigError(f"Cannot define n_choices in {type(self).__name__}")
@@ -106,6 +116,8 @@ class SingleChoice(Choice[P, T]):
 
 
 class DynamicSingleChoice(SingleChoice[P, T]):
+    """Select a single option from a set of choices drawn from an object."""
+
     def __init__(self, choices: str, **params):
         super().__init__(choices=(), **params)
         self.getter = choices
@@ -131,6 +143,8 @@ class DynamicSingleChoice(SingleChoice[P, T]):
 
 
 class DynamicMultiChoice(MultipleChoice[Sequence[P], Sequence[T]]):
+    """Select multiple options form a set of choices drawn from an object."""
+
     def __init__(self, choices: str, n_choices: int | None, **params):
         super().__init__(choices=(), n_choices=n_choices, **params)
         self.getter = choices
