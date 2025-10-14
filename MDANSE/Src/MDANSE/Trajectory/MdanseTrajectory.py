@@ -436,6 +436,9 @@ class MdanseTrajectory(TrajectoryFile):
 
         data_type = self._data_types[index]
 
+        if data_type == b"str":
+            return ATOMS_DATABASE.get_atom_property(atom_symbol, atom_property)
+
         if index not in self._data_units:
             data_unit = "none"
             try:
@@ -466,11 +469,6 @@ class MdanseTrajectory(TrajectoryFile):
 
         elif data_type == b"int":
             out = int(value)
-
-        elif data_type == b"str":
-            if isinstance(value, bytes):
-                value = value.decode("utf-8")
-            out = value
 
         else:
             out = str_to_num(value)
