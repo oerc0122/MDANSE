@@ -420,7 +420,7 @@ class MolecularViewer(QtWidgets.QWidget):
         )
 
         tree = KDTree(grid)
-        contacts = tree.query_ball_point(coords, radius)
+        contacts = tree.query_ball_point(coords, radius, workers=-1)
         n_dists = sum([len(i) for i in contacts])
 
         js = np.zeros(n_dists, dtype=int)
