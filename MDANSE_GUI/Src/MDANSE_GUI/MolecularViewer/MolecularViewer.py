@@ -381,32 +381,54 @@ class MolecularViewer(QtWidgets.QWidget):
         LOG.info(f"Computing isosurface of atom {index}")
         if params is None:
             params = copy.copy(TRACE_PARAMETERS)
-        fine_sampling = params.get("fine_sampling", 5)
+
+        smearing_factor = params.get("smearing_factor", 1)
+        grid_step = params.get("grid_sampling", 0.02)
         rgb = params.get("surface_colour", (0, 0.5, 0.75))
         opacity = params.get("surface_opacity", 0.5)
         trace_cutoff = params.get("trace_cutoff", 90) / 100
 
         coords = self._reader.read_atom_trajectory(index)
         element = self._reader._atom_types[index]
-        radius = self._reader._trajectory.get_atom_property(element, "covalent_radius")
+        radius = smearing_factor * self._reader._trajectory.get_atom_property(
+            element, "vdw_radius"
+        )
 
-        upper_limit = np.max(coords, axis=0) + radius / (2 * trace_cutoff)
-        lower_limit = np.min(coords, axis=0) - radius / (2 * trace_cutoff)
+        upper_limit = np.max(coords, axis=0) + radius
+        lower_limit = np.min(coords, axis=0) - radius
         span = upper_limit - lower_limit
-        grid_step = radius / fine_sampling
         grid_steps = list((span // grid_step).astype(int))
 
         xs = np.linspace(lower_limit[0], upper_limit[0], grid_steps[0])
         ys = np.linspace(lower_limit[1], upper_limit[1], grid_steps[1])
         zs = np.linspace(lower_limit[2], upper_limit[2], grid_steps[2])
-        grid = np.stack(list(np.meshgrid(xs, ys, zs, indexing="ij")), axis=-1)
+        grid = np.stack(list(np.meshgrid(xs, ys, zs, indexing="ij")), axis=-1).reshape(
+            -1, 3
+        )
 
-        vals = np.zeros(grid_steps)
-        for coord in coords:
-            diff = grid - coord
-            sq_dist = np.sum(diff**2, axis=-1)
-            vals += np.exp(-sq_dist / (2 * radius**2))
+        tree = KDTree(grid)
+        contacts = tree.query_ball_point(coords, radius, workers=-1)
+        n_dists = sum([len(i) for i in contacts])
+
+        js = np.zeros(n_dists, dtype=int)
+        ks = np.zeros(n_dists, dtype=int)
+        start = 0
+        for i, idxs in enumerate(contacts):
+            n_idxs = len(idxs)
+            if n_idxs == 0:
+                continue
+            js[start : start + n_idxs] = i
+            ks[start : start + n_idxs] = idxs
+            start += n_idxs
+
+        diff = coords[js] - grid[ks]
+        sq_dist = np.sum(diff**2, axis=-1)
+        exp_res = np.exp(-sq_dist / (2 * (radius / 3) ** 2))
+
+        vals = np.zeros(grid.shape[0])
+        np.add.at(vals, ks, exp_res)
         vals = vals / np.max(vals)
+        vals = vals.reshape(grid_steps)
 
         self._image = array_to_3d_imagedata(vals, (grid_step, grid_step, grid_step))
 

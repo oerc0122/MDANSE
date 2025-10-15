@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 TRACE_PARAMETERS = {
     "atom_number": 0,
-    "fine_sampling": 3,
+    "grid_sampling": 0.02,
     "surface_colour": (0, 0.5, 0.75),
     "surface_opacity": 0.5,
     "trace_cutoff": 5,
@@ -142,7 +142,8 @@ class TraceWidget(QWidget):
         self._atom_spinbox = QSpinBox(self)
         self._surface_spinbox = QSpinBox(self)
         self._fraction_spinbox = QSpinBox(self)
-        self._grid_spinbox = QSpinBox(self)
+        self._smearing_spinbox = QDoubleSpinBox(self)
+        self._grid_spinbox = QDoubleSpinBox(self)
         self._opacity_spinbox = QDoubleSpinBox(self)
         self._colour_lineedit = QLineEdit("0,128,192", self)
         self._colour_lineedit.setPlaceholderText("0,128,192 (red,green,blue)")
@@ -160,15 +161,22 @@ class TraceWidget(QWidget):
         self.update_limits()
         self._fraction_spinbox.setMaximum(100)
         self._fraction_spinbox.setValue(50)
-        self._grid_spinbox.setMaximum(10)
-        self._grid_spinbox.setMinimum(1)
-        self._grid_spinbox.setValue(3)
+        self._smearing_spinbox.setMaximum(10)
+        self._smearing_spinbox.setMinimum(0.01)
+        self._smearing_spinbox.setValue(1)
+        self._smearing_spinbox.setSingleStep(0.2)
+        self._grid_spinbox.setDecimals(3)
+        self._grid_spinbox.setMaximum(0.1)
+        self._grid_spinbox.setMinimum(0.001)
+        self._grid_spinbox.setValue(0.02)
+        self._grid_spinbox.setSingleStep(0.001)
         self._opacity_spinbox.setMaximum(1.0)
         self._opacity_spinbox.setValue(0.5)
         self._opacity_spinbox.setSingleStep(0.01)
         for label, widget in [
             ("Selected atom index: ", self._atom_spinbox),
-            ("Sampling step (1=coarse, 10=fine)", self._grid_spinbox),
+            ("Radius smearing factor (larger=more smearing)", self._smearing_spinbox),
+            ("Grid step (0.10=coarse, 0.01=fine) / nm", self._grid_spinbox),
             ("Trace percentile for isovalue", self._fraction_spinbox),
             ("Isosurface opacity", self._opacity_spinbox),
             ("Isosurface colour (R,G,B)", self._colour_lineedit),
@@ -246,7 +254,8 @@ class TraceWidget(QWidget):
                 float(x) / 256 for x in self._colour_lineedit.text().split(",")
             ]
         params["trace_cutoff"] = self._fraction_spinbox.value()
-        params["fine_sampling"] = self._grid_spinbox.value()
+        params["smearing_factor"] = self._smearing_spinbox.value()
+        params["grid_sampling"] = self._grid_spinbox.value()
         params["surface_opacity"] = self._opacity_spinbox.value()
         return params
 
