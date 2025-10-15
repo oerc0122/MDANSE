@@ -388,7 +388,7 @@ class MolecularViewer(QtWidgets.QWidget):
         grid_step = params.get("grid_sampling", 0.02)
         rgb = params.get("surface_colour", (0, 0.5, 0.75))
         opacity = params.get("surface_opacity", 0.5)
-        trace_cutoff = params.get("trace_cutoff", 90) / 100
+        trace_isovalue = params.get("trace_isovalue", 0.5)
 
         # interpolate the trajectory and sample to reduce the number of
         # positions that will be evaluated or if there are only a few
@@ -452,7 +452,7 @@ class MolecularViewer(QtWidgets.QWidget):
             new_isocontour.SetInput(self.image)
         else:
             new_isocontour.SetInputData(self._image)
-        new_isocontour.SetValue(0, trace_cutoff)
+        new_isocontour.SetValue(0, trace_isovalue)
 
         self._depthSort = vtk.vtkDepthSortPolyData()
         self._depthSort.SetInputConnection(new_isocontour.GetOutputPort())

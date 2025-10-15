@@ -42,7 +42,7 @@ TRACE_PARAMETERS = {
     "grid_sampling": 0.02,
     "surface_colour": (0, 0.5, 0.75),
     "surface_opacity": 0.5,
-    "trace_cutoff": 5,
+    "trace_isovalue": 0.5,
     "surface_number": -1,
 }
 
@@ -116,7 +116,7 @@ class TraceWidget(QWidget):
         initial_parameters = copy.copy(TRACE_PARAMETERS)
         self._opacity = initial_parameters["surface_opacity"]
         self._color = initial_parameters["surface_colour"]
-        self._iso_percentile = initial_parameters["trace_cutoff"]
+        self._trace_isovalue = initial_parameters["trace_isovalue"]
         self.populate_layout()
 
     def initialise_values(self, viewer: MolecularViewer):
@@ -143,7 +143,7 @@ class TraceWidget(QWidget):
         self.remove_trace_button.clicked.connect(self.remove_trace)
         self._atom_spinbox = QSpinBox(self)
         self._surface_spinbox = QSpinBox(self)
-        self._fraction_spinbox = QSpinBox(self)
+        self._fraction_spinbox = QDoubleSpinBox(self)
         self._sampling_spinbox = QSpinBox(self)
         self._smearing_spinbox = QDoubleSpinBox(self)
         self._grid_spinbox = QDoubleSpinBox(self)
@@ -162,8 +162,9 @@ class TraceWidget(QWidget):
             sbox.setMinimum(0)
             sbox.setValue(0)
         self.update_limits()
-        self._fraction_spinbox.setMaximum(100)
-        self._fraction_spinbox.setValue(50)
+        self._fraction_spinbox.setMaximum(1)
+        self._fraction_spinbox.setValue(0.5)
+        self._fraction_spinbox.setSingleStep(0.01)
         self._smearing_spinbox.setMaximum(10)
         self._smearing_spinbox.setMinimum(0.01)
         self._smearing_spinbox.setValue(1)
@@ -184,7 +185,7 @@ class TraceWidget(QWidget):
             ("Selected atom index: ", self._atom_spinbox),
             ("Number of trajectory samples", self._sampling_spinbox),
             ("Position smearing (larger=more smearing)", self._smearing_spinbox),
-            ("Grid step (0.10=coarse, 0.01=fine) / nm", self._grid_spinbox),
+            ("Grid step (0.050=coarse, 0.005=fine) / nm", self._grid_spinbox),
             ("Trace isovalue", self._fraction_spinbox),
             ("Isosurface opacity", self._opacity_spinbox),
             ("Isosurface colour (R,G,B)", self._colour_lineedit),
@@ -262,7 +263,7 @@ class TraceWidget(QWidget):
                 float(x) / 256 for x in self._colour_lineedit.text().split(",")
             ]
         params["traj_samples"] = self._sampling_spinbox.value()
-        params["trace_cutoff"] = self._fraction_spinbox.value()
+        params["trace_isovalue"] = self._fraction_spinbox.value()
         params["smearing_factor"] = self._smearing_spinbox.value()
         params["grid_sampling"] = self._grid_spinbox.value()
         params["surface_opacity"] = self._opacity_spinbox.value()
