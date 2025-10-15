@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 
 TRACE_PARAMETERS = {
     "atom_number": 0,
+    "traj_sampling": 1000,
+    "smearing_factor": 1,
     "grid_sampling": 0.02,
     "surface_colour": (0, 0.5, 0.75),
     "surface_opacity": 0.5,
@@ -142,6 +144,7 @@ class TraceWidget(QWidget):
         self._atom_spinbox = QSpinBox(self)
         self._surface_spinbox = QSpinBox(self)
         self._fraction_spinbox = QSpinBox(self)
+        self._sampling_spinbox = QSpinBox(self)
         self._smearing_spinbox = QDoubleSpinBox(self)
         self._grid_spinbox = QDoubleSpinBox(self)
         self._opacity_spinbox = QDoubleSpinBox(self)
@@ -165,6 +168,10 @@ class TraceWidget(QWidget):
         self._smearing_spinbox.setMinimum(0.01)
         self._smearing_spinbox.setValue(1)
         self._smearing_spinbox.setSingleStep(0.2)
+        self._sampling_spinbox.setMinimum(100)
+        self._sampling_spinbox.setMaximum(1000000)
+        self._sampling_spinbox.setValue(1000)
+        self._sampling_spinbox.setSingleStep(1)
         self._grid_spinbox.setDecimals(3)
         self._grid_spinbox.setMaximum(0.1)
         self._grid_spinbox.setMinimum(0.001)
@@ -175,7 +182,8 @@ class TraceWidget(QWidget):
         self._opacity_spinbox.setSingleStep(0.01)
         for label, widget in [
             ("Selected atom index: ", self._atom_spinbox),
-            ("Radius smearing factor (larger=more smearing)", self._smearing_spinbox),
+            ("Number of trajectory samples", self._sampling_spinbox),
+            ("Position smearing (larger=more smearing)", self._smearing_spinbox),
             ("Grid step (0.10=coarse, 0.01=fine) / nm", self._grid_spinbox),
             ("Trace percentile for isovalue", self._fraction_spinbox),
             ("Isosurface opacity", self._opacity_spinbox),
@@ -253,6 +261,7 @@ class TraceWidget(QWidget):
             params["surface_colour"] = [
                 float(x) / 256 for x in self._colour_lineedit.text().split(",")
             ]
+        params["traj_samples"] = self._sampling_spinbox.value()
         params["trace_cutoff"] = self._fraction_spinbox.value()
         params["smearing_factor"] = self._smearing_spinbox.value()
         params["grid_sampling"] = self._grid_spinbox.value()

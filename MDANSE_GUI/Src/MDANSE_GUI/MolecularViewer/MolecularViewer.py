@@ -24,6 +24,7 @@ import vtk
 from qtpy import QtWidgets
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QSizePolicy
+from scipy.interpolate import CubicSpline
 from scipy.spatial import cKDTree as KDTree
 from scipy.spatial.transform import Rotation as R
 from vtk.util import numpy_support
@@ -382,13 +383,25 @@ class MolecularViewer(QtWidgets.QWidget):
         if params is None:
             params = copy.copy(TRACE_PARAMETERS)
 
+        traj_sampling = params.get("traj_samples", 1000)
         smearing_factor = params.get("smearing_factor", 1)
         grid_step = params.get("grid_sampling", 0.02)
         rgb = params.get("surface_colour", (0, 0.5, 0.75))
         opacity = params.get("surface_opacity", 0.5)
         trace_cutoff = params.get("trace_cutoff", 90) / 100
 
+        # interpolate the trajectory and sample to reduce the number of
+        # positions that will be evaluated or if there are only a few
+        # positions then interpolate to ensure that the atom trace
+        # is continuous
         coords = self._reader.read_atom_trajectory(index)
+        idxs1 = np.linspace(0, 1, num=coords.shape[0])
+        idxs2 = np.linspace(0, 1, num=traj_sampling)
+        f_x = CubicSpline(idxs1, coords[:, 0])
+        f_y = CubicSpline(idxs1, coords[:, 1])
+        f_z = CubicSpline(idxs1, coords[:, 2])
+        coords = np.stack((f_x(idxs2), f_y(idxs2), f_z(idxs2)), axis=-1)
+
         element = self._reader._atom_types[index]
         radius = smearing_factor * self._reader._trajectory.get_atom_property(
             element, "vdw_radius"
@@ -407,7 +420,7 @@ class MolecularViewer(QtWidgets.QWidget):
         )
 
         tree = KDTree(grid)
-        contacts = tree.query_ball_point(coords, radius, workers=-1)
+        contacts = tree.query_ball_point(coords, radius)
         n_dists = sum([len(i) for i in contacts])
 
         js = np.zeros(n_dists, dtype=int)
