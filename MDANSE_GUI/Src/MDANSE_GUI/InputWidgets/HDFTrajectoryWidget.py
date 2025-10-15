@@ -15,67 +15,50 @@
 #
 from __future__ import annotations
 
-import os
-from pathlib import PurePath
+from pathlib import Path
 
 from qtpy.QtWidgets import QLabel
 
+from MDANSE.Framework.Parameters import MDANSEResult, MDANSETrajectory
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class HDFTrajectoryWidget(WidgetBase):
-    def __init__(self, *args, trajectory_instance: Trajectory | None = None, **kwargs):
-        super().__init__(*args, **kwargs)
-        filename = kwargs.get("source_object")
-        if trajectory_instance:
-            self._configurator._instance = trajectory_instance
-            self._configurator.configure_from_instance()
-            filename = trajectory_instance.filename
-        elif filename is not None:
-            self._configurator.configure(str(filename))
-        if not filename:
+    def __init__(
+        self,
+        *args,
+        parameter: MDANSETrajectory | MDANSEResult,
+        **kwargs,
+    ):
+        super().__init__(*args, parameter=parameter, **kwargs)
+
+        if not self.valid:
             label = QLabel("No Trajectory available", self._base)
             self._layout.addWidget(label)
         else:
+            filename = Path(self.raw)
             label = QLabel(str(filename), self._base)
             self._layout.addWidget(label)
-            trajectory_path, _ = os.path.split(filename)
-            self.default_path = PurePath(trajectory_path)
+            self.default_path = filename.parent
+
         self.default_labels()
         self.update_labels()
-        if self._tooltip:
-            tooltip_text = self._tooltip
-        else:
-            tooltip_text = "A single logical value that can be True of False"
+
+        tooltip_text = self._tooltip or "A trajectory"
+
         label.setToolTip(tooltip_text)
         self._label = label
-
-    def configure_using_default(self):
-        """This is too static to have a default value"""
 
     def default_labels(self):
         """Each Widget should have a default tooltip and label,
         which will be set in this method, unless specific
         values are provided in the settings of the job that
         is being configured."""
-        if self._label_text == "":
+        if not self._label_text:
             self._label_text = "HDFTrajectoryWidget"
-        if self._tooltip == "":
+        if not self._tooltip:
             self._tooltip = "The input trajectory to be processed"
 
-    def get_value(self):
-        return self._configurator["value"]
-
     def get_widget_value(self):
-        result = self.get_value()
-        if not self._configurator.valid:
-            self.mark_error(self._configurator.error_status)
-        else:
-            self.mark_warning(self._configurator.warning_status)
-            if self._configurator.warning_status:
-                self._label.setToolTip(self._configurator.warning_status)
-            else:
-                self._label.setToolTip(self._tooltip)
-            self.value_updated.emit()
-        return result
+        return self.get_value()

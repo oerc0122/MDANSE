@@ -110,6 +110,7 @@ class OutputFile(CustomConfig):
             return
 
         if isinstance(value, dict):
+            print(value)
             self.set(**value)
             return
 
@@ -138,7 +139,11 @@ def add_mdt(_desc, value, _deps):
 
 
 class OutputTrajectory(OutputFile):
-    path = PathParam(mode="w", on_set=add_mdt)
+    path = PathParam(
+        mode="w",
+        extensions={"MDANSE Trajectory": "*.mdt"},
+        on_set=add_mdt,
+    )
     out_format = OutputFormat(
         ("MDTFormat",),
         default=("MDTFormat",),
@@ -166,6 +171,7 @@ class OutputTrajectory(OutputFile):
         chunk_size: int = 128,
         compression: str = "none",
         log_level: LogLevels = LogLevels.NONE,
+        out_format: None = None,
     ) -> None:
         """Set values from old-style tuple."""
         self.path = path

@@ -31,23 +31,50 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from MDANSE.Framework.Configurators.HDFTrajectoryConfigurator import (
-    HDFTrajectoryConfigurator,
-)
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    Array,
+    AtomMapping,
+    AtomSelection,
+    AtomTransmutation,
+    Boolean,
+    CorrelationWindow,
+    DynamicMultiChoice,
+    DynamicSingleChoice,
+    Filter,
+    Float,
+    FrameSelect,
+    GroupingLevel,
+    InstrumentResolution,
+    Integer,
+    InterpOrder,
+    ManyPath,
+    MDANSEResult,
+    MDANSETrajectory,
+    MolecularAxis,
+    MultipleChoice,
+    OutputFile,
+    OutputTrajectory,
+    PartialCharge,
+    PathParam,
+    Projection,
+    QVectors,
+    Range,
+    RangeCellCutoff,
+    RunningMode,
+    SingleChoice,
+    String,
+    Vector,
+    Weights,
+)
+from MDANSE.Framework.Parameters.Parameters import Parameter
 from MDANSE.IO.IOUtils import summarise_array
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE_GUI.InputWidgets import (
-    AseInputFileWidget,
     AtomMappingWidget,
-    AtomSelectionWidget,
-    AtomTransmutationWidget,
-    BackupWidget,
     BooleanWidget,
     ComboWidget,
-    CorrelationFramesWidget,
-    DerivativeOrderWidget,
     DistHistCutoffWidget,
     FloatWidget,
     FramesWidget,
@@ -55,75 +82,89 @@ from MDANSE_GUI.InputWidgets import (
     InputFileWidget,
     InstrumentResolutionWidget,
     IntegerWidget,
-    InterpolationOrderWidget,
-    MDAnalysisCoordinateFileWidget,
-    MDAnalysisMDTrajTimeStepWidget,
-    MDAnalysisTopologyFileWidget,
-    MDTrajTopologyFileWidget,
     MoleculeAndAxisWidget,
-    MoleculeWidget,
     MultiInputFileWidget,
-    MultipleCombosWidget,
     OptionalFloatWidget,
     OutputFilesWidget,
-    OutputStructureWidget,
     OutputTrajectoryWidget,
     PartialChargeWidget,
     ProjectionWidget,
     QVectorsWidget,
     RangeWidget,
     RunningModeWidget,
-    TrajectoryFilterWidget,
-    UnitCellWidget,
     VectorWidget,
     WeightsWidget,
 )
+from MDANSE_GUI.InputWidgets.DummyWidget import DummyWidget
 from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
 from MDANSE_GUI.Widgets.DelayedButton import DelayedButton
 
-widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
-    "FloatConfigurator": FloatWidget,
-    "OptionalFloatConfigurator": OptionalFloatWidget,
-    "BooleanConfigurator": BooleanWidget,
-    "IntegerConfigurator": IntegerWidget,
-    "CorrelationFramesConfigurator": CorrelationFramesWidget,
-    "FramesConfigurator": FramesWidget,
-    "RangeConfigurator": RangeWidget,
-    "DistHistCutoffConfigurator": DistHistCutoffWidget,
-    "VectorConfigurator": VectorWidget,
-    "HDFInputFileConfigurator": InputFileWidget,
-    "HDFTrajectoryConfigurator": HDFTrajectoryWidget,
-    "DerivativeOrderConfigurator": DerivativeOrderWidget,
-    "InterpolationOrderConfigurator": InterpolationOrderWidget,
-    "OutputFilesConfigurator": OutputFilesWidget,
-    "InputFileConfigurator": InputFileWidget,
-    "AseInputFileConfigurator": AseInputFileWidget,
-    "MDAnalysisCoordinateFileConfigurator": MDAnalysisCoordinateFileWidget,
-    "MDAnalysisTopologyFileConfigurator": MDAnalysisTopologyFileWidget,
-    "FileWithAtomDataConfigurator": InputFileWidget,
-    "RunningModeConfigurator": RunningModeWidget,
-    "WeightsConfigurator": WeightsWidget,
-    "MultipleChoicesConfigurator": MultipleCombosWidget,
-    "MoleculeSelectionConfigurator": MoleculeWidget,
-    "AxisSelectionConfigurator": MoleculeAndAxisWidget,
-    "GroupingLevelConfigurator": ComboWidget,
-    "SingleChoiceConfigurator": ComboWidget,
-    "QVectorsConfigurator": QVectorsWidget,
-    "OutputStructureConfigurator": OutputStructureWidget,
-    "OutputTrajectoryConfigurator": OutputTrajectoryWidget,
-    "ProjectionConfigurator": ProjectionWidget,
-    "AtomSelectionConfigurator": AtomSelectionWidget,
-    "AtomMappingConfigurator": AtomMappingWidget,
-    "AtomTransmutationConfigurator": AtomTransmutationWidget,
-    "InstrumentResolutionConfigurator": InstrumentResolutionWidget,
-    "PartialChargeConfigurator": PartialChargeWidget,
-    "TrajectoryFilterConfigurator": TrajectoryFilterWidget,
-    "UnitCellConfigurator": UnitCellWidget,
-    "MDAnalysisTimeStepConfigurator": MDAnalysisMDTrajTimeStepWidget,
-    "MDTrajTimeStepConfigurator": MDAnalysisMDTrajTimeStepWidget,
-    "MDTrajTrajectoryFileConfigurator": MultiInputFileWidget,
-    "MDTrajTopologyFileConfigurator": MDTrajTopologyFileWidget,
-}
+
+def widget_lookup(widget: Parameter) -> BaseWidget:
+    match widget:
+        case Float():
+            return FloatWidget
+        case Boolean():
+            return BooleanWidget
+        case Integer() | CorrelationWindow() | InterpOrder():
+            return IntegerWidget
+        case FrameSelect():
+            return FramesWidget
+        case Range():
+            return RangeWidget
+        case Vector():
+            return VectorWidget
+        case AtomMapping():
+            return AtomMappingWidget
+        case SingleChoice() | GroupingLevel():
+            return ComboWidget
+        case InstrumentResolution():
+            return InstrumentResolutionWidget
+        case ManyPath():
+            raise MultiInputFileWidget
+        case MolecularAxis():
+            return MoleculeAndAxisWidget
+        case OutputTrajectory():
+            return OutputTrajectoryWidget
+        case OutputFile():
+            return OutputFilesWidget
+        case PartialCharge():
+            return PartialChargeWidget
+        case PathParam():
+            return InputFileWidget
+        case Projection():
+            return ProjectionWidget
+        case QVectors():
+            return QVectorsWidget
+        case RangeCellCutoff():
+            return DistHistCutoffWidget
+        case RunningMode():
+            return RunningModeWidget
+        case Weights():
+            return WeightsWidget
+        case MDANSETrajectory():
+            return HDFTrajectoryWidget
+        case _:
+            LOG.error(type(widget).__name__)
+            return DummyWidget
+        # case String():
+        #     raise NotImplementedError()
+        # case Array():
+        #     raise NotImplementedError()
+        # case MultipleChoice():
+        #     raise NotImplementedError()
+        # case MDANSEResult():
+        #     raise NotImplementedError()
+        # case AtomSelection():
+        #     raise NotImplementedError()
+        # case AtomTransmutation():
+        #     raise NotImplementedError()
+        # case DynamicMultiChoice():
+        #     raise NotImplementedError()
+        # case DynamicSingleChoice():
+        #     raise NotImplementedError()
+        # case Filter():
+        #     raise NotImplementedError()
 
 
 class Action(QWidget):
@@ -131,7 +172,13 @@ class Action(QWidget):
     run_and_load = Signal(list)
     new_path = Signal(str)
 
-    def __init__(self, *args, use_preview=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        use_preview: bool = False,
+        trajectory: Trajectory | None = None,
+        **kwargs,
+    ):
         self._default_path = None
         self._input_traj_path = None
         self._parent_tab = None
@@ -145,14 +192,14 @@ class Action(QWidget):
         self._has_been_initialised = False
         self.execute_button = None
         self.post_execute_checkbox = None
-        input_trajectory = kwargs.pop("trajectory", None)
-        self.set_trajectory(input_trajectory)
+        self.set_trajectory(trajectory)
         super().__init__(*args, **kwargs)
 
         self.layout = QVBoxLayout(self)
         self.handlers = {}
         self._widgets = []
         self._widgets_in_layout = {}
+        self._raw_widgets = {}
 
     def set_settings(self, settings):
         self._settings = settings
@@ -171,21 +218,26 @@ class Action(QWidget):
             self._input_traj_path = None
             self._has_been_initialised = False
             return
+
         new_path = trajectory.filename
         if new_path == self._input_traj_path:
             LOG.debug("Skipping set_trajectory, no change.")
             return
-        self._job_instance = IJob()
+
         self._trajectory_instance = trajectory
-        self._trajectory_configurator = HDFTrajectoryConfigurator(
-            "Input Trajectory", instance=trajectory
-        )
-        self._trajectory_configurator.configure_from_instance()
+        self._job_instance.trajectory = trajectory
+
+        # self._trajectory_configurator = HDFTrajectoryConfigurator(
+        #     "Input Trajectory", instance=trajectory
+        # )
+        # self._trajectory_configurator.configure_from_instance()
         self._input_traj_path = new_path
+
         if self._input_traj_path is not None:
             self._default_path = Path(self._input_traj_path).parent
         else:
-            self._default_path = Path().absolute()
+            self._default_path = Path.cwd()
+
         if self._job_name is not None:
             self._parent_tab.set_path(self._job_name, str(self._default_path))
 
@@ -203,6 +255,7 @@ class Action(QWidget):
             widget.hide()
             widget.setParent(None)
             widget.deleteLater()
+
         self._widgets = []
         self._widgets_in_layout = {}
         self._preview_box = None
@@ -220,89 +273,114 @@ class Action(QWidget):
             type(self._job_instance).__name__,
             job_name,
         )
+
         if type(self._job_instance).__name__ != job_name:
             self.clear_panel()
             self._has_been_initialised = False
 
             self._job_name = job_name
-            if self._default_path is None or Path(self._default_path).samefile(Path()):
+            if self._default_path is None or (
+                Path(self._default_path).exists()
+                and Path(self._default_path).samefile(Path.cwd())
+            ):
                 self._default_path = str(Path(self._parent_tab.get_path(job_name)))
+
             try:
-                job_instance = IJob.create(job_name)
+                self._job_instance = IJob.create(job_name)
+                if self._trajectory_instance:
+                    self._job_instance.trajectory = self._trajectory_instance
             except ValueError as e:
-                LOG.debug(
+                LOG.error(
                     f"Failed to create IJob {job_name};\n"
                     f"reason {e};\n"
                     f"traceback {traceback.format_exc()}"
                 )
                 return
-            job_instance.build_configuration()
-            settings = job_instance.settings
-            self._job_instance = job_instance
-        else:
-            job_instance = self._job_instance
-            settings = self._job_instance.settings
-        LOG.info(f"Configuration {job_instance.configuration}")
+
+        LOG.info("Configuration %s", self._job_instance)
         LOG.debug(f"{self._input_traj_path} loaded as {self._trajectory_instance}")
-        if "trajectory" in settings:
-            if self._input_traj_path is None:
-                return
-            key, value = "trajectory", settings["trajectory"]
-            dtype = value[0]
-            ddict = value[1]
-            configurator = job_instance.configuration[key]
-            if key not in self._widgets_in_layout:
-                ddict.setdefault("label", key)
-                ddict["configurator"] = configurator
-                ddict["source_object"] = self._input_traj_path
-                widget_class = widget_lookup[dtype]
-                input_widget = widget_class(
-                    parent=self, trajectory_instance=self._trajectory_instance, **ddict
-                )
-                widget = input_widget._base
-                self.layout.addWidget(widget, stretch=input_widget._relative_size)
-                self._widgets_in_layout[key] = widget
-                self._widgets.append(input_widget)
-                self._trajectory_configurator = input_widget._configurator
-            LOG.info("Set up input trajectory")
-        for key, value in settings.items():
+
+        for key, desc in self._job_instance.descriptors.items():
             if key in self._widgets_in_layout:
                 continue
-            dtype = value[0]
-            ddict = value[1]
-            configurator = job_instance.configuration[key]
-            ddict.setdefault("label", key)
-            ddict["configurator"] = configurator
-            ddict["source_object"] = self._input_traj_path
-            ddict["trajectory_configurator"] = self._trajectory_configurator
-            if dtype not in widget_lookup:
-                ddict["tooltip"] = (
-                    "This is not implemented in the MDANSE GUI at the moment, and it MUST BE!"
-                )
-                placeholder = BackupWidget(parent=self, **ddict)
-                widget = placeholder._base
-                self.layout.addWidget(widget, stretch=placeholder._relative_size)
-                self._widgets_in_layout[key] = widget
-                self._widgets.append(placeholder)
-                LOG.warning(f"Could not find the right widget for {key}")
-            else:
-                widget_class = widget_lookup[dtype]
-                # expected = {key: ddict[key] for key in widget_class.__init__.__code__.co_varnames}
-                input_widget = widget_class(parent=self, **ddict)
-                widget = input_widget._base
-                self.layout.addWidget(widget, stretch=input_widget._relative_size)
-                self._widgets_in_layout[key] = widget
-                self._widgets.append(input_widget)
-                input_widget.valid_changed.connect(self.allow_execution)
-                has_preview = callable(
-                    getattr(input_widget._configurator, "preview_output_axis", False)
-                )
-                if self._use_preview and has_preview:
-                    input_widget.value_updated.connect(self.show_output_prediction)
-                LOG.info(f"Set up the right widget for {key}")
-            # self.handlers[key] = data_handler
+
+            widget_class = widget_lookup(desc)
+            LOG.info("%s", widget_class.__name__)
+            input_widget = widget_class(
+                parent=self,
+                label=key,
+                configurable=self._job_instance,
+                prop=key,
+                parameter=desc,
+            )
+            widget = input_widget._base
+            self.layout.addWidget(widget, stretch=input_widget._relative_size)
+            self._widgets_in_layout[key] = widget
+            self._raw_widgets[key] = input_widget
+            self._widgets.append(input_widget)
+            input_widget.value_changed.connect(self.allow_execution)
+
+            LOG.info(f"Set up {type(input_widget).__name__} for {key}")
         self._has_been_initialised = True
-        self.check_inputs()
+
+        # if "trajectory" in settings:
+        #     if self._input_traj_path is None:
+        #         return
+        #     key, value = "trajectory", settings["trajectory"]
+        #     dtype = value[0]
+        #     ddict = value[1]
+        #     configurator = job_instance.configuration[key]
+        #     if key not in self._widgets_in_layout:
+        #         ddict.setdefault("label", key)
+        #         ddict["configurator"] = configurator
+        #         ddict["source_object"] = self._input_traj_path
+        #         widget_class = widget_lookup[dtype]
+        #         input_widget = widget_class(
+        #             parent=self, trajectory_instance=self._trajectory_instance, **ddict
+        #         )
+        #         widget = input_widget._base
+        #         self.layout.addWidget(widget, stretch=input_widget._relative_size)
+        #         self._widgets_in_layout[key] = widget
+        #         self._widgets.append(input_widget)
+        #         self._trajectory_configurator = input_widget._configurator
+        #     LOG.info("Set up input trajectory")
+
+        # for key, value in settings.items():
+        #     if key in self._widgets_in_layout:
+        #         continue
+        #     dtype = value[0]
+        #     ddict = value[1]
+        #     configurator = job_instance.configuration[key]
+        #     ddict.setdefault("label", key)
+        #     ddict["configurator"] = configurator
+        #     ddict["source_object"] = self._input_traj_path
+        #     ddict["trajectory_configurator"] = self._trajectory_configurator
+        #     if dtype not in widget_lookup:
+        #         ddict["tooltip"] = (
+        #             "This is not implemented in the MDANSE GUI at the moment, and it MUST BE!"
+        #         )
+        #         placeholder = BackupWidget(parent=self, **ddict)
+        #         widget = placeholder._base
+        #         self.layout.addWidget(widget, stretch=placeholder._relative_size)
+        #         self._widgets_in_layout[key] = widget
+        #         self._widgets.append(placeholder)
+        #         LOG.warning(f"Could not find the right widget for {key}")
+        #     else:
+        #         widget_class = widget_lookup[dtype]
+        #         # expected = {key: ddict[key] for key in widget_class.__init__.__code__.co_varnames}
+        #         input_widget = widget_class(parent=self, **ddict)
+        #         widget = input_widget._base
+        #         self.layout.addWidget(widget, stretch=input_widget._relative_size)
+        #         self._widgets_in_layout[key] = widget
+        #         self._widgets.append(input_widget)
+        #         input_widget.valid_changed.connect(self.allow_execution)
+        #         has_preview = callable(
+        #             getattr(input_widget._configurator, "preview_output_axis", False)
+        #         )
+        #         if self._use_preview and has_preview:
+        #             input_widget.value_updated.connect(self.show_output_prediction)
+        #         LOG.info(f"Set up the right widget for {key}")
+        #     # self.handlers[key] = data_handler
 
         if self._use_preview and "preview_box" not in self._widgets_in_layout:
             box = QGroupBox("results preview")
@@ -344,17 +422,7 @@ class Action(QWidget):
         self.allow_execution()
 
     def check_inputs(self) -> bool:
-        configured = False
-        iterations = 0
-        while not configured:
-            configured = True
-            for widget in self._widgets:
-                widget.value_from_configurator()
-                configured = configured and widget._configurator.is_configured()
-            iterations += 1
-            if iterations > 3:
-                break
-        return configured
+        return self._job_instance.check_status()
 
     @Slot()
     def test_file_outputs(self):
@@ -362,7 +430,7 @@ class Action(QWidget):
             return
         self.check_inputs()
         for widget in self._widgets:
-            if isinstance(widget, OutputFilesWidget | OutputTrajectoryWidget):
+            if isinstance(widget, (OutputFilesWidget, OutputTrajectoryWidget)):
                 widget.updateValue()
         self.allow_execution()
 
@@ -408,26 +476,26 @@ class Action(QWidget):
         if self._use_preview:
             self.allow_execution()
             LOG.info("Show output prediction")
-            pardict = self.set_parameters()
-            self._job_instance.setup(pardict, rebuild=False)
+
+            # pardict = self.set_parameters()
+            # self._job_instance.setup(pardict, rebuild=False)
+
             axes = self._job_instance.preview_output_axis()
             LOG.info(f"Axes = {axes.keys()}")
             text = "<p><b>The results will cover the following range:</b></p>"
+
             for unit, old_array in axes.items():
                 scale_factor, new_unit = self._parent_tab.conversion_factor(unit)
                 array = np.array(old_array) * scale_factor
                 text += f"<p>[{summarise_array(array)}] ({new_unit})</p>"
+
             self._preview_box.setText(text)
 
     @Slot()
     def allow_execution(self):
-        allow = True
-        has_warning = False
-        for widget in self._widgets:
-            if not widget._configurator.valid:
-                allow = False
-                widget.mark_error(widget._configurator.error_status, silent=True)
-            has_warning = has_warning or widget.has_warning
+        allow = self._job_instance.check_status()
+        has_warning = any(widget.has_warning for widget in self._widgets)
+
         if self.execute_button is not None:
             self.execute_button.setEnabled(allow)
             self.save_button.setEnabled(allow)
@@ -443,6 +511,7 @@ class Action(QWidget):
                 self.execute_button.setToolTip(
                     "Launch the job using the current parameters."
                 )
+
         if self.post_execute_checkbox is not None:
             if self._job_name == "AverageStructure":
                 self.post_execute_checkbox.setEnabled(False)
@@ -458,7 +527,7 @@ class Action(QWidget):
         try:
             _cname = self._job_name
         except Exception:
-            currentpath = Path().absolute()
+            currentpath = Path.cwd()
         else:
             currentpath = Path(self._parent_tab.get_path(self._job_name + "_script"))
         result, _ftype = QFileDialog.getSaveFileName(
@@ -467,17 +536,20 @@ class Action(QWidget):
             str(currentpath),
             "Python script (*.py)",
         )
-        if result == "":
+
+        if not result:
             return None
+
         path = Path(result).parent
+
         try:
             _cname = self._job_name
         except Exception:
             pass
         else:
             self._parent_tab.set_path(self._job_name + "_script", str(path))
-        pardict = self.set_parameters(labels=True)
-        self._job_instance.save(result, pardict)
+
+        self._job_instance.save(result)
 
     def set_parameters(self, labels=False):
         results = {}
@@ -491,21 +563,27 @@ class Action(QWidget):
 
     @Slot()
     def execute_converter(self):
-        pardict = self.set_parameters()
-        LOG.info(pardict)
+        # pardict = self.set_parameters()
+        # LOG.info(pardict)
+
         self._parent_tab.set_path(self._job_name, str(self._default_path))
         self._parent_tab._session.save()
+
         # when we are ready, we can consider running it
         # self.converter_instance.run(pardict)
         # this would send the actual instance, which _may_ be wrong
         # self.new_thread_objects.emit([self.converter_instance, pardict])
+
         if (
             self.post_execute_checkbox.isChecked()
             and self._job_name != "AverageStructure"
         ):
-            self.run_and_load.emit([self._job_name, pardict])
+            self.run_and_load.emit([self._job_name, self._job_instance.raw_values])
         else:
-            self.new_thread_objects.emit([self._job_name, pardict])
+            self.new_thread_objects.emit(
+                [self._job_name, self._job_instance.raw_values]
+            )
+
         self.check_inputs()
         for widget in self._widgets:
             widget.updateValue()

@@ -142,14 +142,29 @@ class Boolean(ConfigureDescriptor[Bools, bool]):
 
 
 class Float(MinMax[float], ConfigureDescriptor[SupportsFloat, float]):
-    """Floating point parameter."""
+    """Floating point parameter.
+
+    Parameters
+    ----------
+    non_zero : float | None
+        Whether data should be non-zero.
+
+        If None:
+            Vector can be zero.
+        Otherwise:
+            Tolerance of non-zero.
+    optional : bool
+        Allows value to be None
+    """
 
     def __init__(
         self,
         non_zero: float | None = None,
+        optional: bool = False,
         **params,
     ):
         super().__init__(**params)
+        self.optional = optional
         self.non_zero = non_zero
 
     def validate(self, value: SupportsFloat, deps: Depends, /) -> float:
@@ -175,8 +190,15 @@ class Float(MinMax[float], ConfigureDescriptor[SupportsFloat, float]):
 
 class Integer(MinMax[int], ConfigureDescriptor[SupportsInt, int]):
     """Integer parameter."""
+    def __init__(
+        self,
+        optional: bool = False,
+        **params,
+    ):
+        super().__init__(**params)
+        self.optional = optional
 
-    def validate(self, value: SupportsInt, deps: Depends, /) -> int:
+    def validate(self, value: SupportsInt, deps: Depends, /) -> int | None:
         if self.optional and value is None:
             return None
 
@@ -235,7 +257,7 @@ class Dict(
         value: Sequence[tuple[K, V]] | dict[K, V] | str | Path | None,
         deps: Depends,
         /,
-    ) -> dict[K, V]:
+    ) -> dict[K, V] | None:
         if self.optional and value is None:
             return None
 
@@ -337,11 +359,13 @@ class PathParam(ConfigureDescriptor[str | Path, Path]):
         self,
         mode: FileModes | str,
         *,
+        optional: bool = False,
         extensions: dict[str, str] | None = None,
         directory: bool = False,
         **params,
     ):
         super().__init__(**params)
+        self.optional = optional
 
         self.mode = (
             self.FileModes[mode.upper()]
@@ -354,7 +378,7 @@ class PathParam(ConfigureDescriptor[str | Path, Path]):
         self.directory = directory
 
     def validate(self, value: Path | str, deps: Depends, /) -> Path | None:
-        if self.optional and value is None:
+        if self.optional and not value:
             return None
 
         try:

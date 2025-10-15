@@ -97,6 +97,7 @@ class MDANSETrajectory(ConfigureDescriptor[str | Path, Trajectory]):
         if isinstance(value, (Trajectory, MockTrajectory)):
             setattr(owner, self.private_name, value)
             setattr(owner, self.configured_var, True)
+            setattr(owner, self.raw_name, value.filename)
             self._validate_dependents(owner)
             return
 

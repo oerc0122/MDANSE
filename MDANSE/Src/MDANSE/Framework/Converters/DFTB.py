@@ -35,13 +35,13 @@ class DFTB(Forcite):
 
     xtd_file = PathParam(
         mode="r",
-        extensions={"XTD file": ".xtd"},
+        extensions={"XTD file": "*.xtd"},
         label="The XTD file.",
         on_set=to_class(XTDFile),
     )
     trj_file = PathParam(
         mode="r",
-        extensions={"TRJ file": ".trj"},
+        extensions={"TRJ file": "*.trj"},
         label="The TRJ file.",
         on_set=to_class(TrjFile),
     )

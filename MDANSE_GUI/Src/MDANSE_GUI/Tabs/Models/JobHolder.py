@@ -220,21 +220,24 @@ Status:
         self.update_fields()
 
     def expected_output(self) -> str:
-        try:
-            len(self.parameters["output_files"][1])
-        except TypeError:  # job is a converter
-            file_name = self.parameters["output_files"][0]
-            if ".mdt" not in file_name[-5:]:
+        # job is a converter
+        if "compression" in self.parameters["output_files"]:
+            file_name = self.parameters["output_files"]["path"]
+            if not file_name.endswith(".mdt"):
                 file_name += ".mdt"
+            print("Boof")
             return file_name
-        else:  # job is an analysis
-            if "MDAFormat" in self.parameters["output_files"][1]:
-                file_name = self.parameters["output_files"][0]
-                if ".mda" not in file_name[-5:]:
-                    file_name += ".mda"
-                return file_name
-            else:
-                return self.parameters["output_files"][0]
+
+        # job is an analysis
+        if "MDAFormat" in self.parameters["output_files"]["out_format"]:
+            file_name = self.parameters["output_files"]["path"]
+            if not file_name.endswith(".mda"):
+                file_name += ".mda"
+            print("Beef")
+            return file_name
+
+        print("Woof")
+        return self.parameters["output_files"]["path"]
 
     @Slot(int)
     def on_started(self, target_steps: int):

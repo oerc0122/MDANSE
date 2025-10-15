@@ -15,39 +15,50 @@
 #
 from __future__ import annotations
 
+from qtpy.QtCore import Qt, Slot
 from qtpy.QtGui import QIntValidator
-from qtpy.QtWidgets import QLineEdit, QSpinBox
+from qtpy.QtWidgets import QCheckBox, QLineEdit, QSpinBox
 
+from MDANSE.Framework.Parameters import Integer
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
 class IntegerWidget(WidgetBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        try:
-            default_option = int(self._configurator.default)
-        except ValueError:
-            default_option = 0
-        if self._configurator.choices:
+    def __init__(self, *args, parameter: Integer, **kwargs):
+        super().__init__(*args, parameter=parameter, **kwargs)
+
+        self._default_value = self.get_default()
+
+        if self.parameter.choices:
             field = QSpinBox(self._base)
-            field.setMinimum(self._configurator.choices[0])
-            field.setMaximum(self._configurator.choices[-1])
-            field.setValue(default_option)
+
+            field.setMinimum(min(self.parameter.choices))
+            field.setMaximum(max(self.parameter.choices))
+            field.setValue(self._default_option)
         else:
             field = QLineEdit(self._base)
             validator = QIntValidator(field)
-            minval, maxval = self._configurator.mini, self._configurator.maxi
-            if minval is not None:
-                validator.setBottom(minval)
-            if maxval is not None:
-                validator.setTop(maxval)
+
+            if self.parameter.minimum is not None:
+                validator.setBottom(self.parameter.minimum)
+            if self.parameter.maximum is not None:
+                validator.setTop(self.parameter.maximum)
+
             field.setValidator(validator)
-            field.setText(str(default_option))
-            field.setPlaceholderText(str(default_option))
+            field.setText(str(self._default_value))
+            field.setPlaceholderText(str(self._default_value))
             field.textChanged.connect(self.updateValue)
+
+        if self.parameter.optional:
+            self._apply_box = QCheckBox("Enable", self._base)
+            self._apply_box.setTristate(False)
+            self._apply_box.checkStateChanged.connect(self.toggle_widgets)
+            self._apply_box.setChecked(False)
+            self._layout.addWidget(self._apply_box)
+
         self._field = field
-        self._default_value = default_option
         self._layout.addWidget(field)
+
         self.default_labels()
         self.update_labels()
         self.updateValue()
@@ -55,22 +66,34 @@ class IntegerWidget(WidgetBase):
         tooltip_text = self._tooltip or "A single integer number"
         field.setToolTip(tooltip_text)
 
+    @Slot()
+    def toggle_widgets(self):
+        if not self.parameter.optional:
+            return
+
+        self._field.setEnabled(self._apply_box.checkState() == Qt.CheckState.Checked)
+
     def default_labels(self):
         """Each Widget should have a default tooltip and label,
         which will be set in this method, unless specific
         values are provided in the settings of the job that
         is being configured."""
-        if self._label_text == "":
+        if not self._label_text:
             self._label_text = "IntegerWidget"
-        if self._tooltip == "":
+        if not self._tooltip:
             self._tooltip = "A single integer number"
 
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""
+        if (
+            self.parameter.optional
+            and self._apply_box.checkState() == Qt.CheckState.Checked
+        ):
+            return None
+
         strval = self._field.text().strip()
-        if len(strval) < 1:
-            self._empty = True
+        self._empty = not strval
+        if self._empty:
             return self._default_value
-        else:
-            self._empty = False
+
         return strval

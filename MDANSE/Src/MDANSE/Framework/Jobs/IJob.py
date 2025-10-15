@@ -206,9 +206,6 @@ class IJob(Configurable, metaclass=SubclassFactory):
 
     enabled = True
 
-    def check_status(self):
-        pass
-
     @classmethod
     def define_unique_name(cls):
         """
