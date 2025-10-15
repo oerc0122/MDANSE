@@ -24,16 +24,16 @@ from string import ascii_uppercase as upcase
 from typing import Any, Literal
 
 import numpy as np
-from more_itertools import first, first_true, split_before, spy
+from more_itertools import first, split_before, spy
 from numpy.typing import NDArray
 
 from MDANSE.Core.Error import Error
 from MDANSE.Framework.AtomMapping import AtomLabel
-from MDANSE.Framework.Converters.LAMMPS import BoxStyle
+from MDANSE.Framework.Parsers.LAMMPS import BoxStyle
 from MDANSE.IO.IOUtils import strip_comments
 from MDANSE.MLogging import LOG
 
-from .FileWithAtomDataConfigurator import FileWithAtomDataConfigurator
+from .Parser import Parser
 
 
 class LAMMPSConfigFileError(Error):
@@ -243,7 +243,7 @@ ATOM_TYPES_MAP = {
 
 ATOM_TYPES_MAP.update(
     {
-        f"{key}_w_image": value + ("ix", "iy", "iz")
+        f"{key}_w_image": (*value, "ix", "iy", "iz")
         for key, value in ATOM_TYPES_MAP.items()
     }
 )
@@ -320,12 +320,16 @@ def int_list_parser(lines, *_) -> dict[str, tuple[int, ...]]:
     }
 
 
-class ConfigFileConfigurator(FileWithAtomDataConfigurator):
+class LAMMPSConfigFile(Parser, dict):
     """Parse the result of a LAMMPS ``write_data``.
 
     Provides necessary initial details if not included in
     trajectory.
     """
+
+    def __init__(self, filename: Path | str | None = None):
+        self.filename = filename
+        self.parse()
 
     @staticmethod
     def header_parser(lines: Iterable[str]) -> dict[str, Any]:
@@ -618,7 +622,7 @@ class ConfigFileConfigurator(FileWithAtomDataConfigurator):
         element_map = {
             int(line.split()[0]): match[1].title()
             for line in lines
-            if (match := re.search(r"# ([A-Z][a-z]{,2})\s*$", line, re.I))
+            if (match := re.search(r"# ([A-Z][a-z]{,2})\s*$", line, re.IGNORECASE))
         }
 
         if element_map and self.setdefault("elements", element_map) != element_map:
@@ -692,23 +696,23 @@ class ConfigFileConfigurator(FileWithAtomDataConfigurator):
             return [
                 line.strip()
                 for line in strip_comments(source_file)
-                if ConfigFileConfigurator._is_block(line)
+                if LAMMPSConfigFile._is_block(line)
             ]
 
     def parse(self, filename: Path | str | None = None) -> None:
         """Parse file and store data in self."""
-        self._filename = self["filename"] if filename is None else filename
+        self.filename = self.filename if filename is None else filename
 
-        self._known_blocks = self.scan(self._filename)
+        self._known_blocks = self.scan(self.filename)
 
-        with open(self._filename, encoding="utf-8") as source_file:
+        with open(self.filename, encoding="utf-8") as source_file:
             lines = map(str.strip, source_file)
 
             comment = next(lines)
             (line,), lines = spy(lines)
 
             # Fix for VMD disobeying spec.
-            if not re.match(r"\s*\d+\s+atoms", line, re.I):
+            if not re.match(r"\s*\d+\s+atoms", line, re.IGNORECASE):
                 comment += " " + next(lines)
 
             for desc in re.finditer(r"(\w+)\s*=\s*(\w+)", comment):
@@ -730,9 +734,10 @@ class ConfigFileConfigurator(FileWithAtomDataConfigurator):
 
         elem_range = range(1, self["n_atom_types"] + 1)
 
-        self.setdefault("elements", dict(zip(elem_range, map(str, elem_range))))
+        self.setdefault("elements", {elem: str(elem) for elem in elem_range})
         self.setdefault("charges", np.zeros(self["n_atoms"]))
 
+    @property
     def atom_labels(self) -> Iterable[AtomLabel]:
         """
         Yields
@@ -742,7 +747,7 @@ class ConfigFileConfigurator(FileWithAtomDataConfigurator):
         """
         conts = sorted(self.keys() & {"elements", "mass"})
         if conts == ["elements", "mass"]:
-            for elem, mass in zip(self["elements"].values(), self["mass"]):
+            for elem, mass in zip(self["elements"].values(), self["mass"], strict=True):
                 yield AtomLabel(elem, mass=mass)
         elif conts == ["elements"]:
             for elem in self["elements"].values():

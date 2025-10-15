@@ -30,7 +30,7 @@ J Chem Inf Model. 57(1):1-5 (2017).
 
 ## Version information
 
-This is the first release candidate of MDANSE 2.0.0. The set of features it
+This is the second release candidate of MDANSE 2.0.0. The set of features it
 contains will not change by the time the full release has been made. However,
 there still may be some problems with the code at this stage that need to be
 identified and corrected. Please help us develop MDANSE by reporting any
@@ -71,6 +71,19 @@ If you experience problems with the installation, you may want to upgrade pip
 pip install --upgrade pip
 ```
 and try again.
+
+### Optional dependencies
+
+Most users prefer to install [MDANSE_GUI](https://pypi.org/project/MDANSE-GUI/) alongside MDANSE,
+and use the GUI to convert, analyse and view trajectories and to visualise results.
+
+Users who prefer running MDANSE scripts in the command line can include optional dependencies
+by installing MDANSE with
+```
+pip install mdanse[cli]
+```
+This will install [tqdm](https://pypi.org/project/tqdm/), which will then be used to display
+a progress bar when an MDANSE script is running in the shell.
 
 ## Quick start: workflow
 

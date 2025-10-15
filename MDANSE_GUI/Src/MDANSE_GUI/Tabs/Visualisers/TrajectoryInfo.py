@@ -16,87 +16,24 @@
 from __future__ import annotations
 
 import traceback
-from typing import TYPE_CHECKING
 
-import numpy as np
-from qtpy.QtCore import Signal, Slot
-from qtpy.QtWidgets import QTextBrowser
+from qtpy.QtCore import Slot
 
-from MDANSE.Framework.Formats.HDFFormat import check_metadata
 from MDANSE.MLogging import LOG
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
+from MDANSE.MolecularDynamics.Trajectory import (
+    chemical_system_summary,
+    trajectory_summary,
+)
 
-if TYPE_CHECKING:
-    from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
-
-
-def trajectory_summary(traj: Trajectory):
-    val = []
-    try:
-        time_axis = traj.time()
-    except Exception:
-        timeline = "No time information!\n"
-    else:
-        if len(time_axis) < 1:
-            timeline = "N/A\n"
-        elif len(time_axis) < 5:
-            timeline = f"{time_axis}\n"
-        else:
-            timeline = f"[{time_axis[0]}, {time_axis[1]}, ..., {time_axis[-1]}]\n"
-
-    val.append("Path:")
-    val.append(f"{traj.filename}\n")
-    val.append("Number of steps:")
-    val.append(f"{len(traj)}\n")
-    val.append("Configuration:")
-    val.append(f"\tIs periodic: {traj.unit_cell(0) is not None}\n")
-    try:
-        val.append(f"First unit cell (nm):\n{traj.unit_cell(0)._unit_cell}\n")
-    except Exception:
-        val.append("No unit cell information\n")
-    val.append("Frame times (1st, 2nd, ..., last) in ps:")
-    val.append(timeline)
-    val.append("Variables:")
-    for k in traj.variables():
-        v = traj.variable(k)
-        try:
-            val.append(f"\t- {k}: {v.shape}")
-        except AttributeError:
-            try:
-                val.append(f"\t- {k}: {v['value'].shape}")
-            except KeyError:
-                continue
-
-    val.append("\nConversion history:")
-    metadata = check_metadata(traj.file)
-    if metadata:
-        for k, v in metadata.items():
-            val.append(f"{k}: {v}")
-
-    val.append("\nMolecular types found:")
-    for molname, mollist in traj.chemical_system._clusters.items():
-        val.append(f"Molecule: {molname}; Count: {len(mollist)}")
-
-    val = "\n".join(val)
-
-    return val
+from .TextInfo import TextInfo
 
 
-class TrajectoryInfo(QTextBrowser):
-    error = Signal(str)
-
-    def __init__(self, *args, **kwargs):
-        self._header = kwargs.pop("header", "")
-        self._footer = kwargs.pop("footer", "")
-        super().__init__(*args, **kwargs)
-        self.setOpenExternalLinks(True)
-
+class TrajectoryInfo(TextInfo):
     @Slot(object)
     def update_panel(self, data: tuple):
         fullpath, incoming = data
         if incoming is None:
-            self.clear()
-            self.setHtml(fullpath)
+            self.setHtml(self.filter(fullpath))
             return
         try:
             text = trajectory_summary(incoming)  # this is from a trajectory object
@@ -107,33 +44,13 @@ class TrajectoryInfo(QTextBrowser):
                 err,
                 traceback.format_exc(),
             )
-            self.clear()
+            self.setHtml("")
             return
         try:
             cs = incoming.chemical_system
         except AttributeError:
             LOG.error("Trajectory %s has no chemical system", incoming)
         else:
-            text += self.summarise_chemical_system(cs)
+            text += chemical_system_summary(cs)
         filtered = self.filter(text)
         self.setHtml(filtered)
-
-    def summarise_chemical_system(self, cs: ChemicalSystem):
-        text = "\n ==== Chemical System summary ==== \n"
-        atoms, counts = np.unique(cs.atom_list, return_counts=True)
-        for ind in range(len(atoms)):
-            text += f"Element: {atoms[ind]}; Count: {counts[ind]}\n"
-        for molname, mollist in cs._clusters.items():
-            text += f"Molecule: {molname}; Count: {len(mollist)}\n"
-        text += " ===== \n"
-        return text
-
-    def filter(self, some_text: str, line_break="<br />"):
-        new_text = ""
-        if self._header:
-            new_text += self._header + line_break
-        if some_text is not None:
-            new_text += line_break.join([x.strip() for x in some_text.split("\n")])
-        if self._footer:
-            new_text += line_break + self._footer
-        return new_text

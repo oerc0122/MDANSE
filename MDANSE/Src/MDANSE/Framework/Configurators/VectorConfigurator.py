@@ -67,7 +67,7 @@ class VectorConfigurator(IConfigurator):
 
         self._original_input = value
 
-        if not isinstance(value, (list, tuple)):
+        if not isinstance(value, list | tuple):
             self.error_status = "Invalid input type"
             return
 
@@ -80,10 +80,9 @@ class VectorConfigurator(IConfigurator):
         if self.normalize:
             vector = vector.normal()
 
-        if self.notNull:
-            if vector.length() == 0.0:
-                self.error_status = "The vector is null"
-                return
+        if self.notNull and vector.length() == 0.0:
+            self.error_status = "The vector is null"
+            return
 
         self["vector"] = vector
         self["value"] = vector

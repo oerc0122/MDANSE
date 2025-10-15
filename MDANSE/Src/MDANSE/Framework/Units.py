@@ -21,6 +21,7 @@ import math
 import numbers
 from collections import defaultdict
 from functools import singledispatchmethod
+from typing import ClassVar
 
 from MDANSE.Core.Platform import PLATFORM
 from MDANSE.Core.Singleton import Singleton
@@ -252,7 +253,7 @@ class _Unit:
         10 V
         """
         u = copy.deepcopy(self)
-        if isinstance(other, (numbers.Number, numbers.Complex)):
+        if isinstance(other, numbers.Number | numbers.Complex):
             u._factor /= other
         elif isinstance(other, _Unit):
             u._div_by(other)
@@ -308,7 +309,7 @@ class _Unit:
         """
 
         u = copy.deepcopy(self)
-        if isinstance(other, (numbers.Number, numbers.Complex)):
+        if isinstance(other, numbers.Number | numbers.Complex):
             u._factor *= other
             return u
         elif isinstance(other, _Unit):
@@ -467,10 +468,7 @@ class _Unit:
         __div__
         """
 
-        if isinstance(other, numbers.Number):
-            self._factor /= other
-            return self
-        elif isinstance(other, numbers.Complex):
+        if isinstance(other, numbers.Number | numbers.Complex):
             self._factor /= other
             return self
         elif isinstance(other, _Unit):
@@ -499,10 +497,7 @@ class _Unit:
         __mul__
         """
 
-        if isinstance(other, numbers.Number):
-            self._factor *= other
-            return self
-        elif isinstance(other, numbers.Complex):
+        if isinstance(other, numbers.Number | numbers.Complex):
             self._factor *= other
             return self
         elif isinstance(other, _Unit):
@@ -548,10 +543,7 @@ class _Unit:
 
     def __rdiv__(self, other):
         u = copy.deepcopy(self)
-        if isinstance(other, numbers.Number):
-            u._factor /= other
-            return u
-        elif isinstance(other, numbers.Complex):
+        if isinstance(other, numbers.Number | numbers.Complex):
             u._factor /= other
             return u
         elif isinstance(other, _Unit):
@@ -564,10 +556,7 @@ class _Unit:
         """Multiply _Unit instances.  See __mul__."""
 
         u = copy.deepcopy(self)
-        if isinstance(other, numbers.Number):
-            u._factor *= other
-            return u
-        elif isinstance(other, numbers.Complex):
+        if isinstance(other, numbers.Number | numbers.Complex):
             u._factor *= other
             return u
         elif isinstance(other, _Unit):
@@ -589,7 +578,7 @@ class _Unit:
 
             positive_units = []
             negative_units = []
-            for uname, uval in zip(_UNAMES, unit._dimension):
+            for uname, uval in zip(_UNAMES, unit._dimension, strict=True):
                 if uval == 0:
                     continue
 
@@ -1017,7 +1006,7 @@ def _str_to_unit(s: str) -> _Unit:
 class UnitsManager(metaclass=Singleton):
     """Database dictionary for handling units."""
 
-    _UNITS = {}
+    _UNITS: ClassVar[dict[str, _Unit]] = {}
 
     _DEFAULT_DATABASE = (
         PLATFORM.base_directory() / "MDANSE" / "Framework" / "units.json"

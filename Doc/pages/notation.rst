@@ -9,6 +9,7 @@ Symbols and Notation
 :math:`\alpha, \beta, \gamma, \ldots`                   atom types
 :math:`j, k, l, \ldots`                                 atom indices
 :math:`b_{\mathrm{coh},\alpha}`                         the coherent scattering length of atom-types :math:`\alpha`
+:math:`b_{\mathrm{coh},\alpha}^{\dagger}`               the complex conjugate of the coherent scattering length of atom-types :math:`\alpha`
 :math:`b_{\mathrm{inc},\alpha}^{2}`                     the squared incoherent scattering length of atom-types :math:`\alpha`
 :math:`c_{\alpha}`                                      concentration of atom-type :math:`\alpha` where :math:`c_{\alpha} = N_{\alpha} / N`
 :math:`C_{\mathbf{vv}jj}(t)`                            the velocity autocorrelation function of particle :math:`j`

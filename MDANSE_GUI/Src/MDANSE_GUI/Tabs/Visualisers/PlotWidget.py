@@ -63,20 +63,23 @@ class SliderPack(QWidget):
         self._valarray = np.ones(n_sliders) * 0.5
         self._steparray = np.ones(n_sliders) * 0.01
         self._clickarray = np.array(n_sliders * [101], dtype=int)
-        current_row = 0
+
         for n in range(n_sliders):
             label = QLabel(self)
             slider = RestrictedSlider(self)
             slider.setOrientation(Qt.Orientation.Horizontal)
+
             box = QDoubleSpinBox(self)
             box.setSingleStep(self._steparray[n])
-            layout.addWidget(label, current_row, 0)
-            layout.addWidget(slider, current_row, 1, 1, 2)
-            layout.addWidget(box, current_row, 3)
-            current_row += 1
+
+            layout.addWidget(label, n, 0)
+            layout.addWidget(slider, n, 1, 1, 2)
+            layout.addWidget(box, n, 3)
+
             self._labels.append(label)
             self._sliders.append(slider)
             self._spinboxes.append(box)
+
             slider.valueChanged.connect(self.slider_to_box)
             box.valueChanged.connect(self.box_to_slider)
             box.valueChanged.connect(self.collect_values)
@@ -121,7 +124,7 @@ class SliderPack(QWidget):
         """
         for number, element in enumerate(input_limits):
             minimum, maximum, stepsize = element[0], element[1], element[2]
-            clicks = int(round((maximum - minimum) / stepsize))
+            clicks = round((maximum - minimum) / stepsize)
             self._minarray[number] = minimum
             self._maxarray[number] = maximum
             self._steparray[number] = stepsize
@@ -134,7 +137,7 @@ class SliderPack(QWidget):
             self._spinboxes[number].setDecimals(abs(int(np.floor(np.log10(stepsize)))))
             temp_value = min(maximum, temp_value)
             temp_value = max(minimum, temp_value)
-            click_value = int(round((temp_value - minimum) / stepsize))
+            click_value = round((temp_value - minimum) / stepsize)
             self._sliders[number].setValue(click_value)
             self._spinboxes[number].setValue(temp_value)
 
@@ -354,7 +357,7 @@ class PlotWidget(QWidget):
         figAgg.updateGeometry()
         toolbar = NavigationToolbar2QTAgg(figAgg, canvas)
         toolbar.update()
-        layout.addWidget(figAgg)
+        layout.addWidget(figAgg, stretch=1)
         normaliser = NormalisationWidget(self)
         slider = SliderPack(self)
         self.change_slider_labels.connect(slider.new_slider_labels)

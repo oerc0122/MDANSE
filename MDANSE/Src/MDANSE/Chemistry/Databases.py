@@ -20,25 +20,25 @@ import json
 from collections import defaultdict
 from collections.abc import ItemsView
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, SupportsComplex
 
 from MDANSE.Core.Error import Error
 from MDANSE.Core.Platform import PLATFORM
 from MDANSE.Core.Singleton import Singleton
 from MDANSE.Framework.Units import measure
-from MDANSE.IO.IOUtils import MDANSEEncoder
+from MDANSE.IO.IOUtils import MDANSEEncoder, json_handler
 from MDANSE.MLogging import LOG
 
 TOLERANCE_IMG = 1e-13
 
 
-def str_to_num(numstr: str) -> float | complex:
+def str_to_num(numstr: SupportsComplex) -> float | complex:
     """Convert the number from string format to float or complex.
 
     Parameters
     ----------
-    numstr : str
-        number, saved as string
+    numstr : SupportsComplex
+        Input to be converted or stripped of imaginary part.
 
     Returns
     -------
@@ -132,11 +132,8 @@ class _Database(metaclass=Singleton):
 
         database_path = user_database if user_database.exists() else default_database
 
-        with open(default_database, encoding="utf-8") as f:
-            self._default_data = json.load(f)
-
-        with open(database_path, encoding="utf-8") as f:
-            self._data = json.load(f)
+        self._default_data = json_handler(default_database)
+        self._data = json_handler(database_path)
 
     def items(self) -> ItemsView[str, dict]:
         """Return the iterator over the items of the data dict.
@@ -426,6 +423,11 @@ class AtomsDatabase(_Database):
         """Return the names of the properties stored in the atoms database."""
         return sorted(self._properties.keys())
 
+    @property
+    def units(self) -> dict[str, str]:
+        """Return the dictionary mapping properties to their physical units."""
+        return self._units
+
     def get_property(self, pname: str) -> dict[str, str | int | float | list]:
         """Return the values of a property for all atoms.
 
@@ -570,40 +572,6 @@ class AtomsDatabase(_Database):
 
         """
         return pname in self._properties
-
-    def info(self, atom: str) -> str:
-        """Return as string all the information about the input atom.
-
-        Parameters
-        ----------
-        atom : str
-            Atom type.
-
-        Returns
-        -------
-        str
-            Multi-line list of all the atom properties.
-
-        """
-        # A delimiter line.
-        delimiter = "-" * 70
-        tab_fmt = " {:<20}{!s:>50}"
-
-        info = [
-            delimiter,
-            f"{atom:^70}",
-            tab_fmt.format("property", "value"),
-            delimiter,
-        ]
-
-        # The values for all element's properties
-        for pname in sorted(self._properties):
-            info.append(tab_fmt.format(pname, self._data[atom].get(pname, None)))
-
-        info.append(delimiter)
-        info = "\n".join(info)
-
-        return info
 
     def match_numeric_property(
         self,
@@ -791,7 +759,7 @@ class AtomsDatabase(_Database):
         try:
             del self._properties[label]
         except KeyError:
-            raise AtomsDatabaseError(f"Atom property {label} does not exist.")
+            raise AtomsDatabaseError(f"Atom property {label} does not exist.") from None
 
         for atm in self.atoms:
             del self._data[atm][label]

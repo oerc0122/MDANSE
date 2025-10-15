@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MDANSE_GUI"
-version = "1.0.0rc1"
+version = "1.0.0rc2"
 description = 'MDANSE GUI package - the graphical interface for MDANSE'
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 keywords = ["molecular dynamics", "science", "simulation", "analysis"]
 maintainers = [
@@ -24,7 +24,10 @@ classifiers = [
         'Topic :: Scientific/Engineering :: Visualization',
 
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Programming Language :: Python :: 3 :: Only',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Operating System :: OS Independent'
@@ -39,7 +42,9 @@ dependencies = [
     "tomlkit"
 ]
 
-# dynamic = ["version", "description"]
+[project.optional-dependencies]
+test=["pytest", "pytest-timeout", "pytest-qt"]
+lint=["ruff<0.14"]
 
 [project.urls]
 homepage = "https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx"
@@ -59,3 +64,10 @@ mdanse_elements_database = "MDANSE_GUI.Scripts.mdanse_elements_database:main"
 mdanse_gui = "MDANSE_GUI.Scripts.mdanse_gui:main"
 mdanse_periodic_table = "MDANSE_GUI.Scripts.mdanse_periodic_table:main"
 mdanse_units_editor = "MDANSE_GUI.Scripts.mdanse_units_editor:main"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = "Tests"
+addopts = "--import-mode=importlib"
+timeout = 240
+qt_api = "pyqt6"

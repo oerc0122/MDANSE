@@ -56,7 +56,7 @@ class AtomTransmuter:
         if symbol not in ATOMS_DATABASE:
             raise ValueError(f"{symbol} not found in the atom database.")
 
-        self.selector.load_from_json(selection_string)
+        self.selector.load(selection_string)
         indices = self.selector.select_in_trajectory(self._current_trajectory)
         self._new_map.update(dict.fromkeys(indices, symbol))
 
@@ -127,6 +127,7 @@ class AtomTransmutationConfigurator(IConfigurator):
         # if the input value is None, do not perform any transmutation
         if value in {None, "", "{}"}:
             self.transmutation = {}
+            self.error_status = "OK"
             return
 
         if not isinstance(value, str):
@@ -160,7 +161,7 @@ class AtomTransmutationConfigurator(IConfigurator):
 
         elements = set(value.values())
         for element in elements:
-            if (element not in traj_config["instance"].atoms_in_database) and (
+            if (element not in traj_config["instance"].atoms) and (
                 element not in ATOMS_DATABASE.atoms
             ):
                 self.error_status = (

@@ -40,10 +40,7 @@ class CenterOfMassesTrajectory(IJob):
 
     label = "Center Of Masses Trajectory"
 
-    category = (
-        "Analysis",
-        "Trajectory",
-    )
+    category = ("Trajectory",)
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
@@ -61,15 +58,6 @@ class CenterOfMassesTrajectory(IJob):
         "BooleanConfigurator",
         {"default": False, "label": "Fold coordinates in to box"},
     )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            },
-            "default": "molecule",
-        },
-    )
     settings["output_files"] = (
         "OutputTrajectoryConfigurator",
         {"format": "MDTFormat"},
@@ -86,18 +74,24 @@ class CenterOfMassesTrajectory(IJob):
 
         self.cluster_composition = {}
         original_atom_list = chemical_system.atom_list
+        selected_indices = (
+            set(self.trajectory._selection)
+            if self.trajectory._selection
+            else set(chemical_system._atom_indices)
+        )
         new_element_list = []
         used_up_atoms = set()
         new_chemical_system = ChemicalSystem()
-        for cluster_name in chemical_system._clusters.keys():
+        for cluster_name in chemical_system._clusters:
             for cluster in chemical_system._clusters[cluster_name]:
-                if cluster_name not in self.cluster_composition:
-                    self.cluster_composition[cluster_name] = [
-                        original_atom_list[ind] for ind in cluster
-                    ]
-                new_element_list.append(cluster_name)
-                used_up_atoms.update(set(cluster))
-        for index in chemical_system._atom_indices:
+                if selected_indices and set(cluster) <= selected_indices:
+                    if cluster_name not in self.cluster_composition:
+                        self.cluster_composition[cluster_name] = [
+                            original_atom_list[ind] for ind in cluster
+                        ]
+                    new_element_list.append(cluster_name)
+                    used_up_atoms.update(set(cluster))
+        for index in selected_indices:
             if index not in used_up_atoms:
                 new_element_list.append(chemical_system.atom_list[index])
         self._used_up_atoms = used_up_atoms
@@ -114,8 +108,9 @@ class CenterOfMassesTrajectory(IJob):
         )
         self._unique_atoms = np.unique(new_element_list)
         self._molecule_radii = {
-            cluster_name: [] for cluster_name in chemical_system._clusters.keys()
+            cluster_name: [] for cluster_name in chemical_system._clusters
         }
+        self.selected_indices = selected_indices
 
     def run_step(self, index):
         """
@@ -137,14 +132,14 @@ class CenterOfMassesTrajectory(IJob):
 
         conf = self.trajectory.configuration(frameIndex)
         conf = conf.contiguous_configuration()
-        temp_radii = {
-            cluster_name: [] for cluster_name in chemical_system._clusters.keys()
-        }
+        temp_radii = {cluster_name: [] for cluster_name in chemical_system._clusters}
 
         com_coords = np.empty((n_coms, 3), dtype=np.float64)
         mol_index = 0
-        for cluster_name in chemical_system._clusters.keys():
+        for cluster_name in chemical_system._clusters:
             for cluster in chemical_system._clusters[cluster_name]:
+                if not set(cluster).issubset(self.selected_indices):
+                    continue
                 masses = [
                     atom_database.get_atom_property(
                         chemical_system.atom_list[cluster_index], "atomic_weight"
@@ -159,7 +154,7 @@ class CenterOfMassesTrajectory(IJob):
                 average_radius = np.average(average_radius, weights=masses)
                 temp_radii[cluster_name].append(average_radius)
                 mol_index += 1
-        for atom_index in chemical_system._atom_indices:
+        for atom_index in self.selected_indices:
             if atom_index not in self._used_up_atoms:
                 com_coords[mol_index] = conf.coordinates[atom_index]
                 mol_index += 1
@@ -201,7 +196,7 @@ class CenterOfMassesTrajectory(IJob):
 
         time_averaged_radii = {
             cluster_name: np.mean(self._molecule_radii[cluster_name])
-            for cluster_name in self._molecule_radii.keys()
+            for cluster_name in self._molecule_radii
         }
 
         self._output_trajectory.write_atom_database(

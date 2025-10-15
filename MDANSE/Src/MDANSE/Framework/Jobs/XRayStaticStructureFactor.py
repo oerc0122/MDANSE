@@ -20,6 +20,7 @@ from collections.abc import Iterator
 
 import numpy as np
 import numpy.typing as npt
+from more_itertools import always_iterable
 
 from MDANSE.Framework.AtomGrouping.grouping import (
     add_grouped_totals,
@@ -266,8 +267,13 @@ class XRayStaticStructureFactor(DistanceHistogram):
                 self.trajectory,
             )
             for name, ele in zip(
-                self.trajectory.selection_getter(self.trajectory.atom_names),
-                self.trajectory.selection_getter(self.trajectory.atom_types),
+                always_iterable(
+                    self.trajectory.selection_getter(self.trajectory.atom_names)
+                ),
+                always_iterable(
+                    self.trajectory.selection_getter(self.trajectory.atom_types)
+                ),
+                strict=True,
             )
         }
         all_asf = {
@@ -276,7 +282,9 @@ class XRayStaticStructureFactor(DistanceHistogram):
                 self._outputData["xssf/axes/q"],
                 self.trajectory,
             )
-            for name, ele in zip(self.trajectory.atom_names, self.trajectory.atom_types)
+            for name, ele in zip(
+                self.trajectory.atom_names, self.trajectory.atom_types, strict=True
+            )
         }
         weight_dict = get_weights(
             asf,

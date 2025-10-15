@@ -39,7 +39,6 @@ class ActionsTree(QTreeView):
         self.click_position = None
 
         self.clicked.connect(self.on_select_action)
-        self.doubleClicked.connect(self.pop_action_dialog)
         self.clicked.connect(self.item_picked)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
@@ -48,32 +47,12 @@ class ActionsTree(QTreeView):
             return None
         return super().mousePressEvent(e)
 
-    def on_select_action(self, index):
+    def on_select_action(self, index: QModelIndex):
         model = self.model()
         item = model.itemFromIndex(index)
         text = item.text()
         LOG.info(f"tree: clicked on {text}")
         self.jobname_selected.emit(text)
-
-    def pop_action_dialog(self, index):
-        model = self.model()
-        item = model.itemFromIndex(index)
-        # debug
-        text = item.text()
-        LOG.info(f"About to execute action {text}")
-
-        number = item.data(Qt.ItemDataRole.UserRole)
-        LOG.info(f"Node number is {number}")
-        if number is None:
-            return
-        action = model._values[number]
-        self.execute_action.emit(action)
-
-    @Slot(DataTreeItem)
-    def showValidActions(self, item: DataTreeItem):
-        LOG.info(f"Creating model from {item}")
-        new_model = ActionsHolder(item)
-        self.setModel(new_model)
 
     @Slot(QModelIndex)
     def item_picked(self, index: QModelIndex):

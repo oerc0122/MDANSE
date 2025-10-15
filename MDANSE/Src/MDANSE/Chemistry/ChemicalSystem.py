@@ -18,6 +18,7 @@ from __future__ import annotations
 import copy
 from collections.abc import Iterable
 from functools import reduce
+from pathlib import Path
 from typing import Any, SupportsInt
 
 import h5py
@@ -126,7 +127,8 @@ class ChemicalSystem:
             unique_atoms, counts = np.unique(atom_list, return_counts=True)
             unique_atoms = map(self._rename_isotopes, unique_atoms)
             name = "_".join(
-                f"{atom}{count}" for atom, count in zip(unique_atoms, counts)
+                f"{atom}{count}"
+                for atom, count in zip(unique_atoms, counts, strict=True)
             )
 
             if name not in self._clusters:
@@ -320,7 +322,7 @@ class ChemicalSystem:
             new_vals = [list(padded(val, fillvalue=-1, n=size)) for val in vals]
             clusters_group.create_dataset(key, data=new_vals)
 
-    def load(self, trajectory: h5py.File | str):
+    def load(self, trajectory: h5py.File | Path | str):
         """Read the ChemicalSystem information from the trajectory.
 
         Parameters
@@ -329,15 +331,15 @@ class ChemicalSystem:
             Filename or a file object of the trajectory.
         """
         close_on_end = False
-        if isinstance(trajectory, str):
+        if isinstance(trajectory, Path | str):
             close_on_end = True
             source = h5py.File(trajectory)
         else:
             source = trajectory
 
-        assert isinstance(source, (h5py.File, dict))
+        assert isinstance(source, h5py.File | dict)
 
-        if "composition" not in source.keys():
+        if "composition" not in source:
             if close_on_end:
                 source.close()
             self.legacy_load(trajectory)

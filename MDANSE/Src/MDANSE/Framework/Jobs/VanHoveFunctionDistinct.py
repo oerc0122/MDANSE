@@ -21,6 +21,7 @@ from collections.abc import Iterator
 
 import numpy as np
 import numpy.typing as npt
+from more_itertools import always_iterable
 
 from MDANSE.Chemistry import ChemicalSystem
 from MDANSE.Framework.AtomGrouping.grouping import (
@@ -169,10 +170,8 @@ def van_hove_distinct(
                         np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
                     ]
                     bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
-                    for bin, counts in zip(bin_numbers, bin_counts):
-                        if bin < 0:
-                            continue
-                        elif bin >= nbins:
+                    for bin, counts in zip(bin_numbers, bin_counts, strict=True):
+                        if bin < 0 or bin >= nbins:
                             continue
                         else:
                             total[type_sub, type_ref, bin] += counts
@@ -183,10 +182,8 @@ def van_hove_distinct(
                         np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
                     ]
                     bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
-                    for bin, counts in zip(bin_numbers, bin_counts):
-                        if bin < 0:
-                            continue
-                        elif bin >= nbins:
+                    for bin, counts in zip(bin_numbers, bin_counts, strict=True):
+                        if bin < 0 or bin >= nbins:
                             continue
                         else:
                             intra[type_sub, type_ref, bin] += counts
@@ -284,10 +281,8 @@ def van_hove_distinct_all_inter(
                         np.ix_(type_indices_sub[type_sub], type_indices_ref[type_ref])
                     ]
                     bin_numbers, bin_counts = np.unique(bins_subset, return_counts=True)
-                    for bin, counts in zip(bin_numbers, bin_counts):
-                        if bin < 0:
-                            continue
-                        elif bin >= nbins:
+                    for bin, counts in zip(bin_numbers, bin_counts, strict=True):
+                        if bin < 0 or bin >= nbins:
                             continue
                         else:
                             total[type_sub, type_ref, bin] += counts
@@ -502,7 +497,9 @@ class VanHoveFunctionDistinct(IJob):
         self.indexToSymbol = np.array(
             [
                 self.selectedElements.index(name)
-                for name in self.trajectory.selection_getter(self.trajectory.atom_names)
+                for name in always_iterable(
+                    self.trajectory.selection_getter(self.trajectory.atom_names)
+                )
             ],
             dtype=np.int32,
         )
@@ -709,10 +706,7 @@ class VanHoveFunctionDistinct(IJob):
 
         if self.intra:
             for i in ["/intra", "/inter", ""]:
-                if i == "/intra":
-                    labels = self.labels_intra
-                else:
-                    labels = self.labels
+                labels = self.labels_intra if i == "/intra" else self.labels
                 assign_weights(
                     self._outputData, weight_dict, f"vh/g(r,t){i}/%s", labels
                 )

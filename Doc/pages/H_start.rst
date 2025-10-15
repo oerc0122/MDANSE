@@ -59,6 +59,22 @@ Use ``pip`` to install the MDANSE package from the specified GitHub repository:
 The MDANSE package contains all the code needed to perform trajectory conversion
 and analysis using MDANSE, but none of the visualisation tools.
 
+Optional Dependencies
+'''''''''''''''''''''
+
+If you intend to use MDANSE in the command line rather than in the GUI, you can
+include optional dependencies targeted specifically at Command Line Interface (CLI)
+users:
+
+.. code-block:: bash
+
+   pip install "MDANSE[cli]"
+
+At the moment, this is equivalent to running ``pip install MDANSE tqdm``.
+You can run MDANSE scripts in the command line independent of whether ``tqdm``
+is installed or not, but if ``tqdm`` is present, it will be used to provide
+a CLI progress bar for MDANSE jobs.
+
 Install MDANSE_GUI Package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -83,6 +99,34 @@ You can now start using MDANSE by running the following command:
 
 This will launch the MDANSE graphical user interface (GUI),
 and you can start using MDANSE for your analysis.
+
+Make sure that you are starting MDANSE from a shell/console
+in which you have activated the Python virtual environment,
+as described above in section :ref:`venv_for_mdanse`.
+
+Run MDANSE in the shell
+~~~~~~~~~~~~~~~~~~~~~~~
+
+As an alternative to using the GUI, MDANSE package provides
+a script that can be used in the command line. To find out
+more about the valid input commands, type
+
+.. code-block:: bash
+
+   mdanse -h
+
+This will show the help message of the MDANSE CLI and give
+you the list of available subcommands.
+
+The currently implemented commands allow you to display the
+contents of MDANSE trajectory files (.mdt) and the contents
+of MDANSE analysis results (.mda), view the atom database
+entries for different chemical elements, and to create
+Python scripts for trajectory conversion and analysis.
+At the moment the scripts contain only default values which
+then need to be replaced with values relevant to the input
+files you intend to use, so creating scripts in the GUI
+is still easier for now.
 
 Make sure that you are starting MDANSE from a shell/console
 in which you have activated the Python virtual environment,

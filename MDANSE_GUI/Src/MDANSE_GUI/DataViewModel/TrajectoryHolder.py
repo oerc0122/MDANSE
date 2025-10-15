@@ -74,7 +74,7 @@ class DataTreeItem(QStandardItem):
         if parent is None:
             return [self.mdanse_tag]
         else:
-            return parent.ancestors() + [self.mdanse_tag]
+            return [*parent.ancestors(), self.mdanse_tag]
 
 
 class TrajectoryItem(DataTreeItem):
@@ -86,7 +86,7 @@ class TrajectoryItem(DataTreeItem):
         super().__init__(*args, **new_kwargs)
 
         self.filename = kwargs.get("fname", "NULL")
-        self.trajectory = kwargs.get("trajectory", None)
+        self.trajectory = kwargs.get("trajectory")
         self.original_input = []
         self.processing_used = ""
         self.processing_parameters = {}

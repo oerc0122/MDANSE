@@ -104,7 +104,7 @@ class SelectionModel(QStandardItemModel):
             item = self.itemFromIndex(index)
             json_string = item.text()
             total_dict[row] = json.loads(json_string)
-        self._selection.load_from_json(json.dumps(total_dict))
+        self._selection.load(json.dumps(total_dict))
         self._current_selection = self._selection.select_in_trajectory(self._trajectory)
         if last_operation:
             try:
@@ -116,7 +116,7 @@ class SelectionModel(QStandardItemModel):
             except json.JSONDecodeError:
                 return SelectionValidity.MALFORMED_SELECTION
             if valid:
-                self._selection.load_from_json(json_string)
+                self._selection.load(json_string)
                 return SelectionValidity.VALID_SELECTION
             return SelectionValidity.USELESS_SELECTION
         return None
@@ -558,19 +558,29 @@ class AtomSelectionWidget(WidgetBase):
         trajectory = traj_config["instance"]
         self._trajectory_path = Path(traj_filename).parent
         self.selection_model = SelectionModel(trajectory)
+        self.selection_model.clear()
+        self.selection_model.accept_from_widget(
+            '{"function_name": "select_all", "operation_type": "union"}'
+        )
+        self.selection_model.accept_from_widget(
+            '{"function_name": "select_dummy", "operation_type": "difference"}'
+        )
         if use_list_view:
             self._field.setModel(self.selection_model)
-        self.helper = self.create_helper((traj_filename, trajectory))
+        self.helper = None
+        self.helper_settings = (traj_filename, trajectory)
+        self.helper_save_button = False
         helper_button = QPushButton(self._push_button_text, self._base)
         helper_button.clicked.connect(self.helper_dialog)
         self._layout.addWidget(self._field)
         self._layout.addWidget(helper_button)
         if use_list_view:
             self._layout.addWidget(load_button)
-            self.helper.create_optional_save_button()
+            self.helper_save_button = True
         self.update_labels()
         self.updateValue()
         self._field.setToolTip(self._tooltip_text)
+        self.selection_model.selection_changed.connect(self.updateValue)
 
     def create_helper(
         self,
@@ -597,6 +607,10 @@ class AtomSelectionWidget(WidgetBase):
     @Slot()
     def helper_dialog(self) -> None:
         """Open the helper dialog."""
+        if self.helper is None:
+            self.helper = self.create_helper(self.helper_settings)
+            if self.helper_save_button:
+                self.helper.create_optional_save_button()
         if self.helper.isVisible():
             geometry = self.helper.saveGeometry()
             self.helper.previous_geometry = geometry
@@ -627,7 +641,7 @@ class AtomSelectionWidget(WidgetBase):
         except OSError:
             LOG.info("File %s could not be read as an HDF5 file", fname)
             try:
-                temp_selection.load_from_json_file(fname)
+                temp_selection.load(fname)
             except (json.JSONDecodeError, UnicodeDecodeError):
                 LOG.info("File %s could not be read using JSON decoder", fname)
                 LOG.warning("Selection will NOT be loaded from %s", fname)

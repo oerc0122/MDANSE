@@ -337,9 +337,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
                     self.trajectory.close()
                     break
             else:
-                if self._status is not None:
-                    if hasattr(self._status, "_pause_event"):
-                        self._status._pause_event.wait()
+                if hasattr(self._status, "_pause_event"):
+                    self._status._pause_event.wait()
                 output = self.run_step(index)
                 outputs.put(output)
 
@@ -358,9 +357,8 @@ class IJob(Configurable, metaclass=SubclassFactory):
             )
 
         for index in steps:
-            if self._status is not None:
-                if hasattr(self._status, "_pause_event"):
-                    self._status._pause_event.wait()
+            if hasattr(self._status, "_pause_event"):
+                self._status._pause_event.wait()
 
             idx, result = self.run_step(index)
             if self._status is not None:
@@ -393,7 +391,7 @@ class IJob(Configurable, metaclass=SubclassFactory):
         for i in range(self.numberOfSteps):
             inputQueue.put(i)
 
-        for i in range(self.configuration["running_mode"]["slots"]):
+        for _ in range(self.configuration["running_mode"]["slots"]):
             self._run_multicore_check_terminate(listener)
             p = multiprocessing.Process(
                 target=self.process_tasks_queue,
@@ -450,20 +448,22 @@ class IJob(Configurable, metaclass=SubclassFactory):
             hasattr(self._status, "_queue_0") and hasattr(self._status, "_queue_1")
         ):
             return
-        if not self._status._queue_1.empty():
-            if self._status._queue_1.get() == "terminate":
-                LOG.warning("Job received a request to terminate. Aborting the run.")
-                for p in self._processes:
-                    p.terminate()
-                    p.join()
-                listener.stop()
-                self._status._queue_0.put("terminated")
-                # we've terminated the child processes, now we wait
-                # here as the whole subprocess will be terminated.
-                # We don't want IJob doing anything else from now
-                # onwards.
-                while True:
-                    time.sleep(10)
+        if (
+            not self._status._queue_1.empty()
+            and self._status._queue_1.get() == "terminate"
+        ):
+            LOG.warning("Job received a request to terminate. Aborting the run.")
+            for p in self._processes:
+                p.terminate()
+                p.join()
+            listener.stop()
+            self._status._queue_0.put("terminated")
+            # we've terminated the child processes, now we wait
+            # here as the whole subprocess will be terminated.
+            # We don't want IJob doing anything else from now
+            # onwards.
+            while True:
+                time.sleep(10)
 
     def _run_remote(self, *, prog: bool = False):
         raise NotImplementedError(
@@ -492,10 +492,9 @@ class IJob(Configurable, metaclass=SubclassFactory):
                 self._status = self._status_constructor(self)
 
             self.setup(parameters)
+            self.check_status()
 
             self.initialize()
-
-            self.check_status()
 
             if self._status is not None:
                 self._status.start(self.numberOfSteps)
@@ -521,8 +520,14 @@ class IJob(Configurable, metaclass=SubclassFactory):
             raise JobError(self) from err
 
     @property
-    def info(self):
-        return str(self)
+    def info(self) -> str:
+        return (
+            self.__doc__
+            + "\nInput Parameters\n================\n"
+            + "\n".join(
+                sorted(f"{key}: {value}" for key, value in self.settings.items())
+            )
+        )
 
     @classmethod
     def save_template(cls, shortname, classname):

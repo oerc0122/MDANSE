@@ -165,20 +165,6 @@ def random_points_on_sphere(radius=1.0, nPoints=100):
     return points
 
 
-def random_points_on_disk(axis, radius=1.0, nPoints=100):
-    axis = Vector(axis).normal().array
-
-    points = np.random.uniform(-radius, radius, 3 * nPoints)
-    points = points.reshape((3, nPoints))
-
-    proj = np.dot(axis, points)
-    proj = np.dot(axis[:, np.newaxis], proj[np.newaxis, :])
-
-    points -= proj
-
-    return points
-
-
 def random_points_on_circle(axis, radius=1.0, nPoints=100):
     axis = Vector(axis).normal().array
 
@@ -260,7 +246,7 @@ def superposition_fit(confs):
     """
     w_sum = 0.0
     wr_sum = np.zeros((3,), np.float64)
-    for w, r_ref, r in confs:
+    for w, r_ref, _ in confs:
         w_sum += w
         wr_sum += w * r_ref.array
     ref_cms = wr_sum / w_sum
@@ -297,10 +283,7 @@ def superposition_fit(confs):
     v = v[i]
     if v[0] < 0:
         v = -v
-    if e[i] <= 0.0:
-        rms = 0.0
-    else:
-        rms = np.sqrt(e[i])
+    rms = 0.0 if e[i] <= 0.0 else np.sqrt(e[i])
 
     from MDANSE.Mathematics.LinearAlgebra import Quaternion, Vector
 

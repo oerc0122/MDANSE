@@ -41,7 +41,7 @@ class PartialChargeMapper:
         self._traj_charges = trajectory.charges(0)[:]
         self._current_trajectory = trajectory
         self._original_map = {}
-        for at_num, at in enumerate(system.atom_list):
+        for at_num, _ in enumerate(system.atom_list):
             try:
                 self._original_map[at_num] = self._traj_charges[at_num]
             except Exception:
@@ -61,7 +61,7 @@ class PartialChargeMapper:
             The partial charge to map the selected atoms to.
         """
         selector = ReusableSelection()
-        selector.load_from_json(selection_string)
+        selector.load(selection_string)
         indices = selector.select_in_trajectory(self._current_trajectory)
         for idx in indices:
             self._new_map[idx] = charge

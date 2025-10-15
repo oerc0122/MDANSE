@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import collections
 
+from more_itertools import always_iterable
+
 from MDANSE.Framework.Jobs.IJob import IJob
 from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
@@ -32,10 +34,7 @@ class CroppedTrajectory(IJob):
 
     label = "Cropped Trajectory"
 
-    category = (
-        "Analysis",
-        "Trajectory",
-    )
+    category = ("Trajectory",)
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
@@ -65,7 +64,7 @@ class CroppedTrajectory(IJob):
         atoms = self.trajectory.atom_types
         indices = self.trajectory.atom_indices
 
-        self._selectedAtoms = self.trajectory.selection_getter(atoms)
+        self._selectedAtoms = always_iterable(self.trajectory.selection_getter(atoms))
         self._selected_indices = indices
 
         # The output trajectory is opened for writing.

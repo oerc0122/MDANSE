@@ -26,12 +26,12 @@ from MDANSE_GUI.Widgets.ResolutionWidget import ResolutionCalculator, widget_tex
 
 
 class SimpleInstrument:
-    sample_options = ["isotropic", "crystal"]
-    technique_options = ["QENS", "INS"]
-    resolution_options = [str(x) for x in widget_text_map.keys()]
-    qvector_options = [str(x) for x in IQVectors.indirect_subclasses()]
-    energy_units = ["meV", "1/cm", "THz"]
-    momentum_units = ["1/ang", "1/nm", "1/Bohr"]
+    sample_options = ("isotropic", "crystal")
+    technique_options = ("QENS", "INS")
+    resolution_options = tuple(map(str, widget_text_map))
+    qvector_options = tuple(map(str, IQVectors.indirect_subclasses()))
+    energy_units = ("meV", "1/cm", "THz")
+    momentum_units = ("1/ang", "1/nm", "1/Bohr")
 
     def __init__(self, optional_qitem_reference: QStandardItem = None) -> None:
         self._list_item = optional_qitem_reference
@@ -130,8 +130,8 @@ class SimpleInstrument:
         _q_step, _q_min, _q_max, _q_width = self.sanitize_numbers()
         try:
             conversion_factor = measure(1.0, iunit=self._q_unit).toval("1/nm")
-        except Exception:
-            raise ValueError(f"Could not convert unit: {self._q_unit}")
+        except Exception as err:
+            raise ValueError(f"Could not convert unit: {self._q_unit}") from err
         else:
             conversion_factor = float(conversion_factor)
         if "shells" in qvec_generator._configuration:

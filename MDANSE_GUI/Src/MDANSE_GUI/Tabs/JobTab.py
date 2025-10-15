@@ -15,16 +15,21 @@
 #
 from __future__ import annotations
 
-import os
 from functools import partial
-from pathlib import PurePath
 
-from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QComboBox, QLabel, QWidget
+from qtpy.QtCore import Qt, Slot
+from qtpy.QtGui import QFontMetrics
+from qtpy.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QLabel,
+    QProxyStyle,
+    QSizePolicy,
+    QWidget,
+)
 
 from MDANSE.MLogging import LOG
-from MDANSE_GUI.InputWidgets.MoleculeWidget import MoleculeWidget
-from MDANSE_GUI.Session.LocalSession import LocalSession
+from MDANSE_GUI.Session.Session import Session
 from MDANSE_GUI.Tabs.GeneralTab import GeneralTab
 from MDANSE_GUI.Tabs.Layouts.MultiPanel import MultiPanel
 from MDANSE_GUI.Tabs.Models.JobTree import JobTree
@@ -47,6 +52,22 @@ one you defined. The parameters saved under the instrument name
 will be used as initial values when you switch to a new analysis type.
 """
 
+COMBO_BOX_LENGTH = 32
+
+
+class ComboStyle(QProxyStyle):
+    """Style stopping the QComboBox from expanding to the longest string length."""
+
+    def __init__(self, *args, metrics: QFontMetrics | None = None, **kwargs):
+        self.metrics = metrics
+        super().__init__(*args, **kwargs)
+
+    def drawItemText(self, painter, rect, flags, pal, enabled, text, textRole):
+        elided_text = self.metrics.elidedText(text, Qt.TextElideMode.ElideRight, 200)
+        return super().drawItemText(
+            painter, rect, flags, pal, enabled, elided_text, textRole
+        )
+
 
 class JobTab(GeneralTab):
     """The tab for choosing and starting a new job."""
@@ -66,12 +87,23 @@ class JobTab(GeneralTab):
         self._instrument_index = -1
         self._trajectory_combo = QComboBox()
         self._trajectory_combo.setEditable(False)
+        self._trajectory_combo.setMinimumContentsLength(COMBO_BOX_LENGTH)
+        self._trajectory_combo.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred
+        )
+        self._trajectory_combo.setStyle(
+            ComboStyle(
+                QApplication.style().name(),
+                metrics=self._trajectory_combo.fontMetrics(),
+            )
+        )
         self._trajectory_combo.currentIndexChanged.connect(self.set_current_trajectory)
         if combo_model is not None:
             self._trajectory_combo.setModel(combo_model)
         combo_model.finished_loading.connect(self.reload_trajectory)
         self._instrument_combo = QComboBox()
         self._instrument_combo.setEditable(False)
+        self._instrument_combo.setMinimumContentsLength(COMBO_BOX_LENGTH)
         self._instrument_combo.currentIndexChanged.connect(self.set_current_instrument)
 
         if instrument_model is not None:
@@ -171,38 +203,14 @@ class JobTab(GeneralTab):
             self._needs_updating = False
 
     @classmethod
-    def standard_instance(cls):
-        action = Action()
-        the_tab = cls(
-            window,
-            name="AvailableJobs",
-            model=JobTree(),
-            view=ActionsTree(),
-            visualiser=Action(),
-            layout=partial(
-                MultiPanel,
-                left_panels=[
-                    TextInfo(
-                        header="MDANSE Analysis",
-                        footer="Look up our Read The Docs page:"
-                        + "https://mdanse.readthedocs.io/en/protos/",
-                    )
-                ],
-            ),
-            label_text=job_tab_label,
-            action=action,
-        )
-        action._parent_tab = the_tab
-        return the_tab
-
-    @classmethod
     def gui_instance(
         cls,
         parent: QWidget,
         name: str,
-        session: LocalSession,
+        session: Session,
         settings,
         logger,
+        combo_model,
         **kwargs,
     ):
         action = Action(use_preview=True)
@@ -212,9 +220,9 @@ class JobTab(GeneralTab):
             session=session,
             settings=settings,
             logger=logger,
-            model=kwargs.get("model", JobTree(filter="Analysis")),
-            combo_model=kwargs.get("combo_model", None),
-            instrument_model=kwargs.get("instrument_model", None),
+            model=kwargs.get("model", JobTree(filter="Converters")),
+            combo_model=combo_model,
+            instrument_model=kwargs.get("instrument_model"),
             view=ActionsTree(),
             visualiser=action,
             layout=partial(
@@ -232,38 +240,5 @@ class JobTab(GeneralTab):
             action=action,
         )
         action.set_settings(the_tab._settings)
+        the_tab._view.expand(the_tab._model.index(0, 0))
         return the_tab
-
-
-if __name__ == "__main__":
-    import sys
-
-    from qtpy.QtWidgets import QApplication, QMainWindow
-
-    app = QApplication(sys.argv)
-    window = QMainWindow()
-    action = Action()
-    the_tab = JobTab(
-        window,
-        name="AvailableJobs",
-        model=JobTree(),
-        view=ActionsTree(),
-        visualiser=action,
-        layout=partial(
-            MultiPanel,
-            left_panels=[
-                TextInfo(
-                    header="MDANSE Analysis",
-                    footer="Look up our "
-                    + '<a href="https://mdanse.readthedocs.io/en/protos/">Read The Docs</a>'
-                    + " page.",
-                )
-            ],
-        ),
-        label_text=job_tab_label,
-        action=action,
-    )
-    the_tab.update_trajectory_list(["/Users/maciej.bartkowiak/an_example/BLAH.mdt"])
-    window.setCentralWidget(the_tab._core)
-    window.show()
-    app.exec()

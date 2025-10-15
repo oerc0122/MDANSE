@@ -23,9 +23,10 @@ from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import (
     QCheckBox,
     QFileDialog,
+    QGroupBox,
     QHBoxLayout,
+    QLabel,
     QPushButton,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -77,6 +78,7 @@ from MDANSE_GUI.InputWidgets import (
     TrajectoryFilterWidget,
     UnitCellWidget,
     VectorWidget,
+    WeightsWidget,
 )
 from MDANSE_GUI.Tabs.Visualisers.InstrumentInfo import SimpleInstrument
 from MDANSE_GUI.Widgets.DelayedButton import DelayedButton
@@ -96,20 +98,13 @@ widget_lookup = {  # these all come from MDANSE_GUI.InputWidgets
     "DerivativeOrderConfigurator": DerivativeOrderWidget,
     "InterpolationOrderConfigurator": InterpolationOrderWidget,
     "OutputFilesConfigurator": OutputFilesWidget,
-    "ASEFileConfigurator": InputFileWidget,
-    "AseInputFileConfigurator": AseInputFileWidget,
-    "ConfigFileConfigurator": InputFileWidget,
-    "MDAnalysisCoordinateFileConfigurator": MDAnalysisCoordinateFileWidget,
     "InputFileConfigurator": InputFileWidget,
+    "AseInputFileConfigurator": AseInputFileWidget,
+    "MDAnalysisCoordinateFileConfigurator": MDAnalysisCoordinateFileWidget,
     "MDAnalysisTopologyFileConfigurator": MDAnalysisTopologyFileWidget,
-    "MDFileConfigurator": InputFileWidget,
-    "FieldFileConfigurator": InputFileWidget,
-    "XDATCARFileConfigurator": InputFileWidget,
-    "XTDFileConfigurator": InputFileWidget,
-    "XYZFileConfigurator": InputFileWidget,
-    "OptionalXYZFileConfigurator": InputFileWidget,
+    "FileWithAtomDataConfigurator": InputFileWidget,
     "RunningModeConfigurator": RunningModeWidget,
-    "WeightsConfigurator": ComboWidget,
+    "WeightsConfigurator": WeightsWidget,
     "MultipleChoicesConfigurator": MultipleCombosWidget,
     "MoleculeSelectionConfigurator": MoleculeWidget,
     "AxisSelectionConfigurator": MoleculeAndAxisWidget,
@@ -251,7 +246,7 @@ class Action(QWidget):
             settings = self._job_instance.settings
         LOG.info(f"Configuration {job_instance.configuration}")
         LOG.debug(f"{self._input_traj_path} loaded as {self._trajectory_instance}")
-        if "trajectory" in settings.keys():
+        if "trajectory" in settings:
             if self._input_traj_path is None:
                 return
             key, value = "trajectory", settings["trajectory"]
@@ -308,13 +303,15 @@ class Action(QWidget):
                     input_widget.value_updated.connect(self.show_output_prediction)
                 LOG.info(f"Set up the right widget for {key}")
             # self.handlers[key] = data_handler
-            self._has_been_initialised = True
-            self.check_inputs()
+        self._has_been_initialised = True
+        self.check_inputs()
 
         if self._use_preview and "preview_box" not in self._widgets_in_layout:
-            self._preview_box = QTextEdit(self)
-            self.layout.addWidget(self._preview_box)
-            self._widgets_in_layout["preview_box"] = self._preview_box
+            box = QGroupBox("results preview")
+            self._preview_box = QLabel(self)
+            QHBoxLayout(box).addWidget(self._preview_box)
+            self.layout.addWidget(box)
+            self._widgets_in_layout["preview_box"] = box
 
         if "button_base" not in self._widgets_in_layout:
             buttonbase = QWidget(self)
@@ -348,7 +345,7 @@ class Action(QWidget):
         self.apply_instrument()
         self.allow_execution()
 
-    def check_inputs(self):
+    def check_inputs(self) -> bool:
         configured = False
         iterations = 0
         while not configured:
@@ -357,8 +354,9 @@ class Action(QWidget):
                 widget.value_from_configurator()
                 configured = configured and widget._configurator.is_configured()
             iterations += 1
-            if iterations > 5:
+            if iterations > 3:
                 break
+        return configured
 
     @Slot()
     def test_file_outputs(self):
@@ -366,7 +364,7 @@ class Action(QWidget):
             return
         self.check_inputs()
         for widget in self._widgets:
-            if isinstance(widget, (OutputFilesWidget, OutputTrajectoryWidget)):
+            if isinstance(widget, OutputFilesWidget | OutputTrajectoryWidget):
                 widget.updateValue()
         self.allow_execution()
 
@@ -424,7 +422,7 @@ class Action(QWidget):
                     text += f"<p>{array} ({new_unit})</p>"
                 else:
                     text += f"<p>[{array[0]}, {array[1]}, {array[2]}, ..., {array[-1]}] ({new_unit})</p>"
-            self._preview_box.setHtml(text)
+            self._preview_box.setText(text)
 
     @Slot()
     def allow_execution(self):
@@ -437,6 +435,7 @@ class Action(QWidget):
             has_warning = has_warning or widget.has_warning
         if self.execute_button is not None:
             self.execute_button.setEnabled(allow)
+            self.save_button.setEnabled(allow)
             if has_warning:
                 self.execute_button.setStyleSheet(
                     "QWidget { background-color:rgb(220,210,30); font-weight: bold }"
@@ -467,7 +466,7 @@ class Action(QWidget):
             currentpath = Path().absolute()
         else:
             currentpath = Path(self._parent_tab.get_path(self._job_name + "_script"))
-        result, ftype = QFileDialog.getSaveFileName(
+        result, _ftype = QFileDialog.getSaveFileName(
             self,
             "Save job as a Python script",
             str(currentpath),

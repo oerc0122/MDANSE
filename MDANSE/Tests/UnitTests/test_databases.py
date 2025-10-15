@@ -13,19 +13,17 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-import json
-from pathlib import Path
 import unittest
-from unittest.mock import patch, mock_open, ANY
+from unittest.mock import patch, mock_open
 
 from MDANSE.Chemistry import (
     ATOMS_DATABASE,
 )
-import MDANSE.Chemistry.Databases as Databases
 from MDANSE.Chemistry.Databases import (
     AtomsDatabaseError
 )
 from MDANSE.IO.IOUtils import MDANSEEncoder
+from MDANSE.IO.AtomInfo import atom_info
 
 
 class TestAtomsDatabase(unittest.TestCase):
@@ -202,18 +200,16 @@ class TestAtomsDatabase(unittest.TestCase):
         self.assertFalse(ATOMS_DATABASE.has_property("INVALID"))
 
     def test_info(self):
-        self.assertEqual(
-            "----------------------------------------------------------------------\n"
-            "                                  H                                   \n"
-            " property                                                         value\n"
-            "----------------------------------------------------------------------\n"
-            " electronegativity                                                  2.2\n"
-            " family                                                       non metal\n"
-            " nucleon                                                              0\n"
-            " symbol                                                               H\n"
-            "----------------------------------------------------------------------",
-            ATOMS_DATABASE.info("H"),
-        )
+        info_text = atom_info("H", database=ATOMS_DATABASE)
+        lines = iter(info_text.splitlines())
+        next(lines)
+        self.assertEqual(next(lines).strip(), "H")
+        self.assertTrue({"property", "value", "unit"}.issubset(next(lines).split()))
+        
+        properties = {
+            tokens[0] for line in lines if len(tokens := line.split()) > 2
+        }
+        self.assertTrue(set(self.properties) <= properties)
 
     def test_items(self):
         for (expected_atom, expected_data), (atom, data) in zip(

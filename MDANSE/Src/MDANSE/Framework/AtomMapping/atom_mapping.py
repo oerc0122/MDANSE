@@ -46,7 +46,7 @@ class AtomLabel:
             for k, v in kwargs.items():
                 self.grp_label += f"{k}={str(v).translate(translation)};"
             self.grp_label = self.grp_label[:-1]
-        self.mass = kwargs.get("mass", None)
+        self.mass = kwargs.get("mass")
         if self.mass is not None:
             self.mass = float(self.mass)
 
@@ -85,6 +85,14 @@ class AtomLabel:
             A hash of the object in its current state.
         """
         return hash((self.atm_label, self.grp_label, self.mass))
+
+    def __repr__(self) -> str:
+        grps = self.grp_label.split(";") if self.grp_label else []
+        grps = (x.split("=") for x in grps)
+        cont = ", ".join(
+            f"{key}={val!r}" for key, val in (("atm_label", self.atm_label), *grps)
+        )
+        return f"{type(self).__name__}({cont})"
 
 
 def guess_element(atm_label: str, mass: float | int | None = None) -> str:
@@ -245,7 +253,7 @@ def mapping_to_labels(mapping: dict[str, dict[str, str]]) -> list[AtomLabel]:
         if grp_label:
             for k, v in [i.split("=") for i in grp_label.split(";")]:
                 kwargs[k] = v
-        for atm_label in atm_map.keys():
+        for atm_label in atm_map:
             labels.append(AtomLabel(atm_label, **kwargs))
     return labels
 

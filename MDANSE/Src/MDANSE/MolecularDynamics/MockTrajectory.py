@@ -37,6 +37,8 @@ from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 Self = TypeVar("Self", bound="MockTrajectory")
 
+DEFAULT_BOX = 10.0 * np.eye(3)
+
 
 class MockTrajectory:
     """For testing purposes, MockTrajectory can replace a trajectory.
@@ -52,7 +54,7 @@ class MockTrajectory:
         atoms_in_box: tuple = ("Si",),
         time_step: float = 1.0,
         box_repetitions: tuple = (2, 3, 1),
-        box_size: np.ndarray = 10.0 * np.eye(3),
+        box_size: np.ndarray = DEFAULT_BOX,
         pbc: bool = False,
     ):
         self._number_of_frames = number_of_frames
@@ -231,7 +233,9 @@ class MockTrajectory:
     def time(self) -> np.ndarray:
         return self._time_axis
 
-    def coordinates(self, frame: int) -> np.ndarray:
+    def coordinates(
+        self, frame: int, atom_indices: slice | int = np.s_[:]
+    ) -> np.ndarray:
         """Returns the atom coordinates at the specified frame
 
         Parameters
@@ -258,7 +262,7 @@ class MockTrajectory:
 
         scaled_index = frame % self._real_length
 
-        return self._coordinates[scaled_index].astype(np.float64)
+        return self._coordinates[scaled_index, atom_indices, :].astype(np.float64)
 
     def configuration(self, frame: int) -> _Configuration:
         """An MDANSE Configuration at the specified frame number.
@@ -300,13 +304,13 @@ class MockTrajectory:
     def _load_unit_cells(self):
         """Only added for compatibility with Trajectory."""
 
-    def get_atom_property(self, atom_symbol: str, property: str):
-        return ATOMS_DATABASE.get_atom_property(atom_symbol, property)
+    def get_atom_property(self, atom_symbol: str, atom_property: str):
+        return ATOMS_DATABASE.get_atom_property(atom_symbol, atom_property)
 
-    def atoms_in_database(self) -> list[str]:
+    def atoms(self) -> list[str]:
         return ATOMS_DATABASE.atoms
 
-    def properties_in_database(self) -> list[str]:
+    def properties(self) -> list[str]:
         return ATOMS_DATABASE.properties
 
     def unit_cell(self, frame: int) -> UnitCell:
@@ -421,11 +425,9 @@ class MockTrajectory:
 
         if self._pbc:
             real_coordinates = np.empty(box_coordinates.shape, dtype=np.float64)
-            comp = 0
-            for i in range(first, last, step):
+            for comp, i in enumerate(range(first, last, step)):
                 direct_cell = self.unit_cell(i).direct
                 real_coordinates[comp, :] = box_coordinates[comp, :] @ direct_cell
-                comp += 1
             return real_coordinates
         else:
             return box_coordinates
@@ -434,7 +436,7 @@ class MockTrajectory:
         self,
         index: int,
         first: int = 0,
-        last: int = None,
+        last: int | None = None,
         step: int = 1,
         *,
         box_coordinates: bool = False,
@@ -548,7 +550,7 @@ class MockTrajectory:
         bool
             True if velocities are stored in MockTrajectory
         """
-        return "velocities" in self._variables.keys()
+        return "velocities" in self._variables
 
     def has_variable(self, variable: str) -> bool:
         """True if the trajectory contains atom velocities,
@@ -559,7 +561,7 @@ class MockTrajectory:
         bool
             True if velocities are stored in MockTrajectory
         """
-        return variable in self._variables.keys()
+        return variable in self._variables
 
     def variables(self):
         """Return the configuration variables stored in this trajectory.
