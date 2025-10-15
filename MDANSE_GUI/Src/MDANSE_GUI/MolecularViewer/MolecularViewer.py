@@ -54,9 +54,7 @@ def array_to_3d_imagedata(data: np.ndarray, spacing: tuple[float, float, float])
     else:
         image.AllocateScalars(vtk.VTK_DOUBLE, 1)
 
-    for (i, j, k), val in np.ndenumerate(data):
-        image.SetScalarComponentFromDouble(i, j, k, 0, val)
-
+    image.GetPointData().SetScalars(numpy_support.numpy_to_vtk(data.ravel("F")))
     return image
 
 
