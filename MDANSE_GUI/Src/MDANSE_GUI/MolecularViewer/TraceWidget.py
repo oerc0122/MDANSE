@@ -185,7 +185,7 @@ class TraceWidget(QWidget):
             ("Number of trajectory samples", self._sampling_spinbox),
             ("Position smearing (larger=more smearing)", self._smearing_spinbox),
             ("Grid step (0.10=coarse, 0.01=fine) / nm", self._grid_spinbox),
-            ("Trace percentile for isovalue", self._fraction_spinbox),
+            ("Trace isovalue", self._fraction_spinbox),
             ("Isosurface opacity", self._opacity_spinbox),
             ("Isosurface colour (R,G,B)", self._colour_lineedit),
         ]:
