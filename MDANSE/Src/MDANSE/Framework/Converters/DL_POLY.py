@@ -56,14 +56,14 @@ class DL_POLY(Converter):
     field_file = PathParam(
         mode="r",
         extensions={"FIELD files": "FIELD*"},
-        default="INPUT_FILENAME",
+        default="FIELD",
         label="Input FIELD file",
         on_set=to_class(DLPField),
     )
     history_file = PathParam(
         mode="r",
         extensions={"HISTORY files": "HISTORY*"},
-        default="INPUT_FILENAME",
+        default="HISTORY",
         label="Input HISTORY file",
         on_set=to_class(DLPHistory),
     )

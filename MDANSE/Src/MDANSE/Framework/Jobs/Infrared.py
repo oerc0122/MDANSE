@@ -28,6 +28,7 @@ from MDANSE.Framework.Parameters import (
     InstrumentResolution,
     InterpOrder,
     MDANSETrajectory,
+    Molecule,
     OutputFile,
     PartialCharge,
     RunningMode,
@@ -71,12 +72,7 @@ class Infrared(IJob):
         depends={"trajectory": "trajectory", "frames": "frames"},
         label="d/dt dipole numerical derivative",
     )
-    molecule_name = DynamicSingleChoice(
-        choices="chemical_system._clusters.keys()",
-        depends={"choices": "trajectory"},
-        label="Molecule name",
-        default="",
-    )
+    molecule_name = Molecule(depends={"choices": "trajectory"})
     output_files = OutputFile()
     running_mode = RunningMode()
 

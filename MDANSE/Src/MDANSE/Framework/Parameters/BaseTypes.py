@@ -68,7 +68,10 @@ class NumericRange(Generic[T]):
     """Wrapper for :class:`more_itertools.numeric_range` for non-private start stop."""
 
     def __init__(self, *params: T):
-        self.iterator = numeric_range(*params)
+        try:
+            self.iterator = numeric_range(*params)
+        except ValueError as err:
+            raise ConfigError("Unable to build numeric range.") from err
 
     def __iter__(self) -> Iterator[T]:
         return iter(self.iterator)
@@ -190,6 +193,7 @@ class Float(MinMax[float], ConfigureDescriptor[SupportsFloat, float]):
 
 class Integer(MinMax[int], ConfigureDescriptor[SupportsInt, int]):
     """Integer parameter."""
+
     def __init__(
         self,
         optional: bool = False,
@@ -404,6 +408,7 @@ class ManyPath(PathParam):
     Files can be defined as either a Sequence of paths or
     a semi-colon separated list of paths.
     """
+
     def validate(
         self, value: Sequence[Path | str] | Path | str, deps: Depends, /
     ) -> Sequence[Path | str | None]:
@@ -504,6 +509,7 @@ class Array(ConfigureDescriptor[str | npt.ArrayLike, np.ndarray]):
     non_zero : bool
         Whether array must have a non-zero critical value.
     """
+
     def __init__(
         self,
         *,
@@ -555,6 +561,7 @@ class Vector(Array):
     normalise : bool
         Whether vector should be normalised on return.
     """
+
     def __init__(
         self,
         *,

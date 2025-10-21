@@ -316,6 +316,14 @@ class Configurable:
 
         return docstring
 
+    @property
+    def invalid(self) -> Iterable[str]:
+        for param in self.parameters:
+            try:
+                getattr(self, param)
+            except ConfigError:
+                yield param
+
     def __str__(self) -> str:
         out = f"{type(self).__name__}(\n"
         for param in self.parameters:
@@ -370,14 +378,18 @@ class HasDependencies:
                 "are not correctly defined."
             )
 
-        return cast(
-            Depends,
-            {
-                dep: getattr(owner, key)
-                for dep, key in depends.items()
-                if key != "parent"
-            },
-        )
+        deps = {
+            dep: getattr(owner, key) for dep, key in depends.items() if key != "parent"
+        }
+
+        if "parent" in depends.values() and isinstance(owner, CustomConfig):
+            deps |= {
+                key: owner.last_deps[key]
+                for key, val in depends.items()
+                if val == "parent"
+            }
+
+        return cast(Depends, deps)
 
     def required_deps(self) -> set[DescID]:
         return set()
@@ -537,8 +549,6 @@ class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
             )
 
         deps = self._get_deps(owner)
-        if "parent" in self.depends.values():
-            deps |= owner.last_deps
 
         out = self.validate(value, deps)
 
@@ -647,7 +657,7 @@ class ConfigureDescriptor(Parameter, HasDependencies, Generic[P, T]):
 
             if not self._validate_choices(out, self.last_choices):
                 raise ConfigError(
-                    f"Value ({out!r}) not in choices ({cjoin(self.last_choices)})."
+                    f"Value ({out!r}) not in choices ({cjoin(map(str, self.last_choices))})."
                 )
 
         elif self.choices and is_enum(self.choices):  # Enum

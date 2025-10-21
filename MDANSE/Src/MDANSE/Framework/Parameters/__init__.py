@@ -44,7 +44,7 @@ from .Choices import (
 from .Filter import Filter
 from .Frames import CorrelationWindow, Frames, FrameSelect, InterpOrder
 from .InputFiles import MDANSEResult, MDANSETrajectory
-from .Molecules import MolecularAxis
+from .Molecules import MolecularAxis, Molecule
 from .OutputFiles import ASEOutputFormat, OutputFile, OutputTrajectory
 from .Parameters import to_class
 from .Projection import Projection

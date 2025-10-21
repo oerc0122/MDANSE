@@ -78,7 +78,9 @@ class CP2K(Converter):
         label="Force file (XYZ, optional)",
     )
     cell_file = PathParam(
-        "r", extensions={"CP2K cell file": "*.cell"}, label="CP2K unit cell file (.cell)"
+        "r",
+        extensions={"CP2K cell file": "*.cell"},
+        label="CP2K unit cell file (.cell)",
     )
     atom_aliases = AtomMapping(depends={"trajectory": "pos_file"})
     fold = Boolean(default=False, label="Fold coordinates into box")

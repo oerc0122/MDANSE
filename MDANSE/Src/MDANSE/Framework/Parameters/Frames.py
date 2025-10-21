@@ -110,6 +110,9 @@ class FrameWindow:
     def duration(self):
         return [time - self.times[0] for time in self.times]
 
+    def __int__(self) -> int:
+        return self.window
+
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.window})"
 
@@ -119,7 +122,12 @@ class FrameSelect(Range[int]):
     default_label = "Frames to include in correlation."
 
     def __init__(
-        self, *args, default: FrameInput = "all", dtype: None = None, **kwargs
+        self,
+        *args,
+        default: FrameInput = "all",
+        dtype: None = None,
+        include_last: None = None,
+        **kwargs,
     ):
         super().__init__(*args, default=default, dtype=int, **kwargs)
 
@@ -157,15 +165,19 @@ class FrameSelect(Range[int]):
             value = (0, nsteps, 1)
 
         ranges = super().validate(value, deps)
+
         return Frames(trajectory, ranges)
 
 
 class CorrelationWindow(Integer):
     default_label = "Correlation window"
     default_tooltip = "Number of frames in correlation window."
+    optional_label = "Default (n_frames / 2)"
 
-    def __init__(self, *args, default: int | None = None, **kwargs):
-        super().__init__(*args, default=default, optional=True, **kwargs)
+    def __init__(
+        self, *args, default: int | None = None, optional: bool = True, **kwargs
+    ):
+        super().__init__(*args, default=default, optional=optional, **kwargs)
 
     def validate(self, value: SupportsInt, deps: Depends):
         if isinstance(value, FrameWindow):
@@ -206,6 +218,7 @@ class InterpOrder(SingleChoice[int | str, int]):
         default: int = 3,
         aliases: None = None,
         choices: None = None,
+        optional: bool = False,
         **kwargs,
     ):
         if aliases is not None:
@@ -214,15 +227,17 @@ class InterpOrder(SingleChoice[int | str, int]):
             raise ConfigError("choices may not be non-None")
 
         super().__init__(
-            *args, choices=(), aliases=self.base_aliases, default=default, **kwargs
+            *args,
+            choices=(),
+            aliases=self.base_aliases,
+            default=default,
+            optional=optional,
+            **kwargs,
         )
+        self.last_choices = ()
 
     @property
     def choices(self) -> list[int]:
-        if getattr(self, "last_choices", None) is None:
-            self.last_choices = self.get_choices()
-
-        assert isinstance(self.last_choices, set)
         return sorted(self.last_choices)
 
     @choices.setter

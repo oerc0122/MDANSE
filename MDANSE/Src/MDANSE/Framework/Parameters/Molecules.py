@@ -23,24 +23,41 @@ from .UtilTypes import Depends
 
 class AtomWithinMolecule(Integer):
     def required_deps(self) -> set[str]:
-        return super().required_deps() | {"trajectory", "choice"}
+        return super().required_deps() | {"trajectory", "choices"}
 
     def get_ranges(self, deps: Depends):
         trajectory = deps["trajectory"]
-        molecule = deps["choice"]
+        molecule = deps["choices"]
 
-        return (0, len(trajectory.chemical_system._clusters[molecule]))
+        return (0, len(trajectory.chemical_system._clusters[molecule][0]))
+
+
+class Molecule(DynamicSingleChoice[str, str]):
+    default_label = "Molecule name"
+    default_tooltip = "Molecule to select."
+
+    def __init__(self, *args, choices: None = None, **kwargs):
+        if choices is not None:
+            raise ConfigError("Choices cannot be non-None")
+
+        super().__init__(
+            *args,
+            choices="chemical_system._clusters.keys()",
+            **kwargs,
+        )
 
 
 class MolecularAxis(CustomConfig):
-    molecule = DynamicSingleChoice(
-        choices="chemical_system.unique_molecules()", depends={"choices": "parent"}
-    )
+    molecule = Molecule(depends={"choices": "parent"})
     axis_1 = AtomWithinMolecule(
-        default=None, depends={"choice": "molecule", "trajectory": "parent"}
+        default=None,
+        depends={"choices": "molecule", "trajectory": "parent"},
+        optional=True,
     )
     axis_2 = AtomWithinMolecule(
-        default=None, depends={"choice": "molecule", "trajectory": "parent"}
+        default=None,
+        depends={"choices": "molecule", "trajectory": "parent"},
+        optional=True,
     )
 
     def required_deps(self) -> set[str]:

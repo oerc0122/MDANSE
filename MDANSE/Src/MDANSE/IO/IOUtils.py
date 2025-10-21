@@ -44,6 +44,9 @@ class UCEnum(Enum):
         value = "_".join(value.split())
         return vars(cls).get(value.upper())
 
+    def __str__(self) -> str:
+        return self.name.capitalize()
+
 
 @runtime_checkable
 class Serialisable(Protocol):

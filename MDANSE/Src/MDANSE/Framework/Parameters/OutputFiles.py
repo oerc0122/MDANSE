@@ -110,7 +110,6 @@ class OutputFile(CustomConfig):
             return
 
         if isinstance(value, dict):
-            print(value)
             self.set(**value)
             return
 

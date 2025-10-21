@@ -168,6 +168,7 @@ class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
 
     def __init__(self, default: Collection[int] | dict | None = None, **kwargs):
         super().__init__(default=default, **kwargs)
+        self.all = False
 
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("trajectory")}
@@ -181,8 +182,10 @@ class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
         trajectory = deps["trajectory"]
 
         if value is None or value == "all":
+            self.all = True
             return list(range(len(trajectory.atom_types)))
         if isinstance(value, list | tuple | set):
+            self.all = set(value) == set(range(len(trajectory.atom_types)))
             return sorted(value)
 
         selector = ReusableSelection()
@@ -198,7 +201,18 @@ class AtomSelection(ConfigureDescriptor[Collection[int], list[int]]):
 
         indices = selector.select_in_trajectory(trajectory)
 
+        self.all = set(indices) == set(range(len(trajectory.atom_types)))
         return sorted(indices)
+
+    def __str__(self) -> str:
+        if self.all:
+            return "all"
+        return super().__str__()
+
+    def __repr__(self) -> str:
+        if self.all:
+            return "all"
+        return super().__repr__()
 
 
 class PartialCharge(ConfigureDescriptor[str | Path | dict, dict[int, float]]):
