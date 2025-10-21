@@ -225,7 +225,6 @@ Status:
             file_name = self.parameters["output_files"]["path"]
             if not file_name.endswith(".mdt"):
                 file_name += ".mdt"
-            print("Boof")
             return file_name
 
         # job is an analysis
@@ -233,10 +232,8 @@ Status:
             file_name = self.parameters["output_files"]["path"]
             if not file_name.endswith(".mda"):
                 file_name += ".mda"
-            print("Beef")
             return file_name
 
-        print("Woof")
         return self.parameters["output_files"]["path"]
 
     @Slot(int)

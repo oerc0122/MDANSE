@@ -34,8 +34,9 @@ class HDFTrajectoryWidget(WidgetBase):
         super().__init__(*args, parameter=parameter, **kwargs)
 
         if not self.valid:
-            label = QLabel("No Trajectory available", self._base)
+            label = QLabel("No Trajectory available.", self._base)
             self._layout.addWidget(label)
+            self.mark_error("No trajectory available.")
         else:
             filename = Path(self.raw)
             label = QLabel(str(filename), self._base)
@@ -50,6 +51,9 @@ class HDFTrajectoryWidget(WidgetBase):
         label.setToolTip(tooltip_text)
         self._label = label
 
+    def trajectory_changed(self) -> None:
+        self._label.setText(self.raw)
+
     def default_labels(self):
         """Each Widget should have a default tooltip and label,
         which will be set in this method, unless specific
@@ -61,4 +65,4 @@ class HDFTrajectoryWidget(WidgetBase):
             self._tooltip = "The input trajectory to be processed"
 
     def get_widget_value(self):
-        return self.get_value()
+        return self.value

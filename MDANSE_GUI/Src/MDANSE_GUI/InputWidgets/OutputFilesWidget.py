@@ -33,7 +33,9 @@ if TYPE_CHECKING:
 
 class OutputFilesWidget(WidgetBase):
     def __init__(self, *args, parameter: OutputFile, **kwargs):
-        super().__init__(*args, parameter=parameter, layout_type="QGridLayout", **kwargs)
+        super().__init__(
+            *args, parameter=parameter, layout_type="QGridLayout", **kwargs
+        )
 
         default_value = self.parameter.descriptors["path"].default
 
@@ -69,7 +71,9 @@ class OutputFilesWidget(WidgetBase):
         self.type_box.addItems(
             [
                 fmt_string
-                for fmt_string in sorted(self.parameter.descriptors["out_format"].choices)
+                for fmt_string in sorted(
+                    self.parameter.descriptors["out_format"].choices
+                )
                 if fmt_string != "FileInMemory"
             ]
         )
@@ -147,13 +151,17 @@ class OutputFilesWidget(WidgetBase):
         self.parameter.out_format = self.type_box.checked_values()
         self.parameter.log_level = self.logs_combo.currentText()
 
-    # def get_widget_value(self):
-    #     self._configurator.forbidden_files = self._session.reserved_filenames()
-    #     filename = self._field.text()
-    #     if not filename:
-    #         filename = self._default_value
+    def trajectory_changed(self) -> None:
+        self._field.setText(str(self.parameter.path))
+        self.updateValue()
 
-    #     formats = self.type_box.checked_values()
-    #     log_level = self.logs_combo.currentText()
+    def get_widget_value(self):
+        self._configurator.forbidden_files = self._session.reserved_filenames()
+        filename = self._field.text()
+        if not filename:
+            filename = self._default_value
 
-    #     return (str(Path(filename).absolute()), formats, log_level)
+        formats = self.type_box.checked_values()
+        log_level = self.logs_combo.currentText()
+
+        return (str(Path(filename).absolute()), formats, log_level)

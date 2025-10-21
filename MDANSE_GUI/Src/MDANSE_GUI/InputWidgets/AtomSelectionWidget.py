@@ -200,12 +200,15 @@ class SelectionModel(QStandardItemModel):
             self.accept_from_widget(json_string)
 
     @Slot(str)
-    def accept_from_widget(self, json_string: str):
+    def accept_from_widget(self, *json_string: str):
         """Add a selection operation sent from a selection widget."""
         self.finalise_manual_selection()
-        new_item = QStandardItem(json_string)
-        new_item.setEditable(False)
-        self.appendRow(new_item)
+
+        for string in json_string:
+            new_item = QStandardItem(string)
+            new_item.setEditable(False)
+            self.appendRow(new_item)
+
         self.selection_changed.emit()
 
     @Slot(str)
@@ -518,10 +521,8 @@ class SelectionHelper(QDialog):
         """Reset the helper to the default state."""
         self.selection_model.clear()
         self.selection_model.accept_from_widget(
-            '{"function_name": "select_all", "operation_type": "union"}'
-        )
-        self.selection_model.accept_from_widget(
-            '{"function_name": "select_dummy", "operation_type": "difference"}'
+            '{"function_name": "select_all", "operation_type": "union"}',
+            '{"function_name": "select_dummy", "operation_type": "difference"}',
         )
         self.recalculate_selection()
 
@@ -541,24 +542,28 @@ class AtomSelectionWidget(WidgetBase):
     def __init__(self, *args, use_list_view: bool = True, **kwargs):
         """Create the main widget for atom selection."""
         super().__init__(*args, **kwargs)
-        self._value = self._default_value
+
+        self._value = self.default
+
         if use_list_view:
             self._field = QListView(self._base)
             load_button = QPushButton(self._load_button_text, self._base)
             load_button.clicked.connect(self.load_selection_from_file_dialog)
         else:
             self._field = QLineEdit(self._base)
-            default_text = str(self._configurator.default)
+            default_text = str(self.default)
             self._field.setPlaceholderText(default_text)
             self._field.setText(default_text)
             self._field.setMaxLength(2147483647)
-        traj_config = self._configurator.configurable[
-            self._configurator.dependencies["trajectory"]
-        ]
-        traj_filename = traj_config["filename"]
-        trajectory = traj_config["instance"]
+
+        traj_config = self.get_widget_deps()["trajectory"]
+
+        traj_filename = traj_config.raw
+        trajectory = traj_config.value
+
         self._trajectory_path = Path(traj_filename).parent
         self.selection_model = SelectionModel(trajectory)
+
         self.selection_model.clear()
         self.selection_model.accept_from_widget(
             '{"function_name": "select_all", "operation_type": "union"}'
@@ -566,18 +571,23 @@ class AtomSelectionWidget(WidgetBase):
         self.selection_model.accept_from_widget(
             '{"function_name": "select_dummy", "operation_type": "difference"}'
         )
+
         if use_list_view:
             self._field.setModel(self.selection_model)
+
         self.helper = None
         self.helper_settings = (traj_filename, trajectory)
         self.helper_save_button = False
         helper_button = QPushButton(self._push_button_text, self._base)
         helper_button.clicked.connect(self.helper_dialog)
+
         self._layout.addWidget(self._field)
         self._layout.addWidget(helper_button)
+
         if use_list_view:
             self._layout.addWidget(load_button)
             self.helper_save_button = True
+
         self.update_labels()
         self.updateValue()
         self._field.setToolTip(self._tooltip_text)
@@ -628,15 +638,18 @@ class AtomSelectionWidget(WidgetBase):
         At the moment it is possible to use .mda files,
         or JSON text files.
         """
-        fname = QFileDialog.getOpenFileName(
+        fname, _ = QFileDialog.getOpenFileName(
             self._base,
             "Load selection from a file (JSON or MDA)",
             str(self._trajectory_path),
             "MDANSE selection files (*.mda *.json);;HDF5 files (*.h5);;HDF5 files(*.hdf);;All files(*.*)",
-        )[0]
+        )
+
         if not fname:
             return
+
         temp_selection = ReusableSelection()
+
         try:
             temp_selection.load_from_hdf5(fname)
         except OSError:
@@ -647,9 +660,11 @@ class AtomSelectionWidget(WidgetBase):
                 LOG.info("File %s could not be read using JSON decoder", fname)
                 LOG.warning("Selection will NOT be loaded from %s", fname)
                 return
+
         if not temp_selection.operations:
             LOG.warning("Selection from %s was empty and will be ignored", fname)
             return
+
         new_selection = temp_selection.convert_to_json()
         self.helper.selection_model.create_from_string(new_selection)
 

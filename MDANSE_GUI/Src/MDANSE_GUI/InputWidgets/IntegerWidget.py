@@ -15,6 +15,8 @@
 #
 from __future__ import annotations
 
+from typing import SupportsInt
+
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtGui import QIntValidator
 from qtpy.QtWidgets import QCheckBox, QLineEdit, QSpinBox
@@ -27,51 +29,54 @@ class IntegerWidget(WidgetBase):
     def __init__(self, *args, parameter: Integer, **kwargs):
         super().__init__(*args, parameter=parameter, **kwargs)
 
-        self._default_value = self.get_default()
+        self._field = QSpinBox(self._base)
 
-        if self.parameter.choices:
-            field = QSpinBox(self._base)
-
-            field.setMinimum(min(self.parameter.choices))
-            field.setMaximum(max(self.parameter.choices))
-            field.setValue(self._default_option)
-        else:
-            field = QLineEdit(self._base)
-            validator = QIntValidator(field)
-
-            if self.parameter.minimum is not None:
-                validator.setBottom(self.parameter.minimum)
-            if self.parameter.maximum is not None:
-                validator.setTop(self.parameter.maximum)
-
-            field.setValidator(validator)
-            field.setText(str(self._default_value))
-            field.setPlaceholderText(str(self._default_value))
-            field.textChanged.connect(self.updateValue)
+        if self.choices:
+            self.reset_choices()
+        elif self.ranges:
+            self.reset_ranges()
 
         if self.parameter.optional:
-            self._apply_box = QCheckBox("Enable", self._base)
+            label = getattr(
+                self.parameter, "optional_label", f"Default ({self.parameter.default})"
+            )
+            self._apply_box = QCheckBox(label, self._base)
             self._apply_box.setTristate(False)
             self._apply_box.checkStateChanged.connect(self.toggle_widgets)
             self._apply_box.setChecked(False)
             self._layout.addWidget(self._apply_box)
 
-        self._field = field
-        self._layout.addWidget(field)
+        self.set_value(self.default)
+
+        self._layout.addWidget(self._field)
 
         self.default_labels()
         self.update_labels()
         self.updateValue()
 
         tooltip_text = self._tooltip or "A single integer number"
-        field.setToolTip(tooltip_text)
+        self._field.setToolTip(tooltip_text)
+
+    @Slot()
+    def reset_choices(self) -> None:
+        choices = self.choices
+        self._field.setMinimum(min(choices))
+        self._field.setMaximum(max(choices))
+
+    @Slot()
+    def reset_ranges(self) -> None:
+        mini, maxi = self.ranges
+        if mini is not None:
+            self._field.setMinimum(mini)
+        if maxi is not None:  # Range exclusive.
+            self._field.setMaximum(maxi - 1)
 
     @Slot()
     def toggle_widgets(self):
         if not self.parameter.optional:
             return
 
-        self._field.setEnabled(self._apply_box.checkState() == Qt.CheckState.Checked)
+        self._field.setEnabled(self._apply_box.checkState() != Qt.CheckState.Checked)
 
     def default_labels(self):
         """Each Widget should have a default tooltip and label,
@@ -83,17 +88,20 @@ class IntegerWidget(WidgetBase):
         if not self._tooltip:
             self._tooltip = "A single integer number"
 
+    def set_value(self, value: SupportsInt | None) -> None:
+        if self.parameter.optional and value is None:
+            self._apply_box.setChecked(False)
+            return
+
+        self._field.setValue(int(value))
+        self.updateValue()
+
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""
         if (
             self.parameter.optional
-            and self._apply_box.checkState() == Qt.CheckState.Checked
+            and self._apply_box.checkState() != Qt.CheckState.Checked
         ):
             return None
 
-        strval = self._field.text().strip()
-        self._empty = not strval
-        if self._empty:
-            return self._default_value
-
-        return strval
+        return self._field.value()

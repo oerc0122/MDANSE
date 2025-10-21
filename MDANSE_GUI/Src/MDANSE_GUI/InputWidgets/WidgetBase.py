@@ -29,8 +29,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from MDANSE.Framework.Parameters.Parameters import ConfigError, CustomChoices
-from MDANSE.MLogging import LOG
+from MDANSE.Framework.Parameters.Parameters import ConfigError, CustomChoices, MinMax
 
 if TYPE_CHECKING:
     from MDANSE.Framework.Parameters.Parameters import Parameter
@@ -76,6 +75,7 @@ class WidgetBase(QObject):
         parameter: Parameter,
         configurable: object,
         prop: str,
+        parent_widget: WidgetBase | None = None,
         label: str = "",
         tooltip: str = "",
         base_type: Bases = "QGroupBox",
@@ -91,9 +91,10 @@ class WidgetBase(QObject):
         self._base_type = base_type
         self._layout_type = layout_type
 
-        self.parameter = parameter
+        self.parameter: Parameter = parameter
         self._configurable = configurable
         self._property = prop
+        self._parent_widget = parent_widget
 
         for dep in self.get_widget_deps().values():
             dep.value_changed.connect(self.updateValue)
@@ -134,6 +135,10 @@ class WidgetBase(QObject):
         self._empty = False
         self.has_warning = False
 
+        self._widgets_in_layout = {}
+        self._raw_widgets = {}
+        self._widgets = []
+
     def update_labels(self):
         """Update contained labels (dependent on base_type)."""
 
@@ -159,14 +164,6 @@ class WidgetBase(QObject):
             self._label_text = "Base Widget"
         if not self._tooltip:
             self._tooltip = "A specific tooltip for this widget SHOULD have been set"
-
-    @abstractmethod
-    def value_from_configurator(self):
-        """
-        Set the widgets to the values of the underlying configurator object.
-
-        Should also check for dependencies of the configurator.
-        """
 
     @abstractmethod
     def get_widget_value(self):
@@ -225,23 +222,34 @@ class WidgetBase(QObject):
         return getattr(self._configurable, self.parameter.raw_name, None)
 
     @property
-    def default(self):
+    def default(self) -> Any:
         return self._configurable.default_parameters[self._property]
 
     @property
-    def value(self):
+    def value(self) -> Any:
+        return self.get_value()
+
+    @value.setter
+    def value(self, value) -> None:
+        self.set_value(value)
+
+    def get_value(self) -> Any:
         return getattr(self._configurable, self._property)
 
+    def set_value(self, value: Any) -> None:
+        self._field.setText(str(value))
+        self.updateValue()
+
+    def trajectory_changed(self) -> None:
+        self.updateValue()
+
     @property
-    def choices(self):
+    def choices(self) -> set[Any] | None:
         if isinstance(self.parameter.choices, EnumMeta):
-            option_list = (
-                member.name.capitalize() for member in self.parameter.choices
-            )
-            return option_list
+            return {member.name.capitalize() for member in self.parameter.choices}
 
         if isinstance(self.parameter, CustomChoices):
-            if self.parameter._bad_deps(self._configurable):
+            if any(self.parameter._bad_deps(self._configurable)):
                 self.mark_error("Invalid dependencies")
                 return ()
             deps = self.parameter._get_deps(self._configurable)
@@ -250,14 +258,47 @@ class WidgetBase(QObject):
         if self.parameter.choices:
             return self.parameter.choices
 
-    def get_widget_deps(self):
+        return None
+
+    @property
+    def ranges(self) -> tuple[Any, Any] | None:
+        if not isinstance(self.parameter, MinMax):
+            return None
+
+        if any(self.parameter._bad_deps(self._configurable)):
+            self.mark_error("Invalid dependencies")
+            return (None, None)
+
+        deps = self.parameter._get_deps(self._configurable)
+        return self.parameter.get_ranges(deps)
+
+    def get_widget_deps(self) -> dict[str, QWidget]:
+        if isinstance(self._parent_widget, WidgetBase):
+            parent_deps = self._parent_widget.get_widget_deps()
+            return {
+                key: self._parent_widget._raw_widgets[val]
+                if val != "parent"
+                else parent_deps[key]
+                for key, val in self.parameter.depends.items()
+            }
+
         return {
             key: self._parent._raw_widgets[val]
             for key, val in self.parameter.depends.items()
         }
 
+    def add_widget(
+        self, input_widget: WidgetBase, key: str, *, add_to_layout: bool = True
+    ):
+        if add_to_layout:
+            self._layout.addWidget(input_widget._base)
+        self._widgets_in_layout[key] = input_widget._base
+        self._raw_widgets[key] = input_widget
+        self._widgets.append(input_widget)
+        input_widget.value_changed.connect(self.value_changed.emit)
+
     @Slot()
-    def updateValue(self):
+    def updateValue(self) -> None:
         try:
             self.set_parameter()
             self.clear_error()

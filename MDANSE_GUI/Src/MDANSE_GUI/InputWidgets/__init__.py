@@ -16,6 +16,8 @@
 from __future__ import annotations
 
 from .AtomMappingWidget import AtomMappingWidget as AtomMappingWidget
+from .AtomSelectionWidget import AtomSelectionWidget as AtomSelectionWidget
+from .AtomTransmutationWidget import AtomTransmutationWidget as AtomTransmutationWidget
 from .BooleanWidget import BooleanWidget as BooleanWidget
 from .ComboWidget import ComboWidget as ComboWidget
 from .DistHistCutoffWidget import DistHistCutoffWidget as DistHistCutoffWidget
@@ -28,6 +30,8 @@ from .InstrumentResolutionWidget import (
 )
 from .IntegerWidget import IntegerWidget as IntegerWidget
 from .MoleculeAndAxisWidget import MoleculeAndAxisWidget as MoleculeAndAxisWidget
+from .MoleculePreviewWidget import MoleculePreviewWidget as MoleculePreviewWidget
+from .MoleculeWidget import MoleculeWidget as MoleculeWidget
 from .MultiInputFileWidget import MultiInputFileWidget as MultiInputFileWidget
 from .OptionalFloatWidget import OptionalFloatWidget as OptionalFloatWidget
 from .OutputFilesWidget import OutputFilesWidget as OutputFilesWidget

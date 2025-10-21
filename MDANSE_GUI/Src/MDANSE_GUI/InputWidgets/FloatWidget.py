@@ -27,7 +27,7 @@ class FloatWidget(WidgetBase):
     def __init__(self, *args, parameter: Float, **kwargs):
         super().__init__(*args, parameter=parameter, **kwargs)
 
-        self._default_value = self.get_default()
+        self._default_value = self.default
 
         if self.parameter.choices:
             field = QDoubleSpinBox(self._base)

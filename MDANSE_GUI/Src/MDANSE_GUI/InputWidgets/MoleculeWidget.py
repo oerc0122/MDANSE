@@ -15,53 +15,98 @@
 #
 from __future__ import annotations
 
+from collections import Counter
+
 import numpy as np
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QComboBox, QLabel, QPushButton
 
+from MDANSE.Framework.Parameters import Molecule
+from MDANSE_GUI.InputWidgets import ComboWidget
 from MDANSE_GUI.InputWidgets.MoleculePreviewWidget import MoleculePreviewWidget
-from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 
 
-class MoleculeWidget(WidgetBase):
+class MoleculeWidget(ComboWidget):
     """MDANSE input widget for selecting a molecule type in a trajectory."""
 
-    def __init__(self, *args, index_boxes: int = 0, **kwargs):
+    def __init__(self, *args, index_boxes: int = 0, parameter: Molecule, **kwargs):
         """Populate the combo box with valid molecule names."""
-        super().__init__(*args, **kwargs)
-        self.index_combo_boxes = []
-        configurator = kwargs.get("configurator")
-        trajectory_configurator = kwargs.get("trajectory_configurator")
-        default_option = ""
-        if trajectory_configurator is not None:
-            option_list = trajectory_configurator[
-                "instance"
-            ].chemical_system.unique_molecules()
-            if len(option_list) > 0:
-                default_option = option_list[0]
-        elif configurator is None:
-            option_list = kwargs.get("choices", [])
-        else:
-            option_list = configurator.choices
-            default_option = configurator.default
-        traj_config = self._configurator.configurable[
-            self._configurator.dependencies["trajectory"]
-        ]
-        trajectory = traj_config["instance"]
-        unique_molecules = trajectory.chemical_system.unique_molecules()
-        traj_bond_list = trajectory.chemical_system._bonds
-        self.atom_database = trajectory
         self.mol_dict = {}
-        for mol_name in unique_molecules:
-            no_of_molecules = len(trajectory.chemical_system._clusters[mol_name])
-            atom_indices = trajectory.chemical_system._clusters[mol_name][0]
+
+        super().__init__(*args, parameter=parameter, **kwargs)
+
+        self.index_combo_boxes = [QComboBox(self._base) for box in range(index_boxes)]
+
+        self.trajectory_changed()
+
+        self._field.currentTextChanged.connect(self.molecule_changed)
+
+        button = QPushButton(self._base)
+        button.setText("Molecule Preview")
+        button.clicked.connect(self.button_clicked)
+
+        if self._tooltip:
+            tooltip_text = self._tooltip
+        else:
+            tooltip_text = (
+                "A single option can be picked out of all the options listed."
+            )
+
+        self.view_button = button
+        self._field.setToolTip(tooltip_text)
+
+        self._layout.addWidget(self._field)
+        for nbox, cbox in enumerate(self.index_combo_boxes):
+            self._layout.addWidget(QLabel(f"Atom {nbox + 1}:"))
+            self._layout.addWidget(cbox)
+        self._layout.addWidget(button)
+
+        self.valid_changed.connect(self.toggle_button)
+        self.default_labels()
+        self.update_labels()
+        self.updateValue()
+
+    @Slot()
+    def molecule_changed(self):
+        """Change molecule preview and molecule information."""
+        self.selected_name = self._field.currentText()
+        self.selected_mol = self.mol_dict.get(self.selected_name, None)
+
+        if self.selected_mol is not None:
+            self.window = MoleculePreviewWidget(
+                self._base,
+                self.selected_mol,
+                self.selected_name,
+                self.trajectory,
+            )
+
+    @Slot()
+    def button_clicked(self):
+        """Open a window that shows a preview of selected molecule."""
+        self.molecule_changed()
+        if self.selected_mol is None:
+            return
+
+        if self.window.isVisible():
+            self.window.close()
+        else:
+            self.window.show()
+
+    def trajectory_changed(self):
+        self.trajectory = self.get_widget_deps()["choices"].value
+        traj_bond_list = self.trajectory.chemical_system._bonds
+
+        self.get_choices()
+        self.mol_dict.clear()
+
+        for mol_name in self.choices:
+            no_of_molecules = len(self.trajectory.chemical_system._clusters[mol_name])
+            atom_indices = self.trajectory.chemical_system._clusters[mol_name][0]
             atom_symbols = [
-                trajectory.chemical_system.atom_list[index] for index in atom_indices
+                self.trajectory.chemical_system.atom_list[index]
+                for index in atom_indices
             ]
-            unique_atoms, atom_counts = np.unique(atom_symbols, return_counts=True)
-            atom_counts = {
-                unique_atoms[n]: atom_counts[n] for n in range(len(unique_atoms))
-            }
+            atom_counts = Counter(atom_symbols)
             bonds = [
                 (bond[0], bond[1])
                 for bond in traj_bond_list
@@ -72,86 +117,22 @@ class MoleculeWidget(WidgetBase):
                 "atom_number": atom_counts,
                 "atom_indices": atom_indices,
                 "atom_symbols": atom_symbols,
+                "num_atoms": len(atom_indices),
                 "bond_list": bonds,
             }
 
-        self.field = QComboBox(self._base)
-        self.field.addItems(option_list)
-        self.field.setCurrentText(default_option)
-        self.selected_name = self.field.currentText()
-        self.selected_mol = self.mol_dict.get(self.selected_name, None)
-        self.field.currentTextChanged.connect(self.updateValue)
-        self.field.currentTextChanged.connect(self.molecule_changed)
-        initial_num_atoms = len(
-            self.mol_dict.get(default_option, {}).get("atom_indices", []),
-        )
-        index_elements = ["None"]
-        index_elements.extend(str(x) for x in range(initial_num_atoms))
-        for box_index in range(index_boxes):
-            index_box = QComboBox(self._base)
-            index_box.setEditable(False)
-            index_box.addItems(index_elements)
-            index_box.setCurrentText("None") if box_index else index_box.setCurrentText(
-                "0",
-            )
-            self.index_combo_boxes.append(index_box)
-        button = QPushButton(self._base)
-        button.setText("Molecule Preview")
-        button.clicked.connect(self.button_clicked)
-        if self._tooltip:
-            tooltip_text = self._tooltip
-        else:
-            tooltip_text = (
-                "A single option can be picked out of all the options listed."
-            )
-        self.view_button = button
-        self.field.setToolTip(tooltip_text)
-        self._field = self.field
-        self._layout.addWidget(self.field)
-        for nbox, cbox in enumerate(self.index_combo_boxes):
-            self._layout.addWidget(QLabel(f"Atom {nbox + 1}:"))
-            self._layout.addWidget(cbox)
-        self._layout.addWidget(button)
-        self._configurator = configurator
-        self.valid_changed.connect(self.toggle_button)
-        self.default_labels()
-        self.update_labels()
-        self.updateValue()
+        self.molecule_changed()
 
-    @Slot()
-    def molecule_changed(self):
-        """Change molecule preview and molecule information."""
-        self.selected_name = self.field.currentText()
-        try:
-            self.selected_mol = self.mol_dict[self.selected_name]
-        except KeyError:
-            self.selected_mol = None
+        if self.selected_mol is not None:
+            index_elements = [str(x) for x in range(self.selected_mol["num_atoms"])]
         else:
-            self.window = MoleculePreviewWidget(
-                self._base,
-                self.selected_mol,
-                self.selected_name,
-                self.atom_database,
-            )
+            index_elements = ["None"]
 
-    @Slot()
-    def button_clicked(self):
-        """Open a window that shows a preview of selected molecule."""
-        if self.selected_mol is None:
-            return
-        self.window = MoleculePreviewWidget(
-            self._base,
-            self.selected_mol,
-            self.selected_name,
-            self.atom_database,
-        )
-        if self.window.isVisible():
-            self.window.close()
-        else:
-            self.window.show()
-
-    def configure_using_default(self):
-        """Do nothing in the case of this widget."""
+        for box in self.index_combo_boxes:
+            box.clearItems()
+            box.setEditable(False)
+            box.addItems(index_elements)
+            box.setCurrentText("0" if self.selected_mol else "None")
 
     def default_labels(self):
         """Set labels to default values.
@@ -161,18 +142,19 @@ class MoleculeWidget(WidgetBase):
         values are provided in the settings of the job that
         is being configured.
         """
-        if self._label_text == "":
+        if not self._label_text:
             self._label_text = "ComboWidget"
-        if self._tooltip == "":
+        if not self._tooltip:
             self._tooltip = "You only have one option. Choose wisely."
 
     def toggle_button(self):
         """Enable the button only if molecules are present."""
-        self.view_button.setEnabled(self.field.count())
+        self.view_button.setEnabled(self._field.count())
 
     def get_widget_value(self) -> str | None:
         """Return the currently selected molecule name."""
         mol_key = self._field.currentText()
+
         if mol_key in self.mol_dict:
             return mol_key
         return None

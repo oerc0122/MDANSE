@@ -150,16 +150,18 @@ class InstrumentResolutionWidget(WidgetBase):
     def get_widget_value(self):
         function = widget_text_map[self._type_combo.currentText()]
         params = {}
-        for index in range(5):
-            key = self._labels[index].text()
-            if len(key) > 0:
+
+        for label, field, default in zip(
+            self._labels, self._fields, self._defaults, strict=True
+        ):
+            if key := label.text():
                 try:
-                    value = float(self._fields[index].text())
+                    value = float(field.text())
+                    field.setStyleSheet("")
                 except ValueError:
-                    value = self._defaults[index]
-                else:
-                    self._fields[index].setStyleSheet("")
+                    value = default
                 params[key] = value
+
         self.helper._panel.update_fields((function, params))
         return (function, params)
 

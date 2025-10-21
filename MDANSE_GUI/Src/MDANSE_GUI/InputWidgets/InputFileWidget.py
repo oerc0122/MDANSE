@@ -36,7 +36,7 @@ class InputFileWidget(WidgetBase):
     ):
         super().__init__(*args, parameter=parameter, **kwargs)
 
-        self._default_value = self.get_default()
+        self._default_value = self.default
 
         if self._default_value == "N/A":
             default_extension = first(self.parameter.extension.values()).lstrip("*")
@@ -112,6 +112,13 @@ class InputFileWidget(WidgetBase):
                 LOG.error(
                     f"session.set_path failed for {self._job_name}, {new_path.parent}"
                 )
+
+    def trajectory_changed(self) -> None:
+        if self.raw is None:
+            self._field.setText("")
+            return
+
+        super().syncrhonise()
 
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""

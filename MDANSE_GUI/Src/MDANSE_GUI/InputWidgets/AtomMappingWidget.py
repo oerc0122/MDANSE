@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 
+from more_itertools import first
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import (
     QComboBox,
@@ -31,7 +32,6 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from more_itertools import first
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.AtomMapping import guess_element

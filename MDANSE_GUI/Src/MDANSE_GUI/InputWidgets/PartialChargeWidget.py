@@ -27,7 +27,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from MDANSE.Framework.Parameters import PartialCharge
+from MDANSE.Framework.Parameters.AtomMapping import PartialChargeMapper
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE_GUI.InputWidgets.AtomSelectionWidget import (
     AtomSelectionWidget,

@@ -85,7 +85,9 @@ class OutputTrajectoryWidget(WidgetBase):
         )
 
         self.compression_box = QComboBox(self._base)
-        self.compression_box.addItems(sorted(self.parameter.descriptors["compression"].choices))
+        self.compression_box.addItems(
+            sorted(self.parameter.descriptors["compression"].choices)
+        )
         self.compression_box.setCurrentText("gzip")
 
         browse_button = QPushButton("Browse", self._base)
