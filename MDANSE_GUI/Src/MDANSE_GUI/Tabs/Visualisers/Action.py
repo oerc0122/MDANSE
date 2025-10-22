@@ -109,6 +109,7 @@ widget_lookup.update(
         InterpOrder: IntegerWidget,
         FrameSelect: FramesWidget,
         Range: RangeWidget,
+        RangeCellCutoff: RangeWidget,
         Vector: VectorWidget,
         AtomMapping: AtomMappingWidget,
         AtomSelection: AtomSelectionWidget,
@@ -127,7 +128,6 @@ widget_lookup.update(
         PathParam: InputFileWidget,
         Projection: ProjectionWidget,
         QVectors: QVectorsWidget,
-        RangeCellCutoff: DistHistCutoffWidget,
         RunningMode: RunningModeWidget,
         MDANSETrajectory: HDFTrajectoryWidget,
     }

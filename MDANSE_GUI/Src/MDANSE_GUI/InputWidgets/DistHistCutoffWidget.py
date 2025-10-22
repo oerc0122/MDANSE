@@ -23,9 +23,3 @@ from .RangeWidget import RangeWidget
 class DistHistCutoffWidget(RangeWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def setup_fields(self, *args, **kwargs):
-        start = 0.0
-        end = floor(self._configurator.get_largest_cutoff() * 100) / 100
-        step = 0.01
-        super().setup_fields(*args, default=(start, end, step), **kwargs)

@@ -88,16 +88,16 @@ class RangeCellCutoff(Range[float]):
 
         if self._max_value:
             try:
-                self.validate_range(
-                    value.stop,
-                    (0, round(self.get_largest_cutoff(deps["trajectory"]), 2)),
-                )
+                self.validate_range(value.stop, self.get_ranges(deps))
             except ConfigError:
                 raise ConfigError(
                     "The cutoff distance goes into the simulation box periodic images."
                 ) from None
 
         return HistogramInfo(value)
+
+    def get_ranges(self, deps: Depends):
+        return (0, round(self.get_largest_cutoff(deps["trajectory"]), 2))
 
     @staticmethod
     def get_largest_cutoff(trajectory: Trajectory) -> float:

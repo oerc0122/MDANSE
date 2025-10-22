@@ -141,7 +141,8 @@ class ChargeHelper(SelectionHelper):
             return
         self.selection_model.finalise_manual_selection()
         selection_string = self.selection_model.current_steps()
-        self.mapper.update_charges(selection_string, charge)
+
+        self.mapper.apply(selection_string, charge)
         self.update_charge_textbox()
         self.apply()
 
@@ -170,14 +171,13 @@ class PartialChargeWidget(AtomSelectionWidget):
     """The partial charge widget."""
 
     _push_button_text = "Partial charge helper"
-    _default_value = "{}"
     _tooltip_text = (
         "Specify the partial charges that will be used in the analysis."
         " The input is a JSON string, and can be created using"
         " the helper dialog."
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, use_list_view: bool = False, **kwargs):
         """Create the widget for setting atom charges.
 
         Parameters
@@ -186,9 +186,10 @@ class PartialChargeWidget(AtomSelectionWidget):
             ignored here. This widget always sets use_list_view=False
 
         """
-        if kwargs.get("use_list_view", False):
+        if use_list_view:
             raise TypeError(f"Cannot use list view with {type(self).__name__}.")
-        super().__init__(*args, use_list_view=False, **kwargs)
+
+        super().__init__(*args, use_list_view=use_list_view, **kwargs)
         self._field.textChanged.connect(self.updateValue)
 
     def create_helper(self, traj_data: tuple[str, Trajectory]) -> ChargeHelper:
@@ -205,7 +206,7 @@ class PartialChargeWidget(AtomSelectionWidget):
             Create and return the partial charge helper QDialog.
 
         """
-        mapper = self._configurator.get_charge_mapper()
+        mapper = PartialChargeMapper(traj_data[1])
         return ChargeHelper(mapper, traj_data, self._field, self._base)
 
     def get_widget_value(self) -> str:
@@ -218,4 +219,4 @@ class PartialChargeWidget(AtomSelectionWidget):
 
         """
         text = self._field.text()
-        return text if text else self._default_value
+        return text if text else self.default

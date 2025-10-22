@@ -251,9 +251,13 @@ class WidgetBase(QObject):
         if isinstance(self.parameter, CustomChoices):
             if any(self.parameter._bad_deps(self._configurable)):
                 self.mark_error("Invalid dependencies")
-                return ()
+                return set()
             deps = self.parameter._get_deps(self._configurable)
-            return self.parameter.get_choices(deps)
+            try:
+                return self.parameter.get_choices(deps)
+            except ConfigError:
+                self.mark_error("No valid choices")
+                return set()
 
         if self.parameter.choices:
             return self.parameter.choices

@@ -67,9 +67,7 @@ class ComboWidget(WidgetBase):
             self._field.setEnabled(False)
             return None
 
-        deps = self.parameter._get_deps(self._configurable)
-        option_list = self.parameter.get_choices(deps)
-        self._field.addItems(sorted(option_list))
+        self._field.addItems(sorted(self.choices))
 
         if self.default != "N/A":
             self._field.setCurrentText(self.default)

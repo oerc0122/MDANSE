@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
+from more_itertools import bucket
 
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.AtomMapping import check_mapping_valid, fill_remaining_labels
@@ -220,6 +221,9 @@ class PartialCharge(ConfigureDescriptor[str | Path | dict, dict[int, float]]):
     with applications of the update_charges method with a selection
     setting and partial charge."""
 
+    def __init__(self, *args, default: str | Path | dict = "{}", **kwargs):
+        super().__init__(*args, default=default, **kwargs)
+
     def required_deps(self) -> set[DescID]:
         return super().required_deps() | {DescID("trajectory")}
 
@@ -270,7 +274,7 @@ class PartialChargeMapper(Mapper):
     """The partial charge mapper.
 
     Updates an atom partial charge map with application of
-    :meth:`update_charges` with a selection setting and partial
+    :meth:`apply` with a selection setting and partial
     charge.
     """
 
@@ -284,9 +288,10 @@ class PartialChargeMapper(Mapper):
         super().__init__()
         system = trajectory.chemical_system
         self._traj_charges = trajectory.charges(0)[:]
+
         self._current_trajectory = trajectory
         self._original_map = {
-            at_num: self._traj_charges.get(at_num, 0)
+            at_num: self._traj_charges[at_num]
             for at_num, at in enumerate(system.atom_list)
         }
 
@@ -295,7 +300,7 @@ class PartialChargeMapper(Mapper):
 
         Parameters
         ----------
-        selection_dict : dict[str, Union[bool, dict]]
+        selection_string : Path | str | dict
             The selection setting to get the indices to map the input
             partial charge.
         charge : float
@@ -313,16 +318,14 @@ class PartialChargeMapper(Mapper):
         dict[tuple[int], float]
             The minimal partial charge setting.
         """
-        new_charges = self._traj_charges.copy() | self._new_map
-        valid_indices = np.where(~np.isclose(new_charges, self._traj_charges))
-        unique_charges = np.unique(new_charges[valid_indices])
+        new_charges = self._traj_charges.copy()
+        for k, v in self._new_map.items():
+            new_charges[k] = v
 
-        groups = {}
-        for charge in unique_charges:
-            charge_indices = set(np.where(np.isclose(new_charges, charge))[0])
-            key = charge_indices.intersection(valid_indices[0])
-            groups[charge] = [int(x) for x in key]
-        return groups
+        valid_indices = set(*np.where(~np.isclose(new_charges, self._traj_charges)))
+
+        buck = bucket(enumerate(new_charges), key=lambda x: x[1])
+        return {key: [x for x, _ in buck[key] if x in valid_indices] for key in buck}
 
     def get_json_setting(self) -> str:
         """
