@@ -47,6 +47,15 @@ from MDANSE.MLogging import FMT, LOG
 RUNSCRIPT = """\
 #!{executable}
 
+import os
+os.environ.update(
+    OMP_NUM_THREADS = '1',
+    OPENBLAS_NUM_THREADS = '1',
+    MKL_NUM_THREADS = '1',
+    VECLIB_MAXIMUM_THREADS = '1',
+    NUMEXPR_NUM_THREADS = '1'
+)
+
 ########################################################
 # This is an automatically generated MDANSE run script #
 ########################################################
