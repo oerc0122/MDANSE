@@ -19,7 +19,7 @@ import json
 from enum import Enum
 from pathlib import Path
 
-from qtpy.QtCore import Qt, Signal, Slot
+from qtpy.QtCore import QEvent, QObject, Qt, Signal, Slot
 from qtpy.QtGui import (
     QStandardItem,
     QStandardItemModel,
@@ -105,6 +105,7 @@ class SelectionModel(QStandardItemModel):
     selection_changed = Signal()
     can_undo = Signal(bool)
     can_redo = Signal(bool)
+    gui_selection_finalised = Signal()
 
     def __init__(self, trajectory):
         """Assign the current trajectory to the model."""
@@ -193,6 +194,17 @@ class SelectionModel(QStandardItemModel):
         )
 
     @Slot()
+    def atom_clicked_undo(self):
+        self.can_redo.emit(False)
+        if len(self._clicked_atoms) <= 1:
+            self.clear_manual_selection()
+        else:
+            self._clicked_atoms.pop()
+            self._manual_selection_item.setText(
+                f"Manual selection IN PROGRESS: clicked on {self._clicked_atoms}",
+            )
+
+    @Slot()
     def clear_manual_selection(self):
         """Remove the placeholder item from the end of the list, clear clicked atoms."""
         if not self._clicked_atoms:
@@ -257,6 +269,7 @@ class SelectionModel(QStandardItemModel):
             json_string = json.dumps(new_params)
             self._clicked_atoms = []
             self.accept_from_widget(json_string)
+        self.gui_selection_finalised.emit()
 
     @Slot(str)
     def accept_from_widget(self, json_string: str):
@@ -327,10 +340,15 @@ class SelectionHelper(QDialog):
         self.selection_textbox = QPlainTextEdit()
         self.selection_textbox.setReadOnly(True)
 
-        mol_view = MolecularViewerWithPicking()
-        mol_view.clicked_atom_index.connect(self.update_from_3d_view)
-        mol_view.picked_atoms_changed.connect(self.update_picked_atom_count)
-        self.view_3d = View3D(mol_view)
+        self.mol_view = MolecularViewerWithPicking()
+        self.mol_view.clicked_atom_index.connect(self.update_from_3d_view)
+        self.mol_view.picked_atoms_changed.connect(self.update_picked_atom_count)
+        self.mol_view.picked_atoms_changed.connect(self.enable_gui_selection_buttons)
+        self.selection_model.gui_selection_finalised.connect(
+            self.disable_gui_selection_buttons
+        )
+
+        self.view_3d = View3D(self.mol_view)
         self.view_3d.update_panel(traj_data)
 
         layouts = self.create_layouts()
@@ -352,6 +370,13 @@ class SelectionHelper(QDialog):
         self.all_selection = True
         self.selected = set()
         self.reset()
+
+    def event(self, a1: QEvent | None) -> bool:
+        if a1.type() == QEvent.WindowDeactivate:
+            # confirm the manual selection if the user moves away from the
+            # selection helper
+            self.selection_model.finalise_manual_selection()
+        return super().event(a1)
 
     def closeEvent(self, a0):
         """Hide the window instead of closing.
@@ -440,8 +465,8 @@ class SelectionHelper(QDialog):
         """
         selection_panel = QWidget(self)
         panel_layout = QGridLayout(selection_panel)
-        undo_button = QPushButton("Undo", selection_panel)
-        redo_button = QPushButton("Redo", selection_panel)
+        undo_button = QPushButton("Undo selection", selection_panel)
+        redo_button = QPushButton("Redo selection", selection_panel)
         panel_layout.addWidget(undo_button, 0, 0)
         panel_layout.addWidget(redo_button, 0, 1)
         panel_layout.addWidget(self.selection_operations_view, 1, 0, 1, 2)
@@ -481,13 +506,20 @@ class SelectionHelper(QDialog):
             SphereSelection(self, self.trajectory, self.view_3d._viewer),
         ]
 
+        self.confirm_gui_selection_button = self.selection_widgets[
+            1
+        ].confirm_gui_selection
+        self.undo_gui_selection_button = self.selection_widgets[1].undo_gui_selection
+
         for widget in self.selection_widgets:
             select_layout.addWidget(widget)
             if isinstance(widget, GUISelection):
-                widget.confirm_gui_selection.clicked.connect(
+                self.confirm_gui_selection_button.clicked.connect(
                     self.selection_model.finalise_manual_selection,
                 )
-                widget.undo_gui_selection.clicked.connect(self.undo_manual_selection)
+                self.undo_gui_selection_button.clicked.connect(
+                    self.undo_manual_selection
+                )
             else:
                 widget.new_selection.connect(self.selection_model.accept_from_widget)
 
@@ -508,11 +540,23 @@ class SelectionHelper(QDialog):
         self.selection_model.selection_changed.connect(self.recalculate_selection)
         return [scroll_area]
 
+    def enable_gui_selection_buttons(self):
+        self.confirm_gui_selection_button.setEnabled(True)
+        self.undo_gui_selection_button.setEnabled(True)
+
+    def disable_gui_selection_buttons(self):
+        self.confirm_gui_selection_button.setEnabled(False)
+        self.undo_gui_selection_button.setEnabled(False)
+
     @Slot()
     def undo_manual_selection(self):
-        """Remove all atoms (de)selected in the most recent manual selection."""
-        self.selection_model.clear_manual_selection()
-        self.recalculate_selection()
+        if len(self.selection_model._clicked_atoms) > 0:
+            idx = self.selection_model._clicked_atoms[-1]
+            self.mol_view.pick_atom(idx)
+        if len(self.selection_model._clicked_atoms) == 1:
+            self.disable_gui_selection_buttons()
+        self.selection_model.atom_clicked_undo()
+        self.update_selection_textbox()
 
     @Slot()
     def recalculate_selection(self):
