@@ -8,7 +8,7 @@ message: >-
   If you have used MDANSE or the MDANSE_GUI in your research, please cite both the MDANSE & MDANSE_GUI software,
   and the article from preferred-citation.
 authors:
-  - given-names: Ifeoma(Ify)
+  - given-names: Ifeoma (Ify)
     family-names: Agu
     email: ify.agu@stfc.ac.uk
     affiliation: STFC
