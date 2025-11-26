@@ -8,6 +8,10 @@ message: >-
   If you have used MDANSE in your research, please cite both the MDANSE software itself,
   and the article from preferred-citation.
 authors:
+  - given-names: Ifeoma (Ify)
+    family-names: Agu
+    email: ify.agu@stfc.ac.uk
+    affiliation: STFC
   - given-names: Raunakk
     family-names: Banerjee
     email: raunakk.banerjee@stfc.ac.uk
