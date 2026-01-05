@@ -23,8 +23,10 @@ import h5py
 from qtpy.QtCore import QModelIndex, QMutex, QObject, Qt, Signal, Slot
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 
+from MDANSE.Core.Platform import PLATFORM
 from MDANSE.Framework.Formats.HDFFormat import check_metadata
 from MDANSE.MLogging import LOG
+from MDANSE_GUI.Session.RecentFiles import RecentFiles
 
 Self = TypeVar("Self", bound="BasicPlotDataItem")
 EXCLUDE = {"metadata"}
@@ -141,6 +143,14 @@ class MDADataStructure:
     def __init__(self, filename: str):
         self._file = h5py.File(filename)
         self._metadata = check_metadata(self._file)
+        # Ensure only mda type file are loaded in Plot Creator Tab
+        output_metadata = self._metadata["inputs/output_files"]
+        if (
+            not isinstance(output_metadata[1], list)
+            or "MDAFormat" not in output_metadata[1]
+        ):
+            self.close()
+            raise ValueError(f"Not a .mda type file {filename}")
 
     def close(self):
         """Close the HDF5 file."""
@@ -154,8 +164,20 @@ class PlotDataModel(QStandardItemModel):
     It stores elements and emits them to the ItemVisualiser.
     """
 
+    DEFAULT_JSON_PATH = (
+        PLATFORM.application_directory() / "recent_plot_selection_file.json"
+    )
+    MAX_NUMBER_RECENT_FILES = 10  # maximum number of recent files to store
+    PLACEHOLDER_STRING = "Recently used result files (.mda)"
+    recent_files = RecentFiles(
+        DEFAULT_JSON_PATH,
+        MAX_NUMBER_RECENT_FILES,
+        PLACEHOLDER_STRING,
+    )
+
     error = Signal(str)
     all_elements = Signal(object)
+    finished_loading = Signal(int)
 
     def __init__(self, parent: QObject = None):
         super().__init__(parent=parent)
@@ -176,15 +198,17 @@ class PlotDataModel(QStandardItemModel):
         try:
             new_datafile = MDADataStructure(filename)
         except Exception as e:
-            LOG.error(f"Invalid: {e!s}")
+            LOG.error("Invalid: %s", e)
         else:
             self._nodes[self._next_number] = new_datafile
             new_item = DataFileItem()
             new_item.setData(f"{Path(filename).name}", role=Qt.ItemDataRole.DisplayRole)
             new_item.setData(self._next_number, role=Qt.ItemDataRole.UserRole)
-            self._next_number += 1
             self.appendRow(new_item)
             new_item.populate(new_datafile._file)
+            self.finished_loading.emit(self._next_number)
+            self.recent_files.store_recently_used_filename(filename)
+            self._next_number += 1
 
     def inner_object(self, index: QModelIndex) -> MDADataStructure | h5py.Dataset:
         """For a Qt model index, return its corresponding HDF5 object.

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 from functools import partial
-from pathlib import PurePath
+from pathlib import Path
 
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QFileDialog, QWidget
@@ -60,18 +60,22 @@ class TrajectoryTab(GeneralTab):
             str(self.get_path("trajectory")),
             "HDF5 files, MDANSE or H5MD format (*.mdt *.h5);;H5MD files (*.h5);;All files (*)",
         )
+
+        loaded_files = []  # list to store loaded files for recent files tracking
+
         for fname in fnames[0]:
-            self.load_trajectory(PurePath(fname))
-            last_path = str(PurePath(os.path.split(fname)[0]))
-        if fnames[0]:
-            self.set_path("trajectory", str(PurePath(last_path)))
+            self.load_trajectory(fname)
+            filepath = Path(fname)
+            last_path = str(filepath.parent)
+            loaded_files.append(str(filepath))
+            self.set_path("trajectory", last_path)
             self._session.save()
 
     @Slot(str)
-    def load_trajectory(self, some_fname: str):
-        fname = str(PurePath(some_fname))
+    def load_trajectory(self, fname: str):
+        fpath = Path(fname)
         if len(fname) > 0:
-            _, short_name = os.path.split(fname)
+            short_name = fpath.name
             self._core._model.append_object((fname, short_name))
             self._session.protect_filename(fname)
 

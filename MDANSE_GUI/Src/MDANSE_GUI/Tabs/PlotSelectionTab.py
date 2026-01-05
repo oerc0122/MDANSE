@@ -51,6 +51,7 @@ class PlotSelectionTab(GeneralTab):
         self._core.add_button("Load .MDA results", self.load_files)
         self._visualiser._settings = self._settings
         self._visualiser._unit_lookup = self
+        self._model.finished_loading.connect(self.tab_notification)
 
     def grouped_settings(self):
         return super().grouped_settings() | {

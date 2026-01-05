@@ -15,9 +15,12 @@
 #
 from __future__ import annotations
 
+import json
 import os
 from collections import defaultdict
+from collections.abc import Callable
 from importlib import metadata
+from pathlib import Path
 
 from qtpy.QtCore import QMessageLogger, QSize, Qt, QTimer, QUrl, Signal, Slot
 from qtpy.QtGui import QDesktopServices
@@ -25,6 +28,7 @@ from qtpy.QtWidgets import (
     QAction,
     QApplication,
     QMainWindow,
+    QMenu,
     QMenuBar,
     QMessageBox,
     QToolBar,
@@ -41,6 +45,7 @@ from MDANSE_GUI.Tabs.JobTab import JobTab
 from MDANSE_GUI.Tabs.LoggingTab import GuiLogHandler, LoggingTab
 from MDANSE_GUI.Tabs.Models.GeneralModel import GeneralModel
 from MDANSE_GUI.Tabs.Models.JobHolder import JobHolder
+from MDANSE_GUI.Tabs.Models.PlotDataModel import PlotDataModel
 from MDANSE_GUI.Tabs.Models.TrajectoryModel import TrajectoryModel
 from MDANSE_GUI.Tabs.PlotSelectionTab import PlotSelectionTab
 from MDANSE_GUI.Tabs.PlotTab import PlotTab
@@ -56,6 +61,38 @@ MDANSE_DOCS_WEBSITE = QUrl("https://mdanse.readthedocs.io/en/latest/")
 MDANSE_PROJECT_WEBSITE = QUrl("https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx")
 
 
+class RecentFileAction(QAction):
+    """A subclass of QAction made for loading recently used files.
+
+    It stores a file name and a reference to a class method to be called
+    when the action is clicked. The main reason for using a subclass of
+    QAction is to avoid using a lambda function which references a method
+    of a class instance, as this used to be known to cause problems with
+    object reference count and garbage collection."""
+
+    def __init__(
+        self,
+        *args,
+        file_path: str | None = None,
+        external_function: Callable | None = None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.file_path = file_path
+        self.external_function = external_function
+        self.triggered.connect(self.on_triggered)
+        if not Path(file_path).exists():
+            self.setEnabled(False)
+
+    @Slot()
+    def on_triggered(self):
+        """Executes a function on an argument, both given as input in the constructor.
+
+        Here it is meant run a method of one of the data models which will load
+        a file with a specific name into the model."""
+        self.external_function(str(self.file_path))
+
+
 class TabbedWindow(QMainWindow):
     """The main window of the MDANSE GUI,
     inherits QMainWindow.
@@ -63,6 +100,10 @@ class TabbedWindow(QMainWindow):
     Args:
         QMainWindow - the base class.
     """
+
+    # write signal to send a single path to trajectory tab to load recent files
+    signal_recent_trajectory_file = Signal(str)
+    signal_recent_plot_selection_file = Signal(str)
 
     def __init__(
         self,
@@ -116,6 +157,13 @@ class TabbedWindow(QMainWindow):
         )
         self._tabs["Instruments"]._visualiser.instrument_details_changed.connect(
             self._tabs["Actions"].update_action_after_instrument_change
+        )
+        # connect signal to the tab
+        self.signal_recent_trajectory_file.connect(
+            self._tabs["Trajectories"].load_trajectory
+        )
+        self.signal_recent_plot_selection_file.connect(
+            self._tabs["Plot Creator"].load_results
         )
 
         self.tabs.currentChanged.connect(self.tabs.reset_current_color)
@@ -177,6 +225,21 @@ class TabbedWindow(QMainWindow):
         file_group = menubar.addMenu("File")
         settings_group = menubar.addMenu("Settings")
         help_group = menubar.addMenu("Help")
+        self.recent_trajectory_file_menu = QMenu(
+            "Open Recent Trajectories File", parent=menubar
+        )
+        self.recent_trajectory_file_menu.aboutToShow.connect(
+            self.populate_recent_trajectory_menu
+        )
+        file_group.addMenu(self.recent_trajectory_file_menu)
+        self.recent_plot_selection_file_menu = QMenu(
+            "Open Recent Results File", parent=menubar
+        )
+        self.recent_plot_selection_file_menu.aboutToShow.connect(
+            self.populate_recent_plot_selection_menu
+        )
+        file_group.addMenu(self.recent_plot_selection_file_menu)
+        file_group.addSeparator()
         self.exitAct = QAction("Exit", parent=menubar)
         self.exitAct.triggered.connect(self.shut_down)
         file_group.addAction(self.exitAct)
@@ -202,6 +265,89 @@ class TabbedWindow(QMainWindow):
     def shut_down(self):
         QApplication.quit()
         self.destroy(True, True)
+
+    def populate_recent_menu(
+        self,
+        menu: QMenu,
+        recent_filepath: Path,
+        open_recent_file_function: Callable,
+        placeholder_string: str,
+    ):
+        """Generic helper for populating 'recent files' menus.
+
+        Parameters
+        ----------
+        menu : QMenu
+            The QMenu to which file loading actions will be added.
+        recent_filepath : Path
+            Path to the JSON file that stores recent items.
+        open_recent_file_function : Callable
+            Function to call when an item is clicked.
+        placeholder_string : str
+            Text to show on an inactive entry if the file list was empty.
+
+        """
+        menu.clear()
+        filepath = Path(recent_filepath)
+
+        if not filepath.is_file():
+            return
+
+        with filepath.open(encoding="utf-8") as file:
+            data = json.load(file)
+
+        if not isinstance(data, list):
+            raise ValueError(f"{filepath} JSON is not a list")
+
+        if len(data) > 1 and placeholder_string in data:
+            data.remove(placeholder_string)
+
+        for file in data[::-1]:
+            action = RecentFileAction(
+                file,
+                menu,
+                file_path=file,
+                external_function=open_recent_file_function,
+            )
+            menu.addAction(action)
+
+    @Slot()
+    def populate_recent_trajectory_menu(
+        self,
+        filename=TrajectoryModel.DEFAULT_JSON_PATH,
+        placeholder=TrajectoryModel.PLACEHOLDER_STRING,
+    ):
+        """Populate the recent trajectory files menu in the File menu."""
+        self.populate_recent_menu(
+            self.recent_trajectory_file_menu,
+            filename,
+            self.open_recent_trajectory_file,
+            placeholder_string=placeholder,
+        )
+
+    @Slot()
+    def open_recent_trajectory_file(self, file: str):
+        """Emit signal to the trajectory tab to load the file with the file path as the argument."""
+        self.signal_recent_trajectory_file.emit(file)
+
+    @Slot()
+    def populate_recent_plot_selection_menu(
+        self,
+        filename=PlotDataModel.DEFAULT_JSON_PATH,
+        placeholder=PlotDataModel.PLACEHOLDER_STRING,
+    ):
+        """Populate the recent plot selection files menu in the File menu."""
+        self.populate_recent_menu(
+            self.recent_plot_selection_file_menu,
+            filename,
+            self.open_recent_plot_selection_file,
+            placeholder_string=placeholder,
+        )
+
+    @Slot()
+    def open_recent_plot_selection_file(self, file: str):
+        """Emit signal to the plot selection tab to load the file with the file path as the argument."""
+        self.signal_recent_plot_selection_file.emit(file)
 
     def version_information(self):
         version = ""
