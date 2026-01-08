@@ -55,18 +55,14 @@ def distance_calculation(
     """
     tree = KDTree(coordinates)
     contacts = tree.query_ball_point(coordinates, max_distance, workers=worker_limit)
-    n_dists = sum([len(i) for i in contacts])
 
-    js = np.zeros(n_dists, dtype=int)
-    ks = np.zeros(n_dists, dtype=int)
-    start = 0
-    for i, idxs in enumerate(contacts):
-        n_idxs = len(idxs)
-        if n_idxs == 0:
-            continue
-        js[start : start + n_idxs] = i
-        ks[start : start + n_idxs] = idxs
-        start += n_idxs
+    # generate indexes of all pairs of points in close contact
+    # e.g. js = [0, 0, 0, ...] and ks = [1, 2, 4, ...]
+    # so that pairs (0, 1), (0, 2), (0, 4), ... are in close contact
+    n_contacts = np.fromiter((len(i) for i in contacts), dtype=int)
+    mask = n_contacts > 0
+    js = np.repeat(np.nonzero(mask)[0], n_contacts[mask])
+    ks = np.concatenate([contacts[i] for i in np.nonzero(mask)[0]])
 
     mask = js < ks
     js = js[mask]

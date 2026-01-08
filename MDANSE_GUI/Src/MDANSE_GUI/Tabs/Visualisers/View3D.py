@@ -19,8 +19,8 @@ from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QVBoxLayout, QWidget
 
 from MDANSE.MolecularDynamics.Trajectory import Trajectory
+from MDANSE_GUI.MolecularViewer import MolecularViewer
 from MDANSE_GUI.MolecularViewer.Controls import ViewerControls
-from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
 
 
 class View3D(QWidget):
@@ -36,8 +36,8 @@ class View3D(QWidget):
         viewer.setParent(controls)
         controls.setViewer(viewer)
         controls.createSidePanel()
-        viewer.create_trace_dialog(controls)
-        viewer.create_property_viewer_dialog(controls)
+        controls.create_property_viewer()
+        controls.create_trace_dialog()
         if hasattr(viewer, "clicked_atom_index"):
             viewer.clicked_atom_index.connect(controls._trace_widget.accept_atom_index)
         layout.addWidget(controls)
@@ -45,23 +45,15 @@ class View3D(QWidget):
         self._controls = controls
         self._controls.toggle_projection()
 
-        # Set layout
-        self.setLayout(layout)
-        self.load_placeholder()
-
-    def load_placeholder(self):
-        self._viewer.clear_panel()
-        self._viewer.load_trajectory_placeholder_3d_model()
-
     @Slot(tuple)
     def update_panel(self, data: tuple[str, Trajectory] | None):
         if data is None or data[0] == "":
-            self.load_placeholder()
+            self._viewer.clear_panel()
             return
         fullpath, incoming = data
         try:
             self._viewer._new_trajectory_object(fullpath, incoming)
+            self._controls._property_widget.extract_props(incoming)
         except AttributeError:
             self.error.emit(f"3D View could not visualise {fullpath}")
-            self._viewer.clear_trajectory()
-            self._viewer.clear_atom_labels()
+            self._viewer.clear_panel()

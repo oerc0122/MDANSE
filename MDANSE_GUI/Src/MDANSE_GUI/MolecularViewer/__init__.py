@@ -13,3 +13,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from __future__ import annotations
+
+from .MolecularViewer import AtomLabelType, AxesType, BondCalc, MolecularViewer
+from .MolecularViewerExtended import MolecularViewerExtended
+from .MolecularViewerWithPicking import MolecularViewerWithPicking

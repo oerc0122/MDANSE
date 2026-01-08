@@ -37,7 +37,12 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
+from MDANSE_GUI.MolecularViewer.MolecularViewer import (
+    AtomLabelType,
+    AxesType,
+    BondCalc,
+    MolecularViewer,
+)
 from MDANSE_GUI.MolecularViewer.PropertyWidget import PropertyWidget
 from MDANSE_GUI.MolecularViewer.TraceWidget import TraceWidget
 from MDANSE_GUI.Tabs.Views.Delegates import ColourPicker, RadiusSpinBox
@@ -113,7 +118,7 @@ class ViewerControls(QWidget):
         self._current_step_size = 1
         self._time_per_frame = 80  # in ms
         self._frame_factor = 1  # just a scalar multiplication factor
-        self._visibility = [True, True, True, True]
+        self._visibility = [True, True]
         self.createSlider()
         self.createButtons(Qt.Orientation.Horizontal)
         self._bkg_dialog = QColorDialog()
@@ -151,7 +156,7 @@ class ViewerControls(QWidget):
         viewer.new_max_frames.connect(self.stop_animation)
         # self._database.setViewer(viewer)
         # viewer.setDataModel(viewer._colour_manager)
-        viewer._colour_manager.new_atom_properties.connect(viewer.take_atom_properties)
+        viewer._colour_manager.new_atom_properties.connect(viewer._new_atom_properties)
 
     def createButtons(self, orientation: Qt.Orientation):
         """Create a bar with video player buttons for controlling the
@@ -263,33 +268,40 @@ class ViewerControls(QWidget):
 
         atoms_visible = QCheckBox("atoms:")
         atoms_visible.setLayoutDirection(Qt.RightToLeft)
-        bonds_visible = QCheckBox("bonds:")
-        bonds_visible.setLayoutDirection(Qt.RightToLeft)
         cell_visible = QCheckBox("cell:")
         cell_visible.setLayoutDirection(Qt.RightToLeft)
         layout5.addWidget(atoms_visible, 0, 0, 1, 1)
-        layout5.addWidget(bonds_visible, 0, 1, 1, 1)
-        layout5.addWidget(cell_visible, 0, 2, 1, 1)
+        layout5.addWidget(cell_visible, 0, 1, 1, 1)
+        self._visibility_checkboxes = [
+            atoms_visible,
+            cell_visible,
+        ]
 
         self.axes_combo = QComboBox()
-        self.axes_combo.addItems(["none", "cartesian", "direct", "reciprocal"])
+        for axes in AxesType:
+            self.axes_combo.addItem(axes.value, axes)
         self.axes_combo.setCurrentIndex(1)
         label = QLabel("axes:")
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         layout5.addWidget(label, 1, 0, 1, 1)
-        layout5.addWidget(self.axes_combo, 1, 1, 1, 2)
-        self._visibility_checkboxes = [
-            atoms_visible,
-            bonds_visible,
-            cell_visible,
-        ]
+        layout5.addWidget(self.axes_combo, 1, 1, 1, 1)
 
         self.labels_combo = QComboBox()
-        self.labels_combo.addItems(["none", "index", "label", "atom", "molecule"])
+        for label_type in AtomLabelType:
+            self.labels_combo.addItem(label_type.value, label_type)
         label = QLabel("labels:")
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         layout5.addWidget(label, 2, 0, 1, 1)
-        layout5.addWidget(self.labels_combo, 2, 1, 1, 2)
+        layout5.addWidget(self.labels_combo, 2, 1, 1, 1)
+
+        self.bond_calc_combo = QComboBox()
+        for bond_calc in BondCalc:
+            self.bond_calc_combo.addItem(bond_calc.value, bond_calc)
+        self.bond_calc_combo.setCurrentIndex(3)
+        label = QLabel("bonds:")
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        layout5.addWidget(label, 3, 0, 1, 1)
+        layout5.addWidget(self.bond_calc_combo, 3, 1, 1, 1)
 
         for nw, box in enumerate(self._visibility_checkboxes):
             box.setTristate(False)
@@ -297,6 +309,7 @@ class ViewerControls(QWidget):
             box.stateChanged.connect(self.setVisibility)
         self.axes_combo.currentIndexChanged.connect(self.changeAxes)
         self.labels_combo.currentIndexChanged.connect(self.changeLabels)
+        self.bond_calc_combo.currentIndexChanged.connect(self.changeBondCalc)
 
         layout.addWidget(wrapper5)
         # the database of atom types
@@ -305,20 +318,28 @@ class ViewerControls(QWidget):
             self._atom_details.resizeColumnToContents(column_number)
         self._splitter.addWidget(absolute_base)
 
-    def createTracePanel(self, viewer):
-        """Adds widgets for finer control of the playback"""
+    def createTracePanel(self):
+        """Adds widgets for generate atom trace plots."""
         base = QWidget(self)
         base.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         layout = QVBoxLayout(base)
         base.setLayout(layout)
         self._side_base.addTab(base, "Atom trace")
         # colour changes
-        self._trace_widget = TraceWidget(viewer)
-        self._trace_widget.initialise_values(viewer)
+        self._trace_widget = TraceWidget(self._viewer)
+        self._trace_widget.initialise_values(self._viewer)
         layout.addWidget(self._trace_widget)
-        return self._trace_widget
 
-    def create_property_viewer(self, viewer):
+    def create_trace_dialog(self):
+        """Creates the atom trace panel and connects the trace panel to
+        the molecule viewer.
+        """
+        self.createTracePanel()
+        self._trace_widget.new_atom_trace.connect(self._viewer.create_atom_trace)
+        self._trace_widget.remove_atom_trace.connect(self._viewer.delete_atom_trace)
+        self._viewer.changed_trace.connect(self._trace_widget.update_limits)
+
+    def create_property_viewer(self):
         """Adds widget for viewing trajectory properties."""
         base = QWidget(self)
         base.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
@@ -326,11 +347,12 @@ class ViewerControls(QWidget):
         base.setLayout(layout)
         self._side_base.addTab(base, "Property viewer")
         # colour changes
-        self._property_widget = PropertyWidget(viewer, self._side_base.indexOf(base))
+        self._property_widget = PropertyWidget(
+            self._viewer, self._side_base.indexOf(base)
+        )
         self._side_base.currentChanged.connect(self._property_widget._active)
         # self._property_widget.initialise_values(viewer)
         layout.addWidget(self._property_widget)
-        return self._property_widget
 
     @Slot()
     def set_background_colour(self):
@@ -355,7 +377,7 @@ class ViewerControls(QWidget):
             self._viewer._camera.SetParallelProjection(255)
         else:
             self._viewer._camera.SetParallelProjection(0)
-        self._viewer._iren.Render()
+        self._viewer.update_renderer()
         self._projection = not self._projection
 
     @Slot()
@@ -366,11 +388,15 @@ class ViewerControls(QWidget):
 
     @Slot()
     def changeAxes(self):
-        self._viewer._change_axes(self.axes_combo.currentText())
+        self._viewer.change_axes(self.axes_combo.currentData())
 
     @Slot()
     def changeLabels(self):
-        self._viewer._change_atom_labels(self.labels_combo.currentText())
+        self._viewer.change_atom_labels(self.labels_combo.currentData())
+
+    @Slot()
+    def changeBondCalc(self):
+        self._viewer.change_bond_calc(self.bond_calc_combo.currentData())
 
     @Slot(int)
     def setTimeStep(self, new_value: int):

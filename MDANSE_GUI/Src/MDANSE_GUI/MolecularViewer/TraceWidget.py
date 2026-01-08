@@ -32,12 +32,12 @@ from qtpy.QtWidgets import (
 )
 
 if TYPE_CHECKING:
-    from MDANSE_GUI.MolecularViewer.MolecularViewer import MolecularViewer
+    from MDANSE_GUI.MolecularViewer import MolecularViewer
 
 
 TRACE_PARAMETERS = {
     "atom_number": 0,
-    "traj_sampling": 1000,
+    "traj_samples": 1000,
     "smearing_factor": 1,
     "grid_sampling": 0.02,
     "surface_colour": (0, 0.5, 0.75),
@@ -217,7 +217,9 @@ class TraceWidget(QWidget):
         if self._molviewer is None:
             return
         self._atom_spinbox.setMaximum(max(self._molviewer._n_atoms - 1, 0))
-        self._surface_spinbox.setMaximum(max(len(self._molviewer._surfaces) - 1, 0))
+        self._surface_spinbox.setMaximum(
+            max(len(self._molviewer.surface_actors) - 1, 0)
+        )
         self.enable_buttons()
 
     @Slot(str)
@@ -243,7 +245,7 @@ class TraceWidget(QWidget):
         """
         if self._molviewer is None:
             return
-        self.remove_trace_button.setEnabled(len(self._molviewer._surfaces) != 0)
+        self.remove_trace_button.setEnabled(len(self._molviewer.surface_actors) != 0)
         self.add_trace_button.setEnabled(self._molviewer._n_atoms > 0)
 
     def get_values(self) -> dict[str, Any]:
