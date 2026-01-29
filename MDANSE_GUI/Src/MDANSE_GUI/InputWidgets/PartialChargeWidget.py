@@ -53,7 +53,7 @@ class ChargeHelper(SelectionHelper):
         mapper: PartialChargeMapper,
         traj_data: tuple[str, Trajectory],
         field: QLineEdit,
-        parent,
+        parent: QWidget,
         *args,
         **kwargs,
     ):
@@ -171,6 +171,9 @@ class PartialChargeWidget(AtomSelectionWidget):
 
     _push_button_text = "Partial charge helper"
     _default_value = "{}"
+    _default_selection = """{
+        "0": {"function_name": "select_all", "operation_type": "union"}
+    }"""
     _tooltip_text = (
         "Specify the partial charges that will be used in the analysis."
         " The input is a JSON string, and can be created using"
@@ -206,7 +209,13 @@ class PartialChargeWidget(AtomSelectionWidget):
 
         """
         mapper = self._configurator.get_charge_mapper()
-        return ChargeHelper(mapper, traj_data, self._field, self._base)
+        return ChargeHelper(
+            mapper,
+            traj_data,
+            self._field,
+            self._base,
+            default_selection=self._default_selection,
+        )
 
     def get_widget_value(self) -> str:
         """Return the current text in the input field.

@@ -110,13 +110,26 @@ class SelectionModel(QStandardItemModel):
     def __init__(self, trajectory, *, default: str = "{}"):
         """Assign the current trajectory to the model."""
         super().__init__(None)
-        self._default = default
+        self.set_default(default)
         self._trajectory = trajectory
         self._selection = ReusableSelection()
         self._current_selection = set()
         self._manual_selection_item = None
         self._clicked_atoms = []
         self.undo_stack = QUndoStack(self)
+
+    def set_default(self, value: dict[str, dict[str, str]] | str) -> None:
+        match value:
+            case dict():
+                value = json.dumps(value)
+            case str():
+                try:
+                    json.loads(value)
+                except Exception as err:
+                    raise ValueError(f"Cannot parse {value} as json.") from err
+            case _:
+                raise ValueError(f"Cannot parse {value} as json.")
+        self._default = value
 
     def reset(self) -> None:
         """Reset selection model to its default."""
@@ -312,6 +325,7 @@ class SelectionHelper(QDialog):
         model: SelectionModel,
         parent,
         *args,
+        default_selection: str | None = None,
         **kwargs,
     ):
         """Create the selection dialog.
@@ -326,6 +340,8 @@ class SelectionHelper(QDialog):
             parent object in the Qt object hierarchy
         *args : Any, ...
             catches all the arguments that may be passed to the QDialog constructor
+        default_selection : str, optional
+            Override default selection on ``selection_model``.
         **kwargs : dict[str, Any]
             catches all the keyword arguments passed to the QDialog constructor
 
@@ -337,6 +353,8 @@ class SelectionHelper(QDialog):
         self.trajectory = traj_data[1]
         self.system = self.trajectory.chemical_system
         self.selection_model = model
+        if default_selection is not None:
+            self.selection_model.set_default(default_selection)
         self.atm_full_names = self.system.name_list
         self.molecule_names = self.system.unique_molecules()
         self.labels = list(map(str, self.system._labels))
@@ -647,6 +665,9 @@ class AtomSelectionWidget(WidgetBase):
     _push_button_text = "Atom selection helper"
     _load_button_text = "Load selection from file"
     _default_value = "{}"
+    _default_selection = """{
+        "0": {"function_name": "select_all", "operation_type": "union"}
+    }"""
     _tooltip_text = (
         "Specify which atoms will be used in the analysis. "
         "The input is a JSON string, and can be created"
@@ -656,7 +677,11 @@ class AtomSelectionWidget(WidgetBase):
     def __init__(self, *args, use_list_view: bool = True, **kwargs):
         """Create the main widget for atom selection."""
         super().__init__(*args, **kwargs)
-        self.default = self._value = self._configurator.default or self._default_value
+
+        self._value = self._configurator.default or self._default_value
+
+        if type(self) is AtomSelectionWidget:
+            self._default_selection = self._value
 
         if use_list_view:
             self._field = QListView(self._base)
@@ -677,7 +702,9 @@ class AtomSelectionWidget(WidgetBase):
 
         self._trajectory_path = Path(traj_filename).parent
 
-        self.selection_model = SelectionModel(trajectory, default=self.default)
+        self.selection_model = SelectionModel(
+            trajectory, default=self._default_selection
+        )
         self.selection_model.reset()
 
         if use_list_view:
