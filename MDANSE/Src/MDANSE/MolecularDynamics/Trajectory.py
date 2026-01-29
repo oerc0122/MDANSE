@@ -61,7 +61,26 @@ class GroupingLevels(UCEnum):
         return self.name.title()
 
 
-def trajectory_summary(traj: Trajectory):
+def trajectory_summary(traj: Trajectory, *, use_html: bool = False) -> str:
+    """Return information about the input trajectory as formatted text.
+
+    This function is used both in the CLI and in the GUI. For GUI use
+    use_html should be True to include tags that work with the HTML-enabled
+    text widget.
+
+    Parameters
+    ----------
+    traj : Trajectory
+        Trajectory object from which information will be extracted.
+    use_html : bool, optional
+        Set to True if the output will be shown in the GUI, by default False.
+
+    Returns
+    -------
+    str
+        A multi-line text string summarising the trajectory contents.
+    """
+    head = []
     val = []
     try:
         time_axis = traj.time()
@@ -73,8 +92,11 @@ def trajectory_summary(traj: Trajectory):
         else:
             timeline = f"[{summarise_array(time_axis, maxlen=5, arr_fmt='5.4f')}]\n"
 
-    val.append("Path:")
-    val.append(f"{traj.filename}\n")
+    filename = html.escape(f"{traj.filename}")
+    if use_html:
+        head = f"Path: <pre>{filename}</pre>"
+    else:
+        head = f"Path:\n{filename}\n"
     val.append("Number of steps:")
     val.append(f"{len(traj)}\n")
     val.append("Configuration:")
@@ -107,8 +129,10 @@ def trajectory_summary(traj: Trajectory):
         val.append(f"Molecule: {molname}; Count: {len(mollist)}")
 
     val = "\n".join(val)
+    if use_html:
+        val = html.escape(val)
 
-    return html.escape(val)
+    return head + "\n" + val
 
 
 def chemical_system_summary(cs: ChemicalSystem) -> str:
