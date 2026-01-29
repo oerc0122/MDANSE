@@ -36,6 +36,7 @@ from more_itertools import nth_product
 from qtpy.QtCore import QModelIndex, Qt, Signal, Slot
 from qtpy.QtGui import QColor, QStandardItem, QStandardItemModel
 
+from MDANSE.IO.IOUtils import summarise_array
 from MDANSE.MLogging import LOG
 
 if TYPE_CHECKING:
@@ -43,6 +44,7 @@ if TYPE_CHECKING:
 
 NUMBERS_FOR_SLICE = 3
 NUMBERS_FOR_RANGE = 2
+SCALE_FACTOR_FORMAT = "3.3f"
 
 
 class PlotArgs(NamedTuple):
@@ -889,7 +891,11 @@ class PlottingContext(QStandardItemModel):
                 self.next_colour(),
                 new_dataset._linestyle,
                 new_dataset._marker if new_dataset._marker else "None",
-                "",
+                format(new_dataset._scaling_factor, SCALE_FACTOR_FORMAT)
+                if isinstance(new_dataset._scaling_factor, float)
+                else summarise_array(
+                    new_dataset._scaling_factor, show=1, arr_fmt=SCALE_FACTOR_FORMAT
+                ),
                 new_dataset._filename,
             ]
         ]
