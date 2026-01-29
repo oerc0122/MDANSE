@@ -177,6 +177,9 @@ class AtomTransmutationWidget(AtomSelectionWidget):
 
     _push_button_text = "Atom transmutation helper"
     _default_value = "{}"
+    _default_selection = """{
+        "0": {"function_name": "select_all", "operation_type": "union"}
+    }"""
     _tooltip_text = (
         "Specify the atom transmutation that will be used in the analysis."
         " The input is a JSON string, and can be created using"
@@ -212,7 +215,13 @@ class AtomTransmutationWidget(AtomSelectionWidget):
 
         """
         transmuter = self._configurator.get_transmuter()
-        return TransmutationHelper(transmuter, traj_data, self._field, self._base)
+        return TransmutationHelper(
+            transmuter,
+            traj_data,
+            self._field,
+            self._base,
+            default_selection=self._default_selection,
+        )
 
     def get_widget_value(self) -> str:
         """Return the current text in the input field.
