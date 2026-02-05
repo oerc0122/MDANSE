@@ -23,6 +23,7 @@ from MDANSE.Framework.QVectors.CircularQVectors import (
     circle_of_vectors,
     circle_rotation_matrix,
 )
+from MDANSE.Framework.Parameters import Float, Integer, Range, Vector
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 
 
@@ -41,44 +42,28 @@ class CircularLatticeQVectors(LatticeQVectors):
     |Q| values for which no valid vectors can be found are omitted in the output.
     """
 
-    settings = {}
-    settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["shells"] = (
-        "RangeConfigurator",
-        {
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "default": (0.0, 5.0, 0.5),
-        },
-    )
-    settings["n_vectors"] = ("IntegerConfigurator", {"mini": 1, "default": 50})
-    settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
-    settings["axis"] = (
-        "VectorConfigurator",
-        {"normalize": False, "notNull": True, "valueType": float, "default": [0, 0, 1]},
-    )
+    seed = Integer(minimum=0, default=0)
+    shells = Range[float](minimum=0.0, default=(0.0, 5.0, 0.5))
+    n_vectors = Integer(minimum=1, default=50)
+    width = Float(minimum=1e-6, default=1)
+    axis = Vector(normalise=True, non_zero=True, default=np.array([0, 0, 1]))
 
     def _generate(self):
-        if self._configuration["seed"]["value"] != 0:
-            np.random.seed(self._configuration["seed"]["value"])
-            random.seed(self._configuration["seed"]["value"])
+        if self.seed != 0:
+            np.random.seed(self.seed)
+            random.seed(self.seed)
 
-        nvecs_per_shell = self._configuration["n_vectors"]["value"]
-        target_circle_axis = self._configuration["axis"]["value"] / np.linalg.norm(
-            self._configuration["axis"]["value"],
-        )
-        rot_mat = circle_rotation_matrix(target_circle_axis)
+        rot_mat = circle_rotation_matrix(self.axis)
 
-        width = self._configuration["width"]["value"] / 2
+        width = self.width / 2
 
         if self._status is not None:
-            self._status.start(self._configuration["shells"]["number"])
+            self._status.start(len(self.shells))
 
-        self._configuration["q_vectors"] = {}
+        self.q_vectors = {}
 
-        for q in self._configuration["shells"]["value"]:
-            q_vectors = circle_of_vectors(q, width, nvecs_per_shell, rot_mat=rot_mat)
+        for q in self.shells:
+            q_vectors = circle_of_vectors(q, width, self.n_vectors, rot_mat=rot_mat)
             lattice_hkl_vectors, weights = self.lattice_vectors_with_weights(
                 q_vectors,
                 self._unit_cell,
@@ -90,11 +75,12 @@ class CircularLatticeQVectors(LatticeQVectors):
             )
             weights = weights[selection]
             lattice_hkl_vectors = lattice_hkl_vectors.T[selection].T
+
             if not len(weights):
-                self._configuration["q_vectors"][q] = None
+                self.q_vectors[q] = None
                 continue
 
-            self._configuration["q_vectors"][q] = {
+            self.q_vectors[q] = {
                 "q_vectors": self.hkl_to_qvectors(lattice_hkl_vectors, self._unit_cell),
                 "weights": weights,
                 "n_q_vectors": np.sum(weights),

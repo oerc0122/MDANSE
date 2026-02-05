@@ -23,8 +23,13 @@ import numpy.typing as npt
 from scipy.stats import truncnorm
 
 from MDANSE.Core.SubclassFactory import SubclassFactory
-from MDANSE.Framework.Configurable import Configurable
+from MDANSE.Framework.Parameters.Parameters import (
+    ConfigError,
+    Configurable,
+    ConfigureDescriptor,
+)
 from MDANSE.MLogging import LOG
+from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 if TYPE_CHECKING:
     from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
@@ -85,6 +90,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
     """Parent class of all Q vector generators."""
 
     is_lattice = False
+    depends = {}
 
     def __init__(self, unit_cell: UnitCell | None, status=None):
         Configurable.__init__(self)
@@ -92,30 +98,46 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
         self._unit_cell = unit_cell
 
         self._status = status
+        self.q_vectors = {}
+
+    @property
+    def n_shells(self) -> int:
+        return len(self.shells)
 
     @abc.abstractmethod
     def _generate(self):
-        pass
+        raise NotImplementedError("Q vector generator has no _generate method")
 
     def generate(self) -> bool:
         """Generate vectors by calling the internal method _generate."""
-        if self._configured:
-            self._generate()
+        self._generate()
 
-            if self._status is not None:
-                self._status.finish()
+        if self._status is not None:
+            self._status.finish()
             return True
         LOG.error(
             "Cannot generate vectors: q vector generator is not configured correctly.",
         )
         return False
 
+    def validate(self, conf: ConfigureDescriptor, value: Configurable):
+        try:
+            # Force the setting (if we've reached this far)
+            setattr(self, conf.private_name, value)
+            self.generate()
+        except Exception as err:
+            import traceback
+
+            traceback.print_exception(err)
+            raise ConfigError("Invalid or incomplete QVector configuration.") from err
+        return value
+
     @classmethod
     def qvectors_to_hkl(
         cls,
-        vector_array: np.array,
+        vector_array: npt.NDArray[np.floating],
         unit_cell: UnitCell,
-    ) -> np.ndarray:
+    ) -> npt.NDArray[np.floating]:
         """Recalculate Q vectors to HKL Miller indices.
 
         Using a unit cell definition, recalculates an array
@@ -123,35 +145,35 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
 
         Parameters
         ----------
-        vector_array : np.array
+        vector_array : npt.NDArray[np.floating]
             a (3,N) array of scattering vectors
         unit_cell : UnitCell
             an instance of UnitCell class describing the simulation box
 
         Returns
         -------
-        np.ndarray
+        npt.NDArray[np.floating]
             A (3,N) array of HKL values (Miller indices)
 
         """
         return np.dot(unit_cell.direct, vector_array) / (2 * np.pi)
 
     @classmethod
-    def hkl_to_qvectors(cls, hkls: np.array, unit_cell: UnitCell) -> np.ndarray:
+    def hkl_to_qvectors(cls, hkls: npt.NDArray[np.floating], unit_cell: UnitCell) -> npt.NDArray[np.floating]:
         """Convert an array of HKL values to scattering vectors.
 
         Uses a unit cell object to get the lattice vectors for conversion.
 
         Parameters
         ----------
-        hkls : np.array
+        hkls : npt.NDArray[np.floating]
             A (3,N) array of HKL values (Miller indices)
         unit_cell : UnitCell
             An instance of UnitCell class describing the simulation box shape
 
         Returns
         -------
-        np.ndarray
+        npt.NDArray[np.floating]
             a (3, N) array of Q vectors (scattering vectors)
 
         """
@@ -160,9 +182,9 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
     @classmethod
     def lattice_vectors_with_weights(
         cls,
-        start_shape: npt.NDArray[float],
+        start_shape: npt.NDArray[np.floating],
         unit_cell: UnitCell,
-    ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    ) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]:
         """Return HKL vectors from the input q-vector array.
 
         An arbitrary shape will be scaled by values between qmin and qmax
@@ -170,14 +192,14 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
 
         Parameters
         ----------
-        start_shape : npt.NDArray[float]
+        start_shape : npt.NDArray[np.floating]
             Q-vector array representing a specific geometric shape.
         unit_cell : UnitCell
             The unit cell of the system, for conversion to HKL values.
 
         Returns
         -------
-        tuple[npt.NDArray[float], npt.NDArray[float]]
+        tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]
             Unique Q-vectors as HKL values, number of times each vector appeared.
         """
         hkl_fractional = cls.qvectors_to_hkl(start_shape, unit_cell)
@@ -186,7 +208,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
     @classmethod
     def vectors_within_limits(
         cls,
-        q_vectors: npt.NDArray[float],
+        q_vectors: npt.NDArray[np.floating],
         *,
         q_min: float,
         q_max: float,
@@ -195,7 +217,7 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
 
         Parameters
         ----------
-        q_vectors : npt.NDArray[float]
+        q_vectors : npt.NDArray[np.floating]
             Array containing vectors to be checked.
         q_min : float
             Lower limit of |q|
@@ -222,7 +244,8 @@ class IQVectors(Configurable, metaclass=SubclassFactory):
             An object managing the writeout to one or many output files
 
         """
-        qvector_info = self._configuration["q_vectors"]
+        qvector_info = self.q_vectors
+
         q_values = [float(x) for x in qvector_info]
         output_data.add(
             "vector_generator/q",
