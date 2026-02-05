@@ -20,6 +20,14 @@ import numpy as np
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Framework.Formats.HDFFormat import write_metadata
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    Boolean,
+    FrameSelect,
+    GroupingLevel,
+    MDANSETrajectory,
+    OutputTrajectory,
+)
 from MDANSE.Mathematics.Geometry import center_of_mass
 from MDANSE.MolecularDynamics.Configuration import (
     PeriodicRealConfiguration,
@@ -42,30 +50,14 @@ class CenterOfMassesTrajectory(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = {}
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}, "default": (0, 1, 1)},
+    trajectory = MDANSETrajectory(selection="atom_selection")
+    frames = FrameSelect(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(
+        depends={"trajectory": "trajectory"},
+        default={"0": {"function_name": "select_all", "operation_type": "union"}},
     )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {
-            "dependencies": {"trajectory": "trajectory"},
-            "default": """\
-{
-   "0": {"function_name": "select_all", "operation_type": "union"}
-}""",
-        },
-    )
-    settings["fold"] = (
-        "BooleanConfigurator",
-        {"default": False, "label": "Fold coordinates into box"},
-    )
-    settings["output_files"] = (
-        "OutputTrajectoryConfigurator",
-        {"format": "MDTFormat"},
-    )
+    fold = Boolean(label="Fold coordinates in to box")
+    output_files = OutputTrajectory()
 
     def initialize(self):
         """
@@ -73,7 +65,7 @@ class CenterOfMassesTrajectory(IJob):
         """
         super().initialize()
 
-        self.numberOfSteps = self.configuration["frames"]["number"]
+        self.numberOfSteps = len(self.frames)
         chemical_system = self.trajectory.chemical_system
 
         self.cluster_composition = {}
@@ -86,8 +78,9 @@ class CenterOfMassesTrajectory(IJob):
         new_element_list = []
         used_up_atoms = set()
         new_chemical_system = ChemicalSystem()
-        for cluster_name in chemical_system._clusters:
-            for cluster in chemical_system._clusters[cluster_name]:
+
+        for cluster_name, clusters in chemical_system._clusters.items():
+            for cluster in clusters:
                 if selected_indices and set(cluster) <= selected_indices:
                     if cluster_name not in self.cluster_composition:
                         self.cluster_composition[cluster_name] = [
@@ -103,12 +96,12 @@ class CenterOfMassesTrajectory(IJob):
 
         # The output trajectory is opened for writing.
         self._output_trajectory = TrajectoryWriter(
-            self.configuration["output_files"]["file"],
+            self.output_files.path,
             new_chemical_system,
             self.numberOfSteps,
-            positions_dtype=self.configuration["output_files"]["dtype"],
-            chunking_limit=self.configuration["output_files"]["chunk_size"],
-            compression=self.configuration["output_files"]["compression"],
+            positions_dtype=self.output_files.dtype,
+            chunking_limit=self.output_files.chunk_size,
+            compression=self.output_files.compression,
         )
         self._unique_atoms = np.unique(new_element_list)
         self._molecule_radii = {
@@ -116,19 +109,21 @@ class CenterOfMassesTrajectory(IJob):
         }
         self.selected_indices = selected_indices
 
-    def run_step(self, index):
-        """
-        Runs a single step of the job.\n
+    def run_step(self, index: int) -> tuple[int, None]:
+        """Runs a single step of the job.
 
-        :Parameters:
-            #. index (int): The index of the step.
-        :Returns:
-            #. index (int): The index of the step.
-            #. None
+        Parameters
+        ----------
+        index : int
+            Index of the loop.
+
+        Returns
+        -------
+        tuple[int, None]
         """
 
         # get the Frame index
-        frameIndex = self.configuration["frames"]["value"][index]
+        frameIndex = self.frames[index].ind
         chemical_system = self.trajectory.chemical_system
         atom_database = self.trajectory
 
@@ -140,8 +135,9 @@ class CenterOfMassesTrajectory(IJob):
 
         com_coords = np.empty((n_coms, 3), dtype=np.float64)
         mol_index = 0
-        for cluster_name in chemical_system._clusters:
-            for cluster in chemical_system._clusters[cluster_name]:
+
+        for cluster_name, clusters in chemical_system._clusters.items():
+            for cluster in clusters:
                 if not set(cluster).issubset(self.selected_indices):
                     continue
                 masses = [
@@ -158,10 +154,10 @@ class CenterOfMassesTrajectory(IJob):
                 average_radius = np.average(average_radius, weights=masses)
                 temp_radii[cluster_name].append(average_radius)
                 mol_index += 1
-        for atom_index in self.selected_indices:
-            if atom_index not in self._used_up_atoms:
-                com_coords[mol_index] = conf.coordinates[atom_index]
-                mol_index += 1
+
+        for atom_index in set(self.selected_indices) - self._used_up_atoms:
+            com_coords[mol_index] = conf.coordinates[atom_index]
+            mol_index += 1
 
         if conf.is_periodic:
             com_conf = PeriodicRealConfiguration(
@@ -172,26 +168,29 @@ class CenterOfMassesTrajectory(IJob):
                 self._output_trajectory.chemical_system, com_coords
             )
 
-        if self.configuration["fold"]["value"]:
+        if self.fold:
             com_conf.fold_coordinates()
 
         for cluster_name, radii in temp_radii.items():
             self._molecule_radii[cluster_name].append(np.mean(radii))
+
         # The times corresponding to the running index.
-        time = self.configuration["frames"]["time"][index]
+        time = self.frames.times[index]
 
         self._output_trajectory.dump_configuration(com_conf, time)
 
         return index, None
 
-    def combine(self, index, x):
+    def combine(self, _index, _x):
+        """Dummy combine step.
+
+        Parameters
+        ----------
+        _index : int
+            Unused.
+        _x : None
+            Unused.
         """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
-        """
-        pass
 
     def finalize(self):
         """
@@ -199,8 +198,8 @@ class CenterOfMassesTrajectory(IJob):
         """
 
         time_averaged_radii = {
-            cluster_name: np.mean(self._molecule_radii[cluster_name])
-            for cluster_name in self._molecule_radii
+            cluster_name: np.mean(radii)
+            for cluster_name, radii in self._molecule_radii.items()
         }
 
         self._output_trajectory.write_atom_database(

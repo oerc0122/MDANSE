@@ -15,17 +15,35 @@
 #
 from __future__ import annotations
 
+import collections
 import copy
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial import KDTree
 
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    Boolean,
+    Float,
+    Frames,
+    FrameSelect,
+    GroupingLevel,
+    Integer,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+    SingleChoice,
+)
 from MDANSE.Mathematics.Geometry import generate_sphere_points
 from MDANSE.MolecularDynamics.Configuration import padded_coordinates
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 def compare_trees(
@@ -371,76 +389,51 @@ class SolventAccessibleSurface(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = {}
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["frames"] = (
-        "FramesConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        grouping="grouping_level",
     )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
+    frames = FrameSelect(depends={"trajectory": "trajectory"}, default=(0, 2, 1))
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    n_sphere_points = Integer(
+        minimum=1,
+        default=1000,
+        label="Number of sphere points",
+        tooltip="The surface of each atom will be approximated by this number of near-evenly spaced points.",
     )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
+    probe_radius = Float(
+        minimum=0.0,
+        default=0.14,
+        label="Probe particle radius",
+        tooltip="Radius of the probe particle used for surface sampling",
     )
-    settings["n_sphere_points"] = (
-        "IntegerConfigurator",
-        {
-            "mini": 1,
-            "default": 1000,
-            "label": "Number of sphere points",
-            "tooltip": "The surface of each atom will be approximated by this number of near-evenly spaced points.",
-        },
+    radius_type = SingleChoice(
+        choices=("van der Waals", "covalent"),
+        default="van der Waals",
+        label="Atom radius type",
+        tooltip="Use van der Waals radius (adsorption) or covalent radius (chemisorption)",
     )
-    settings["probe_radius"] = (
-        "FloatConfigurator",
-        {
-            "mini": 0.0,
-            "default": 0.14,
-            "label": "Probe particle radius",
-            "tooltip": "Radius of the probe particle used for surface sampling",
-        },
+    calculate_blocked_surface = Boolean(
+        label="Calculate blocked surface per atom",
+        tooltip="Calculate which atoms are blocking the surface of the selection (expensive)",
     )
-    settings["radius_type"] = (
-        "SingleChoiceConfigurator",
-        {
-            "label": "Atom radius type",
-            "tooltip": "Use van der Waals radius (adsorption) or covalent radius (chemisorption)",
-            "choices": ["van der Waals", "covalent"],
-            "default": "van der Waals",
-        },
-    )
-    settings["calculate_blocked_surface"] = (
-        "BooleanConfigurator",
-        {
-            "default": False,
-            "label": "Calculate blocked surface per atom",
-            "tooltip": "Calculate which atoms are blocking the surface of the selection (expensive)",
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
-    settings["running_mode"] = ("RunningModeConfigurator", {})
+    output_files = OutputFile()
+    running_mode = RunningMode()
 
     def initialize(self):
         super().initialize()
 
-        self.check_blocking = self.configuration["calculate_blocked_surface"]["value"]
-        self.numberOfSteps = self.configuration["frames"]["number"]
         self.type_mapping = {}
         self.molecule_mapping = {}
         self.grouping_keys = {}
+        self.numberOfSteps = len(self.frames)
 
         # Will store the time.
         self._outputData.add(
             "sas/axes/time",
             "LineOutputVariable",
-            self.configuration["frames"]["time"],
+            self.frames.times,
             units="ps",
         )
 
@@ -448,34 +441,33 @@ class SolventAccessibleSurface(IJob):
         self._outputData.add(
             "sas/total",
             "LineOutputVariable",
-            (self.configuration["frames"]["number"],),
+            (len(self.frames),),
             axis="sas/axes/time",
             units="nm2",
             main_result=True,
         )
 
         atoms_in_molecule, loose_atoms = identify_loose_atoms(
-            self.trajectory, self.configuration["grouping_level"]["value"]
+            self.trajectory,
+            self.grouping_level,
         )
 
         # Generate the sphere points that will be used to evaluate the sas per atom.
         self.spherePoints = np.array(
-            generate_sphere_points(self.configuration["n_sphere_points"]["value"]),
+            generate_sphere_points(self.n_sphere_points),
             dtype=np.float64,
-        ).T
+        )
 
         # A mapping between the atom indices and covalent_radius radius for the whole universe.
-        if self.configuration["radius_type"]["value"] == "van der Waals":
-            self.vdwRadii = self.configuration["trajectory"][
-                "instance"
-            ].chemical_system.atom_property("vdw_radius")
-        elif self.configuration["radius_type"]["value"] == "covalent":
-            self.vdwRadii = self.configuration["trajectory"][
-                "instance"
-            ].chemical_system.atom_property("covalent_radius")
+        if self.radius_type == "van der Waals":
+            self.vdwRadii = self.trajectory.chemical_system.atom_property("vdw_radius")
+        elif self.radius_type == "covalent":
+            self.vdwRadii = self.trajectory.chemical_system.atom_property(
+                "covalent_radius"
+            )
         else:
             raise NotImplementedError(
-                f"Property {self.configuration['radius_type']['value']} cannot be used as radius in the SAS calculation."
+                f"Property {self.radius_type} cannot be used as radius in the SAS calculation."
             )
 
         self.selected_indices = self.trajectory.atom_indices
@@ -483,16 +475,16 @@ class SolventAccessibleSurface(IJob):
 
         self.type_mapping, self.grouping_keys = create_type_mapping(
             atom_types,
-            self.configuration["grouping_level"]["value"],
+            self.grouping_level,
             molecule_names=set(self.trajectory.chemical_system._clusters),
             atoms_in_molecule=atoms_in_molecule,
         )
 
-        if self.check_blocking:
+        if self.calculate_blocked_surface:
             self._outputData.add(
                 "sas/free",
                 "LineOutputVariable",
-                (self.configuration["frames"]["number"],),
+                (len(self.frames),),
                 axis="sas/axes/time",
                 units="nm2",
                 main_result=True,
@@ -502,7 +494,7 @@ class SolventAccessibleSurface(IJob):
                     self._outputData.add(
                         f"sas/taken/{result_key}",
                         "LineOutputVariable",
-                        (self.configuration["frames"]["number"],),
+                        (len(self.frames),),
                         axis="sas/axes/time",
                         units="nm2",
                         main_result=False,
@@ -512,7 +504,7 @@ class SolventAccessibleSurface(IJob):
             self.selected_indices,
             atom_types,
             self.type_mapping,
-            self.configuration["grouping_level"]["value"],
+            self.grouping_level,
             self.trajectory.chemical_system._clusters,
         )
 
@@ -525,7 +517,7 @@ class SolventAccessibleSurface(IJob):
         """
 
         # This is the actual index of the frame corresponding to the loop index.
-        frameIndex = self.configuration["frames"]["value"][index]
+        frameIndex = self.frames[index].ind
 
         # Fetch the configuration.
         conf = self.trajectory.configuration(frameIndex)
@@ -535,9 +527,7 @@ class SolventAccessibleSurface(IJob):
         unit_cell = conf._unit_cell
 
         if conf.is_periodic:
-            padding_thickness = 1.05 * (
-                self.configuration["probe_radius"]["value"] + np.max(self.vdwRadii)
-            )
+            padding_thickness = 1.05 * max(self.probe_radius, np.max(self.vdwRadii))
             coords, atom_indices = padded_coordinates(
                 conf["coordinates"],
                 unit_cell,
@@ -558,8 +548,8 @@ class SolventAccessibleSurface(IJob):
             self.grouping_indices,
             temp_vdw_radii,
             self.spherePoints,
-            self.configuration["probe_radius"]["value"],
-            calculate_blocking=self.check_blocking,
+            self.probe_radius,
+            calculate_blocking=self.calculate_blocked_surface,
         )
 
         return index, sas_and_occupations
@@ -575,7 +565,7 @@ class SolventAccessibleSurface(IJob):
         total_sas, free_sas, blocked_sas = x
         # The SAS is updated with the value obtained for frame |index|.
         self._outputData["sas/total"][index] = total_sas
-        if self.check_blocking:
+        if self.calculate_blocked_surface:
             for type_index, surface in blocked_sas.items():
                 self._outputData[f"sas/taken/{self.grouping_keys[type_index]}"][
                     index
@@ -589,8 +579,8 @@ class SolventAccessibleSurface(IJob):
 
         # Write the output variables.
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_format,
             str(self),
             self,
         )
