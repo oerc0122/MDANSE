@@ -18,19 +18,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
+from qtpy.QtCore import Qt, Slot
 from qtpy.QtGui import QStandardItem, QStandardItemModel
-from qtpy.QtWidgets import (
-    QAbstractScrollArea,
-    QLabel,
-    QLineEdit,
-    QSizePolicy,
-    QTableView,
-)
+from qtpy.QtWidgets import QAbstractScrollArea, QSizePolicy, QTableView
 
+from MDANSE.Framework.Parameters import Array, Vector
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
-
-if TYPE_CHECKING:
-    from MDANSE.Framework.Parameters import Array, Vector
+from MDANSE_GUI.Utils import block_signals
 
 
 class ArrayWidget(WidgetBase[Array | Vector]):
@@ -53,51 +48,34 @@ class ArrayWidget(WidgetBase[Array | Vector]):
         if len(self.parameter.shape) > 2:
             raise NotImplementedError("3D data objects not supported")
 
-        val = np.atleast_2d(self.value)
-        for row in val:
+        val = self.value if self.value is not None else np.zeros(self.parameter.shape)
+
+        for row in np.atleast_2d(val):
             items = [QStandardItem(str(elem)) for elem in row]
             self._model.appendRow(items)
 
+        self._layout.addWidget(self._view)
         self.toggle_widgets()
         self._model.itemChanged.connect(self.updateValue)
 
-    def get_widget_value(self) -> np.ndarray:
-        return np.array(
-            [
-                [self.item(row, col) for col in range(self.columnCount())]
-                for row in range(self.rowCount())
-            ],
-            dtype=float,
-        ).reshape(self.parameter.shape)
+    def set_value(self, val: npt.NDArray[np.floating]) -> None:
+        if val.shape != self.parameter.shape:
+            raise ValueError(
+                "Shape mismatch: \n"
+                f"expected: {self.parameter.shape}\n"
+                f"received: {val.shape}"
+            )
 
+        with block_signals(self._model):
+            for (row, col), elem in np.ndenumerate(val):
+                self._model.item(row, col).setText(str(elem))
 
-class VectorWidget(WidgetBase[Vector]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._changing_label = QLabel("Vector", parent=self._base)
-        self._layout.addWidget(self._changing_label)
-        self._vector_fields = [
-            QLineEdit(val, self._base) for val in map(str, self._configurator.default)
-        ]
-
-        if self._tooltip:
-            tooltip_text = self._tooltip
-        else:
-            tooltip_text = "The spatial properties in the analysis can be projected on a plane or on an axis, as chosen here."
-
-        for field in self._vector_fields:
-            self._layout.addWidget(field)
-            field.setToolTip(tooltip_text)
-        self._mode = 0
         self.updateValue()
 
-    def configure_using_default(self):
-        """This is too complex to have a default value"""
+    @Slot()
+    def toggle_widgets(self) -> None:
+        if not self.parameter.optional:
+            return
 
-    def get_widget_value(self):
-        """Collect the results from the input widgets and return the value."""
-        try:
-            vector = [float(x.text()) for x in self._vector_fields]
-        except Exception:
-            vector = [0, 0, 0]
-        return vector
+        self._view.setEnabled(self._apply_box.checkState() != Qt.CheckState.Checked)
+        self.updateValue()
