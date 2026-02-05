@@ -67,7 +67,7 @@ class TrajectoryFilter(IJob):
     )
     settings["projection"] = (
         "ProjectionConfigurator",
-        {"label": "project coordinates"},
+        {},
     )
     settings["trajectory_filter"] = (
         "TrajectoryFilterConfigurator",
@@ -101,7 +101,6 @@ class TrajectoryFilter(IJob):
     settings["output_files"] = (
         "OutputTrajectoryConfigurator",
         {
-            "label": "MDANSE trajectory (filename, datatype, chunk size, compression, logfile output)",
             "format": "MDTFormat",
         },
     )
