@@ -16,20 +16,19 @@
 from __future__ import annotations
 
 import html
-import json
-from collections.abc import Generator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import h5py
 import numpy as np
 import numpy.typing as npt
-from more_itertools import always_iterable
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QPoint, Qt, Signal, Slot
-from qtpy.QtGui import QContextMenuEvent, QMouseEvent
+from qtpy.QtCore import QModelIndex, Qt, Signal, Slot
 from qtpy.QtWidgets import QAbstractItemView, QMenu, QTreeView
 
-from MDANSE.Framework.Configurators.QVectorsConfigurator import QVectorsConfigurator
-from MDANSE.Framework.QVectors.IQVectors import WIDTH_NONZERO_LIMIT
+from MDANSE.Framework.Parameters import QVectors
+from MDANSE.Framework.QVectors.IQVectors import (
+    WIDTH_NONZERO_LIMIT,
+    IQVectors,
+)
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
 from MDANSE_GUI.Tabs.Models.PlotDataModel import BasicPlotDataItem, MDADataStructure
@@ -37,9 +36,12 @@ from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext, SingleDatase
 from MDANSE_GUI.Tabs.Visualisers.DataPlotter import DataPlotter
 from MDANSE_GUI.Tabs.Visualisers.TextInfo import TextInfo
 
-MAX_BINS_PER_SHELL = 20
-MIN_BINS_PER_SHELL = 1
-MAX_BINS_PER_PLOT = 180
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from qtpy.QtGui import QContextMenuEvent, QMouseEvent
+
+WEIGHTS_MULTIPLIER = 100
 
 WEIGHTS_MULTIPLIER = 100
 
@@ -155,7 +157,7 @@ def qvector_binning_general(
 
 
 def shell_to_modq(shell_index: int, parent: h5py.Dataset) -> npt.NDArray[float]:
-    """Find the vector shell dataset and returns arrays of q vector lengths.
+    """Finds the vector shell dataset and returns arrays of q vector lengths.
 
     Parameters
     ----------
@@ -174,7 +176,7 @@ def shell_to_modq(shell_index: int, parent: h5py.Dataset) -> npt.NDArray[float]:
 
 
 def vector_angular_datasets(
-    source: QVectorsConfigurator,
+    source: IQVectors,
     shell_key: float,
 ) -> tuple[SingleDataset, SingleDataset]:
     """Return a specific q-vector shell as spherical coordinate angle datasets.
@@ -191,8 +193,8 @@ def vector_angular_datasets(
     tuple[SingleDataset, SingleDataset]
         Datasets of polar and azimuthal angles.
     """
-    q_array = source["q_vectors"][shell_key]["q_vectors"]
-    q_weights = source["q_vectors"][shell_key]["weights"]
+    q_array = source.q_vectors[shell_key]["q_vectors"]
+    q_weights = source.q_vectors[shell_key]["weights"]
     return angular_datasets_from_qarray(q_array, q_weights)
 
 
@@ -254,7 +256,7 @@ def angular_datasets_from_qarray(
 
 
 def vector_projection_datasets(
-    source: QVectorsConfigurator,
+    source: IQVectors,
     shell_key: float,
 ) -> tuple[SingleDataset, SingleDataset, SingleDataset, SingleDataset]:
     """Return a specific q-vector shell as Cartesian coordinate datasets.
@@ -271,7 +273,7 @@ def vector_projection_datasets(
     tuple[SingleDataset, SingleDataset, SingleDataset, SingleDataset]
         Datasets of coordinates grouped as y(x), z(x), z(y) and z(x,y).
     """
-    q_array = source["q_vectors"][shell_key]["q_vectors"] * measure(
+    q_array = source.q_vectors[shell_key]["q_vectors"] * measure(
         1.0,
         iunit="1/nm",
     ).toval("1/ang")
@@ -364,78 +366,94 @@ def vector_q_statistics_datasets(
     Iterable[SingleDataset]
         1D array of vector count vs. |q|, 2D histogram of q vector counts per shell.
     """
-    if isinstance(source, h5py.File):
-        filename = source.filename
-        parent_dset = source[main_dset]
-        qvals = parent_dset["q"][:]
-        nshells = len(qvals)
-        valid_shells = [
-            index
-            for index in range(nshells)
-            if len(parent_dset[f"shell_{index}/qvector_array"][0])
-        ]
-        modq_per_shell = [shell_to_modq(n, parent_dset) for n in valid_shells]
-        available_vectors = np.array([len(qvecs) for qvecs in modq_per_shell])
+    if isinstance(source, QVectors):
+        source = source.generator
 
-        def q_data(elem: str) -> Generator:
-            for index in valid_shells:
-                yield parent_dset[f"shell_{index}/{elem}"]
+    match source:
+        case h5py.File():
+            filename = source.filename
+            parent_dset = source[main_dset]
+            qvals = parent_dset["q"][:]
+            nshells = len(qvals)
+            valid_shells = [
+                index
+                for index in range(nshells)
+                if len(parent_dset[f"shell_{index}/qvector_array"][0])
+            ]
+            modq_per_shell = [shell_to_modq(n, parent_dset) for n in valid_shells]
+            available_vectors = np.array([len(qvecs) for qvecs in modq_per_shell])
 
-        if all(
-            "weights" in parent_dset[f"shell_{shell_index}"]
-            for shell_index in valid_shells
-        ):
-            vec_weights = [dat[:] for dat in q_data("weights")]
-            if "n_q_vectors" in parent_dset and "n_q_found" in parent_dset:
-                used = np.array(parent_dset["n_q_vectors"])
-                found = np.array(parent_dset["n_q_found"])
+            def q_data(elem: str) -> Generator:
+                for index in valid_shells:
+                    yield parent_dset[f"shell_{index}/{elem}"]
+
+            if all(
+                "weights" in parent_dset[f"shell_{shell_index}"]
+                for shell_index in valid_shells
+            ):
+                vec_weights = [dat[:] for dat in q_data("weights")]
+                if "n_q_vectors" in parent_dset and "n_q_found" in parent_dset:
+                    used = np.array(parent_dset["n_q_vectors"])
+                    found = np.array(parent_dset["n_q_found"])
+                else:
+                    used = np.array([len(dat) for dat in q_data("weights")])
+                    found = np.array([sum(dat[:]) for dat in q_data("weights")])
+                available_vectors = np.vstack((found, used)).T
             else:
-                used = np.array([len(dat) for dat in q_data("weights")])
-                found = np.array([sum(dat[:]) for dat in q_data("weights")])
-            available_vectors = np.vstack((found, used)).T
-        else:
-            vec_weights = [np.ones_like(modq_shell) for modq_shell in modq_per_shell]
-    elif isinstance(source, QVectorsConfigurator):
-        filename = None
-        qvals = np.array([float(x) for x in source["q_vectors"]])
-        valid_shells = [
-            index
-            for index in range(len(qvals))
-            if source["q_vectors"][qvals[index]] is not None
-        ]
-        nshells = len(valid_shells)
+                vec_weights = [np.ones_like(modq_shell) for modq_shell in modq_per_shell]
 
-        def q_data(elem: str) -> Generator:
-            for index in valid_shells:
-                yield source["q_vectors"][qvals[index]][elem]
+        case IQVectors():
 
-        modq_per_shell = [np.linalg.norm(dat, axis=0) for dat in q_data("q_vectors")]
-        available_vectors = np.array(
-            [
-                (
-                    n_found,
-                    n_used,
-                )
-                for n_found, n_used in zip(
-                    q_data("n_q_found"), q_data("n_q_vectors"), strict=False
-                )
-            ],
-        )
-        vec_weights = [dat[:] for dat in q_data("weights")]
+            filename = None
+            qvals = np.array([float(x) for x in source.q_vectors])
+            valid_shells = [
+                index
+                for index in range(len(qvals))
+                if source.q_vectors[qvals[index]] is not None
+            ]
+            nshells = len(valid_shells)
+
+            def q_data(elem: str) -> Generator:
+                for index in valid_shells:
+                    yield source.q_vectors[qvals[index]][elem]
+
+            modq_per_shell = [np.linalg.norm(dat, axis=0) for dat in q_data("q_vectors")]
+
+            available_vectors = np.array(
+                [
+                    (
+                        n_found,
+                        n_used,
+                    )
+                    for n_found, n_used in zip(
+                        q_data("n_q_found"), q_data("n_q_vectors"), strict=False
+                    )
+                ],
+            )
+
+            vec_weights = [dat[:] for dat in q_data("weights")]
+
+        case _:
+            raise TypeError(f"Unable to compute from {type(source).__name__}")
+
     if q_bin_limits is None:
         qmin, qmax = np.min(modq_per_shell[0]), np.max(modq_per_shell[-1])
         q_step = np.mean(np.abs(np.diff(qvals))) if len(qvals) > 1 else 0.1
         bin_width = 0.4 * np.min([np.std(one_shell) for one_shell in modq_per_shell])
         common_bins = qvector_binning_general(qmin, qmax, q_step, bin_width, 10)
+
     else:
         common_bins = q_bin_limits
+
     if np.any(common_bins < 0):
         start_index = np.argmax(common_bins >= 0) - 1
         if start_index >= 0:
             common_bins = common_bins[start_index:]
+
     qmod_histograms = [np.histogram(qmods, common_bins)[0] for qmods in modq_per_shell]
     stacked_histograms = np.vstack(qmod_histograms)
     xvals = common_bins[1:] - np.diff(common_bins) / 2
+
     nvec_per_q = SingleDataset(
         "Available vectors",
         None,
@@ -450,6 +468,7 @@ def vector_q_statistics_datasets(
         axes_units={"|q|": "1/nm"},
         optional_filename=filename,
     )
+
     real_q_ideal_q = SingleDataset(
         r"<|q|> - q$_{target}$",
         None,
@@ -473,6 +492,7 @@ def vector_q_statistics_datasets(
         optional_filename=filename,
         uneven_array=True,
     )
+
     vecs_per_qbin = SingleDataset(
         "Shell population",
         None,
@@ -499,7 +519,6 @@ class PlotDataView(QTreeView):
     fast_plotting_data = Signal(object)
     free_name = Signal(str)
     fast_plotting_vectors = Signal(object)
-    vector_shell_plotting = Signal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -541,7 +560,6 @@ class PlotDataView(QTreeView):
             # block right click when it's not on a trajectory
             return
         if index.parent().data() is not None:
-            self.populateVectorMenu(self.model(), index, event.globalPos())
             return
         model = self.model()
         qitem = model.itemFromIndex(index)
@@ -560,15 +578,6 @@ class PlotDataView(QTreeView):
         menu.exec_(event.globalPos())
 
     def populateMenu(self, menu: QMenu, index: QModelIndex):
-        """Add actions to a contex menu for .mda files in the plot creator.
-
-        Parameters
-        ----------
-        menu : QMenu
-            The QMenu instance created by contex menu event.
-        index : QModelIndex
-            Index of the active item in the dataset view.
-        """
         for action, method in [("Vector summary", self.plot_vectors)]:
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
@@ -578,40 +587,8 @@ class PlotDataView(QTreeView):
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
 
-    def populateVectorMenu(
-        self,
-        model: QAbstractItemModel,
-        index: QModelIndex,
-        event_pos: QPoint,
-    ):
-        """Show a menu that allows to visualise a single vector shell.
-
-        This function is meant to exit early if the user clicked on an object
-        that is not a q vector shell.
-        """
-        item = model.itemFromIndex(index)
-        text = item.text()
-        if "shell" not in text:
-            return
-        mda_data_structure = model.inner_object(index)
-        if "qvector_array" not in mda_data_structure:
-            return
-        self._qvector_shell = mda_data_structure["qvector_array"][:]
-        if not len(self._qvector_shell[0]):
-            return
-        try:
-            self._qvector_weights = mda_data_structure["weights"][:]
-        except KeyError:
-            self._qvector_weights = np.ones(self._qvector_shell.shape[1])
-        self._qvector_filename = mda_data_structure.file.filename
-        menu = QMenu()
-        temp_action = menu.addAction("Vector positions")
-        temp_action.triggered.connect(self.plot_vector_shell)
-        menu.exec_(event_pos)
-
     @Slot()
     def deleteNode(self):
-        """Delete the selected file from the tree view."""
         model = self.model()
         index = self.currentIndex()
         mda_data_structure = model.parent_object(index)
@@ -626,17 +603,7 @@ class PlotDataView(QTreeView):
         model.removeRow(parent_node.row())
         self.item_details.emit("")
 
-    def on_select_dataset(self, index: QModelIndex):
-        """Respond to the user clicking on an item in plot creator's tree view.
-
-        This should collect viewable information about the selected object
-        (dataset) and send it to visualiser widgets.
-
-        Parameters
-        ----------
-        index : QModelIndex
-            Index of the selected item in the model.
-        """
+    def on_select_dataset(self, index):
         model = self.model()
         item = model.itemFromIndex(index)
         text = item.child_path
@@ -652,8 +619,8 @@ class PlotDataView(QTreeView):
                     "\n".join(
                         f"{key}: {item}"
                         for key, item in mda_data_structure._metadata.items()
-                    ),
-                ),
+                    )
+                )
             )
         else:
             try:
@@ -667,7 +634,6 @@ class PlotDataView(QTreeView):
     def plot_vectors(
         self,
     ):
-        """Create and emit the datasets of |q| statistics in all shells."""
         source_model = self.model()
         index = self.currentIndex()
         mda_data_structure = source_model.parent_object(index)
@@ -682,22 +648,6 @@ class PlotDataView(QTreeView):
         ):
             model.add_dataset(qvec_dataset)
         self.fast_plotting_vectors.emit(model)
-
-    def plot_vector_shell(self):
-        """Create and emit datasets with vector positions in a single shell."""
-        new_model = PlottingContext()
-        for dataset in projection_datasets_from_qarray(
-            self._qvector_shell,
-            self._qvector_filename,
-        ):
-            new_model.add_dataset(dataset)
-        for dataset in angular_datasets_from_qarray(
-            self._qvector_shell,
-            self._qvector_weights,
-            self._qvector_filename,
-        ):
-            new_model.add_dataset(dataset)
-        self.vector_shell_plotting.emit(new_model)
 
     def quick_plot_data(
         self,
@@ -769,7 +719,7 @@ class PlotDataView(QTreeView):
         else:
             description = "generic item"
         self.item_details.emit(
-            html.escape(description),
+            html.escape(description)
         )  # this should emit the job name
 
     def connect_to_visualiser(
