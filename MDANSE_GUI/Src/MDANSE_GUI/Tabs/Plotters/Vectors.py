@@ -19,7 +19,6 @@ import contextlib
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import numpy.typing as npt
 
 from MDANSE.MLogging import LOG
 from MDANSE_GUI.Tabs.Plotters.Plotter import Plotter
@@ -30,11 +29,6 @@ if TYPE_CHECKING:
     from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext
 
 
-def violin_plot_width(positions: npt.NDArray[float]) -> float:
-    """Return the width of the violin plot based on the spacing between points."""
-    return np.mean(np.diff(positions)) if len(positions) > 1 else 0.5
-
-
 class Vectors(Plotter):
     """Plots all the datasets in the same figure."""
 
@@ -42,8 +36,8 @@ class Vectors(Plotter):
         """Initialise all ploting parameters to default values."""
         super().__init__()
         self._figure = None
-        self._backup_limits = {}
-        self._curve_limit_per_dataset = 128
+        self._backup_limits = []
+        self._curve_limit_per_dataset = 36
         self._legend_limit_for_histogram = 6
 
     def slider_labels(self) -> list[str]:
@@ -120,10 +114,7 @@ class Vectors(Plotter):
             target.clear()
             target.canvas.draw()
         single_plot_stack = [222, 221]
-        label_stack = [
-            "Unique",
-            "Total",
-        ]
+        label_stack = ["Total available", "Requested", "Selected"]
         for databundle in plotting_context.datasets().values():
             dataset = databundle.dataset
             try:
@@ -146,8 +137,6 @@ class Vectors(Plotter):
                             label=label_stack.pop(),
                         )
                         temp_curves.append(temp)
-                        if not label_stack:
-                            break
                 else:
                     temp_curves = axes.plot(
                         dataset.x_axis(best_axis),
@@ -165,22 +154,36 @@ class Vectors(Plotter):
                 self._axes.append(axes)
                 axes.set_xlabel(", ".join(np.unique(x_axis_labels)))
                 axes.set_title(dataset._name)
-            elif dataset._name == r"<|q|> - q$_{target}$":
+            elif dataset._name == "Mean |q|":
                 axes = target.add_subplot(single_plot_stack.pop())
-                xvals = dataset.x_axis(best_axis)
-                axes.violinplot(
+                temp_curves = axes.plot(
+                    dataset.x_axis(best_axis),
                     dataset.data,
-                    positions=xvals,
-                    widths=violin_plot_width(xvals),
+                    linestyle=databundle.line_style,
+                    label=plotlabel,
+                    color=databundle.colour,
                 )
+                if dataset._yerror is not None:
+                    axes.errorbar(
+                        dataset.x_axis(best_axis),
+                        dataset.data,
+                        fmt=databundle.marker,
+                        yerr=dataset._yerror,
+                        color=temp_curves[0].get_color(),
+                    )
+                for temp in temp_curves:
+                    try:
+                        temp.set_marker(databundle.marker)
+                    except ValueError:
+                        with contextlib.suppress(Exception):
+                            temp.set_marker(int(databundle.marker))
                 self._axes.append(axes)
                 axes.set_xlabel(", ".join(np.unique(x_axis_labels)))
                 axes.set_title(dataset._name)
             elif dataset._name == "Shell population":
                 axes = target.add_subplot(212)
                 multi_curves = dataset.curves_vs_axis(
-                    (best_unit, best_axis),
-                    max_limit=self._curve_limit_per_dataset,
+                    (best_unit, best_axis), max_limit=self._curve_limit_per_dataset
                 )
                 x_axis = dataset.x_axis(best_axis)
                 bottom = np.zeros(len(x_axis))
@@ -219,49 +222,25 @@ class Vectors(Plotter):
                             add_legend_placeholder = False
                             add_last_entry = True
                             axes.bar(
-                                x_axis,
-                                0,
-                                label="...",
-                                color=target.get_facecolor(),
+                                x_axis, 0, label="...", color=target.get_facecolor()
                             )
-        for axindex, axes in enumerate(self._axes):
+        for axes in self._axes:
             if update_only:
-                plot_limits = self._backup_limits[axindex]
-                if axindex != 1:  # axindex 1 is a special dataset for the violin plot.
-                    try:
-                        axes.set_xlim((plot_limits[0], plot_limits[1]))
-                    except ValueError:
-                        LOG.error(
-                            f"Matplotlib could not set x limits to {plot_limits[0]}, {plot_limits[1]}",
-                        )
-                else:
-                    for databundle in plotting_context.datasets().values():
-                        dataset = databundle.dataset
-                        best_unit, best_axis = dataset.longest_axis()
-                        if dataset._name == r"<|q|> - q$_{target}$":
-                            axes.clear()
-                            xvals = dataset.x_axis(best_axis)
-                            axes.violinplot(
-                                dataset.data,
-                                positions=xvals,
-                                widths=violin_plot_width(xvals),
-                            )
-                            axes.set_xlabel(", ".join(np.unique(x_axis_labels)))
-                            axes.set_title(dataset._name)
                 try:
-                    axes.set_ylim((plot_limits[2], plot_limits[3]))
+                    axes.set_xlim((self._backup_limits[0], self._backup_limits[1]))
                 except ValueError:
                     LOG.error(
-                        f"Matplotlib could not set y limits to {self._backup_limits[2]}, {self._backup_limits[3]}",
+                        f"Matplotlib could not set x limits to {self._backup_limits[0]}, {self._backup_limits[1]}"
+                    )
+                try:
+                    axes.set_ylim((self._backup_limits[2], self._backup_limits[3]))
+                except ValueError:
+                    LOG.error(
+                        f"Matplotlib could not set y limits to {self._backup_limits[2]}, {self._backup_limits[3]}"
                     )
             else:
                 xlimits, ylimits = axes.get_xlim(), axes.get_ylim()
-                self._backup_limits[axindex] = [
-                    xlimits[0],
-                    xlimits[1],
-                    ylimits[0],
-                    ylimits[1],
-                ]
+                self._backup_limits = [xlimits[0], xlimits[1], ylimits[0], ylimits[1]]
         for axes in self._axes:
             legend = axes.legend()
             legend.set_visible(plotting_context.use_legend)

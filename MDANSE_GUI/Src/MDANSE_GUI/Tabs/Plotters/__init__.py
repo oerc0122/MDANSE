@@ -21,4 +21,3 @@ from .Plotter import Plotter as Plotter
 from .Single import Single as Single
 from .Text import Text as Text
 from .Vectors import Vectors as Vectors
-from .Vectors3D import Vectors3D as Vectors3D
