@@ -43,8 +43,6 @@ from MDANSE.MLogging import LOG
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext
 from MDANSE_GUI.Tabs.Views.PlotDataView import (
-    qvector_binning_from_dict,
-    vector_angular_datasets,
     vector_projection_datasets,
     vector_q_statistics_datasets,
 )
@@ -374,11 +372,9 @@ class VectorViewer(QDialog):
         if not parameters_have_changed(self.qvec_configurator, self):
             return
         model = PlottingContext()
-        modq_binning = qvector_binning_from_dict(self.qvec_configurator["parameters"])
         try:
             for qvec_dataset in vector_q_statistics_datasets(
                 self.qvec_configurator,
-                q_bin_limits=modq_binning,
             ):
                 model.add_dataset(qvec_dataset)
         except ValueError:

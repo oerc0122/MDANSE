@@ -14,6 +14,8 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from __future__ import annotations
+from MDANSE.Framework.QVectors import IQVectors
+from MDANSE.Framework.QVectors.VectorStats import QVectorStats
 
 import html
 import json
@@ -42,216 +44,6 @@ MIN_BINS_PER_SHELL = 1
 MAX_BINS_PER_PLOT = 180
 
 WEIGHTS_MULTIPLIER = 100
-
-
-def qvector_binning_from_dict(
-    qvector_params: dict[str, Any],
-    n_segments: int = 10,
-) -> npt.NDArray[float] | None:
-    """Calculate the range of |q| bins from the vector generator parameters.
-
-    Parameters
-    ----------
-    qvector_params : dict[str, Any]
-        Input parameters of any subclass of IQVectors given as a dictionary.
-    n_segments : int, optional
-        Starting value of the number of histogram bins per vector shell, by default 10
-
-    Returns
-    -------
-    npt.NDArray[float] | None
-        A 1D array of |q| bin limits.
-    """
-    if (step_params := qvector_params.get("shells")) is None:
-        return None
-    start, end, step_size = step_params
-    width = qvector_params.get("width")
-    return qvector_binning_general(start, end, step_size, width, n_segments)
-
-
-def qvector_binning_general(
-    start: float,
-    end: float,
-    step_size: float,
-    width: float | None,
-    n_segments: int,
-) -> npt.NDArray[float]:
-    """Calculate the |q| bin limits based of vector shell limits and steps.
-
-    Parameters
-    ----------
-    start : float
-        Lower limit of the |q| shell range.
-    end : float
-        Upper limit of the |q| shell range.
-    step_size : float
-        Step size of the |q| shell range.
-    width : float | None
-        Width of a single shell in |q| units (1/nm).
-    n_segments : int
-        Starting value of number of histogram bins per shell.
-
-    Returns
-    -------
-    npt.NDArray[float]
-        A 1D array of |q| histogram bin limits.
-    """
-    if end < start:
-        start, end = end, start
-    if np.isclose(start, end) and (
-        width is None or np.isclose(width, 0, atol=WIDTH_NONZERO_LIMIT)
-    ):
-        return np.array([start - 0.15, start - 0.05, start + 0.05, start + 0.15])
-
-    width = abs(width) if width else width
-    step_size = abs(step_size)
-
-    def get_bin_width(n_segments: int) -> tuple[float, float]:
-        """Return the bin width based on shell width and shell separation."""
-        if np.isclose(start, end):
-            return width / n_segments, width
-        elif width is None or width <= step_size / 2:
-            return step_size / n_segments, step_size
-        else:
-            return step_size / n_segments, width
-
-    def get_first_last_values(
-        bin_width: float, peak_width: float
-    ) -> tuple[float, float]:
-        """Return the limits of the binning range based on the shell and bin sizes."""
-        bins_per_shell = peak_width // bin_width
-        if bins_per_shell > MAX_BINS_PER_SHELL or bins_per_shell < MIN_BINS_PER_SHELL:
-            bins_per_shell = min(
-                max(MIN_BINS_PER_SHELL, bins_per_shell),
-                MAX_BINS_PER_SHELL,
-            )
-            bin_width = peak_width / bins_per_shell
-        first_value = start - 0.5 * (bins_per_shell + 1) * bin_width
-        last_value = end + 0.5 * (bins_per_shell + 1.01) * bin_width
-        return first_value, last_value
-
-    bin_width, peak_width = get_bin_width(n_segments)
-    first_value, last_value = get_first_last_values(bin_width, peak_width)
-    common_binning = np.arange(
-        first_value,
-        last_value,
-        bin_width,
-    )
-    last_binning_length = len(common_binning)
-    while len(common_binning) > MAX_BINS_PER_PLOT:
-        bin_width *= 2
-        first_value, last_value = get_first_last_values(bin_width, peak_width)
-        common_binning = np.arange(
-            first_value,
-            last_value,
-            bin_width,
-        )
-        if len(common_binning) == last_binning_length:
-            break
-        last_binning_length = len(common_binning)
-    offset = np.min(np.abs(start - common_binning)) / bin_width
-    common_binning -= (offset - 0.5) * bin_width
-    return common_binning
-
-
-def shell_to_modq(shell_index: int, parent: h5py.Dataset) -> npt.NDArray[float]:
-    """Find the vector shell dataset and returns arrays of q vector lengths.
-
-    Parameters
-    ----------
-    shell_index : int
-        Index of the MDANSE q vector shell in the HDF5 data structure.
-    parent : h5py.Dataset
-        HDF5 object holding the shell_N keys, where N is shell_index.
-
-    Returns
-    -------
-    npt.NDArray[float]
-        A 1D array of q-vector lengths.
-    """
-    qvectors = parent[f"shell_{shell_index}/qvector_array"][:]
-    return np.linalg.norm(qvectors, axis=0)
-
-
-def vector_angular_datasets(
-    source: QVectorsConfigurator,
-    shell_key: float,
-) -> tuple[SingleDataset, SingleDataset]:
-    """Return a specific q-vector shell as spherical coordinate angle datasets.
-
-    Parameters
-    ----------
-    source : QVectorsConfigurator
-        An instance of the QVectorsConfigurator in the GUI.
-    shell_key : float
-        The |q| of the vector shell.
-
-    Returns
-    -------
-    tuple[SingleDataset, SingleDataset]
-        Datasets of polar and azimuthal angles.
-    """
-    q_array = source["q_vectors"][shell_key]["q_vectors"]
-    q_weights = source["q_vectors"][shell_key]["weights"]
-    return angular_datasets_from_qarray(q_array, q_weights)
-
-
-def angular_datasets_from_qarray(
-    q_array: npt.NDArray[float],
-    weight_array: npt.NDArray[float],
-    filename: str | None = None,
-) -> tuple[SingleDataset, SingleDataset]:
-    """Convert an array of q vectors into two datasets of spherical angles.
-
-    Parameters
-    ----------
-    q_array : npt.NDArray[float]
-        A (3,N) array of reciprocal space vectors.
-    weight_array: npt.NDArray[float],
-        Array of weights per vector, based the multiplicity of each vector.
-    filename : str | None, optional
-        Name of the file to be shown in plot details, by default None
-
-    Returns
-    -------
-    tuple[SingleDataset, SingleDataset]
-        Datasets of polar and azimuthal angles.
-    """
-    inplane_r = np.linalg.norm(q_array[:2, :], axis=0)
-    polar_angles = np.arctan2(inplane_r, q_array[2, :])
-    azimuthal_angles = np.arctan2(q_array[1, :], q_array[0, :])
-    results = []
-    rounding_precision = 3
-    for input_angles, label, xlabel, normalise, hist_range in (
-        (
-            polar_angles,
-            r"Polar angle, NORMALISED: counts/sin($\theta$)",
-            r"$\theta$",
-            True,
-            (0, np.pi),
-        ),
-        (azimuthal_angles, "Azimuthal angle", r"$\phi$", False, (-np.pi, np.pi)),
-    ):
-        angles = np.round(input_angles, rounding_precision)
-        counts, bins = np.histogram(angles, weights=weight_array, range=hist_range)
-        unique_counts, _ = np.histogram(angles, bins=bins)
-        mean_angles = (bins[1:] + bins[:-1]) / 2
-        if normalise:
-            counts = counts / np.sin(mean_angles)
-        dataset = SingleDataset(
-            label,
-            None,
-            linestyle="-",
-            marker="o",
-            data=np.vstack((counts, unique_counts)),
-            plot_axes={xlabel: mean_angles},
-            axes_units={xlabel: "rad"},
-            data_unit="rad",
-            optional_filename=filename,
-        )
-        results.append(dataset)
-    return results
-
 
 def vector_projection_datasets(
     source: QVectorsConfigurator,
@@ -344,10 +136,10 @@ def projection_datasets_from_qarray(
 
 
 def vector_q_statistics_datasets(
-    source: h5py.File | QVectorsConfigurator,
+    source: h5py.File | QVectorsConfigurator | IQVectors,
     main_dset: str = "vector_generator",
-    q_bin_limits: npt.NDArray[float] | None = None,
-) -> tuple[SingleDataset, SingleDataset]:
+    q_bin_limits: npt.NDArray[np.floating] | None = None,
+) -> tuple[SingleDataset, SingleDataset, SingleDataset]:
     """Create plottable SingleDataset instances showing |q| of generated vectors.
 
     Parameters
@@ -364,124 +156,62 @@ def vector_q_statistics_datasets(
     Iterable[SingleDataset]
         1D array of vector count vs. |q|, 2D histogram of q vector counts per shell.
     """
-    if isinstance(source, h5py.File):
-        filename = source.filename
-        parent_dset = source[main_dset]
-        qvals = parent_dset["q"][:]
-        nshells = len(qvals)
-        valid_shells = [
-            index
-            for index in range(nshells)
-            if len(parent_dset[f"shell_{index}/qvector_array"][0])
-        ]
-        modq_per_shell = [shell_to_modq(n, parent_dset) for n in valid_shells]
-        available_vectors = np.array([len(qvecs) for qvecs in modq_per_shell])
+    if isinstance(source, QVectorsConfigurator):
+        source: IQVectors = source["generator"]
 
-        def q_data(elem: str) -> Generator:
-            for index in valid_shells:
-                yield parent_dset[f"shell_{index}/{elem}"]
+    stats = QVectorStats(source, main_dset)
 
-        if all(
-            "weights" in parent_dset[f"shell_{shell_index}"]
-            for shell_index in valid_shells
-        ):
-            vec_weights = [dat[:] for dat in q_data("weights")]
-            if "n_q_vectors" in parent_dset and "n_q_found" in parent_dset:
-                used = np.array(parent_dset["n_q_vectors"])
-                found = np.array(parent_dset["n_q_found"])
-            else:
-                used = np.array([len(dat) for dat in q_data("weights")])
-                found = np.array([sum(dat[:]) for dat in q_data("weights")])
-            available_vectors = np.vstack((found, used)).T
-        else:
-            vec_weights = [np.ones_like(modq_shell) for modq_shell in modq_per_shell]
-    elif isinstance(source, QVectorsConfigurator):
-        filename = None
-        qvals = np.array([float(x) for x in source["q_vectors"]])
-        valid_shells = [
-            index
-            for index in range(len(qvals))
-            if source["q_vectors"][qvals[index]] is not None
-        ]
-        nshells = len(valid_shells)
+    common_bins = stats.qvector_binning() if q_bin_limits is None else q_bin_limits
+    ind = np.searchsorted(common_bins, 0., side="right")
+    common_bins = common_bins[ind:]
 
-        def q_data(elem: str) -> Generator:
-            for index in valid_shells:
-                yield source["q_vectors"][qvals[index]][elem]
+    xvals, stacked_histograms = stats.histogram(common_bins)
 
-        modq_per_shell = [np.linalg.norm(dat, axis=0) for dat in q_data("q_vectors")]
-        available_vectors = np.array(
-            [
-                (
-                    n_found,
-                    n_used,
-                )
-                for n_found, n_used in zip(
-                    q_data("n_q_found"), q_data("n_q_vectors"), strict=False
-                )
-            ],
-        )
-        vec_weights = [dat[:] for dat in q_data("weights")]
-    if q_bin_limits is None:
-        qmin, qmax = np.min(modq_per_shell[0]), np.max(modq_per_shell[-1])
-        q_step = np.mean(np.abs(np.diff(qvals))) if len(qvals) > 1 else 0.1
-        bin_width = 0.4 * np.min([np.std(one_shell) for one_shell in modq_per_shell])
-        common_bins = qvector_binning_general(qmin, qmax, q_step, bin_width, 10)
-    else:
-        common_bins = q_bin_limits
-    if np.any(common_bins < 0):
-        start_index = np.argmax(common_bins >= 0) - 1
-        if start_index >= 0:
-            common_bins = common_bins[start_index:]
-    qmod_histograms = [np.histogram(qmods, common_bins)[0] for qmods in modq_per_shell]
-    stacked_histograms = np.vstack(qmod_histograms)
-    xvals = common_bins[1:] - np.diff(common_bins) / 2
     nvec_per_q = SingleDataset(
         "Available vectors",
         None,
         linestyle=":",
         marker="o",
-        data=available_vectors,
+        data=stats.available_vectors,
         plot_axes={
-            "|q|": qvals
-            if len(qvals) == len(available_vectors)
-            else qvals[valid_shells]
+            "|q|": stats.shells
+            if len(stats.shells) == len(stats.available_vectors)
+            else stats.valid_shells
         },
         axes_units={"|q|": "1/nm"},
-        optional_filename=filename,
+        optional_filename=stats.filename,
     )
+
     real_q_ideal_q = SingleDataset(
         r"<|q|> - q$_{target}$",
         None,
         linestyle="-",
         marker=".",
-        data=[
-            np.concatenate(
-                [
-                    int(vec_weights[shellindex][vecindex] * WEIGHTS_MULTIPLIER)
-                    * list(always_iterable(veclen))
-                    for vecindex, veclen in enumerate(
-                        modq_per_shell[shellindex] - qvals[shell],
-                    )
-                ],
-            )
-            for shellindex, shell in enumerate(valid_shells)
+        data = [
+            np.repeat(diff, np.asarray(weights * WEIGHTS_MULTIPLIER, int))
+            for diff, weights in zip(stats.q_diff, stats.weights, strict=True)
         ],
-        plot_axes={"|q|": qvals[valid_shells]},
+        plot_axes={"|q|": stats.valid_shells},
         axes_units={"|q|": "1/nm"},
         data_unit="1/ang",
-        optional_filename=filename,
+        optional_filename=stats.filename,
         uneven_array=True,
     )
+
+    print("Meaty")
+
     vecs_per_qbin = SingleDataset(
         "Shell population",
         None,
         data=stacked_histograms,
         data_unit="counts",
-        plot_axes={"|q|": qvals[valid_shells], "q_bin": xvals},
+        plot_axes={"|q|": stats.valid_shells, "q_bin": xvals},
         axes_units={"|q|": "1/nm", "q_bin": "1/nm"},
-        optional_filename=filename,
+        optional_filename=stats.filename,
     )
+
+    print(nvec_per_q, real_q_ideal_q, vecs_per_qbin)
+
     return nvec_per_q, real_q_ideal_q, vecs_per_qbin
 
 
