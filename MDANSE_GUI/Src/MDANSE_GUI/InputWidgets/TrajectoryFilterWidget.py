@@ -16,8 +16,7 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Callable, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as mpl
 import numpy as np
@@ -62,6 +61,9 @@ from MDANSE.Mathematics.Signal import (
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.PlotUtils import MDANSEMatPlotLibNavBar
 from MDANSE_GUI.Utils import block_signals
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 # Default maximum value for a float spinbox
 DEFAULT_SPINBOX_MAX_FLOAT = 1000.0
