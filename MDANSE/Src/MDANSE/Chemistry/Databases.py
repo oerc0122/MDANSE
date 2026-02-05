@@ -20,7 +20,7 @@ import json
 from collections import ChainMap, defaultdict
 from collections.abc import ItemsView
 from pathlib import Path
-from typing import Any, SupportsComplex
+from typing import TYPE_CHECKING, Any, SupportsComplex
 
 from MDANSE.Core.Error import Error
 from MDANSE.Core.Platform import PLATFORM
@@ -28,6 +28,9 @@ from MDANSE.Core.Singleton import Singleton
 from MDANSE.Framework.Units import measure
 from MDANSE.IO.IOUtils import MDANSEEncoder, json_handler
 from MDANSE.MLogging import LOG
+
+if TYPE_CHECKING:
+    from collections.abc import ItemsView
 
 TOLERANCE_IMG = 1e-13
 

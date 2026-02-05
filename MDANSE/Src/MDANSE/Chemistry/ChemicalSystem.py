@@ -21,7 +21,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from functools import reduce
 from pathlib import Path
-from typing import Any, SupportsInt
+from typing import TYPE_CHECKING, Any, SupportsInt
 
 import h5py
 import networkx as nx
@@ -34,6 +34,9 @@ from rdkit.Geometry import Point3D
 from MDANSE.Chemistry import ATOMS_DATABASE
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def assign_molecules_after_atom_selection(

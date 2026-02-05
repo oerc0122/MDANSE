@@ -17,17 +17,15 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from collections import namedtuple
 from copy import copy
 from enum import Enum
-from typing import NamedTuple
+from typing import Any, Final, NamedTuple
 
 import numpy as np
 from scipy import fftpack, signal
 
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.OutputVariables.IOutputVariable import OutputData
-from MDANSE.Mathematics.Arithmetic import assign_weights, get_weights, weighted_sum
+from MDANSE.IO.IOUtils import UCEnum
 
 
 class SignalError(Error):
@@ -298,13 +296,15 @@ class Filter(ABC):
     # Conversion factor: cyclic frequency to angular frequency
     _cyclic_to_angular = 2 * np.pi
 
-    class FrequencyUnits(Enum):
+    default_settings: dict[str, Any]
+
+    class FrequencyUnits(UCEnum):
         """Enumeration for frequency unit type."""
 
         CYCLIC: str = "THz"
         ANGULAR: str = "rad/ps"
 
-    class FrequencyRangeMethod(Enum):
+    class FrequencyRangeMethod(UCEnum):
         """Enumeration for custom (externally provided) and FFT-derived frequency ranges for plotting the
         filter response.
 
@@ -313,7 +313,7 @@ class Filter(ABC):
         CUSTOM: int = 0
         FFT: int = 1
 
-    class Flags(Enum):
+    class Flags(UCEnum):
         """Enumeration for flags associated with usage of filters."""
 
         DIGITAL_ONLY: int = 0
@@ -322,13 +322,13 @@ class Filter(ABC):
         BOUNDED_FILTER: int = 3
 
     @abstractmethod
-    def __init__(self, **kwargs):
+    def __init__(self, n_steps: int, time_step_ps: float, **kwargs):
         # Custom frequency range (assumes frequencies are angular) around which to compute the filter frequency response
         self.custom_freq_range = []
         # Number of simulation steps
-        self.n_steps = kwargs.pop("n_steps")
+        self.n_steps = n_steps
         # Simulation sample frequency in THz
-        self.sample_freq = 1 / kwargs.pop("time_step_ps")
+        self.sample_freq = 1 / time_step_ps
         self.set_filter_attributes(kwargs)
 
     def compute_frequencies(self, filt_range: np.ndarray):
@@ -1083,7 +1083,7 @@ class Comb(Filter):
         self.set_freq_response(Filter.FrequencyRangeMethod.FFT)
 
 
-FILTERS = (
+FILTERS: Final[tuple[type[Filter], ...]] = (
     Butterworth,
     ChebyshevTypeI,
     ChebyshevTypeII,
@@ -1094,18 +1094,21 @@ FILTERS = (
     Comb,
 )
 
-FILTER_MAP = {filter_class.__name__: filter_class for filter_class in FILTERS}
+FILTER_MAP: Final[dict[str, type[Filter]]] = {
+    filter_class.__name__: filter_class for filter_class in FILTERS
+}
 
 # Default filter type is Butterworth
-DEFAULT_FILTER = Butterworth
+DEFAULT_FILTER: Final[type[Filter]] = Butterworth
+
 # Default simulation time step in picoseconds
-DEFAULT_TIME_STEP = 0.005
+DEFAULT_TIME_STEP: Final[float] = 0.005
 
 # Default number of simulation steps
-DEFAULT_N_STEPS = 320
+DEFAULT_N_STEPS: Final[int] = 320
 
 
-def filter_default_attributes(filter=DEFAULT_FILTER):
+def filter_default_attributes(filter: type[Filter] = DEFAULT_FILTER):
     """Get the filter-specific settings dictionary for a filter class.
 
     Parameters
