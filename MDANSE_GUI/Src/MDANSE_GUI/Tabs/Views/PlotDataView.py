@@ -22,7 +22,8 @@ from typing import TYPE_CHECKING, Any
 import h5py
 import numpy as np
 import numpy.typing as npt
-from qtpy.QtCore import QModelIndex, Qt, Signal, Slot
+from more_itertools import always_iterable
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QPoint, Qt, Signal, Slot
 from qtpy.QtWidgets import QAbstractItemView, QMenu, QTreeView
 
 from MDANSE.Framework.Parameters import QVectors
@@ -43,6 +44,9 @@ if TYPE_CHECKING:
     from qtpy.QtGui import QContextMenuEvent, QMouseEvent
 
 WEIGHTS_MULTIPLIER = 100
+MAX_BINS_PER_SHELL = 20
+MIN_BINS_PER_SHELL = 1
+MAX_BINS_PER_PLOT = 180
 
 WEIGHTS_MULTIPLIER = 100
 
@@ -523,6 +527,7 @@ class PlotDataView(QTreeView):
     fast_plotting_data = Signal(object)
     free_name = Signal(str)
     fast_plotting_vectors = Signal(object)
+    vector_shell_plotting = Signal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -564,6 +569,7 @@ class PlotDataView(QTreeView):
             # block right click when it's not on a trajectory
             return
         if index.parent().data() is not None:
+            self.populateVectorMenu(self.model(), index, event.globalPos())
             return
         model = self.model()
         qitem = model.itemFromIndex(index)
@@ -582,6 +588,15 @@ class PlotDataView(QTreeView):
         menu.exec_(event.globalPos())
 
     def populateMenu(self, menu: QMenu, index: QModelIndex):
+        """Add actions to a contex menu for .mda files in the plot creator.
+
+        Parameters
+        ----------
+        menu : QMenu
+            The QMenu instance created by contex menu event.
+        index : QModelIndex
+            Index of the active item in the dataset view.
+        """
         for action, method in [("Vector summary", self.plot_vectors)]:
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
@@ -591,8 +606,40 @@ class PlotDataView(QTreeView):
             temp_action = menu.addAction(action)
             temp_action.triggered.connect(method)
 
+    def populateVectorMenu(
+        self,
+        model: QAbstractItemModel,
+        index: QModelIndex,
+        event_pos: QPoint,
+    ):
+        """Show a menu that allows to visualise a single vector shell.
+
+        This function is meant to exit early if the user clicked on an object
+        that is not a q vector shell.
+        """
+        item = model.itemFromIndex(index)
+        text = item.text()
+        if "shell" not in text:
+            return
+        mda_data_structure = model.inner_object(index)
+        if "qvector_array" not in mda_data_structure:
+            return
+        self._qvector_shell = mda_data_structure["qvector_array"][:]
+        if not len(self._qvector_shell[0]):
+            return
+        try:
+            self._qvector_weights = mda_data_structure["weights"][:]
+        except KeyError:
+            self._qvector_weights = np.ones(self._qvector_shell.shape[1])
+        self._qvector_filename = mda_data_structure.file.filename
+        menu = QMenu()
+        temp_action = menu.addAction("Vector positions")
+        temp_action.triggered.connect(self.plot_vector_shell)
+        menu.exec_(event_pos)
+
     @Slot()
     def deleteNode(self):
+        """Delete the selected file from the tree view."""
         model = self.model()
         index = self.currentIndex()
         mda_data_structure = model.parent_object(index)
@@ -607,7 +654,17 @@ class PlotDataView(QTreeView):
         model.removeRow(parent_node.row())
         self.item_details.emit("")
 
-    def on_select_dataset(self, index):
+    def on_select_dataset(self, index: QModelIndex):
+        """Respond to the user clicking on an item in plot creator's tree view.
+
+        This should collect viewable information about the selected object
+        (dataset) and send it to visualiser widgets.
+
+        Parameters
+        ----------
+        index : QModelIndex
+            Index of the selected item in the model.
+        """
         model = self.model()
         item = model.itemFromIndex(index)
         text = item.child_path
@@ -623,8 +680,8 @@ class PlotDataView(QTreeView):
                     "\n".join(
                         f"{key}: {item}"
                         for key, item in mda_data_structure._metadata.items()
-                    )
-                )
+                    ),
+                ),
             )
         else:
             try:
@@ -638,6 +695,7 @@ class PlotDataView(QTreeView):
     def plot_vectors(
         self,
     ):
+        """Create and emit the datasets of |q| statistics in all shells."""
         source_model = self.model()
         index = self.currentIndex()
         mda_data_structure = source_model.parent_object(index)
@@ -652,6 +710,22 @@ class PlotDataView(QTreeView):
         ):
             model.add_dataset(qvec_dataset)
         self.fast_plotting_vectors.emit(model)
+
+    def plot_vector_shell(self):
+        """Create and emit datasets with vector positions in a single shell."""
+        new_model = PlottingContext()
+        for dataset in projection_datasets_from_qarray(
+            self._qvector_shell,
+            self._qvector_filename,
+        ):
+            new_model.add_dataset(dataset)
+        for dataset in angular_datasets_from_qarray(
+            self._qvector_shell,
+            self._qvector_weights,
+            self._qvector_filename,
+        ):
+            new_model.add_dataset(dataset)
+        self.vector_shell_plotting.emit(new_model)
 
     def quick_plot_data(
         self,
@@ -723,7 +797,7 @@ class PlotDataView(QTreeView):
         else:
             description = "generic item"
         self.item_details.emit(
-            html.escape(description)
+            html.escape(description),
         )  # this should emit the job name
 
     def connect_to_visualiser(
