@@ -16,15 +16,22 @@
 from __future__ import annotations
 
 from math import sqrt
+from typing import Any
 
 import numpy as np
 
 from MDANSE.Core.Error import Error
-from MDANSE.Framework.AtomGrouping.grouping import (
-    add_grouped_totals,
-    pair_labels,
-)
+from MDANSE.Framework.AtomGrouping.grouping import add_grouped_totals, pair_labels
 from MDANSE.Framework.Jobs.IJob import IJob
+from MDANSE.Framework.Parameters import (
+    AtomSelection,
+    AtomTransmutation,
+    GroupingLevel,
+    MDANSEResult,
+    MDANSETrajectory,
+    OutputFile,
+    RunningMode,
+)
 
 
 class NeutronDynamicTotalStructureFactorError(Error):
@@ -54,56 +61,38 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
     ancestor = ["hdf_trajectory", "molecular_viewer"]
 
-    settings = {}
-    settings["trajectory"] = ("HDFTrajectoryConfigurator", {})
-    settings["dcsf_input_file"] = (
-        "HDFInputFileConfigurator",
-        {
-            "label": "MDANSE Coherent Structure Factor",
-            "default": "dcsf.mda",
-            "tooltip": "Result of the DynamicCoherentStructureFactor analysis on the input trajectory.",
-        },
+    trajectory = MDANSETrajectory(
+        selection="atom_selection",
+        transmutation="atom_transmutation",
+        grouping="grouping_level",
     )
-    settings["disf_input_file"] = (
-        "HDFInputFileConfigurator",
-        {
-            "label": "MDANSE Incoherent Structure Factor",
-            "default": "disf.mda",
-            "tooltip": "Result of the DynamicIncoherentStructureFactor analysis on the input trajectory.",
-        },
+    dcsf_input_file = MDANSEResult(
+        label="MDANSE Coherent Structure Factor",
+        choices=("dcsf",),
+        tooltip="Result of the DynamicCoherentStructureFactor analysis on the input trajectory.",
     )
-    settings["grouping_level"] = (
-        "GroupingLevelConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
+    disf_input_file = MDANSEResult(
+        label="MDANSE Incoherent Structure Factor",
+        choices=("disf",),
+        tooltip="Result of the DynamicIncoherentStructureFactor analysis on the input trajectory.",
     )
-    settings["atom_selection"] = (
-        "AtomSelectionConfigurator",
-        {"dependencies": {"trajectory": "trajectory"}},
-    )
-    settings["atom_transmutation"] = (
-        "AtomTransmutationConfigurator",
-        {
-            "dependencies": {
-                "trajectory": "trajectory",
-            }
-        },
-    )
-    settings["output_files"] = ("OutputFilesConfigurator", {})
+    grouping_level = GroupingLevel(depends={"trajectory": "trajectory"})
+    atom_selection = AtomSelection(depends={"trajectory": "trajectory"})
+    atom_transmutation = AtomTransmutation(depends={"trajectory": "trajectory"})
+    output_files = OutputFile()
 
     def _get_data_from_files(self, props: str):
         out = {}
-        for file, prop in zip(("dcsf", "disf"), self._expand(props), strict=True):
+        for file, prop in zip(
+            (self.dcsf_input_file, self.disf_input_file),
+            self._expand(props),
+            strict=True,
+        ):
             try:
-                out[file] = self.configuration[f"{file}_input_file"]["instance"][prop][
-                    :
-                ]
+                out[file] = file[prop][:]
             except KeyError:
                 raise NeutronDynamicTotalStructureFactorError(
-                    f"No `{prop}` found in {file} input file"
+                    f"No `{prop}` found in {file.path} input file"
                 ) from None
         return tuple(out.values())
 
@@ -187,62 +176,42 @@ class NeutronDynamicTotalStructureFactor(IJob):
 
         # Check f(q,t) and s(q,f) for dcsf
         for pair_str, _ in self.pair_labels:
-            if (
-                f"dcsf/f(q,t)/{pair_str}"
-                not in self.configuration["dcsf_input_file"]["instance"]
-            ):
+            if f"dcsf/f(q,t)/{pair_str}" not in self.dcsf_input_file:
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing f(q,t) in dcsf input file"
                 )
-            if (
-                f"dcsf/s(q,f)/{pair_str}"
-                not in self.configuration["dcsf_input_file"]["instance"]
-            ):
+            if f"dcsf/s(q,f)/{pair_str}" not in self.dcsf_input_file:
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing s(q,f) in dcsf input file"
                 )
             if (
                 "scaling_factor"
-                not in self.configuration["dcsf_input_file"]["instance"][
-                    f"dcsf/s(q,f)/{pair_str}"
-                ].attrs
+                not in self.dcsf_input_file[f"dcsf/s(q,f)/{pair_str}"].attrs
             ):
                 raise NeutronDynamicTotalStructureFactorError(
                     "This DCSF file was created before the new scaling scheme. Please calculate it again."
                 )
 
         for element in self.trajectory.unique_names:
-            if (
-                f"disf/f(q,t)/{element}"
-                not in self.configuration["disf_input_file"]["instance"]
-            ):
+            if f"disf/f(q,t)/{element}" not in self.disf_input_file:
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing f(q,t) in disf input file"
                 )
-            if (
-                f"disf/s(q,f)/{element}"
-                not in self.configuration["disf_input_file"]["instance"]
-            ):
+            if f"disf/s(q,f)/{element}" not in self.disf_input_file:
                 raise NeutronDynamicTotalStructureFactorError(
                     "Missing s(q,f) in disf input file"
                 )
             if (
                 "scaling_factor"
-                not in self.configuration["disf_input_file"]["instance"][
-                    f"disf/s(q,f)/{element}"
-                ].attrs
+                not in self.disf_input_file[f"disf/s(q,f)/{element}"].attrs
             ):
                 raise NeutronDynamicTotalStructureFactorError(
                     "This DISF file was created before the new scaling scheme. Please calculate it again."
                 )
 
         for element in self.trajectory.unique_names:
-            fqt = self.configuration["disf_input_file"]["instance"][
-                f"disf/f(q,t)/{element}"
-            ]
-            sqf = self.configuration["disf_input_file"]["instance"][
-                f"disf/s(q,f)/{element}"
-            ]
+            fqt = self.disf_input_file[f"disf/f(q,t)/{element}"]
+            sqf = self.disf_input_file[f"disf/s(q,f)/{element}"]
             self._outputData.add(
                 f"ndsf/f(q,t)_inc/{element}",
                 "SurfaceOutputVariable",
@@ -259,12 +228,8 @@ class NeutronDynamicTotalStructureFactor(IJob):
             )
 
         for pair_str, _ in self.pair_labels:
-            fqt = self.configuration["dcsf_input_file"]["instance"][
-                f"dcsf/f(q,t)/{pair_str}"
-            ]
-            sqf = self.configuration["dcsf_input_file"]["instance"][
-                f"dcsf/s(q,f)/{pair_str}"
-            ]
+            fqt = self.dcsf_input_file[f"dcsf/f(q,t)/{pair_str}"]
+            sqf = self.dcsf_input_file[f"dcsf/s(q,f)/{pair_str}"]
             self._outputData.add(
                 f"ndsf/f(q,t)_coh/{pair_str}",
                 "SurfaceOutputVariable",
@@ -333,39 +298,38 @@ class NeutronDynamicTotalStructureFactor(IJob):
             main_result=True,
         )
         self._input_disf_weight = (
-            self.configuration["disf_input_file"]["instance"][
-                "metadata/inputs/weights"
-            ][0]
-            .decode()
-            .strip('"')
+            self.disf_input_file["metadata/inputs/weights"][0].decode().strip('"')
         )
         self._input_dcsf_weight = (
-            self.configuration["dcsf_input_file"]["instance"][
-                "metadata/inputs/weights"
-            ][0]
-            .decode()
-            .strip('"')
+            self.dcsf_input_file["metadata/inputs/weights"][0].decode().strip('"')
         )
 
-    def run_step(self, index):
-        """
-        Runs a single step of the job.\n
+    def run_step(self, index: int) -> tuple[int, None]:
+        """Runs a single step of the job.
 
-        :Parameters:
-            #. index (int): The index of the step.
-        :Returns:
-            #. index (int): The index of the step.
-            #. rho (np.array): The exponential part of I(k,t)
+        Parameters
+        ----------
+        index : int
+            The index of the step.
+
+        Returns
+        -------
+        tuple[int, None]
+            The index of the step.
         """
 
         return index, None
 
-    def combine(self, index, x):
+    def combine(self, index: int, x: Any) -> None:
         """
-        Combines returned results of run_step.\n
-        :Parameters:
-            #. index (int): The index of the step.\n
-            #. x (any): The returned result(s) of run_step
+        Combines returned results of run_step.
+
+        Parameters
+        ----------
+        index : int
+            The index of the step.
+        x : Any
+            The returned result(s) of run_step.
         """
 
     def finalize(self):
@@ -488,12 +452,12 @@ class NeutronDynamicTotalStructureFactor(IJob):
         self._outputData["ndsf/s(q,f)/total"].scaling_factor = fact
 
         self._outputData.write(
-            self.configuration["output_files"]["root"],
-            self.configuration["output_files"]["formats"],
+            self.output_files.path,
+            self.output_files.out_format,
             str(self),
             self,
         )
         self.trajectory.close()
-        self.configuration["disf_input_file"]["instance"].close()
-        self.configuration["dcsf_input_file"]["instance"].close()
+        self.disf_input_file.close()
+        self.dcsf_input_file.close()
         super().finalize()

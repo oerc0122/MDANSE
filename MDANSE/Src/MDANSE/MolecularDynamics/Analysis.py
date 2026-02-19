@@ -15,19 +15,25 @@
 #
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
-from numpy.typing import NDArray
 from scipy.signal import correlate
 
 from MDANSE.Core.Error import Error
 from MDANSE.Mathematics.Geometry import center_of_mass
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 class AnalysisError(Error):
     pass
 
 
-def mean_square_displacement(coords: np.ndarray, n_configs: int) -> NDArray[np.float64]:
+def mean_square_displacement(
+    coords: NDArray[float], n_configs: int
+) -> NDArray[np.float64]:
     """Computes the mean square displacement of a set of coordinates
     using the MSD algorithm described in Kneller et al., Com. Phys. Com., 1995.
 
@@ -51,7 +57,7 @@ def mean_square_displacement(coords: np.ndarray, n_configs: int) -> NDArray[np.f
     return msd
 
 
-def mean_square_fluctuation(coords: np.ndarray, root: bool = False) -> float:
+def mean_square_fluctuation(coords: NDArray[float], root: bool = False) -> float:
     """
     Computes the mean-square fluctuation, or the root-mean-square fluctuation if root is set to True. The following
     equation is used:
@@ -72,11 +78,11 @@ def mean_square_fluctuation(coords: np.ndarray, root: bool = False) -> float:
     if root:
         msf = np.sqrt(msf)
 
-    return msf
+    return float(msf)
 
 
 def radius_of_gyration(
-    coords: np.ndarray, masses: np.ndarray = None, root: bool = False
+    coords: NDArray[float], masses: NDArray[float] | None = None, root: bool = False
 ) -> float:
     """
     Computes the radius of gyration for a set of coordinates and their corresponding masses. If no masses are provided,

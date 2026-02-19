@@ -40,10 +40,10 @@ class PositionCorrelationFunction(CartesianCorrelationFunction):
 
         series = self.trajectory.read_atomic_trajectory(
             atom_index,
-            first=self.configuration["frames"]["first"],
-            last=self.configuration["frames"]["last"] + 1,
-            step=self.configuration["frames"]["step"],
+            first=self.frames.index_start,
+            last=self.frames.index_stop + 1,
+            step=self.frames.index_step,
         )
         series = series - np.average(series, axis=0)
-        series = self.configuration["projection"]["projector"](series)
+        series = self.projection.projector(series)
         return series

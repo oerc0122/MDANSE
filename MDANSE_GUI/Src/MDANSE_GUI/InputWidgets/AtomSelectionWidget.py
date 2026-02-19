@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 from enum import Enum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QEvent, QObject, Qt, Signal, Slot
 from qtpy.QtGui import (
@@ -43,8 +44,8 @@ from qtpy.QtWidgets import (
 )
 
 from MDANSE.Framework.AtomSelector.selector import ReusableSelection
+from MDANSE.IO.IOUtils import UCEnum
 from MDANSE.MLogging import LOG
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.MolecularViewer import MolecularViewerWithPicking
 from MDANSE_GUI.Tabs.Visualisers.View3D import View3D
@@ -60,8 +61,12 @@ from MDANSE_GUI.Widgets.SelectionWidgets import (
     SphereSelection,
 )
 
+if TYPE_CHECKING:
+    from MDANSE.Framework.Parameters import AtomSelection as AtomSelectionParam
+    from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
-class SelectionValidity(Enum):
+
+class SelectionValidity(UCEnum):
     """Strings for selection check results."""
 
     VALID_SELECTION = "Valid selection"
@@ -160,7 +165,7 @@ class SelectionModel(QStandardItemModel):
         self.can_undo.emit(self.undo_stack.canUndo())
         self.can_redo.emit(self.undo_stack.canRedo())
 
-    def rebuild_selection(self, last_operation: str) -> SelectionValidity:
+    def rebuild_selection(self, last_operation: str) -> SelectionValidity | None:
         """Update the current selection based on the text in the GUI.
 
         Parameters
@@ -290,10 +295,10 @@ class SelectionModel(QStandardItemModel):
         self.gui_selection_finalised.emit()
 
     @Slot(str)
-    def accept_from_widget(self, json_string: str):
+    def accept_from_widget(self, *json_string: str):
         """Add a selection operation sent from a selection widget."""
         self.finalise_manual_selection()
-        append_selection_command = AppendSelectionCommand(self, json_string)
+        append_selection_command = AppendSelectionCommand(self, *json_string)
         self.undo_stack.push(append_selection_command)
         self.can_undo.emit(self.undo_stack.canUndo())
         self.can_redo.emit(self.undo_stack.canRedo())
@@ -665,20 +670,17 @@ class AtomSelectionWidget(WidgetBase):
     _push_button_text = "Atom selection helper"
     _load_button_text = "Load selection from file"
     _default_value = "{}"
-    _default_selection = """{
-        "0": {"function_name": "select_all", "operation_type": "union"}
-    }"""
     _tooltip_text = (
         "Specify which atoms will be used in the analysis. "
         "The input is a JSON string, and can be created"
         " using the helper dialog."
     )
 
-    def __init__(self, *args, use_list_view: bool = True, **kwargs):
+    def __init__(self, *args, parameter: AtomSelectionParam, use_list_view: bool = True, **kwargs):
         """Create the main widget for atom selection."""
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, parameter=parameter, **kwargs)
 
-        self._value = self._configurator.default or self._default_value
+        self._value = self.parameter.default
 
         if type(self) is AtomSelectionWidget:
             self._default_selection = self._value
@@ -689,19 +691,17 @@ class AtomSelectionWidget(WidgetBase):
             load_button.clicked.connect(self.load_selection_from_file_dialog)
         else:
             self._field = QLineEdit(self._base)
-            default_text = str(self._configurator.default)
+            default_text = str(self.default)
             self._field.setPlaceholderText(default_text)
             self._field.setText(default_text)
             self._field.setMaxLength(2147483647)
 
-        traj_config = self._configurator.configurable[
-            self._configurator.dependencies["trajectory"]
-        ]
-        traj_filename = traj_config["filename"]
-        trajectory = traj_config["instance"]
+        traj_config = self.get_widget_deps()["trajectory"]
+
+        traj_filename = traj_config.raw
+        trajectory = traj_config.value
 
         self._trajectory_path = Path(traj_filename).parent
-
         self.selection_model = SelectionModel(
             trajectory, default=self._default_selection
         )
@@ -715,11 +715,14 @@ class AtomSelectionWidget(WidgetBase):
         self.helper_save_button = False
         helper_button = QPushButton(self._push_button_text, self._base)
         helper_button.clicked.connect(self.helper_dialog)
+
         self._layout.addWidget(self._field)
         self._layout.addWidget(helper_button)
+
         if use_list_view:
             self._layout.addWidget(load_button)
             self.helper_save_button = True
+
         self.update_labels()
         self.updateValue()
         self._field.setToolTip(self._tooltip_text)
@@ -774,15 +777,18 @@ class AtomSelectionWidget(WidgetBase):
         At the moment it is possible to use .mda files,
         or JSON text files.
         """
-        fname = QFileDialog.getOpenFileName(
+        fname, _ = QFileDialog.getOpenFileName(
             self._base,
             "Load selection from a file (JSON or MDA)",
             str(self._trajectory_path),
             "MDANSE selection files (*.mda *.json);;HDF5 files (*.h5);;HDF5 files(*.hdf);;All files(*.*)",
-        )[0]
+        )
+
         if not fname:
             return
+
         temp_selection = ReusableSelection()
+
         try:
             temp_selection.load_from_hdf5(fname)
         except OSError:
@@ -793,9 +799,11 @@ class AtomSelectionWidget(WidgetBase):
                 LOG.info("File %s could not be read using JSON decoder", fname)
                 LOG.warning("Selection will NOT be loaded from %s", fname)
                 return
+
         if not temp_selection.operations:
             LOG.warning("Selection from %s was empty and will be ignored", fname)
             return
+
         new_selection = temp_selection.convert_to_json()
         self.initialise_helper()
         self.helper.selection_model.create_from_string(new_selection)

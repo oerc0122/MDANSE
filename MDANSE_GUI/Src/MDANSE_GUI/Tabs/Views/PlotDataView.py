@@ -18,24 +18,28 @@ from __future__ import annotations
 import html
 import json
 from collections.abc import Generator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import h5py
 import numpy as np
 import numpy.typing as npt
 from more_itertools import always_iterable
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QPoint, Qt, Signal, Slot
-from qtpy.QtGui import QContextMenuEvent, QMouseEvent
 from qtpy.QtWidgets import QAbstractItemView, QMenu, QTreeView
 
-from MDANSE.Framework.Configurators.QVectorsConfigurator import QVectorsConfigurator
-from MDANSE.Framework.QVectors.IQVectors import WIDTH_NONZERO_LIMIT
+from MDANSE.Framework.QVectors.IQVectors import (
+    WIDTH_NONZERO_LIMIT,
+    IQVectors,
+)
 from MDANSE.Framework.Units import measure
 from MDANSE.MLogging import LOG
 from MDANSE_GUI.Tabs.Models.PlotDataModel import BasicPlotDataItem, MDADataStructure
 from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext, SingleDataset
 from MDANSE_GUI.Tabs.Visualisers.DataPlotter import DataPlotter
 from MDANSE_GUI.Tabs.Visualisers.TextInfo import TextInfo
+
+if TYPE_CHECKING:
+    import h5py
+    from qtpy.QtGui import QContextMenuEvent, QMouseEvent
 
 MAX_BINS_PER_SHELL = 20
 MIN_BINS_PER_SHELL = 1
@@ -350,126 +354,54 @@ def vector_q_statistics_datasets(
 
     Parameters
     ----------
-    source : h5py.File | QVectorsConfigurator
-        An object containing vector parameters: configurator or an .mda file.
+    file : h5py.File | IQVectors
+        HDF5 file object, typically an .mda file.
     main_dset : str, optional
         Name of the group with q vector shells, by default "vector_generator".
-    q_bin_limits : npt.NDArray[float], optional
-        Bin limits for the |q| histogram. If not given, it will be determined from |q| values.
 
     Returns
     -------
     Iterable[SingleDataset]
         1D array of vector count vs. |q|, 2D histogram of q vector counts per shell.
     """
-    if isinstance(source, h5py.File):
-        filename = source.filename
-        parent_dset = source[main_dset]
-        qvals = parent_dset["q"][:]
-        nshells = len(qvals)
-        valid_shells = [
-            index
-            for index in range(nshells)
-            if len(parent_dset[f"shell_{index}/qvector_array"][0])
-        ]
-        modq_per_shell = [shell_to_modq(n, parent_dset) for n in valid_shells]
-        available_vectors = np.array([len(qvecs) for qvecs in modq_per_shell])
+    stats = QVectorStats(source, main_dset)
 
-        def q_data(elem: str) -> Generator:
-            for index in valid_shells:
-                yield parent_dset[f"shell_{index}/{elem}"]
-
-        if all(
-            "weights" in parent_dset[f"shell_{shell_index}"]
-            for shell_index in valid_shells
-        ):
-            vec_weights = [dat[:] for dat in q_data("weights")]
-            unique_vectors = np.array([len(dat) for dat in q_data("weights")])
-            all_vectors = np.array([sum(dat[:]) for dat in q_data("weights")])
-            available_vectors = np.vstack((all_vectors, unique_vectors)).T
-        else:
-            vec_weights = [np.ones_like(modq_shell) for modq_shell in modq_per_shell]
-    elif isinstance(source, QVectorsConfigurator):
-        filename = None
-        qvals = np.array([float(x) for x in source["q_vectors"]])
-        valid_shells = [
-            index
-            for index in range(len(qvals))
-            if source["q_vectors"][qvals[index]] is not None
-        ]
-        nshells = len(valid_shells)
-
-        def q_data(elem: str) -> Generator:
-            for index in valid_shells:
-                yield source["q_vectors"][qvals[index]][elem]
-
-        modq_per_shell = [np.linalg.norm(dat, axis=0) for dat in q_data("q_vectors")]
-        available_vectors = np.array(
-            [
-                (
-                    sum(dat),
-                    len(dat),
-                )
-                for dat in q_data("weights")
-            ],
-        )
-        vec_weights = [dat[:] for dat in q_data("weights")]
-    if q_bin_limits is None:
-        qmin, qmax = np.min(modq_per_shell[0]), np.max(modq_per_shell[-1])
-        q_step = np.mean(np.abs(np.diff(qvals))) if len(qvals) > 1 else 0.1
-        bin_width = 0.4 * np.min([np.std(one_shell) for one_shell in modq_per_shell])
-        common_bins = qvector_binning_general(qmin, qmax, q_step, bin_width, 10)
-    else:
-        common_bins = q_bin_limits
-    if np.any(common_bins < 0):
-        start_index = np.argmax(common_bins >= 0) - 1
-        if start_index >= 0:
-            common_bins = common_bins[start_index:]
-    qmod_histograms = [np.histogram(qmods, common_bins)[0] for qmods in modq_per_shell]
-    stacked_histograms = np.vstack(qmod_histograms)
-    xvals = common_bins[1:] - np.diff(common_bins) / 2
     nvec_per_q = SingleDataset(
         "Available vectors",
         None,
         linestyle=":",
         marker="o",
-        data=available_vectors,
-        plot_axes={"|q|": qvals[valid_shells]},
+        data=stats.available_vectors,
+        plot_axes={"|q|": stats.shells},
         axes_units={"|q|": "1/nm"},
-        optional_filename=filename,
+        optional_filename=stats.filename,
     )
+
     real_q_ideal_q = SingleDataset(
-        r"<|q|> - q$_{target}$",
+        "Mean |q|",
         None,
         linestyle="-",
         marker=".",
-        data=[
-            np.concatenate(
-                [
-                    int(vec_weights[shellindex][vecindex])
-                    * list(always_iterable(veclen))
-                    for vecindex, veclen in enumerate(
-                        modq_per_shell[shellindex] - qvals[shell],
-                    )
-                ],
-            )
-            for shellindex, shell in enumerate(valid_shells)
-        ],
-        plot_axes={"|q|": qvals[valid_shells]},
+        data=stats.mean_q,
+        plot_axes={"|q|": stats.shells},
         axes_units={"|q|": "1/nm"},
-        data_unit="1/ang",
-        optional_filename=filename,
-        uneven_array=True,
+        data_unit="1/nm",
+        yerror=stats.mean_q_yerr,
+        optional_filename=stats.filename,
     )
+
+    xvals, hist = stats.histogram()
+
     vecs_per_qbin = SingleDataset(
         "Shell population",
         None,
-        data=stacked_histograms,
+        data=hist,
         data_unit="counts",
-        plot_axes={"|q|": qvals[valid_shells], "q_bin": xvals},
+        plot_axes={"|q|": stats.shells, "q_bin": xvals},
         axes_units={"|q|": "1/nm", "q_bin": "1/nm"},
-        optional_filename=filename,
+        optional_filename=stats.filename,
     )
+
     return nvec_per_q, real_q_ideal_q, vecs_per_qbin
 
 
@@ -662,12 +594,7 @@ class PlotDataView(QTreeView):
         file = mda_data_structure._file
         LOG.debug("Running plot_vectors on file %s", file.filename)
         model = PlottingContext()
-        _, qvector_params = json.loads(file["metadata/inputs/q_vectors"][0])
-        modq_binning = qvector_binning_from_dict(qvector_params)
-        for qvec_dataset in vector_q_statistics_datasets(
-            file,
-            q_bin_limits=modq_binning,
-        ):
+        for qvec_dataset in convert_vectors_to_datasets(file):
             model.add_dataset(qvec_dataset)
         self.fast_plotting_vectors.emit(model)
 

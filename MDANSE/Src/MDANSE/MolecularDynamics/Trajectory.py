@@ -19,7 +19,10 @@ import copy
 import html
 import math
 from collections import Counter, defaultdict
+from collections.abc import Mapping, Sequence
+from contextlib import suppress
 from enum import auto
+from functools import cached_property
 from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -170,7 +173,6 @@ class Trajectory:
         self._grouping_level = GroupingLevels.ATOM
         self._atom_cache = {}
         self._selection = []
-        self.selection_getter = None
         self._transmutation = {}
 
     @property
@@ -252,7 +254,7 @@ class Trajectory:
     @property
     def atom_names(self) -> Sequence[str]:
         """Labels of ALL the atoms, after transmutation."""
-        if self._grouping_level == GroupingLevels.MOLECULE:
+        if self._grouping_level is GroupingLevels.MOLECULE:
             temp_names = {}
             for mol_name, clusters in self.chemical_system._clusters.items():
                 for cluster in clusters:
@@ -271,7 +273,7 @@ class Trajectory:
         if self._selection:
             return set(always_iterable(self.selection_getter(self.atom_types)))
         return set(always_iterable(self.atom_types))
-    
+
     @property
     def non_dummy_elements(self) -> set[str]:
         """Set of chemical elements which are not dummy atoms."""
@@ -296,6 +298,10 @@ class Trajectory:
         changed_atoms : dict[int, str]
             Substitution dictionary, as created by AtomTransmutationConfigurator
         """
+        with suppress(AttributeError):
+            del self.atom_indices
+        with suppress(AttributeError):
+            del self.atom_types
         self._transmutation = changed_atoms
 
     def set_selection(self, selected_indices: Sequence[int]):
@@ -306,8 +312,15 @@ class Trajectory:
         selected_indices : Sequence[int]
             Selected atom indices, output by ReusableSelection.
         """
+        with suppress(AttributeError):
+            del self.atom_indices
         self._selection = selected_indices
-        self.selection_getter = itemgetter(*selected_indices)
+
+    @property
+    def selection_getter(self):
+        if not self._selection:
+            return itemgetter(*self.atom_indices)
+        return itemgetter(*self._selection)
 
     def set_grouping(self, grouping_level: str):
         """Assign the grouping level to the trajectory.
@@ -317,6 +330,12 @@ class Trajectory:
         grouping_level : str
             Grouping level, as output by GroupingLevelConfigurator.
         """
+        with suppress(AttributeError):
+            del self.element_from_label
+        with suppress(AttributeError):
+            del self.group_lookup
+        with suppress(AttributeError):
+            del self.atom_names
         self._grouping_level = grouping_level
 
     def get_weights(
@@ -360,7 +379,7 @@ class Trajectory:
 
         return tuple(weights)
 
-    def get_natoms(self) -> dict[str, int]:
+    def get_natoms(self, *, total: bool = False) -> dict[str, int]:
         """Count the selected atoms, per element.
 
         Returns
@@ -369,7 +388,7 @@ class Trajectory:
             A dictionary of the number of atom per element.
 
         """
-        if self._selection:
+        if not total and self._selection:
             return Counter(always_iterable(self.selection_getter(self.atom_names)))
         return Counter(self.atom_names)
 
@@ -384,7 +403,7 @@ class Trajectory:
         """
         return Counter(self.atom_names)
 
-    def get_total_natoms(self) -> int:
+    def get_total_natoms(self, *, total: bool = False) -> int:
         """Count all the selected atoms.
 
         Returns
@@ -393,7 +412,7 @@ class Trajectory:
             The total number of atoms selected.
 
         """
-        if self._selection:
+        if not total and self._selection:
             return len(self._selection)
         return len(self.atom_types)
 
@@ -831,6 +850,9 @@ class Trajectory:
         """
         return self._trajectory.variables()
 
+    def __str__(self) -> str:
+        return f"{type(self).__name__}({self.filename!r})"
+
 
 additive_atom_properties = [
     "nucleon",
@@ -1096,7 +1118,6 @@ class TrajectoryWriter:
 
         else:
             # Get str/bytes from possible array
-            print(colour)
             colour = first(always_iterable(colour))
 
             assert isinstance(colour, (str, bytes))
@@ -1273,27 +1294,25 @@ class TrajectoryWriter:
 
         # Write the configuration variables
         configuration_grp = self._h5_file["/configuration"]
+
         for k, v in configuration.variables.items():
-            data = np.empty(v.shape)
-            data[:] = np.nan
+            data = np.full_like(v, np.nan)
             data[self._selected_atoms, :] = v[self._selected_atoms, :]
+
             dset = configuration_grp.get(k, None)
+
             if dset is None:
-                if self._compression in TrajectoryWriter.allowed_compression:
-                    dset = configuration_grp.create_dataset(
-                        k,
-                        shape=(self._n_steps, self._padded_size, 3),
-                        chunks=self._chunk_tuple,
-                        dtype=self._dtype,
-                        compression=self._compression,
-                    )
-                else:
-                    dset = configuration_grp.create_dataset(
-                        k,
-                        shape=(self._n_steps, self._padded_size, 3),
-                        chunks=self._chunk_tuple,
-                        dtype=self._dtype,
-                    )
+                dset = configuration_grp.create_dataset(
+                    k,
+                    shape=(self._n_steps, self._n_atoms, 3),
+                    chunks=self._chunk_tuple,
+                    dtype=self._dtype,
+                    compression=(
+                        self._compression
+                        if self._compression in TrajectoryWriter.allowed_compression
+                        else None
+                    ),
+                )
                 dset.attrs["units"] = units.get(k, "")
             dset[self._current_index, : self._n_atoms] = data
 

@@ -18,20 +18,21 @@ from __future__ import annotations
 import copy
 import csv
 import enum
-from collections.abc import Iterator
 from itertools import count
 from typing import TYPE_CHECKING, Any, Literal, TextIO
 
 import numpy as np
-from matplotlib.axes import Axes
-from matplotlib.lines import Line2D
 from more_itertools import consumer
 
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.MLogging import LOG
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from matplotlib.lines import Line2D
 
     from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext
 
@@ -117,7 +118,7 @@ class Plotter(metaclass=SubclassFactory):
             return
         self._slider_reference.collect_values()
 
-    def clear(self, figure: Figure = None):
+    def clear(self, figure: Figure | None = None):
         """Clear the figure, usually before plotting again.
 
         Parameters
@@ -136,15 +137,15 @@ class Plotter(metaclass=SubclassFactory):
         """Get text to be shown next to sliders."""
         return ["Slider 1", "Slider 2"]
 
-    def slider_limits(self) -> list[str]:
+    def slider_limits(self) -> list[tuple[float, float, float]]:
         """Get default limit values for sliders."""
-        return self._number_of_sliders * [[-1.0, 1.0, 0.01]]
+        return [(-1.0, 1.0, 0.01)] * self._number_of_sliders
 
     def sliders_coupled(self) -> bool:
         """Check if the slider values depend on each other."""
         return False
 
-    def get_figure(self, figure: Figure = None):
+    def get_figure(self, figure: Figure | None = None):
         """Get the reference to the current figure, if present."""
         target = self._figure if figure is None else figure
         if target is None:
@@ -191,7 +192,7 @@ class Plotter(metaclass=SubclassFactory):
 
     def normalise_curve(
         self, xdata: np.ndarray, ydata: np.ndarray
-    ) -> tuple[np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Scale a 1D curve according to the current normalisation parameters.
 
         Parameters
@@ -220,9 +221,9 @@ class Plotter(metaclass=SubclassFactory):
             )
             return xdata, ydata
         if operation == NormOperations.AVERAGE:
-            scale_factor = np.nanmean(ref_values)
+            scale_factor = np.mean(ref_values)
         elif operation == NormOperations.SUM:
-            scale_factor = np.sum(np.nan_to_num(ref_values))
+            scale_factor = np.sum(ref_values)
         if np.isclose(scale_factor, 0.0):
             self._normalisation_errors.append(
                 "Normalisation factor is 0 and will not be applied."
@@ -254,9 +255,9 @@ class Plotter(metaclass=SubclassFactory):
         if ref_column.shape[1] < 1:
             return data_array
         if operation == NormOperations.AVERAGE:
-            scale_column = np.nanmean(ref_column, axis=1)
+            scale_column = np.mean(ref_column, axis=1)
         elif operation == NormOperations.SUM:
-            scale_column = np.sum(np.nan_to_num(ref_column), axis=1)
+            scale_column = np.sum(ref_column, axis=1)
         if np.any(np.isclose(scale_column, 0.0)):
             self._normalisation_errors.append(
                 "Normalisation factor is 0 for some rows of the 2D array."
@@ -272,8 +273,8 @@ class Plotter(metaclass=SubclassFactory):
     def plot(
         self,
         plotting_context: PlottingContext,
-        figure: Figure = None,
-        update_only=False,
+        figure: Figure | None = None,
+        update_only: bool = False,
         toolbar=None,
     ):
         """Plot the selected data in the figure.
@@ -301,13 +302,7 @@ class Plotter(metaclass=SubclassFactory):
         self._axes = [axes]
         self.apply_settings(plotting_context)
 
-    def plot_blank(
-        self,
-        *,
-        draw_cross: bool = True,
-        override_title: str | None = None,
-        override_label: str | None = None,
-    ):
+    def plot_blank(self, *, draw_cross: bool = True):
         """Inform the user that no data could be plotted.
 
         Parameters
@@ -320,15 +315,10 @@ class Plotter(metaclass=SubclassFactory):
         if draw_cross:
             axes.axline([0, 0], [1, 1], color="k", linestyle="-")
             axes.axline([0, 1], [1, 0], color="k", linestyle="-")
-        label_text = (
-            override_label
-            or "If you expected a plot, please check the settings you changed last."
+        axes.set_title("The data sets you selected could not be plotted.")
+        axes.set_xlabel(
+            "If you expected a plot, please check the settings you changed last."
         )
-        title_text = (
-            override_title or "The data sets you selected could not be plotted."
-        )
-        axes.set_title(title_text)
-        axes.set_xlabel(label_text)
         figure.canvas.draw()
 
     @staticmethod

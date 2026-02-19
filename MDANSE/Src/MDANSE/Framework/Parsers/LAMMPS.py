@@ -20,14 +20,12 @@ from collections import defaultdict
 from contextlib import suppress
 from enum import Enum, auto
 from itertools import count
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 import h5py
 import numpy as np
 from more_itertools import consume as drop
 from more_itertools import ilen, take
-from numpy.typing import NDArray
 
 from MDANSE.Chemistry.ChemicalSystem import ChemicalSystem
 from MDANSE.Core.Error import Error
@@ -39,13 +37,17 @@ from MDANSE.MolecularDynamics.Configuration import (
     PeriodicBoxConfiguration,
     PeriodicRealConfiguration,
 )
-from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
+    from numpy.typing import NDArray
+
     from MDANSE.Framework.Configurators.ConfigFileConfigurator import (
         ConfigFileConfigurator,
     )
+    from MDANSE.MolecularDynamics.Trajectory import TrajectoryWriter
 
 ELECTRON_CHARGE = 1.6021765e-19
 DIMS = ("x", "y", "z")

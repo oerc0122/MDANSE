@@ -16,8 +16,7 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Callable, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as mpl
 import numpy as np
@@ -61,6 +60,10 @@ from MDANSE.Mathematics.Signal import (
 )
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
 from MDANSE_GUI.PlotUtils import MDANSEMatPlotLibNavBar
+from MDANSE_GUI.Utils import block_signals
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 # Default maximum value for a float spinbox
 DEFAULT_SPINBOX_MAX_FLOAT = 1000.0
@@ -218,7 +221,7 @@ class ConstrainedDoubleSpinBox(QDoubleSpinBox):
 
         # New value is the closest value evenly dividing the constraint
         new_value = np.round(value / self.constraint) * self.constraint
-        self.setValue(np.round(new_value, FLOAT_SPINBOX_DECIMALS))
+        self.setValue(new_value)
 
     def search_by_function(self, value: Any) -> None:
         """Apply the constraint formalised in the lambda.
@@ -595,17 +598,13 @@ class FilterSettingGroup(QObject):
             The widget value.
 
         """
-        if isinstance(widget, QSpinBox):
-            return widget.value()
-
-        if isinstance(widget, QDoubleSpinBox):
-            return np.round(widget.value(), FLOAT_SPINBOX_DECIMALS)
-
-        if isinstance(widget, QComboBox):
-            return widget.currentText()
-
-        if isinstance(widget, QCheckBox):
-            return widget.isChecked()
+        match widget:
+            case QComboBox():
+                return widget.currentText()
+            case QCheckBox():
+                return widget.isChecked()
+            case _:
+                return widget.value()
 
     @Slot()
     def collect_inputs(self) -> None:
@@ -645,6 +644,29 @@ class FilterSettingGroup(QObject):
 
         return self.grid
 
+    def update_widget_step(self, n_steps: int, time_step: float):
+        """Update the spin box settings based on frames settings.
+
+        Parameters
+        ----------
+        n_steps : int
+            Number of trajectory steps currently selected by frames widget.
+        time_step : float
+            Time step between consecutive trajectory frames.
+        """
+        bin_width = Filter.frequency_resolution(n_steps, time_step, units=self.units)
+        vmax = Filter.nyquist(time_step, units=self.units) - bin_width
+        with block_signals(self):
+            for key in {"cutoff_freq", "fundamental_freq"} & self.widgets.keys():
+                widget_instance: ConstrainedDoubleSpinBox = self.widgets[key]
+                temp_value = widget_instance.value()
+                widget_instance.setSingleStep(bin_width)
+                widget_instance.set_snap(snap_to=bin_width)
+                widget_instance.setMaximum(vmax)
+                widget_instance.setMinimum(bin_width)
+                new_value = bin_width * (min(temp_value, vmax) // bin_width)
+                widget_instance.setValue(new_value)
+
     def setting_to_widget(self, setting_key: str, val_group: dict) -> QWidget:
         """Convert the setting dictionary to the corresponding setting widget and sets up connections.
 
@@ -681,35 +703,20 @@ class FilterSettingGroup(QObject):
                     "time_step_ps", DEFAULT_TIME_STEP
                 )
 
-                bin_width = np.round(
-                    Filter.frequency_resolution(n_steps, time_step, units=self.units),
-                    FLOAT_SPINBOX_DECIMALS,
+                bin_width = Filter.frequency_resolution(
+                    n_steps, time_step, units=self.units
                 )
 
-                vmax = np.round(
-                    Filter.nyquist(time_step, units=self.units) - bin_width,
-                    FLOAT_SPINBOX_DECIMALS,
-                )
+                vmax = Filter.nyquist(time_step, units=self.units) - bin_width
 
                 # Configure constrained spinbox based on filter type
-                if Filter.Flags.FUNDAMENTAL_EVENLY_DIVIDES_FS in self.flags:
-                    widget = ConstrainedDoubleSpinBox(
-                        minimum=bin_width,
-                        maximum=vmax,
-                        step=bin_width,
-                        value=bin_width,
-                    )
-                    widget.set_search(
-                        constraint_func=lambda x: ((1 / time_step) % x) == 0
-                    )
-                else:
-                    widget = ConstrainedDoubleSpinBox(
-                        minimum=bin_width,
-                        maximum=vmax,
-                        step=bin_width,
-                        value=bin_width,
-                    )
-                    widget.set_snap(snap_to=bin_width)
+                widget = ConstrainedDoubleSpinBox(
+                    minimum=bin_width,
+                    maximum=vmax,
+                    step=bin_width,
+                    value=bin_width,
+                )
+                widget.set_snap(snap_to=bin_width)
             else:
                 # Other data spinbox
                 widget = QDoubleSpinBox()
@@ -958,6 +965,9 @@ class FilterDesigner(QDialog):
         self.field = field
         self.configurator = configurator
 
+        self.n_steps = DEFAULT_N_STEPS
+        self.time_step_ps = DEFAULT_TIME_STEP
+
         self.graph_ready = False
 
         self.setting_stack_layout = QStackedLayout()
@@ -974,6 +984,24 @@ class FilterDesigner(QDialog):
         self.set_filter(self.configurator._default_filter.__name__)
         self.create_designer()
         self.preferences_group.pps_checkbox.checkStateChanged.connect(self.update_pps)
+
+    def accept_time_steps(self, n_steps: int, time_step_ps: float):
+        """Save the new time parameters given by the frames settings.
+
+        Parameters
+        ----------
+        n_steps : int
+            Number of trajectory steps currently selected.
+        time_step_ps : float
+            Time interval between consecutive trajectory frames.
+        """
+        self.n_steps = n_steps
+        self.time_step_ps = time_step_ps
+        self.settings["attributes"]["n_steps"] = n_steps
+        self.settings["attributes"]["time_step_ps"] = time_step_ps
+        for settings_group in self.settings_group.values():
+            settings_group.update_widget_step(n_steps, time_step_ps)
+        self.settings_group[self.settings["filter"]].collect_inputs()
 
     def find_configuration(self) -> dict[str, str]:
         """Find the configuration of the main filter job.
@@ -1017,13 +1045,9 @@ class FilterDesigner(QDialog):
             "filter": filter_type,
             "attributes": {
                 # Number of simulation steps
-                "n_steps": self.configurator.configurable.settings["trajectory"][1][
-                    "configurator"
-                ]["length"],
+                "n_steps": self.n_steps,
                 # Simulation time step in picoseconds
-                "time_step_ps": self.configurator.configurable.settings["trajectory"][
-                    1
-                ]["configurator"]["md_time_step"],
+                "time_step_ps": self.time_step_ps,
             },
         }
 
@@ -1177,7 +1201,7 @@ class FilterDesigner(QDialog):
             freqs.max(),
             len(response.frequencies),
         )
-        tr_filter.freq_response = (tr_filter.coeffs, Filter.FrequencyRangeMethod.CUSTOM)
+        tr_filter.set_freq_response(Filter.FrequencyRangeMethod.CUSTOM)
 
         # Normalise trajectory power spectrum (y-axis)
         normalised = values / np.max(values)
@@ -1192,7 +1216,7 @@ class FilterDesigner(QDialog):
         if self.current_filter_units() == Filter.FrequencyUnits.CYCLIC:
             freqs /= 2 * np.pi
 
-        return (freqs, normalised, normalised * attenuation(freqs))
+        return (freqs, normalised, normalised * abs(attenuation(freqs)) ** 4)
 
     def create_settings_layout(self, widget_area: QVBoxLayout) -> None:
         """Create the filter settings vertical layout.
@@ -1230,9 +1254,9 @@ class FilterDesigner(QDialog):
 
         for name, filter_class in FILTER_MAP.items():
             template = (
-                FilterSettingGroup
-                if Filter.Flags.DIGITAL_ONLY in filter_class.flags
-                else BoundedFilterSettingsGroup
+                BoundedFilterSettingsGroup
+                if Filter.Flags.BOUNDED_FILTER in filter_class.flags
+                else FilterSettingGroup
             )
             group_obj = template(
                 parent_attributes=copy.deepcopy(self.settings["attributes"]),
@@ -1317,7 +1341,7 @@ class FilterDesigner(QDialog):
         axes = self._figure.add_axes([0.1, 0.1, 0.8, 0.8])
         axes.plot(
             x,
-            20 * np.log10(abs(y)) if db_response else y,
+            20 * np.log10(abs(y) ** 4) if db_response else abs(y) ** 4,
             label="Filter response",
         )
 
@@ -1326,13 +1350,13 @@ class FilterDesigner(QDialog):
             psx, ps, attenuated_ps = trajectory_power_spectrum
             axes.plot(
                 psx,
-                20 * np.log10(abs(ps)) if db_response else ps,
+                20 * np.log10(ps) if db_response else ps,
                 label="Trajectory response",
                 color="grey",
             )
             axes.plot(
                 psx,
-                20 * np.log10(abs(attenuated_ps)) if db_response else attenuated_ps,
+                20 * np.log10(attenuated_ps) if db_response else attenuated_ps,
                 label="Attenuation",
                 color="black",
             )
@@ -1539,8 +1563,6 @@ class FilterDesigner(QDialog):
 
     def apply(self) -> None:
         """Pass the filter parameters to the main widget."""
-        self.configurator.configure(self.settings)
-
         filter_class = FILTER_MAP[self.settings["filter"]]
 
         # update widget field text to reflect filter designer
@@ -1549,7 +1571,6 @@ class FilterDesigner(QDialog):
             self.combine_attributes(filter_class, self.settings["attributes"]),
         )
         self.field.setText(field)
-        self.close()
 
     def create_buttons(self) -> list[QPushButton]:
         """Create button widgets needed by the filter interface.
@@ -1561,17 +1582,17 @@ class FilterDesigner(QDialog):
             create_layouts.
 
         """
-        apply = QPushButton("Use Setting")
         close = QPushButton("Close")
 
-        apply.setAutoDefault(False)
-        apply.setDefault(False)
         close.setAutoDefault(False)
         close.setDefault(False)
 
-        apply.clicked.connect(self.apply)
         close.clicked.connect(self.close)
-        return [apply, close]
+        return [close]
+
+    def closeEvent(self, a0):
+        self.apply()
+        return super().closeEvent(a0)
 
 
 class TrajectoryFilterWidget(WidgetBase):
@@ -1588,7 +1609,18 @@ class TrajectoryFilterWidget(WidgetBase):
         self._field.setPlaceholderText(self._default_value)
         self._field.setMaxLength(2147483647)  # set to the largest possible
         self._field.textChanged.connect(self.updateValue)
+        for widget in self.parent()._widgets:
+            if (
+                widget._configurator
+                is self._configurator.configurable[
+                    self._configurator.dependencies["frames"]
+                ]
+            ):
+                self._frames_widget = widget
+                break
+        self._frames_widget.value_changed.connect(self.update_time_steps)
         self.filter_designer = self.create_helper()
+        self.update_time_steps()
         helper_button = QPushButton(self._push_button_text, self._base)
         helper_button.clicked.connect(self.helper_dialog)
         self._layout.addWidget(self._field)
@@ -1596,6 +1628,15 @@ class TrajectoryFilterWidget(WidgetBase):
         self.update_labels()
         self.updateValue()
         self._field.setToolTip(self._tooltip_text)
+        self.filter_designer.apply()
+
+    def update_time_steps(self):
+        """Configure filters using the new frames settings."""
+        frames_configurator = self._frames_widget._configurator
+        time_step_ps = frames_configurator["time_step"]
+        n_steps = frames_configurator["number"]
+        self.filter_designer.accept_time_steps(n_steps, time_step_ps)
+        self.filter_designer.apply()
 
     def create_helper(self) -> FilterDesigner:
         """

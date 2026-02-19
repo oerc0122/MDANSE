@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import collections
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -24,6 +24,9 @@ import numpy.typing as npt
 from MDANSE.Core.Error import Error
 from MDANSE.Core.SubclassFactory import SubclassFactory
 from MDANSE.Framework.Formats.IFormat import IFormat
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class OutputVariableError(Error):
@@ -101,12 +104,12 @@ class IOutputVariable(np.ndarray, metaclass=SubclassFactory):
 
         if value.ndim != cls._nDimensions:
             raise OutputVariableError(
-                f"Invalid number of dimensions ({value.ndim}) for an output variable of type {cls.__name__!r}"
+                f"Invalid number of dimensions ({value.ndim}) for an output variable ({varname}) of type {cls.__name__!r}"
             )
 
         if len(axis) != cls._nDimensions:
             raise OutputVariableError(
-                f"Invalid number of dimensions ({len(axis)}) for an axis label of type {cls.__name__!r}"
+                f"Invalid number of dimensions ({len(axis)}) for an axis label ({', '.join(axis)}) of type {cls.__name__!r}"
             )
 
         # Input array is an already formed ndarray instance

@@ -15,8 +15,8 @@
 #
 from __future__ import annotations
 
-from collections.abc import Collection, Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from more_itertools import ilen, take
@@ -24,6 +24,9 @@ from more_itertools import ilen, take
 from MDANSE.Core.Error import Error
 
 from .Parser import Parser
+
+if TYPE_CHECKING:
+    from collections.abc import Collection, Iterator
 
 
 class CellFileError(Error):

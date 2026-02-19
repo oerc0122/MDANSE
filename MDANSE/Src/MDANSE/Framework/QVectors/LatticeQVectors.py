@@ -15,8 +15,12 @@
 #
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
-from MDANSE.MolecularDynamics.UnitCell import UnitCell
+
+if TYPE_CHECKING:
+    from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
 class LatticeQVectors(IQVectors):

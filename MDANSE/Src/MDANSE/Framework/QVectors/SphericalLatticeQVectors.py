@@ -15,8 +15,15 @@
 #
 from __future__ import annotations
 
+import random
+
 import numpy as np
 
+from MDANSE.Framework.Parameters import (
+    Float,
+    Integer,
+    Range,
+)
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 from MDANSE.Framework.QVectors.SphericalQVectors import spherical_vectors
 
@@ -35,35 +42,24 @@ class SphericalLatticeQVectors(LatticeQVectors):
     over all vectors in the shell.
     """
 
-    settings = {}
-    settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["shells"] = (
-        "RangeConfigurator",
-        {
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "default": (0, 5.0, 0.5),
-        },
-    )
-    settings["n_vectors"] = ("IntegerConfigurator", {"mini": 1, "default": 50})
-    settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
+    seed = Integer(minimum=0, default=0)
+    shells = Range(minimum=0.0, default=(0, 5.0, 0.5), include_last=True)
+    n_vectors = Integer(minimum=1, default=50)
+    width = Float(minimum=1e-6, default=1.0)
 
     def _generate(self):
-        if self._configuration["seed"]["value"] != 0:
-            np.random.seed(self._configuration["seed"]["value"])
+        if self.seed != 0:
+            np.random.seed(self.seed)
+            random.seed(self.seed)
 
-        width = self._configuration["width"]["value"]
-
-        nvecs_per_shell = self._configuration["n_vectors"]["value"]
 
         if self._status is not None:
-            self._status.start(self._configuration["shells"]["number"])
+            self._status.start(len(self.shells))
 
-        self._configuration["q_vectors"] = {}
+        self.q_vectors = {}
 
-        for q in self._configuration["shells"]["value"]:
-            q_vectors = spherical_vectors(q, width, nvecs_per_shell)
+        for q in self.shells:
+            q_vectors = spherical_vectors(q, self.width, self.n_vectors)
             lattice_hkl_vectors, weights = self.lattice_vectors_with_weights(
                 q_vectors,
                 self._unit_cell,
@@ -75,17 +71,19 @@ class SphericalLatticeQVectors(LatticeQVectors):
             )
             weights = weights[selection]
             lattice_hkl_vectors = lattice_hkl_vectors.T[selection].T
+
             if not len(weights):
-                self._configuration["q_vectors"][q] = None
+                self.q_vectors[q] = None
                 continue
 
-            self._configuration["q_vectors"][q] = {
+            self.q_vectors[q] = {
                 "q_vectors": self.hkl_to_qvectors(lattice_hkl_vectors, self._unit_cell),
                 "n_q_vectors": np.sum(weights),
                 "weights": weights,
                 "q": q,
                 "hkls": lattice_hkl_vectors,
             }
+
             if self._status is not None:
                 if self._status.is_stopped():
                     return

@@ -19,6 +19,7 @@ import random
 
 import numpy as np
 
+from MDANSE.Framework.Parameters import Float, Integer, Range, Vector
 from MDANSE.Framework.QVectors.LatticeQVectors import LatticeQVectors
 from MDANSE.Framework.QVectors.LinearQVectors import linear_vectors
 
@@ -37,41 +38,24 @@ class LinearLatticeQVectors(LatticeQVectors):
     over all vectors in the group, which is still called a shell.
     """
 
-    settings = {}
-    settings["seed"] = ("IntegerConfigurator", {"mini": 0, "default": 0})
-    settings["shells"] = (
-        "RangeConfigurator",
-        {
-            "valueType": float,
-            "includeLast": True,
-            "mini": 0.0,
-            "default": (0, 5.0, 0.5),
-        },
-    )
-    settings["n_vectors"] = ("IntegerConfigurator", {"mini": 1, "default": 50})
-    settings["width"] = ("FloatConfigurator", {"mini": 1.0e-6, "default": 1.0})
-    settings["axis"] = (
-        "VectorConfigurator",
-        {"normalize": True, "notNull": True, "valueType": float, "default": [1, 0, 0]},
-    )
+    seed = Integer(minimum=0, default=0)
+    shells = Range[float](minimum=0.0, default=(0.0, 5.0, 0.5))
+    n_vectors = Integer(minimum=1, default=50)
+    width = Float(minimum=1e-6, default=1.0)
+    axis = Vector(non_zero=True, dtype=int, default=np.array([1, 0, 0], dtype=int))
 
     def _generate(self):
-        if self._configuration["seed"]["value"] != 0:
-            np.random.seed(self._configuration["seed"]["value"])
-            random.seed(self._configuration["seed"]["value"])
-
-        width = self._configuration["width"]["value"]
-        axis = self._configuration["axis"]["vector"].array
-
-        nvecs_per_shell = self._configuration["n_vectors"]["value"]
+        if self.seed != 0:
+            np.random.seed(self.seed)
+            random.seed(self.seed)
 
         if self._status is not None:
-            self._status.start(self._configuration["shells"]["number"])
+            self._status.start(len(self.shells))
 
-        self._configuration["q_vectors"] = {}
+        self.q_vectors = {}
 
-        for q in self._configuration["shells"]["value"]:
-            q_vectors = linear_vectors(q, width, nvecs_per_shell, axis)
+        for q in self.shells:
+            q_vectors = linear_vectors(q, self.width, self.n_vectors, axis)
             lattice_hkl_vectors, weights = self.lattice_vectors_with_weights(
                 q_vectors,
                 self._unit_cell,
@@ -84,16 +68,17 @@ class LinearLatticeQVectors(LatticeQVectors):
             weights = weights[selection]
             lattice_hkl_vectors = lattice_hkl_vectors.T[selection].T
             if not len(weights):
-                self._configuration["q_vectors"][q] = None
+                self.q_vectors[q] = None
                 continue
 
-            self._configuration["q_vectors"][q] = {
+            self.q_vectors[q] = {
                 "q_vectors": self.hkl_to_qvectors(lattice_hkl_vectors, self._unit_cell),
                 "weights": weights,
                 "n_q_vectors": np.sum(weights),
                 "q": q,
                 "hkls": lattice_hkl_vectors,
             }
+
             if self._status is not None:
                 if self._status.is_stopped():
                     return

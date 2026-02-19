@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING
 
 from more_itertools import nth
 from qtpy.QtCore import QObject, Qt, Signal, Slot
@@ -36,10 +37,10 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from MDANSE.Framework.Configurators.QVectorsConfigurator import QVectorsConfigurator
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
 from MDANSE.MLogging import LOG
-from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
+from MDANSE_GUI.InputWidgets.ComboWidget import ComboWidget
+from MDANSE_GUI.InputWidgets.WidgetBase import Layouts, WidgetBase
 from MDANSE_GUI.Tabs.Models.PlottingContext import PlottingContext
 from MDANSE_GUI.Tabs.Views.PlotDataView import (
     qvector_binning_from_dict,
@@ -49,6 +50,9 @@ from MDANSE_GUI.Tabs.Views.PlotDataView import (
 )
 from MDANSE_GUI.Tabs.Visualisers.PlotWidget import PlotWidget
 from MDANSE_GUI.Utils import block_signals
+
+if TYPE_CHECKING:
+    from MDANSE.Framework.Parameters import QVectors
 
 
 def numerator_suffix(index: int) -> str:
@@ -315,7 +319,6 @@ class VectorViewer(QDialog):
         self,
         parent: QObject,
         *args,
-        configurator: QVectorsConfigurator | None = None,
         **kwargs,
     ):
         """Create the selection dialog.
@@ -332,7 +335,6 @@ class VectorViewer(QDialog):
         """
         super().__init__(parent, *args, **kwargs)
         self.tab_index = {}
-        self.qvec_configurator = configurator
         self.last_vec_type = ""
         self.last_vec_params = {}
         self.setWindowTitle(self._helper_title)
@@ -396,82 +398,115 @@ class VectorViewer(QDialog):
             self.shell_panel_3D.update_plot()
 
 
+class QVectorsParams(QObject):
+    value_changed = Signal()
+    _relative_size = 1
+
+    def __init__(
+        self,
+        parent: QObject | None = None,
+        *args,
+        parameter: IQVectors,
+        label: str = "Params",
+        tooltip: str = "Q-Vector Params",
+        layout: QLayout = QVBoxLayout,
+    ):
+        super().__init__(*args, parent=parent)
+        from MDANSE_GUI.Tabs.Visualisers.Action import widget_lookup
+
+        self.parameter = parameter
+
+        self._widgets_in_layout = {}
+        self._raw_widgets = {}
+
+        self._base = QGroupBox(label, parent)
+        self._base.setToolTip(tooltip)
+        self._layout = layout(self._base)
+        self._base.setLayout(self._layout)
+
+        for key, desc in self.parameter.descriptors.items():
+            widget_class = widget_lookup[type(desc)]
+            LOG.info(f"Setting up {widget_class.__name__} for {key}")
+
+            input_widget = widget_class(
+                parent=self._base,
+                base_type="QWidget",
+                label=key,
+                configurable=self.parameter,
+                prop=key,
+                parameter=desc,
+            )
+            self.add_widget(input_widget, key)
+
+    def add_widget(
+        self,
+        input_widget: WidgetBase,
+        key: str,
+        *,
+        add_to_layout: bool = True,
+    ) -> None:
+        if add_to_layout:
+            self._layout.addWidget(
+                input_widget._base, stretch=input_widget._relative_size
+            )
+        self._widgets_in_layout[key] = input_widget._base
+        self._raw_widgets[key] = input_widget
+        input_widget.value_changed.connect(self.value_changed.emit)
+
+
 class QVectorsWidget(WidgetBase):
-    """Input widget defining the vector generator type and its parameters."""
+    def __init__(
+        self,
+        *args,
+        parameter: QVectors,
+        layout_type: Layouts = "QVBoxLayout",
+        **kwargs,
+    ):
+        super().__init__(*args, parameter=parameter, layout_type=layout_type, **kwargs)
 
-    new_shell_number = Signal(int)
-
-    def __init__(self, *args, **kwargs):
-        kwargs["layout_type"] = "QVBoxLayout"
-        super().__init__(*args, **kwargs)
         self._relative_size = 3
-        trajectory_configurator = kwargs.get("trajectory_configurator")
-        trajectory = None
-        if trajectory_configurator is not None:
-            trajectory = trajectory_configurator["instance"]
+
         self.helper = None
-        top_bar_layout = QHBoxLayout()
-        top_bar_layout.addWidget(QLabel("Generator type:"), stretch=0)
-        self._selector = QComboBox(self._base)
-        self._selector.addItems(
-            x for x in IQVectors.indirect_subclasses() if x != "LatticeQVectors"
+
+        self._selector = ComboWidget(
+            parent=self._base,
+            base_type="QWidget",
+            label="Generator type",
+            tooltip="The q-vectors will be generated using the method chosen here.",
+            choices=IQVectors.indirect_subclasses(),
+            parent_widget=self,
+            configurable=self.parameter,
+            prop="generator",
+            parameter=self.parameter.descriptors["generator"],
         )
-        self._model = VectorModel(self._base, trajectory=trajectory)
-        self._view = QTableView(self._base)
+        self._selector.value_changed.connect(self.switch_qvector_type)
+
         self._preview_button = QPushButton("Preview vector distribution")
         self._preview_button.clicked.connect(self.helper_dialog)
-        top_bar_layout.addWidget(self._selector, stretch=1)
+
+        top_bar_layout = QHBoxLayout()
+        top_bar_layout.addWidget(self._selector._base, stretch=1)
         top_bar_layout.addStretch(1)
         top_bar_layout.addWidget(self._preview_button)
+
         self._layout.addLayout(top_bar_layout)
-        self._layout.addWidget(self._view)
-        self._view.setModel(self._model)
-        self._selector.currentTextChanged.connect(self._model.switch_qvector_type)
-        self._selector.setCurrentText("SphericalLatticeQVectors")
-        self._model.itemChanged.connect(self.updateValue)
-        self._model.type_changed.connect(self.updateValue)
-        self._model.unit_cell_missing.connect(self.fail_early)
-        self.updateValue()
-        if self._tooltip:
-            tooltip_text = self._tooltip
-        else:
-            tooltip_text = "The parameters needed by the specific q-vector generator can be input here"
-        self._view.setToolTip(tooltip_text)
-        self._selector.setToolTip(
-            "The q vectors will be generated using the method chosen here.",
-        )
-        self._model.input_is_valid.connect(self.validate_model_parameters)
-        policy = self._view.sizePolicy()
-        policy.setVerticalPolicy(QSizePolicy.Policy.Minimum)
-        self._view.setSizePolicy(policy)
-        self._view.horizontalHeader().hide()
-        self._view.setSizeAdjustPolicy(
-            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents,
-        )
+        self.switch_qvector_type()
         self.value_changed.connect(self.preview_vectors)
 
-    @Slot(bool)
-    def validate_model_parameters(self, all_are_correct: bool):
-        """Update the widget appearance based on the input validation results."""
-        if all_are_correct:
-            self.clear_error()
-        else:
-            self.mark_error("Some entries in the parameter table are invalid.")
+    def switch_qvector_type(self):
+        if "params" in self._raw_widgets:
+            self.remove_widget("params")
 
-    @Slot()
-    def fail_early(self):
-        """Interrupt the vector generation process early due to initial errors."""
-        self._configurator.error_status = "Unit cell information is missing in the trajectory. Lattice vectors will not work."
-        self.updateValue()
+        params = QVectorsParams(
+            parent=self._base,
+            label="Generator Parameters",
+            tooltip="The q-vectors will be generated using the method chosen here.",
+            parameter=self.parameter.generator,
+        )
+        self.add_widget(params, "params")
 
     def get_widget_value(self):
         """Collect the results from the input widgets and return the value."""
-        qvector_type = self._selector.currentText()
-        pardict = self._model.params_summary()
-        return (qvector_type, pardict)
-
-    def configure_using_default(self):
-        """This is too complex to have a default value"""
 
     def create_helper(
         self,
@@ -481,8 +516,11 @@ class QVectorsWidget(WidgetBase):
         The PlotWidget is modified compared to the normal plotter,
         not allowing the user to change the plotting mode from 'vectors'.
         """
-        dialog_instance = VectorViewer(self._base, configurator=self._configurator)
+        dialog_instance = VectorViewer(self._base)
         self.new_shell_number.connect(dialog_instance.shell_panel_3D.set_upper_limit)
+        dialog_instance.plot_widget.plot_selector.setVisible(False)
+        dialog_instance.plot_widget._normaliser.setVisible(False)
+        dialog_instance.plot_widget._sliderpack.setVisible(False)
         return dialog_instance
 
     @Slot()
@@ -490,6 +528,7 @@ class QVectorsWidget(WidgetBase):
         """Open the helper dialog."""
         if self.helper is None:
             self.helper = self.create_helper()
+
         if self.helper.isVisible():
             geometry = self.helper.saveGeometry()
             self.helper.previous_geometry = geometry
@@ -508,20 +547,16 @@ class QVectorsWidget(WidgetBase):
         """
         if self.helper is None:
             self.helper = self.create_helper()
+
         if not self.helper.isVisible():
             return
-        if self._configurator.error_status != "OK":
+
+        if not self.parameter.check_status():
             self.helper.plot_widget._plotter.plot_blank()
-            self.helper.shell_panel_3D.plot_widget._plotter.plot_blank()
             return
         self.helper.update_plot()
 
     def updateValue(self):
-        """Use the current inputs to configure the q vector generator."""
         temp = super().updateValue()
-        is_valid = self._configurator.error_status == "OK"
-        self._preview_button.setEnabled(is_valid)
-        if is_valid:
-            self.new_shell_number.emit(self._configurator["n_shells"])
-            return temp
-        return None
+        self._preview_button.setEnabled(self.parameter.check_status())
+        return temp

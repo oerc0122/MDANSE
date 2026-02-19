@@ -86,7 +86,7 @@ class TextFormat(IFormat):
                 tf.addfile(tarinfo=info, fileobj=real_buffer)
 
             if run_instance is not None:
-                inputs = run_instance.output_configuration()
+                inputs = run_instance.configuration
                 real_buffer = io.BytesIO()
                 tempStr = codecs.getwriter("utf-8")(real_buffer)
                 tempStr.write(f"run type: {run_instance.__class__.__name__}\n")
@@ -100,7 +100,7 @@ class TextFormat(IFormat):
                 info.mtime = time.time()
                 tf.addfile(tarinfo=info, fileobj=real_buffer)
 
-            for var in list(data.values()):
+            for var in data.values():
                 real_buffer = io.BytesIO()
                 tempStr = codecs.getwriter("utf-8")(real_buffer)
                 tempStr.write(var.info())

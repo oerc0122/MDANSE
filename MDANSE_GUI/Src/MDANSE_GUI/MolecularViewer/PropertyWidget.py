@@ -1,17 +1,35 @@
+#    This file is part of MDANSE.
+#
+#    MDANSE is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 from __future__ import annotations
 
 from collections import ChainMap
-from collections.abc import Callable, Sequence
 from enum import Enum, auto
 from functools import partial
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QComboBox, QTableView, QVBoxLayout, QWidget
 
 from MDANSE.Chemistry import ATOMS_DATABASE
-from MDANSE.MolecularDynamics.Trajectory import Trajectory
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from MDANSE.MolecularDynamics.Trajectory import Trajectory
 
 
 class Const:
