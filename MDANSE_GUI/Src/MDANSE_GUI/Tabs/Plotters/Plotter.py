@@ -46,6 +46,10 @@ class NormOperations(enum.Enum):
     SUM = enum.auto()
     NOT_IMPLEMENTED = enum.auto()
 
+    @classmethod
+    def _missing_(cls, value):
+        return cls.NOT_IMPLEMENTED
+
 
 def str_to_enum(operation: str) -> NormOperations:
     """Get the right enum from the input text string.
@@ -61,11 +65,7 @@ def str_to_enum(operation: str) -> NormOperations:
         enum value of the operation.
 
     """
-    if operation == "average":
-        return NormOperations.AVERAGE
-    if operation == "sum":
-        return NormOperations.SUM
-    return NormOperations.NOT_IMPLEMENTED
+    return NormOperations[operation]
 
 
 def enum_to_str(operation: NormOperations) -> str:
@@ -82,11 +82,7 @@ def enum_to_str(operation: NormOperations) -> str:
         name of the operation as string
 
     """
-    if operation == NormOperations.AVERAGE:
-        return "average"
-    if NormOperations.SUM:
-        return "sum"
-    return "not implemented"
+    return operation.name.lower()
 
 
 NORMALISATION_DEFAULTS = {
@@ -101,6 +97,8 @@ class Plotter(RegisterFactory):
     """Parent class to all classes used for displaying data."""
 
     registry: ClassVar[UCDict[str, type[Plotter]]] = UCDict()
+    slider_labels: ClassVar[tuple[str, ...]] = "Slider 1", "Slider 2"
+    sliders_coupled: ClassVar[bool] = False
 
     def __init__(self) -> None:
         """Create defaults common to all plotters."""
@@ -137,17 +135,9 @@ class Plotter(RegisterFactory):
             return
         target.clear()
 
-    def slider_labels(self) -> list[str]:
-        """Get text to be shown next to sliders."""
-        return ["Slider 1", "Slider 2"]
-
     def slider_limits(self) -> list[tuple[float, float, float]]:
         """Get default limit values for sliders."""
         return [(-1.0, 1.0, 0.01)] * self._number_of_sliders
-
-    def sliders_coupled(self) -> bool:
-        """Check if the slider values depend on each other."""
-        return False
 
     def get_figure(self, figure: Figure | None = None):
         """Get the reference to the current figure, if present."""
@@ -158,7 +148,8 @@ class Plotter(RegisterFactory):
         target.clear()
         return target
 
-    def apply_settings(self, plotting_context: PlottingContext):
+    @staticmethod
+    def apply_settings(plotting_context: PlottingContext):
         """Check that the plotting context can be used."""
         if plotting_context.set_axes() is None:
             LOG.debug("Axis check failed.")

@@ -172,7 +172,7 @@ class SliderPack(QWidget):
         clicks = np.zeros_like(self._clickarray)
         for ns, slider in enumerate(self._sliders):
             clicks[ns] = slider.value()
-        vals = self._minarray + clicks * self._steparray
+        vals[:] = self._minarray + clicks * self._steparray
         for ns, box in enumerate(self._spinboxes):
             box.setValue(vals[ns])
 
@@ -184,7 +184,7 @@ class SliderPack(QWidget):
             clicks = np.zeros_like(self._clickarray)
             for ns, box in enumerate(self._spinboxes):
                 vals[ns] = box.value()
-            clicks = np.round((vals - self._minarray) / self._steparray).astype(int)
+            clicks[:] = np.round((vals - self._minarray) / self._steparray).astype(int)
             for ns, slider in enumerate(self._sliders):
                 slider.setValue(clicks[ns])
             self.slider_to_box()
@@ -245,9 +245,9 @@ class PlotWidget(QWidget):
         except Exception:
             self._plotter = Plotter()
         self._plotter._figure = self._figure
-        self.change_slider_labels.emit(self._plotter.slider_labels())
+        self.change_slider_labels.emit(self._plotter.slider_labels)
         self.change_slider_limits.emit(self._plotter.slider_limits())
-        self.change_slider_coupling.emit(self._plotter.sliders_coupled())
+        self.change_slider_coupling.emit(self._plotter.sliders_coupled)
         self.reset_slider_values.emit(self._plotter._value_reset_needed)
         self._plotter._slider_reference = self._sliderpack
         self._sliderpack.setEnabled(False)
@@ -280,7 +280,8 @@ class PlotWidget(QWidget):
             values = self._plotter._initial_values
             self._sliderpack.set_values(values)
 
-    def available_plotters(self) -> list[str]:
+    @staticmethod
+    def available_plotters() -> list[str]:
         """List all the plotters supported by this widget."""
         return [str(x) for x in Plotter.raw_names() if str(x) != "Text"]
 
@@ -432,7 +433,7 @@ class PlotWidget(QWidget):
             index = model.index(i, 0)
             item = model.itemFromIndex(index)
             item_text = model.data(index)
-            if item_text in ("Text", "Vectors", "Vectors3D"):
+            if item_text in {"Text", "Vectors", "Vectors3D"}:
                 item.setSelectable(False)
 
     def _save_data(self) -> None:

@@ -16,10 +16,10 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Collection, Iterable, Iterator
 from functools import cached_property
 from itertools import dropwhile
-from typing import Any
+from operator import not_
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from ase.io.trajectory import Trajectory as ASETrajectory
@@ -30,6 +30,9 @@ from MDANSE.Framework.Units import measure
 from MDANSE.util_types import FloatArray
 
 from .Parser import Parser
+
+if TYPE_CHECKING:
+    from collections.abc import Collection, Iterable, Iterator
 
 HBAR = measure(1.05457182e-34, "kg m2 / s").toval("Da nm2 / ps")
 HARTREE = measure(27.2113845, "eV").toval("Da nm2 / ps2")
@@ -80,7 +83,7 @@ class CASTEPMDFile(Parser):
             file = dropwhile(lambda line: not line.startswith("END"), file)
             next(file)
 
-            file = split_at(file, lambda line: not line)
+            file = split_at(file, not_)
             file = filter(None, file)
 
             yield from map(self.parse_frame, file)

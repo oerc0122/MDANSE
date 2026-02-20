@@ -43,9 +43,9 @@ class IInstrumentResolution(Configurable, RegisterFactory, abc.ABC):
     def set_kernel(self, omegas, dt):
         pass
 
-    def apply_fft(self, omegaWindow, dt):
-        timeWindow = np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(omegaWindow)) / dt)
-        return timeWindow
+    @staticmethod
+    def apply_fft(omegaWindow, dt):
+        return np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(omegaWindow)) / dt)
 
     @property
     def omegaWindow(self):

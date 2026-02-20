@@ -35,6 +35,8 @@ if TYPE_CHECKING:
 class Single(Plotter):
     """Plots all the datasets in the same figure."""
 
+    slider_labels = "Y offset", "X offset"
+
     def __init__(self) -> None:
         """Initialise all ploting parameters to default values."""
         super().__init__()
@@ -60,10 +62,6 @@ class Single(Plotter):
             return None
         target.clear()
         return target
-
-    def slider_labels(self) -> list[str]:
-        """Return slider labels for single plot mode."""
-        return ["Y offset", "X offset"]
 
     def slider_limits(self) -> list[str]:
         """Return slider limits for single plot mode."""
