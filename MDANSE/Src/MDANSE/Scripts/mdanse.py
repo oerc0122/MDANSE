@@ -35,6 +35,7 @@ from MDANSE.IO.AtomInfo import atom_info
 from MDANSE.MLogging import LOG
 from MDANSE.MolecularDynamics.Trajectory import (
     Trajectory,
+    check_hdf5_driver,
     chemical_system_summary,
     trajectory_summary,
 )
@@ -65,7 +66,11 @@ def show_trajectory_contents(args: Namespace):
     if not trajectory_path:
         return
     trajectory_name = Path.cwd() / trajectory_path
-    instance = Trajectory(trajectory_name)
+    instance = (
+        Trajectory(trajectory_name, hdf5_driver="core")
+        if check_hdf5_driver()
+        else Trajectory(trajectory_name)
+    )
     result = trajectory_summary(instance)
     result += chemical_system_summary(instance.chemical_system)
     traj_arrays = get_hdf5_contents(instance.file)
