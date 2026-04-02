@@ -30,15 +30,16 @@ J Chem Inf Model. 57(1):1-5 (2017).
 
 ## Version information
 
-This is the second release candidate of MDANSE 2.0.0. The set of features it
-contains will not change by the time the full release has been made. However,
-there still may be some problems with the code at this stage that need to be
-identified and corrected. Please help us develop MDANSE by reporting any
-problems you experience when using the code. The preferred way of reporting
-problems is by adding them to the
-[GitHub issue tracker](https://github.com/ISISNeutronMuon/MDANSE/issues).
-You can also send a message to MDANSE-help@stfc.ac.uk to get in touch
-with MDANSE developers.
+This is the first release of MDANSE 2.0.0.
+
+> [!NOTE]
+> Considering the large number of different MD engines and analysis types,
+> it is still possible that some conversion or analysis runs will not
+> produce the expected results. Please report any problems
+> you experience while using MDANSE by adding them to the
+> [GitHub issue tracker](https://github.com/ISISNeutronMuon/MDANSE/issues).
+> You can also send a message to MDANSE-help@stfc.ac.uk to get in touch
+> with MDANSE developers.
 
 ## Quick start: installation
 
@@ -65,6 +66,13 @@ pip install MDANSE
 which will allow you to execute MDANSE scripts, as long as your
 virtual environment is active. (This means that you will have to
 activate it when you start a new shell.)
+
+If you are using a virtual environment in which you had installed
+MDANSE in the past, you can upgrade MDANSE to the current version
+by typing:
+```
+pip install --upgrade MDANSE
+```
 
 If you experience problems with the installation, you may want to upgrade pip
 ```
@@ -95,16 +103,26 @@ The typical workflow of MDANSE:
 3. Perform an analysis,
 4. Check the results with the plotter.
 
-The most complete user documentation of MDANSE can be found on [our Read the Docs page](https://mdanse.readthedocs.io/en/protos).
+The most complete user documentation of MDANSE can be found on [our Read the Docs page](https://mdanse.readthedocs.io).
 
-Other information including example scripts can be found on the [MDANSE website](https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx) 
+Other information, including tutorials, can be found in the
+[MDANSE-Examples repository](https://github.com/ISISNeutronMuon/MDANSE-Examples).
 
 ## What can MDANSE do?
 
-Firstly, MDANSE can read the output of many MD simulation packages.
+Firstly, MDANSE can read the output of MD simulation software.
 It does this by providing converters for different file formats
 into an .MDT file (HDF format), which is then used for all
-calculations. The following MD packages are supported:
+calculations. General-purpose converters are implemented using
+external libraries:
+
+- ASE,
+- MDAnalysis,
+- MDTraj,
+
+which means that if your trajectories have worked with any of
+these libraries, then you can expect them to work with MDANSE too.
+Additionally, the following converters for specific MD packages are supported:
 
 - CASTEP
 - CHARMM
@@ -118,7 +136,6 @@ calculations. The following MD packages are supported:
 - NAMD
 - VASP
 - XPLOR
-- ASE
 
 The converted trajectory can then be loaded into MDANSE, where
 it can be visualised via the Molecular Viewer and animated.
@@ -130,14 +147,14 @@ potential experiment. The following properties can be computed:
 <details><summary>Dynamics</summary><ul>
 <li>Density of States</li>
 <li>Mean Square Displacement</li>
-<li>Position Autocorrelation Function</li>
+<li>Position Correlation Function</li>
 <li>Position Power Spectrum</li>
 <li>Reorientational Time Correlation Function</li>
 <li>Root Mean Square Deviation</li>
 <li>Root Mean Square Fluctuation</li>
 <li>van Hove function (self)</li>
 <li>van Hove function (distinct)</li>
-<li>Velocity Autocorrelation Function</li>
+<li>Velocity Correlation Function</li>
 </ul></details>
 
 <details><summary>Infrared</summary><ul>
@@ -160,7 +177,6 @@ potential experiment. The following properties can be computed:
 
 <details><summary>Structure</summary><ul>
 <li>Area Per Molecule</li>
-<li>Average Structure</li>
 <li>Coordination Number</li>
 <li>Eccentricity</li>
 <li>Molecular Trace</li>
@@ -176,7 +192,9 @@ potential experiment. The following properties can be computed:
 </ul></details>
 
 <details><summary>Trajectory</summary><ul>
+<li>Average Structure</li>
 <li>Center of Masses Trajectory</li>
+<li>Trajectory Editor</li>
 <li>Trajectory Filter</li>
 </ul></details>
 
@@ -189,14 +207,13 @@ can be saved in an MDA file (HDF5 format), or a set of DAT files
 
 More detailed information on how MDANSE works, what it can do,
 and the science can all be found on
-[our Read the Docs page](https://mdanse.readthedocs.io/en/protos).
+[our Read the Docs page](https://mdanse.readthedocs.io).
 
 ## Citing MDANSE
 
-If you used MDANSE in your research, please cite the following paper:
-
->MDANSE: An Interactive Analysis Environment for Molecular Dynamics Simulations.
-G. Goret, B. Aoun, E. Pellegrini. J Chem Inf Model. (2017) 57(1):1-5.
+If you used MDANSE in your research, please cite it according to the CITATION.cff file
+in the [MDANSE GitHub repository](https://github.com/ISISNeutronMuon/MDANSE).
+On GitHub, you can use the "cite this repository" link to generate the citation.
 
 ## License
 

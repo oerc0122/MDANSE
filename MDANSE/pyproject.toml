@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MDANSE"
-version = "2.0.0rc2"
+version = "2.0.0"
 description = 'MDANSE Core package - Molecular Dynamics trajectory handling and analysis code'
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,7 +16,7 @@ maintainers = [
   {name = "Jacob Wilkins", email = "jacob.wilkins@stfc.ac.uk"}
 ]
 classifiers = [
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
 
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Chemistry',
@@ -50,8 +50,8 @@ lint=["ruff<0.14"]
 # dynamic = ["version", "description"]
 
 [project.urls]
-homepage = "https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx"
-documentation = "https://mdanse.readthedocs.io/en/protos/"
+homepage = "https://pypi.org/project/MDANSE"
+documentation = "https://mdanse.readthedocs.io/"
 repository = "https://github.com/ISISNeutronMuon/MDANSE"
 
 [tool.setuptools]

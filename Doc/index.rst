@@ -3,14 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. note::
-   This is the documentation of MDANSE 2.0.
-   MDANSE 2 is currently (September 2025) approaching its first release.
-
 Welcome to MDANSE's documentation!
 ==================================
 
-**Useful links**: `MDANSE Project Website <https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx>`_ | `MDANSE GitHub <https://github.com/ISISNeutronMuon/MDANSE>`_ | `MDANSE-Examples GitHub <https://github.com/ISISNeutronMuon/MDANSE-Examples>`_
+**Useful links**: `MDANSE GitHub <https://github.com/ISISNeutronMuon/MDANSE>`_ | `MDANSE-Examples GitHub <https://github.com/ISISNeutronMuon/MDANSE-Examples>`_
 
 **MDANSE (Molecular Dynamics Analysis for Neutron Scattering Experiments)**
 is a Python application designed for computing neutron observables
@@ -92,6 +88,7 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5 <https://doi.org/10.1021/acs.jcim.6b0057
    pages/H_start
    pages/H_conv
    pages/H_Plotting
+   pages/H_cluster
 
 .. toctree::
    :maxdepth: 5

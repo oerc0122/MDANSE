@@ -1,11 +1,14 @@
-# MDANSE
+<h1 align="center">
+<img src="https://raw.githubusercontent.com/ISISNeutronMuon/MDANSE/protos/MDANSE_GUI/Src/MDANSE_GUI/Resources/frontpage_logo_mdanse.svg" width="400">
+</h1><br>
+
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mdanse)](https://pypi.org/project/MDANSE/)
 [![PyPI - Version](https://img.shields.io/pypi/v/mdanse?label=mdanse)](https://pypi.org/project/MDANSE/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/mdanse?label=mdanse)](https://pypi.org/project/MDANSE/)
 [![PyPI - Version](https://img.shields.io/pypi/v/mdanse_gui?label=mdanse_gui)](https://pypi.org/project/MDANSE/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/mdanse_gui?label=mdanse_gui)](https://pypi.org/project/MDANSE/)
-[![Read the Docs](https://img.shields.io/readthedocs/mdanse)](https://mdanse.readthedocs.io/en/protos/)
+[![Read the Docs](https://img.shields.io/readthedocs/mdanse)](https://mdanse.readthedocs.io/)
 
 
 ## Molecular Dynamics Analysis for Neutron Scattering Experiments
@@ -30,21 +33,17 @@ J. Chem. Inf. Model. 2017, 57, 1, 1–5](https://doi.org/10.1021/acs.jcim.6b0057
 
 ## Version information
 
-This is the 2.x branch of MDANSE, which consists of two Python packages,
+This is the first full release of MDANSE 2.0, consisting of two Python packages,
 MDANSE (the analysis code) and MDANSE_GUI (the graphical user interface).
-The final version in the 1.5.x series can still be found in the **legacy**
-branch, but is not being actively developed or supported.
 
-The current version of MDANSE is currently approaching the first release,
-and the second release candidate has been created. The set of features it
-contains will not change by the time the full release has been made. However,
-there still may be some problems with the code at this stage that need to be
-identified and corrected. You can help the developers by reporting problems
-you experience while using MDANSE. The preferred way of reporting
-problems is by adding them to the
-[GitHub issue tracker](https://github.com/ISISNeutronMuon/MDANSE/issues).
-You can also send a message to MDANSE-help@stfc.ac.uk to get in touch
-with MDANSE developers.
+> [!NOTE]
+> Considering the large number of different MD engines and analysis types,
+> it is still possible that some conversion or analysis runs will not
+> produce the expected results. Please report any problems
+> you experience while using MDANSE by adding them to the
+> [GitHub issue tracker](https://github.com/ISISNeutronMuon/MDANSE/issues).
+> You can also send a message to MDANSE-help@stfc.ac.uk to get in touch
+> with MDANSE developers.
 
 ## Quick start: installation
 
@@ -68,7 +67,12 @@ While your virtual environment is active, you can install MDANSE:
 ```
 pip install MDANSE MDANSE_GUI
 ```
-and start the graphical interface by typing
+If you are using a virtual environment in which you had installed pre-release
+versions of MDANSE, you can upgrade by typing:
+```
+pip install --upgrade MDANSE MDANSE_GUI
+```
+Then, start the graphical interface by typing
 ```
 mdanse_gui
 ```
@@ -108,11 +112,9 @@ The typical workflow of MDANSE:
 4. Check the results with the plotter.
 
 The most complete user documentation of MDANSE can be found on
-[our Read the Docs page](https://mdanse.readthedocs.io/en/protos).
+[our Read the Docs page](https://mdanse.readthedocs.io).
 
-Other information including example scripts can be found on the
-[MDANSE website](https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx)
-while the most recent tutorials are stored in the
+Other information, including tutorials, can be found in the
 [MDANSE-Examples repository](https://github.com/ISISNeutronMuon/MDANSE-Examples).
 
 ## What can MDANSE do?
@@ -120,7 +122,16 @@ while the most recent tutorials are stored in the
 Firstly, MDANSE can read the output of MD simulation software.
 It does this by providing converters for different file formats
 into an .MDT file (HDF format), which is then used for all
-calculations. The following MD packages are supported:
+calculations. General-purpose converters are implemented using
+external libraries:
+
+- ASE,
+- MDAnalysis,
+- MDTraj,
+
+which means that if your trajectories have worked with any of
+these libraries, then you can expect them to work with MDANSE too.
+Additionally, the following converters for specific MD packages are supported:
 
 - CASTEP
 - CHARMM
@@ -134,7 +145,6 @@ calculations. The following MD packages are supported:
 - NAMD
 - VASP
 - XPLOR
-- ASE
 
 The converted trajectory can then be loaded into MDANSE, where
 it can be visualised via the Molecular Viewer and animated.
@@ -146,14 +156,14 @@ potential experiment. The following properties can be computed:
 <details><summary>Dynamics</summary><ul>
 <li>Density of States</li>
 <li>Mean Square Displacement</li>
-<li>Position Autocorrelation Function</li>
+<li>Position Correlation Function</li>
 <li>Position Power Spectrum</li>
 <li>Reorientational Time Correlation Function</li>
 <li>Root Mean Square Deviation</li>
 <li>Root Mean Square Fluctuation</li>
 <li>van Hove function (self)</li>
 <li>van Hove function (distinct)</li>
-<li>Velocity Autocorrelation Function</li>
+<li>Velocity Correlation Function</li>
 </ul></details>
 
 <details><summary>Infrared</summary><ul>
@@ -176,7 +186,6 @@ potential experiment. The following properties can be computed:
 
 <details><summary>Structure</summary><ul>
 <li>Area Per Molecule</li>
-<li>Average Structure</li>
 <li>Coordination Number</li>
 <li>Eccentricity</li>
 <li>Molecular Trace</li>
@@ -192,7 +201,9 @@ potential experiment. The following properties can be computed:
 </ul></details>
 
 <details><summary>Trajectory</summary><ul>
+<li>Average Structure</li>
 <li>Center of Masses Trajectory</li>
+<li>Trajectory Editor</li>
 <li>Trajectory Filter</li>
 </ul></details>
 
@@ -205,14 +216,12 @@ can be saved in an MDA file (HDF5 format), or a set of DAT files
 
 More detailed information on how MDANSE works, what it can do,
 and the science can all be found on
-[our Read the Docs page](https://mdanse.readthedocs.io/en/protos).
+[our Read the Docs page](https://mdanse.readthedocs.io).
 
 ## Citing MDANSE
 
-If you used MDANSE in your research, please cite the following paper:
-
->[G. Goret, B. Aoun, E. Pellegrini, "MDANSE: An Interactive Analysis Environment for Molecular Dynamics Simulations",
-J. Chem. Inf. Model. 2017, 57, 1, 1–5](https://doi.org/10.1021/acs.jcim.6b00571)
+If you used MDANSE in your research, please cite it according to the CITATION.cff file.
+You can use the "cite this repository" link to generate the citation.
 
 ## License
 
@@ -227,14 +236,13 @@ nMOLDYN was originally developed by Gerald Kneller in 1995 and
 subsequently also by Konrad Hinsen, Tomasz Rog, Krzysztof Murzyn,
 Slawomir Stachura, and Eric Pellegrini. MDANSE includes most of the
 code of nMOLDYN3, and also code from the libraries
-[MMTK](https://github.com/khinsen/MMTK),
-[ScientificPython](https://github.com/khinsen/ScientificPython)
-and [MDTraj](https://github.com/mdtraj/mdtraj).
+[MMTK](https://github.com/khinsen/MMTK) and
+[ScientificPython](https://github.com/khinsen/ScientificPython).
 
 For more information see:
 
 >nMoldyn 3: Using task farming for a parallel spectroscopy-oriented analysis of molecular dynamics simulations.
-K. Hinsen, E. Pellegrini, S. Stachura, G.R. Kneller J. Comput. Chem. (2012) 33:2043-2048 [https://doi.org/10.1002/jcc.23035][https://doi.org/10.1002/jcc.23035].
+K. Hinsen, E. Pellegrini, S. Stachura, G.R. Kneller J. Comput. Chem. (2012) 33:2043-2048 [https://doi.org/10.1002/jcc.23035](https://doi.org/10.1002/jcc.23035).
 
 We are grateful to all the people who have helped in some way or
 another to improve nMOLDYN and/or MDANSE along those years.

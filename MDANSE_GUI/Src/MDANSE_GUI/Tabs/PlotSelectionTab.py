@@ -114,9 +114,6 @@ class PlotSelectionTab(GeneralTab):
                 left_panels=[
                     TextInfo(
                         header="MDANSE Plotting",
-                        footer="Look up our "
-                        + '<a href="https://mdanse.readthedocs.io/en/protos/">Read The Docs</a>'
-                        + " page.",
                     )
                 ],
             ),

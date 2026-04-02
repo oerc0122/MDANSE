@@ -55,7 +55,7 @@ authors:
     orcid: https://orcid.org/0009-0004-9147-3475
 
 repository-code: 'https://github.com/ISISNeutronMuon/MDANSE/tree/protos/MDANSE'
-url: 'https://www.isis.stfc.ac.uk/Pages/MDANSEproject.aspx'
+url: 'https://pypi.org/project/MDANSE'
 keywords:
   - molecular dynamics
   - science
@@ -63,7 +63,7 @@ keywords:
   - analysis
 
 license: GPL-3.0
-version: 2.0.0b3
+version: 2.0.0
 
 preferred-citation:
   type: article
