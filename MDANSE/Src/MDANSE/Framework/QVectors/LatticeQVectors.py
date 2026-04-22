@@ -15,14 +15,23 @@
 #
 from __future__ import annotations
 
+from collections.abc import Callable
+from functools import partial
+
 import numpy as np
 
 from MDANSE.Framework.QVectors.IQVectors import IQVectors
+from MDANSE.Framework.QVectors.SphericalQVectors import spherical_vectors
 from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 
-def fpsampling(q_vectors: np.ndarray, n_vecs: int) -> np.ndarray:
+def fpsampling(
+    q_vectors: np.ndarray, n_vecs: int, random_vector_func: Callable[[], np.ndarray]
+) -> np.ndarray:
     """Basic farthest point sampling function used to sample q-vectors.
+    Q-vectors are normalised to avoid sampling vectors from the ends of
+    the shell. Distances between vectors are calculated on the angle
+    between them.
 
     Parameters
     ----------
@@ -30,6 +39,8 @@ def fpsampling(q_vectors: np.ndarray, n_vecs: int) -> np.ndarray:
         Array of q_vectors.
     n_vecs : int
         Number of vectors to sample.
+    random_vector_func : Callable[[], np.ndarray]
+        A function which generates a single random vector.
 
     Returns
     -------
@@ -49,15 +60,24 @@ def fpsampling(q_vectors: np.ndarray, n_vecs: int) -> np.ndarray:
     elif n_points <= 0:
         raise ValueError("n_vecs should be greater than zero.")
 
+    mag_q = np.linalg.norm(q_vectors, axis=1)
+    if np.any(mag_q == 0):
+        # deal with the vector at the origin by turning into some
+        # random unit vector
+        random_vector = random_vector_func().T[0]
+        zero_idx = np.where(mag_q == 0)[0]
+        q_vectors[zero_idx] = random_vector
+        mag_q[zero_idx] = 1
+    q_vectors = q_vectors / mag_q[:, None]
+
     dists = np.full(n_points, np.inf)
     selected = np.random.randint(n_points)
     selection = np.zeros(n_vecs, dtype=int)
     selection[0] = selected
 
     for i in range(1, n_vecs):
-        diff = q_vectors - q_vectors[selected]
-        dist_sq = np.sum(diff**2, axis=1)
-        dists = np.minimum(dists, dist_sq)
+        theta = np.arccos(np.clip(np.dot(q_vectors, q_vectors[selected]), -1.0, 1.0))
+        dists = np.minimum(dists, theta)
         selected = np.argmax(dists)
         selection[i] = selected
 
