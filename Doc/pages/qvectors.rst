@@ -1,4 +1,7 @@
 
+.. |modq| replace:: :math:`|\mathbf{q}|`
+.. |q| replace:: :math:`\mathbf{q}`
+
 .. _qvector-generation:
 
 q-Vector Generation
@@ -53,14 +56,14 @@ where
 
    \mathbf{a}^* = \frac{2 \pi}{V} \mathbf{b} \times \mathbf{c}, \qquad \mathbf{b}^* = \frac{2 \pi}{V} \mathbf{c} \times \mathbf{a}, \qquad \mathbf{c}^* = \frac{2 \pi}{V} \mathbf{a} \times \mathbf{b}.
 
-If the :math:`\mathbf{q}`-vectors are now chosen as
+If the |q|-vectors are now chosen as
 
 .. math::
    :label: qvector3
 
    \mathbf{q} =  h\mathbf{a}^* + k\mathbf{b}^* + l\mathbf{c}^*
 
-so that this selection of :math:`\mathbf{q}`-vectors produces phase changes for
+so that this selection of |q|-vectors produces phase changes for
 handling jumps in particle trajectories. Here :math:`h`, :math:`k`, and :math:`l`
 are integers, jumps in the particle trajectories
 produce phase changes of multiples of :math:`2\pi` in the Fourier transformed
@@ -77,7 +80,7 @@ The current implementation of the lattice vector generators
 that different vectors can have different weights. This
 is meant to approximate a spherical distribution of vectors
 in low-symmetry systems where lattice vectors are not uniformly
-spaced, and also to give preference to vectors with :math:`|Q|`
+spaced, and also to give preference to vectors with |modq|
 close to the nominal value for a specific shell. This behaviour
 is different from MDANSE 1.5, where the shell population was
 deterministic for shells containing less lattice vectors than
@@ -89,4 +92,27 @@ you can set the variable :code:`force_equal_weights=True` for these
 vector generators. You can also save the value of this variable in your
 instrument profiles, so it is set to :code:`True` every time you set
 the vector parameters using these profiles.
+
+If you use the currently recommended setting of :code:`force_equal_weights=False`,
+the lattice vector generator will randomly create :code:`n_vectors` vectors
+commensurate with the reciprocal lattice defined by the simulation box.
+It will then generate :code:`n_samples` reciprocal space points within
+the same vector shell. Each random point will contribute to the weight
+of the lattice vector which is the nearest. As a result, the lattice vectors
+in the areas of reciprocal space containing many lattice vectors close to
+each other will contribute less to the calculation results than the vectors
+from the reciprocal space regions containing few lattice vectors. This is meant
+to produce a better approximation of spherical sampling with a uniform distribution
+of angles. Additionally, the random points used for sampling follow a normal distribution
+in |q|, assigning a larger weight to the vectors close to the
+nominal |q| value of the shell.
+
+The MDANSE GUI offers a preview dialog, visualising the vector distribution that
+should be created based on the input parameters. Additionally, the same
+detailed information about the vectors that have been generated
+and used in the calculation is written into a separate data group or file,
+depending on the format used. In the case of .mda files, a data group
+called :code:`/vector_generator` is written into the file. Information about
+viewing the vector information can be found in the plotting documentation,
+section :ref:`plotting-vectors`.
 
