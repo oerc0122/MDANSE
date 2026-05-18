@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import html
+import json
 from typing import TYPE_CHECKING, Any
 
 import h5py
@@ -49,7 +50,7 @@ WEIGHTS_MULTIPLIER = 100
 def qvector_binning_from_dict(
     qvector_params: dict[str, Any],
     n_segments: int = 10,
-) -> npt.NDArray[float] | None:
+) -> npt.NDArray[np.floating] | None:
     """Calculate the range of |q| bins from the vector generator parameters.
 
     Parameters
@@ -77,7 +78,7 @@ def qvector_binning_general(
     step_size: float,
     width: float | None,
     n_segments: int,
-) -> npt.NDArray[float]:
+) -> npt.NDArray[np.floating]:
     """Calculate the |q| bin limits based of vector shell limits and steps.
 
     Parameters
@@ -156,8 +157,8 @@ def qvector_binning_general(
     return common_binning
 
 
-def shell_to_modq(shell_index: int, parent: h5py.Dataset) -> npt.NDArray[float]:
-    """Finds the vector shell dataset and returns arrays of q vector lengths.
+def shell_to_modq(shell_index: int, parent: h5py.Dataset) -> npt.NDArray[np.floating]:
+    """Find the vector shell dataset and returns arrays of q vector lengths.
 
     Parameters
     ----------
@@ -183,8 +184,8 @@ def vector_angular_datasets(
 
     Parameters
     ----------
-    source : QVectorsConfigurator
-        An instance of the QVectorsConfigurator in the GUI.
+    source : IQVectors
+        An instance of the QVectors.
     shell_key : float
         The |q| of the vector shell.
 
@@ -346,7 +347,7 @@ def projection_datasets_from_qarray(
 
 
 def vector_q_statistics_datasets(
-    source: h5py.File | QVectorsConfigurator,
+    source: h5py.File | IQVectors | QVectors,
     main_dset: str = "vector_generator",
     q_bin_limits: npt.NDArray[float] | None = None,
 ) -> tuple[SingleDataset, SingleDataset]:
@@ -400,10 +401,11 @@ def vector_q_statistics_datasets(
                     found = np.array([sum(dat[:]) for dat in q_data("weights")])
                 available_vectors = np.vstack((found, used)).T
             else:
-                vec_weights = [np.ones_like(modq_shell) for modq_shell in modq_per_shell]
+                vec_weights = [
+                    np.ones_like(modq_shell) for modq_shell in modq_per_shell
+                ]
 
         case IQVectors():
-
             filename = None
             qvals = np.array([float(x) for x in source.q_vectors])
             valid_shells = [
@@ -417,7 +419,9 @@ def vector_q_statistics_datasets(
                 for index in valid_shells:
                     yield source.q_vectors[qvals[index]][elem]
 
-            modq_per_shell = [np.linalg.norm(dat, axis=0) for dat in q_data("q_vectors")]
+            modq_per_shell = [
+                np.linalg.norm(dat, axis=0) for dat in q_data("q_vectors")
+            ]
 
             available_vectors = np.array(
                 [
