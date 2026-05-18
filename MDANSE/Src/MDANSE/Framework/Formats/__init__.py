@@ -26,10 +26,10 @@ from .TextFormat import TextFormat as TextFormat
 
 
 class OutputFormats(Enum):
-    MDAFormat = auto()  # noqa: F811
-    TextFormat = auto()  # noqa: F811
-    FileInMemory = auto()  # noqa: F811
-    MDTFormat = auto()  # noqa: F811
+    MDAFormat = auto()
+    TextFormat = auto()
+    FileInMemory = auto()
+    MDTFormat = auto()
 
     @classmethod
     def _missing_(cls, value):
