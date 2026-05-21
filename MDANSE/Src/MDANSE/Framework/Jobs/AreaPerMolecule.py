@@ -62,7 +62,7 @@ class AreaPerMolecule(IJob):
 
     trajectory = MDANSETrajectory()
     frames = FrameSelect(depends={"trajectory": "trajectory"})
-    axis = SingleChoice[str, str](
+    axis = SingleChoice[str, tuple[int, int]](
         choices=_AXIS_MAP.keys(),
         default="ab",
         label="Surface defined by unit cell vectors",
