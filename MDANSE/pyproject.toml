@@ -55,6 +55,7 @@ lint=["ruff<0.14"]
 
 [project.optional-dependencies]
 cli=["tqdm"]
+extxyz=["extxyz"]
 
 [project.urls]
 homepage = "https://pypi.org/project/MDANSE"
