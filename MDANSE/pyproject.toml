@@ -48,7 +48,7 @@ dev = [
   {include-group = "lint"},
   {include-group = "external"},
 ]
-external=["MDAnalysis", "ase", "mdtraj", "finufft"]
+external=["MDAnalysis", "ase", "mdtraj", "finufft", "extxyz"]
 test=["pytest", "pytest-timeout"]
 lint=["ruff<0.14"]
 
