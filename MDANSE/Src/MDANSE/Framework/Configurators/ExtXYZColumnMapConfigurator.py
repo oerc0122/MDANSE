@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from more_itertools import first_true
@@ -26,7 +27,7 @@ from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.MLogging import LOG
 
 if TYPE_CHECKING:
-    from MDANSE.Framework.Configurators import FileWithAtomDataConfigurator
+    from MDANSE.Framework.Configurators import MultiFileWithAtomDataConfigurator
     from MDANSE.Framework.Parsers.extxyz import ExtXYZFile
 
 
@@ -56,22 +57,28 @@ class ExtXYZColumnMapConfigurator(IConfigurator):
             The atom map setting JSON string.
         """
 
-        file_configurator: FileWithAtomDataConfigurator[ExtXYZFile] = self.configurable[
-            self.dependencies["input_file"]
-        ]
+        file_configurator: MultiFileWithAtomDataConfigurator[ExtXYZFile] = (
+            self.configurable[self.dependencies["input_file"]]
+        )
         if not file_configurator.valid:
             self.error_status = "Input file not selected or valid."
             return
 
-        parser = file_configurator.parser_instance
-        assert parser is not None
+        parsers = file_configurator.parser_instances
 
-        _info, arrays = parser.columns
-        self.columns = arrays.keys()
+        arrays = {
+            f"{key}:{Path(file).name}": val
+            for file, parser in zip(file_configurator.filenames, parsers, strict=True)
+            for key, val in parser.arrays.items()
+        }
+        self.columns = list(arrays)
+
         if not value:
             self.mapping = self.get_default_mapping(arrays)
         elif mismatch := set(value.values()) - {*self.columns, "None", None}:
-            raise ValueError(f"Keys mismatched between provided dict and file ({mismatch}).")
+            raise ValueError(
+                f"Keys mismatched between provided dict and file ({mismatch})."
+            )
         else:
             self.mapping = value
 
