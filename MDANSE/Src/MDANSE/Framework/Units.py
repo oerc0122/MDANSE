@@ -77,11 +77,16 @@ _COMMON_DIMS = {
     "time": Dims(time=1),
     "frequency": Dims(time=-1),
     "length": Dims(length=1),
+    "distance": Dims(length=1),
     "recip": Dims(length=-1),
     "temperature": Dims(temperature=1),
     "energy": Dims(mass=1, length=2, time=-2),
+    "positions": Dims(length=1),
     "velocities": Dims(length=1, time=-1),
+    "momenta": Dims(mass=1, length=1, time=-1),
+    "forces": Dims(mass=1, length=1, time=-2),
     "gradients": Dims(mass=1, length=1, time=-2),
+    "masses": Dims(mass=1),
     "ang_velocity": Dims(angle=1, time=-1),
 }
 
@@ -1080,7 +1085,14 @@ class UnitsManager(metaclass=Singleton):
     def filter_by_common_dimension(
         cls,
         dim: Literal[
-            "energy", "velocities", "gradients", "time", "length", "reciprocal", "mass"
+            "energy",
+            "velocities",
+            "gradients",
+            "time",
+            "length",
+            "reciprocal",
+            "mass",
+            "momenta",
         ],
     ) -> dict[str, _Unit]:
         return cls.filter_by_dimension(_COMMON_DIMS[dim])
