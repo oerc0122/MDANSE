@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from __future__ import annotations
+from MDANSE.MolecularDynamics.UnitCell import UnitCell
 
 from typing import Any, Literal
 
@@ -66,6 +67,10 @@ class LAMMPS(Converter):
             "choices": ["custom", "xyz"],
             "default": "custom",
         },
+    )
+    settings["unit_cell"] = (
+        "UnitCellConfigurator",
+        {},
     )
     settings["lammps_units"] = (
         "SingleChoiceConfigurator",
@@ -254,7 +259,12 @@ class LAMMPS(Converter):
             Index of job step.
         """
 
-        val1, val2 = self._reader.run_step(index)
+        uco = (
+            UnitCell(self.configuration["unit_cell"]["value"])
+            if self.configuration["unit_cell"]["apply"]
+            else None
+        )
+        val1, val2 = self._reader.run_step(index, unit_cell_override=uco)
 
         self._start = val2
 
