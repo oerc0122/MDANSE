@@ -60,7 +60,7 @@ class InterpolationOrderConfigurator(IntegerConfigurator):
             return
         self.warning_status = ""
 
-        frames_configurator = self.configurable[self.dependencies["frames"]]
+        frames_configurator = self.get_dependency("frames")
         if not frames_configurator.valid:
             self.error_status = "Frames configurator is not valid."
             return
@@ -71,7 +71,7 @@ class InterpolationOrderConfigurator(IntegerConfigurator):
 
         IntegerConfigurator.configure(self, value)
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
+        trajConfig = self.get_dependency("trajectory")
         traj_has_velocities = trajConfig["instance"].has_variable("velocities")
 
         if value == 0:

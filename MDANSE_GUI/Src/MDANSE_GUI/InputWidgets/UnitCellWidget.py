@@ -39,9 +39,7 @@ class UnitCellWidget(WidgetBase):
 
         try:
             self._configurator.update_trajectory_information(
-                self._configurator.configurable[
-                    self._configurator.dependencies["trajectory"]
-                ]["instance"]
+                self._configurator._get_dependency("trajectory")["instance"]
             )
             self.start_values = self._configurator.recommended_cell
         except (AttributeError, KeyError):

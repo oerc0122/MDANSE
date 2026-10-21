@@ -99,9 +99,7 @@ class WeightsConfigurator(SingleChoiceConfigurator):
             return
 
         self._original_input = value
-        self._trajectory = self.configurable[self.dependencies["trajectory"]][
-            "instance"
-        ]
+        self._trajectory = self.get_dependency("trajectory")["instance"]
 
         if not isinstance(value, str):
             self.error_status = "Invalid type for weight. Must be a string."
@@ -127,12 +125,8 @@ class WeightsConfigurator(SingleChoiceConfigurator):
 
     def test_values_for_nan(self, property_name: str) -> bool:
         """Throw an error early if weights are not usable."""
-        atom_select = self.configurable[self.dependencies["atom_selection"]][
-            "flatten_indices"
-        ]
-        atom_trans = self.configurable[
-            self.dependencies["atom_transmutation"]
-        ].transmutation
+        atom_select = self.get_dependency("atom_selection")["flatten_indices"]
+        atom_trans = self.get_dependency("atom_transmutation").transmutation
         self._trajectory.set_transmutation(atom_trans)
         self._trajectory.set_selection(atom_select)
         atom_types = self._trajectory.unique_elements

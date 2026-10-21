@@ -48,7 +48,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
         if not self.update_needed(value):
             return
 
-        if not self.configurable[self.dependencies["coordinate_files"]].valid:
+        if not self.get_dependency("coordinate_files").valid:
             self.error_status = "Trajectory file not valid."
             return
 
@@ -56,9 +56,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
             self.error_status = "OK"
             self["filename"] = value
 
-            extension = self.configurable[
-                self.dependencies["coordinate_files"]
-            ].extension
+            extension = self.get_dependency("coordinate_files").extension
 
             supported = [i[1:] for i in _TOPOLOGY_EXTS]
             if extension not in supported:
@@ -86,7 +84,7 @@ class MDTrajTopologyFileConfigurator(FileWithAtomDataConfigurator):
             super().configure(value)
 
     def parse(self, _) -> None:
-        coord_files = self.configurable[self.dependencies["coordinate_files"]][
+        coord_files = self.get_dependency("coordinate_files")[
             "filenames"
         ]
         if self["filename"]:

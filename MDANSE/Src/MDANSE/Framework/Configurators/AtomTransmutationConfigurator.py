@@ -143,7 +143,7 @@ class AtomTransmutationConfigurator(IConfigurator):
             self.error_status = "Unable to load JSON string."
             return
 
-        traj_config = self.configurable[self.dependencies["trajectory"]]
+        traj_config = self.get_dependency("trajectory")
         system = traj_config["instance"].chemical_system
         idxs = range(system.total_number_of_atoms)
 
@@ -184,6 +184,6 @@ class AtomTransmutationConfigurator(IConfigurator):
             The atom transmuter object initialised with the trajectories
             chemical system.
         """
-        traj_config = self.configurable[self.dependencies["trajectory"]]
+        traj_config = self.get_dependency("trajectory")
         transmuter = AtomTransmuter(traj_config["instance"])
         return transmuter

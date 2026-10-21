@@ -58,7 +58,7 @@ class AtomSelectionConfigurator(IConfigurator):
 
         self._original_input = value
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
+        trajConfig = self.get_dependency("trajectory")
         self.selector = ReusableSelection()
 
         if value is None:

@@ -72,7 +72,7 @@ class InstrumentResolutionConfigurator(IConfigurator):
 
         self._original_input = value
 
-        framesCfg = self.configurable[self.dependencies["frames"]]
+        framesCfg = self.get_dependency("frames")
 
         time = framesCfg["time"]
         self["n_frames"] = len(time)

@@ -65,7 +65,7 @@ class GridStepConfigurator(FloatConfigurator):
         self._last_frames = []
 
     def new_frames(self) -> Sequence[float] | None:
-        new_frames = self.configurable[self.dependencies["frames"]]["value"]
+        new_frames = self.get_dependency("frames")["value"]
         if len(new_frames) != len(self._last_frames) or not np.allclose(
             new_frames, self._last_frames
         ):
@@ -80,7 +80,7 @@ class GridStepConfigurator(FloatConfigurator):
             self._avg_cell = None
         if self._avg_cell is not None:
             return self._avg_cell
-        trajectory: Trajectory = self.configurable[self.dependencies["trajectory"]][
+        trajectory: Trajectory = self.get_dependency("trajectory")[
             "instance"
         ]
         if trajectory.unit_cell_warning == NO_CELL:
@@ -92,7 +92,7 @@ class GridStepConfigurator(FloatConfigurator):
     def configure(self, value):
         super().configure(value)
 
-        trajectory: Trajectory = self.configurable[self.dependencies["trajectory"]][
+        trajectory: Trajectory = self.get_dependency("trajectory")[
             "instance"
         ]
         unit_cell = self.average_unit_cell
@@ -101,7 +101,7 @@ class GridStepConfigurator(FloatConfigurator):
         else:
             axes = np.linalg.norm(unit_cell, axis=0)
         if "axis" in self.dependencies:
-            axis_index = self.configurable[self.dependencies["axis"]]["index"]
+            axis_index = self.get_dependency("axis")["index"]
             axis_length = axes[axis_index]
             temp_array = np.arange(
                 0.0, axis_length - 0.1 * self["value"], self["value"]

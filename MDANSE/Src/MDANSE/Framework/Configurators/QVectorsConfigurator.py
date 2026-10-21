@@ -76,7 +76,7 @@ class QVectorsConfigurator(IConfigurator):
 
         self._original_input = value
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
+        trajConfig = self.get_dependency("trajectory")
         self.error_status = "OK"
         self.warning_status = ""
         try:

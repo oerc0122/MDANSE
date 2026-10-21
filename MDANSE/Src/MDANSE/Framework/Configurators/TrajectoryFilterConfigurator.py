@@ -90,7 +90,7 @@ class TrajectoryFilterConfigurator(IConfigurator):
             self.error_status = f"The input dictionary is missing the expected keys: {', '.join(missing)}."
             return
 
-        frames_configurator = self.configurable[self.dependencies["frames"]]
+        frames_configurator = self.get_dependency("frames")
 
         dict_value["attributes"].setdefault("n_steps", frames_configurator["number"])
         dict_value["attributes"].setdefault(

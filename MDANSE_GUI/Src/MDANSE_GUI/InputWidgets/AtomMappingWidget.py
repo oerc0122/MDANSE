@@ -176,15 +176,7 @@ class AtomMappingWidget(WidgetBase):
 
         # file input widgets should be loaded into the _widgets list
         # before this one
-        for widget in self.parent()._widgets:
-            if (
-                widget._configurator
-                is self._configurator.configurable[
-                    self._configurator.dependencies["input_file"]
-                ]
-            ):
-                self._file_widget = widget
-                break
+        self._file_widget = self.get_dep("input_file")
 
         self.helper = AtomMappingHelperDialog(
             self._file_widget, self._field, self._base

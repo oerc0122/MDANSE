@@ -50,7 +50,7 @@ class DerivativeOrderConfigurator(IntegerConfigurator):
         if not self.update_needed(value):
             return
 
-        frames_configurator = self.configurable[self.dependencies["frames"]]
+        frames_configurator = self.get_dependency("frames")
         if not frames_configurator.valid:
             self.error_status = "Frames configurator is not valid."
             return

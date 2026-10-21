@@ -22,16 +22,7 @@ class WeightsWidget(ComboWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for widget in self.parent()._widgets:
-            if (
-                widget._configurator
-                is self._configurator.configurable[
-                    self._configurator.dependencies["atom_selection"]
-                ]
-            ) or (
-                widget._configurator
-                is self._configurator.configurable[
-                    self._configurator.dependencies["atom_transmutation"]
-                ]
-            ):
-                widget.value_changed.connect(self.updateValue)
+        if widget := self.get_dep("atom_selection"):
+            widget.value_changed.connect(self.updateValue)
+        if widget := self.get_dep("atom_transmutation"):
+            widget.value_changed.connect(self.updateValue)

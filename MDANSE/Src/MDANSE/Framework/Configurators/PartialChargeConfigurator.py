@@ -188,7 +188,7 @@ class PartialChargeConfigurator(IConfigurator):
             else:
                 processed_values[index] = charge
 
-        traj_config = self.configurable[self.dependencies["trajectory"]]
+        traj_config = self.get_dependency("trajectory")
         system = traj_config["instance"].chemical_system
         traj_indices = system._atom_indices
         charge_indices = set(processed_values.keys())
@@ -213,6 +213,6 @@ class PartialChargeConfigurator(IConfigurator):
             The partial charge mapper object initialised with the
             trajectories chemical system.
         """
-        traj_config = self.configurable[self.dependencies["trajectory"]]
+        traj_config = self.get_dependency("trajectory")
         mapper = PartialChargeMapper(traj_config["instance"])
         return mapper

@@ -696,9 +696,7 @@ class AtomSelectionWidget(WidgetBase):
             self._field.setText(default_text)
             self._field.setMaxLength(2147483647)
 
-        traj_config = self._configurator.configurable[
-            self._configurator.dependencies["trajectory"]
-        ]
+        traj_config = self._configurator._get_dependency("trajectory")
         traj_filename = traj_config["filename"]
         trajectory = traj_config["instance"]
 

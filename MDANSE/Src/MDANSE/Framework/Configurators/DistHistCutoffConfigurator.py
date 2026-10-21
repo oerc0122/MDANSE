@@ -73,7 +73,7 @@ class DistHistCutoffConfigurator(RangeConfigurator):
         float
             The maximum cutoff for the distance histogram job.
         """
-        traj_config = self.configurable[self.dependencies["trajectory"]]["instance"]
+        traj_config = self.get_dependency("trajectory")["instance"]
         if traj_config.unit_cell_warning == NO_CELL:
             return np.linalg.norm(traj_config.min_span)
 

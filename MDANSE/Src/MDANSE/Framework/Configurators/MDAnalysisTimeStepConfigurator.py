@@ -46,9 +46,7 @@ class MDAnalysisTimeStepConfigurator(FloatConfigurator):
             value = float(value)
 
         if value in {None, "", 0.0}:
-            files_configurator = self.configurable[
-                self.dependencies["coordinate_files"]
-            ]
+            files_configurator = self.get_dependency("coordinate_files")
 
             if not files_configurator.valid:
                 self.error_status = "Unable to determine a time step from MDAnalysis."

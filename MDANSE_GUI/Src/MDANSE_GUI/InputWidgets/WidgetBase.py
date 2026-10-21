@@ -29,6 +29,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import TypeVar
 
 from MDANSE.Framework.Configurators.IConfigurator import IConfigurator
 from MDANSE.MLogging import LOG
@@ -235,7 +236,9 @@ class WidgetBase(QObject, Generic[Config]):
     def default_path(self, value: str) -> None:
         self._parent_dialog.default_path = value
 
-    def get_dep(self, dependency: str, default=None):
+    Dep = TypeVar("Dep", default="WidgetBase")
+
+    def get_dep(self, dependency: str, default=None) -> Dep:
         return first_true(
             self.parent()._widgets,
             pred=lambda x: (

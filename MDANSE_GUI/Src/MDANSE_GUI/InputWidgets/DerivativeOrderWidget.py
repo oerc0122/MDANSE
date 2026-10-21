@@ -19,6 +19,7 @@ from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QLabel, QSpinBox
 
 from MDANSE_GUI.InputWidgets.WidgetBase import WidgetBase
+from MDANSE_GUI.Src.MDANSE_GUI.InputWidgets import FramesWidget
 
 suffix_dict = {
     "1": "st order",
@@ -55,14 +56,8 @@ class DerivativeOrderWidget(WidgetBase):
         self.numerator.setToolTip(tooltip_text)
         self._field.valueChanged.connect(self.adjust_numerator_and_update)
 
-        for widget in self.parent()._widgets:
-            if (
-                widget._configurator
-                is self._configurator.configurable[
-                    self._configurator.dependencies["frames"]
-                ]
-            ):
-                widget.value_changed.connect(self.updateValue)
+        widget = self.get_dep("frames")
+        widget.value_changed.connect(self.updateValue)
 
     def configure_using_default(self):
         """This is too simple to have a default value"""

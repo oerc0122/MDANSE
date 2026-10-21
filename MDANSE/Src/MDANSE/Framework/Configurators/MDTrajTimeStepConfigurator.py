@@ -41,8 +41,8 @@ class MDTrajTimeStepConfigurator(FloatConfigurator):
             value = float(value)
 
         if value in {None, "", 0.0}:
-            coord_conf = self.configurable[self.dependencies["coordinate_files"]]
-            top_conf = self.configurable[self.dependencies["topology_file"]]
+            coord_conf = self.get_dependency("coordinate_files")
+            top_conf = self.get_dependency("topology_file")
             if coord_conf.valid and top_conf.valid:
                 traj_files = coord_conf["filenames"]
                 top_file = top_conf["filename"]

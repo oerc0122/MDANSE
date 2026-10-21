@@ -59,7 +59,7 @@ class MDAnalysisCoordinateFileConfigurator(MultiInputFileConfigurator):
             self.error_status = "MDAnalysis coordinate file format not recognised."
             return
 
-        topology_configurator = self.configurable[self.dependencies["input_file"]]
+        topology_configurator = self.get_dependency("input_file")
         if not topology_configurator.valid:
             self.error_status = "Requires a valid topology file."
             return

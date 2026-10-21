@@ -67,7 +67,7 @@ class MoleculeSelectionConfigurator(IConfigurator):
             self.error_status = "Invalid input value."
             return
 
-        trajectory_configurator = self.configurable[self.dependencies["trajectory"]]
+        trajectory_configurator = self.get_dependency("trajectory")
         if not trajectory_configurator.valid:
             self.error_status = "Input file not selected."
             return

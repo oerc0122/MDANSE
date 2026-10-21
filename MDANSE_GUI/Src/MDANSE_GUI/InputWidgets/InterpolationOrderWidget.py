@@ -38,9 +38,7 @@ class InterpolationOrderWidget(WidgetBase):
         self._field = QSpinBox(self._base)
         self._field.setMaximum(5)
         configurator = self._configurator
-        trajectory = configurator.configurable[configurator.dependencies["trajectory"]][
-            "instance"
-        ]
+        trajectory = configurator._get_dependency("trajectory")["instance"]
         label = QLabel("Interpolation order", self._base)
         self.numerator = QLabel("st order")
         if not trajectory.has_variable("velocities"):
@@ -66,14 +64,8 @@ class InterpolationOrderWidget(WidgetBase):
         self.numerator.setToolTip(tooltip_text)
         self._field.valueChanged.connect(self.adjust_numerator_and_update)
 
-        for widget in self.parent()._widgets:
-            if (
-                widget._configurator
-                is self._configurator.configurable[
-                    self._configurator.dependencies["frames"]
-                ]
-            ):
-                widget.value_changed.connect(self.updateValue)
+        widget = self.get_dep("frames")
+        widget.value_changed.connect(self.updateValue)
 
     def configure_using_default(self):
         """This is too simple to have a default value"""

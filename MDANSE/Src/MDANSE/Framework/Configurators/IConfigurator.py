@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 from warnings import warn
 
 from more_itertools import value_chain
+from typing_extensions import TypeVar
 
 from MDANSE.Core.RegisterFactory import RegisterFactory
 from MDANSE.IO.IOUtils import MDANSEEncoder, UCDict
@@ -292,6 +293,25 @@ class IConfigurator(dict, RegisterFactory["IConfigurator"], abc.ABC):
 
         """
         self.configurable = configurable
+
+    Dep = TypeVar("Dep", default="IConfigurator")
+
+    def get_dependency(self, dependency: str) -> Dep:
+        """Get a sibling dependency from configurable.
+
+        Parameters
+        ----------
+        dependency : str
+            Dependency to get.
+
+        Returns
+        -------
+        IConfigurator
+            Configurator managing dependency.
+        """
+        if self.configurable is None:
+            raise ValueError("No configurable defined.")
+        return self.configurable[self.dependencies[dependency]]
 
     def check_dependencies(self, configured: list[str] | None = None) -> bool:
         """Check if the other Configurators needed by this one are ready.

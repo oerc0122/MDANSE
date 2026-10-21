@@ -78,7 +78,7 @@ class GroupingLevelConfigurator(SingleChoiceConfigurator):
 
         SingleChoiceConfigurator.configure(self, value)
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
+        trajConfig = self.get_dependency("trajectory")
         if (
             value == "molecule"
             and len(trajConfig["instance"].chemical_system.unique_molecules()) == 0

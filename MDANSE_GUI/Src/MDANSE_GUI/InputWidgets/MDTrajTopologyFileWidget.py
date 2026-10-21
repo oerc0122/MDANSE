@@ -24,11 +24,5 @@ class MDTrajTopologyFileWidget(InputFileWidget):
 
         # file input widgets should be loaded into the _widgets list
         # before this one
-        for widget in self.parent()._widgets:
-            if (
-                widget._configurator
-                is self._configurator.configurable[
-                    self._configurator.dependencies["coordinate_files"]
-                ]
-            ):
-                widget.value_changed.connect(self.updateValue)
+        widget = self.get_dep("coordinate_files")
+        widget.value_changed.connect(self.updateValue)

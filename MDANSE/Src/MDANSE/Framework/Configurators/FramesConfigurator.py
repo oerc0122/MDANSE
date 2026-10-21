@@ -56,7 +56,7 @@ class FramesConfigurator(RangeConfigurator):
 
         self._original_input = value
 
-        trajConfig = self.configurable[self.dependencies["trajectory"]]
+        trajConfig = self.get_dependency("trajectory")
         n_steps = trajConfig["length"]
 
         # if all or None set to default
